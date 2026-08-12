@@ -252,6 +252,12 @@ and effective level through existing projectile fields. Resulting stationary
 Lightning segments continue to use behavior `4`; clients never choose targets,
 consume RNG, or resolve collision and damage.
 
+A Nova cast uses behavior value `30` for its one-tick radial controller and
+value `31` for each continuing Lightning ball. The server preserves the native
+nine-point quarter-radius order and mirrored emissions, then owns ball movement,
+target collision, resistance, lifetime, and RNG. Clients render the resulting
+authoritative projectiles and never emit balls or apply damage.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

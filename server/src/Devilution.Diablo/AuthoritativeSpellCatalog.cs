@@ -35,6 +35,8 @@ public enum AuthoritativeProjectileBehavior
     InfernoSegment = 27,
     ChainLightningController = 28,
     ChainLightningBolt = 29,
+    NovaController = 30,
+    NovaBall = 31,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -246,6 +248,15 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native one-tick Chain Lightning fan-out controller lifetime. */
     public int ChainLightningControllerLifetime { get; init; }
+
+    /** Native Nova controller lifetime in simulation ticks. */
+    public int NovaControllerLifetime { get; init; }
+
+    /** Native Nova projectile radius in tiles. */
+    public int NovaSearchRadius { get; init; }
+
+    /** Number of Nova projectiles emitted by one controller. */
+    public int NovaProjectileCount { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -283,7 +294,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt;
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -495,6 +508,29 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChainLightningBolt)
                 throw new InvalidDataException(
                     "ChainLightningBolt is runtime-owned and cannot be selected by spell content.");
+            if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
+                && (definition.ProjectileSpeed != 16
+                    || definition.ProjectileLifetime != 255
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Lightning
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.NovaControllerLifetime != 1
+                    || definition.NovaSearchRadius != 4
+                    || definition.NovaProjectileCount != 36
+                    || definition.RandomDamageRange != 6
+                    || definition.RandomDamageIterationsBonus != 5
+                    || definition.CharacterLevelDamageDivisor != 1
+                    || definition.DamageBonus != 5
+                    || definition.MagicDamageDivisor != 2
+                    || definition.SpellEffectScaleDivisor != 8
+                    || definition.DamageScale != 64)) {
+                throw new InvalidDataException(
+                    "Nova behavior requires the native one-tick radial Lightning fan-out tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.NovaBall)
+                throw new InvalidDataException(
+                    "NovaBall is runtime-owned and cannot be selected by spell content.");
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -779,7 +815,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -788,7 +826,9 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.BloodStar
-                    or AuthoritativeProjectileBehavior.BoneSpirit)
+                    or AuthoritativeProjectileBehavior.BoneSpirit
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.MagicDamageDivisor != 0
                     || definition.SpellLevelDamage != 0
                     || definition.MagicDamageReductionDivisor != 0)) {
@@ -813,7 +853,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -823,10 +865,12 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.Fireball
-                    or AuthoritativeProjectileBehavior.HolyBolt)
+                    or AuthoritativeProjectileBehavior.HolyBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && definition.CharacterLevelDamageDivisor != 0) {
                 throw new InvalidDataException(
-                    "Character-level damage scaling requires Flash, Fireball, or HolyBolt projectile behavior.");
+                    "Character-level damage scaling requires Flash, Fireball, HolyBolt, or Nova projectile behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Flash
                 && definition.PostScaleDamagePercent != 0) {
@@ -852,7 +896,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
                     || definition.SecondaryProjectileLifetime != 0
                     || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 0)) {
@@ -869,10 +915,12 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && definition.DamageScale != 1) {
                 throw new InvalidDataException(
-                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, Inferno, or Chain Lightning behavior.");
+                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, Inferno, Chain Lightning, or Nova behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Fireball
@@ -899,7 +947,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
                     or AuthoritativeProjectileBehavior.ChainLightningController
-                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt
+                    or AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -943,6 +993,15 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ChainLightningControllerLifetime != 0)) {
                 throw new InvalidDataException(
                     "Chain Lightning tuning requires Chain Lightning behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.NovaController
+                    or AuthoritativeProjectileBehavior.NovaBall)
+                && (definition.NovaControllerLifetime != 0
+                    || definition.NovaSearchRadius != 0
+                    || definition.NovaProjectileCount != 0)) {
+                throw new InvalidDataException(
+                    "Nova tuning requires Nova behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1107,6 +1166,9 @@ public sealed class AuthoritativeSpellCatalog
                 "chain_lightning_search_radius_bonus"),
             ChainLightningControllerLifetime = row.OptionalInt32(
                 "chain_lightning_controller_lifetime"),
+            NovaControllerLifetime = row.OptionalInt32("nova_controller_lifetime"),
+            NovaSearchRadius = row.OptionalInt32("nova_search_radius"),
+            NovaProjectileCount = row.OptionalInt32("nova_projectile_count"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

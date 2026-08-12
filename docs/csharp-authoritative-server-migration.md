@@ -540,6 +540,12 @@ the existing Lightning controller and segment rules while retaining the chain
 spell ID and effective level. Clients observe only the resulting authoritative
 projectiles and damage events.
 
+Schema 0.37 adds Nova (spell ID `18`). The server resolves its one-tick native
+radial controller in the nine-point quarter-radius order, emits four mirrored
+balls per point, and advances each Lightning ball independently through 16.16
+movement and continuing target collision. Clients observe only authoritative
+projectiles and damage events.
+
 ## Lua transition
 
 Lua remains a frozen native-client compatibility layer. New authoritative

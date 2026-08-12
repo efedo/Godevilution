@@ -187,6 +187,9 @@ Windows toolchain command.
   Chain Lightning uses behavior value `28` for its one-tick fan-out controller
   and value `29` for each Lightning-compatible moving bolt; resulting segments
   use the existing Lightning segment behavior and projectile fields.
+  Nova uses behavior value `30` for its one-tick radial controller and value
+  `31` for each continuing Lightning ball. Existing projectile fields carry the
+  native mirrored fan-out, movement, damage, lifetime, and collision state.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

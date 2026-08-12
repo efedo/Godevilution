@@ -409,7 +409,8 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.FireWallController
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.InfernoController
-                or AuthoritativeProjectileBehavior.ChainLightningController;
+                or AuthoritativeProjectileBehavior.ChainLightningController
+                or AuthoritativeProjectileBehavior.NovaController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -434,12 +435,14 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.InfernoController;
         var isChainLightning = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.ChainLightningController;
+        var isNova = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.NovaController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno || isChainLightning) && intent.TargetEntityId != 0)
+        if ((isFireWall || isInferno || isChainLightning || isNova) && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
             && intent.TargetEntityId != 0
@@ -511,12 +514,12 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (!(isFireWall || isFlameWave || isInferno || isChainLightning) && spell.AreaRadius == 0
+                || (!(isFireWall || isFlameWave || isInferno || isChainLightning || isNova) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-            var hasLineOfSight = isFireWall || isFlameWave || isInferno || isChainLightning || spell.ProjectileSpeed > 0
+            var hasLineOfSight = isFireWall || isFlameWave || isInferno || isChainLightning || isNova || spell.ProjectileSpeed > 0
                 ? world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -533,7 +536,7 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = isFireWall || isFlameWave || isInferno || isChainLightning
+            damageTargets = isFireWall || isFlameWave || isInferno || isChainLightning || isNova
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -775,6 +778,17 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Add(
                 projectileEntityId,
                 CreateChainLightningController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel,
+                    centerX,
+                    centerY));
+        } else if (isNova) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateNovaController(
                     projectileEntityId,
                     player,
                     spell,
@@ -1717,6 +1731,91 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private AuthoritativeProjectile CreateNovaController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < spell.RandomDamageIterationsBonus;
+             iteration++) {
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        }
+        damage = checked(
+            damage
+            + checked((int)player.CharacterLevel) / spell.CharacterLevelDamageDivisor
+            + spell.DamageBonus);
+        damage /= spell.MagicDamageDivisor;
+        for (var level = 0; level < effectiveSpellLevel; level++)
+            damage = checked(damage + damage / spell.SpellEffectScaleDivisor);
+        damage = checked(damage * spell.DamageScale);
+
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.NovaControllerLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.NovaController,
+            OriginalDirection = (int)player.FacingDirection,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateNovaBall(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY,
+            spell.ProjectileSpeed);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            0,
+            controller.SpellId,
+            controller.LevelId,
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY,
+            controller.Damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.ProjectileLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.NovaBall,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = controller.EffectiveSpellLevel,
+        };
+    }
+
     private AuthoritativeProjectile CreateFlameWaveController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2407,9 +2506,17 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceChainLightningController(projectile, players);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.NovaController) {
+                    AdvanceNovaController(projectile);
+                    continue;
+                }
                 if (projectile.Behavior is AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.ChainLightningBolt) {
                     AdvanceLightningController(projectile, players);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.NovaBall) {
+                    AdvanceNovaBall(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -3506,6 +3613,78 @@ public sealed class DiabloCombatCommandProcessor
                     AuthoritativeProjectileBehavior.ChainLightningBolt));
         }
         world.Projectiles.Remove(controller.EntityId);
+    }
+
+    private void AdvanceNovaController(AuthoritativeProjectile controller)
+    {
+        controller.RemainingTicks--;
+        if (!spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.NovaController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var quarterRadius = new List<(int X, int Y)>();
+        for (var y = 0; y <= spell.NovaSearchRadius; y++)
+            quarterRadius.Add((spell.NovaSearchRadius, y));
+        for (var x = spell.NovaSearchRadius - 1; x >= 0; x--)
+            quarterRadius.Add((x, spell.NovaSearchRadius));
+        foreach (var quarter in quarterRadius) {
+            var offsets = new[] {
+                quarter,
+                (-quarter.X, -quarter.Y),
+                (-quarter.X, quarter.Y),
+                (quarter.X, -quarter.Y),
+            };
+            foreach (var offset in offsets) {
+                var entityId = AllocateProjectileEntityId();
+                world.Projectiles.Add(
+                    entityId,
+                    CreateNovaBall(
+                        entityId,
+                        controller,
+                        spell,
+                        checked(controller.PositionX + offset.Item1),
+                        checked(controller.PositionY + offset.Item2)));
+            }
+        }
+        world.Projectiles.Remove(controller.EntityId);
+    }
+
+    private void AdvanceNovaBall(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks == 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var visitedTiles = MoveNativeProjectile(projectile);
+        if (visitedTiles.Count == 0)
+            visitedTiles = [(projectile.PositionX, projectile.PositionY, projectile.TraveledX, projectile.TraveledY)];
+        foreach (var tile in visitedTiles) {
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            if (!world.ContainsPosition(projectile.LevelId, tile.X, tile.Y)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+
+            var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
+            if (target is not null
+                && target.EntityId != projectile.LastCollisionTargetEntityId) {
+                _ = TryResolveFireboltHit(projectile, target, players, events);
+                projectile.LastCollisionTargetEntityId = target.EntityId;
+            } else if (target is null) {
+                projectile.LastCollisionTargetEntityId = 0;
+            }
+        }
     }
 
     private void CreateLightningSegment(

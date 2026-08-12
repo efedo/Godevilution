@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.36.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.37.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.36.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.37.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -667,6 +667,77 @@ public sealed class DiabloSimulationTests
         Assert.Equal(1U, restored[0].RemainingTicks);
         Assert.Equal(AuthoritativeProjectileBehavior.ChainLightningBolt, restored[1].Behavior);
         Assert.Equal((32, 254U, 4), (
+            restored[1].Speed,
+            restored[1].RemainingTicks,
+            restored[1].ResistantDamageDivisor));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsNovaControllerAndBallState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x80000007,
+                        7,
+                        0,
+                        18,
+                        0,
+                        5,
+                        5,
+                        9,
+                        5,
+                        320,
+                        AuthoritativeDamageType.Lightning,
+                        0,
+                        1) {
+                        Behavior = AuthoritativeProjectileBehavior.NovaController,
+                        OriginalDirection = 2,
+                        EffectiveSpellLevel = 1,
+                    },
+                    new AuthoritativeProjectile(
+                        0x80000008,
+                        7,
+                        0,
+                        18,
+                        0,
+                        6,
+                        5,
+                        9,
+                        5,
+                        320,
+                        AuthoritativeDamageType.Lightning,
+                        0,
+                        254) {
+                        Behavior = AuthoritativeProjectileBehavior.NovaBall,
+                        VelocityX = 1048576,
+                        VelocityY = 1048576,
+                        OriginalDirection = 2,
+                        Speed = 16,
+                        ResistantDamageDivisor = 4,
+                        EffectiveSpellLevel = 1,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = replacement.WorldState.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, restored.Length);
+        Assert.Equal(AuthoritativeProjectileBehavior.NovaController, restored[0].Behavior);
+        Assert.Equal(1U, restored[0].RemainingTicks);
+        Assert.Equal(AuthoritativeProjectileBehavior.NovaBall, restored[1].Behavior);
+        Assert.Equal((16, 254U, 4), (
             restored[1].Speed,
             restored[1].RemainingTicks,
             restored[1].ResistantDamageDivisor));

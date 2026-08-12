@@ -1297,6 +1297,48 @@ public sealed class DiabloCombatCommandProcessorTests
         });
     }
 
+    [Fact]
+    public void NovaControllerEmitsNativeRadialLightningBalls()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateNovaSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            characterLevel: 1,
+            memorizedSpells: [new MemorizedSpellState(18, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(18, 0, 14, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.NovaController, controller.Behavior);
+        Assert.True(controller.Damage > 0);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.NovaController);
+        var balls = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.NovaBall)
+            .ToArray();
+        Assert.Equal(36, balls.Length);
+        Assert.All(balls, ball => {
+            Assert.Equal(16, ball.Speed);
+            Assert.Equal(18U, ball.SpellId);
+            Assert.Equal(controller.Damage, ball.Damage);
+            Assert.Equal(254U, ball.RemainingTicks);
+        });
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1390,6 +1432,33 @@ public sealed class DiabloCombatCommandProcessorTests
             StaffLevel = 7,
             ChainLightningSearchRadiusBonus = 3,
             ChainLightningControllerLifetime = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateNovaSpell()
+    {
+        return new AuthoritativeSpellDefinition(18, 60, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Lightning,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 255,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.NovaController,
+            RandomDamageRange = 6,
+            MagicDamageDivisor = 2,
+            DamageBonus = 5,
+            RandomDamageIterationsBonus = 5,
+            CharacterLevelDamageDivisor = 1,
+            SpellEffectScaleDivisor = 8,
+            DamageScale = 64,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 3,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 35,
+            ManaCostScale = 64,
+            StaffLevel = 10,
+            NovaControllerLifetime = 1,
+            NovaSearchRadius = 4,
+            NovaProjectileCount = 36,
         };
     }
 

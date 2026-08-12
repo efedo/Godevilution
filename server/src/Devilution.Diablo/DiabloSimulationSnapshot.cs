@@ -580,6 +580,34 @@ public sealed partial class DiabloSimulation
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.OriginalDirection is < 0 or > 7
                         || projectile.ResistantDamageDivisor != 4))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.NovaController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Lightning
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.RemainingTicks != 1
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.PositionX,
+                            projectile.PositionY)
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.TargetX,
+                            projectile.TargetY)))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.NovaBall
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Lightning
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 16
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.VelocityX == 0
+                            && projectile.VelocityY == 0
+                        || projectile.ResistantDamageDivisor != 4))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
