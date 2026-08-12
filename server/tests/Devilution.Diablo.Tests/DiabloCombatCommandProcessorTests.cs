@@ -729,6 +729,57 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(world.Projectiles);
     }
 
+    [Fact]
+    public void HolyBoltDamagesUndeadButPassesThroughLivingMonsters()
+    {
+        var spell = new AuthoritativeSpellDefinition(5, 1, 0, 0, 0, 0) {
+            DamageType = AuthoritativeDamageType.Physical,
+            Range = 4,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.HolyBolt,
+            RandomDamageRange = 10,
+            DamageBonus = 9,
+            CharacterLevelDamageDivisor = 1,
+            ProjectileSpeedSpellLevelStep = 2,
+            ProjectileSpeedMaximumBonus = 47,
+        };
+        var undead = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            monsterLevel: 1,
+            undead: true);
+        var living = new AuthoritativeCombatTarget(10, 1, 1, 40, monsterLevel: 1);
+        var world = new DiabloWorldState(combatTargets: [undead, living]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 100,
+            entityId: 7,
+            characterLevel: 4,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            },
+            memorizedSpells: [new MemorizedSpellState(5, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(5, 0, 1, 0, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 1; tick <= 64 && world.Projectiles.Count > 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.True(undead.HitPoints < 40);
+        Assert.Equal(40, living.HitPoints);
+        Assert.Contains(deliveries, delivery => delivery.Event.TargetEntityId == undead.EntityId);
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 1104)]
     [InlineData(DiabloGameVariant.Hellfire, 1360)]

@@ -206,6 +206,10 @@ Windows toolchain command.
   capability used by later server-owned casts. True uses the tagged
   `godevilution-monster-stone-curse-immunity-v1` hash extension; false remains
   the additive compatibility default.
+- `MonsterSnapshot.is_undead` field 23 persists the external monster
+  capability used by the server-owned Holy Bolt cast. True uses the tagged
+  `godevilution-monster-undead-v1` hash extension; false remains the additive
+  compatibility default.
 
 ## Identity Note
 

@@ -408,6 +408,8 @@ public sealed class SnapshotStateHasherTests
         petrified.Monsters[0].Petrified = true;
         var immune = petrified.Clone();
         immune.Monsters[0].StoneCurseImmune = true;
+        var undead = immune.Clone();
+        undead.Monsters[0].IsUndead = true;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(stationary),
@@ -418,6 +420,9 @@ public sealed class SnapshotStateHasherTests
         Assert.NotEqual(
             SnapshotStateHasher.Compute(petrified),
             SnapshotStateHasher.Compute(immune));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(immune),
+            SnapshotStateHasher.Compute(undead));
     }
 
     [Fact]

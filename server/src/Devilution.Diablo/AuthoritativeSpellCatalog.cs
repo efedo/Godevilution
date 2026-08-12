@@ -8,6 +8,7 @@ public enum AuthoritativeProjectileBehavior
     Targeted,
     ChargedBolt,
     Firebolt,
+    HolyBolt,
     Lightning,
     LightningSegment,
     Flash,
@@ -298,6 +299,33 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Firebolt behavior requires one moving, random, magic-scaled projectile.");
             }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.ProjectileSpeed <= 0
+                    || definition.AreaRadius != 0
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.DamageType != AuthoritativeDamageType.Physical
+                    || definition.RandomDamageRange <= 0
+                    || definition.DamageBonus <= 0
+                    || definition.CharacterLevelDamageDivisor <= 0
+                    || definition.RandomDamageIterationsCharacterLevelDivisor != 0
+                    || definition.RandomDamageIterationsBonus != 0
+                    || definition.SpellEffectScaleDivisor != 0
+                    || definition.ProjectileSpeedSpellLevelStep <= 0
+                    || definition.ProjectileSpeedMaximumBonus < definition.ProjectileSpeedSpellLevelStep
+                    || (long)definition.ProjectileSpeed
+                        + definition.ProjectileSpeedMaximumBonus > 512
+                    || definition.MagicDamageDivisor != 0
+                    || definition.SpellLevelDamage != 0
+                    || definition.ResistantDamageDivisor <= 0)) {
+                throw new InvalidDataException(
+                    "Holy Bolt behavior requires one moving physical-damage projectile with native undead-only scaling.");
+            }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Fireball
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -544,13 +572,14 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
+                    or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.Fireball)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
-                    "Native random damage columns require Firebolt, Lightning, Flash, or Fireball projectile behavior.");
+                    "Native random damage columns require Firebolt, HolyBolt, Lightning, Flash, or Fireball projectile behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Firebolt
                 && (definition.MagicDamageDivisor != 0
@@ -560,13 +589,21 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Flash
-                    or AuthoritativeProjectileBehavior.Fireball)
+                    or AuthoritativeProjectileBehavior.Fireball
+                    or AuthoritativeProjectileBehavior.HolyBolt)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
-                    || definition.CharacterLevelDamageDivisor != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
                 throw new InvalidDataException(
                     "Repeated random-damage scaling requires Flash or Fireball projectile behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.Flash
+                    or AuthoritativeProjectileBehavior.Fireball
+                    or AuthoritativeProjectileBehavior.HolyBolt)
+                && definition.CharacterLevelDamageDivisor != 0) {
+                throw new InvalidDataException(
+                    "Character-level damage scaling requires Flash, Fireball, or HolyBolt projectile behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Flash
                 && definition.PostScaleDamagePercent != 0) {
@@ -599,15 +636,18 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Scaled native projectile damage requires Lightning or Fireball behavior.");
             }
-            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Fireball
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.Fireball
+                    or AuthoritativeProjectileBehavior.HolyBolt)
                 && (definition.ProjectileSpeedSpellLevelStep != 0
                     || definition.ProjectileSpeedMaximumBonus != 0)) {
                 throw new InvalidDataException(
-                    "Spell-level projectile-speed tuning requires Fireball behavior.");
+                    "Spell-level projectile-speed tuning requires Fireball or HolyBolt behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.ChargedBolt
                     or AuthoritativeProjectileBehavior.Firebolt
+                    or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.StoneCurse

@@ -53,6 +53,32 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedHolyBoltCarriesNativeUndeadProjectileTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(5, out var holyBolt));
+        Assert.Equal(AuthoritativeProjectileBehavior.HolyBolt, holyBolt.ProjectileBehavior);
+        Assert.Equal(AuthoritativeDamageType.Physical, holyBolt.DamageType);
+        Assert.Equal((7, 10, 9, 1), (
+            holyBolt.ManaCost,
+            holyBolt.RandomDamageRange,
+            holyBolt.DamageBonus,
+            holyBolt.CharacterLevelDamageDivisor));
+        Assert.Equal((16, 2, 47, 256), (
+            holyBolt.ProjectileSpeed,
+            holyBolt.ProjectileSpeedSpellLevelStep,
+            holyBolt.ProjectileSpeedMaximumBonus,
+            holyBolt.ProjectileLifetime));
+    }
+
+    [Fact]
     public void ShippedFireballCarriesNativeDamageSpeedAndExplosionTuning()
     {
         var path = Path.Combine(

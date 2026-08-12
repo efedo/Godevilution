@@ -397,6 +397,8 @@ message MonsterSnapshot {
 	bool petrified = 21;
 	// Immutable content capability persisted for deterministic future casts.
 	bool stone_curse_immune = 22;
+	// Immutable content capability used by the undead-only Holy Bolt spell.
+	bool is_undead = 23;
 }
 
 message WorldItemSnapshot {

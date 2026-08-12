@@ -30,7 +30,8 @@ public sealed class AuthoritativeCombatTarget
         int? futurePositionX = null,
         int? futurePositionY = null,
         bool petrified = false,
-        bool stoneCurseImmune = false)
+        bool stoneCurseImmune = false,
+        bool undead = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -65,6 +66,7 @@ public sealed class AuthoritativeCombatTarget
         IsMoving = moving;
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
+        IsUndead = undead;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -99,6 +101,9 @@ public sealed class AuthoritativeCombatTarget
     public bool IsMoving { get; private set; }
     public bool IsPetrified { get; set; }
     public bool StoneCurseImmune { get; set; }
+
+    /** External monster capability used by Holy Bolt targeting. */
+    public bool IsUndead { get; set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
     public int HitPoints
     {

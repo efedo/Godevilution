@@ -212,6 +212,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
                     hasher.AppendBool(true);
                 }
+                if (monster.IsUndead) {
+                    hasher.AppendString("godevilution-monster-undead-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 

@@ -44,7 +44,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.28.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.29.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

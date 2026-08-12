@@ -749,6 +749,14 @@ public sealed class DiabloCombatCommandProcessor
                             effectiveSpellLevel,
                             centerX,
                             centerY),
+                    AuthoritativeProjectileBehavior.HolyBolt =>
+                        CreateHolyBoltProjectile(
+                            projectileEntityId,
+                            player,
+                            spell,
+                            effectiveSpellLevel,
+                            centerX,
+                            centerY),
                     AuthoritativeProjectileBehavior.Fireball =>
                         CreateFireballProjectile(
                             projectileEntityId,
@@ -1181,6 +1189,66 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = spell.ProjectileSpeed,
+            ImpactLifetime = spell.ProjectileImpactLifetime,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+        };
+    }
+
+    private AuthoritativeProjectile CreateHolyBoltProjectile(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var speed = checked(
+            spell.ProjectileSpeed
+            + Math.Min(
+                effectiveSpellLevel * spell.ProjectileSpeedSpellLevelStep,
+                spell.ProjectileSpeedMaximumBonus));
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            speed);
+        var damage = checked(
+            random.GenerateRnd(spell.RandomDamageRange)
+            + checked((int)player.CharacterLevel) / spell.CharacterLevelDamageDivisor
+            + spell.DamageBonus);
+
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            0,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.HolyBolt,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
             ImpactLifetime = spell.ProjectileImpactLifetime,
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
         };
@@ -1776,6 +1844,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.HolyBolt) {
+                    AdvanceFirebolt(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
                     AdvanceFireball(tick, projectile, players, events);
                     continue;
@@ -1949,7 +2021,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionY);
             var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
             if (projectile.LastCollisionTargetEntityId != targetEntityId
-                && CheckFireboltCollision(
+                && CheckProjectileCollision(
                     tick,
                     projectile,
                     target,
@@ -1978,7 +2050,7 @@ public sealed class DiabloCombatCommandProcessor
                 tile.X,
                 tile.Y);
             var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
-            if (CheckFireboltCollision(
+            if (CheckProjectileCollision(
                     tick,
                     projectile,
                     target,
@@ -2027,7 +2099,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionY);
             var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
             if (projectile.LastCollisionTargetEntityId != targetEntityId
-                && CheckFireboltCollision(
+                && CheckProjectileCollision(
                     tick,
                     projectile,
                     target,
@@ -2058,7 +2130,7 @@ public sealed class DiabloCombatCommandProcessor
                 tile.X,
                 tile.Y);
             var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
-            if (CheckFireboltCollision(
+            if (CheckProjectileCollision(
                     tick,
                     projectile,
                     target,
@@ -2576,6 +2648,31 @@ public sealed class DiabloCombatCommandProcessor
             .FirstOrDefault();
     }
 
+    private bool CheckProjectileCollision(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget? target,
+        AuthoritativePlayerState? playerTarget,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        return projectile.Behavior == AuthoritativeProjectileBehavior.HolyBolt
+            ? CheckHolyBoltCollision(
+                tick,
+                projectile,
+                target,
+                playerTarget,
+                players,
+                events)
+            : CheckFireboltCollision(
+                tick,
+                projectile,
+                target,
+                playerTarget,
+                players,
+                events);
+    }
+
     private bool CheckFireboltCollision(
         ulong tick,
         AuthoritativeProjectile projectile,
@@ -2611,6 +2708,69 @@ public sealed class DiabloCombatCommandProcessor
             @object.Destroyed = true;
         }
         return blocked || hitTarget || playerStopsProjectile;
+    }
+
+    private bool CheckHolyBoltCollision(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget? target,
+        AuthoritativePlayerState? playerTarget,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var hitTarget = target is not null
+            && TryResolveHolyBoltHit(projectile, target, players, events);
+
+        var blocked = world.IsMissileBlocked(
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (blocked
+            && world.TryGetMissileBlockingObject(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY,
+                    out var @object)
+            && @object!.Breakable) {
+            @object.Destroyed = true;
+        }
+        return blocked || hitTarget;
+    }
+
+    private bool TryResolveHolyBoltHit(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!target.IsUndead)
+            return false;
+        var resistance = GetMonsterResistance(target, projectile.DamageType);
+        if (resistance >= 100)
+            return false;
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        if (owner is null)
+            return false;
+
+        var ownerClass = GetPlayerClass(owner);
+        var hitChance = Math.Clamp(
+            owner.Attributes.Magic.Current
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - target.MonsterLevel * 2,
+            5,
+            95);
+        var hitRoll = random.RandomIntLessThan(100);
+        if (!target.IsPetrified && hitRoll >= hitChance)
+            return false;
+
+        var damageQ6 = DiabloFixedPointQ6.FromWhole(projectile.Damage);
+        if (resistance > 0)
+            damageQ6 /= projectile.ResistantDamageDivisor;
+        var gameplayEvents = new List<DiabloGameplayEvent>();
+        ApplyResolvedDamageQ6(owner, target, damageQ6, gameplayEvents);
+        foreach (var gameplayEvent in gameplayEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
     }
 
     private bool TryResolveFireboltHit(

@@ -515,10 +515,16 @@ loadout and the native `staff_level` spell field. Activation binds the skill to
 the authoritative recharge policy, and the content value supplies the exact
 character-level divisor used by its shared RNG sequence.
 
+Content schema 0.29 adds the validated Holy Bolt behavior and base spell row,
+plus the external `monsters.tsv` `undead` capability. Holy Bolt reproduces the
+native level-scaled magic projectile and accepts only explicitly undead
+monsters; the capability persists through protocol field 23, compatible saves,
+conditional hashes, and future replay state.
+
 ## Near-term priorities
 
-1. Expand authoritative combat and spell coverage beyond Firebolt, Charged
-   Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
+1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
+   Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
    Infravision, Search, Phasing, Mana Shield, Teleport, and Resurrection,
    including remaining class modifiers, scaling and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,

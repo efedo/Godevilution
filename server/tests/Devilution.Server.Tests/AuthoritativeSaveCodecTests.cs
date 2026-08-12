@@ -187,6 +187,7 @@ public sealed class AuthoritativeSaveCodecTests
                 FuturePositionY = 1,
                 Petrified = true,
                 StoneCurseImmune = true,
+                IsUndead = true,
                 HitPointsQ6 = 304,
             }],
             [new DiabloWorldItemState(

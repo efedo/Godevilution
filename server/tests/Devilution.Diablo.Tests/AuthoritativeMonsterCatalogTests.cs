@@ -37,6 +37,21 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsAndValidatesUndeadCapability()
+    {
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tundead\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t1\t2\t4\t5\t20\t25\t3\t1\n");
+
+        Assert.True(Assert.Single(catalog.Targets).IsUndead);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.LoadTsv(
+                "monsters.tsv",
+                header + "9\t1\t2\t4\t5\t20\t25\t3\t2\n"));
+    }
+
+    [Fact]
     public void RejectsDuplicateMonsterEntityIds()
     {
         var targets = new[] {

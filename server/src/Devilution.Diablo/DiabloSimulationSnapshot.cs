@@ -30,6 +30,8 @@ public sealed record DiabloMonsterState(
 
     public bool StoneCurseImmune { get; init; }
 
+    public bool IsUndead { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -212,6 +214,7 @@ public sealed partial class DiabloSimulation
                     FuturePositionY = target.FuturePositionY,
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
+                    IsUndead = target.IsUndead,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -429,6 +432,15 @@ public sealed partial class DiabloSimulation
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt
                     && (projectile.OriginalDirection is < 0 or > 7
                         || projectile.Speed <= 0
+                        || projectile.ImpactLifetime <= 0
+                        || projectile.ResistantDamageDivisor <= 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.HolyBolt
+                    && (projectile.TargetEntityId != 0
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.Speed <= 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
                         || projectile.ImpactLifetime <= 0
                         || projectile.ResistantDamageDivisor <= 0))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
@@ -756,6 +768,7 @@ public sealed partial class DiabloSimulation
                 target.MagicResistance = monster.MagicResistance;
                 target.MonsterLevel = monster.MonsterLevel;
                 target.StoneCurseImmune = monster.StoneCurseImmune;
+                target.IsUndead = monster.IsUndead;
                 target.RestoreOccupancy(
                     monster.Moving,
                     monster.FuturePositionX,
@@ -781,7 +794,8 @@ public sealed partial class DiabloSimulation
                     futurePositionX: monster.FuturePositionX,
                     futurePositionY: monster.FuturePositionY,
                     petrified: monster.Petrified,
-                    stoneCurseImmune: monster.StoneCurseImmune);
+                    stoneCurseImmune: monster.StoneCurseImmune,
+                    undead: monster.IsUndead);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

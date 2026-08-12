@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Advance the Diablo content schema to 0.29 and add server-owned Holy Bolt.
+  Externalize the undead monster capability, preserve native damage and speed
+  scaling, pass non-undead monsters through, and carry the capability through
+  protocol field 23, compatible saves, and conditional snapshot hashes.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.
