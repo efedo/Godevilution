@@ -2,6 +2,9 @@
 param(
     [string]$GodotExecutable,
     [int]$Port = 0,
+    [ValidateRange(-1, 4294967295)]
+    [long]$CharacterClassId = -1,
+    [string]$CharacterName,
     [switch]$Headless,
     [ValidateRange(1, 3600)]
     [int]$QuitAfterSeconds = 120
@@ -12,7 +15,7 @@ $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Pat
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
 $clientProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
-$captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('DevilutionY-Godot-' + [guid]::NewGuid().ToString('N'))
+$captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Godot-' + [guid]::NewGuid().ToString('N'))
 $stdoutPath = Join-Path $captureRoot 'server.stdout.log'
 $stderrPath = Join-Path $captureRoot 'server.stderr.log'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
@@ -33,8 +36,11 @@ if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
 }
 
 $serverStartTime = Get-Date
-if (-not (Test-Path -LiteralPath $serverExecutable))
-    { throw "The built server executable was not found at $serverExecutable. Build the server project first." }
+if (-not (Test-Path -LiteralPath $serverExecutable)) {
+    & dotnet build $serverProject
+    if ($LASTEXITCODE -ne 0)
+        { throw "Could not build the authoritative server project at $serverProject." }
+}
 $serverArguments = "--port $Port --save-root `"$captureRoot/save`""
 $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
 
@@ -62,6 +68,16 @@ try {
     # in content_manifest_hash for compatibility with the native client.
     $env:DEVILUTION_CONTENT_HASH = $rulesetHash
     $env:DEVILUTION_RULESET_HASH = $rulesetHash
+    if ($CharacterClassId -ge 0) {
+        $env:DEVILUTION_CHARACTER_CLASS_ID = [string]$CharacterClassId
+    } else {
+        Remove-Item Env:DEVILUTION_CHARACTER_CLASS_ID -ErrorAction SilentlyContinue
+    }
+    if (-not [string]::IsNullOrEmpty($CharacterName)) {
+        $env:DEVILUTION_CHARACTER_NAME = $CharacterName
+    } else {
+        Remove-Item Env:DEVILUTION_CHARACTER_NAME -ErrorAction SilentlyContinue
+    }
     $godotArguments = if ($Headless) { "--headless --path `"$clientProject`" --quit-after $QuitAfterSeconds" } else { "--path `"$clientProject`"" }
     $godotProcess = Start-Process -FilePath $GodotExecutable -ArgumentList $godotArguments -WorkingDirectory $repositoryRoot -PassThru -Wait
     if ($godotProcess.ExitCode -ne 0)

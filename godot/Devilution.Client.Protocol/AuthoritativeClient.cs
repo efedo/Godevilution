@@ -32,6 +32,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public uint ServerTickRateHz { get; private set; } = 20;
 
+    public GameMode ServerGameMode { get; private set; } = GameMode.Unspecified;
+
     public ulong SuggestedCommandTick(ulong observedTick)
     {
         var leadTicks = Math.Max(1, (int)Math.Ceiling(RetryTimeout.TotalSeconds * ServerTickRateHz) + 1);
@@ -67,15 +69,20 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         tcpClient = new TcpClient();
         await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
         stream = tcpClient.GetStream();
-        await WriteEnvelopeAsync(new Envelope {
-            ClientHello = new ClientHello {
-                ClientBuildId = options.ClientBuildId,
-                ProtocolSchemaVersion = options.ProtocolSchemaVersion,
-                ContentManifestHash = options.ContentManifestHash,
-                RulesetIdentityHash = options.RulesetIdentityHash,
-                ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
-            },
-        }, cancellationToken);
+        var clientHello = new ClientHello {
+            ClientBuildId = options.ClientBuildId,
+            ProtocolSchemaVersion = options.ProtocolSchemaVersion,
+            ContentManifestHash = options.ContentManifestHash,
+            RulesetIdentityHash = options.RulesetIdentityHash,
+            ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
+        };
+        if (options.RequestedCharacterClassId.HasValue) {
+            clientHello.RequestedCharacterClassId
+                = options.RequestedCharacterClassId.Value;
+        }
+        if (!string.IsNullOrEmpty(options.RequestedCharacterName))
+            clientHello.RequestedCharacterName = options.RequestedCharacterName;
+        await WriteEnvelopeAsync(new Envelope { ClientHello = clientHello }, cancellationToken);
 
         var hello = await ReadEnvelopeAsync(stream, cancellationToken)
             ?? throw new EndOfStreamException("The server closed the connection during handshake.");
@@ -89,6 +96,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
         SessionToken = hello.ServerHello.SessionToken;
         ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
+        ServerGameMode = hello.ServerHello.GameMode;
 
         var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
             ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");

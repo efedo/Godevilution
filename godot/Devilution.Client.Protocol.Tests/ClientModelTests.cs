@@ -29,11 +29,373 @@ public sealed class ClientModelTests
     }
 
     [Fact]
-    public void RejectsSnapshotsWithoutExactlyOnePlayer()
+    public void RejectsSnapshotsWithoutALocalPlayerOrWithInvalidEntityIds()
     {
         var model = new AuthoritativeClientModel();
 
         Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot())));
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot() },
+            })));
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = {
+                    new PlayerSnapshot { EntityId = 7 },
+                    new PlayerSnapshot { EntityId = 7 },
+                },
+            })));
+    }
+
+    [Fact]
+    public void ValidatesAndRetainsTheAuthoritativeHeldItem()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    HeldItem = new ItemSnapshot {
+                        ItemSeed = 42,
+                        Price = 65,
+                        State = new ItemStateSnapshot {
+                            ItemType = 11,
+                            InventoryWidth = 1,
+                            InventoryHeight = 1,
+                            Value = 65,
+                        },
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Equal(42U, model.Snapshot!.Players[0].HeldItem.ItemSeed);
+        var missingSeed = snapshot.Clone();
+        missingSeed.Players[0].HeldItem.ItemSeed = 0;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: missingSeed)));
+        var oversized = snapshot.Clone();
+        oversized.Players[0].HeldItem.State.InventoryWidth = 11;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: oversized)));
+    }
+
+    [Fact]
+    public void AppliesMultiplayerSnapshotsWithTheReceivingParticipantFirst()
+    {
+        var model = new AuthoritativeClientModel();
+
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = {
+                    new PlayerSnapshot { EntityId = 8, PositionX = 3, PositionY = 4 },
+                    new PlayerSnapshot { EntityId = 7, PositionX = 9, PositionY = 10 },
+                },
+            }));
+
+        Assert.Equal(8U, model.PlayerEntityId);
+        Assert.Equal(2, model.Snapshot!.Players.Count);
+        Assert.Null(model.PredictedPlayerPosition);
+    }
+
+    [Fact]
+    public void RetainsCharacterNamesAndNativeDynamicEarPresentation()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CharacterName = "Dead-RogueDM",
+                    ManaShieldActive = true,
+                    StatusEffects = {
+                        new StatusEffectSnapshot {
+                            EffectId = 9,
+                            RemainingTicks = 1584,
+                            Behavior = StatusEffectBehavior.Infravision,
+                        },
+                        new StatusEffectSnapshot {
+                            EffectId = 46,
+                            RemainingTicks = 255,
+                            Behavior = StatusEffectBehavior.Search,
+                        },
+                    },
+                },
+            },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 20,
+                    ItemSeed = 0,
+                    State = new ItemStateSnapshot {
+                        CreateInfo = 0x4100,
+                        ItemIndex = 23,
+                        MiscId = 44,
+                        BaseName = "Ear of A",
+                        IdentifiedName = "A",
+                        NativeCursorGraphic = 21,
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Equal("Dead-RogueDM", model.Snapshot!.Players[0].CharacterName);
+        Assert.True(model.Snapshot.Players[0].ManaShieldActive);
+        Assert.Equal(
+            [StatusEffectBehavior.Infravision, StatusEffectBehavior.Search],
+            model.Snapshot.Players[0].StatusEffects.Select(effect => effect.Behavior));
+        var ear = Assert.Single(model.Snapshot.WorldItems);
+        Assert.Equal(0U, ear.ItemSeed);
+        Assert.Equal("Ear of A", ear.State.BaseName);
+        Assert.Equal("A", ear.State.IdentifiedName);
+        Assert.Equal(21, ear.State.NativeCursorGraphic);
+
+        var missingDynamicName = snapshot.Clone();
+        missingDynamicName.WorldItems[0].State.IdentifiedName = "";
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: missingDynamicName)));
+        var invalidPlayerName = snapshot.Clone();
+        invalidPlayerName.Players[0].CharacterName = "bad name";
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidPlayerName)));
+        var invalidStatus = snapshot.Clone();
+        invalidStatus.Players[0].StatusEffects[0].Magnitude = 1;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidStatus)));
+        var invalidSearch = snapshot.Clone();
+        invalidSearch.Players[0].StatusEffects[1].Magnitude = 1;
+        Assert.Throws<InvalidDataException>(() => model.Apply(
+            new AuthoritativeClientMessage(Snapshot: invalidSearch)));
+    }
+
+    [Fact]
+    public void AppliesRemoteDeathAndServerOwnedResurrectionProjection()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Tick = 1,
+                Players = {
+                    new PlayerSnapshot { EntityId = 7, Life = 1000, LifeMaximum = 1000 },
+                    new PlayerSnapshot {
+                        EntityId = 8,
+                        PositionX = 10,
+                        PositionY = 10,
+                        LifeMaximum = 1000,
+                        CombatMode = PlayerCombatMode.Death,
+                    },
+                },
+            }));
+        Assert.Equal(PlayerCombatMode.Death, model.Snapshot!.Players[1].CombatMode);
+
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Tick = 13,
+                Players = {
+                    new PlayerSnapshot { EntityId = 7, Life = 1000, LifeMaximum = 1000 },
+                    new PlayerSnapshot {
+                        EntityId = 8,
+                        PositionX = 10,
+                        PositionY = 10,
+                        Life = 640,
+                        LifeMaximum = 1000,
+                    },
+                },
+                Projectiles = {
+                    new ProjectileSnapshot {
+                        EntityId = 0x80000000,
+                        SourceEntityId = 7,
+                        TargetEntityId = 8,
+                        SpellId = 32,
+                        PositionX = 10,
+                        PositionY = 10,
+                        TargetX = 10,
+                        TargetY = 10,
+                        RemainingTicks = 15,
+                        Behavior = 11,
+                    },
+                },
+            }));
+
+        Assert.Equal(7U, model.PlayerEntityId);
+        Assert.Equal(640, model.Snapshot!.Players[1].Life);
+        var beam = Assert.Single(model.Snapshot.Projectiles);
+        Assert.Equal(8U, beam.TargetEntityId);
+        Assert.Equal(11, beam.Behavior);
+    }
+
+    [Fact]
+    public void AppliesServerOwnedRestartTownBarrier()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Tick = 42,
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 7,
+                        PositionX = 75,
+                        PositionY = 68,
+                        Life = 64,
+                        LifeMaximum = 640,
+                        CombatMode = PlayerCombatMode.NewLevel,
+                        CombatModeEndTick = 43,
+                        CurrentAction = new PlayerActionSnapshot {
+                            Kind = PlayerActionKind.RestartTown,
+                            StartedAtTick = 42,
+                            EffectTick = 42,
+                            ReadyTick = 43,
+                            EndTick = 43,
+                            EffectApplied = true,
+                        },
+                    },
+                },
+            }));
+
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal((0U, 75, 68, 64), (
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            player.Life));
+        Assert.Equal(PlayerActionKind.RestartTown, player.CurrentAction!.Kind);
+
+        var invalid = model.Snapshot.Clone();
+        invalid.Players[0].CurrentAction.TargetEntityId = 5;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+    }
+
+    [Fact]
+    public void ValidatesAndRetainsAuthoritativePlayerCombatMode()
+    {
+        var model = new AuthoritativeClientModel();
+        var blocking = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    CombatMode = PlayerCombatMode.Block,
+                    CombatModeEndTick = 9,
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: blocking));
+
+        Assert.Equal(PlayerCombatMode.Block, model.Snapshot!.Players[0].CombatMode);
+        var invalid = blocking.Clone();
+        invalid.Players[0].CombatModeEndTick = 0;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        var invalidRemote = blocking.Clone();
+        invalidRemote.Players.Add(new PlayerSnapshot {
+            EntityId = 8,
+            CombatMode = PlayerCombatMode.GotHit,
+        });
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidRemote)));
+    }
+
+    [Fact]
+    public void ValidatesAndRetainsAuthoritativePlayerFacing()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    FacingDirection = PlayerDirection.NorthEast,
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Equal(PlayerDirection.NorthEast, model.Snapshot!.Players[0].FacingDirection);
+        var invalid = snapshot.Clone();
+        invalid.Players[0].FacingDirection = (PlayerDirection)8;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+    }
+
+    [Fact]
+    public void ValidatesTimedMovementAndPresentsItsReservedDestination()
+    {
+        var model = new AuthoritativeClientModel();
+        var moving = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    PositionX = 2,
+                    PositionY = 3,
+                    CombatMode = PlayerCombatMode.WalkSouthwards,
+                    CombatModeEndTick = 18,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 10,
+                        EffectTick = 18,
+                        ReadyTick = 18,
+                        EndTick = 18,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: moving));
+
+        Assert.Equal(new ClientPosition(3, 3), model.PredictedPlayerPosition);
+        Assert.True(model.IsCorrectingPosition);
+        var invalid = moving.Clone();
+        invalid.Players[0].CurrentAction.ReadyTick = 19;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+    }
+
+    [Theory]
+    [InlineData(PlayerActionKind.Death, PlayerCombatMode.Death, 0, 9U)]
+    [InlineData(
+        PlayerActionKind.LevelTransition,
+        PlayerCombatMode.NewLevel,
+        20,
+        5U)]
+    public void ValidatesTerminalPlayerActions(
+        PlayerActionKind kind,
+        PlayerCombatMode mode,
+        int life,
+        uint targetEntityId)
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Life = life,
+                    CombatMode = mode,
+                    CombatModeEndTick = 40,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = kind,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 40,
+                        EndTick = 40,
+                        EffectApplied = true,
+                        TargetEntityId = targetEntityId,
+                    },
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Equal(kind, model.Snapshot!.Players[0].CurrentAction.Kind);
+        var invalid = snapshot.Clone();
+        invalid.Players[0].CurrentAction.EffectApplied = false;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
     }
 
     [Fact]

@@ -1,60 +1,122 @@
 # Godot C# Client
 
-This directory contains the first Godot presentation client for the
-authoritative C# server. The client does not simulate gameplay locally. It
-submits commands, receives complete snapshots, applies transient event
-batches, and renders the latest authoritative projection.
+This directory contains Godevilution's presentation client. It submits player
+intent to the C# server, receives complete snapshots and transient events, and
+renders the latest authoritative projection. It does not simulate gameplay or
+own persistence.
 
-## Project layout
+## Projects
 
 - `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,
-  handshake, command retry, and the authoritative client model.
-- `Devilution.Client` is the Godot 4 C# project and presentation shell.
+  handshake logic, command retry, and the client-side authoritative model.
+- `Devilution.Client.Protocol.Tests` verifies the protocol model and starts a
+  real local server for live transport tests.
+- `Devilution.Client` is the Godot 4.7.1 Mono presentation project.
 
-The server defaults to `127.0.0.1:6113`. Set `DEVILUTION_CONTENT_HASH` to the
-ruleset identity hash printed by the server before connecting. The current
-frozen wire contract carries this combined identity in the
-`content_manifest_hash` field for compatibility with the native client. An
-optional `DEVILUTION_RULESET_HASH` can provide the same identity validation.
+## Verify Without Godot
 
-To run the first vertical slice:
+```powershell
+dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet build godot/Devilution.Client/Devilution.Client.sln
+```
 
-1. Start the server with `dotnet run --project server/src/Devilution.Server/Devilution.Server.csproj -- --port 6113`.
-2. Copy the server's content manifest hash into `DEVILUTION_CONTENT_HASH`.
-3. Open `godot/Devilution.Client/project.godot` with Godot 4.7.x Mono and run
-   the project.
+The live protocol tests build and launch their own server. A Godot installation
+is not required for these commands.
 
-The protocol model and transport can be verified without Godot with:
+## Run the Complete Local Session
 
-`dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj`
+Install Godot 4.7.1 Mono, then run:
 
-The complete local harness starts the server, reads its negotiated identity,
-sets the client environment, and launches Godot:
+```powershell
+powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1
+```
 
-`powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1`
+The harness builds the server if needed, starts it on an available port, reads
+the negotiated ruleset identity, configures the client environment, and launches
+Godot. The protocol client retains the server-owned game mode from the handshake.
+Pass `-GodotExecutable` when discovery cannot find the Mono executable.
+For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.
+Pass `-CharacterClassId <0..5>` to request one of the shipped classes when
+creating a new session. Omitting it uses the active content default; a resume
+token's existing server state takes precedence. The first snapshot contains
+that class's content-defined wallet, resources, equipment, belt, inventory,
+class skill, and learned spells. Manual launches can set the same optional value
+with `DEVILUTION_CHARACTER_CLASS_ID`.
+Pass `-CharacterName <name>` to request a native-valid character name for the
+same new session. Manual launches use `DEVILUTION_CHARACTER_NAME`. The server
+validates, persists, and restores the name; a resume token takes precedence and
+cannot rename an existing character.
 
-The harness discovers versioned Godot Mono installations from `PATH`; pass
-`-GodotExecutable` only when Godot is installed outside `PATH`. See
-`docs/AI/godot-build.md` for the WinGet installation workaround.
+An authoritative snapshot may also contain an in-progress movement, attack,
+cast, death, level-transition, or restart-in-town action. The protocol model
+validates its timing and payload. For deferred movement, local presentation predicts from the
+server-reserved destination so the accepted command does not snap back before
+the authoritative end tick. Death and portal transitions arrive already
+applied with server-owned Death or NewLevel modes; Godot never resolves their
+damage or destination effects itself.
+After terminal Death, Escape sends `RestartTownRequested`. The server chooses
+the destination and resource reset; Godot accepts action kind 6 only as an
+already-applied NewLevel transition and renders the returned town snapshot.
+If a Gold pickup exceeds inventory capacity, the snapshot carries the remainder
+as `held_item`. Godot displays it and sends `DropHeldItemRequested` for a clicked
+tile (or the current tile with `X`); it never chooses the accepted placement or
+mutates the item locally.
+Dynamic world items such as PvP ears carry authoritative runtime names and a
+native cursor identity. Godot validates and renders those fields from the
+snapshot; it does not recreate them from the victim or local class data.
 
-Use `-Headless` for an automated launch. In the client, arrows/WASD move,
-left-click casts spell 4, `O` opens Smith, `P` purchases the selected store
-item, `M` opens the Adria service, and `R` requests a mana refill. The HUD
-also exposes selectable store stock, a footprint-aware inventory grid,
-authoritative buy/sell/repair/recharge/identify/move actions, object and quest
-interaction buttons, command feedback, event-log management, F3 diagnostics,
-and F4 high-contrast HUD text. Left-clicking the world shows a presentation-only
-cast target preview. Optional `res://assets/audio/damage.ogg`,
-`healing.ogg`, and `command_rejected.ogg` files enable event feedback sounds;
-missing files are silent. The world grid is loaded from
-`assets/levels/level_layouts.json`; it is presentation data and must remain
-consistent with the server's external level definitions.
+Snapshots contain every assigned participant. The server puts this client's
+player first and orders the remaining players by entity ID. The client validates
+all identities and action state, applies prediction only to that first player,
+and renders same-level remote players from their authoritative coordinates.
+When Resurrection spell `32` is selected, clicking a same-level remote player
+sends that player's stable entity ID. The server alone admits the cast, revives
+and places a dead target, and owns the timed beam; Godot only renders the
+resulting participant and projectile snapshots.
+When Heal Other spell `34` is selected, the same cursor mapping sends a living
+same-level remote player's stable entity ID. Godot does not roll healing,
+consume mana, change life, or decide whether the target is valid; it renders the
+authoritative event and updated participant snapshot.
+Mana Shield is likewise presentation-only in Godot: the authoritative
+`mana_shield_active` flag adds a cyan player halo and a HUD state label. The
+client neither converts damage to mana nor predicts shield expiry.
+Search is a typed snapshot-only status. While behavior `2` is active, Godot
+adds a HUD label and outlines authoritative world items; it never computes,
+extends, or expires the duration locally.
+For a player whose authoritative class ability is Bard Identify spell `5`, the
+inventory Identify button remains available without a store and sends the
+explicit class-ability service source. Other players use the existing vendor
+request while a store is active. Godot never changes item identification or
+Gold locally.
+For Warrior Repair spell `26`, the Repair button likewise remains available
+without a store and sends the class-ability source. Godot does not roll repair
+strength, reduce maximum durability, consume Gold, or remove an exhausted item;
+it renders only the resulting authoritative snapshot. Other classes use the
+paid vendor request while a store is active.
+For Sorcerer Staff Recharge spell `27`, the Recharge button remains available
+without a store and sends the class-ability source. Godot does not roll recharge
+strength or mutate current or maximum charges; it renders the returned snapshot.
+Other classes use paid vendor recharge while a store is active.
+Stone Curse is also snapshot-only in Godot. Petrified monsters receive a stone
+tint and halo, and behavior-`13` duration/shatter controllers receive a distinct
+projectile treatment. Godot does not select immunity, advance the timer, or
+release movement locally.
+Teleport behavior `9` and Phasing behavior `15` are invisible movement
+controllers. Godot renders only the resulting authoritative player coordinates
+and never predicts either relocation.
+Fireball behavior `16` is also presentation-only: Godot renders an orange
+travel projectile for phase `0` and a larger orange explosion for phase `1`.
+The server owns its path, direct collision, splash targets, damage, and expiry.
 
-For a short automated launch, use `-Headless -QuitAfterSeconds 5` with the
-local harness. The target preview and HUD toggles never change authoritative
-gameplay state.
+For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
+and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open
+`godot/Devilution.Client/project.godot`. The raw content-manifest hash printed
+by the server is not the protocol v1 handshake value.
 
-When the Godot Mono editor is installed, open
-`godot/Devilution.Client/project.godot` and run the project. The current
-presentation uses procedural shapes intentionally; sprites, tilemaps, and UI
-art can be added without changing the authoritative model or transport.
+The current prototype supports movement, casting, store and inventory actions,
+world and quest interactions, event feedback, diagnostics, and accessibility
+HUD toggles. World layout under `Devilution.Client/assets/levels` is
+presentation data and must stay consistent with server content.
+
+See `docs/ai/godot-build.md` for local build details and
+`docs/authoritative-protocol-contract.md` for the client/server boundary.

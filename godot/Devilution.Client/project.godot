@@ -4,7 +4,7 @@ config_version=5
 
 [application]
 
-config/name="DevilutionY Authoritative Client"
+config/name="Godevilution Authoritative Client"
 run/main_scene="res://Main.tscn"
 
 [display]

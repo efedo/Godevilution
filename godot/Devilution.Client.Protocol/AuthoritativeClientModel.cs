@@ -18,7 +18,8 @@ public sealed class AuthoritativeClientModel
 
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
-    public uint PlayerEntityId => Snapshot?.Players.Count == 1 ? Snapshot.Players[0].EntityId : 0;
+    /** The server puts the receiving participant first in every snapshot. */
+    public uint PlayerEntityId => Snapshot?.Players.FirstOrDefault()?.EntityId ?? 0;
 
     public ulong NextCommandTick => checked(CurrentTick + 1);
 
@@ -29,8 +30,49 @@ public sealed class AuthoritativeClientModel
     public void Apply(AuthoritativeClientMessage message)
     {
         if (message.Snapshot is not null) {
-            if (message.Snapshot.Players.Count != 1 || message.Snapshot.Players[0].EntityId == 0)
-                throw new InvalidDataException("The authoritative snapshot must contain exactly one valid player.");
+            if (message.Snapshot.Players.Count == 0)
+                throw new InvalidDataException("The authoritative snapshot has no local player.");
+            var entityIds = new HashSet<uint>();
+            foreach (var player in message.Snapshot.Players) {
+                if (player.EntityId == 0 || !entityIds.Add(player.EntityId)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains invalid player entity IDs.");
+                }
+                if (player.CharacterName.Length > 31
+                    || player.CharacterName.Any(character => character is < (char)0x21 or > (char)0x7e)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid player character name.");
+                }
+                if (!Enum.IsDefined(player.FacingDirection)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid player facing direction.");
+                }
+                if (!Enum.IsDefined(player.CombatMode)
+                    || (player.CombatMode == PlayerCombatMode.Stand
+                        && player.CombatModeEndTick != 0)
+                    || ((player.CombatMode is PlayerCombatMode.Block
+                            or PlayerCombatMode.GotHit)
+                        && player.CombatModeEndTick == 0)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid player combat mode.");
+                }
+                if (player.HeldItem is { } heldItem
+                    && (!HasValidItemIdentity(heldItem.ItemSeed, heldItem.State)
+                        || heldItem.State.InventoryWidth > 10
+                        || heldItem.State.InventoryHeight > 4)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid held item.");
+                }
+                ValidateStatusEffects(player);
+                ValidatePlayerAction(player);
+            }
+            foreach (var item in message.Snapshot.WorldItems) {
+                if (item.EntityId == 0
+                    || !HasValidItemIdentity(item.ItemSeed, item.State)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid world item.");
+                }
+            }
             Snapshot = message.Snapshot;
             LastError = null;
             recentEvents.Clear();
@@ -67,7 +109,7 @@ public sealed class AuthoritativeClientModel
 
     private void RebuildPredictedPosition()
     {
-        if (Snapshot?.Players.SingleOrDefault() is not { } player) {
+        if (Snapshot?.Players.FirstOrDefault() is not { } player) {
             PredictedPlayerPosition = null;
             IsCorrectingPosition = false;
             return;
@@ -75,12 +117,138 @@ public sealed class AuthoritativeClientModel
 
         var x = player.PositionX;
         var y = player.PositionY;
+        if (player.CurrentAction is {
+                Kind: PlayerActionKind.Move,
+            } currentMove) {
+            x += currentMove.DirectionX;
+            y += currentMove.DirectionY;
+        }
         foreach (var move in predictedMoves.Values)
             (x, y) = (x + move.DirectionX, y + move.DirectionY);
 
-        IsCorrectingPosition = predictedMoves.Count > 0
-            && (x != player.PositionX || y != player.PositionY);
+        IsCorrectingPosition = x != player.PositionX || y != player.PositionY;
         PredictedPlayerPosition = IsCorrectingPosition ? new ClientPosition(x, y) : null;
+    }
+
+    private static void ValidatePlayerAction(PlayerSnapshot player)
+    {
+        var action = player.CurrentAction;
+        if (action is null)
+            return;
+        if (!Enum.IsDefined(action.Kind)
+            || action.Kind == PlayerActionKind.Unspecified
+            || action.EffectTick < action.StartedAtTick
+            || action.ReadyTick < action.EffectTick
+            || action.ReadyTick > action.EndTick
+            || action.EndTick != player.CombatModeEndTick) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid player action timing.");
+        }
+
+        var valid = action.Kind switch {
+            PlayerActionKind.Move =>
+                player.CombatMode is PlayerCombatMode.WalkNorthwards
+                    or PlayerCombatMode.WalkSouthwards
+                    or PlayerCombatMode.WalkSideways
+                && action.DirectionX is >= -1 and <= 1
+                && action.DirectionY is >= -1 and <= 1
+                && (action.DirectionX != 0 || action.DirectionY != 0)
+                && action.TargetEntityId == 0
+                && action.Cast is null,
+            PlayerActionKind.Attack =>
+                player.CombatMode is PlayerCombatMode.Attack
+                    or PlayerCombatMode.RangedAttack
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId != 0
+                && action.Cast is null,
+            PlayerActionKind.Cast =>
+                player.CombatMode == PlayerCombatMode.Spell
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.Cast is not null
+                && action.Cast.SpellId != 0
+                && action.TargetEntityId == action.Cast.TargetEntityId
+                && Enum.IsDefined(action.Cast.Source)
+                && (action.Cast.SourceItem is null
+                    || Enum.IsDefined(action.Cast.SourceItem.Location)),
+            PlayerActionKind.Death =>
+                player.CombatMode == PlayerCombatMode.Death
+                && player.Life == 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.Cast is null,
+            PlayerActionKind.LevelTransition =>
+                player.CombatMode == PlayerCombatMode.NewLevel
+                && player.Life > 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId != 0
+                && action.Cast is null,
+            PlayerActionKind.RestartTown =>
+                player.CombatMode == PlayerCombatMode.NewLevel
+                && player.Life > 0
+                && action.EffectApplied
+                && action.EffectTick == action.StartedAtTick
+                && action.ReadyTick == action.EndTick
+                && action.DirectionX == 0
+                && action.DirectionY == 0
+                && action.TargetEntityId == 0
+                && action.Cast is null,
+            _ => false,
+        };
+        if (!valid) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an invalid player action.");
+        }
+    }
+
+    private static void ValidateStatusEffects(PlayerSnapshot player)
+    {
+        if (player.StatusEffects.Count > 128) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many status effects.");
+        }
+        var effectIds = new HashSet<uint>();
+        foreach (var effect in player.StatusEffects) {
+            if (effect.EffectId == 0
+                || effect.RemainingTicks == 0
+                || !Enum.IsDefined(effect.Behavior)
+                || ((effect.Behavior is StatusEffectBehavior.Infravision
+                        or StatusEffectBehavior.Search)
+                    && effect.Magnitude != 0)
+                || !effectIds.Add(effect.EffectId)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains invalid status-effect state.");
+            }
+        }
+    }
+
+    private static bool HasValidItemIdentity(
+        uint itemSeed,
+        ItemStateSnapshot? state)
+    {
+        if (state is null)
+            return false;
+        var hasDynamicPresentation = !string.IsNullOrEmpty(state.BaseName)
+            || !string.IsNullOrEmpty(state.IdentifiedName)
+            || state.HasNativeCursorGraphic;
+        if (!hasDynamicPresentation)
+            return itemSeed != 0;
+        return !string.IsNullOrEmpty(state.BaseName)
+            && !string.IsNullOrEmpty(state.IdentifiedName)
+            && state.HasNativeCursorGraphic
+            && state.NativeCursorGraphic is >= 0 and <= byte.MaxValue
+            && !state.BaseName.Contains('\0')
+            && !state.IdentifiedName.Contains('\0')
+            && System.Text.Encoding.UTF8.GetByteCount(state.BaseName) < 64
+            && System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) < 64;
     }
 
     private readonly record struct PredictedMove(int DirectionX, int DirectionY);

@@ -22,9 +22,13 @@ public sealed class AuthoritativeClientTransportTests
             port,
             "godot-test",
             "0.1.0",
-            "content-hash"));
+            "content-hash") {
+            RequestedCharacterClassId = 2,
+            RequestedCharacterName = "Godot-Rogue",
+        });
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(GameMode.Multiplayer, client.ServerGameMode);
         var initial = Assert.Single(client.DrainMessages());
         var initialSnapshot = initial.Snapshot;
         Assert.NotNull(initialSnapshot);
@@ -47,12 +51,17 @@ public sealed class AuthoritativeClientTransportTests
         var hello = await ReadEnvelopeAsync(stream);
         Assert.Equal("0.1.0", hello.ClientHello.ProtocolSchemaVersion);
         Assert.Equal("content-hash", hello.ClientHello.ContentManifestHash);
+        Assert.True(hello.ClientHello.HasRequestedCharacterClassId);
+        Assert.Equal(2U, hello.ClientHello.RequestedCharacterClassId);
+        Assert.True(hello.ClientHello.HasRequestedCharacterName);
+        Assert.Equal("Godot-Rogue", hello.ClientHello.RequestedCharacterName);
         await WriteEnvelopeAsync(stream, new Envelope {
             ServerHello = new ServerHello {
                 ServerBuildId = "test-server",
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = "content-hash",
                 TickRateHz = 20,
+                GameMode = GameMode.Multiplayer,
             },
         });
         await WriteEnvelopeAsync(stream, new Envelope {

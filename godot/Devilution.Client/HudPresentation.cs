@@ -7,6 +7,9 @@ namespace Devilution.Client;
 /** Data-driven authoritative inventory, store, interaction, and event UI. */
 public partial class HudPresentation : CanvasLayer
 {
+    private const uint IdentifySpellId = 5;
+    private const uint RepairSpellId = 26;
+    private const uint RechargeSpellId = 27;
     private const int InventoryColumns = 10;
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
@@ -30,6 +33,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
     private readonly Button refillMana = new() { Text = "Refill mana" };
+    private readonly Button dropHeld = new() { Text = "Drop held (X)" };
     private readonly Button clearEvents = new() { Text = "Clear events" };
     private readonly CheckButton diagnosticsToggle = new() { Text = "Diagnostics (F3)" };
     private readonly CheckButton highContrastToggle = new() { Text = "High contrast (F4)" };
@@ -51,6 +55,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? OperateObjectRequested;
     public event Action<uint>? AdvanceQuestRequested;
     public event Action? RefillManaRequested;
+    public event Action? DropHeldItemRequested;
     public event Action? ClearEventsRequested;
 
     public override void _Ready()
@@ -83,7 +88,7 @@ public partial class HudPresentation : CanvasLayer
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, interactObject, advanceQuest,
-            refillMana, clearEvents,
+            refillMana, dropHeld, clearEvents,
         })
             controls.AddChild(button);
         sideBox.AddChild(controls);
@@ -122,6 +127,7 @@ public partial class HudPresentation : CanvasLayer
                 AdvanceQuestRequested?.Invoke(questId);
         };
         refillMana.Pressed += () => RefillManaRequested?.Invoke();
+        dropHeld.Pressed += () => DropHeldItemRequested?.Invoke();
         clearEvents.Pressed += () => ClearEventsRequested?.Invoke();
         diagnosticsToggle.Toggled += visible => diagnostics.Visible = visible;
         highContrastToggle.Toggled += _ => ApplyAccessibility();
@@ -153,12 +159,12 @@ public partial class HudPresentation : CanvasLayer
         else if (connectionTask is { IsFaulted: true })
             status.Text = connectionTask.Exception?.GetBaseException().Message ?? "Connection failed";
 
-        var player = model.Snapshot?.Players.SingleOrDefault();
+        var player = model.Snapshot?.Players.FirstOrDefault();
         if (player is null || selectedInventoryIndex >= player.Inventory.Count)
             selectedInventoryIndex = -1;
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
-            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}   Gold {player.Gold}   XP {player.Experience}";
+            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}   Gold {player.Gold}   XP {player.Experience}";
 
         commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
         diagnostics.Text = FormatDiagnostics(model, client);
@@ -173,16 +179,35 @@ public partial class HudPresentation : CanvasLayer
         var activeStore = model.Snapshot?.ActiveStore;
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
+        var hasIdentifyAbility = player?.AbilitySpellId == IdentifySpellId;
+        var hasRepairAbility = player?.AbilitySpellId == RepairSpellId;
+        var hasRechargeAbility = player?.AbilitySpellId == RechargeSpellId;
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
         sellSelected.Disabled = !connected || !hasSelectedInventory;
-        repairSelected.Disabled = !connected || !hasSelectedInventory;
-        rechargeSelected.Disabled = !connected || !hasSelectedInventory;
-        identifySelected.Disabled = !connected || !hasSelectedInventory;
+        repairSelected.Text = activeStore is null && hasRepairAbility
+            ? "Repair selected (Warrior)"
+            : "Repair selected";
+        repairSelected.Disabled = !connected
+            || !hasSelectedInventory
+            || (activeStore is null && !hasRepairAbility);
+        rechargeSelected.Text = activeStore is null && hasRechargeAbility
+            ? "Recharge selected (Sorcerer)"
+            : "Recharge selected";
+        rechargeSelected.Disabled = !connected
+            || !hasSelectedInventory
+            || (activeStore is null && !hasRechargeAbility);
+        identifySelected.Text = activeStore is null && hasIdentifyAbility
+            ? "Identify selected (Bard)"
+            : "Identify selected";
+        identifySelected.Disabled = !connected
+            || !hasSelectedInventory
+            || (activeStore is null && !hasIdentifyAbility);
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;
         refillMana.Disabled = !connected;
+        dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;
         ApplyAccessibility();
     }
@@ -266,8 +291,13 @@ public partial class HudPresentation : CanvasLayer
         if (player is null)
             return "Inventory\nWaiting for authoritative snapshot";
         if (player.Inventory.Count == 0)
-            return "Inventory\n(empty)\nClick an occupied cell after an item arrives.";
-        return $"Inventory ({player.Inventory.Count})\nClick an item to select it; click an empty cell to request a move.";
+            return player.HeldItem is null
+                ? "Inventory\n(empty)\nClick an occupied cell after an item arrives."
+                : $"Inventory\n(empty)\nHeld: {DescribeItem(player.HeldItem.State)}";
+        var held = player.HeldItem is null
+            ? string.Empty
+            : $"\nHeld: {DescribeItem(player.HeldItem.State)}";
+        return $"Inventory ({player.Inventory.Count})\nClick an item to select it; click an empty cell to request a move.{held}";
     }
 
     private static string FormatStoreItem(StoreItemSnapshot item)
@@ -279,6 +309,8 @@ public partial class HudPresentation : CanvasLayer
     {
         if (state is null)
             return "unknown item";
+        if (!string.IsNullOrEmpty(state.BaseName))
+            return $"{state.BaseName}, value {state.Value}";
         var details = state.ItemType switch {
             1 => state.MinDamage > 0 ? $"weapon {state.MinDamage}-{state.MaxDamage}" : $"armor {state.ArmorClass}",
             _ => $"item type {state.ItemType}",
@@ -296,10 +328,15 @@ public partial class HudPresentation : CanvasLayer
         lines.AddRange(events.TakeLast(4).Select(@event => @event.EventCase switch {
             GameEvent.EventOneofCase.Damage => $"Damage {@event.Damage.Amount} to entity {@event.Damage.TargetEntityId}",
             GameEvent.EventOneofCase.Experience => $"Experience +{@event.Experience.Amount}",
-            GameEvent.EventOneofCase.Healing => $"Healing +{@event.Healing.Amount}",
+            GameEvent.EventOneofCase.Healing => $"Healing +{FormatQ6(@event.Healing.AmountQ6 != 0 ? @event.Healing.AmountQ6 : @event.Healing.Amount)}",
             _ => "Authoritative event",
         }));
         return lines.Count == 0 ? "No interaction selected." : string.Join("\n", lines);
+    }
+
+    private static string FormatQ6(int amount)
+    {
+        return (amount / 64.0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static string FormatCommandResult(CommandResult? result)
@@ -324,8 +361,12 @@ public partial class HudPresentation : CanvasLayer
     private static string FormatDiagnostics(AuthoritativeClientModel model, AuthoritativeClient? client)
     {
         var snapshot = model.Snapshot;
+        var localPlayer = snapshot?.Players.FirstOrDefault();
+        var playerIdentity = string.IsNullOrEmpty(localPlayer?.CharacterName)
+            ? $"Player {model.PlayerEntityId}"
+            : $"{localPlayer.CharacterName} ({model.PlayerEntityId})";
         return $"Tick {model.CurrentTick}  pending {client?.PendingCommandCount ?? 0}  RTT {client?.RetryTimeout.TotalMilliseconds ?? 0:0} ms\n"
-            + $"Player {model.PlayerEntityId}  entities: {snapshot?.Monsters.Count ?? 0} monsters, {snapshot?.WorldItems.Count ?? 0} items, {snapshot?.Projectiles.Count ?? 0} projectiles\n"
+            + $"{playerIdentity}  entities: {snapshot?.Monsters.Count ?? 0} monsters, {snapshot?.WorldItems.Count ?? 0} items, {snapshot?.Projectiles.Count ?? 0} projectiles\n"
             + $"Prediction {(model.IsCorrectingPosition ? "active" : "settled")}  events {model.RecentEvents.Count}";
     }
 }
