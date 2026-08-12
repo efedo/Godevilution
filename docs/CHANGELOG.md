@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.48 with server-authoritative Ring of
+  Fire (stable spell ID 44, native `SpellID` 45), preserving native
+  radius-three crawl ordering, first-blocker termination, RNG draw order, and
+  Fire Wall segment lifecycle through the shared projectile protocol state.
+- Refresh the 22 base-content replay fixtures to the resulting manifest
+  identity while preserving all existing replay checkpoints.
 - Advance the Diablo content schema to 0.47 with server-authoritative Mana
   (stable spell ID 41, native `SpellID` 37), preserving native LCG draws,
   Q6 clamping, effective-level scaling, and class multipliers.
