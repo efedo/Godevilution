@@ -12,30 +12,10 @@
 
 #include <sol/sol.hpp>
 
-#include "ui/automap.h"
+#include "application/debug.h"
 #include "lua/metadoc.hpp"
 
 namespace devilution {
-namespace {
-
-std::string DebugCmdMapReveal()
-{
-	for (int x = 0; x < DMAXX; x++)
-		for (int y = 0; y < DMAXY; y++)
-			CurrentAutomapManager.UpdateAutomapExplorer({ x, y }, MAP_EXP_SHRINE);
-	return "Automap fully explored.";
-}
-
-std::string DebugCmdMapHide()
-{
-	for (int x = 0; x < DMAXX; x++)
-		for (int y = 0; y < DMAXY; y++)
-			CurrentAutomapManager.GetAutomapView()[x][y] = MAP_EXP_NONE;
-	return "Automap exploration removed.";
-}
-
-} // namespace
-
 sol::table LuaDevLevelMapModule(sol::state_view &lua)
 {
 	sol::table table = lua.create_table();

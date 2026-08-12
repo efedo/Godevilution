@@ -110,6 +110,8 @@ constexpr std::string_view CommandHelpText =
     "  debug.display.fullbright\n"
     "  debug.display.scrollView [on|off]\n"
     "  debug.display.tileData [name]\n"
+    "  debug.level.map.reveal\n"
+    "  debug.level.map.hide\n"
     "  debug.level.seed [level]\n"
     "  debug.search.clear\n"
     "  debug.search.item <name>\n"

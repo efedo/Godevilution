@@ -59,6 +59,10 @@ filter, per-spell network updates, and zero-level memorization reset.
 The `dev.quests` activation and information helpers now delegate to the
 corresponding `debug.quests` commands; quest state mutation and formatting are
 owned by the native registry while the Lua names remain compatibility aliases.
+The `dev.level.map` reveal and hide helpers now delegate to
+`debug.level.map.reveal` and `debug.level.map.hide`; automap mutation remains
+implemented by native debug handlers while the Lua names remain compatibility
+aliases.
 
 ## Bundled Scripts
 
