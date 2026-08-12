@@ -511,6 +511,23 @@ The current v1 compatibility boundary places the combined ruleset hash in both
 the `content_manifest_hash` and `ruleset_identity_hash` handshake fields. A
 future breaking protocol version may give those fields distinct meanings.
 
+Recent spell slices
+
+Schema 0.29 externalizes Holy Bolt as a typed projectile. Schema 0.30 adds the
+Rogue Trap Disarm item capability, schema 0.31 adds Hellfire Blood Star, schema
+0.32 adds Bone Spirit, and schema 0.33 adds Fire Wall. Each slice keeps its
+native damage, resistance, collision, lifetime, and object-interaction rules
+in the Diablo module while clients receive only authoritative projection.
+
+Schema 0.34 adds Flame Wave (spell ID `15`). The server creates a one-tick
+controller, derives the native perpendicular branch layout from the caster's
+facing and target direction, and persists the resulting moving Fire segments
+through existing projectile fields. Content supplies the controller lifetime,
+branch count, effective-level divisor, and character-level damage bonus; no
+new protocol field is required. Flame Wave branch placement, movement,
+collision, breakable-object destruction, save validation, and replay manifest
+identity remain server-owned.
+
 ## Lua transition
 
 Lua remains a frozen native-client compatibility layer. New authoritative

@@ -1096,6 +1096,83 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.NotEmpty(secondTick);
     }
 
+    [Fact]
+    public void FlameWaveControllerPlacesNativeMovingBranches()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlameWaveSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(15, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(15, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        Assert.Equal(1U, Assert.Single(world.Projectiles.Values).RemainingTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveController);
+        var segments = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveSegment)
+            .ToArray();
+        Assert.Equal(9, segments.Length);
+        Assert.Contains(segments, projectile => (projectile.StartX, projectile.StartY) == (6, 5));
+        Assert.Contains(segments, projectile => (projectile.StartX, projectile.StartY) == (6, 4));
+        Assert.Contains(segments, projectile => (projectile.StartX, projectile.StartY) == (6, 6));
+        Assert.All(segments, projectile => Assert.Equal(16, projectile.Speed));
+    }
+
+    [Fact]
+    public void FlameWaveSegmentUsesNativeFireDamageAndCollision()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            8,
+            6,
+            100,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlameWaveSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(15, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(15, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+
+        var events = processor.AdvanceTick(1, [player]);
+
+        Assert.NotEmpty(events);
+        Assert.True(target.HitPointsQ6 < DiabloFixedPointQ6.FromWhole(100));
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveSegment
+                && projectile.Damage >= 2);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1118,6 +1195,30 @@ public sealed class DiabloCombatCommandProcessorTests
             WallSegmentCharacterLevelDurationStep = 1,
             WallSegmentDurationScale = 16,
             WallCharacterLevelDamageMultiplier = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateFlameWaveSpell()
+    {
+        return new AuthoritativeSpellDefinition(15, 35, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.FlameWaveController,
+            RandomDamageRange = 10,
+            DamageBonus = 1,
+            SecondaryProjectileLifetime = 255,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 3,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 20,
+            ManaCostScale = 64,
+            StaffLevel = 8,
+            FlameWaveControllerLifetime = 1,
+            FlameWaveBranchBase = 2,
+            FlameWaveBranchSpellLevelDivisor = 2,
+            FlameWaveCharacterLevelDamageBonus = 1,
         };
     }
 

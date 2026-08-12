@@ -120,6 +120,9 @@ Fire Wall behaviors `22` and `23` are presentation-only as well. Godot renders
 the authoritative controller and persistent segment snapshots; the server owns
 branch growth and stopping, segment duration, repeated fire damage, resistance,
 and all persisted wall state.
+Flame Wave behaviors `24` and `25` are presentation-only. Godot renders the
+authoritative branch placement and moving segment snapshots while the server
+owns travel direction, collision, damage, lifetime, and blocking.
 
 For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
 and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open

@@ -228,6 +228,15 @@ resume. The server alone applies the ordered 3x3 shifted splash and object
 breakage. Godot and native clients render the orange travel/impact states but
 never predict collision or damage, so protocol version 1 needs no new field.
 
+A Flame Wave cast uses behavior value `24` for its one-tick controller and
+behavior value `25` for each moving Fire segment. The controller stores the
+authoritative target coordinates and caster-facing direction; on its update the
+server places the center segment plus the native left/right branches. Segments
+use the existing speed, direction, damage, resistance, remaining-lifetime,
+position, and collision fields, so protocol version 1 and version-1 saves need
+no additive field. Godot and native clients render the segments but never
+choose branch layout, consume RNG, resolve collision, or apply damage.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

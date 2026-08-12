@@ -178,6 +178,9 @@ Windows toolchain command.
   controller and persistent segments. Additive projectile fields 30 through 38
   carry branch positions, directions, stop flags, and segment hit direction so
   clients can render restored walls without simulating growth or damage.
+  Flame Wave uses behavior values `24` and `25` for its server-owned placement
+  controller and moving fire segments. Existing projectile movement, damage,
+  lifetime, collision, and direction fields carry the complete resumable state.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

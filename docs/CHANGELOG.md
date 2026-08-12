@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.34 with the externally validated
+  Flame Wave controller and moving segment behaviors (spell ID 15), preserving
+  native perpendicular placement, facing-direction travel, random fire damage,
+  collision, lifetime, and deterministic projectile state.
 - Advance the Diablo content schema to 0.33 with the externally validated
   Fire Wall controller and persistent segment behaviors (spell ID 6), preserving
   native perpendicular growth, branch stopping, repeated shifted fire damage,

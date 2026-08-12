@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.33.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.34.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.33.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.34.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -450,6 +450,84 @@ public sealed class DiabloSimulationTests
             restored.EffectiveSpellLevel,
             restored.LastCollisionTargetEntityId));
         Assert.Equal(9U, restored.RemainingTicks);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsFlameWaveControllerAndSegmentState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x80000001,
+                        7,
+                        0,
+                        15,
+                        1,
+                        5,
+                        5,
+                        8,
+                        5,
+                        0,
+                        AuthoritativeDamageType.Fire,
+                        0,
+                        1) {
+                        Behavior = AuthoritativeProjectileBehavior.FlameWaveController,
+                        OriginalDirection = 0,
+                    },
+                    new AuthoritativeProjectile(
+                        0x80000002,
+                        7,
+                        0,
+                        15,
+                        1,
+                        6,
+                        5,
+                        6,
+                        6,
+                        9,
+                        AuthoritativeDamageType.Fire,
+                        0,
+                        255) {
+                        Behavior = AuthoritativeProjectileBehavior.FlameWaveSegment,
+                        OriginalDirection = 0,
+                        Speed = 16,
+                        ResistantDamageDivisor = 4,
+                        EffectiveSpellLevel = 9,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = replacement.WorldState.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, restored.Length);
+        Assert.Equal(AuthoritativeProjectileBehavior.FlameWaveController, restored[0].Behavior);
+        Assert.Equal((8, 5, 0U, 1U, 0, 0), (
+            restored[0].TargetX,
+            restored[0].TargetY,
+            restored[0].TargetEntityId,
+            restored[0].RemainingTicks,
+            restored[0].Speed,
+            restored[0].Damage));
+        Assert.Equal(AuthoritativeProjectileBehavior.FlameWaveSegment, restored[1].Behavior);
+        Assert.Equal((6, 6, 16, 4, 9, 255U, 9), (
+            restored[1].PositionX,
+            restored[1].PositionY,
+            restored[1].Speed,
+            restored[1].ResistantDamageDivisor,
+            restored[1].EffectiveSpellLevel,
+            restored[1].RemainingTicks,
+            restored[1].Damage));
     }
 
     [Fact]

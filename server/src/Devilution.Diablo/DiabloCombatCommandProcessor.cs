@@ -406,7 +406,8 @@ public sealed class DiabloCombatCommandProcessor
             || spell.MagicDamageDivisor > 0
             || spell.SpellLevelDamage > 0
             || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
-                or AuthoritativeProjectileBehavior.FireWallController;
+                or AuthoritativeProjectileBehavior.FireWallController
+                or AuthoritativeProjectileBehavior.FlameWaveController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -425,6 +426,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Phasing;
         var isFireWall = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.FireWallController;
+        var isFlameWave = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.FlameWaveController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -502,12 +505,12 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (!isFireWall && spell.AreaRadius == 0
+                || (!(isFireWall || isFlameWave) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-            var hasLineOfSight = isFireWall || spell.ProjectileSpeed > 0
+            var hasLineOfSight = isFireWall || isFlameWave || spell.ProjectileSpeed > 0
                 ? world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -524,7 +527,7 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = isFireWall
+            damageTargets = isFireWall || isFlameWave
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -820,6 +823,14 @@ public sealed class DiabloCombatCommandProcessor
                             centerY),
                     AuthoritativeProjectileBehavior.Lightning =>
                         CreateLightningController(
+                            projectileEntityId,
+                            player,
+                            spell,
+                            effectiveSpellLevel,
+                            centerX,
+                            centerY),
+                    AuthoritativeProjectileBehavior.FlameWaveController =>
+                        CreateFlameWaveController(
                             projectileEntityId,
                             player,
                             spell,
@@ -1653,6 +1664,82 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private AuthoritativeProjectile CreateFlameWaveController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            0,
+            spell.DamageType,
+            0,
+            checked((uint)spell.FlameWaveControllerLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.FlameWaveController,
+            OriginalDirection = (int)player.FacingDirection,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
+    private AuthoritativeProjectile CreateFlameWaveSegment(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY)
+    {
+        var direction = controller.OriginalDirection;
+        var displacement = DirectionDisplacements[direction];
+        var targetX = checked(positionX + displacement.X);
+        var targetY = checked(positionY + displacement.Y);
+        var (velocityX, velocityY) = CalculateVelocity(
+            positionX,
+            positionY,
+            targetX,
+            targetY,
+            spell.ProjectileSpeed);
+        var damage = checked(
+            random.GenerateRnd(spell.RandomDamageRange)
+            + checked((int)owner.CharacterLevel)
+                * spell.FlameWaveCharacterLevelDamageBonus
+            + spell.DamageBonus);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            0,
+            controller.SpellId,
+            controller.LevelId,
+            positionX,
+            positionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.SecondaryProjectileLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.FlameWaveSegment,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = controller.EffectiveSpellLevel,
+        };
+    }
+
     private AuthoritativeProjectile CreateFlashLayer(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2170,6 +2257,14 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFireWallSegment(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveController) {
+                    AdvanceFlameWaveController(projectile, players);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveSegment) {
+                    AdvanceFlameWaveSegment(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
                     AdvanceFireball(tick, projectile, players, events);
                     continue;
@@ -2569,6 +2664,169 @@ public sealed class DiabloCombatCommandProcessor
             } else {
                 controller.WallRightStopped = true;
             }
+        }
+    }
+
+    private void AdvanceFlameWaveController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null
+            || !spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.FlameWaveController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var spreadDirection = GetDirection(
+            controller.PositionX,
+            controller.PositionY,
+            controller.TargetX,
+            controller.TargetY);
+        var start = (
+            X: checked(controller.PositionX + DirectionDisplacements[spreadDirection].X),
+            Y: checked(controller.PositionY + DirectionDisplacements[spreadDirection].Y));
+        if (CanPlaceFlameWaveSegment(controller.LevelId, start.X, start.Y)) {
+            PlaceFlameWaveSegment(controller, spell, owner, start.X, start.Y);
+            var branchCount = checked(
+                spell.FlameWaveBranchBase
+                + controller.EffectiveSpellLevel / spell.FlameWaveBranchSpellLevelDivisor);
+            var leftDirection = RotateDirection(spreadDirection, -2);
+            var rightDirection = RotateDirection(spreadDirection, 2);
+            var left = start;
+            for (var branch = 0; branch < branchCount; branch++) {
+                left = (
+                    checked(left.X + DirectionDisplacements[leftDirection].X),
+                    checked(left.Y + DirectionDisplacements[leftDirection].Y));
+                if (!TryGrowFlameWave(
+                        controller,
+                        spell,
+                        owner,
+                        left.X,
+                        left.Y,
+                        leftDirection))
+                    break;
+            }
+            var right = start;
+            for (var branch = 0; branch < branchCount; branch++) {
+                right = (
+                    checked(right.X + DirectionDisplacements[rightDirection].X),
+                    checked(right.Y + DirectionDisplacements[rightDirection].Y));
+                if (!TryGrowFlameWave(
+                        controller,
+                        spell,
+                        owner,
+                        right.X,
+                        right.Y,
+                        rightDirection))
+                    break;
+            }
+        }
+        world.Projectiles.Remove(controller.EntityId);
+    }
+
+    private bool TryGrowFlameWave(
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY,
+        int growDirection)
+    {
+        var rightDirection = RotateDirection(growDirection, 1);
+        var gapX = checked(
+            positionX
+            + DirectionDisplacements[rightDirection].X
+            - DirectionDisplacements[growDirection].X);
+        var gapY = checked(
+            positionY
+            + DirectionDisplacements[rightDirection].Y
+            - DirectionDisplacements[growDirection].Y);
+        if (CanPlaceFlameWaveSegment(controller.LevelId, gapX, gapY))
+            PlaceFlameWaveSegment(controller, spell, owner, gapX, gapY);
+        if (!CanPlaceFlameWaveSegment(controller.LevelId, positionX, positionY))
+            return false;
+        PlaceFlameWaveSegment(controller, spell, owner, positionX, positionY);
+        return true;
+    }
+
+    private void PlaceFlameWaveSegment(
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY)
+    {
+        var entityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            entityId,
+            CreateFlameWaveSegment(
+                entityId,
+                controller,
+                spell,
+                owner,
+                positionX,
+                positionY));
+    }
+
+    private bool CanPlaceFlameWaveSegment(uint levelId, int positionX, int positionY)
+    {
+        return world.ContainsPosition(levelId, positionX, positionY)
+            && !world.IsMissileBlocked(levelId, positionX, positionY);
+    }
+
+    private void AdvanceFlameWaveSegment(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks == 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var visitedTiles = MoveNativeProjectile(projectile);
+        if (visitedTiles.Count == 0) {
+            visitedTiles = [(
+                projectile.PositionX,
+                projectile.PositionY,
+                projectile.TraveledX,
+                projectile.TraveledY)];
+        }
+        foreach (var tile in visitedTiles) {
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
+            var playerTarget = FindProjectilePlayer(projectile, players, tile.X, tile.Y);
+            var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
+            if (targetEntityId != 0
+                && targetEntityId != projectile.LastCollisionTargetEntityId) {
+                _ = CheckFireboltCollision(
+                    tick,
+                    projectile,
+                    target,
+                    playerTarget,
+                    players,
+                    events);
+            }
+            projectile.LastCollisionTargetEntityId = targetEntityId;
+            if (!world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y))
+                continue;
+            if (world.TryGetMissileBlockingObject(
+                    projectile.LevelId,
+                    tile.X,
+                    tile.Y,
+                    out var @object)
+                && @object!.Breakable) {
+                @object.Destroyed = true;
+            }
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
         }
     }
 

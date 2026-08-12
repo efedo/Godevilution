@@ -521,6 +521,31 @@ public sealed partial class DiabloSimulation
                         || projectile.WallRightX != 0
                         || projectile.WallRightY != 0
                         || projectile.WallHitDirection is < -1 or > 7))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.RemainingTicks != 1
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.PositionX,
+                            projectile.PositionY)
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.TargetX,
+                            projectile.TargetY)))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveSegment
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 16
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

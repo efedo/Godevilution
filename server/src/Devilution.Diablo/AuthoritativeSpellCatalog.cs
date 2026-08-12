@@ -29,6 +29,8 @@ public enum AuthoritativeProjectileBehavior
     BoneSpirit = 21,
     FireWallController = 22,
     FireWallSegment = 23,
+    FlameWaveController = 24,
+    FlameWaveSegment = 25,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -219,6 +221,18 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Character-level multiplier used by the native Fire Wall damage roll. */
     public int WallCharacterLevelDamageMultiplier { get; init; }
+
+    /** Native Flame Wave controller lifetime in simulation ticks. */
+    public int FlameWaveControllerLifetime { get; init; }
+
+    /** Base number of Flame Wave branches on each side of its center segment. */
+    public int FlameWaveBranchBase { get; init; }
+
+    /** Divisor for effective spell level added to the Flame Wave branch count. */
+    public int FlameWaveBranchSpellLevelDivisor { get; init; }
+
+    /** Character-level bonus in each Flame Wave segment's damage roll. */
+    public int FlameWaveCharacterLevelDamageBonus { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -250,7 +264,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.SpellLevelDamage > 0
                 || definition.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                     or AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment;
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -398,6 +414,33 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Fire Wall behavior requires the native seven-tick controller and shifted fire-segment tuning.");
             }
+            if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.RandomDamageRange != 10
+                    || definition.DamageBonus != 1
+                    || definition.DamageScale != 1
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ProjectileLifetime != 1
+                    || definition.SecondaryProjectileLifetime != 255
+                    || definition.FlameWaveControllerLifetime != 1
+                    || definition.FlameWaveBranchBase != 2
+                    || definition.FlameWaveBranchSpellLevelDivisor != 2
+                    || definition.FlameWaveCharacterLevelDamageBonus != 1)) {
+                throw new InvalidDataException(
+                    "Flame Wave behavior requires the native moving fire-wave tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.FlameWaveSegment)
+                throw new InvalidDataException(
+                    "FlameWaveSegment is runtime-owned and cannot be selected by spell content.");
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -676,7 +719,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment)
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -704,7 +749,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment)
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -736,21 +783,26 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Native random healing tuning requires Healing or HealOther behavior.");
             }
-            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Lightning
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.Lightning
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
                     || definition.SecondaryProjectileLifetime != 0
                     || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 0)) {
                 throw new InvalidDataException(
-                    "Secondary random-damage tuning requires Lightning projectile behavior.");
+                    "Secondary projectile lifetime tuning requires a controller behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment)
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && definition.DamageScale != 1) {
                 throw new InvalidDataException(
-                    "Scaled native projectile damage requires Lightning, Fireball, or Fire Wall behavior.");
+                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, or Flame Wave behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Fireball
@@ -771,7 +823,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.StoneCurse
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment)
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -779,7 +833,9 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.FireWallController
-                    or AuthoritativeProjectileBehavior.FireWallSegment)
+                    or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.WallControlLifetime != 0
                     || definition.WallSegmentBaseDuration != 0
                     || definition.WallSegmentSpellLevelDurationStep != 0
@@ -788,6 +844,16 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.WallCharacterLevelDamageMultiplier != 0)) {
                 throw new InvalidDataException(
                     "Fire Wall duration and character-damage tuning requires Fire Wall behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                && (definition.FlameWaveControllerLifetime != 0
+                    || definition.FlameWaveBranchBase != 0
+                    || definition.FlameWaveBranchSpellLevelDivisor != 0
+                    || definition.FlameWaveCharacterLevelDamageBonus != 0)) {
+                throw new InvalidDataException(
+                    "Flame Wave controller and character-damage tuning requires Flame Wave behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -940,6 +1006,13 @@ public sealed class AuthoritativeSpellCatalog
             WallSegmentDurationScale = row.OptionalInt32("wall_segment_duration_scale"),
             WallCharacterLevelDamageMultiplier = row.OptionalInt32(
                 "wall_character_level_damage_multiplier"),
+            FlameWaveControllerLifetime = row.OptionalInt32(
+                "flame_wave_controller_lifetime"),
+            FlameWaveBranchBase = row.OptionalInt32("flame_wave_branch_base"),
+            FlameWaveBranchSpellLevelDivisor = row.OptionalInt32(
+                "flame_wave_branch_spell_level_divisor"),
+            FlameWaveCharacterLevelDamageBonus = row.OptionalInt32(
+                "flame_wave_character_level_damage_bonus"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),
