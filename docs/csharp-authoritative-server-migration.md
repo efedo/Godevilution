@@ -528,6 +528,12 @@ new protocol field is required. Flame Wave branch placement, movement,
 collision, breakable-object destruction, save validation, and replay manifest
 identity remain server-owned.
 
+Schema 0.35 adds Inferno (spell ID `21`). Its speed-32 controller emits at
+most three stationary fire segments as it crosses new tiles. Segment lifetime,
+native character-level and two-value damage draws, repeated collision, object
+interaction, snapshot validation, and replay identity remain server-owned
+through existing projectile state plus one content tuning column.
+
 ## Lua transition
 
 Lua remains a frozen native-client compatibility layer. New authoritative

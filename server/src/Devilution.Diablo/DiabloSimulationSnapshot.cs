@@ -546,6 +546,22 @@ public sealed partial class DiabloSimulation
                         || projectile.Speed != 16
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.OriginalDirection is < 0 or > 7))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 32
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.PathIndex is < 0 or > 3))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

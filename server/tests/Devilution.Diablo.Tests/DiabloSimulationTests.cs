@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.34.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.35.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.34.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.35.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -528,6 +528,78 @@ public sealed class DiabloSimulationTests
             restored[1].EffectiveSpellLevel,
             restored[1].RemainingTicks,
             restored[1].Damage));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsInfernoControllerAndSegmentState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x80000003,
+                        7,
+                        0,
+                        21,
+                        0,
+                        5,
+                        5,
+                        8,
+                        5,
+                        0,
+                        AuthoritativeDamageType.Fire,
+                        0,
+                        253) {
+                        Behavior = AuthoritativeProjectileBehavior.InfernoController,
+                        VelocityX = 2097152,
+                        OriginalDirection = 2,
+                        Speed = 32,
+                        PathIndex = 1,
+                    },
+                    new AuthoritativeProjectile(
+                        0x80000004,
+                        7,
+                        0,
+                        21,
+                        0,
+                        6,
+                        5,
+                        6,
+                        5,
+                        36,
+                        AuthoritativeDamageType.Fire,
+                        0,
+                        20) {
+                        Behavior = AuthoritativeProjectileBehavior.InfernoSegment,
+                        ResistantDamageDivisor = 1,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = replacement.WorldState.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, restored.Length);
+        Assert.Equal(AuthoritativeProjectileBehavior.InfernoController, restored[0].Behavior);
+        Assert.Equal((32, 253U, 1, 2097152), (
+            restored[0].Speed,
+            restored[0].RemainingTicks,
+            restored[0].PathIndex,
+            restored[0].VelocityX));
+        Assert.Equal(AuthoritativeProjectileBehavior.InfernoSegment, restored[1].Behavior);
+        Assert.Equal((36, 20U, 1), (
+            restored[1].Damage,
+            restored[1].RemainingTicks,
+            restored[1].ResistantDamageDivisor));
     }
 
     [Fact]

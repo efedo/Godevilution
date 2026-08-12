@@ -123,6 +123,9 @@ and all persisted wall state.
 Flame Wave behaviors `24` and `25` are presentation-only. Godot renders the
 authoritative branch placement and moving segment snapshots while the server
 owns travel direction, collision, damage, lifetime, and blocking.
+Inferno behaviors `26` and `27` are presentation-only as well. Godot renders
+the authoritative moving controller and stationary fire segments while the
+server owns emission count, damage, lifetime, collision, and persistence.
 
 For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
 and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open

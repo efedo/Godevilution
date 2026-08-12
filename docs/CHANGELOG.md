@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.35 with the externally validated
+  Inferno controller and stationary segment behaviors (spell ID 21), preserving
+  native speed, three-segment emission, stepwise lifetime, fire damage rolls,
+  repeated collision, and deterministic projectile state.
 - Advance the Diablo content schema to 0.34 with the externally validated
   Flame Wave controller and moving segment behaviors (spell ID 15), preserving
   native perpendicular placement, facing-direction travel, random fire damage,

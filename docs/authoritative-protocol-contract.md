@@ -237,6 +237,14 @@ position, and collision fields, so protocol version 1 and version-1 saves need
 no additive field. Godot and native clients render the segments but never
 choose branch layout, consume RNG, resolve collision, or apply damage.
 
+An Inferno cast uses behavior value `26` for its speed-32 controller and
+behavior value `27` for each stationary Fire segment. The controller's
+position, traveled distance, remaining lifetime, and emission count are
+authoritative; each segment retains its position, damage, lifetime, and
+collision state in the existing projectile fields. Clients render the moving
+stream and stationary segments but never emit segments, consume RNG, resolve
+collision, or apply damage.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

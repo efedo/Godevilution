@@ -31,6 +31,8 @@ public enum AuthoritativeProjectileBehavior
     FireWallSegment = 23,
     FlameWaveController = 24,
     FlameWaveSegment = 25,
+    InfernoController = 26,
+    InfernoSegment = 27,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -233,6 +235,9 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Character-level bonus in each Flame Wave segment's damage roll. */
     public int FlameWaveCharacterLevelDamageBonus { get; init; }
+
+    /** Native Inferno segment lifetime increase for each controller step. */
+    public int InfernoSegmentLifetimeStep { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -266,7 +271,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment;
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -441,6 +448,22 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.FlameWaveSegment)
                 throw new InvalidDataException(
                     "FlameWaveSegment is runtime-owned and cannot be selected by spell content.");
+
+            if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                && (definition.ProjectileSpeed != 32
+                    || definition.AreaRadius != 0
+                    || definition.ResistantDamageDivisor != 1
+                    || definition.InfernoSegmentLifetimeStep != 1
+                    || definition.RandomDamageRange != 2
+                    || definition.DamageScale != 12
+                    || definition.DamageBonus != 24)) {
+                throw new InvalidDataException(
+                    "Inferno behavior requires the native moving fire-stream tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoSegment)
+                throw new InvalidDataException(
+                    "InfernoSegment is runtime-owned and cannot be selected by spell content.");
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -721,7 +744,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -751,7 +776,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -786,7 +813,9 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
                     || definition.SecondaryProjectileLifetime != 0
                     || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 0)) {
@@ -799,10 +828,12 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
                 && definition.DamageScale != 1) {
                 throw new InvalidDataException(
-                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, or Flame Wave behavior.");
+                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, or Inferno behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Fireball
@@ -825,7 +856,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.FlameWaveController
-                    or AuthoritativeProjectileBehavior.FlameWaveSegment)
+                    or AuthoritativeProjectileBehavior.FlameWaveSegment
+                    or AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -854,6 +887,13 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.FlameWaveCharacterLevelDamageBonus != 0)) {
                 throw new InvalidDataException(
                     "Flame Wave controller and character-damage tuning requires Flame Wave behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.InfernoController
+                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                && definition.InfernoSegmentLifetimeStep != 0) {
+                throw new InvalidDataException(
+                    "Inferno segment lifetime tuning requires Inferno behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1013,6 +1053,7 @@ public sealed class AuthoritativeSpellCatalog
                 "flame_wave_branch_spell_level_divisor"),
             FlameWaveCharacterLevelDamageBonus = row.OptionalInt32(
                 "flame_wave_character_level_damage_bonus"),
+            InfernoSegmentLifetimeStep = row.OptionalInt32("inferno_segment_lifetime_step"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

@@ -1173,6 +1173,88 @@ public sealed class DiabloCombatCommandProcessorTests
                 && projectile.Damage >= 2);
     }
 
+    [Fact]
+    public void InfernoControllerEmitsAtMostThreeNativeSegments()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(21, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(21, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Single(world.Projectiles.Values, projectile =>
+            projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+        Assert.Single(world.Projectiles.Values, projectile =>
+            projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment);
+
+        processor.AdvanceTick(2, [player]);
+        processor.AdvanceTick(3, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+        var segments = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment)
+            .ToArray();
+        Assert.Equal(3, segments.Length);
+        Assert.Equal(new[] { 18U, 20U, 22U }, segments
+            .OrderBy(projectile => projectile.EntityId)
+            .Select(projectile => projectile.RemainingTicks)
+            .ToArray());
+        Assert.All(segments, projectile => Assert.Equal(0, projectile.Speed));
+    }
+
+    [Fact]
+    public void InfernoSegmentsRepeatNativeFireCollisionUntilExpiry()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            6,
+            5,
+            100,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(21, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(21, 0, 6, 5, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        processor.AdvanceTick(1, [player]);
+        var firstDamage = target.HitPointsQ6;
+        var firstEvents = processor.AdvanceTick(2, [player]);
+        var secondDamage = target.HitPointsQ6;
+        var secondEvents = processor.AdvanceTick(3, [player]);
+
+        Assert.NotEmpty(firstEvents);
+        Assert.NotEmpty(secondEvents);
+        Assert.True(secondDamage < firstDamage);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1219,6 +1301,28 @@ public sealed class DiabloCombatCommandProcessorTests
             FlameWaveBranchBase = 2,
             FlameWaveBranchSpellLevelDivisor = 2,
             FlameWaveCharacterLevelDamageBonus = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateInfernoSpell()
+    {
+        return new AuthoritativeSpellDefinition(21, 11, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 32,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.InfernoController,
+            RandomDamageRange = 2,
+            DamageBonus = 24,
+            DamageScale = 12,
+            SecondaryProjectileLifetime = 20,
+            ResistantDamageDivisor = 1,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 6,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+            InfernoSegmentLifetimeStep = 1,
         };
     }
 

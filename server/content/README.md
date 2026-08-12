@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.34.0` schema in
+It declares its identity and `devilution.diablo@0.35.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -168,6 +168,12 @@ branch count. Each moving segment rolls `GenerateRnd(10) + character level + 1`,
 travels at speed `16` for `255` ticks in the caster's facing direction, applies
 fire collision and quarter resistance, and stops at missile-blocking geometry.
 
+Schema 0.35 adds the native Inferno spell row (`21`) and its typed controller
+and segment behaviors. The controller travels at speed `32`, emits no more than
+three stationary segments, and increments each segment lifetime by one tick.
+Each segment rolls the native character-level and two-value damage formula and
+repeats fire collision until expiry.
+
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `charges` and
 `max_charges` preserve charged-item state. The content ID remains the key for
@@ -195,7 +201,7 @@ The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
-ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
+ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
 Monk's Search ability spell ID `46`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
@@ -245,6 +251,13 @@ Spell `15` uses `FlameWaveController` behavior to place the native perpendicular
 wave. Its runtime `FlameWaveSegment` projectiles move in the caster's facing
 direction, resolve fire collision on swept tiles, and retain their movement,
 damage, lifetime, and collision state through authoritative snapshots and saves.
+
+Spell `21` uses `InfernoController` behavior to move at native speed toward the
+requested tile and emit at most three stationary `InfernoSegment` projectiles.
+The segment lifetimes increase by one tick per emitted segment, while each
+segment uses the native character-level and two-value fire damage rolls and
+repeats collision checks until expiry. Controller and segment state are
+server-owned and snapshot/save validated.
 
 Spell `2` uses `Healing` behavior. It rolls once from `0..9`, once from `0..3`
 per character level, and once from `0..5` per effective spell level, adding one
@@ -477,7 +490,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.34.0"
+    "version": "0.35.0"
   },
   "dependencyConstraints": [
     {
@@ -509,7 +522,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.34.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.35.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
