@@ -63,6 +63,9 @@ The `dev.level.map` reveal and hide helpers now delegate to
 `debug.level.map.reveal` and `debug.level.map.hide`; automap mutation remains
 implemented by native debug handlers while the Lua names remain compatibility
 aliases.
+The `dev.level.reset` helper now delegates to `debug.level.reset <level> [seed]`;
+native reset validation, visited-state clearing, delta clearing, and optional
+seed selection remain behaviorally compatible with the Lua helper.
 
 ## Bundled Scripts
 

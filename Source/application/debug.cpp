@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <utility>
 
 #include <ankerl/unordered_dense.h>
 
@@ -108,6 +109,26 @@ std::optional<int> ParseRequiredInt(std::string_view value)
 	return error == std::errc {} && end == value.data() + value.size()
 	    ? std::optional<int> { parsed }
 	    : std::nullopt;
+}
+
+std::optional<std::pair<uint8_t, std::optional<int>>> ParseLevelResetArguments(std::string_view value)
+{
+	const size_t separator = value.find_first_of(" \t");
+	const std::string_view levelText = separator == std::string_view::npos ? value : value.substr(0, separator);
+	const auto level = ParseOptionalLevel(levelText);
+	if (!level.has_value())
+		return std::nullopt;
+	if (separator == std::string_view::npos)
+		return std::pair { *level, std::optional<int> {} };
+
+	const size_t seedStart = value.find_first_not_of(" \t", separator);
+	if (seedStart == std::string_view::npos)
+		return std::nullopt;
+	const size_t seedEnd = value.find_first_of(" \t", seedStart);
+	if (seedEnd != std::string_view::npos)
+		return std::nullopt;
+	const auto seed = ParseRequiredInt(value.substr(seedStart));
+	return seed.has_value() ? std::optional<std::pair<uint8_t, std::optional<int>>> { std::pair { *level, seed } } : std::nullopt;
 }
 
 constexpr std::array<std::string_view, 23> DebugTileDataNames {
@@ -467,6 +488,25 @@ std::string DebugCmdMapHide()
 	return "Automap exploration removed.";
 }
 
+std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed)
+{
+	Player &myPlayer = *MyPlayer;
+	if (level > (gbIsHellfire ? 24 : 16))
+		return StrCat("Level ", level, " does not exist!");
+	if (myPlayer.isOnLevel(level))
+		return "Unable to reset dungeon levels occupied by players!";
+
+	myPlayer._pLvlVisited[level] = false;
+	DeltaClearLevel(level);
+
+	if (seed.has_value()) {
+		DungeonSeeds[level] = *seed;
+		LevelSeeds[level] = std::nullopt;
+		return StrCat("Successfully reset level ", level, " with seed ", *seed, ".");
+	}
+	return StrCat("Successfully reset level ", level, ".");
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -569,6 +609,10 @@ void RegisterNativeDebugCommands()
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.map.hide", "Hide the entire automap.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdMapHide() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.level.reset", "Reset a dungeon level, optionally selecting its seed.", [](std::string_view arguments) {
+		const auto parsed = ParseLevelResetArguments(arguments);
+		return parsed.has_value() ? DebugCmdResetLevel(parsed->first, parsed->second) : std::string("Expected a level number and optional integer seed.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))

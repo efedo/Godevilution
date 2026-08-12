@@ -112,6 +112,7 @@ constexpr std::string_view CommandHelpText =
     "  debug.display.tileData [name]\n"
     "  debug.level.map.reveal\n"
     "  debug.level.map.hide\n"
+    "  debug.level.reset <level> [seed]\n"
     "  debug.level.seed [level]\n"
     "  debug.search.clear\n"
     "  debug.search.item <name>\n"
