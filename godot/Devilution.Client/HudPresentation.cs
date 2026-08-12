@@ -47,6 +47,7 @@ public partial class HudPresentation : CanvasLayer
     private uint? availableTrapEntityId;
     private uint? availableQuestId;
     private int selectedInventoryIndex = -1;
+    private string selectedSpellText = "none";
 
     public event Action<uint>? OpenStoreRequested;
     public event Action<uint, uint>? PurchaseRequested;
@@ -154,6 +155,11 @@ public partial class HudPresentation : CanvasLayer
         status.Text = value;
     }
 
+    public void SetSelectedSpellSource(AuthoritativeSpellSource? source)
+    {
+        selectedSpellText = source?.DisplayName ?? "none";
+    }
+
     public void ToggleDiagnostics() => diagnosticsToggle.ButtonPressed = !diagnosticsToggle.ButtonPressed;
 
     public void ToggleHighContrast() => highContrastToggle.ButtonPressed = !highContrastToggle.ButtonPressed;
@@ -172,7 +178,7 @@ public partial class HudPresentation : CanvasLayer
             selectedInventoryIndex = -1;
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
-            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}   Gold {player.Gold}   XP {player.Experience}";
+            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
 
         commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
         diagnostics.Text = FormatDiagnostics(model, client);

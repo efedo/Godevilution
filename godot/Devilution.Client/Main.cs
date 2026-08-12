@@ -19,6 +19,7 @@ public partial class Main : Node2D
     private PresentationFeedback? feedback;
     private Task? connectionTask;
     private Task? pollTask;
+    private string? selectedSpellSourceKey;
 
     public override void _Ready()
     {
@@ -79,6 +80,12 @@ public partial class Main : Node2D
         }
 
         world?.Apply(model.Snapshot, delta, model.PredictedPlayerPosition);
+        var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
+        var selectedSpell = AuthoritativeSpellSourceSelector.Select(
+            spellSources,
+            selectedSpellSourceKey);
+        selectedSpellSourceKey = selectedSpell?.Key;
+        hud?.SetSelectedSpellSource(selectedSpell);
         hud?.Apply(model, client, connectionTask);
         feedback?.Apply(model);
     }
@@ -138,6 +145,8 @@ public partial class Main : Node2D
                     });
                 }
             }
+            if (key.Keycode is Key.Q or Key.E)
+                CycleSpellSource(key.Keycode == Key.E ? 1 : -1);
         }
 
         if (@event is InputEventMouseButton mouse && mouse.Pressed && mouse.ButtonIndex == MouseButton.Left && client?.IsConnected == true) {
@@ -196,111 +205,32 @@ public partial class Main : Node2D
 
     private CastRequested? CreateCastRequest(Vector2I target)
     {
-        var player = model.Snapshot?.Players.FirstOrDefault();
-        if (player is null)
+        var source = AuthoritativeSpellSourceSelector.Select(
+            AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
+            selectedSpellSourceKey);
+        if (source is null)
             return null;
-
-        var memorized = player.MemorizedSpells
-            .Where(spell => spell.SpellId != 0 && spell.Level != 0)
-            .OrderBy(spell => spell.SpellId)
-            .FirstOrDefault();
-        if (memorized is not null) {
-            return new CastRequested {
-                SpellId = memorized.SpellId,
-                TargetEntityId = ResolvePlayerTargetEntityId(
-                    memorized.SpellId,
-                    target,
-                    player),
-                TargetX = target.X,
-                TargetY = target.Y,
-                Source = CastSourceKind.MemorizedSpell,
-            };
-        }
-
-        var staff = player.Equipment
-            .Where(item => item.Slot == 4
-                && item.State is not null
-                && item.State.SpellId > 0
-                && item.State.Charges > 0
-                && item.State.MiscId is 23 or 27)
-            .OrderBy(item => item.ItemSeed)
-            .FirstOrDefault();
-        if (staff is not null) {
-            return new CastRequested {
-                SpellId = (uint)staff.State.SpellId,
-                TargetEntityId = ResolvePlayerTargetEntityId(
-                    (uint)staff.State.SpellId,
-                    target,
-                    player),
-                TargetX = target.X,
-                TargetY = target.Y,
-                Source = CastSourceKind.ChargedItem,
-                SourceItem = new PlayerItemReference {
-                    Location = PlayerItemLocation.Equipment,
-                    Slot = staff.Slot,
-                },
-            };
-        }
-
-        for (var index = 0; index < player.Inventory.Count; index++) {
-            var item = player.Inventory[index];
-            if (!IsSpellConsumable(item.State))
-                continue;
-            return CreateConsumableCast(
-                (uint)item.State.SpellId,
-                target,
-                ResolvePlayerTargetEntityId(
-                    (uint)item.State.SpellId,
-                    target,
-                    player),
-                PlayerItemLocation.Inventory,
-                (uint)index);
-        }
-        var beltItem = player.Belt
-            .Where(item => IsSpellConsumable(item.State))
-            .OrderBy(item => item.Slot)
-            .FirstOrDefault();
-        if (beltItem is not null) {
-            return CreateConsumableCast(
-                (uint)beltItem.State.SpellId,
-                target,
-                ResolvePlayerTargetEntityId(
-                    (uint)beltItem.State.SpellId,
-                    target,
-                    player),
-                PlayerItemLocation.Belt,
-                beltItem.Slot);
-        }
-
-        return player.AbilitySpellId == 0
-            ? null
-            : new CastRequested {
-                SpellId = player.AbilitySpellId,
-                TargetEntityId = ResolvePlayerTargetEntityId(
-                    player.AbilitySpellId,
-                    target,
-                    player),
-                TargetX = target.X,
-                TargetY = target.Y,
-                Source = CastSourceKind.Ability,
-            };
-    }
-
-    private static CastRequested CreateConsumableCast(
-        uint spellId,
-        Vector2I target,
-        uint targetEntityId,
-        PlayerItemLocation location,
-        uint slot)
-    {
+        var player = model.Snapshot!.Players.First();
         return new CastRequested {
-            SpellId = spellId,
-            TargetEntityId = targetEntityId,
+            SpellId = source.SpellId,
+            TargetEntityId = ResolvePlayerTargetEntityId(source.SpellId, target, player),
             TargetX = target.X,
             TargetY = target.Y,
-            Source = CastSourceKind.ConsumableItem,
-            SourceItem = new PlayerItemReference { Location = location, Slot = slot },
+            Source = source.Kind,
+            SourceItem = source.SourceItem,
         };
+    }
+
+    private void CycleSpellSource(int direction)
+    {
+        var source = AuthoritativeSpellSourceSelector.Cycle(
+            AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
+            selectedSpellSourceKey,
+            direction);
+        selectedSpellSourceKey = source?.Key;
+        hud?.SetSelectedSpellSource(source);
+        if (source is not null)
+            hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast; Q/E cycles)");
     }
 
     private uint ResolvePlayerTargetEntityId(
@@ -319,14 +249,6 @@ public partial class Main : Node2D
             .OrderBy(player => player.EntityId)
             .Select(player => player.EntityId)
             .FirstOrDefault() ?? 0;
-    }
-
-    private static bool IsSpellConsumable(ItemStateSnapshot? state)
-    {
-        if (state is null || state.SpellId <= 0)
-            return false;
-        return state.MiscId is 21 or 22
-            || (state.MiscId is >= 47 and <= 51 && state.MiscId == state.SpellId);
     }
 
     public override async void _ExitTree()
