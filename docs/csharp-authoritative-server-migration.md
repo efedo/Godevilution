@@ -513,6 +513,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.43 adds Telekinesis (stable and native spell ID `33`). The server
+resolves the target through the shared cast intent, then authoritatively applies
+remote item pickup, object activation/effects, or one-cell monster knockback.
+Line-of-sight, ownership, inventory capacity, and target state are validated
+before mana or item-source consumption.
+
 Schema 0.42 makes the stable/native spell identity boundary explicit. The
 authoritative `spell_id` remains the command and persistence identity while
 `native_spell_id` records the source `SpellID`; legacy item spell names are

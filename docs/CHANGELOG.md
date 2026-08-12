@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.43 with server-authoritative
+  Telekinesis (spell ID 33), covering visible item pickup, object activation and
+  effects, one-cell monster knockback, line-of-sight validation, and deterministic
+  source/resource handling.
 - Advance the Diablo content schema to 0.42 with explicit stable/native spell
   identity mapping. `spells.tsv` now records `native_spell_id`, rejects duplicate
   native identities, and resolves legacy item spell names to stable content IDs

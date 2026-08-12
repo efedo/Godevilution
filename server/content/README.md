@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.42.0` schema in
+It declares its identity and `devilution.diablo@0.43.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,11 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.43 adds stable Telekinesis spell row `33` (native `SpellID` `33`).
+The typed behavior applies the native cursor operation authoritatively to a
+visible world item, object, or non-talkative monster; item pickup, object
+effects, and one-cell knockback remain server-owned and deterministic.
 
 Schema 0.42 adds the optional `native_spell_id` column to `spells.tsv`.
 `spell_id` remains the stable authoritative content identity used by commands,
@@ -263,7 +268,7 @@ spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
 ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
-Monk's Search ability spell ID `46`.
+Monk's Search ability spell ID `46`, and Telekinesis spell ID `33`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned
@@ -551,7 +556,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.42.0"
+    "version": "0.43.0"
   },
   "dependencyConstraints": [
     {
@@ -583,7 +588,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.42.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.43.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

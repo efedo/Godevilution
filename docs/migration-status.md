@@ -572,6 +572,11 @@ behavior uses typed projectile value `35`: the server preserves the native
 first-destination retarget, 14-tick nine-cell fire burst, fire resistance
 divisor, and burst-origin line-of-sight state through snapshots and protocol.
 
+Content schema 0.43 adds stable Telekinesis spell ID `33` (native `SpellID`
+`33`). The server applies the native cursor operation to a visible item,
+object, or monster through the existing authoritative cast and world rules;
+remote pickup, object effects, and one-cell knockback are deterministic.
+
 Content schema 0.42 adds explicit stable/native spell identity mapping through
 the optional `native_spell_id` column. `spell_id` remains the authoritative
 content identity; legacy item spell names resolve from native IDs through the
@@ -589,8 +594,8 @@ Content schema 0.38 adds stable spell ID `25` for Apocalypse (`SpellID` `24`). I
 behavior uses typed controller value `32` and boom value `33`: the server scans
 the native eight-tile square row-major, skips player minions and blocked cells,
 applies Hellfire missile line-of-sight filtering, and persists cursor/first-hit
-state through snapshots and protocol. Content schema 0.37 adds native spell ID
-stable spell ID `18` for Nova (`SpellID` `18`). Its external behavior
+state through snapshots and protocol. Content schema 0.37 adds stable spell ID
+`18` for Nova (`SpellID` `18`). Its external behavior
 owns the one-tick radial controller, native nine-point quarter-radius order,
 four mirrored emissions, 36 continuing Lightning balls, damage scaling,
 resistance, lifetime, collision, and deterministic projectile state.
@@ -599,7 +604,7 @@ resistance, lifetime, collision, and deterministic projectile state.
 
 1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
    Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
-   Infravision, Search, Phasing, Mana Shield, Teleport, and Resurrection,
+   Infravision, Search, Phasing, Mana Shield, Teleport, Telekinesis, and Resurrection,
    including remaining class modifiers, scaling and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,
    level, quest, and item metadata and authoritative gameplay definitions.
