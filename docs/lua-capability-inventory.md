@@ -49,6 +49,10 @@ attribute mutations while the Lua names remain compatibility aliases.
 The `dev.player.stats.levelUp` helper delegates to `debug.player.levelUp`; the
 native command preserves the default-one behavior and high-priority experience
 command sequence.
+The `dev.player.gold.give` and `take` helpers now delegate to native gold
+commands. The native handlers retain stack filling/removal order, inventory
+recalculation, and omitted-amount behavior while Lua remains a compatibility
+alias.
 
 ## Bundled Scripts
 

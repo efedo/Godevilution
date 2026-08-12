@@ -52,6 +52,8 @@ or clears the native player TRN asset.
 `debug.player.attributes.max` and `.min` set all four base attributes to their
 native maximum or minimum. `debug.player.levelUp [amount]` sends the same
 high-priority experience commands as the legacy level-up helper.
+`debug.player.gold.give [amount]` and `.take [amount]` preserve the legacy
+inventory-stack behavior; omitted amounts use the maximum sweep.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.

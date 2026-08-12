@@ -30,6 +30,8 @@ All notable changes to this fork are documented below.
 - Move player level-up into a native debug command while preserving the Lua
   helper and its high-priority experience command sequence as a compatibility
   alias.
+- Move player gold give/take into native debug commands while preserving exact
+  inventory-stack behavior and Lua compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

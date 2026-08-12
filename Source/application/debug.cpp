@@ -22,6 +22,7 @@
 
 #include "engine/assets.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
+#include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/players/players.hpp"
 #include "ui/automap.h"
@@ -277,6 +278,74 @@ std::string DebugCmdLevelUp(int levels)
 	return StrCat("New character level: ", myPlayer.getCharacterLevel() + levels);
 }
 
+std::string DebugCmdGiveGoldCheat(int amount)
+{
+	if (amount <= 0)
+		return "amount must be positive";
+	Player &myPlayer = *MyPlayer;
+	int goldToAdd = amount;
+	const int goldAmountBefore = myPlayer._pGold;
+	for (int8_t &itemIndex : myPlayer.InvGrid) {
+		if (itemIndex < 0)
+			continue;
+
+		Item &item = myPlayer.InvList[itemIndex != 0 ? itemIndex - 1 : myPlayer._pNumInv];
+		if (itemIndex != 0) {
+			if ((!item.isGold() && !item.isEmpty()) || (item.isGold() && item._ivalue == GOLD_MAX_LIMIT))
+				continue;
+		} else if (item.isEmpty()) {
+			MakeGoldStack(item, 0);
+			myPlayer._pNumInv++;
+			itemIndex = myPlayer._pNumInv;
+		}
+
+		const int goldThatCanBeAdded = GOLD_MAX_LIMIT - item._ivalue;
+		if (goldThatCanBeAdded >= goldToAdd) {
+			item._ivalue += goldToAdd;
+			myPlayer._pGold += goldToAdd;
+			break;
+		}
+
+		item._ivalue += goldThatCanBeAdded;
+		goldToAdd -= goldThatCanBeAdded;
+		myPlayer._pGold += goldThatCanBeAdded;
+	}
+
+	CalcPlrInv(myPlayer, true);
+	return StrCat("Set your gold to ", myPlayer._pGold, ", added ", myPlayer._pGold - goldAmountBefore, ".");
+}
+
+std::string DebugCmdTakeGoldCheat(int amount)
+{
+	if (amount <= 0)
+		return "amount must be positive";
+	Player &myPlayer = *MyPlayer;
+	int goldToRemove = amount;
+	const int goldAmountBefore = myPlayer._pGold;
+	for (auto itemIndex : myPlayer.InvGrid) {
+		itemIndex -= 1;
+		if (itemIndex < 0)
+			continue;
+
+		Item &item = myPlayer.InvList[itemIndex];
+		if (!item.isGold())
+			continue;
+		if (item._ivalue >= goldToRemove) {
+			myPlayer._pGold -= goldToRemove;
+			item._ivalue -= goldToRemove;
+			if (item._ivalue == 0)
+				myPlayer.RemoveInvItem(itemIndex);
+			break;
+		}
+
+		myPlayer._pGold -= item._ivalue;
+		goldToRemove -= item._ivalue;
+		myPlayer.RemoveInvItem(itemIndex);
+	}
+
+	return StrCat("Set your gold to ", myPlayer._pGold, ", removed ", goldAmountBefore - myPlayer._pGold, ".");
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -371,6 +440,18 @@ void RegisterNativeDebugCommands()
 			return DebugCmdLevelUp(1);
 		const auto amount = ParseRequiredInt(arguments);
 		return amount.has_value() ? DebugCmdLevelUp(*amount) : std::string("Expected an integer level amount.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.gold.give", "Give the player gold.", [](std::string_view arguments) {
+		if (arguments.empty())
+			return DebugCmdGiveGoldCheat(GOLD_MAX_LIMIT * InventoryGridCells);
+		const auto amount = ParseRequiredInt(arguments);
+		return amount.has_value() ? DebugCmdGiveGoldCheat(*amount) : std::string("Expected an integer gold amount.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.gold.take", "Take gold from the player.", [](std::string_view arguments) {
+		if (arguments.empty())
+			return DebugCmdTakeGoldCheat(GOLD_MAX_LIMIT * InventoryGridCells);
+		const auto amount = ParseRequiredInt(arguments);
+		return amount.has_value() ? DebugCmdTakeGoldCheat(*amount) : std::string("Expected an integer gold amount.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);
