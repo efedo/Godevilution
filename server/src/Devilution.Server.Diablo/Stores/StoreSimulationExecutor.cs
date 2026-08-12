@@ -341,7 +341,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         });
     }
 
-    /** Serializes authoritative player state for server-owned persistence. */
+    /** Serializes complete authoritative session state for persistence or migration. */
     public string ExportPlayerSave(string sessionId)
     {
         var snapshot = runtime.Capture(
@@ -349,6 +349,12 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             0,
             state => simulation.CaptureSnapshot(state, 0));
         return saveCodec.Serialize(snapshot);
+    }
+
+    /** Exports the complete player and authoritative world state for migration. */
+    public string ExportSessionState(string sessionId)
+    {
+        return ExportPlayerSave(sessionId);
     }
 
     /** Restores a validated save into an existing session without changing world configuration. */
@@ -366,6 +372,12 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 return savedTemplate.CreatePlayer();
             },
             player => simulation.RestoreSnapshot(player, snapshot));
+    }
+
+    /** Restores the complete player and authoritative world state for migration. */
+    public void ImportSessionState(string sessionId, string serializedState)
+    {
+        ImportPlayerSave(sessionId, serializedState);
     }
 
     /** Advances statuses and autonomous monster behavior at a server tick boundary. */

@@ -6,8 +6,9 @@ using Google.Protobuf;
 namespace Devilution.Server.Stores;
 
 /**
- * Compatibility codec for server-owned saves. Version 1 retains the original
- * JSON envelope containing a base64 Protobuf snapshot; game state stays neutral.
+ * Compatibility codec for server-owned session state. Version 1 retains the
+ * original JSON envelope containing a base64 Protobuf snapshot; player and
+ * world state stay transport-neutral.
  */
 public sealed class AuthoritativeSaveCodec
 {

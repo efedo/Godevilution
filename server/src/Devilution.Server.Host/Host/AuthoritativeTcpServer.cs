@@ -19,7 +19,7 @@ namespace Devilution.Server.Host;
  *
  * Each connection is a session for the current slice. The server-issued
  * resume token also provides a stable save identity, allowing a local server
- * restart to restore the same authoritative player save.
+ * restart to restore the same authoritative session state.
  */
 public sealed class AuthoritativeTcpServer : IAsyncDisposable
 {
@@ -344,7 +344,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         var serializedSave = saveStore.Load(session.Id);
         if (serializedSave is null)
             return false;
-        saveProvider.ImportPlayerSave(session.Id, serializedSave);
+        saveProvider.ImportSessionState(session.Id, serializedSave);
         session.ParticipantInitialized = true;
         return true;
     }
@@ -355,7 +355,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             || saveStore is null
             || saveProvider is null)
             return;
-        saveStore.Save(session.Id, saveProvider.ExportPlayerSave(session.Id));
+        saveStore.Save(session.Id, saveProvider.ExportSessionState(session.Id));
     }
 
     private static ValueTask SendErrorAsync(Stream stream, ProtocolErrorCode code, string detail, CancellationToken cancellationToken)

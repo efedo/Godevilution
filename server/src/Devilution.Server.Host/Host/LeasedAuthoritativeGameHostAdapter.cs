@@ -58,7 +58,7 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
             try {
                 saves = sessions.ToDictionary(
                     sessionId => sessionId,
-                    sessionId => previous.Target.ExportPlayerSave(sessionId),
+                    sessionId => previous.Target.ExportSessionState(sessionId),
                     StringComparer.Ordinal);
             } catch (Exception exception) {
                 return FailedReload("ruleset-session-export-failed", exception);
@@ -70,7 +70,7 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
                 candidate => {
                     try {
                         foreach (var sessionId in sessions)
-                            candidate.ImportPlayerSave(sessionId, saves[sessionId]);
+                            candidate.ImportSessionState(sessionId, saves[sessionId]);
                     } catch {
                         disposeAdapter(candidate);
                         throw;
@@ -120,9 +120,19 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
         return WithAdapter(adapter => adapter.ExportPlayerSave(sessionId));
     }
 
+    public string ExportSessionState(string sessionId)
+    {
+        return WithAdapter(adapter => adapter.ExportSessionState(sessionId));
+    }
+
     public void ImportPlayerSave(string sessionId, string serializedSave)
     {
         WithAdapter(adapter => adapter.ImportPlayerSave(sessionId, serializedSave));
+    }
+
+    public void ImportSessionState(string sessionId, string serializedState)
+    {
+        WithAdapter(adapter => adapter.ImportSessionState(sessionId, serializedState));
     }
 
     public void InitializeParticipant(

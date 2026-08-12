@@ -71,6 +71,7 @@ public sealed class RulesetLeaseHostAdapterTests
 
         Assert.True(result.Succeeded);
         Assert.Equal("initial", replacement.ExportPlayerSave("session"));
+        Assert.True(replacement.SessionStateImported);
         Assert.Equal(1, adapter.DisposeRetiredAdapters());
         Assert.True(initial.Disposed);
         Assert.False(replacement.Disposed);
@@ -140,6 +141,7 @@ public sealed class RulesetLeaseHostAdapterTests
         Assert.True((await operation).Succeeded);
         Assert.True((await reload).Succeeded);
         Assert.Equal("initial", adapter.ExportPlayerSave("session"));
+        Assert.True(replacement.SessionStateImported);
     }
 
     [Fact]
@@ -203,6 +205,8 @@ public sealed class RulesetLeaseHostAdapterTests
 
         public bool Disposed { get; private set; }
 
+        public bool SessionStateImported { get; private set; }
+
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
             onExecute?.Invoke();
@@ -235,6 +239,17 @@ public sealed class RulesetLeaseHostAdapterTests
             if (ThrowOnImport)
                 throw new InvalidDataException("session migration rejected");
             saves[sessionId] = serializedSave;
+        }
+
+        public string ExportSessionState(string sessionId)
+        {
+            return ExportPlayerSave(sessionId);
+        }
+
+        public void ImportSessionState(string sessionId, string serializedState)
+        {
+            SessionStateImported = true;
+            ImportPlayerSave(sessionId, serializedState);
         }
 
         public void Dispose()
