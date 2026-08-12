@@ -1,4 +1,4 @@
-# DevilutionX Style Guide
+# Godevilution Style Guide
 
 This guide captures local preferences that are not obvious from the compiler, formatter, or surrounding code.
 
@@ -9,7 +9,7 @@ This guide captures local preferences that are not obvious from the compiler, fo
 - Match nearby code unless this guide says otherwise.
 - Keep names descriptive, but avoid ceremony. Use the shortest name that stays clear at the call site.
 - Prefer lines no longer than 120 columns. A little over is acceptable when wrapping would make the code harder to read.
-- Preserve existing file line endings and indentation. C++ files use tabs and CRLF unless a file already differs.
+- Use CRLF line endings for project-authored source and documentation unless `.editorconfig` specifies a platform format such as LF for shell scripts, translations, or Unix metadata.
 
 ## Comments
 

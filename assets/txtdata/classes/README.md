@@ -26,3 +26,12 @@ There is one folder per class.
  `baseMagicToHit`  | Starting chance to hit with spells/scrolls, %
  `baseMeleeToHit`  | Starting chance to hit with melee weapons/fists, %
  `baseRangedToHit` | Starting chance to hit with ranged weapons, %
+
+### animations.tsv
+
+Animation frame counts are native compatibility data. The authoritative C#
+content pack mirrors the complete six-class table in `class_animations.tsv`,
+including weapon-specific attack/action pairs plus walk, block, death, cast,
+recovery, and town timing. The C# simulation consumes block/recovery timing now;
+the remaining values are validated inputs for command-driven action lifecycles
+as those transitions move off the native engine.

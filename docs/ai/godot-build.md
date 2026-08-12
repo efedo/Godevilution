@@ -1,31 +1,41 @@
 # Godot Build Notes
 
-Godot is installed through WinGet in the agent environment. The executable is
-versioned and is exposed on `PATH`; the old hard-coded
-`D:\Programming\3rdParty\Godot_v4.6.3-stable_mono_win64` path is not valid here.
+The presentation project targets Godot 4.7.1 Mono. Godot is not assumed to be
+installed on every development machine, and repository tests that do not render
+the client must remain runnable without it.
 
-Discover the installed Mono executable instead of assuming a version or install
-directory:
+## Protocol and Solution Verification
+
+From the repository root:
+
+```powershell
+dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet build godot/Devilution.Client/Devilution.Client.sln
+```
+
+The protocol-test project builds the current server once as an explicit,
+build-only dependency, then the live tests launch that Debug server without
+starting concurrent rebuilds.
+
+## Finding Godot
+
+Use a Godot 4.7.1 Mono console executable. When installed through WinGet it may
+not immediately appear in an existing shell's `PATH`. Discover it rather than
+hard-coding an installation directory:
 
 ```powershell
 $godot = (Get-Command 'Godot_v*-stable_mono_win64_console.exe' -CommandType Application).Source
 & $godot --headless --path godot/Devilution.Client --quit-after 5
 ```
 
-The project C# solution should be built with `dotnet build` before the Godot
-launch. In this environment, `--build-solutions --quit` can leave a Godot Mono
-process running after the build; use the explicit .NET build followed by a
-short headless launch for deterministic verification.
-
-The local authoritative harness accepts the discovered path explicitly:
+The local harness also checks the standard per-user WinGet package directory:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Headless -GodotExecutable $godot
+powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Headless -QuitAfterSeconds 5 -GodotExecutable $godot
 ```
 
-`godot/run-local-client.ps1` searches PATH for any versioned Godot Mono binary,
-preferring the console executable and falling back to the editor executable.
-If a nested PowerShell process does not inherit the interactive PATH entry, it
-also searches the standard per-user WinGet package directory. This fallback is
-needed for the common `powershell -File godot/run-local-client.ps1` invocation
-in this environment.
+The harness builds the authoritative server if its Debug executable is absent,
+starts it on a free port, passes the current ruleset identity to the client, and
+reports the temporary server-log directory. Build the solution explicitly
+before a direct Godot smoke launch; this is more deterministic than relying on
+the editor's solution-build switch.

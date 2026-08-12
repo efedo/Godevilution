@@ -1,102 +1,430 @@
 # Authoritative Protocol Contract
 
-This document freezes the server/client boundary used by the current native
-client and the future Godot client. The canonical schema is
-`protocol/devilution.proto`; C++ and C# bindings must be generated from that
-file and must not introduce engine-specific types into the wire contract.
+This document defines the server/client boundary shared by the native adapter
+and Godot client. `protocol/devilution.proto` is the canonical wire schema;
+generated bindings and engine-specific models must not redefine it.
 
-## Compatibility identity
+## Handshake and Identity
 
-Every connection begins with `ClientHello` and must receive `ServerHello`
-before sending commands. A client must match:
+Every connection begins with `ClientHello`. The server accepts commands only
+after returning `ServerHello`. The client must match schema version `0.1.0` and
+the required identity hashes; otherwise the server sends `ProtocolError` and
+closes the connection.
 
-- `protocol_schema_version` (`0.1.0` for the current contract);
-- `content_manifest_hash`; and
-- `ruleset_identity_hash` when supplied by the client.
+Protocol v1 uses a compatibility alias: the server's combined content-and-module
+ruleset SHA-256 is carried in both `content_manifest_hash` and
+`ruleset_identity_hash`. A client must send that combined value in
+`content_manifest_hash` and should repeat it in `ruleset_identity_hash`. The
+separately logged raw content-manifest hash is diagnostic until a later protocol
+version gives the fields independent meanings.
 
-The server returns `ProtocolError` and closes the connection on a required
-identity mismatch. Schema evolution is additive: existing field numbers are
-never reused, removed fields remain reserved by convention, and a client must
-ignore unknown fields. A breaking change requires a new schema version.
+A successful handshake returns a server-issued `session_token`. Presenting a
+known token on reconnect restores the authoritative entity identity and command
+ledger. An unknown or omitted token starts a new session.
+
+`ServerHello.game_mode` additively declares whether the shared authoritative
+simulation uses single-player or multiplayer rules. It is server-owned process
+configuration, not inferred from connected participant count. Both native and
+Godot clients retain it; the native compatibility runtime synchronizes its
+legacy multiplayer presentation flag to the declared value. For additive
+compatibility with older servers, an unspecified value preserves the native
+launch-time mode; current servers always declare a concrete value.
+
+For a new session, `ClientHello.requested_character_class_id` may select a
+stable class ID from the active module's validated catalog. If omitted, the
+module uses its content-selected default. The field is only a creation hint:
+in-memory state or a server-owned save restored by the resume token takes
+precedence, and an ID absent from active content is rejected before gameplay.
+
+`ClientHello.requested_character_name` is the corresponding optional
+new-session name hint. The Diablo module validates it against native multiplayer
+name rules before participant creation. It is not a rename command: an
+in-memory participant or server-owned save restored by the resume token keeps
+its existing character name.
+
+Schema evolution is additive. Existing field numbers and meanings are never
+reused, removed fields are reserved, and peers ignore unknown fields. A breaking
+change requires a new package and protocol schema version.
 
 ## Transport
 
-The initial transport is TCP. Each envelope is encoded as:
+TCP envelopes consist of a four-byte unsigned little-endian payload length and
+one serialized Protobuf `Envelope`. Payloads must be between one byte and 1 MiB.
+Framing is transport infrastructure and may be replaced without changing the
+gameplay contract.
 
-1. a four-byte unsigned little-endian payload length;
-2. one serialized `Envelope` Protobuf payload.
+## Command Delivery
 
-Payloads must be non-empty and no larger than one MiB. The `Envelope` oneof
-contains handshake messages, command batches, acknowledgements, snapshots,
-event batches, snapshot requests, and protocol errors. Transport framing is
-not part of the gameplay model and can be replaced behind the same envelope
-contract later.
+Each command carries a session-scoped client sequence and requested simulation
+tick. The server assigns receipt order, applies its late-command policy, and
+deduplicates by session and client sequence. Clients retain unresolved commands
+and retry after an adaptive acknowledgement deadline. A duplicate returns the
+original receipt and applied tick without mutating state twice.
 
-## Command delivery
+Acknowledgements are authoritative for accepted, rescheduled, rejected, and
+duplicate outcomes. Commands express intent only: clients never supply the
+resulting gold, health, damage, inventory placement, quest state, or world
+mutation.
 
-Commands contain a client sequence and requested simulation tick. The server
-assigns receipt ordering and deduplicates by session and client sequence.
-Clients retain unresolved commands and resubmit them when the acknowledgement
-deadline expires. The deadline is derived from measured client/server latency;
-resubmission is safe because a duplicate produces `DUPLICATE` rather than a
-second state mutation.
+`CastRequested.source` identifies an ability, memorized spell, charged item, or
+consumable item. Item-backed casts must also carry the exact authoritative
+`PlayerItemReference`; non-item sources must not. The server verifies that the
+spell belongs to the declared class ability or learned-spell state, or that the
+referenced item is an eligible matching staff, scroll, or rune in its required
+location. A valid ability costs no mana, a memorized spell consumes catalog
+mana, a charged item decrements one charge, and a consumable is removed. Source
+resources change only after the spell, target, range, line-of-sight, and
+projectile checks have all succeeded.
 
-Gameplay-critical commands use the strict late-command tolerance. Non-critical
-commands may be rescheduled to the current tick within their configured
-tolerance. The acknowledgement is authoritative for accepted, rescheduled,
-rejected, and duplicate outcomes.
+For native-scaled definitions such as Firebolt, catalog mana is resolved from
+effective spell level, character level where applicable, class/game-variant
+reduction, minimum cost, and the Q6 unit scale before admission. The client
+still sends only cast intent; it never computes or supplies the cost or damage.
 
-## Authoritative state
+Source zero is retained for older additive peers, but it is not an ownership
+bypass. The server infers only from authoritative state in the deterministic
+order ability, memorized spell, charged left-hand staff, inventory consumable,
+then belt consumable. If no owned source matches, the cast is rejected.
 
-`Snapshot` is the complete state projection for the receiving session. It may
-contain:
+`IdentifyItemRequested.source` field 3 is a separate item-service source, not a
+spell-cast source. Zero preserves the paid vendor service and active-store
+requirement. `CLASS_ABILITY` names the Bard's content-selected Identify skill;
+the server verifies the player's authoritative `ability_spell_id`, resolves the
+exact owned equipment or inventory item, and identifies it without spending
+Gold. Unknown sources are malformed, and clients never set identified state
+locally.
 
-- the player, resources, attributes, status effects, inventory, equipment, and
-  belt;
-- vendor stock;
-- monsters and their combat state;
-- world items and interactable objects;
-- quest progress; and
-- in-flight projectiles.
+`RepairItemRequested.source` field 3 uses the same enum. Zero preserves paid
+vendor repair, including its store, eligibility, full-restoration, and Gold
+rules. `CLASS_ABILITY` names the Warrior's content-selected Repair skill. The
+server validates that ability and exact owned item, advances the authoritative
+native RNG for every repair iteration, and applies level-scaled repair strength
+plus permanent maximum-durability loss. A fully repaired item is an accepted
+no-op with no RNG draw, and a repair that exhausts maximum durability removes
+the item. Clients never calculate or apply these changes.
 
-The server owns movement, collision/occupancy validation, combat, spell
-resolution, projectile travel, object effects, quests, portals, inventory
-placement, and persistence. The client may interpolate or predict presentation
-only; it must reconcile to the next snapshot.
+`RechargeItemRequested.source` field 3 also uses the item-service enum. Zero
+preserves paid vendor recharge, including store, eligibility, full restoration,
+and Gold rules. `CLASS_ABILITY` names the Sorcerer's content-selected Staff
+Recharge skill. The server validates the ability and exact owned staff, uses
+the content-owned native staff level to make one authoritative recharge-strength
+roll, then reduces maximum charges before each restoration step. A full staff
+is an accepted no-op with no RNG draw; reaching zero maximum charges leaves the
+staff exhausted. Clients never calculate or apply charge changes.
 
-Projectile snapshots are transient authoritative entities. Their stable entity
-ID, source, target, position, destination, damage, effect type, area radius,
-and remaining lifetime are all server-owned. A projectile that reaches blocked
-geometry or expires is removed without client-side resolution.
+`SetFriendlyModeRequested.friendly_mode` is an explicit, retry-safe state
+assignment. The server does not interpret repeated delivery as another toggle.
+The following snapshot is the authority for the resulting mode.
 
-Object effect fields are declarative content values. Current effects are heal,
-damage, and experience, with quest advancement remaining an explicit object
-relationship. Unknown effect kinds are rejected by content validation.
+`DropHeldItemRequested` is the additive command alternative at field 28. It
+contains only a target tile. The Diablo module requires a server-owned held item
+and an unoccupied, walkable tile no farther than one cell from the player, then
+creates the world item with the same item seed, price, and complete state. A
+retry cannot duplicate the item because normal command deduplication and the
+following snapshot remain authoritative.
 
-## Events and hashes
+## State, Events, and Persistence
 
-`EventBatch` carries presentation-friendly authoritative deltas such as
-damage, healing, and experience. Events are not a second source of truth;
-clients always apply the following snapshot as the canonical result.
+`Snapshot` is a complete projection for the receiving session. The server owns
+simulation ticks, movement and occupancy, combat, spells and projectiles,
+monsters, items, objects, quests, portals, stores, inventory, progression,
+content rules, and save data. A client may interpolate presentation but must
+reconcile to every snapshot.
 
-`Snapshot.state_sha256` is the canonical deterministic projection hash. Lists
-are sorted by their stable identity before hashing. Legacy-empty optional
-collections preserve the previous hash representation; non-empty projectiles
-and non-default object effects participate in the hash. Any new authoritative
-field must add a parity vector before it is used by a client.
+The repeated player projection contains every participant with an assigned
+entity ID. Its wire order is receiver-relative: the receiving participant is
+first, followed by all other participants in ascending entity-ID order. IDs are
+nonzero and unique. Clients use the first entry as local presentation state but
+must validate the whole set. The canonical state hasher sorts all players by
+entity ID, so receiver-relative player ordering cannot change the hash. The
+snapshot remains a per-session projection: receiver-scoped fields such as the
+singular active-store view may legitimately produce a different overall hash.
 
-## Godot entry criteria
+`EventBatch` contains presentation-friendly deltas such as damage, healing, and
+experience. Events are not a second source of truth. A reconnect or dropped
+event cannot invalidate the next snapshot.
 
-The boundary is ready for a Godot client when the following are true:
+`Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
+order. Stable-identity lists, including the complete participant set, are
+sorted before hashing. Presentation-only and localized values are excluded.
+Every newly authoritative field requires native and C# parity coverage before
+clients depend on it.
 
-- the Godot client can generate bindings from the shared `.proto` file;
-- it implements the length-delimited TCP envelope and handshake identity
-  checks;
-- it retains and resubmits commands using client sequence numbers;
-- it treats snapshots as complete authoritative state and events as transient
-  presentation deltas; and
-- it can display the current player/world projection without running gameplay
-  simulation locally.
+`Snapshot.random_state` field 10 carries the module-owned Diablo gameplay RNG.
+`MonsterSnapshot.monster_level` field 15 supplies deterministic magic hit
+resolution. `MonsterSnapshot.hit_points_q6` and `max_hit_points_q6` fields
+16-17 carry exact native 26.6 monster health; fields 6-7 remain rounded-up
+whole-point projections so a living fractional-health monster never appears
+dead to an older reader. `DamageEvent.amount_q6` field 4 carries exact damage,
+while field 3 remains its truncated whole-point presentation projection.
+Legacy messages with no raw field are interpreted as whole points multiplied by
+64. Fractional health adds the tagged
+`godevilution-monster-hit-points-q6-v1` canonical-hash section; legacy and
+whole-aligned snapshots retain their prior hashes.
 
-The next phase is therefore a Godot C# project and transport/model shell, not
-another native gameplay adapter.
+`HealingEvent.amount_q6` field 3 carries the exact applied Q6 healing. The
+pre-existing `amount` field 2 remains the same raw native-resource amount for
+older readers and is populated alongside the new field. New native readers use
+`amount_q6` when present and fall back to the legacy raw amount, preserving both
+fractional healing and compatibility with earlier event batches.
+
+`MonsterSnapshot.moving`, `future_position_x`, `future_position_y`, and
+`petrified` fields 18 through 21 preserve the native two-cell walking model.
+The current tile remains positive monster occupancy; the adjacent future tile
+is projected as negative occupancy until movement completes. A normal walker
+is collision-eligible only at its current tile. Petrification freezes movement,
+makes both occupied tiles collision-eligible, and guarantees a missile hit
+after consuming the native hit-roll RNG draw. Death cancels movement back to
+the current tile. The server validates adjacency and duplicate occupancy,
+persists this state in version-1 saves, and adds the tagged
+`godevilution-monster-occupancy-v1` canonical-hash section whenever movement or
+petrification is nondefault. Missing additive fields normalize to stationary
+occupancy at the current tile.
+
+`MonsterSnapshot.stone_curse_immune` field 22 carries an immutable external-
+content capability needed by future authoritative casts and version-1 save
+restore. True adds the tagged
+`godevilution-monster-stone-curse-immunity-v1` hash section; false is the
+additive legacy default. Clients may present the capability but never decide
+whether a cast succeeds.
+
+`ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
+traveled distance and velocity, original direction, wandering path
+position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores
+the last stable occupant checked on a stationary tile, preventing a resumed slow
+missile from rerolling collision against the same actor. Field 29 stores the
+effective spell level captured at creation, so a resumed Lightning controller
+or segment retains its content-scaled lifetime independently of later equipment
+or learned-level changes. These fields are state,
+not presentation hints: they are included in server saves and tagged
+canonical-hash sections when nondefault. Older snapshots retain their existing
+default behavior, while a resumed Charged Bolt continues with the same path,
+collision suppression, exact target health, and next RNG draw. A resumed
+Firebolt likewise retains its origin, 16.16 travel and velocity, native speed,
+impact phase, resistance divisor, exact damage, and stationary-collision state.
+A resumed Lightning cast retains its invisible controller, stationary damaging
+segments, source spell level, remaining lifetimes, exact Q6 damage, and native
+per-tick collision/RNG boundary.
+A Teleport cast uses the existing projectile behavior value `9` as an invisible
+two-tick controller. Its position and remaining lifetime are authoritative;
+the resulting player position continues to use the existing player snapshot
+coordinates. Version-1 peers therefore require no new wire field, and a
+resumed save revalidates occupancy before the controller's first movement.
+
+A Phasing cast uses projectile behavior value `15` as the same shape of
+invisible two-tick movement controller. The server selects its random
+destination, consumes the cast source even when no candidate exists, and
+revalidates occupancy before movement. Clients neither send a destination that
+governs the selection nor consume RNG; they observe the controller through
+existing projectile fields and the resulting authoritative player coordinates.
+Version-1 protocol and save envelopes therefore need no additive field.
+
+A Fireball cast uses projectile behavior value `16`. Phase `0` carries its
+server-owned 16.16 travel state; phase `1` carries the stationary 14-tick
+explosion after direct collision, blocking, or range expiry. Existing origin,
+position, distance, velocity, speed, damage, resistance, impact-lifetime,
+remaining-tick, and effective-spell-level fields are sufficient for exact
+resume. The server alone applies the ordered 3x3 shifted splash and object
+breakage. Godot and native clients render the orange travel/impact states but
+never predict collision or damage, so protocol version 1 needs no new field.
+
+A Resurrection cast names another participant through the existing
+`CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
+value `11` plus the existing target, position, and lifetime fields. Revival is
+not a client event or prediction: updated player coordinates, life, mana,
+combat mode, and action state arrive in the complete participant snapshot. A
+living valid target still produces the authoritative beam without changing
+that player's resources.
+
+A Heal Other cast likewise names another participant through
+`CastRequested.target_entity_id`; it creates no projectile. The server validates
+that the target is living, distinct, same-level, and in range, then publishes
+the exact applied amount through the existing Healing event and the target's
+new life through the complete participant snapshot. A full-life valid target
+still consumes mana and RNG but produces no zero-healing event. Protocol version
+1 therefore needs no additive field.
+
+Stone Curse uses projectile behavior value `13` as a stationary timed
+controller. Existing target, position, remaining-tick, phase, impact-lifetime,
+and effective-spell-level fields carry its complete runtime. The associated
+monster `petrified` flag freezes presentation and movement; expiry or the
+dead-target shatter transition is resolved only by the server.
+
+`StatusEffectSnapshot.behavior` field 4 carries typed server-owned semantics for
+player statuses. Value `1` is Infravision and value `2` is Search. Clients
+use them only for presentation: native maps Search to the original automap item
+highlight and Godot outlines world items. Duration, Infravision recast union,
+Search additive recasts, expiry, and level-transition cleanup remain server
+decisions. Nonzero behavior adds the tagged
+`godevilution-status-effect-behavior-v1` canonical-hash section after the legacy
+effect ID, duration, and magnitude, so an omitted value preserves prior hashes.
+Unknown behavior values and nonzero Infravision or Search magnitude are invalid
+complete snapshot state.
+
+`ObjectSnapshot` fields 10 through 12 carry native missile pass-through,
+breakability, and persistent destruction. The server validates impossible flag
+combinations, excludes destroyed objects from occupancy and interaction, and
+removes them from native presentation. Object and projectile collision
+extensions use separate tagged canonical-hash sections so all-default legacy
+snapshots preserve their prior hashes. Version-1 save envelopes remain
+wire-compatible and preserve the additive raw fields in their Protobuf payload.
+
+Player class identity is authoritative and persists through snapshots and
+server-owned saves. `PlayerSnapshot.character_class_id` field 19 carries the
+stable ID from the active module's validated class catalog. Shipped content
+keeps ID `0` as Warrior, preserving the Protobuf default used by older peers and
+saves. Native compatibility clients reject IDs outside their supported hero
+class enum. Nonzero IDs are included in the canonical state hash and covered by
+matching native/C# golden tests. For newly created Diablo players, the server
+also derives maximum life and mana from the selected class's native-compatible
+Q6 level and attribute formulas; command-line values remain explicit
+development overrides rather than the normal creation path.
+
+`PlayerSnapshot.character_name` field 28 carries server-owned character
+identity. A nonempty value is validated before state creation, persisted in
+version-1 saves, restored on reconnect, and projected by both clients. It adds
+the tagged `godevilution-player-name-v1` canonical-hash section; empty remains
+the additive default for older snapshots and fixtures.
+
+`PlayerSnapshot.mana_shield_active` field 29 carries server-owned Mana Shield
+state. True adds the tagged `godevilution-player-mana-shield-v1` canonical-hash
+section and is preserved by version-1 saves and both clients; false remains the
+additive default. Clients do not apply the effect. The Diablo module owns the
+native learned-level damage reduction, Q6 mana absorption, reverse calculation
+when mana is insufficient, exact-depletion cleanup, and transition cleanup.
+
+Starting Gold is materialized as ordinary `PlayerSnapshot.inventory` and
+`inventory_grid` state: the first pile uses native cell 30 and deterministic
+session-owned nonzero seeds. The wallet remains the native cached total. Store
+commands preserve that topology with nonmaximum-first spending, native purchase
+placement, sale top-off/new-pile placement, and transactional capacity checks;
+aggregate-only compatibility participants retain the older wallet path.
+
+`PlayerSnapshot.ability_spell_id` field 20 carries the class skill and repeated
+`memorized_spells` field 21 carries learned spell IDs and levels. The server
+validates native bounds and uniqueness, saves this state, and sorts learned
+spells for protocol and hash projection. Native compatibility clients rebuild
+their ability and memorized-spell masks from the snapshot rather than retaining
+local creation state. When either field contains state, canonical hashing adds
+the tagged `godevilution-player-spells-v1` section; an entirely empty spell
+projection adds nothing so older state hashes remain unchanged.
+
+`PlayerSnapshot.hostile_mode` field 22 is the inverse of native friendly mode.
+Its absent/false Protobuf default therefore preserves friendly behavior for
+older peers and saves. A true value adds the tagged
+`godevilution-player-hostile-mode-v1` canonical-hash section; friendly legacy
+state retains its prior hash. Diablo content owns the global `friendly_fire`
+rule. When it is disabled, a friendly caster does not collide with another
+player, while hostile mode opts that caster into PvP; when it is enabled,
+player collision is globally active. Charged Bolt then preserves native
+hit-roll, eligible block-roll, and damage-roll order, emits exact Q6 damage to
+the victim, derives lightning resistance and blocking from authoritative class
+and equipped-item state, and treats positive resistance as overriding a block.
+
+`PlayerSnapshot.facing_direction` field 27 mirrors native `Direction` values
+South through SouthEast. South/zero is the additive legacy default. Accepted
+move, attack, and cast intents update facing from their resolved direction;
+rejected or same-position resolved intents do not invent a rotation. Facing
+crosses module snapshots, version-1 saves, native and Godot projection, and the tagged
+`godevilution-player-facing-v1` canonical-hash extension. The server also uses
+it as the starting direction for native equipped-item death placement.
+
+`PlayerSnapshot.combat_mode` field 23 mirrors the native `PLR_MODE` ordinal and
+`combat_mode_end_tick` field 24 records the first inactive tick for a timed
+mode. Stand with end tick zero is the additive legacy default. Only Stand and
+melee Attack admit missile blocking; Block and GotHit durations use validated
+per-class frame counts plus usable fast-block or hit-recovery item flags.
+Nondefault mode state adds the tagged
+`godevilution-player-combat-mode-v1` canonical-hash section and round-trips
+through version-1 saves. Hellfire content also selects the native post-block
+rotation RNG draw before Charged Bolt enters its common impact phase.
+
+`PlayerSnapshot.current_action` field 25 is present while a native-timed move,
+attack, ranged attack, cast, death, level transition, or restart-in-town remains
+in progress. It carries the start, effect, ready, and end ticks; whether the
+effect has already resolved; and the action's direction, target, or complete
+cast request.
+Movement reserves the adjacent destination until its end tick, and presentation
+clients expose that reservation as the future or predicted position. Deferred
+casts preserve their spell, source kind, source item, and target so save
+restoration cannot silently substitute a different resource source.
+
+Death action kind 4 is already applied at its start tick, requires zero life
+and Death combat mode, records the killing source as its target, and uses two
+server ticks per activated class death frame. On the current ordinary combat
+death path, the server first cancels movement, applies the activated Gold
+divisor, and creates deterministic entries in the existing repeated
+`Snapshot.world_items` projection. Canonical Gold piles already carried by
+`PlayerSnapshot.inventory` and `inventory_grid` follow native non-full-first
+removal, whole-pile seed reuse, partial-pile RNG, and compaction. This can expose
+a physical odd remainder that differs from the truncated `PlayerSnapshot.gold`
+cache until authoritative pickup recalculates it. Aggregate-only compatibility
+state continues to use the wallet field directly. World-item position follows
+native crawl order and newly created seeds consume `Snapshot.random_state`.
+These states use only the ordinary player/world-item protocol shapes and
+version-1 save envelope; no client computes loss, placement, topology, seed, or
+recovered balance. The action
+clears at the first inactive tick while Death mode remains terminal.
+Level-transition kind 5 is
+already applied after a valid portal changes level and position, records the
+portal as its target, and holds NewLevel for a one-tick barrier before a living
+player returns to Stand. Restart action kind 6 has no target and is admitted
+only from terminal Death after the Death action clears. The server immediately
+applies the content-selected town level and tile, restores the configured Q6
+life capped by maximum life, zeroes mana, clears the active store, and holds
+NewLevel for the configured barrier before Stand. `RestartTownRequested` is the
+empty additive command alternative at field 27; neither client supplies the
+resulting state. Players in Death, NewLevel, or Quit cannot begin a
+native-timed world action, and NewLevel/Quit players are excluded from monster
+and projectile targeting. Present action state adds the tagged
+`godevilution-player-action-v1` canonical-hash section; an absent action adds
+nothing and retains all earlier hashes.
+
+`PlayerSnapshot.held_item` field 26 carries the item owned by the server but
+presented on the local cursor. It is outside `inventory`, `inventory_grid`, and
+the cached Gold total. A partial Gold pickup fills inventory in native order,
+removes the original world entity, and preserves its seed on the held remainder
+without consuming RNG. Death drops the held item before applying ordinary Gold
+loss. Present held state adds the tagged `godevilution-player-held-item-v1`
+canonical-hash section; absence preserves every earlier hash and save shape.
+
+`ItemStateSnapshot.base_name`, `identified_name`, and optional
+`native_cursor_graphic` fields 59 through 61 carry runtime-authored dynamic-item
+presentation. If any dynamic field is present, both names and a native
+byte-representable cursor must be present. Both clients validate and project
+that complete identity; they never derive it from localized catalog data.
+Present dynamic state adds the tagged
+`godevilution-dynamic-item-presentation-v1` canonical-hash section, while an
+ordinary item with all three fields absent retains its previous hash.
+
+After the unconditional held-item drop, an ordinary monster-or-trap death
+applies Gold loss and then removes equipped items in native slot order from
+Head through Chest. Direction rotates left once for every slot, including an
+empty slot; each present item first tries that adjacent tile and then the
+shared radius-1-through-50 crawl. Drops retain the item seed and complete state,
+and project the identified value as world price without consuming RNG. PvP
+death retains equipment, and validated special-level multiplayer suppression
+retains both equipment and Gold while still dropping the held item.
+An unsuppressed lethal player hit instead creates one server-owned PvP ear.
+The victim's validated name supplies native create-info, seed, and runtime
+names; character level supplies value; the activated class supplies the native
+cursor; and external combat/item content supplies the stable ear definition.
+The existing world-item projection carries the complete result, including a
+valid zero seed for short names. Duplicate ear identity is suppressed and the
+death crawl consumes no gameplay RNG.
+
+New Diablo participants also receive the activated class loadout's wallet,
+equipment, belt, inventory, class skill, and learned spell. Item instances use
+deterministic server-derived seeds. Save restoration validates against the
+saved class template before registering a cold participant, so reconnect-time
+class hints and host defaults cannot replace persisted class state.
+
+Server-backed clients do not load or save legacy client state. The server is
+the sole persistence owner for an authenticated session.
+
+## Compatibility Gate
+
+A protocol change is complete only when the schema, generated clients, server,
+state hasher, shared replay fixtures, and relevant documentation agree. The
+language-neutral delivery vector and replay fixtures under `test/fixtures`
+provide the cross-language boundary tests.

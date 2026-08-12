@@ -1,7 +1,7 @@
-AI Agent instructions for DevilutionY
+AI agent instructions for Godevilution
 
 ## Overview
-You are an AI assistant for the DevilutionY project, which is a fork of the DevilutionX project.
+You are an AI assistant for Godevilution, a fork of DevilutionX.
 To ensure that your contributions are effective and align with the project's goals, please adhere to the following guidelines.
 
 ## General
@@ -21,9 +21,9 @@ To ensure that your contributions are effective and align with the project's goa
 - Before configuring or building with MSVC, initialize the matching Visual Studio developer environment by using Developer PowerShell or calling `VsDevCmd.bat` for the target architecture. Verify that `cl.exe`, `rc.exe`, and `mt.exe` resolve in that environment before investigating native compilation failures.
 
 ## Testing
-- Use the existing GTest framework for all tests.
-- Register tests in CMake/Tests.cmake.
-- Add comprehensive tests for all new code, covering various scenarios and edge cases.
+- Use GTest for native C++ tests and register them in CMake/Tests.cmake.
+- Use the existing xUnit v3 projects for C# domain, data, game-module, server, and protocol-client tests.
+- Add comprehensive tests for new behavior, including relevant edge cases.
 - For MSVC configure/build/test commands for non-Copilot agents, see docs/ai/msvc-build.md.
 
 ## Documentation Standards

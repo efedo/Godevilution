@@ -19,7 +19,7 @@ The Visual Studio bundled CMake used by this workspace is:
 Configure `x64-Debug` from a clean tree:
 
 ```bat
-cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S . -B build\x64-Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDISCORD_INTEGRATION=True -DBUILD_TESTING=ON'
+cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S . -B build\x64-Debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON'
 ```
 
 Build the game:
@@ -49,7 +49,7 @@ If CMake regeneration reports dubious repository ownership, use repository-local
 safe-directory flags where possible:
 
 ```bat
-git -c safe.directory=D:/Programming/DevilutionX status --short
+git -c safe.directory=D:/Programming/Godevilution status --short
 ```
 
 If vcpkg reports permission errors under `%LOCALAPPDATA%\vcpkg`, the command
@@ -60,8 +60,14 @@ directory with the server-backed feature enabled. Keep the default build
 unchanged because that feature requires Protobuf:
 
 ```bat
-cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S . -B build\x64-Debug-authoritative -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DDEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON'
+cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S . -B build\x64-Debug-authoritative -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DDEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON -DCMAKE_TOOLCHAIN_FILE="C:\Program Files\Microsoft Visual Studio\18\Community\VC\vcpkg\scripts\buildsystems\vcpkg.cmake"'
 ```
+
+The server-backed option activates the `authoritative-client` vcpkg manifest
+feature. A fresh configure can therefore take several minutes while vcpkg
+builds Protobuf and its dependencies. Keep the toolchain argument present;
+without manifest mode CMake cannot resolve the required Protobuf package on the
+verified Windows setup.
 
 The authoritative client expects the server's content and ruleset hashes.
 On Windows, `tools/run-authoritative-client.ps1` starts a local server on a
@@ -70,8 +76,12 @@ client with matching arguments. A handshake identity mismatch writes a
 timestamped diagnostic report to `authoritative-diagnostics` (or the
 directory supplied with `--authoritative-diagnostics`). The report includes
 the endpoint, working directory, expected identities, and server identities.
-Use `--game-mode legacy` with the same launcher to verify the unchanged local
-path.
+Pass `-Legacy` to the launcher to verify the unchanged local path. The launcher
+requires the native executable path:
+
+```powershell
+tools/run-authoritative-client.ps1 -ClientExecutable build/x64-Debug/devilutionx.exe
+```
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

@@ -1,88 +1,68 @@
-<p align="center">
-  <img width="560" height="144" alt="image" src="https://github.com/user-attachments/assets/7ac73801-ef7b-4cc1-8442-a191a2a0a1ce" />
-</p>
+# Godevilution
 
----
+Godevilution is an experimental fork of
+[DevilutionX](https://github.com/diasurgical/DevilutionX) that is moving the
+Diablo engine from an embedded C++/SDL architecture to a separated,
+server-authoritative C# engine with a Godot C# client.
 
-[![Discord Channel](https://img.shields.io/discord/518540764754608128?color=%237289DA&logo=discord&logoColor=%23FFFFFF)](https://discord.gg/devilutionx)
-[![Downloads](https://img.shields.io/github/downloads/diasurgical/devilutionX/total.svg)](https://github.com/diasurgical/devilutionX/releases/latest)
-[![Codecov](https://codecov.io/gh/diasurgical/devilutionX/branch/master/graph/badge.svg)](https://codecov.io/gh/diasurgical/devilutionX)
+The project preserves the native client as a compatibility and parity harness
+while gameplay systems move to the server. Single-player and multiplayer use
+the same protocol: clients submit intent, and the server owns simulation,
+randomness, world state, inventory, combat, and persistence.
 
-<p align="center">
-<img width="853" height="480" alt="image" src="https://github.com/user-attachments/assets/ee902926-6382-4ee5-b1c2-7947e8b434e9" />
-</p>
+## Repository layout
 
-<sub>*(The health-bar and XP-bar are off by default but can be enabled in the [game settings](https://github.com/diasurgical/DevilutionX/wiki/Config-File). Widescreen can also be disabled if preferred.)*</sub>
+- `server/` - engine-neutral C# domain, data, and composition runtimes; the
+  Diablo game module; generic authoritative host; Diablo protocol adapter;
+  composition executable; persistence; and tests.
+- `godot/` - Godot presentation client and engine-independent protocol client.
+- `protocol/` - shared Protobuf contract, its single generated C# assembly,
+  and language-neutral test vectors.
+- `Source/` - inherited native C++ client and its server-backed compatibility
+  adapter.
+- `server/content/base/` - current external authoritative content pack.
+- `test/fixtures/replay/` - shared C++/C# deterministic replay fixtures.
 
-# What is DevilutionX
+See the [documentation index](docs/README.md),
+[architecture](docs/csharp-authoritative-server-migration.md), and
+[current migration status](docs/migration-status.md).
+Contributor expectations are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-DevilutionX is a port of Diablo and Hellfire that strives to make it simple to run the game while providing engine improvements, bug fixes, and some optional quality of life features.
+## Quick verification
 
-Check out the [manual](https://github.com/diasurgical/devilutionX/wiki) for available features and how to take advantage of them.
+```powershell
+dotnet run --project server/tests/Devilution.Domain.Tests/Devilution.Domain.Tests.csproj
+dotnet run --project server/tests/Devilution.Data.Tests/Devilution.Data.Tests.csproj
+dotnet run --project server/tests/Devilution.Engine.Tests/Devilution.Engine.Tests.csproj
+dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj
+dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
+dotnet build server/src/Devilution.Server/Devilution.Server.csproj
+dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet build godot/Devilution.Client/Devilution.Client.sln
+```
 
-For a full list of changes, see our [changelog](docs/CHANGELOG.md).
+Run the server with:
 
-# How to Install
+```powershell
+dotnet run --project server/src/Devilution.Server/Devilution.Server.csproj
+```
 
-Note: You'll need access to the data from the original game. If you don't have an original CD, you can [buy Diablo from GoG.com](https://www.gog.com/game/diablo) or Battle.net. Alternatively, you can use `spawn.mpq` from the [shareware](https://github.com/diasurgical/devilutionx-assets/releases/latest/download/spawn.mpq) [[2]](http://ftp.blizzard.com/pub/demos/diablosw.exe) version, in place of `DIABDAT.MPQ`, to play the shareware portion of the game.
+The standalone server defaults to multiplayer. Pass
+`-- --game-mode single-player` for a local single-player session; both modes use
+the same authoritative protocol and implementation.
 
-Download the latest [DevilutionX release](https://github.com/diasurgical/devilutionX/releases/latest) and extract the contents to a location of your choosing or [build from source](#building-from-source).
+The Godot client requires Godot 4.7.1 Mono. See [godot/README.md](godot/README.md)
+for the local harness and [docs/native-client.md](docs/native-client.md) for the
+native compatibility client.
 
-- Copy `DIABDAT.MPQ` from the CD or Diablo installation (or [extract it from the GoG installer](https://github.com/diasurgical/devilutionX/wiki/Extracting-MPQs-from-the-GoG-installer)) to the DevilutionX folder.
-- To run the Diablo: Hellfire expansion, you will also need to copy `hellfire.mpq`, `hfmonk.mpq`, `hfmusic.mpq`, and `hfvoice.mpq`.
+## Origin and game data
 
-For more detailed instructions: [Installation Instructions](./docs/installing.md).
+Godevilution derives from DevilutionX and ultimately from the Devilution
+reverse-engineering project. It does not include Blizzard's Diablo game data.
+Running the inherited native client requires legally obtained Diablo assets.
 
-# Contributing
+## License
 
-We are always looking for more people to help with [coding](docs/CONTRIBUTING.md), [documentation](https://github.com/diasurgical/devilutionX/wiki), [testing the latest builds](#test-builds), spreading the word, or simply just hanging out on our [Discord server](https://discord.gg/devilutionx).
-
-# Mods
-
-We hope to provide a good starting point for mods. In addition to the full Devilution source code, we also provide modding tools. Check out the list of known [mods based on DevilutionX](https://github.com/diasurgical/devilutionX/wiki/Mods).
-
-# Test Builds
-
-If you want to help test the latest development version (make sure to back up your files, as these may contain bugs), you can fetch the test build artifact from one of the build servers:
-
-*Note: You must be logged into GitHub to download the attachments!*
-
-[![Linux x86_64](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86_64.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86_64.yml?query=branch%3Amaster)
-[![Linux AArch64](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_aarch64.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_aarch64.yml?query=branch%3Amaster)
-[![Linux x86](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86.yml?query=branch%3Amaster)
-[![Linux x86_64 SDL1](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86_64_SDL1.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Linux_x86_64_SDL1.yml?query=branch%3Amaster)
-[![macOS x86_64](https://github.com/diasurgical/devilutionX/actions/workflows/macOS_x86_64.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/macOS_x86_64.yml?query=branch%3Amaster)
-[![Windows MinGW x64](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MinGW_x64.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MinGW_x64.yml?query=branch%3Amaster)
-[![Windows MinGW x86](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MinGW_x86.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MinGW_x86.yml?query=branch%3Amaster)
-[![Windows MSVC x64](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MSVC_x64.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Windows_MSVC_x64.yml?query=branch%3Amaster)
-[![Android](https://github.com/diasurgical/devilutionX/actions/workflows/Android.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/Android.yml?query=branch%3Amaster)
-[![iOS](https://github.com/diasurgical/devilutionX/actions/workflows/iOS.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/iOS.yml?query=branch%3Amaster)
-[![PS4](https://github.com/diasurgical/devilutionX/actions/workflows/PS4.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/PS4.yml?query=branch%3Amaster)
-[![Original Xbox](https://github.com/diasurgical/devilutionX/actions/workflows/xbox_nxdk.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/xbox_nxdk.yml?query=branch%3Amaster)
-[![Xbox One/Series](https://github.com/diasurgical/devilutionX/actions/workflows/xbox_one.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/xbox_one.yml?query=branch%3Amaster)
-[![Nintendo Switch](https://github.com/diasurgical/devilutionX/actions/workflows/switch.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/switch.yml)
-[![Sony PlayStation Vita](https://github.com/diasurgical/devilutionX/actions/workflows/vita.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/vita.yml)
-[![Nintendo 3DS](https://github.com/diasurgical/devilutionX/actions/workflows/3ds.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/3ds.yml)
-[![Amiga M68K](https://github.com/diasurgical/devilutionX/actions/workflows/amiga-m68k.yml/badge.svg)](https://github.com/diasurgical/devilutionX/actions/workflows/amiga-m68k.yml)
-
-# Building from Source
-
-Want to compile the program by yourself? Great! Simply follow the [build instructions](./docs/building.md).
-
-# Credits
-
-- The original Devilution project: [Devilution](https://github.com/diasurgical/devilution#credits)
-- [Everyone](https://github.com/diasurgical/devilutionX/graphs/contributors) who worked on Devilution/DevilutionX
-- [Nikolay Popov](https://www.instagram.com/nikolaypopovz/) for UI and graphics
-- [WiAParker](https://wiaparker.pl/projekty/diablo-hellfire/) for the Polish voice pack
-- And thanks to all who support the project, report bugs, and help spread the word ❤️
-
-# Legal
-
-DevilutionX is made publicly available and released under the Sustainable Use License (see [LICENSE](LICENSE.md)).
-
-The source code in this repository is for non-commercial use only. If you use the source code, you may not charge others for access to it or any derivative work thereof.
-
-Diablo® - Copyright © 1996 Blizzard Entertainment, Inc. All rights reserved. Diablo and Blizzard Entertainment are trademarks or registered trademarks of Blizzard Entertainment, Inc. in the U.S. and/or other countries.
-
-DevilutionX and any of its maintainers are in no way associated with or endorsed by Blizzard Entertainment®.
+The inherited [Sustainable Use License](LICENSE.md) remains in the repository.
+Its presence is preserved as part of the fork's licensing history; consult a
+qualified professional for legal advice about redistribution or relicensing.

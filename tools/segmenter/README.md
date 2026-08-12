@@ -41,7 +41,7 @@ To re-segment the Japanese translation files:
 tools/segmenter/segment_ja.py --input_path Translations/ja.po
 ```
 
-Additionaly, you can provide a different separator, such as `--separator='|'`, for debugging.
+Additionally, you can provide a different separator, such as `--separator='|'`, for debugging.
 
 This tool performs a number of replacements to make sure interpolations are not affected etc.
 

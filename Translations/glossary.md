@@ -1,74 +1,46 @@
-# Translations glossary
+# Translation Glossary
 
-## Variables
+## Format Variables
 
-There are two types of variables in the text files: `%s`, `%i`. All of these will add something within the single string, here are some examples.
+Source strings use fmt-style replacement fields. Preserve every field and its
+type exactly in the translated string.
 
-`%s` will always be another word. Example: `%s of %s` refers to an created Item which includes affixes. `Tin Cap of the Fool` would be such an item.
-`%i` will always be a number. Example: `Fire hit damage: %i-%i` will indicate how much fire damage a weapon will deal.
+- `{}` inserts a value with default formatting.
+- `{:s}` inserts text.
+- `{:d}` inserts a decimal integer.
+- `{:+d}` inserts a signed decimal integer.
+- Positional fields such as `{0}` and `{1}` identify arguments explicitly and
+  may be reordered when the target language requires it.
 
-**IMPORTANT**: You have to keep those intact and in the same order.
+Do not translate text inside braces, remove fields, add spaces inside a field,
+or change its type. Keep non-positional fields in source order. Literal braces
+must remain escaped in the same way as the source string.
 
-### Example
+## Item Names
 
-Working:
+Affix templates combine base item names with prefixes or suffixes. Languages
+may change surrounding words or use positional fields to fit their grammar, but
+must preserve both item-name arguments.
 
-	`%s' (level %i) just joined the game`
-changed to
-	`%s' (level %i) is now with you.`
+## Names and Terminology
 
-Not working:
+Keep established Diablo names when they read naturally in the target language.
+Use consistent terms for repeated concepts such as life, mana, recovery,
+resistance, and equipment. Prefer the terminology already used by nearby
+translated strings.
 
-	`%s' (level %i) just joined the game`
-changed to
-	`A level %i Character named % s' is now with you.`
-
-## %s of %s
-
-The rather tricky line `%s of %s` is used to create items with pre- and suffixes as mentioned in examples above. If your language has gendered articles it might be advisable to remove the "of" but add a gendered article to each suffix instead. If you do so the line should be changed to `%s %s` and you will have to add the appropriate article to each suffix.
-
-## Adding lines
-
-Unfortunately it is not possible to add new lines for languages outside of quest texts.
-
-## Names
-
-Please try to keep original names intact, however it's up to your judgment to change something that sounds completely wrong in the language you are translating to.
-
-## Coherence
-
-Make sure that you use the same terminology where it's applicable. 
-
-Example:
-
-Good:
-	`fully recover life`
-	`recover life`
-	`fully recover mana`
-	`recover mana`
-
-Bad:
-	`recover all life points`
-	`recover partial life`
-	`fully recover mana`
-	`recover mana`
+New source messages must be extracted into the translation catalog; adding an
+untracked line to a `.po` file does not create a runtime message.
 
 ## References
 
-Don't worry – we all forget details. Here's a list of resources you can use if you are unsure about a thing.
-
-### Creatures
-
-* Diablo Creatures - [Diablo Archive](https://diablo-archive.fandom.com/wiki/Monsters_(Diablo_I))
-* Diablo Unique Creatures - [Diablo Archive](https://diablo-archive.fandom.com/wiki/Category:Diablo_I_Unique_Monsters)
-* Hellfire Creatures - [Diablo Wiki](https://diablo.fandom.com/wiki/Hellfire_Bestiary)
-
-### Items and Equipment References and Pictures
-
-* Diablo Unique Weapons - [Diablo Archive](https://diablo-archive.fandom.com/wiki/Unique_Weapons_(Diablo_I))
-* Diablo Normal Weapons - [Diablo Archive](https://diablo-archive.fandom.com/wiki/Normal_Weapons_(Diablo_I))
-* Diablo and Hellfire Unique Armor - [Diablo Wiki](https://diablo.fandom.com/wiki/List_of_Unique_Body_Armor_(Diablo_I))
-* Diablo Normal Armor - [Diablo Archive](https://diablo-archive.fandom.com/wiki/Normal_Armor_(Diablo_I))
-* Diablo and Hellfire Unique Rings - [Diablo Wiki](https://diablo.fandom.com/wiki/List_of_Unique_Rings_(Diablo_I))
-* Diablo and Hellfire Unique Amulets - [Diablo Wiki](https://diablo.fandom.com/wiki/List_of_Unique_Amulets_(Diablo_I))
-* Affixes - [diablowiki.net](https://diablo2.diablowiki.net/D1_Modifiers)
+- [Diablo creatures](https://diablo-archive.fandom.com/wiki/Monsters_(Diablo_I))
+- [Diablo unique creatures](https://diablo-archive.fandom.com/wiki/Category:Diablo_I_Unique_Monsters)
+- [Hellfire bestiary](https://diablo.fandom.com/wiki/Hellfire_Bestiary)
+- [Diablo unique weapons](https://diablo-archive.fandom.com/wiki/Unique_Weapons_(Diablo_I))
+- [Diablo normal weapons](https://diablo-archive.fandom.com/wiki/Normal_Weapons_(Diablo_I))
+- [Diablo and Hellfire unique armor](https://diablo.fandom.com/wiki/List_of_Unique_Body_Armor_(Diablo_I))
+- [Diablo normal armor](https://diablo-archive.fandom.com/wiki/Normal_Armor_(Diablo_I))
+- [Diablo and Hellfire unique rings](https://diablo.fandom.com/wiki/List_of_Unique_Rings_(Diablo_I))
+- [Diablo and Hellfire unique amulets](https://diablo.fandom.com/wiki/List_of_Unique_Amulets_(Diablo_I))
+- [Diablo affixes](https://diablo2.diablowiki.net/D1_Modifiers)

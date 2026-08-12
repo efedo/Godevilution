@@ -1,3 +1,11 @@
+# Native TXT Data Format
+
+This document describes the TSV dialect and tables consumed by the legacy
+native engine under `assets/txtdata`. Authoritative server content lives under
+`server/content` and has its own validated schemas; see
+`server/content/README.md`. Do not assume that a native table can be copied
+unchanged into an authoritative content pack.
+
 Data files are based on the format used by Diablo 2. This is a format very
 similar to [IANA TSV][iana-tsv] but with fewer restrictions. Existing tools
 such as AFJ Sheet, Diablo 2 Excel File Editor, [D2ExcelPlus][d2-excel-plus],
