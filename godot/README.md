@@ -52,6 +52,9 @@ losing its server-issued resume token or pending command sequence ledger. Pendin
 commands become eligible for immediate retry after the replacement connection's
 authoritative snapshot is received, so the Godot presentation layer does not need to
 recreate its protocol model for a transient disconnect.
+The `Main` presentation node observes transport closure and poll failures, then
+retries with bounded exponential backoff while retaining the same authoritative
+model and pending-command ledger.
 
 An authoritative snapshot may also contain an in-progress movement, attack,
 cast, death, level-transition, or restart-in-town action. The protocol model

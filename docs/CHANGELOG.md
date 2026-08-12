@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add same-instance Godot protocol reconnect, preserving the server-issued resume
   token and pending command sequence ledger while safely replacing the transport;
   cover the resumed handshake, snapshot, and retry path with a live transport test.
+- Make the Godot presentation observe generation-safe transport closure and
+  recover dropped connections with bounded exponential backoff without replacing
+  its authoritative model.
 - Complete leased-host shutdown ownership: server disposal now releases the
   operation barrier and drains retired adapters, and subsequent operations are
   rejected deterministically.
