@@ -127,6 +127,9 @@ public sealed class AuthoritativeProjectile
     /** Apocalypse Boom stops retrying after its first successful hit. */
     public bool ApocalypseHit { get; set; }
 
+    /** Native Ring of Fire stops its crawl after the first missile blocker. */
+    public bool RingOfFireLimitReached { get; set; }
+
     /** Native Guardian attack animation cooldown state (three ticks after firing). */
     public int GuardianState { get; set; }
 

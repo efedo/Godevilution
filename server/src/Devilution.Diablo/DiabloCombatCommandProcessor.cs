@@ -435,6 +435,7 @@ public sealed class DiabloCombatCommandProcessor
             || spell.SpellLevelDamage > 0
             || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                 or AuthoritativeProjectileBehavior.FireWallController
+                or AuthoritativeProjectileBehavior.RingOfFireController
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ChainLightningController
@@ -455,6 +456,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Magi;
         var isMana = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Mana;
+        var isRingOfFire = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.RingOfFireController;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -490,7 +493,7 @@ public sealed class DiabloCombatCommandProcessor
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
+        if ((isFireWall || isRingOfFire || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal
@@ -503,10 +506,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
-        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana
+        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana || isRingOfFire
             ? player.PositionX
             : intent.TargetX;
-        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana
+        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana || isRingOfFire
             ? player.PositionY
             : intent.TargetY;
         if (isResurrection) {
@@ -542,7 +545,7 @@ public sealed class DiabloCombatCommandProcessor
             centerX = healOtherTarget.PositionX;
             centerY = healOtherTarget.PositionY;
         }
-        if (hasDamage && !isSelfCenteredFlash && !isApocalypse) {
+        if (hasDamage && !isSelfCenteredFlash && !isApocalypse && !isRingOfFire) {
             if (intent.TargetEntityId != 0) {
                 world.CombatTargets.TryGetValue(intent.TargetEntityId, out target);
             } else {
@@ -563,12 +566,12 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (!(isFireWall || isFlameWave || isInferno || isChainLightning || isNova) && spell.AreaRadius == 0
+                || (!(isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-            var hasLineOfSight = isFireWall || isFlameWave || isInferno || isChainLightning || isNova || spell.ProjectileSpeed > 0
+            var hasLineOfSight = isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova || spell.ProjectileSpeed > 0
                 ? world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -585,7 +588,7 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = isFireWall || isFlameWave || isInferno || isChainLightning || isNova
+            damageTargets = isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -863,6 +866,15 @@ public sealed class DiabloCombatCommandProcessor
                     spell,
                     centerX,
                     centerY));
+        } else if (isRingOfFire) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateRingOfFireController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel));
         } else if (wallSpreadPosition.HasValue) {
             var projectileEntityId = AllocateProjectileEntityId();
             world.Projectiles.Add(
@@ -1796,6 +1808,31 @@ public sealed class DiabloCombatCommandProcessor
             WallRightY = spreadPosition.Y,
             WallLeftDirection = RotateDirection(wallDirection, -2),
             WallRightDirection = RotateDirection(wallDirection, 2),
+        };
+    }
+
+    private static AuthoritativeProjectile CreateRingOfFireController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            player.PositionX,
+            player.PositionY,
+            0,
+            spell.DamageType,
+            0,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.RingOfFireController,
+            EffectiveSpellLevel = effectiveSpellLevel,
         };
     }
 
@@ -2991,6 +3028,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFireWallController(projectile, players);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.RingOfFireController) {
+                    AdvanceRingOfFireController(projectile, players);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment) {
                     AdvanceFireWallSegment(tick, projectile, players, events);
                     continue;
@@ -3366,6 +3407,67 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (expiresAfterMovement)
             EnterBoneSpiritImpact(projectile);
+    }
+
+    private void AdvanceRingOfFireController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        controller.RemainingTicks--;
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null
+            || !spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.RingOfFireController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        // ProcessRingOfFire computes a damage value that AddFireWall replaces,
+        // but the two native GenerateRnd(10) draws still advance the shared RNG.
+        _ = random.GenerateRnd(10);
+        _ = random.GenerateRnd(10);
+        if (!controller.RingOfFireLimitReached) {
+            foreach (var displacement in DiabloCrawl.EnumerateDisplacements(
+                         spell.RingOfFireSearchRadius,
+                         spell.RingOfFireSearchRadius)) {
+                var targetX = checked(controller.StartX + displacement.X);
+                var targetY = checked(controller.StartY + displacement.Y);
+                if (!world.ContainsPosition(controller.LevelId, targetX, targetY)
+                    || !world.IsWalkable(controller.LevelId, targetX, targetY))
+                    continue;
+                if (world.Objects.Values.Any(@object => !@object.Activated
+                        && !@object.Destroyed
+                        && @object.LevelId == controller.LevelId
+                        && @object.PositionX == targetX
+                        && @object.PositionY == targetY))
+                    continue;
+                if (!world.HasMissileLineOfSight(
+                        controller.LevelId,
+                        controller.PositionX,
+                        controller.PositionY,
+                        targetX,
+                        targetY))
+                    continue;
+                if (world.IsMissileGeometryBlocked(controller.LevelId, targetX, targetY)) {
+                    controller.RingOfFireLimitReached = true;
+                    break;
+                }
+
+                var segmentEntityId = AllocateProjectileEntityId();
+                world.Projectiles.Add(
+                    segmentEntityId,
+                    CreateWallSegment(
+                        segmentEntityId,
+                        controller,
+                        spell,
+                        owner,
+                        targetX,
+                        targetY,
+                        0,
+                        -1));
+            }
+        }
+        world.Projectiles.Remove(controller.EntityId);
     }
 
     private void AdvanceFireWallController(

@@ -511,6 +511,8 @@ message ProjectileSnapshot {
 	int32 elemental_origin_x = 42;
 	int32 elemental_origin_y = 43;
 	int32 guardian_state = 44;
+	// Native Ring of Fire crawl stops after its first missile blocker.
+	bool ring_of_fire_limit_reached = 45;
 }
 
 message StatusEffectSnapshot {

@@ -47,6 +47,7 @@ public enum AuthoritativeProjectileBehavior
     Reflect = 39,
     Magi = 40,
     Mana = 41,
+    RingOfFireController = 42,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -226,6 +227,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native Fire Wall controller lifetime in simulation ticks. */
     public int WallControlLifetime { get; init; }
 
+    /** Native Ring of Fire crawl radius around its caster. */
+    public int RingOfFireSearchRadius { get; init; }
+
     /** Base native Fire Wall segment duration before spell/character scaling. */
     public int WallSegmentBaseDuration { get; init; }
 
@@ -340,6 +344,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
@@ -510,6 +515,32 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.WallCharacterLevelDamageMultiplier != 1)) {
                 throw new InvalidDataException(
                     "Fire Wall behavior requires the native seven-tick controller and shifted fire-segment tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.RingOfFireController
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.RandomDamageRange != 10
+                    || definition.RandomDamageIterationsBonus != 2
+                    || definition.DamageBonus != 2
+                    || definition.DamageScale != 8
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.RingOfFireSearchRadius != 3
+                    || definition.WallControlLifetime != 0
+                    || definition.WallSegmentBaseDuration != 10
+                    || definition.WallSegmentSpellLevelDurationStep != 10
+                    || definition.WallSegmentCharacterLevelDurationStep != 1
+                    || definition.WallSegmentDurationScale != 16
+                    || definition.WallCharacterLevelDamageMultiplier != 1)) {
+                throw new InvalidDataException(
+                    "Ring of Fire behavior requires the native radius-three crawl and Fire Wall segment tuning.");
             }
             if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment)
@@ -1000,6 +1031,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
@@ -1044,7 +1076,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
-                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.RingOfFireController
+                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
@@ -1112,7 +1145,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
-                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.RingOfFireController
+                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
@@ -1146,7 +1180,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
-                    or AuthoritativeProjectileBehavior.FlameWaveController
+                    or AuthoritativeProjectileBehavior.RingOfFireController
+                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
                     or AuthoritativeProjectileBehavior.InfernoSegment
@@ -1166,6 +1201,7 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment)
                 && (definition.WallControlLifetime != 0
@@ -1175,7 +1211,12 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.WallSegmentDurationScale != 0
                     || definition.WallCharacterLevelDamageMultiplier != 0)) {
                 throw new InvalidDataException(
-                    "Fire Wall duration and character-damage tuning requires Fire Wall behavior.");
+                    "Fire Wall duration and character-damage tuning requires Fire Wall or Ring of Fire behavior.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.RingOfFireController
+                && definition.RingOfFireSearchRadius != 0) {
+                throw new InvalidDataException(
+                    "Ring of Fire crawl tuning requires RingOfFireController behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.FlameWaveController
@@ -1398,6 +1439,7 @@ public sealed class AuthoritativeSpellCatalog
             SecondaryProjectileLifetimeSpellLevelDivisor = row.OptionalInt32(
                 "secondary_projectile_lifetime_spell_level_divisor"),
             WallControlLifetime = row.OptionalInt32("wall_control_lifetime"),
+            RingOfFireSearchRadius = row.OptionalInt32("ring_of_fire_search_radius"),
             WallSegmentBaseDuration = row.OptionalInt32("wall_segment_base_duration"),
             WallSegmentSpellLevelDurationStep = row.OptionalInt32(
                 "wall_segment_spell_level_duration_step"),

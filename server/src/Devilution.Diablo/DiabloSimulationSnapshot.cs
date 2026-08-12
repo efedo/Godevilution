@@ -151,6 +151,8 @@ public sealed record DiabloProjectileState(
 
     public bool ApocalypseHit { get; init; }
 
+    public bool RingOfFireLimitReached { get; init; }
+
     public int GuardianState { get; init; }
 
     public int ElementalOriginX { get; init; }
@@ -341,6 +343,7 @@ public sealed partial class DiabloSimulation
                     ApocalypseScanX = projectile.ApocalypseScanX,
                     ApocalypseScanY = projectile.ApocalypseScanY,
                     ApocalypseHit = projectile.ApocalypseHit,
+                    RingOfFireLimitReached = projectile.RingOfFireLimitReached,
                     GuardianState = projectile.GuardianState,
                     ElementalOriginX = projectile.ElementalOriginX,
                     ElementalOriginY = projectile.ElementalOriginY,
@@ -590,6 +593,18 @@ public sealed partial class DiabloSimulation
                         || projectile.WallRightX != 0
                         || projectile.WallRightY != 0
                         || projectile.WallHitDirection is < -1 or > 7))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.RingOfFireController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.RemainingTicks != 1
+                        || projectile.PositionX != projectile.StartX
+                        || projectile.PositionY != projectile.StartY
+                        || projectile.PositionX != projectile.TargetX
+                        || projectile.PositionY != projectile.TargetY))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.FlameWaveController
                     && (projectile.TargetEntityId != 0
                         || projectile.Damage != 0
@@ -875,6 +890,7 @@ public sealed partial class DiabloSimulation
                 ApocalypseScanX = projectile.ApocalypseScanX,
                 ApocalypseScanY = projectile.ApocalypseScanY,
                 ApocalypseHit = projectile.ApocalypseHit,
+                RingOfFireLimitReached = projectile.RingOfFireLimitReached,
                 GuardianState = projectile.GuardianState,
                 ElementalOriginX = projectile.ElementalOriginX,
                 ElementalOriginY = projectile.ElementalOriginY,

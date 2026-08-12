@@ -1271,6 +1271,7 @@ public sealed class DiabloCombatCommandProcessorTests
             world.Projectiles.Values,
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
                 && (projectile.PositionX, projectile.PositionY) == (8, 5));
+        processor.AdvanceTick(2, [player]);
         Assert.Contains(
             world.Projectiles.Values,
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
@@ -1280,7 +1281,7 @@ public sealed class DiabloCombatCommandProcessorTests
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
                 && (projectile.PositionX, projectile.PositionY) == (8, 6));
 
-        for (ulong tick = 2; tick <= 7; tick++)
+        for (ulong tick = 3; tick <= 7; tick++)
             processor.AdvanceTick(tick, [player]);
         Assert.DoesNotContain(
             world.Projectiles.Values,
@@ -1330,6 +1331,78 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.NotEqual(lifeAfterFirstTick, target.HitPointsQ6);
         Assert.NotEmpty(secondTick);
+    }
+
+    [Fact]
+    public void RingOfFireSpawnsNativeRadiusThreeFireWallSegments()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateRingOfFireSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(44, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(44, 0, 10, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        Assert.Equal(
+            AuthoritativeProjectileBehavior.RingOfFireController,
+            Assert.Single(world.Projectiles.Values).Behavior);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.RingOfFireController);
+        var segments = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment)
+            .ToArray();
+        Assert.Equal(24, segments.Length);
+        Assert.Contains(segments, projectile => (projectile.PositionX, projectile.PositionY) == (10, 13));
+        Assert.Contains(segments, projectile => (projectile.PositionX, projectile.PositionY) == (7, 10));
+        Assert.All(segments, projectile => {
+            Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
+            Assert.True(projectile.Damage > 0);
+        });
+    }
+
+    [Fact]
+    public void RingOfFireStopsAtTheFirstNativeMissileBlocker()
+    {
+        var world = new DiabloWorldState(
+            fallbackMissileBlockedCells: [13 * 40 + 10]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateRingOfFireSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(44, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(44, 0, 10, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment);
     }
 
     [Fact]
@@ -1801,7 +1874,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
-        return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(6, 28, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileLifetime = 1,
             ProjectileBehavior = AuthoritativeProjectileBehavior.FireWallController,
@@ -1824,9 +1898,36 @@ public sealed class DiabloCombatCommandProcessorTests
         };
     }
 
+    private static AuthoritativeSpellDefinition CreateRingOfFireSpell()
+    {
+        return new AuthoritativeSpellDefinition(44, 28, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.RingOfFireController,
+            RandomDamageRange = 10,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            DamageBonus = 2,
+            DamageScale = 8,
+            RandomDamageIterationsBonus = 2,
+            RingOfFireSearchRadius = 3,
+            WallSegmentBaseDuration = 10,
+            WallSegmentSpellLevelDurationStep = 10,
+            WallSegmentCharacterLevelDurationStep = 1,
+            WallSegmentDurationScale = 16,
+            WallCharacterLevelDamageMultiplier = 1,
+        };
+    }
+
     private static AuthoritativeSpellDefinition CreateFlameWaveSpell()
     {
-        return new AuthoritativeSpellDefinition(15, 35, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(15, 35, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileSpeed = 16,
             ProjectileLifetime = 1,
@@ -1850,7 +1951,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateInfernoSpell()
     {
-        return new AuthoritativeSpellDefinition(21, 11, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(21, 11, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileSpeed = 32,
             ProjectileLifetime = 256,
@@ -1872,7 +1974,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateChainLightningSpell()
     {
-        return new AuthoritativeSpellDefinition(16, 30, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(16, 30, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Lightning,
             ProjectileSpeed = 32,
             ProjectileLifetime = 256,
@@ -1897,7 +2000,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateNovaSpell()
     {
-        return new AuthoritativeSpellDefinition(18, 60, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(18, 60, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Lightning,
             ProjectileSpeed = 16,
             ProjectileLifetime = 255,
@@ -1924,7 +2028,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateApocalypseSpell()
     {
-        return new AuthoritativeSpellDefinition(25, 150, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(25, 150, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Magic,
             ProjectileLifetime = 15,
             ProjectileBehavior = AuthoritativeProjectileBehavior.ApocalypseController,
