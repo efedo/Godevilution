@@ -101,6 +101,24 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ProjectsServerOwnedArmedTrapStateForPresentation()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                Objects = {
+                    new ObjectSnapshot { EntityId = 20, ObjectId = 4, TrapArmed = true },
+                    new ObjectSnapshot { EntityId = 21, ObjectId = 5, TrapArmed = false },
+                },
+            }));
+
+        var trap = Assert.Single(model.ArmedTrapObjects);
+        Assert.Equal(20U, trap.EntityId);
+        Assert.True(trap.TrapArmed);
+    }
+
+    [Fact]
     public void RetainsCharacterNamesAndNativeDynamicEarPresentation()
     {
         var model = new AuthoritativeClientModel();

@@ -10,6 +10,7 @@ public partial class HudPresentation : CanvasLayer
     private const uint IdentifySpellId = 5;
     private const uint RepairSpellId = 26;
     private const uint RechargeSpellId = 27;
+    private const uint TrapDisarmSpellId = 28;
     private const int InventoryColumns = 10;
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
@@ -30,6 +31,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button repairSelected = new() { Text = "Repair selected" };
     private readonly Button rechargeSelected = new() { Text = "Recharge selected" };
     private readonly Button identifySelected = new() { Text = "Identify selected" };
+    private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
     private readonly Button refillMana = new() { Text = "Refill mana" };
@@ -42,6 +44,7 @@ public partial class HudPresentation : CanvasLayer
     private uint activeStoreId;
     private uint? selectedStoreSlot;
     private uint? availableObjectEntityId;
+    private uint? availableTrapEntityId;
     private uint? availableQuestId;
     private int selectedInventoryIndex = -1;
 
@@ -51,6 +54,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? RepairItemRequested;
     public event Action<uint>? RechargeItemRequested;
     public event Action<uint>? IdentifyItemRequested;
+    public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
     public event Action<uint>? AdvanceQuestRequested;
@@ -87,7 +91,7 @@ public partial class HudPresentation : CanvasLayer
         var controls = new GridContainer { Columns = 2 };
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
-            rechargeSelected, identifySelected, interactObject, advanceQuest,
+            rechargeSelected, identifySelected, disarmTrap, interactObject, advanceQuest,
             refillMana, dropHeld, clearEvents,
         })
             controls.AddChild(button);
@@ -118,6 +122,10 @@ public partial class HudPresentation : CanvasLayer
         repairSelected.Pressed += () => InvokeInventoryAction(RepairItemRequested);
         rechargeSelected.Pressed += () => InvokeInventoryAction(RechargeItemRequested);
         identifySelected.Pressed += () => InvokeInventoryAction(IdentifyItemRequested);
+        disarmTrap.Pressed += () => {
+            if (availableTrapEntityId is { } entityId)
+                DisarmTrapRequested?.Invoke(entityId);
+        };
         interactObject.Pressed += () => {
             if (availableObjectEntityId is { } entityId)
                 OperateObjectRequested?.Invoke(entityId);
@@ -173,6 +181,9 @@ public partial class HudPresentation : CanvasLayer
         ApplyStore(model.Snapshot?.ActiveStore);
         dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
         availableObjectEntityId = model.Snapshot?.Objects.FirstOrDefault(@object => !@object.Activated)?.EntityId;
+        availableTrapEntityId = model.ArmedTrapObjects
+            .FirstOrDefault(@object => player is not null && @object.LevelId == player.LevelId)
+            ?.EntityId;
         availableQuestId = model.Snapshot?.Quests.FirstOrDefault(quest => !quest.Completed)?.QuestId;
 
         var connected = client?.IsConnected == true;
@@ -182,6 +193,7 @@ public partial class HudPresentation : CanvasLayer
         var hasIdentifyAbility = player?.AbilitySpellId == IdentifySpellId;
         var hasRepairAbility = player?.AbilitySpellId == RepairSpellId;
         var hasRechargeAbility = player?.AbilitySpellId == RechargeSpellId;
+        var hasTrapDisarmAbility = player?.AbilitySpellId == TrapDisarmSpellId;
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
@@ -204,6 +216,7 @@ public partial class HudPresentation : CanvasLayer
         identifySelected.Disabled = !connected
             || !hasSelectedInventory
             || (activeStore is null && !hasIdentifyAbility);
+        disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;
         refillMana.Disabled = !connected;

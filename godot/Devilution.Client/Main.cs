@@ -49,6 +49,9 @@ public partial class Main : Node2D
                 Source = ResolveItemServiceSource(IdentifySpellId),
             },
         });
+        hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
+            DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = entityId },
+        });
         hud.MoveInventoryItemRequested += (inventoryIndex, targetCell) => QueueIfConnected(new Command { MoveInventoryItemRequested = new MoveInventoryItemRequested { InventoryIndex = inventoryIndex, TargetCell = targetCell } });
         hud.OperateObjectRequested += entityId => QueueIfConnected(new Command { OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = entityId } });
         hud.AdvanceQuestRequested += questId => QueueIfConnected(new Command { AdvanceQuestRequested = new AdvanceQuestRequested { QuestId = questId } });

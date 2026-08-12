@@ -101,6 +101,11 @@ Stone Curse is also snapshot-only in Godot. Petrified monsters receive a stone
 tint and halo, and behavior-`13` duration/shatter controllers receive a distinct
 projectile treatment. Godot does not select immunity, advance the timer, or
 release movement locally.
+Rogue Trap Disarm is likewise server-owned: Godot reads the additive
+`ObjectSnapshot.trap_armed` field, marks armed objects with a red overlay, and
+enables the typed disarm command only for a Rogue with ability spell `28` on
+the same level. The server validates range, ability identity, and state change;
+Godot never clears the trap locally.
 Teleport behavior `9` and Phasing behavior `15` are invisible movement
 controllers. Godot renders only the resulting authoritative player coordinates
 and never predicts either relocation.

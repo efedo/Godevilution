@@ -16,6 +16,11 @@ public sealed class AuthoritativeClientModel
 
     public IReadOnlyList<GameEvent> RecentEvents => recentEvents;
 
+    /** Server-owned armed traps available to presentation code for typed interaction. */
+    public IReadOnlyList<ObjectSnapshot> ArmedTrapObjects => Snapshot?.Objects
+        .Where(@object => @object.TrapArmed)
+        .ToArray() ?? [];
+
     public ulong CurrentTick => Snapshot?.Tick ?? 0;
 
     /** The server puts the receiving participant first in every snapshot. */

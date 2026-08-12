@@ -177,7 +177,14 @@ public partial class WorldPresentation : Node2D
     private void DrawObject(ObjectSnapshot @object)
     {
         var color = @object.Activated ? new Color("4b4b62") : new Color("a68bca");
-        DrawTextureOrRect("object", PositionFor(@object.EntityId, @object.PositionX, @object.PositionY), new Vector2(22, 22), color, true);
+        var center = PositionFor(@object.EntityId, @object.PositionX, @object.PositionY);
+        DrawTextureOrRect("object", center, new Vector2(22, 22), color, true);
+        if (@object.TrapArmed) {
+            var trapColor = new Color("f05d5e");
+            DrawArc(center, 15, 0, Mathf.Tau, 20, trapColor, 3);
+            DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
+            DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
+        }
     }
 
     private void DrawProjectile(ProjectileSnapshot projectile)
