@@ -146,14 +146,14 @@ The coordinated ruleset runtime builds a candidate entirely off to the side:
 Data composition, all-or-nothing module registration, deterministic identity,
 and a caller-provided game-specific activation must all succeed before one
 locked publication replaces the active tuple. Stage-specific reload failures
-return the exact previous activation. The server uses this path at startup;
-live replacement still requires host session migration and safe retirement of
-the previous game adapter before it can be exposed operationally. Engine now
-provides a generation lease for each in-flight operation, and the generic host
-adapter routes every command, tick, snapshot, event, save, and participant
-operation through that lease. Replaced activations leave `DrainRetired` only
-after all leases are released; the host still owns session migration and
-disposal of the returned game-specific target.
+return the exact previous activation. Engine accepts a host-owned candidate
+preparation callback, so session state can be validated against the candidate
+before publication. The generic host provides a read/write operation barrier,
+exports initialized sessions from the old adapter, imports them into the
+candidate, and updates the handshake identity only after migration succeeds.
+Generation leases keep replaced activations alive until all in-flight
+operations release them; the host drains and disposes those targets through its
+injected disposal policy.
 
 Snapshot hashing treats static catalog portals as content rather than mutable
 simulation state, preserving legacy replay vectors. Owned, expiring portals are

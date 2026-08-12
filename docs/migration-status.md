@@ -7,18 +7,18 @@ Status date: 2026-08-12
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, and resume precedence | Broaden reconnect/soak compatibility tests and eventually separate content/ruleset identity in a new protocol version |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state | Add mod reload, Hellfire activation, broader quest selection, and longer soak fixtures |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state | Add Hellfire activation, broader quest selection, and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
 | Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm presentation and a stable authoritative spell-source selector | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
-| Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and add host-controlled live reload with safe session migration |
-| Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Integrate live replacement with host session migration and safe old-target disposal while keeping filesystem/reflection outside Engine |
+| Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
+| Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
 | External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, and Town Portal spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
-| Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Add replacement-retirement policy and further first-party capabilities |
+| Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Broaden replacement-retirement fixtures and add further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
 
@@ -171,13 +171,13 @@ generic network and operational behavior. Remaining debt is behavioral and
 extensibility work rather than a collapsed project boundary: the adapter still
 retains the legacy-named protocol executor and replay helpers, format-1 packages
 provide gameplay modules rather than host adapters, live ruleset replacement
-  now exposes generation leases and explicit retired-target draining, and the
-  generic host routes each adapter operation through a lease; host session
-  migration and safe old-target disposal still need integration, and authoritative
-content/gameplay coverage is still partial. Static content portal routes remain
-  protocol-visible without perturbing legacy replay hashes; owned, expiring portal
-  state is hash-visible, and the base-content replay golden vectors track the
-  current manifest. Cast source ownership and immediate
+  now exposes transactional candidate preparation, a host operation barrier,
+  save-based session migration, handshake identity publication, generation
+  leases, and explicit retired-target disposal; broader reload fixtures and
+  authoritative content/gameplay coverage are still partial. Static content
+  portal routes remain protocol-visible without perturbing legacy replay hashes;
+  owned, expiring portal state is hash-visible, and the base-content replay
+  golden vectors track the current manifest. Cast source ownership and immediate
 resource consumption are now authoritative, and every directly castable base
 loadout source resolves during activation, but the spell catalog still models
 only the current healing, damage, area, status, and projectile slice. Charged

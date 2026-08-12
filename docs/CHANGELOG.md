@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Add host-controlled ruleset replacement with transactional candidate
+  preparation, save-based session migration, handshake identity publication,
+  operation barriers, generation-safe retired-target disposal, and regression
+  coverage for failed and concurrent migrations.
 - Preserve legacy replay hashes for static catalog portals while hashing owned,
   expiring Town Portal state, and refresh all base-content replay golden vectors
   to the current manifest and authoritative snapshot projections.
