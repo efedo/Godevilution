@@ -436,6 +436,7 @@ public sealed class DiabloCombatCommandProcessor
             || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                 or AuthoritativeProjectileBehavior.FireWallController
                 or AuthoritativeProjectileBehavior.RingOfFireController
+                or AuthoritativeProjectileBehavior.ImmolationController
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ChainLightningController
@@ -458,6 +459,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Mana;
         var isRingOfFire = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.RingOfFireController;
+        var isImmolation = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.ImmolationController;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -875,6 +878,17 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     spell,
                     effectiveSpellLevel));
+        } else if (isImmolation) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateImmolationController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel,
+                    centerX,
+                    centerY));
         } else if (wallSpreadPosition.HasValue) {
             var projectileEntityId = AllocateProjectileEntityId();
             world.Projectiles.Add(
@@ -3032,6 +3046,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceRingOfFireController(projectile, players);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.ImmolationController) {
+                    AdvanceImmolationController(projectile);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment) {
                     AdvanceFireWallSegment(tick, projectile, players, events);
                     continue;
@@ -3468,6 +3486,113 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         world.Projectiles.Remove(controller.EntityId);
+    }
+
+    private AuthoritativeProjectile CreateImmolationController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < spell.RandomDamageIterationsBonus;
+             iteration++)
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        damage = checked(
+            damage
+            + checked((int)player.CharacterLevel) / spell.CharacterLevelDamageDivisor
+            + spell.DamageBonus);
+        damage /= spell.MagicDamageDivisor;
+        for (var level = 0; level < effectiveSpellLevel; level++)
+            damage = checked(damage + damage / spell.SpellEffectScaleDivisor);
+        damage = checked(damage * spell.DamageScale);
+
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        var direction = GetDirection(player.PositionX, player.PositionY, targetX, targetY);
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var speed = checked(
+            spell.ProjectileSpeed
+            + Math.Min(
+                effectiveSpellLevel * spell.ProjectileSpeedSpellLevelStep,
+                spell.ProjectileSpeedMaximumBonus));
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            speed);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.ImmolationControllerLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.ImmolationController,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateImmolationBall(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY,
+            spell.ProjectileSpeed);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            0,
+            controller.SpellId,
+            controller.LevelId,
+            controller.PositionX,
+            controller.PositionY,
+            targetX,
+            targetY,
+            controller.Damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.ProjectileLifetime)) {
+            // FireballBow uses the native persistent fireball movement and impact path.
+            Behavior = AuthoritativeProjectileBehavior.Fireball,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = controller.EffectiveSpellLevel,
+        };
     }
 
     private void AdvanceFireWallController(
@@ -4280,6 +4405,60 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         world.Projectiles.Remove(controller.EntityId);
+    }
+
+    private void AdvanceImmolationController(AuthoritativeProjectile controller)
+    {
+        controller.RemainingTicks--;
+        if (!spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ImmolationController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var quarterRadius = new List<(int X, int Y)>();
+        for (var y = 0; y <= spell.ImmolationSearchRadius; y++)
+            quarterRadius.Add((spell.ImmolationSearchRadius, y));
+        for (var x = spell.ImmolationSearchRadius - 1; x >= 0; x--)
+            quarterRadius.Add((x, spell.ImmolationSearchRadius));
+        foreach (var quarter in quarterRadius) {
+            var offsets = new[] {
+                quarter,
+                (-quarter.X, -quarter.Y),
+                (-quarter.X, quarter.Y),
+                (quarter.X, -quarter.Y),
+            };
+            foreach (var offset in offsets) {
+                var entityId = AllocateProjectileEntityId();
+                world.Projectiles.Add(
+                    entityId,
+                    CreateImmolationBall(
+                        entityId,
+                        controller,
+                        spell,
+                        checked(controller.PositionX + offset.Item1),
+                        checked(controller.PositionY + offset.Item2)));
+            }
+        }
+
+        if (controller.RemainingTicks == 0) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+        var visitedTiles = MoveNativeProjectile(controller);
+        if (visitedTiles.Count > 0) {
+            var finalTile = visitedTiles[^1];
+            controller.PositionX = finalTile.X;
+            controller.PositionY = finalTile.Y;
+            controller.TraveledX = finalTile.TraveledX;
+            controller.TraveledY = finalTile.TraveledY;
+        }
+        if (!world.ContainsPosition(controller.LevelId, controller.PositionX, controller.PositionY)
+            || world.IsMissileBlocked(
+                controller.LevelId,
+                controller.PositionX,
+                controller.PositionY))
+            world.Projectiles.Remove(controller.EntityId);
     }
 
     private void AdvanceApocalypseController(

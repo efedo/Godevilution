@@ -48,6 +48,7 @@ public enum AuthoritativeProjectileBehavior
     Magi = 40,
     Mana = 41,
     RingOfFireController = 42,
+    ImmolationController = 43,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -275,6 +276,11 @@ public sealed record AuthoritativeSpellDefinition(
     /** Number of Nova projectiles emitted by one controller. */
     public int NovaProjectileCount { get; init; }
 
+    /** Native Immolation controller lifetime, radial search radius, and fan-out count. */
+    public int ImmolationControllerLifetime { get; init; }
+    public int ImmolationSearchRadius { get; init; }
+    public int ImmolationProjectileCount { get; init; }
+
     /** Native Apocalypse scan radius in tiles. */
     public int ApocalypseSearchRadius { get; init; }
 
@@ -345,6 +351,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.RingOfFireController
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
@@ -353,6 +360,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom;
             if (hasDamage && definition.Range <= 0)
@@ -541,6 +549,33 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.WallCharacterLevelDamageMultiplier != 1)) {
                 throw new InvalidDataException(
                     "Ring of Fire behavior requires the native radius-three crawl and Fire Wall segment tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ImmolationController
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileSpeedSpellLevelStep != 1
+                    || definition.ProjectileSpeedMaximumBonus != 34
+                    || definition.ProjectileLifetime != 256
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.RandomDamageRange != 6
+                    || definition.RandomDamageIterationsBonus != 5
+                    || definition.CharacterLevelDamageDivisor != 1
+                    || definition.DamageBonus != 5
+                    || definition.MagicDamageDivisor != 2
+                    || definition.SpellEffectScaleDivisor != 8
+                    || definition.DamageScale != 64
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ImmolationControllerLifetime != 1
+                    || definition.ImmolationSearchRadius != 4
+                    || definition.ImmolationProjectileCount != 36)) {
+                throw new InvalidDataException(
+                    "Immolation behavior requires the native moving fire-burst tuning.");
             }
             if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment)
@@ -1032,6 +1067,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.RingOfFireController
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
@@ -1040,6 +1076,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
                     or AuthoritativeProjectileBehavior.Elemental
@@ -1056,7 +1093,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Elemental
                     or AuthoritativeProjectileBehavior.GuardianController
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController)
                 && (definition.MagicDamageDivisor != 0
                     || definition.SpellLevelDamage != 0
                     || definition.MagicDamageReductionDivisor != 0)) {
@@ -1085,10 +1123,12 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
                     or AuthoritativeProjectileBehavior.Elemental
-                    or AuthoritativeProjectileBehavior.GuardianController)
+                    or AuthoritativeProjectileBehavior.GuardianController
+                    or AuthoritativeProjectileBehavior.ImmolationController)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -1100,7 +1140,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController)
                 && definition.CharacterLevelDamageDivisor != 0) {
                 throw new InvalidDataException(
                     "Character-level damage scaling requires Flash, Fireball, HolyBolt, or Nova projectile behavior.");
@@ -1132,6 +1173,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
@@ -1154,6 +1196,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && definition.DamageScale != 1) {
@@ -1162,7 +1205,8 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Fireball
-                    or AuthoritativeProjectileBehavior.HolyBolt)
+                    or AuthoritativeProjectileBehavior.HolyBolt
+                    or AuthoritativeProjectileBehavior.ImmolationController)
                 && (definition.ProjectileSpeedSpellLevelStep != 0
                     || definition.ProjectileSpeedMaximumBonus != 0)) {
                 throw new InvalidDataException(
@@ -1189,6 +1233,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
                     or AuthoritativeProjectileBehavior.Elemental
@@ -1251,6 +1296,13 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.NovaProjectileCount != 0)) {
                 throw new InvalidDataException(
                     "Nova tuning requires Nova behavior.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.ImmolationController
+                && (definition.ImmolationControllerLifetime != 0
+                    || definition.ImmolationSearchRadius != 0
+                    || definition.ImmolationProjectileCount != 0)) {
+                throw new InvalidDataException(
+                    "Immolation tuning requires Immolation behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.ApocalypseController
@@ -1463,6 +1515,9 @@ public sealed class AuthoritativeSpellCatalog
             NovaControllerLifetime = row.OptionalInt32("nova_controller_lifetime"),
             NovaSearchRadius = row.OptionalInt32("nova_search_radius"),
             NovaProjectileCount = row.OptionalInt32("nova_projectile_count"),
+            ImmolationControllerLifetime = row.OptionalInt32("immolation_controller_lifetime"),
+            ImmolationSearchRadius = row.OptionalInt32("immolation_search_radius"),
+            ImmolationProjectileCount = row.OptionalInt32("immolation_projectile_count"),
             ApocalypseControllerLifetime = row.OptionalInt32("apocalypse_controller_lifetime"),
             ApocalypseSearchRadius = row.OptionalInt32("apocalypse_search_radius"),
             RageControllerLifetime = row.OptionalInt32("rage_controller_lifetime"),

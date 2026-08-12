@@ -1406,6 +1406,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ImmolationEmitsNativeMovingFireballBurst()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateImmolationSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(45, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(45, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        Assert.Equal(
+            AuthoritativeProjectileBehavior.ImmolationController,
+            Assert.Single(world.Projectiles.Values).Behavior);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ImmolationController);
+        var fireballs = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.Fireball)
+            .ToArray();
+        Assert.Equal(36, fireballs.Length);
+        Assert.All(fireballs, projectile => {
+            Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
+            Assert.True(projectile.Damage > 0);
+            Assert.Equal(256U, projectile.RemainingTicks);
+        });
+    }
+
+    [Fact]
     public void FlameWaveControllerPlacesNativeMovingBranches()
     {
         var world = new DiabloWorldState();
@@ -1921,6 +1963,31 @@ public sealed class DiabloCombatCommandProcessorTests
             WallSegmentCharacterLevelDurationStep = 1,
             WallSegmentDurationScale = 16,
             WallCharacterLevelDamageMultiplier = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateImmolationSpell()
+    {
+        return new AuthoritativeSpellDefinition(45, 1, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ImmolationController,
+            RandomDamageRange = 6,
+            MagicDamageDivisor = 2,
+            DamageBonus = 5,
+            CharacterLevelDamageDivisor = 1,
+            RandomDamageIterationsBonus = 5,
+            SpellEffectScaleDivisor = 8,
+            DamageScale = 64,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ProjectileSpeedSpellLevelStep = 1,
+            ProjectileSpeedMaximumBonus = 34,
+            ImmolationControllerLifetime = 1,
+            ImmolationSearchRadius = 4,
+            ImmolationProjectileCount = 36,
         };
     }
 
