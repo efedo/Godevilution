@@ -519,6 +519,12 @@ nine-cell fire burst, and carries its current target, burst origin, phase, and
 movement state through snapshots, saves, hashes, and the existing projectile
 protocol fields.
 
+Schema 0.41 adds Guardian (spell ID `7`). The server creates a typed stationary
+turret, preserves the native spawn search, duration, six-tile scan cadence,
+Firebolt emission, line-of-sight filtering, and RNG ordering, and carries its
+controller state through snapshots, saves, hashes, and the existing projectile
+protocol fields.
+
 Schema 0.39 adds Hellfire Rage (spell ID `22`). The server creates a typed
 active/cooldown controller, preserves the native character-level lifetime
 formula and minimum-life Q6 self-damage on cooldown expiry, rejects recasts

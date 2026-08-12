@@ -127,6 +127,9 @@ public sealed class AuthoritativeProjectile
     /** Apocalypse Boom stops retrying after its first successful hit. */
     public bool ApocalypseHit { get; set; }
 
+    /** Native Guardian attack animation cooldown state (three ticks after firing). */
+    public int GuardianState { get; set; }
+
     /** Initial Elemental destination retained for native burst line-of-sight checks. */
     public int ElementalOriginX { get; init; }
 

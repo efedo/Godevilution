@@ -248,7 +248,13 @@ collision, or apply damage.
 A Chain Lightning cast uses behavior value `28` for its one-tick fan-out and
 value `29` for each moving Lightning-compatible bolt. The server enumerates the
 native crawl radius, creates the target bolts, and retains the chain spell ID
-and effective level through existing projectile fields. Resulting stationary
+and effective level through existing projectile fields.
+
+A Guardian cast uses behavior value `36` for its stationary turret controller.
+`ProjectileSnapshot.guardian_state` field 44 carries the native three-tick
+post-shot animation countdown; all spawn, scan, line-of-sight, RNG, and
+Firebolt emission decisions remain server-owned.
+
 Lightning segments continue to use behavior `4`; clients never choose targets,
 consume RNG, or resolve collision and damage.
 

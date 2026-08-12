@@ -41,6 +41,7 @@ public enum AuthoritativeProjectileBehavior
     ApocalypseBoom = 33,
     RageController = 34,
     Elemental = 35,
+    GuardianController = 36,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -282,6 +283,17 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native Elemental character-level damage multiplier before spell scaling. */
     public int ElementalCharacterLevelDamageMultiplier { get; init; }
+
+    /** Native Guardian controller duration and targeting constants. */
+    public int GuardianDurationTickScale { get; init; }
+    public int GuardianMinimumDuration { get; init; }
+    public int GuardianMaximumDuration { get; init; }
+    public int GuardianCharacterLevelDurationDivisor { get; init; }
+    public int GuardianSpawnSearchRadius { get; init; }
+    public int GuardianTargetSearchRadius { get; init; }
+    public int GuardianFireInterval { get; init; }
+    public int GuardianProjectileSpeedLevelStep { get; init; }
+    public int GuardianProjectileSpeedMaximumBonus { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -370,6 +382,15 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.RageSelfDamageCharacterLevel < 0
                 || definition.ElementalRetargetLifetime < 0
                 || definition.ElementalCharacterLevelDamageMultiplier < 0
+                || definition.GuardianDurationTickScale < 0
+                || definition.GuardianMinimumDuration < 0
+                || definition.GuardianMaximumDuration < 0
+                || definition.GuardianCharacterLevelDurationDivisor < 0
+                || definition.GuardianSpawnSearchRadius < 0
+                || definition.GuardianTargetSearchRadius < 0
+                || definition.GuardianFireInterval < 0
+                || definition.GuardianProjectileSpeedLevelStep < 0
+                || definition.GuardianProjectileSpeedMaximumBonus < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
                 throw new InvalidDataException(
@@ -625,6 +646,36 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ElementalCharacterLevelDamageMultiplier != 2)) {
                 throw new InvalidDataException(
                     "Elemental behavior requires the native retargeting fire-burst tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.GuardianController
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range <= 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileLifetime != 256
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.RandomDamageRange != 10
+                    || definition.MagicDamageDivisor != 8
+                    || definition.SpellLevelDamage != 1
+                    || definition.DamageBonus != 1
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ProjectileImpactLifetime != 1
+                    || definition.GuardianDurationTickScale != 16
+                    || definition.GuardianMinimumDuration != 30
+                    || definition.GuardianMaximumDuration != 30
+                    || definition.GuardianCharacterLevelDurationDivisor != 2
+                    || definition.GuardianSpawnSearchRadius != 5
+                    || definition.GuardianTargetSearchRadius != 6
+                    || definition.GuardianFireInterval != 16
+                    || definition.GuardianProjectileSpeedLevelStep != 2
+                    || definition.GuardianProjectileSpeedMaximumBonus != 47)) {
+                throw new InvalidDataException(
+                    "Guardian behavior requires the native turret and Firebolt tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
@@ -914,7 +965,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
                     or AuthoritativeProjectileBehavior.ApocalypseController
-                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom
+                    or AuthoritativeProjectileBehavior.Elemental
+                    or AuthoritativeProjectileBehavior.GuardianController)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -925,6 +978,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.BloodStar
                     or AuthoritativeProjectileBehavior.BoneSpirit
                     or AuthoritativeProjectileBehavior.Elemental
+                    or AuthoritativeProjectileBehavior.GuardianController
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.MagicDamageDivisor != 0
@@ -956,7 +1010,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.NovaBall
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
-                    or AuthoritativeProjectileBehavior.Elemental)
+                    or AuthoritativeProjectileBehavior.Elemental
+                    or AuthoritativeProjectileBehavior.GuardianController)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -1057,7 +1112,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.NovaBall
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
-                    or AuthoritativeProjectileBehavior.Elemental)
+                    or AuthoritativeProjectileBehavior.Elemental
+                    or AuthoritativeProjectileBehavior.GuardianController)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -1131,6 +1187,19 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ElementalCharacterLevelDamageMultiplier != 0)) {
                 throw new InvalidDataException(
                     "Elemental tuning requires Elemental behavior.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.GuardianController
+                && (definition.GuardianDurationTickScale != 0
+                    || definition.GuardianMinimumDuration != 0
+                    || definition.GuardianMaximumDuration != 0
+                    || definition.GuardianCharacterLevelDurationDivisor != 0
+                    || definition.GuardianSpawnSearchRadius != 0
+                    || definition.GuardianTargetSearchRadius != 0
+                    || definition.GuardianFireInterval != 0
+                    || definition.GuardianProjectileSpeedLevelStep != 0
+                    || definition.GuardianProjectileSpeedMaximumBonus != 0)) {
+                throw new InvalidDataException(
+                    "Guardian tuning requires Guardian behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1309,6 +1378,18 @@ public sealed class AuthoritativeSpellCatalog
                 "elemental_retarget_lifetime"),
             ElementalCharacterLevelDamageMultiplier = row.OptionalInt32(
                 "elemental_character_level_damage_multiplier"),
+            GuardianDurationTickScale = row.OptionalInt32("guardian_duration_tick_scale"),
+            GuardianMinimumDuration = row.OptionalInt32("guardian_minimum_duration"),
+            GuardianMaximumDuration = row.OptionalInt32("guardian_maximum_duration"),
+            GuardianCharacterLevelDurationDivisor = row.OptionalInt32(
+                "guardian_character_level_duration_divisor"),
+            GuardianSpawnSearchRadius = row.OptionalInt32("guardian_spawn_search_radius"),
+            GuardianTargetSearchRadius = row.OptionalInt32("guardian_target_search_radius"),
+            GuardianFireInterval = row.OptionalInt32("guardian_fire_interval"),
+            GuardianProjectileSpeedLevelStep = row.OptionalInt32(
+                "guardian_projectile_speed_level_step"),
+            GuardianProjectileSpeedMaximumBonus = row.OptionalInt32(
+                "guardian_projectile_speed_maximum_bonus"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

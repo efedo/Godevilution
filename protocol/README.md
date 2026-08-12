@@ -197,6 +197,9 @@ Windows toolchain command.
   existing projectile phase and remaining-tick fields carry its resumable state.
   Elemental uses behavior value `35`; existing target, phase, movement, and
   new burst-origin fields carry its retargeting and persistent fire-burst state.
+  Guardian uses behavior value `36` for its stationary turret controller;
+  `ProjectileSnapshot.guardian_state` field 44 carries its firing animation
+  countdown through snapshots and the wire protocol.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

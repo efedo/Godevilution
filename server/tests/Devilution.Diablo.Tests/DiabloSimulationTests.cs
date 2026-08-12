@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.40.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.41.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.40.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.41.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -927,6 +927,50 @@ public sealed class DiabloSimulationTests
         Assert.Equal((14, 10), (restored.TargetX, restored.TargetY));
         Assert.Equal((12, 10), (restored.ElementalOriginX, restored.ElementalOriginY));
         Assert.Equal((123, -456), (restored.VelocityX, restored.VelocityY));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsGuardianControllerState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x8000000E,
+                        7,
+                        0,
+                        7,
+                        0,
+                        12,
+                        10,
+                        12,
+                        10,
+                        0,
+                        AuthoritativeDamageType.Fire,
+                        0,
+                        32) {
+                        Behavior = AuthoritativeProjectileBehavior.GuardianController,
+                        OriginalDirection = 3,
+                        GuardianState = 2,
+                        EffectiveSpellLevel = 1,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, restored.Behavior);
+        Assert.Equal(2, restored.GuardianState);
+        Assert.Equal(32U, restored.RemainingTicks);
+        Assert.Equal((12, 10), (restored.PositionX, restored.PositionY));
     }
 
     [Fact]

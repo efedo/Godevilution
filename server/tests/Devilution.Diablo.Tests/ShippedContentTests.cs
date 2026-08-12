@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.40.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.41.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }

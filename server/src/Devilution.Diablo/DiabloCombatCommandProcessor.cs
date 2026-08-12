@@ -86,6 +86,17 @@ public sealed class DiabloCombatCommandProcessor
         (0, -1),
     ];
 
+    private static readonly (int X, int Y)[] GuardianArc = [
+        (6, 0), (5, 0), (4, 0), (3, 0), (2, 0), (1, 0),
+        (6, 1), (5, 1), (4, 1), (3, 1), (6, 2), (2, 1),
+        (5, 2), (6, 3), (4, 2), (5, 3), (3, 2), (1, 1),
+        (6, 4), (6, 5), (5, 4), (4, 3), (2, 2), (5, 5),
+        (4, 4), (3, 3), (6, 6), (5, 6), (4, 5), (3, 4),
+        (2, 3), (4, 6), (3, 5), (2, 4), (1, 2), (3, 6),
+        (2, 5), (1, 3), (0, 1), (2, 6), (1, 4), (1, 5),
+        (1, 6), (0, 2), (0, 3), (0, 6), (0, 5), (0, 4),
+    ];
+
     private static readonly (int X, int Y)[] ResurrectionInitialOffsets = [
         (0, 0),
         (1, 0),
@@ -424,7 +435,8 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ChainLightningController
                 or AuthoritativeProjectileBehavior.NovaController
-                or AuthoritativeProjectileBehavior.ApocalypseController;
+                or AuthoritativeProjectileBehavior.ApocalypseController
+                or AuthoritativeProjectileBehavior.GuardianController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -457,12 +469,14 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.RageController;
         var isElemental = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Elemental;
+        var isGuardian = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.GuardianController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental)
+        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
@@ -603,7 +617,12 @@ public sealed class DiabloCombatCommandProcessor
         var wallSpreadPosition = isFireWall
             ? FindWallSpreadPosition(player, centerX, centerY)
             : null;
+        var guardianSpawnPosition = isGuardian
+            ? FindGuardianSpawnPosition(player, centerX, centerY, spell, players)
+            : null;
         if (isFireWall && !wallSpreadPosition.HasValue)
+            return DiabloCombatIntentResult.Accepted;
+        if (isGuardian && !guardianSpawnPosition.HasValue)
             return DiabloCombatIntentResult.Accepted;
         if (source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
@@ -841,6 +860,16 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     spell,
                     effectiveSpellLevel));
+        } else if (isGuardian) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateGuardianController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel,
+                    guardianSpawnPosition!.Value));
         } else if (spell.ProjectileSpeed > 0) {
             var projectileCount = checked(
                 spell.ProjectileCount
@@ -2035,6 +2064,101 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private AuthoritativeProjectile CreateGuardianBoltProjectile(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var speed = checked(
+            spell.ProjectileSpeed
+            + Math.Min(
+                effectiveSpellLevel * spell.GuardianProjectileSpeedLevelStep,
+                spell.GuardianProjectileSpeedMaximumBonus));
+        var damage = checked(
+            random.GenerateRnd(spell.RandomDamageRange)
+            + player.Attributes.Magic.Current / spell.MagicDamageDivisor
+            + effectiveSpellLevel * spell.SpellLevelDamage
+            + spell.DamageBonus);
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            speed);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            0,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            ImpactLifetime = spell.ProjectileImpactLifetime,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateGuardianController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        (int X, int Y) spawnPosition)
+    {
+        var durationUnits = Math.Min(
+            spell.GuardianMaximumDuration,
+            effectiveSpellLevel
+                + checked((int)player.CharacterLevel / spell.GuardianCharacterLevelDurationDivisor));
+        var duration = Math.Max(
+            spell.GuardianMinimumDuration,
+            checked(durationUnits * spell.GuardianDurationTickScale));
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            spawnPosition.X,
+            spawnPosition.Y,
+            spawnPosition.X,
+            spawnPosition.Y,
+            0,
+            spell.DamageType,
+            0,
+            checked((uint)duration)) {
+            Behavior = AuthoritativeProjectileBehavior.GuardianController,
+            OriginalDirection = (int)player.FacingDirection,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
     private AuthoritativeProjectile CreateFlameWaveController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2495,6 +2619,35 @@ public sealed class DiabloCombatCommandProcessor
                     candidateY));
     }
 
+    private (int X, int Y)? FindGuardianSpawnPosition(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        AuthoritativeSpellDefinition spell,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        return DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            spell.GuardianSpawnSearchRadius,
+            (candidateX, candidateY) =>
+                world.ContainsPosition(player.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    player.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    player.EntityId)
+                && !world.IsMissileBlocked(player.LevelId, candidateX, candidateY)
+                && world.HasMissileLineOfSight(
+                    player.LevelId,
+                    player.PositionX,
+                    player.PositionY,
+                    candidateX,
+                    candidateY));
+    }
+
     private static int RotateDirection(int direction, int offset)
     {
         var rotated = (direction + offset) % DirectionDisplacements.Length;
@@ -2752,6 +2905,10 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Elemental) {
                     AdvanceElemental(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.GuardianController) {
+                    AdvanceGuardian(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -4145,6 +4302,97 @@ public sealed class DiabloCombatCommandProcessor
             projectile.RemainingTicks = checked((uint)spell.ElementalRetargetLifetime);
             RetargetElemental(projectile, owner);
         }
+    }
+
+    private void AdvanceGuardian(
+        ulong tick,
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.GuardianController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null || owner.Life <= 0 || owner.LevelId != controller.LevelId) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        controller.RemainingTicks--;
+        if (controller.GuardianState > 0)
+            controller.GuardianState--;
+        if (controller.RemainingTicks == 0) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+        if (controller.RemainingTicks % (uint)spell.GuardianFireInterval != 0)
+            return;
+
+        var position = (X: controller.PositionX, Y: controller.PositionY);
+        foreach (var offset in GuardianArc) {
+            var candidates = new[] {
+                (X: position.X + offset.X, Y: position.Y + offset.Y),
+                (X: position.X + offset.Y, Y: position.Y + offset.X),
+                (X: position.X + offset.Y, Y: position.Y - offset.X),
+                (X: position.X + offset.X, Y: position.Y - offset.Y),
+            };
+            foreach (var candidate in candidates) {
+                if (TryFireGuardianAt(
+                        tick,
+                        controller,
+                        owner,
+                        spell,
+                        candidate.X,
+                        candidate.Y,
+                        players,
+                        events))
+                    return;
+            }
+        }
+    }
+
+    private bool TryFireGuardianAt(
+        ulong tick,
+        AuthoritativeProjectile controller,
+        AuthoritativePlayerState owner,
+        AuthoritativeSpellDefinition spell,
+        int targetX,
+        int targetY,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.HasMissileLineOfSight(
+                controller.LevelId,
+                controller.PositionX,
+                controller.PositionY,
+                targetX,
+                targetY))
+            return false;
+        if (Math.Max(
+                Math.Abs(targetX - controller.PositionX),
+                Math.Abs(targetY - controller.PositionY)) > spell.GuardianTargetSearchRadius)
+            return false;
+        var target = FindProjectileTarget(controller.LevelId, targetX, targetY);
+        if (target is null || target.HitPointsQ6 <= 0 || target.IsPlayerMinion)
+            return false;
+        // AddGuardian computes a discarded damage roll before AddFirebolt;
+        // consume the same native RNG draw to preserve replay parity.
+        _ = random.GenerateRnd(spell.RandomDamageRange);
+        var entityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            entityId,
+            CreateGuardianBoltProjectile(
+                entityId,
+                owner,
+                spell,
+                controller.EffectiveSpellLevel,
+                targetX,
+                targetY));
+        controller.GuardianState = 3;
+        return true;
     }
 
     private void RetargetElemental(

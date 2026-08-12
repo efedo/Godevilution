@@ -1517,6 +1517,52 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(target.HitPointsQ6 < lifeAfterDirectHit);
     }
 
+    [Fact]
+    public void GuardianSpawnsAndFiresNativeFireboltOnSixTileArc()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            18,
+            10,
+            1000,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateGuardianSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            characterLevel: 4,
+            memorizedSpells: [new MemorizedSpellState(7, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(7, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        var guardian = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, guardian.Behavior);
+        Assert.Equal((12, 10), (guardian.PositionX, guardian.PositionY));
+        Assert.Equal(48U, guardian.RemainingTicks);
+
+        for (ulong tick = 1; tick < 16; tick++)
+            processor.AdvanceTick(tick, [player]);
+        Assert.Single(world.Projectiles.Values);
+
+        processor.AdvanceTick(16, [player]);
+        Assert.Equal(3, guardian.GuardianState);
+        var bolt = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt);
+        Assert.Equal((18, 10), (bolt.TargetX, bolt.TargetY));
+        Assert.Equal(18, bolt.Speed);
+        Assert.True(bolt.Damage > 0);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1699,6 +1745,35 @@ public sealed class DiabloCombatCommandProcessorTests
             StaffLevel = 6,
             ElementalRetargetLifetime = 255,
             ElementalCharacterLevelDamageMultiplier = 2,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateGuardianSpell()
+    {
+        return new AuthoritativeSpellDefinition(7, 50, 0, 0, 15, 0) {
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.GuardianController,
+            RandomDamageRange = 10,
+            MagicDamageDivisor = 8,
+            SpellLevelDamage = 1,
+            DamageBonus = 1,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 30,
+            ManaCostScale = 64,
+            GuardianDurationTickScale = 16,
+            GuardianMinimumDuration = 30,
+            GuardianMaximumDuration = 30,
+            GuardianCharacterLevelDurationDivisor = 2,
+            GuardianSpawnSearchRadius = 5,
+            GuardianTargetSearchRadius = 6,
+            GuardianFireInterval = 16,
+            GuardianProjectileSpeedLevelStep = 2,
+            GuardianProjectileSpeedMaximumBonus = 47,
         };
     }
 

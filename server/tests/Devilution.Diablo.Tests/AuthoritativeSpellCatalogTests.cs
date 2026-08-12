@@ -14,6 +14,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(20, (int)AuthoritativeProjectileBehavior.BloodStar);
         Assert.Equal(21, (int)AuthoritativeProjectileBehavior.BoneSpirit);
         Assert.Equal(35, (int)AuthoritativeProjectileBehavior.Elemental);
+        Assert.Equal(36, (int)AuthoritativeProjectileBehavior.GuardianController);
     }
 
     [Fact]
@@ -182,6 +183,47 @@ public sealed class AuthoritativeSpellCatalogTests
             elemental.ElementalCharacterLevelDamageMultiplier));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             elemental with { ElementalRetargetLifetime = 254 },
+        ]));
+    }
+
+    [Fact]
+    public void ShippedGuardianCarriesNativeTurretAndFireboltTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        Assert.True(catalog.TryGet(7, out var guardian));
+
+        Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, guardian.ProjectileBehavior);
+        Assert.Equal(AuthoritativeDamageType.Fire, guardian.DamageType);
+        Assert.Equal((50, 30, 2, 30, 64), (
+            guardian.ManaCost,
+            guardian.MinimumManaCost,
+            guardian.ManaAdjustment,
+            guardian.GuardianMinimumDuration,
+            guardian.ManaCostScale));
+        Assert.Equal((16, 30, 30, 2, 5, 6, 16), (
+            guardian.ProjectileSpeed,
+            guardian.GuardianDurationTickScale,
+            guardian.GuardianMaximumDuration,
+            guardian.GuardianCharacterLevelDurationDivisor,
+            guardian.GuardianSpawnSearchRadius,
+            guardian.GuardianTargetSearchRadius,
+            guardian.GuardianFireInterval));
+        Assert.Equal((2, 47, 10, 8, 1, 1, 4), (
+            guardian.GuardianProjectileSpeedLevelStep,
+            guardian.GuardianProjectileSpeedMaximumBonus,
+            guardian.RandomDamageRange,
+            guardian.MagicDamageDivisor,
+            guardian.SpellLevelDamage,
+            guardian.DamageBonus,
+            guardian.ResistantDamageDivisor));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            guardian with { GuardianFireInterval = 8 },
         ]));
     }
 

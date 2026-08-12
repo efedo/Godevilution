@@ -151,6 +151,8 @@ public sealed record DiabloProjectileState(
 
     public bool ApocalypseHit { get; init; }
 
+    public int GuardianState { get; init; }
+
     public int ElementalOriginX { get; init; }
 
     public int ElementalOriginY { get; init; }
@@ -335,6 +337,7 @@ public sealed partial class DiabloSimulation
                     ApocalypseScanX = projectile.ApocalypseScanX,
                     ApocalypseScanY = projectile.ApocalypseScanY,
                     ApocalypseHit = projectile.ApocalypseHit,
+                    GuardianState = projectile.GuardianState,
                     ElementalOriginX = projectile.ElementalOriginX,
                     ElementalOriginY = projectile.ElementalOriginY,
                 })
@@ -686,6 +689,14 @@ public sealed partial class DiabloSimulation
                             && (projectile.VelocityX != 0
                                 || projectile.VelocityY != 0
                                 || projectile.RemainingTicks > projectile.ImpactLifetime))))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.GuardianController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.AreaRadius != 0
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.RemainingTicks == 0
+                        || projectile.GuardianState is < 0 or > 3
+                        || projectile.Speed != 0))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
@@ -817,6 +828,7 @@ public sealed partial class DiabloSimulation
                 ApocalypseScanX = projectile.ApocalypseScanX,
                 ApocalypseScanY = projectile.ApocalypseScanY,
                 ApocalypseHit = projectile.ApocalypseHit,
+                GuardianState = projectile.GuardianState,
                 ElementalOriginX = projectile.ElementalOriginX,
                 ElementalOriginY = projectile.ElementalOriginY,
             };

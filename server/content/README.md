@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.40.0` schema in
+It declares its identity and `devilution.diablo@0.41.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -184,6 +184,12 @@ Schema 0.40 adds the native Elemental spell row (`31`) and its typed
 retargeting projectile behavior. The projectile preserves the native first
 destination, retargets once to the nearest eligible monster, then applies its
 14-tick nine-cell fire burst with native line-of-sight and resistance rules.
+
+Schema 0.41 adds the native Guardian spell row (`7`) and its typed turret
+controller behavior. The server finds a valid five-tile spawn, persists the
+native duration and firing cadence, scans the six-tile guardian arc in native
+order, and emits Firebolt-compatible projectiles with deterministic RNG and
+line-of-sight rules.
 
 Schema 0.39 adds the native Hellfire Rage spell row (`22`) and its typed
 active/cooldown controller behavior. The controller preserves the native
@@ -524,7 +530,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.40.0"
+    "version": "0.41.0"
   },
   "dependencyConstraints": [
     {
@@ -556,7 +562,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.40.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.41.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

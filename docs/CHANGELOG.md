@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.41 with the externally validated
+  Guardian turret (spell ID 7), preserving its native spawn search, duration,
+  arc scan, Firebolt emission, line-of-sight filtering, RNG ordering, and
+  resumable controller state.
 - Advance the Diablo content schema to 0.40 with the externally validated
   Elemental projectile (spell ID 31), preserving its native first-destination
   retarget, persistent nine-cell fire burst, deterministic damage scaling, and
