@@ -103,6 +103,33 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void WarpSelectsNearestTriggerAndCrawlsAroundOccupiedDestination()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 5, 5));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 5, 5));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(7, 1, 1, 1, 2, 2, 2));
+        var blocker = CreatePlayer(positionX: 2, positionY: 2, levelId: 2, entityId: 2);
+        var world = new DiabloWorldState(authoritativeWorld);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 0, positionY: 0, levelId: 1, entityId: 1);
+        player.StatusEffects.Add(new AuthoritativeStatusEffect(9, 20, 0) {
+            Behavior = AuthoritativeStatusEffectBehavior.Infravision,
+        });
+        player.StatusEffects.Add(new AuthoritativeStatusEffect(46, 30, 0) {
+            Behavior = AuthoritativeStatusEffectBehavior.Search,
+        });
+
+        var result = processor.ExecuteWarp(player, 12, [player, blocker]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2U, player.LevelId);
+        Assert.NotEqual((2, 2), (player.PositionX, player.PositionY));
+        Assert.True(authoritativeWorld.IsWalkable(player.LevelId, player.PositionX, player.PositionY));
+        Assert.Empty(player.StatusEffects);
+    }
+
+    [Fact]
     public void PickupPlacesMultiCellItemAndRemovesItFromWorld()
     {
         var itemState = AuthoritativeItemState.Empty with {

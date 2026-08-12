@@ -51,6 +51,7 @@ public enum AuthoritativeProjectileBehavior
     ImmolationController = 43,
     Jester = 44,
     Berserk = 45,
+    Warp = 46,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -1395,6 +1396,22 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.BerserkSpellLevelBonus != 1)) {
                 throw new InvalidDataException(
                     "Berserk behavior requires the native monster-target mutation tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Warp
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range <= 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 2
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0)) {
+                throw new InvalidDataException(
+                    "Warp behavior requires the native two-tick level transition tuning.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Berserk
                 && (definition.BerserkSearchRadius != 0

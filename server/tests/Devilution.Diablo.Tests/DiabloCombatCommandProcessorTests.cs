@@ -1552,6 +1552,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WarpCastUsesTheAuthoritativeLevelTriggerAndConsumesMana()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 5, 5));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 5, 5));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(7, 1, 1, 1, 2, 2, 2));
+        var world = new DiabloWorldState(authoritativeWorld);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateWarpSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            levelId: 1,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(49, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(49, 0, player.PositionX, player.PositionY, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(2U, player.LevelId);
+        Assert.Equal(5000 - 35 * 64, player.Mana);
+    }
+
+    [Fact]
     public void FlameWaveControllerPlacesNativeMovingBranches()
     {
         var world = new DiabloWorldState();
@@ -2131,6 +2163,21 @@ public sealed class DiabloCombatCommandProcessorTests
             BerserkDamagePercentBase = 120,
             BerserkDamagePercentRandomRange = 10,
             BerserkSpellLevelBonus = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateWarpSpell()
+    {
+        return new AuthoritativeSpellDefinition(49, 35, 0, 0, 0, 0) {
+            NativeSpellId = 42,
+            Range = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 2,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Warp,
+            ManaAdjustment = 3,
+            MinimumManaCost = 18,
+            ManaCostScale = 64,
         };
     }
 

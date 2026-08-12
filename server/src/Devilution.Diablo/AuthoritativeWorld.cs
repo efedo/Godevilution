@@ -7,6 +7,7 @@ using System.Globalization;
 public sealed class AuthoritativeWorld
 {
     private readonly Dictionary<uint, AuthoritativeLevel> levels = new();
+    private readonly Dictionary<uint, AuthoritativeWarpTarget> warpTargets = new();
 
     public void AddLevel(AuthoritativeLevel level)
     {
@@ -45,6 +46,49 @@ public sealed class AuthoritativeWorld
     }
 
     public IReadOnlyList<AuthoritativeLevel> Levels => levels.Values.OrderBy(level => level.LevelId).ToArray();
+
+    public IReadOnlyList<AuthoritativeWarpTarget> WarpTargets => warpTargets.Values
+        .OrderBy(target => target.WarpId)
+        .ToArray();
+
+    public void AddWarpTarget(AuthoritativeWarpTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (!levels.ContainsKey(target.SourceLevelId)
+            || !levels.ContainsKey(target.TargetLevelId)) {
+            throw new InvalidDataException(
+                $"Warp {target.WarpId} references an unknown source or target level.");
+        }
+        if (!ContainsPosition(target.SourceLevelId, target.TriggerX, target.TriggerY)
+            || !ContainsPosition(target.TargetLevelId, target.TargetX, target.TargetY)) {
+            throw new InvalidDataException(
+                $"Warp {target.WarpId} contains a position outside its level.");
+        }
+        if (!warpTargets.TryAdd(target.WarpId, target))
+            throw new InvalidDataException($"Warp {target.WarpId} is registered more than once.");
+    }
+
+    public AuthoritativeWarpTarget? FindNearestWarpTarget(
+        uint sourceLevelId,
+        int positionX,
+        int positionY)
+    {
+        return warpTargets.Values
+            .Where(target => target.SourceLevelId == sourceLevelId)
+            .OrderBy(target => checked(
+                (long)(target.TriggerX - positionX) * (target.TriggerX - positionX)
+                + (long)(target.TriggerY - positionY) * (target.TriggerY - positionY)))
+            .ThenBy(target => target.WarpId)
+            .FirstOrDefault();
+    }
+
+    public bool IsWarpTrigger(uint levelId, int positionX, int positionY)
+    {
+        return warpTargets.Values.Any(target =>
+            target.SourceLevelId == levelId
+            && target.TriggerX == positionX
+            && target.TriggerY == positionY);
+    }
 
     public uint? DefaultStartingLevelId => levels.Values
         .Where(level => level.IsDefaultStart)

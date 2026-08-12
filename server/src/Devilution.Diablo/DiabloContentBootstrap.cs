@@ -198,6 +198,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelsTable.SourcePath,
                 levelsTable.ToCanonicalTsv())
             : null;
+        if (world is not null && content.TryGetTable("warps.tsv", out var warpsTable)) {
+            foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
+                         warpsTable.SourcePath,
+                         warpsTable.ToCanonicalTsv(),
+                         world)) {
+                world.AddWarpTarget(warp);
+            }
+        }
         playerLoadouts.ValidateCastSources(spells);
         if (world is not null)
             combatRules.ValidateWorld(world);

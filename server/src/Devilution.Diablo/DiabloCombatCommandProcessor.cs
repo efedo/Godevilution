@@ -469,6 +469,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Jester;
         var isBerserk = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Berserk;
+        var isWarp = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Warp;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -507,7 +509,7 @@ public sealed class DiabloCombatCommandProcessor
         if ((isFireWall || isRingOfFire || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal && !isBerserk
+        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal && !isBerserk && !isWarp
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -702,6 +704,18 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
         }
+        if (isWarp) {
+            if (worldCommands is null)
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            var warpValidation = worldCommands.ExecuteWarp(
+                player,
+                appliedTick,
+                players,
+                applyEffects: false);
+            if (!warpValidation.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    warpValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
+        }
         if (!skipSourceValidation
             && source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
@@ -787,6 +801,15 @@ public sealed class DiabloCombatCommandProcessor
             if (!townPortalResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalResult.Failure ?? DiabloRuleFailure.Malformed);
+        }
+        if (isWarp) {
+            var warpResult = worldCommands!.ExecuteWarp(
+                player,
+                appliedTick,
+                players);
+            if (!warpResult.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    warpResult.Failure ?? DiabloRuleFailure.Malformed);
         }
         ApplyImmediateSelfDamage(
             player,

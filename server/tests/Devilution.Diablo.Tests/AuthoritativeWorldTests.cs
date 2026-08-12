@@ -75,6 +75,29 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsNormalizedWarpTargetsAndRejectsUnknownLevels()
+    {
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\tnone\n2\t3\t3\tnone\n");
+        var targets = AuthoritativeWarpCatalog.LoadTsv(
+            "warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"
+                + "7\t1\t1\t1\t2\t2\t2\n",
+            world);
+
+        world.AddWarpTarget(Assert.Single(targets));
+
+        Assert.Equal(7U, world.FindNearestWarpTarget(1, 0, 0)!.WarpId);
+        Assert.True(world.IsWarpTrigger(1, 1, 1));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.LoadTsv(
+            "invalid-warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"
+                + "8\t1\t1\t1\t9\t0\t0\n",
+            world));
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(

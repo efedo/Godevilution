@@ -227,6 +227,74 @@ public sealed class DiabloWorldCommandProcessor
         return DiabloWorldIntentResult.Accepted;
     }
 
+    /** Applies the native Warp spell to the nearest normalized level trigger. */
+    public DiabloWorldIntentResult ExecuteWarp(
+        AuthoritativePlayerState player,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
+        bool applyEffects = true)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        if (world.World is null
+            || player.LevelId == AuthoritativePortalRules.TownLevelId) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        var warp = world.World.FindNearestWarpTarget(
+            player.LevelId,
+            player.PositionX,
+            player.PositionY);
+        if (warp is null)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        var participants = players.ToArray();
+        var destination = DiabloCrawl.FindClosestValidPosition(
+            warp.TargetX,
+            warp.TargetY,
+            0,
+            5,
+            (candidateX, candidateY) =>
+                world.IsWalkable(warp.TargetLevelId, candidateX, candidateY)
+                && !world.IsMissileBlocked(warp.TargetLevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    warp.TargetLevelId,
+                    candidateX,
+                    candidateY,
+                    participants,
+                    player.EntityId)
+                && !world.World.IsWarpTrigger(
+                    warp.TargetLevelId,
+                    candidateX,
+                    candidateY));
+        if (!destination.HasValue)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
+
+        player.LevelId = warp.TargetLevelId;
+        player.PositionX = destination.Value.X;
+        player.PositionY = destination.Value.Y;
+        player.ManaShieldActive = false;
+        RemoveLevelTransitionStatuses(player);
+        if (useNativePlayerActionTiming) {
+            var endTick = checked(appliedTick + 2);
+            DiabloPlayerActionLifecycle.Begin(
+                player,
+                new AuthoritativePlayerActionState(
+                    DiabloPlayerActionKind.LevelTransition,
+                    appliedTick,
+                    appliedTick,
+                    endTick,
+                    endTick) {
+                    EffectApplied = true,
+                    TargetEntityId = warp.WarpId,
+                },
+                DiabloPlayerCombatMode.NewLevel);
+        }
+        return DiabloWorldIntentResult.Accepted;
+    }
+
     private uint AllocatePortalId()
     {
         const uint firstDynamicPortalId = 0x20000000;
