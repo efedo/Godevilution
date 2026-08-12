@@ -626,7 +626,7 @@ resistance, lifetime, collision, and deterministic projectile state.
 3. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
 4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
-5. Add host-controlled live ruleset replacement with session migration and safe
-   retirement; generalize adapter selection when a second adapter exists.
+5. Broaden host-controlled live ruleset replacement fixtures and safe-retirement
+   soak coverage; generalize adapter selection when a second adapter exists.
 6. Replace the remaining Lua capability destinations and remove Lua only after
    every removal gate is satisfied.

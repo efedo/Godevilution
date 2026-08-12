@@ -149,7 +149,7 @@ locked publication replaces the active tuple. Stage-specific reload failures
 return the exact previous activation. Engine accepts a host-owned candidate
 preparation callback, so session state can be validated against the candidate
 before publication. The generic host provides a read/write operation barrier,
-exports initialized sessions from the old adapter, imports them into the
+exports complete initialized session state from the old adapter, imports it into the
 candidate, and updates the handshake identity only after migration succeeds.
 Generation leases keep replaced activations alive until all in-flight
 operations release them; the host drains and disposes those targets through its

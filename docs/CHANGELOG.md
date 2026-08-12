@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Make the Host save contract explicitly expose complete session-state
+  migration while retaining the legacy player-save method names; the Diablo
+  adapter now documents its versioned snapshot as player-plus-world state.
 - Add host-controlled ruleset replacement with transactional candidate
   preparation, save-based session migration, handshake identity publication,
   operation barriers, generation-safe retired-target disposal, and regression
