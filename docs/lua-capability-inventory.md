@@ -29,7 +29,9 @@ now also have a deterministic native command registry; the debug console routes
 those commands natively and retains Lua as a compatibility frontend for the
 remaining REPL and module commands. Level-seed inspection and automap search
 markers now use the same native registry, while their Lua names remain as
-compatibility aliases.
+compatibility aliases. The display tile-data and scroll-view diagnostics now
+use native handlers as well; Lua remains only the compatibility frontend for
+these names.
 
 ## Bundled Scripts
 

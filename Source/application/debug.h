@@ -91,6 +91,8 @@ std::string DebugCmdVision(std::optional<bool> on);
 std::string DebugCmdPath(std::optional<bool> on);
 std::string DebugCmdFullbright(std::optional<bool> on);
 std::string DebugCmdToggleFPS(std::optional<bool> on);
+std::string DebugCmdShowTileData(std::optional<std::string_view> dataType);
+std::string DebugCmdScrollView(std::optional<bool> on);
 std::string DebugCmdLevelSeed(std::optional<uint8_t> level);
 std::string DebugCmdSearchMonster(std::string_view name);
 std::string DebugCmdSearchItem(std::string_view name);

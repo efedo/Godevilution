@@ -7,6 +7,7 @@
 #include "application/debug.h"
 #ifdef _DEBUG
 
+#include <array>
 #include <charconv>
 #include <cmath>
 #include <cstdint>
@@ -20,6 +21,7 @@
 #include "engine/render/world_renderer.h"
 
 #include "game/levels/dungeon_common.h"
+#include "game/players/players.hpp"
 #include "ui/automap.h"
 #include "engine/cursor.h"
 #include "engine/load/load_cel.hpp"
@@ -88,6 +90,32 @@ std::optional<uint8_t> ParseOptionalLevel(std::string_view value)
 		return std::nullopt;
 	return static_cast<uint8_t>(parsed);
 }
+
+constexpr std::array<std::string_view, 23> DebugTileDataNames {
+	"microTiles",
+	"piece",
+	"transVal",
+	"dLight",
+	"dPreLight",
+	"dFlags",
+	"dPlayer",
+	"dMonster",
+	"missiles",
+	"dCorpse",
+	"dObject",
+	"dItem",
+	"dSpecial",
+	"coords",
+	"cursorcoords",
+	"objectindex",
+	"solid",
+	"transparent",
+	"trap",
+	"AutomapView",
+	"currentMegaTile",
+	"replacementMegaTile",
+	"protectedTiles()",
+};
 
 bool HasInvalidLevelArgument(std::string_view value)
 {
@@ -183,6 +211,10 @@ void RegisterNativeDebugCommands()
 	registerToggle("debug.display.vision", "Toggle vision highlighting.", DebugCmdVision);
 	registerToggle("debug.display.path", "Toggle path highlighting.", DebugCmdPath);
 	registerToggle("debug.display.fps", "Toggle the FPS counter.", DebugCmdToggleFPS);
+	registerToggle("debug.display.scrollView", "Toggle view scrolling via Shift+Mouse.", DebugCmdScrollView);
+	CurrentDebugCommandRegistry.Register("debug.display.tileData", "Toggle tile-data inspection.", [](std::string_view arguments) {
+		return DebugCmdShowTileData(arguments.empty() ? std::nullopt : std::optional<std::string_view> { arguments });
+	});
 	CurrentDebugCommandRegistry.Register("debug.display.fullbright", "Toggle fullbright lighting.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdFullbright(std::nullopt) : std::string("This command takes no arguments.");
 	});
@@ -444,6 +476,50 @@ void ClearDebugAutomapHighlights()
 	SearchMonsters.clear();
 	SearchItems.clear();
 	SearchObjects.clear();
+}
+
+std::string DebugCmdShowTileData(std::optional<std::string_view> dataType)
+{
+	if (!dataType.has_value()) {
+		std::string result = "Valid values for the first argument:\nclear";
+		for (const std::string_view name : DebugTileDataNames)
+			StrAppend(result, ", ", name);
+		return result;
+	}
+	if (*dataType == "clear") {
+		SetDebugGridTextType(DebugGridTextItem::None);
+		return "Tile data cleared.";
+	}
+	std::string_view requestedType = *dataType;
+	if (requestedType == "dPiece")
+		requestedType = "piece";
+	if (requestedType == "dTransVal")
+		requestedType = "transVal";
+	int index = 0;
+	for (const std::string_view name : DebugTileDataNames) {
+		++index;
+		if (requestedType != name)
+			continue;
+		const auto newGridText = static_cast<DebugGridTextItem>(index);
+		if (newGridText == GetDebugGridTextType()) {
+			SetDebugGridTextType(DebugGridTextItem::None);
+			return "Tile data: Off";
+		}
+		SetDebugGridTextType(newGridText);
+		return "Tile data: On";
+	}
+	std::string result = "Invalid name! Valid names are:\nclear";
+	for (const std::string_view name : DebugTileDataNames)
+		StrAppend(result, ", ", name);
+	return result;
+}
+
+std::string DebugCmdScrollView(std::optional<bool> on)
+{
+	DebugScrollViewEnabled = on.value_or(!DebugScrollViewEnabled);
+	if (!DebugScrollViewEnabled)
+		InitMultiView();
+	return StrCat("Scroll view: ", DebugScrollViewEnabled ? "On" : "Off");
 }
 
 std::string DebugCmdLevelSeed(std::optional<uint8_t> level)

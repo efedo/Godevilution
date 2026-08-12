@@ -9,9 +9,10 @@ top toolbar, then use **Console**, **Inspector**, and **Editor** to open or
 close their independent windows. Press <kbd>Escape</kbd> to close the toolbar
 and all overlay windows.
 
-The Console window runs Lua code in the same REPL environment used by the
-existing debug command-line support. The Inspector reports the tile and entity
-under the cursor, or the Editor's selected tile when one is selected.
+The Console window executes registered native debug commands first and falls
+back to Lua in the same REPL environment used by the existing debug
+command-line support. The Inspector reports the tile and entity under the
+cursor, or the Editor's selected tile when one is selected.
 
 Opening Editor in single-player pauses gameplay without showing the normal
 pause label. Click a tile in the game view to select it; the selected tile is
@@ -28,7 +29,9 @@ The ImGui overlay is available on SDL2 and SDL3 builds that use the SDL
 renderer path. SDL1 and non-renderer builds keep the legacy in-game console
 fallback.
 
-Most debug functionality is exposed through the `dev` Lua module. For example:
+The legacy `dev` Lua module remains available as a compatibility frontend. The
+native registry provides equivalent commands for the migrated display, level,
+and search diagnostics. For example:
 
 | Command | Description |
 | ------- | ----------- |
@@ -37,6 +40,11 @@ Most debug functionality is exposed through the `dev` Lua module. For example:
 | `dev.display.grid()` | Toggles grid rendering. |
 | `dev.display.vision()` | Toggles vision debug rendering. |
 | `dev.level.seed()` | Shows seed info for the current level. |
+
+Native equivalents include `debug.display.tileData [name]`,
+`debug.display.scrollView [on|off]`, `debug.level.seed [level]`, and
+`debug.search.item <name>` (with corresponding monster, object, and clear
+commands).
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.
