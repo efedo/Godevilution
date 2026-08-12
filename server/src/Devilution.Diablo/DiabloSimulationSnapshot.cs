@@ -64,6 +64,8 @@ public sealed record DiabloObjectState(
     public bool Breakable { get; init; }
 
     public bool Destroyed { get; init; }
+
+    public bool TrapArmed { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -245,6 +247,7 @@ public sealed partial class DiabloSimulation
                     MissilePassable = @object.MissilePassable,
                     Breakable = @object.Breakable,
                     Destroyed = @object.Destroyed,
+                    TrapArmed = @object.TrapArmed,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -825,6 +828,7 @@ public sealed partial class DiabloSimulation
                 target.MissilePassable = @object.MissilePassable;
                 target.Breakable = @object.Breakable;
                 target.Destroyed = @object.Destroyed;
+                target.TrapArmed = @object.TrapArmed;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -838,7 +842,8 @@ public sealed partial class DiabloSimulation
                     @object.EffectAmount,
                     @object.MissilePassable,
                     @object.Breakable,
-                    @object.Destroyed));
+                    @object.Destroyed,
+                    @object.TrapArmed));
             }
         }
     }

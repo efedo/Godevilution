@@ -156,6 +156,17 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsExternalArmedTrapState()
+    {
+        const string header = "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\ttrap_armed\n";
+        var objects = AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            header + "20\t4\t1\t2\t3\t1\n");
+
+        Assert.True(Assert.Single(objects).TrapArmed);
+    }
+
+    [Fact]
     public void MissileLineOfSightUsesGeometryWhileMovingCollisionIncludesObjects()
     {
         var @object = new AuthoritativeWorldObject(20, 4, 0, 1, 0);

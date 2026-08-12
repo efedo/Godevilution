@@ -11,6 +11,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeCombatRules combatRules;
     private readonly DiabloRandom random;
     private readonly AuthoritativePlayerDamageResolver? playerDamage;
+    private readonly uint trapDisarmAbilitySpellId;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -19,7 +20,8 @@ public sealed class DiabloWorldCommandProcessor
         bool useNativePlayerActionTiming = false,
         AuthoritativeCombatRules? combatRules = null,
         DiabloRandom? random = null,
-        AuthoritativePlayerDamageResolver? playerDamage = null)
+        AuthoritativePlayerDamageResolver? playerDamage = null,
+        uint trapDisarmAbilitySpellId = 0)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -27,6 +29,7 @@ public sealed class DiabloWorldCommandProcessor
         this.combatRules = combatRules ?? new AuthoritativeCombatRules(10, 1, 100);
         this.random = random ?? new DiabloRandom(0);
         this.playerDamage = playerDamage;
+        this.trapDisarmAbilitySpellId = trapDisarmAbilitySpellId;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -72,6 +75,7 @@ public sealed class DiabloWorldCommandProcessor
                 drop.TargetY,
                 players.ToArray()),
             DiabloOperateObjectIntent operation => OperateObject(player, operation.ObjectEntityId),
+            DiabloDisarmTrapIntent disarm => DisarmTrap(player, disarm.ObjectEntityId),
             DiabloAdvanceQuestIntent quest => AdvanceQuest(player, quest.QuestId),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
@@ -450,6 +454,27 @@ public sealed class DiabloWorldCommandProcessor
         default:
             return DiabloWorldIntentResult.Accepted;
         }
+    }
+
+    private DiabloWorldIntentResult DisarmTrap(
+        AuthoritativePlayerState player,
+        uint objectEntityId)
+    {
+        if (trapDisarmAbilitySpellId == 0
+            || player.AbilitySpellId != trapDisarmAbilitySpellId) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+        if (!world.Objects.TryGetValue(objectEntityId, out var @object)
+            || !@object.TrapArmed
+            || @object.LevelId != player.LevelId
+            || Math.Max(
+                Math.Abs(@object.PositionX - player.PositionX),
+                Math.Abs(@object.PositionY - player.PositionY)) > 1) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        @object.TrapArmed = false;
+        return DiabloWorldIntentResult.Accepted;
     }
 
     private static AuthoritativePlayerDamageResult ApplyUnshieldedDamage(

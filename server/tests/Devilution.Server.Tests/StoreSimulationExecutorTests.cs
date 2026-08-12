@@ -1089,6 +1089,34 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void TrapDisarmProtocolIntentClearsServerOwnedArmedObject()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 640,
+            startingLifeMaximum: 640,
+            startingAbilitySpellId: 28,
+            startingObjects: [new AuthoritativeWorldObject(
+                20,
+                4,
+                0,
+                1,
+                0,
+                trapArmed: true)],
+            trapDisarmAbilitySpellId: 28);
+
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = 20 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.False(executor.CreateSnapshot("player-a", 1, 1).Objects.Single().TrapArmed);
+    }
+
+    [Fact]
     public void NativeHealingEventPreservesLegacyAmountAndExplicitQ6Amount()
     {
         var executor = new StoreSimulationExecutor(

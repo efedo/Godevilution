@@ -262,7 +262,8 @@ Unknown behavior values and nonzero Infravision or Search magnitude are invalid
 complete snapshot state.
 
 `ObjectSnapshot` fields 10 through 12 carry native missile pass-through,
-breakability, and persistent destruction. The server validates impossible flag
+breakability, and persistent destruction. Field 13 carries additive armed-trap
+state for the Rogue Trap Disarm capability. The server validates impossible flag
 combinations, excludes destroyed objects from occupancy and interaction, and
 removes them from native presentation. Object and projectile collision
 extensions use separate tagged canonical-hash sections so all-default legacy

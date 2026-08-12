@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-## 2026-08-11
+## 2026-08-12
 
 - Advance the Diablo content schema to 0.29 and add server-owned Holy Bolt.
   Externalize the undead monster capability, preserve native damage and speed
@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Refresh the 22 base-content replay fixtures to the current manifest identity
   while preserving their native-compatible snapshot checkpoints, and keep the
   projectile behavior values stable as Holy Bolt is appended to the catalog.
+- Externalize the Rogue's Trap Disarm capability identity and armed-object
+  state, then route an additive protocol command through the authoritative
+  Diablo world module with snapshot, save, and hash coverage.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

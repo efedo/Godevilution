@@ -185,6 +185,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var identifyAbilitySpellId = stableIds?.Resolve("spell", "identify") ?? 0;
         var repairAbilitySpellId = stableIds?.Resolve("spell", "repair") ?? 0;
         var rechargeAbilitySpellId = stableIds?.Resolve("spell", "recharge") ?? 0;
+        var trapDisarmAbilitySpellId = stableIds?.Resolve("spell", "trap_disarm") ?? 0;
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
@@ -234,6 +235,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             IdentifyAbilitySpellId = identifyAbilitySpellId,
             RepairAbilitySpellId = repairAbilitySpellId,
             RechargeAbilitySpellId = rechargeAbilitySpellId,
+            TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
             UseNativePlayerActionTiming = true,

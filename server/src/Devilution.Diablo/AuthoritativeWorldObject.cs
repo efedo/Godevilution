@@ -17,7 +17,8 @@ public sealed class AuthoritativeWorldObject
         int effectAmount = 0,
         bool missilePassable = false,
         bool breakable = false,
-        bool destroyed = false)
+        bool destroyed = false,
+        bool trapArmed = false)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -39,6 +40,7 @@ public sealed class AuthoritativeWorldObject
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
+        TrapArmed = trapArmed;
     }
 
     public uint EntityId { get; }
@@ -53,6 +55,9 @@ public sealed class AuthoritativeWorldObject
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
+
+    /** Native-compatible armed trap state for cursor-driven Trap Disarm. */
+    public bool TrapArmed { get; set; }
 }
 
 /** External object placement and identity definitions. */
@@ -73,7 +78,8 @@ public static class AuthoritativeWorldObjectCatalog
             row.OptionalInt32("effect_amount"),
             row.OptionalInt32("missile_passable") != 0,
             row.OptionalInt32("breakable") != 0,
-            row.OptionalInt32("destroyed") != 0)).ToArray();
+            row.OptionalInt32("destroyed") != 0,
+            row.OptionalInt32("trap_armed") != 0)).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
         if (objects.Select(@object => @object.EntityId).Distinct().Count() != objects.Length)

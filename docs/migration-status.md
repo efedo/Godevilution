@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-11
+Status date: 2026-08-12
 
 ## Current state
 
@@ -17,7 +17,7 @@ Status date: 2026-08-11
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Add complete table-schema documentation and host-controlled live reload with safe session migration |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, atomic candidate registration, and coordinated ruleset publication, depending only on Domain and Data | Add safe retirement policy for replaced rulesets while keeping filesystem/reflection outside Engine |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
-| External content | Base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, and authoritative definitions for every directly castable starting source | Externalize cursor-driven class capabilities and remaining native spells, Hellfire monster, level, quest, and item metadata; migrate the base pack to an explicit manifest when compatibility permits; and complete table documentation |
+| External content | Base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, and the Rogue Trap Disarm capability identity | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; migrate the base pack to an explicit manifest when compatibility permits; and complete table documentation |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Add replacement-retirement policy and further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, TRN selection, level-seed inspection, and automap search now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |

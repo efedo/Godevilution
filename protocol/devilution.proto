@@ -83,6 +83,7 @@ message Command {
 		SetFriendlyModeRequested set_friendly_mode_requested = 26;
 		RestartTownRequested restart_town_requested = 27;
 		DropHeldItemRequested drop_held_item_requested = 28;
+		DisarmTrapRequested disarm_trap_requested = 29;
 	}
 }
 
@@ -188,6 +189,10 @@ message DropHeldItemRequested {
 }
 
 message OperateObjectRequested {
+	uint32 object_entity_id = 1;
+}
+
+message DisarmTrapRequested {
 	uint32 object_entity_id = 1;
 }
 
@@ -425,6 +430,8 @@ message ObjectSnapshot {
 	bool missile_passable = 10;
 	bool breakable = 11;
 	bool destroyed = 12;
+	// Native-compatible cursor-driven Trap Disarm state.
+	bool trap_armed = 13;
 }
 
 message QuestSnapshot {

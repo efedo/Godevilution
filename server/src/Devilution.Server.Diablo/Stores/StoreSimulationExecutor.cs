@@ -102,7 +102,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         bool startingManaShieldActive = false,
         uint identifyAbilitySpellId = 0,
         uint repairAbilitySpellId = 0,
-        uint rechargeAbilitySpellId = 0)
+        uint rechargeAbilitySpellId = 0,
+        uint trapDisarmAbilitySpellId = 0)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -128,6 +129,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 IdentifyAbilitySpellId = identifyAbilitySpellId,
                 RepairAbilitySpellId = repairAbilitySpellId,
                 RechargeAbilitySpellId = rechargeAbilitySpellId,
+                TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
                 PlayerClasses = startingPlayerClasses,
                 PlayerAnimations = startingPlayerAnimations,
                 UseNativePlayerActionTiming = useNativePlayerActionTiming,
@@ -286,6 +288,12 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     participants,
                     new DiabloOperateObjectIntent(
                         command.OperateObjectRequested.ObjectEntityId),
+                    appliedTick),
+                Command.IntentOneofCase.DisarmTrapRequested => ExecuteWorldIntent(
+                    player,
+                    participants,
+                    new DiabloDisarmTrapIntent(
+                        command.DisarmTrapRequested.ObjectEntityId),
                     appliedTick),
                 Command.IntentOneofCase.AdvanceQuestRequested => ExecuteWorldIntent(
                     player,

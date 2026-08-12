@@ -253,6 +253,10 @@ public static class SnapshotStateHasher
                     hasher.AppendBool(@object.Breakable);
                     hasher.AppendBool(@object.Destroyed);
                 }
+                if (@object.TrapArmed) {
+                    hasher.AppendString("godevilution-object-trap-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 

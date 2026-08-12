@@ -57,6 +57,9 @@ public sealed class DiabloSimulationOptions
     /** Stable spell identity authorizing the Sorcerer's native Staff Recharge action. */
     public uint RechargeAbilitySpellId { get; init; }
 
+    /** Stable spell identity authorizing the Rogue's native Trap Disarm action. */
+    public uint TrapDisarmAbilitySpellId { get; init; }
+
     public AuthoritativePlayerClassCatalog? PlayerClasses { get; init; }
 
     public AuthoritativePlayerAnimationCatalog? PlayerAnimations { get; init; }
@@ -128,7 +131,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.UseNativePlayerActionTiming,
                 combatRules,
                 random,
-                playerDamage),
+                playerDamage,
+                options.TrapDisarmAbilitySpellId),
             new DiabloCombatCommandProcessor(
                 worldState,
                 spells,

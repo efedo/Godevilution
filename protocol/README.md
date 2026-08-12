@@ -192,7 +192,8 @@ Windows toolchain command.
   `godevilution-status-effect-behavior-v1` canonical-hash extension; omitted
   behavior preserves legacy generic-status hashes.
 - `ObjectSnapshot` fields 10-12 carry missile pass-through, breakability, and
-  persistent destruction. Nondefault object collision state uses the tagged
+  persistent destruction, while field 13 carries additive armed-trap state for
+  the Rogue Trap Disarm capability. Nondefault object collision state uses the tagged
   `godevilution-object-collision-v1` hash extension. Native projection removes
   activated or destroyed objects from interaction and presentation occupancy.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:

@@ -87,6 +87,7 @@ internal static class DiabloProtocolMapper
                 MissilePassable = @object.MissilePassable,
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
+                TrapArmed = @object.TrapArmed,
             });
         }
         foreach (var quest in source.Quests) {
@@ -300,6 +301,7 @@ internal static class DiabloProtocolMapper
                 MissilePassable = @object.MissilePassable,
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
+                TrapArmed = @object.TrapArmed,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

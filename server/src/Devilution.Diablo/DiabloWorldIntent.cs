@@ -13,6 +13,8 @@ public sealed record DiabloDropHeldItemIntent(int TargetX, int TargetY) : Diablo
 
 public sealed record DiabloOperateObjectIntent(uint ObjectEntityId) : DiabloWorldIntent;
 
+public sealed record DiabloDisarmTrapIntent(uint ObjectEntityId) : DiabloWorldIntent;
+
 public sealed record DiabloAdvanceQuestIntent(uint QuestId) : DiabloWorldIntent;
 
 public sealed record DiabloSetFriendlyModeIntent(bool FriendlyMode) : DiabloWorldIntent;

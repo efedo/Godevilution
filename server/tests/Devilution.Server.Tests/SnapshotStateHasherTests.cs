@@ -616,12 +616,17 @@ public sealed class SnapshotStateHasherTests
         var changedObject = baseline.Clone();
         changedObject.Objects[0].Breakable = true;
         changedObject.Objects[0].Destroyed = true;
+        var changedTrap = baseline.Clone();
+        changedTrap.Objects[0].TrapArmed = true;
         var changedProjectile = baseline.Clone();
         changedProjectile.Projectiles[0].LastCollisionTargetEntityId = 9;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(baseline),
             SnapshotStateHasher.Compute(changedObject));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changedTrap));
         Assert.NotEqual(
             SnapshotStateHasher.Compute(baseline),
             SnapshotStateHasher.Compute(changedProjectile));

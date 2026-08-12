@@ -510,6 +510,76 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            trapArmed: true);
+        var world = new DiabloWorldState(objects: [@object]);
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            50,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            50,
+            1,
+            0,
+            0,
+            abilitySpellId: 28) {
+            EntityId = 7,
+        };
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            trapDisarmAbilitySpellId: 28);
+
+        var result = processor.Execute(
+            player,
+            new DiabloDisarmTrapIntent(20),
+            5,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.False(@object.TrapArmed);
+    }
+
+    [Fact]
+    public void TrapDisarmRejectsWrongAbilityAndLeavesTrapArmed()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            trapArmed: true);
+        var world = new DiabloWorldState(objects: [@object]);
+        var player = CreatePlayer(entityId: 7);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            trapDisarmAbilitySpellId: 28);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloDisarmTrapIntent(20),
+                5,
+                [player]),
+            DiabloRuleFailure.NotAllowed);
+        Assert.True(@object.TrapArmed);
+    }
+
+    [Fact]
     public void ExperienceObjectLevelsPlayerAndEmitsEvent()
     {
         var @object = new AuthoritativeWorldObject(
