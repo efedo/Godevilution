@@ -205,7 +205,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         acceptLoop = null;
         simulationLoop = null;
         if (gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter)
-            leasedAdapter.DisposeRetiredAdapters();
+            leasedAdapter.Dispose();
     }
 
     private async Task AcceptLoopAsync(CancellationToken cancellationToken)

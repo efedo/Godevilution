@@ -174,6 +174,26 @@ public sealed class RulesetLeaseHostAdapterTests
         Assert.Equal(result.Active.Identity.CombinedSha256, handshake.Identity.RulesetIdentityHash);
     }
 
+    [Fact]
+    public void DisposingTheLeasedAdapterDisposesRetiredTargetsAndRejectsNewOperations()
+    {
+        var initial = new FakeAdapter("initial");
+        var replacement = new FakeAdapter("replacement");
+        var runtime = CreateRuntime(new Queue<FakeAdapter>([initial, replacement]));
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+        Assert.True(adapter.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0")],
+            []).Succeeded);
+
+        adapter.Dispose();
+        adapter.Dispose();
+
+        Assert.True(initial.Disposed);
+        Assert.Throws<ObjectDisposedException>(
+            () => adapter.ExportSessionState("session"));
+    }
+
     private static GameplayRulesetRuntime<IAuthoritativeGameHostAdapter> CreateRuntime(
         Queue<FakeAdapter> candidates)
     {
