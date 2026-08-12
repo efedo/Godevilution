@@ -50,7 +50,8 @@ while `debug.player.health <amount>` and `debug.player.mana <amount>` adjust
 the corresponding pools by whole points. `debug.player.trn <asset-path|clear>` selects
 or clears the native player TRN asset.
 `debug.player.attributes.max` and `.min` set all four base attributes to their
-native maximum or minimum.
+native maximum or minimum. `debug.player.levelUp [amount]` sends the same
+high-priority experience commands as the legacy level-up helper.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.

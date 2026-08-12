@@ -32,6 +32,7 @@
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
+#include "network/protocol/msg.h"
 #include "ui/player_messages.h"
 #include "utils/string/str_case.hpp"
 #include "utils/string/str_cat.hpp"
@@ -266,6 +267,16 @@ std::string DebugCmdMinStats()
 	return "Set all character base attributes to minimum.";
 }
 
+std::string DebugCmdLevelUp(int levels)
+{
+	if (levels <= 0)
+		return "amount must be positive";
+	Player &myPlayer = *MyPlayer;
+	for (int i = 0; i < levels; i++)
+		NetSendCmd(true, CMD_CHEAT_EXPERIENCE);
+	return StrCat("New character level: ", myPlayer.getCharacterLevel() + levels);
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -354,6 +365,12 @@ void RegisterNativeDebugCommands()
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.attributes.min", "Set all character base attributes to minimum.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdMinStats() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.levelUp", "Level the player up by a number of levels.", [](std::string_view arguments) {
+		if (arguments.empty())
+			return DebugCmdLevelUp(1);
+		const auto amount = ParseRequiredInt(arguments);
+		return amount.has_value() ? DebugCmdLevelUp(*amount) : std::string("Expected an integer level amount.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);

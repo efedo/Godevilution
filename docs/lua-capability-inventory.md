@@ -46,6 +46,9 @@ behavior.
 The `dev.player.stats.setAttrToMax` and `setAttrToMin` helpers now delegate to
 `debug.player.attributes.max` and `.min`; the native handlers own the four
 attribute mutations while the Lua names remain compatibility aliases.
+The `dev.player.stats.levelUp` helper delegates to `debug.player.levelUp`; the
+native command preserves the default-one behavior and high-priority experience
+command sequence.
 
 ## Bundled Scripts
 

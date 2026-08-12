@@ -93,6 +93,7 @@ std::string DebugCmdChangeHealth(int change);
 std::string DebugCmdChangeMana(int change);
 std::string DebugCmdMaxStats();
 std::string DebugCmdMinStats();
+std::string DebugCmdLevelUp(int levels);
 std::string DebugCmdSetPlayerTrn(std::string_view path);
 std::string DebugCmdShowGrid(std::optional<bool> on);
 std::string DebugCmdVision(std::optional<bool> on);
