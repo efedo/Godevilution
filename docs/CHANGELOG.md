@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
   inventory-stack behavior and Lua compatibility aliases.
 - Move the player spell-level helper into a native debug command while
   preserving learned-spell filtering and the Lua compatibility alias.
+- Move quest activation and diagnostics into native debug commands while
+  preserving the `dev.quests` Lua compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

@@ -25,6 +25,7 @@
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/spells/spells.hpp"
+#include "game/quests/quests.hpp"
 #include "game/players/players.hpp"
 #include "ui/automap.h"
 #include "engine/cursor.h"
@@ -37,6 +38,7 @@
 #include "network/protocol/msg.h"
 #include "tables/spelldat.h"
 #include "ui/player_messages.h"
+#include "utils/is_of.hpp"
 #include "utils/string/str_case.hpp"
 #include "utils/string/str_cat.hpp"
 
@@ -360,6 +362,49 @@ std::string DebugCmdSetSpellsLevel(uint8_t level)
 	return StrCat("Set all spell levels to ", level);
 }
 
+std::string DebugCmdEnableQuest(uint8_t questId)
+{
+	if (questId >= MAXQUESTS)
+		return StrCat("Quest ", questId, " does not exist!");
+	Quest &quest = Quests[questId];
+	if (IsNoneOf(quest._qactive, QUEST_NOTAVAIL, QUEST_INIT))
+		return StrCat(QuestsData[questId]._qlstr, " is already active!");
+	quest._qactive = QUEST_ACTIVE;
+	quest._qlog = true;
+	return StrCat(QuestsData[questId]._qlstr, " activated.");
+}
+
+std::string DebugCmdEnableQuests()
+{
+	for (Quest &quest : Quests) {
+		if (IsNoneOf(quest._qactive, QUEST_NOTAVAIL, QUEST_INIT))
+			continue;
+		quest._qactive = QUEST_ACTIVE;
+		quest._qlog = true;
+	}
+	return "Activated all quests.";
+}
+
+std::string DebugCmdQuestInfo(uint8_t questId)
+{
+	if (questId >= MAXQUESTS)
+		return StrCat("Quest ", questId, " does not exist!");
+	const Quest &quest = Quests[questId];
+	return StrCat("Quest id=", quest._qidx, " ", QuestsData[quest._qidx]._qlstr,
+	    " active=", quest._qactive, " var1=", quest._qvar1, " var2=", quest._qvar2);
+}
+
+std::string DebugCmdQuestsInfo()
+{
+	std::string result;
+	for (const Quest &quest : Quests)
+		StrAppend(result, "Quest id=", quest._qidx, " ", QuestsData[quest._qidx]._qlstr,
+		    " active=", quest._qactive, " var1=", quest._qvar1, " var2=", quest._qvar2, "\n");
+	if (!result.empty())
+		result.pop_back();
+	return result;
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -472,6 +517,22 @@ void RegisterNativeDebugCommands()
 		if (!amount.has_value() || *amount < 0 || *amount > UINT8_MAX)
 			return std::string("Expected a spell level from 0 to 255.");
 		return DebugCmdSetSpellsLevel(static_cast<uint8_t>(*amount));
+	});
+	CurrentDebugCommandRegistry.Register("debug.quests.activate", "Activate a quest by ID.", [](std::string_view arguments) {
+		if (HasInvalidLevelArgument(arguments) || arguments.empty())
+			return std::string("Expected a quest ID.");
+		return DebugCmdEnableQuest(*ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.quests.activateAll", "Activate all available quests.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdEnableQuests() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.quests.info", "Show quest information by ID.", [](std::string_view arguments) {
+		if (HasInvalidLevelArgument(arguments) || arguments.empty())
+			return std::string("Expected a quest ID.");
+		return DebugCmdQuestInfo(*ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.quests.all", "Show all quest information.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdQuestsInfo() : std::string("This command takes no arguments.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);

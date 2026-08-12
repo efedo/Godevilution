@@ -56,6 +56,9 @@ alias.
 The `dev.player.spells.setLevel` helper now delegates to
 `debug.player.spells.setLevel`; the native command preserves the learned-spell
 filter, per-spell network updates, and zero-level memorization reset.
+The `dev.quests` activation and information helpers now delegate to the
+corresponding `debug.quests` commands; quest state mutation and formatting are
+owned by the native registry while the Lua names remain compatibility aliases.
 
 ## Bundled Scripts
 
