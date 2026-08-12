@@ -372,6 +372,40 @@ that collision set persistent `destroyed` state. A destroyed or activated
 object no longer occupies its cell or accepts interaction. Activation rejects a
 breakable pass-through object and any destroyed object that is not breakable.
 
+## Table schema reference
+
+The following table is the authoritative ownership and key reference for the
+base pack. Column order is part of the validated schema; overlays must retain
+the complete target header even when they upsert only one row.
+
+| Table | Stable row key | Module-owned meaning |
+| --- | --- | --- |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, and Q6 resource formulas. |
+| `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
+| `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
+| `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
+| `combat.tsv` | singleton | Variant, combat defaults, restart rules, death-gold rules, and PvP-ear identity. |
+| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
+| `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
+| `portals.tsv` | `portal_id` | Source and destination level endpoints. |
+| `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
+| `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements and initial completion state. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources, typed projectile behavior, scaling, status, and damage rules. |
+| `items.tsv` | `item_id` | Normalized item identity, native compatibility metadata, placement, charges, and generation inputs. |
+| `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
+| `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions and fixed effects. |
+| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references. |
+| `store_services.tsv` | `key`, `spell_id` | Service pricing and spell-staff costs; omitted keys use module defaults. |
+| `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
+| `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item fallback used only when `unique_items.tsv` is absent. |
+
+The Data runtime owns parsing, ordered composition, overlay keys, and manifest
+identity. The Diablo module owns the meaning and cross-table validation of these
+rows. A pack cannot add an unrecognized column, replace a table implicitly, or
+assign a class capability that the active module does not validate.
+
 ## Overlay packs
 
 Pass each overlay directory with a repeatable `--content-overlay` argument.
