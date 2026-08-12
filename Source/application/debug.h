@@ -117,6 +117,7 @@ std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed);
 std::string DebugCmdWarpToDungeonLevel(uint8_t level);
 std::string DebugCmdWarpToQuestLevel(uint8_t level);
 std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y);
+std::string DebugCmdExportDun();
 const Item *DebugCmdGetSelectedItem();
 std::string DebugCmdItemInfo();
 std::string DebugCmdTalkToTowner(std::string_view name);

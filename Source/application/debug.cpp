@@ -27,6 +27,7 @@
 #include "game/items/item_pool.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
+#include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
 #include "game/quests/quests.hpp"
 #include "game/players/players.hpp"
@@ -44,6 +45,8 @@
 #include "tables/spelldat.h"
 #include "ui/load_screens.h"
 #include "ui/player_messages.h"
+#include "utils/endian/endian_stream.hpp"
+#include "utils/file/file_util.h"
 #include "utils/is_of.hpp"
 #include "utils/string/str_case.hpp"
 #include "utils/string/str_cat.hpp"
@@ -614,6 +617,73 @@ std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, i
 	return StrCat("Moved you to ", TestMapPath, ".");
 }
 
+std::string DebugCmdExportDun()
+{
+	const std::string levelName = StrCat(currentLevelNumber(), "-", DungeonSeeds[currentLevelNumber()], ".dun");
+	FILE *dunFile = OpenFile(levelName.c_str(), "ab");
+
+	WriteLE16(dunFile, DMAXX);
+	WriteLE16(dunFile, DMAXY);
+
+	/** Tiles. */
+	for (int y = 0; y < DMAXY; y++) {
+		for (int x = 0; x < DMAXX; x++) {
+			WriteLE16(dunFile, megaTileAt(x, y).current());
+		}
+	}
+
+	/** Padding */
+	for (int y = 16; y < MAXDUNY - 16; y++) {
+		for (int x = 16; x < MAXDUNX - 16; x++) {
+			WriteLE16(dunFile, 0);
+		}
+	}
+
+	/** Monsters */
+	for (int y = 16; y < MAXDUNY - 16; y++) {
+		for (int x = 16; x < MAXDUNX - 16; x++) {
+			uint16_t monsterId = 0;
+			const int16_t activeMonsterId = tileAt(x, y).monster();
+			if (activeMonsterId > 0) {
+				for (int i = 0; i < 157; i++) {
+					if (MonstConvTbl[i] == Monsters[std::abs(activeMonsterId) - 1].type().type) {
+						monsterId = i + 1;
+						break;
+					}
+				}
+			}
+			WriteLE16(dunFile, monsterId);
+		}
+	}
+
+	/** Objects */
+	for (int y = 16; y < MAXDUNY - 16; y++) {
+		for (int x = 16; x < MAXDUNX - 16; x++) {
+			uint16_t objectId = 0;
+			Object *object = FindObjectAtPosition({ x, y }, false);
+			if (object != nullptr) {
+				for (int i = 0; i < 147; i++) {
+					if (ObjTypeConv[i] == object->_otype) {
+						objectId = i;
+						break;
+					}
+				}
+			}
+			WriteLE16(dunFile, objectId);
+		}
+	}
+
+	/** Transparency */
+	for (int y = 16; y < MAXDUNY - 16; y++) {
+		for (int x = 16; x < MAXDUNX - 16; x++) {
+			WriteLE16(dunFile, tileAt(x, y).transVal());
+		}
+	}
+	std::fclose(dunFile);
+
+	return StrCat("Successfully exported ", levelName, ".");
+}
+
 const Item *DebugCmdGetSelectedItem()
 {
 	const Player &myPlayer = *MyPlayer;
@@ -832,6 +902,9 @@ void RegisterNativeDebugCommands()
 	});
 	CurrentDebugCommandRegistry.Register("debug.items.info", "Show information about the selected item.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdItemInfo() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.level.exportDun", "Export the current level as a dun file.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdExportDun() : std::string("This command takes no arguments.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.towners.talk", "Open a towner talk window.", DebugCmdTalkToTowner);
 	CurrentDebugCommandRegistry.Register("debug.towners.visit", "Teleport to a towner in town.", DebugCmdVisitTowner);

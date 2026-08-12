@@ -78,6 +78,9 @@ spawn-bound, and transition validation remain compatibility behavior.
 The `dev.items.info` diagnostic now delegates to `debug.items.info`; selected
 item lookup and network-pack validation are native-owned while Lua retains the
 legacy name as a compatibility alias.
+The `dev.level.exportDun` helper now delegates to `debug.level.exportDun`; the
+native handler owns the legacy binary tile, monster, object, and transparency
+export while Lua retains the compatibility alias.
 The `dev.towners.talk` and `dev.towners.visit` helpers now delegate to native
 `debug.towners.talk` and `debug.towners.visit` commands; town-only checks,
 legacy aliases, teleportation, and talk-window dispatch remain native-owned.
