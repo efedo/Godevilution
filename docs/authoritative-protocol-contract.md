@@ -245,6 +245,13 @@ collision state in the existing projectile fields. Clients render the moving
 stream and stationary segments but never emit segments, consume RNG, resolve
 collision, or apply damage.
 
+A Chain Lightning cast uses behavior value `28` for its one-tick fan-out and
+value `29` for each moving Lightning-compatible bolt. The server enumerates the
+native crawl radius, creates the target bolts, and retains the chain spell ID
+and effective level through existing projectile fields. Resulting stationary
+Lightning segments continue to use behavior `4`; clients never choose targets,
+consume RNG, or resolve collision and damage.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

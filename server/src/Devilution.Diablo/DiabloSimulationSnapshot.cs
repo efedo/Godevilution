@@ -562,6 +562,24 @@ public sealed partial class DiabloSimulation
                         || projectile.AreaRadius != 0
                         || projectile.Speed != 0
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Lightning
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.RemainingTicks != 1))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningBolt
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Lightning
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 32
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.ResistantDamageDivisor != 4))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

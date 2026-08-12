@@ -126,6 +126,9 @@ owns travel direction, collision, damage, lifetime, and blocking.
 Inferno behaviors `26` and `27` are presentation-only as well. Godot renders
 the authoritative moving controller and stationary fire segments while the
 server owns emission count, damage, lifetime, collision, and persistence.
+Chain Lightning behaviors `28` and `29` are presentation-only. Godot renders
+the authoritative fan-out and moving bolts; the server owns crawl order,
+damage, segment creation, collision, and RNG.
 
 For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
 and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open

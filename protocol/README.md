@@ -184,6 +184,9 @@ Windows toolchain command.
   Inferno uses behavior values `26` and `27` for its server-owned moving
   controller and stationary fire segments. Existing projectile position,
   damage, lifetime, and collision fields carry the complete resumable state.
+  Chain Lightning uses behavior value `28` for its one-tick fan-out controller
+  and value `29` for each Lightning-compatible moving bolt; resulting segments
+  use the existing Lightning segment behavior and projectile fields.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

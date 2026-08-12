@@ -33,6 +33,8 @@ public enum AuthoritativeProjectileBehavior
     FlameWaveSegment = 25,
     InfernoController = 26,
     InfernoSegment = 27,
+    ChainLightningController = 28,
+    ChainLightningBolt = 29,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -238,6 +240,12 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native Inferno segment lifetime increase for each controller step. */
     public int InfernoSegmentLifetimeStep { get; init; }
+
+    /** Native Chain Lightning crawl radius added to the effective spell level. */
+    public int ChainLightningSearchRadiusBonus { get; init; }
+
+    /** Native one-tick Chain Lightning fan-out controller lifetime. */
+    public int ChainLightningControllerLifetime { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -273,7 +281,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment;
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -464,6 +474,27 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoSegment)
                 throw new InvalidDataException(
                     "InfernoSegment is runtime-owned and cannot be selected by spell content.");
+
+            if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                && (definition.ProjectileSpeed != 32
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Lightning
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ChainLightningSearchRadiusBonus != 3
+                    || definition.ChainLightningControllerLifetime != 1
+                    || definition.RandomDamageRange != 2
+                    || definition.DamageBonus != 2
+                    || definition.CharacterLevelRandomDamageDivisor != 1
+                    || definition.DamageScale != 64
+                    || definition.SecondaryProjectileLifetime != 6
+                    || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 2)) {
+                throw new InvalidDataException(
+                    "Chain Lightning behavior requires the native fan-out and Lightning tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChainLightningBolt)
+                throw new InvalidDataException(
+                    "ChainLightningBolt is runtime-owned and cannot be selected by spell content.");
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -746,7 +777,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -778,7 +811,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -815,7 +850,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
                     || definition.SecondaryProjectileLifetime != 0
                     || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 0)) {
@@ -830,10 +867,12 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
                 && definition.DamageScale != 1) {
                 throw new InvalidDataException(
-                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, or Inferno behavior.");
+                    "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, Inferno, or Chain Lightning behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Fireball
@@ -858,7 +897,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
-                    or AuthoritativeProjectileBehavior.InfernoSegment)
+                    or AuthoritativeProjectileBehavior.InfernoSegment
+                    or AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -894,6 +935,14 @@ public sealed class AuthoritativeSpellCatalog
                 && definition.InfernoSegmentLifetimeStep != 0) {
                 throw new InvalidDataException(
                     "Inferno segment lifetime tuning requires Inferno behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.ChainLightningController
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt)
+                && (definition.ChainLightningSearchRadiusBonus != 0
+                    || definition.ChainLightningControllerLifetime != 0)) {
+                throw new InvalidDataException(
+                    "Chain Lightning tuning requires Chain Lightning behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1054,6 +1103,10 @@ public sealed class AuthoritativeSpellCatalog
             FlameWaveCharacterLevelDamageBonus = row.OptionalInt32(
                 "flame_wave_character_level_damage_bonus"),
             InfernoSegmentLifetimeStep = row.OptionalInt32("inferno_segment_lifetime_step"),
+            ChainLightningSearchRadiusBonus = row.OptionalInt32(
+                "chain_lightning_search_radius_bonus"),
+            ChainLightningControllerLifetime = row.OptionalInt32(
+                "chain_lightning_controller_lifetime"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

@@ -1255,6 +1255,48 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(secondDamage < firstDamage);
     }
 
+    [Fact]
+    public void ChainLightningControllerFansOutNativeLightningBolts()
+    {
+        var world = new DiabloWorldState(combatTargets: [
+            new AuthoritativeCombatTarget(9, 6, 5, 100, petrified: true),
+            new AuthoritativeCombatTarget(10, 7, 6, 100, petrified: true),
+        ]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateChainLightningSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(16, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(16, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        Assert.Single(world.Projectiles.Values, projectile =>
+            projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningController);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningController);
+        var bolts = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningBolt)
+            .ToArray();
+        Assert.Equal(3, bolts.Length);
+        Assert.All(bolts, bolt => {
+            Assert.Equal(32, bolt.Speed);
+            Assert.Equal(16U, bolt.SpellId);
+            Assert.Equal(0, bolt.Damage);
+        });
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1323,6 +1365,31 @@ public sealed class DiabloCombatCommandProcessorTests
             ManaCostScale = 64,
             StaffLevel = 2,
             InfernoSegmentLifetimeStep = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateChainLightningSpell()
+    {
+        return new AuthoritativeSpellDefinition(16, 30, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Lightning,
+            ProjectileSpeed = 32,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ChainLightningController,
+            RandomDamageRange = 2,
+            DamageBonus = 2,
+            CharacterLevelRandomDamageDivisor = 1,
+            DamageScale = 64,
+            SecondaryProjectileLifetime = 6,
+            SecondaryProjectileLifetimeSpellLevelDivisor = 2,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 18,
+            ManaCostScale = 64,
+            StaffLevel = 7,
+            ChainLightningSearchRadiusBonus = 3,
+            ChainLightningControllerLifetime = 1,
         };
     }
 

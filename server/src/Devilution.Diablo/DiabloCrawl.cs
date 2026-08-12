@@ -28,6 +28,19 @@ public static class DiabloCrawl
         return null;
     }
 
+    /** Enumerates native crawl displacements in stable order for multi-target spells. */
+    public static IEnumerable<(int X, int Y)> EnumerateDisplacements(
+        int minimumRadius,
+        int maximumRadius)
+    {
+        if (minimumRadius < 0
+            || maximumRadius < minimumRadius
+            || maximumRadius > MaximumSupportedRadius) {
+            throw new ArgumentOutOfRangeException(nameof(maximumRadius));
+        }
+        return Enumerate(minimumRadius, maximumRadius);
+    }
+
     private static IEnumerable<(int X, int Y)> Enumerate(
         int minimumRadius,
         int maximumRadius)

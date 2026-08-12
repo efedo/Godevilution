@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   Inferno controller and stationary segment behaviors (spell ID 21), preserving
   native speed, three-segment emission, stepwise lifetime, fire damage rolls,
   repeated collision, and deterministic projectile state.
+- Advance the Diablo content schema to 0.36 with the externally validated
+  Chain Lightning fan-out controller and Lightning-compatible bolt behavior
+  (spell ID 16), preserving native crawl targeting, damage, segment lifetime,
+  resistance, collision, and deterministic source-level state.
 - Advance the Diablo content schema to 0.34 with the externally validated
   Flame Wave controller and moving segment behaviors (spell ID 15), preserving
   native perpendicular placement, facing-direction travel, random fire damage,

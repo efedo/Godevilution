@@ -534,6 +534,12 @@ native character-level and two-value damage draws, repeated collision, object
 interaction, snapshot validation, and replay identity remain server-owned
 through existing projectile state plus one content tuning column.
 
+Schema 0.36 adds Chain Lightning (spell ID `16`). The server resolves its
+one-tick target fan-out in native crawl order, then advances each bolt through
+the existing Lightning controller and segment rules while retaining the chain
+spell ID and effective level. Clients observe only the resulting authoritative
+projectiles and damage events.
+
 ## Lua transition
 
 Lua remains a frozen native-client compatibility layer. New authoritative

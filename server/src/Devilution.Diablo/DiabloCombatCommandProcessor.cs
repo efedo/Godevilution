@@ -408,7 +408,8 @@ public sealed class DiabloCombatCommandProcessor
             || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                 or AuthoritativeProjectileBehavior.FireWallController
                 or AuthoritativeProjectileBehavior.FlameWaveController
-                or AuthoritativeProjectileBehavior.InfernoController;
+                or AuthoritativeProjectileBehavior.InfernoController
+                or AuthoritativeProjectileBehavior.ChainLightningController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -431,12 +432,14 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.FlameWaveController;
         var isInferno = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.InfernoController;
+        var isChainLightning = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.ChainLightningController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno) && intent.TargetEntityId != 0)
+        if ((isFireWall || isInferno || isChainLightning) && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
             && intent.TargetEntityId != 0
@@ -508,12 +511,12 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (!(isFireWall || isFlameWave || isInferno) && spell.AreaRadius == 0
+                || (!(isFireWall || isFlameWave || isInferno || isChainLightning) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-            var hasLineOfSight = isFireWall || isFlameWave || isInferno || spell.ProjectileSpeed > 0
+            var hasLineOfSight = isFireWall || isFlameWave || isInferno || isChainLightning || spell.ProjectileSpeed > 0
                 ? world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -530,7 +533,7 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = isFireWall || isFlameWave || isInferno
+            damageTargets = isFireWall || isFlameWave || isInferno || isChainLightning
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -767,6 +770,17 @@ public sealed class DiabloCombatCommandProcessor
                     spell,
                     effectiveSpellLevel,
                     AuthoritativeProjectileBehavior.FlashTop));
+        } else if (isChainLightning) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateChainLightningController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel,
+                    centerX,
+                    centerY));
         } else if (spell.ProjectileSpeed > 0) {
             var projectileCount = checked(
                 spell.ProjectileCount
@@ -1628,7 +1642,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeSpellDefinition spell,
         int effectiveSpellLevel,
         int targetX,
-        int targetY)
+        int targetY,
+        AuthoritativeProjectileBehavior behavior = AuthoritativeProjectileBehavior.Lightning)
     {
         var direction = GetDirection(
             player.PositionX,
@@ -1664,12 +1679,40 @@ public sealed class DiabloCombatCommandProcessor
             spell.DamageType,
             0,
             (uint)spell.ProjectileLifetime) {
-            Behavior = AuthoritativeProjectileBehavior.Lightning,
+            Behavior = behavior,
             VelocityX = velocityX,
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = spell.ProjectileSpeed,
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
+    private AuthoritativeProjectile CreateChainLightningController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            0,
+            spell.DamageType,
+            0,
+            checked((uint)spell.ChainLightningControllerLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.ChainLightningController,
+            OriginalDirection = (int)player.FacingDirection,
             EffectiveSpellLevel = effectiveSpellLevel,
         };
     }
@@ -2360,12 +2403,17 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceInfernoSegment(tick, projectile, players, events);
                     continue;
                 }
-                if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
-                    AdvanceFireball(tick, projectile, players, events);
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningController) {
+                    AdvanceChainLightningController(projectile, players);
                     continue;
                 }
-                if (projectile.Behavior == AuthoritativeProjectileBehavior.Lightning) {
+                if (projectile.Behavior is AuthoritativeProjectileBehavior.Lightning
+                    or AuthoritativeProjectileBehavior.ChainLightningBolt) {
                     AdvanceLightningController(projectile, players);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
+                    AdvanceFireball(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.LightningSegment) {
@@ -3366,7 +3414,9 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         if (!spells.TryGet(projectile.SpellId, out var spell)
-            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Lightning) {
+            || spell.ProjectileBehavior is not (
+                AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.ChainLightningController)) {
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
@@ -3410,6 +3460,52 @@ public sealed class DiabloCombatCommandProcessor
             CreateLightningSegment(projectile, spell, damageQ6);
         if (projectile.RemainingTicks == 0)
             world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private void AdvanceChainLightningController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        controller.RemainingTicks--;
+
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null
+            || !spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ChainLightningController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var targets = new List<(int X, int Y)> {
+            (controller.TargetX, controller.TargetY),
+        };
+        var radius = Math.Min(
+            controller.EffectiveSpellLevel + spell.ChainLightningSearchRadiusBonus,
+            DiabloCrawl.MaximumSupportedRadius);
+        var targetIds = new HashSet<uint>();
+        foreach (var displacement in DiabloCrawl.EnumerateDisplacements(1, radius)) {
+            var positionX = checked(controller.PositionX + displacement.X);
+            var positionY = checked(controller.PositionY + displacement.Y);
+            var target = FindProjectileTarget(controller.LevelId, positionX, positionY);
+            if (target is null || !targetIds.Add(target.EntityId))
+                continue;
+            targets.Add((target.PositionX, target.PositionY));
+        }
+
+        foreach (var target in targets) {
+            var entityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                entityId,
+                CreateLightningController(
+                    entityId,
+                    owner,
+                    spell,
+                    controller.EffectiveSpellLevel,
+                    target.X,
+                    target.Y,
+                    AuthoritativeProjectileBehavior.ChainLightningBolt));
+        }
+        world.Projectiles.Remove(controller.EntityId);
     }
 
     private void CreateLightningSegment(
