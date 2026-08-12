@@ -17,7 +17,7 @@
   "content_manifest": {
     "id": "base",
     "version": "1",
-    "sha256": "cc060d8d155dac621a3b92dd2757ec42f67a6ef04867501b4013479254a89534"
+    "sha256": "aa3246df2b03e6ead1143a6293ffc9837305a44cd2abb72efa7adc9874fca247"
   },
   "commands": [
     { "client_sequence": 1, "target_tick": 10, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } },

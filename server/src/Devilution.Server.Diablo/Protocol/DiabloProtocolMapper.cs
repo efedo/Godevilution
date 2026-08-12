@@ -148,6 +148,20 @@ internal static class DiabloProtocolMapper
                 GuardianState = projectile.GuardianState,
             });
         }
+        foreach (var portal in source.Portals.OrderBy(portal => portal.PortalId)) {
+            snapshot.Portals.Add(new PortalSnapshot {
+                PortalId = portal.PortalId,
+                SourceLevelId = portal.SourceLevelId,
+                SourcePositionX = portal.SourcePositionX,
+                SourcePositionY = portal.SourcePositionY,
+                DestinationLevelId = portal.DestinationLevelId,
+                DestinationPositionX = portal.DestinationPositionX,
+                DestinationPositionY = portal.DestinationPositionY,
+                RemainingTicks = portal.RemainingTicks,
+                OwnerEntityId = portal.OwnerEntityId,
+                Bidirectional = portal.Bidirectional,
+            });
+        }
         if (source.ActiveStore is not null) {
             var store = new StoreSnapshot { StoreId = source.ActiveStore.StoreId };
             foreach (var item in source.ActiveStore.Items) {
@@ -378,6 +392,18 @@ internal static class DiabloProtocolMapper
             }).ToArray(),
             activeStore) {
             RandomState = source.RandomState,
+            Portals = source.Portals.Select(portal => new DiabloPortalState(
+                portal.PortalId,
+                portal.SourceLevelId,
+                portal.SourcePositionX,
+                portal.SourcePositionY,
+                portal.DestinationLevelId,
+                portal.DestinationPositionX,
+                portal.DestinationPositionY) {
+                RemainingTicks = portal.RemainingTicks,
+                OwnerEntityId = portal.OwnerEntityId,
+                Bidirectional = portal.Bidirectional,
+            }).ToArray(),
         };
     }
 

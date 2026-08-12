@@ -47,6 +47,12 @@ public partial class WorldPresentation : Node2D
             UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta);
         foreach (var @object in snapshot.Objects)
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta);
+        foreach (var portal in snapshot.Portals) {
+            if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId)
+                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta);
+            else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId)
+                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta);
+        }
         foreach (var projectile in snapshot.Projectiles.Where(
                      projectile => projectile.Behavior != TeleportProjectileBehavior
                          && projectile.Behavior != PhasingProjectileBehavior))
@@ -98,6 +104,8 @@ public partial class WorldPresentation : Node2D
             DrawItem(item, searchActive);
         foreach (var @object in snapshot.Objects.Where(@object => IsVisible(@object.LevelId, currentLevel)))
             DrawObject(@object);
+        foreach (var portal in snapshot.Portals)
+            DrawPortal(portal, currentLevel);
         foreach (var projectile in snapshot.Projectiles.Where(projectile =>
                      projectile.Behavior != TeleportProjectileBehavior
                      && projectile.Behavior != PhasingProjectileBehavior
@@ -185,6 +193,19 @@ public partial class WorldPresentation : Node2D
             DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
             DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
         }
+    }
+
+    private void DrawPortal(PortalSnapshot portal, uint currentLevel)
+    {
+        var isSource = portal.SourceLevelId == currentLevel;
+        var isDestination = portal.Bidirectional && portal.DestinationLevelId == currentLevel;
+        if (!isSource && !isDestination)
+            return;
+        var x = isSource ? portal.SourcePositionX : portal.DestinationPositionX;
+        var y = isSource ? portal.SourcePositionY : portal.DestinationPositionY;
+        var center = PositionFor(portal.PortalId, x, y);
+        DrawArc(center, 13, 0, Mathf.Tau, 24, new Color("bd7cff"), 3);
+        DrawArc(center, 8, 0, Mathf.Tau, 20, new Color("f0c7ff"), 2);
     }
 
     private void DrawProjectile(ProjectileSnapshot projectile)

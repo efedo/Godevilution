@@ -78,6 +78,18 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid world item.");
                 }
             }
+            var portalIds = new HashSet<uint>();
+            foreach (var portal in message.Snapshot.Portals) {
+                if (portal.PortalId == 0
+                    || !portalIds.Add(portal.PortalId)
+                    || (portal.Bidirectional
+                        && (portal.OwnerEntityId == 0 || portal.RemainingTicks == 0))
+                    || (!portal.Bidirectional
+                        && (portal.OwnerEntityId != 0 || portal.RemainingTicks != 0))) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid portal.");
+                }
+            }
             Snapshot = message.Snapshot;
             LastError = null;
             recentEvents.Clear();

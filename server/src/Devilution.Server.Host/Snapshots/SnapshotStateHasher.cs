@@ -364,6 +364,24 @@ public static class SnapshotStateHasher
             }
         }
 
+        var portals = snapshot.Portals.OrderBy(portal => portal.PortalId).ToArray();
+        if (portals.Length > 0) {
+            hasher.AppendString("godevilution-portals-v1");
+            hasher.AppendUInt64((ulong)portals.Length);
+            foreach (var portal in portals) {
+                hasher.AppendUInt32(portal.PortalId);
+                hasher.AppendUInt32(portal.SourceLevelId);
+                hasher.AppendInt32(portal.SourcePositionX);
+                hasher.AppendInt32(portal.SourcePositionY);
+                hasher.AppendUInt32(portal.DestinationLevelId);
+                hasher.AppendInt32(portal.DestinationPositionX);
+                hasher.AppendInt32(portal.DestinationPositionY);
+                hasher.AppendUInt32(portal.RemainingTicks);
+                hasher.AppendUInt32(portal.OwnerEntityId);
+                hasher.AppendBool(portal.Bidirectional);
+            }
+        }
+
         hasher.AppendBool(snapshot.ActiveStore is not null);
         if (snapshot.ActiveStore is not null) {
             hasher.AppendUInt32(snapshot.ActiveStore.StoreId);

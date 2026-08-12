@@ -260,6 +260,21 @@ message Snapshot {
 	repeated ProjectileSnapshot projectiles = 9;
 	// Current state of the module-owned native-compatible gameplay RNG.
 	uint32 random_state = 10;
+	// Dynamic and external authoritative portal routes.
+	repeated PortalSnapshot portals = 11;
+}
+
+message PortalSnapshot {
+	uint32 portal_id = 1;
+	uint32 source_level_id = 2;
+	int32 source_position_x = 3;
+	int32 source_position_y = 4;
+	uint32 destination_level_id = 5;
+	int32 destination_position_x = 6;
+	int32 destination_position_y = 7;
+	uint32 remaining_ticks = 8;
+	uint32 owner_entity_id = 9;
+	bool bidirectional = 10;
 }
 
 message StoreSnapshot {
