@@ -513,6 +513,11 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.44 adds Town Portal (stable spell ID `39`, native `SpellID` `7`). The
+server owns native five-cell placement, one active portal per caster, the fixed
+town endpoint, bidirectional use, 100-tick expiry, and portal persistence in
+snapshots, saves, hashes, and the shared protocol.
+
 Schema 0.43 adds Telekinesis (stable and native spell ID `33`). The server
 resolves the target through the shared cast intent, then authoritatively applies
 remote item pickup, object activation/effects, or one-cell monster knockback.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.43.0` schema in
+It declares its identity and `devilution.diablo@0.44.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,12 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.44 adds stable Town Portal spell row `39` (native `SpellID` `7`).
+The typed behavior performs native five-cell portal placement, replaces the
+owner's prior portal, exposes a bidirectional dungeon/town route, and expires
+after 100 authoritative ticks. Portal state is server-owned through snapshots,
+saves, hashes, and the shared protocol.
 
 Schema 0.43 adds stable Telekinesis spell row `33` (native `SpellID` `33`).
 The typed behavior applies the native cursor operation authoritatively to a
@@ -556,7 +562,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.43.0"
+    "version": "0.44.0"
   },
   "dependencyConstraints": [
     {
@@ -588,7 +594,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.43.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.44.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

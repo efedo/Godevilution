@@ -151,6 +151,12 @@ Every newly authoritative field requires native and C# parity coverage before
 clients depend on it.
 
 `Snapshot.random_state` field 10 carries the module-owned Diablo gameplay RNG.
+`Snapshot.portals` field 11 carries the complete authoritative portal route
+projection. Each row includes both endpoints plus dynamic owner,
+bidirectional-use, and remaining-tick metadata; Town Portal placement,
+replacement, expiry, and travel remain server-owned. Older readers may ignore
+the additive field, while current clients validate and render it without
+simulating portal state.
 `MonsterSnapshot.monster_level` field 15 supplies deterministic magic hit
 resolution. `MonsterSnapshot.hit_points_q6` and `max_hit_points_q6` fields
 16-17 carry exact native 26.6 monster health; fields 6-7 remain rounded-up

@@ -212,6 +212,11 @@ Windows toolchain command.
   Stone Curse uses behavior value `13` with the same target, position,
   remaining-tick, phase, impact-lifetime, and effective-spell-level fields for
   its stationary duration/shatter controller.
+- `Snapshot.portals` field 11 carries server-owned static and dynamic portal
+  endpoints. Dynamic Town Portal rows retain owner, bidirectional-use, and
+  remaining-tick state; clients render these endpoints but never create,
+  expire, or resolve a portal locally. The field is additive for readers that
+  predate dynamic portal projection.
 - `StatusEffectSnapshot.behavior` field 4 identifies typed server-owned status
   semantics without asking a client to infer them from an effect ID.
   `STATUS_EFFECT_BEHAVIOR_INFRAVISION` value `1` drives native and Godot

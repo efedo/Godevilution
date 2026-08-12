@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.44 with server-authoritative Town
+  Portal (spell ID 39, native `SpellID` 7), including native five-cell
+  placement, owner replacement, bidirectional dungeon/town use, 100-tick
+  expiry, and persisted protocol-visible portal state.
 - Advance the Diablo content schema to 0.43 with server-authoritative
   Telekinesis (spell ID 33), covering visible item pickup, object activation and
   effects, one-cell monster knockback, line-of-sight validation, and deterministic
