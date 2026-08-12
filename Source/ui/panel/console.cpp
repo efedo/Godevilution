@@ -116,6 +116,7 @@ constexpr std::string_view CommandHelpText =
     "  debug.level.warp.dungeon <level>\n"
     "  debug.level.warp.quest <level>\n"
     "  debug.level.warp.map <path> <dunType> <x> <y>\n"
+    "  debug.items.info\n"
     "  debug.level.seed [level]\n"
     "  debug.search.clear\n"
     "  debug.search.item <name>\n"

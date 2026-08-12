@@ -75,6 +75,9 @@ legacy transition behavior remain native-owned compatibility behavior.
 The `dev.level.warp.map` helper now delegates to
 `debug.level.warp.map <path> <dunType> <x> <y>`; native path, dungeon-type,
 spawn-bound, and transition validation remain compatibility behavior.
+The `dev.items.info` diagnostic now delegates to `debug.items.info`; selected
+item lookup and network-pack validation are native-owned while Lua retains the
+legacy name as a compatibility alias.
 
 ## Bundled Scripts
 

@@ -19,12 +19,11 @@
 
 #include <sol/sol.hpp>
 
-#include "engine/cursor.h"
+#include "application/debug.h"
 #include "engine/random.hpp"
 #include "game/items/items.hpp"
 #include "game/items/item_pool.hpp"
 #include "lua/metadoc.hpp"
-#include "persistence/pack.h"
 #include "game/players/players.hpp"
 #include "utils/is_of.hpp"
 #include "utils/string/str_case.hpp"
@@ -33,51 +32,6 @@
 namespace devilution {
 
 namespace {
-
-const Item *DebugCmdGetItem()
-{
-	const Player &myPlayer = *MyPlayer;
-	if (!myPlayer.HoldItem.isEmpty()) return &myPlayer.HoldItem;
-	if (pcursinvitem != -1) {
-		if (pcursinvitem < INVITEM_INV_FIRST) return &myPlayer.InvBody[pcursinvitem];
-		if (pcursinvitem <= INVITEM_INV_LAST) return &myPlayer.InvList[pcursinvitem - INVITEM_INV_FIRST];
-		return &myPlayer.SpdList[pcursinvitem - INVITEM_BELT_FIRST];
-	}
-	if (pcursitem != -1) return &Items[pcursitem];
-	return nullptr;
-}
-
-std::string DebugCmdItemInfo()
-{
-	const Item *pItem = DebugCmdGetItem();
-	if (pItem != nullptr) {
-		const Player &myPlayer = *MyPlayer;
-		std::string_view netPackValidation { "N/A" };
-		if (gbIsMultiplayer) {
-			ItemNetPack itemPack;
-			Item unpacked;
-			PackNetItem(*pItem, itemPack);
-			netPackValidation = UnPackNetItem(myPlayer, itemPack, unpacked) ? "Success" : "Failure";
-		}
-		return StrCat("Name: ", pItem->_iIName,
-		    "\nIDidx: ", pItem->IDidx, " (", AllItemsList[pItem->IDidx].iName, ")",
-		    "\nSeed: ", pItem->_iSeed,
-		    "\nCreateInfo: ", pItem->_iCreateInfo,
-		    "\nLevel: ", pItem->_iCreateInfo & CF_LEVEL,
-		    "\nOnly Good: ", ((pItem->_iCreateInfo & CF_ONLYGOOD) == 0) ? "False" : "True",
-		    "\nUnique Monster: ", ((pItem->_iCreateInfo & CF_UPER15) == 0) ? "False" : "True",
-		    "\nDungeon Item: ", ((pItem->_iCreateInfo & CF_UPER1) == 0) ? "False" : "True",
-		    "\nUnique Item: ", ((pItem->_iCreateInfo & CF_UNIQUE) == 0) ? "False" : "True",
-		    "\nSmith: ", ((pItem->_iCreateInfo & CF_SMITH) == 0) ? "False" : "True",
-		    "\nSmith Premium: ", ((pItem->_iCreateInfo & CF_SMITHPREMIUM) == 0) ? "False" : "True",
-		    "\nBoy: ", ((pItem->_iCreateInfo & CF_BOY) == 0) ? "False" : "True",
-		    "\nWitch: ", ((pItem->_iCreateInfo & CF_WITCH) == 0) ? "False" : "True",
-		    "\nHealer: ", ((pItem->_iCreateInfo & CF_HEALER) == 0) ? "False" : "True",
-		    "\nPregen: ", ((pItem->_iCreateInfo & CF_PREGEN) == 0) ? "False" : "True",
-		    "\nNet Validation: ", netPackValidation);
-	}
-	return StrCat("Num items: ", ActiveItemCount);
-}
 
 std::mt19937 BetterRng;
 std::string DebugSpawnItem(std::string itemName)
@@ -211,8 +165,8 @@ std::string DebugSpawnUniqueItem(std::string itemName)
 sol::table LuaDevItemsModule(sol::state_view &lua)
 {
 	sol::table table = lua.create_table();
-	LuaSetDocFn(table, "get", "() -> Item", "Get the currently selected item.", &DebugCmdGetItem);
-	LuaSetDocFn(table, "info", "()", "Show info of currently selected item.", &DebugCmdItemInfo);
+	LuaSetDocFn(table, "get", "() -> Item", "Get the currently selected item.", &devilution::DebugCmdGetSelectedItem);
+	LuaSetDocFn(table, "info", "()", "Show info of currently selected item.", &devilution::DebugCmdItemInfo);
 	LuaSetDocFn(table, "spawn", "(name: string)", "Attempt to generate an item.", &DebugSpawnItem);
 	LuaSetDocFn(table, "spawnUnique", "(name: string)", "Attempt to generate a unique item.", &DebugSpawnUniqueItem);
 	return table;

@@ -24,6 +24,7 @@
 #include "engine/assets.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "game/items/items.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
 #include "game/spells/spells.hpp"
@@ -38,6 +39,7 @@
 #include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "network/protocol/msg.h"
+#include "persistence/pack.h"
 #include "tables/spelldat.h"
 #include "ui/load_screens.h"
 #include "ui/player_messages.h"
@@ -587,6 +589,51 @@ std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, i
 	return StrCat("Moved you to ", TestMapPath, ".");
 }
 
+const Item *DebugCmdGetSelectedItem()
+{
+	const Player &myPlayer = *MyPlayer;
+	if (!myPlayer.HoldItem.isEmpty()) return &myPlayer.HoldItem;
+	if (pcursinvitem != -1) {
+		if (pcursinvitem < INVITEM_INV_FIRST) return &myPlayer.InvBody[pcursinvitem];
+		if (pcursinvitem <= INVITEM_INV_LAST) return &myPlayer.InvList[pcursinvitem - INVITEM_INV_FIRST];
+		return &myPlayer.SpdList[pcursinvitem - INVITEM_BELT_FIRST];
+	}
+	if (pcursitem != -1) return &Items[pcursitem];
+	return nullptr;
+}
+
+std::string DebugCmdItemInfo()
+{
+	const Item *pItem = DebugCmdGetSelectedItem();
+	if (pItem != nullptr) {
+		const Player &myPlayer = *MyPlayer;
+		std::string_view netPackValidation { "N/A" };
+		if (gbIsMultiplayer) {
+			ItemNetPack itemPack;
+			Item unpacked;
+			PackNetItem(*pItem, itemPack);
+			netPackValidation = UnPackNetItem(myPlayer, itemPack, unpacked) ? "Success" : "Failure";
+		}
+		return StrCat("Name: ", pItem->_iIName,
+		    "\nIDidx: ", pItem->IDidx, " (", AllItemsList[pItem->IDidx].iName, ")",
+		    "\nSeed: ", pItem->_iSeed,
+		    "\nCreateInfo: ", pItem->_iCreateInfo,
+		    "\nLevel: ", pItem->_iCreateInfo & CF_LEVEL,
+		    "\nOnly Good: ", ((pItem->_iCreateInfo & CF_ONLYGOOD) == 0) ? "False" : "True",
+		    "\nUnique Monster: ", ((pItem->_iCreateInfo & CF_UPER15) == 0) ? "False" : "True",
+		    "\nDungeon Item: ", ((pItem->_iCreateInfo & CF_UPER1) == 0) ? "False" : "True",
+		    "\nUnique Item: ", ((pItem->_iCreateInfo & CF_UNIQUE) == 0) ? "False" : "True",
+		    "\nSmith: ", ((pItem->_iCreateInfo & CF_SMITH) == 0) ? "False" : "True",
+		    "\nSmith Premium: ", ((pItem->_iCreateInfo & CF_SMITHPREMIUM) == 0) ? "False" : "True",
+		    "\nBoy: ", ((pItem->_iCreateInfo & CF_BOY) == 0) ? "False" : "True",
+		    "\nWitch: ", ((pItem->_iCreateInfo & CF_WITCH) == 0) ? "False" : "True",
+		    "\nHealer: ", ((pItem->_iCreateInfo & CF_HEALER) == 0) ? "False" : "True",
+		    "\nPregen: ", ((pItem->_iCreateInfo & CF_PREGEN) == 0) ? "False" : "True",
+		    "\nNet Validation: ", netPackValidation);
+	}
+	return StrCat("Num items: ", ActiveItemCount);
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -707,6 +754,9 @@ void RegisterNativeDebugCommands()
 	CurrentDebugCommandRegistry.Register("debug.level.warp.map", "Warp to a custom dungeon map.", [](std::string_view arguments) {
 		const auto parsed = ParseCustomMapWarpArguments(arguments);
 		return parsed.has_value() ? DebugCmdWarpToCustomMap(parsed->path, parsed->dunType, parsed->x, parsed->y) : std::string("Expected a map path, dungeon type, and spawn x/y coordinates.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.items.info", "Show information about the selected item.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdItemInfo() : std::string("This command takes no arguments.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))
