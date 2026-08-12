@@ -589,10 +589,11 @@ public sealed partial class DiabloSimulation
                             && (projectile.VelocityX != 0
                                 || projectile.VelocityY != 0
                                  || projectile.RemainingTicks > projectile.ImpactLifetime))))
-                || (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallController
+                || ((projectile.Behavior is AuthoritativeProjectileBehavior.FireWallController
+                        or AuthoritativeProjectileBehavior.LightningWallController)
                     && (projectile.TargetEntityId != 0
                         || projectile.Damage != 0
-                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.DamageType is not (AuthoritativeDamageType.Fire or AuthoritativeDamageType.Lightning)
                         || projectile.AreaRadius != 0
                         || projectile.Speed != 0
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
@@ -610,7 +611,7 @@ public sealed partial class DiabloSimulation
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
                     && (projectile.TargetEntityId != 0
                         || projectile.Damage <= 0
-                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.DamageType is not (AuthoritativeDamageType.Fire or AuthoritativeDamageType.Lightning)
                         || projectile.AreaRadius != 0
                         || projectile.Speed != 0
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel

@@ -52,6 +52,7 @@ public enum AuthoritativeProjectileBehavior
     Jester = 44,
     Berserk = 45,
     Warp = 46,
+    LightningWallController = 47,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -362,6 +363,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.Jester
@@ -541,6 +543,31 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.WallCharacterLevelDamageMultiplier != 1)) {
                 throw new InvalidDataException(
                     "Fire Wall behavior requires the native seven-tick controller and shifted fire-segment tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.LightningWallController
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.DamageType != AuthoritativeDamageType.Lightning
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.RandomDamageRange != 10
+                    || definition.RandomDamageIterationsBonus != 2
+                    || definition.DamageBonus != 2
+                    || definition.DamageScale != 16
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.WallControlLifetime != 7
+                    || definition.WallSegmentBaseDuration != 255
+                    || definition.WallSegmentSpellLevelDurationStep != 255
+                    || definition.WallSegmentCharacterLevelDurationStep != 0
+                    || definition.WallSegmentDurationScale != 1
+                    || definition.WallCharacterLevelDamageMultiplier != 1)) {
+                throw new InvalidDataException(
+                    "Lightning Wall behavior requires the native seven-tick controller and persistent lightning-segment tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.RingOfFireController
                 && (definition.HealingAmount != 0
@@ -1107,6 +1134,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.FlameWaveController
@@ -1154,6 +1182,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                      or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
@@ -1226,6 +1255,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                      or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
@@ -1263,6 +1293,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Fireball
                     or AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                      or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
@@ -1285,6 +1316,7 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.FireWallController
                     or AuthoritativeProjectileBehavior.FireWallSegment
+                    or AuthoritativeProjectileBehavior.LightningWallController
                     or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment)

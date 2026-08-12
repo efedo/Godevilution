@@ -1292,6 +1292,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void LightningWallControllerUsesNativeLightningTuningAndPersistentSegments()
+    {
+        var spell = CreateLightningWallSpell();
+        var world = new DiabloWorldState(fallbackWidth: 40, fallbackHeight: 40);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(50, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(50, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.LightningWallController, controller.Behavior);
+        Assert.Equal(7U, controller.RemainingTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        var segment = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment);
+        Assert.Equal(AuthoritativeDamageType.Lightning, segment.DamageType);
+        Assert.Equal(144, segment.Damage);
+        Assert.InRange(segment.RemainingTicks, 509U, 510U);
+    }
+
+    [Fact]
     public void FireWallSegmentsApplyShiftedFireDamageOnEveryAuthoritativeTick()
     {
         var target = new AuthoritativeCombatTarget(
@@ -2125,6 +2162,34 @@ public sealed class DiabloCombatCommandProcessorTests
             ImmolationControllerLifetime = 1,
             ImmolationSearchRadius = 4,
             ImmolationProjectileCount = 36,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateLightningWallSpell()
+    {
+        return new AuthoritativeSpellDefinition(50, 35, 0, 0, 0, 0) {
+            NativeSpellId = 40,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Lightning,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.LightningWallController,
+            RandomDamageRange = 10,
+            RandomDamageIterationsBonus = 2,
+            DamageBonus = 2,
+            DamageScale = 16,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 3,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 18,
+            ManaCostScale = 64,
+            WallControlLifetime = 7,
+            WallSegmentBaseDuration = 255,
+            WallSegmentSpellLevelDurationStep = 255,
+            WallSegmentCharacterLevelDurationStep = 0,
+            WallSegmentDurationScale = 1,
+            WallCharacterLevelDamageMultiplier = 1,
         };
     }
 
