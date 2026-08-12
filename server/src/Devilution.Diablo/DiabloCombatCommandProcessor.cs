@@ -420,12 +420,15 @@ public sealed class DiabloCombatCommandProcessor
         DiabloCastIntent intent,
         ulong appliedTick,
         bool applyEffects = true,
-        IReadOnlyList<AuthoritativePlayerState>? players = null)
+        IReadOnlyList<AuthoritativePlayerState>? players = null,
+        bool skipSourceValidation = false)
     {
         players ??= [player];
         if (!spells.TryGet(intent.SpellId, out var spell))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!TryResolveCastSource(player, intent, out var source, out var sourceFailure))
+        ResolvedCastSource source = default!;
+        if (!skipSourceValidation
+            && !TryResolveCastSource(player, intent, out source, out var sourceFailure))
             return DiabloCombatIntentResult.Rejected(sourceFailure);
         var hasDamage = spell.DamageAmount > 0
             || spell.RandomMagicDamageDivisor > 0
@@ -437,6 +440,7 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.FireWallController
                 or AuthoritativeProjectileBehavior.RingOfFireController
                 or AuthoritativeProjectileBehavior.ImmolationController
+                or AuthoritativeProjectileBehavior.Jester
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ChainLightningController
@@ -461,6 +465,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.RingOfFireController;
         var isImmolation = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.ImmolationController;
+        var isJester = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Jester;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -569,7 +575,7 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (!(isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova) && spell.AreaRadius == 0
+                || (!(isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova || isJester) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -685,7 +691,8 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
         }
-        if (source.Kind == DiabloCastSourceKind.MemorizedSpell
+        if (!skipSourceValidation
+            && source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
         }
@@ -734,7 +741,8 @@ public sealed class DiabloCombatCommandProcessor
         var createStoneCurseController = stoneCurseTarget.HasValue
             && !stoneCurseTarget.Value.Target.IsPetrified;
 
-        ConsumeCastSource(player, source, manaCost);
+        if (!skipSourceValidation)
+            ConsumeCastSource(player, source, manaCost);
         var events = new List<DiabloGameplayEvent>();
         if (isTelekinesis) {
             var telekinesisResult = worldCommands!.ExecuteTelekinesis(
@@ -804,6 +812,21 @@ public sealed class DiabloCombatCommandProcessor
             player.Mana = Math.Min(
                 player.ManaMaximum,
                 checked(player.Mana + ResolveManaRestorationQ6(player, effectiveSpellLevel)));
+        } else if (isJester) {
+            var jesterSpellId = SelectJesterSpellId();
+            var jesterResult = ResolveCast(
+                player,
+                intent with {
+                    SpellId = jesterSpellId,
+                    Source = DiabloCastSourceKind.Unspecified,
+                },
+                appliedTick,
+                applyEffects: true,
+                players,
+                skipSourceValidation: true);
+            if (!jesterResult.Succeeded)
+                return jesterResult;
+            events.AddRange(jesterResult.Events);
         } else if (createStoneCurseController) {
             stoneCurseTarget!.Value.Target.IsPetrified = true;
         } else if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Healing) {
@@ -1197,6 +1220,23 @@ public sealed class DiabloCombatCommandProcessor
             failure = DiabloRuleFailure.Malformed;
             return false;
         }
+    }
+
+    /** Mirrors native AddJester's 10-way deterministic missile dispatch. */
+    private uint SelectJesterSpellId()
+    {
+        return random.RandomIntLessThan(10) switch {
+            0 or 1 => 1U, // Firebolt
+            2 => 12U, // Fireball
+            3 => 6U, // Fire Wall
+            4 => 7U, // Guardian
+            5 => 16U, // Chain Lightning
+            6 => 39U, // Town Portal
+            7 => 23U, // Teleport
+            8 => 25U, // Apocalypse
+            9 => 8U, // Stone Curse
+            _ => throw new InvalidOperationException("Native Jester dispatch produced an invalid roll."),
+        };
     }
 
     private static bool TryInferCastSource(

@@ -49,6 +49,7 @@ public enum AuthoritativeProjectileBehavior
     Mana = 41,
     RingOfFireController = 42,
     ImmolationController = 43,
+    Jester = 44,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -352,6 +353,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.FireWallSegment
                     or AuthoritativeProjectileBehavior.RingOfFireController
                     or AuthoritativeProjectileBehavior.ImmolationController
+                    or AuthoritativeProjectileBehavior.Jester
                     or AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment
                     or AuthoritativeProjectileBehavior.InfernoController
@@ -360,7 +362,6 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
-                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom;
             if (hasDamage && definition.Range <= 0)
@@ -576,6 +577,29 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ImmolationProjectileCount != 36)) {
                 throw new InvalidDataException(
                     "Immolation behavior requires the native moving fire-burst tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Jester
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.RandomDamageRange != 0
+                    || definition.RandomMagicDamageDivisor != 0
+                    || definition.MagicDamageDivisor != 0
+                    || definition.SpellLevelDamage != 0
+                    || definition.DamageBonus != 0
+                    || definition.CharacterLevelRandomDamageDivisor != 0
+                    || definition.DamageScale != 1
+                    || definition.ResistantDamageDivisor != 1
+                    || definition.ProjectileImpactLifetime != 1)) {
+                throw new InvalidDataException(
+                    "Jester behavior requires the native targeted dispatch-only tuning.");
             }
             if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.FlameWaveController
                     or AuthoritativeProjectileBehavior.FlameWaveSegment)
@@ -1076,7 +1100,6 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
-                    or AuthoritativeProjectileBehavior.ImmolationController
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
                     or AuthoritativeProjectileBehavior.Elemental
@@ -1127,8 +1150,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ApocalypseController
                     or AuthoritativeProjectileBehavior.ApocalypseBoom
                     or AuthoritativeProjectileBehavior.Elemental
-                    or AuthoritativeProjectileBehavior.GuardianController
-                    or AuthoritativeProjectileBehavior.ImmolationController)
+                    or AuthoritativeProjectileBehavior.GuardianController)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {

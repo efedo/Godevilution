@@ -17,6 +17,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(36, (int)AuthoritativeProjectileBehavior.GuardianController);
         Assert.Equal(37, (int)AuthoritativeProjectileBehavior.Telekinesis);
         Assert.Equal(38, (int)AuthoritativeProjectileBehavior.TownPortal);
+        Assert.Equal(44, (int)AuthoritativeProjectileBehavior.Jester);
     }
 
     [Fact]
@@ -72,6 +73,29 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(18, townPortal.MinimumManaCost);
         Assert.Equal(3, townPortal.StaffLevel);
         Assert.Equal(AuthoritativeProjectileBehavior.TownPortal, townPortal.ProjectileBehavior);
+    }
+
+    [Fact]
+    public void ShippedJesterCarriesNativeDispatchIdentity()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(47, out var jester));
+        Assert.Equal(39U, jester.NativeSpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Jester, jester.ProjectileBehavior);
+        Assert.Equal((20, 3, 1, 15, 64, 10), (
+            jester.ManaCost,
+            jester.ManaAdjustment,
+            jester.ManaAdjustmentDivisor,
+            jester.MinimumManaCost,
+            jester.ManaCostScale,
+            jester.StaffLevel));
     }
 
     [Fact]
@@ -281,7 +305,7 @@ public sealed class AuthoritativeSpellCatalogTests
             guardian.ManaAdjustment,
             guardian.GuardianMinimumDuration,
             guardian.ManaCostScale));
-        Assert.Equal((16, 30, 30, 2, 5, 6, 16), (
+        Assert.Equal((16, 16, 30, 2, 5, 6, 16), (
             guardian.ProjectileSpeed,
             guardian.GuardianDurationTickScale,
             guardian.GuardianMaximumDuration,

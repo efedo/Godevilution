@@ -1443,8 +1443,36 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.All(fireballs, projectile => {
             Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
             Assert.True(projectile.Damage > 0);
-            Assert.Equal(256U, projectile.RemainingTicks);
+            Assert.Equal(255U, projectile.RemainingTicks);
         });
+    }
+
+    [Fact]
+    public void JesterDispatchesThroughTheNativeDeterministicSpellTable()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateJesterSpell(), CreateFireboltSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(47, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(47, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        Assert.True(player.Mana < 5000);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
+        Assert.Equal(1U, projectile.SpellId);
     }
 
     [Fact]
@@ -1968,7 +1996,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateImmolationSpell()
     {
-        return new AuthoritativeSpellDefinition(45, 1, 0, 0, 112, 0) {
+        return new AuthoritativeSpellDefinition(45, 1, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileSpeed = 16,
             ProjectileLifetime = 256,
@@ -1988,6 +2017,27 @@ public sealed class DiabloCombatCommandProcessorTests
             ImmolationControllerLifetime = 1,
             ImmolationSearchRadius = 4,
             ImmolationProjectileCount = 36,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateJesterSpell()
+    {
+        return new AuthoritativeSpellDefinition(47, 20, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Jester,
+            ResistantDamageDivisor = 1,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 3,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 15,
+            ManaCostScale = 64,
+            DamageScale = 1,
+            HealingScale = 1,
+            ResurrectionLifeScale = 1,
+            StaffLevel = 10,
         };
     }
 
