@@ -449,6 +449,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.HealOther;
         var isManaShield = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.ManaShield;
+        var isReflect = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Reflect;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -497,10 +499,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
-        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse
+        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect
             ? player.PositionX
             : intent.TargetX;
-        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse
+        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect
             ? player.PositionY
             : intent.TargetY;
         if (isResurrection) {
@@ -778,6 +780,14 @@ public sealed class DiabloCombatCommandProcessor
             }
         } else if (isManaShield) {
             player.ManaShieldActive = true;
+        } else if (isReflect) {
+            // Native AddReflect uses spell level 2 when the cast does not carry
+            // an explicit level, then adds level * character level to uint16
+            // charges. Overflow intentionally fizzles the charge increment.
+            var reflectSpellLevel = effectiveSpellLevel == 0 ? 2 : effectiveSpellLevel;
+            var chargeIncrement = checked((uint)reflectSpellLevel * player.CharacterLevel);
+            if (chargeIncrement <= ushort.MaxValue - player.ReflectCharges)
+                player.ReflectCharges += chargeIncrement;
         } else if (createStoneCurseController) {
             stoneCurseTarget!.Value.Target.IsPetrified = true;
         } else if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Healing) {
@@ -2842,7 +2852,25 @@ public sealed class DiabloCombatCommandProcessor
                     target.AttackDamage,
                     victim.ArmorClass,
                     unchecked((uint)tick ^ target.EntityId ^ victim.EntityId));
-                var damageResult = playerDamage.Apply(victim, Math.Max(0, damage));
+                var reflectedDamage = 0;
+                if (damage > 0 && victim.ReflectCharges > 0) {
+                    victim.ReflectCharges--;
+                    reflectedDamage = checked(
+                        damage * random.RandomIntBetween(20, 30) / 100);
+                    if (reflectedDamage > 0) {
+                        var reflectedEvents = new List<DiabloGameplayEvent>();
+                        ApplyResolvedDamageQ6(
+                            victim,
+                            target,
+                            DiabloFixedPointQ6.FromWhole(reflectedDamage),
+                            reflectedEvents);
+                        foreach (var reflectedEvent in reflectedEvents)
+                            events.Add(new DiabloDirectedGameplayEvent(victim, reflectedEvent));
+                    }
+                }
+                var damageResult = playerDamage.Apply(
+                    victim,
+                    Math.Max(0, damage - reflectedDamage));
                 if (damageResult.IncomingDamageQ6 > 0) {
                     events.Add(new DiabloDirectedGameplayEvent(
                         victim,

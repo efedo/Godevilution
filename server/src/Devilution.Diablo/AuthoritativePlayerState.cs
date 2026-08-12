@@ -181,6 +181,7 @@ public sealed record StorePlayerSnapshot(
     public uint CharacterClassId { get; init; }
     public string CharacterName { get; init; } = string.Empty;
     public bool ManaShieldActive { get; init; }
+    public uint ReflectCharges { get; init; }
     public uint AbilitySpellId { get; init; }
     public IReadOnlyList<MemorizedSpellState> MemorizedSpells { get; init; } = [];
     public IReadOnlyList<AuthoritativeStatusEffect> StatusEffects { get; init; } = [];
@@ -244,7 +245,8 @@ public sealed class AuthoritativePlayerState(
     OwnedStoreItem? heldItem = null,
     DiabloPlayerDirection facingDirection = DiabloPlayerDirection.South,
     string characterName = "",
-    bool manaShieldActive = false)
+    bool manaShieldActive = false,
+    uint reflectCharges = 0)
 {
     public uint Gold { get; set; } = gold;
 
@@ -275,6 +277,11 @@ public sealed class AuthoritativePlayerState(
 
     /** True while the server-owned native Mana Shield defense is active. */
     public bool ManaShieldActive { get; set; } = manaShieldActive;
+
+    /** Native-compatible remaining Reflect charges, capped at uint16 like DevilutionX. */
+    public uint ReflectCharges { get; set; } = reflectCharges <= ushort.MaxValue
+        ? reflectCharges
+        : throw new ArgumentOutOfRangeException(nameof(reflectCharges));
 
     /** True while the player has not opted into hostile player targeting. */
     public bool FriendlyMode { get; set; } = friendlyMode;

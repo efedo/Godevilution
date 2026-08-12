@@ -1069,7 +1069,8 @@ public sealed class BaseContentReplayTests
                 .ToArray(),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             startingPlayerClasses: classes,
-            startingManaShieldActive: initial.ManaShieldActive);
+            startingManaShieldActive: initial.ManaShieldActive,
+            startingReflectCharges: initial.ReflectCharges);
 
         var result = ReplayFixtureExecutor.Execute(
             fixture,

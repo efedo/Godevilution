@@ -4176,6 +4176,34 @@ public sealed class DiabloCombatCommandProcessorTests
             Assert.Single(player.StatusEffects).RemainingTicks);
     }
 
+    [Fact]
+    public void ReflectCastAddsNativeLevelScaledChargesAndConsumesMana()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateReflectSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterLevel: 3,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(43, 2)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                43,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6U, player.ReflectCharges);
+        Assert.Equal(965, player.Mana);
+    }
+
     private static DiabloCombatCommandProcessor CreateProcessor(
         DiabloWorldState world,
         AuthoritativeSpellCatalog? spells = null,
@@ -4453,6 +4481,20 @@ public sealed class DiabloCombatCommandProcessorTests
             ManaCostScale = 64,
             SearchCharacterLevelDurationMultiplier = 2,
             SearchSpellLevelDurationMultiplier = 10,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateReflectSpell()
+    {
+        return new AuthoritativeSpellDefinition(43, 35, 0, 0, 0, 0) {
+            NativeSpellId = 43,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
+            ManaAdjustmentDivisor = 1,
+            ManaCostScale = 64,
+            StaffLevel = -1,
         };
     }
 

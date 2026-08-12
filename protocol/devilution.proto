@@ -332,6 +332,8 @@ message PlayerSnapshot {
 	string character_name = 28;
 	// Persistent server-owned native Mana Shield defense state.
 	bool mana_shield_active = 29;
+	// Native-compatible remaining Reflect charges. Zero preserves legacy snapshots.
+	uint32 reflect_charges = 30;
 }
 
 enum PlayerDirection {

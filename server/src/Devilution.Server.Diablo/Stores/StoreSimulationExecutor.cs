@@ -103,7 +103,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint identifyAbilitySpellId = 0,
         uint repairAbilitySpellId = 0,
         uint rechargeAbilitySpellId = 0,
-        uint trapDisarmAbilitySpellId = 0)
+        uint trapDisarmAbilitySpellId = 0,
+        uint startingReflectCharges = 0)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -159,7 +160,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             heldItem: startingHeldItem,
             facingDirection: startingFacingDirection,
             characterName: startingCharacterName,
-            manaShieldActive: startingManaShieldActive);
+            manaShieldActive: startingManaShieldActive,
+            reflectCharges: startingReflectCharges);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
         this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();

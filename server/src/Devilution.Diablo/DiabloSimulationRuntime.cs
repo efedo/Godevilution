@@ -66,7 +66,8 @@ public sealed class DiabloPlayerTemplate
         OwnedStoreItem? heldItem = null,
         DiabloPlayerDirection facingDirection = DiabloPlayerDirection.South,
         string characterName = "",
-        bool manaShieldActive = false)
+        bool manaShieldActive = false,
+        uint reflectCharges = 0)
     {
         Gold = gold;
         Experience = experience;
@@ -100,6 +101,7 @@ public sealed class DiabloPlayerTemplate
             ? string.Empty
             : DiabloPlayerName.RequireValid(characterName, nameof(characterName));
         ManaShieldActive = manaShieldActive;
+        ReflectCharges = reflectCharges;
     }
 
     public uint Gold { get; }
@@ -128,6 +130,7 @@ public sealed class DiabloPlayerTemplate
     public DiabloPlayerDirection FacingDirection { get; }
     public string CharacterName { get; }
     public bool ManaShieldActive { get; }
+    public uint ReflectCharges { get; }
 
     /** Returns a fresh-template identity without mutating the content-owned loadout. */
     public DiabloPlayerTemplate WithCharacterName(string characterName)
@@ -158,7 +161,8 @@ public sealed class DiabloPlayerTemplate
             HeldItem,
             FacingDirection,
             characterName,
-            ManaShieldActive);
+            ManaShieldActive,
+            ReflectCharges);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -190,7 +194,8 @@ public sealed class DiabloPlayerTemplate
             HeldItem,
             FacingDirection,
             CharacterName,
-            ManaShieldActive);
+            ManaShieldActive,
+            ReflectCharges);
     }
 }
 

@@ -189,6 +189,7 @@ public static class ReplayFixtureLoader
                 : RequiredInt(value, "life"),
             CharacterName = OptionalString(value, "character_name") ?? string.Empty,
             ManaShieldActive = GetOptionalBool(value, "mana_shield_active"),
+            ReflectCharges = GetOptionalUInt(value, "reflect_charges"),
             ManaMaximum = value.TryGetProperty("mana_maximum", out var manaMaximum) ? manaMaximum.GetInt32() : 0,
             Magic = value.TryGetProperty("magic", out var magic) ? magic.GetInt32() : 0,
             CharacterClass = value.TryGetProperty("character_class", out var characterClass) ? characterClass.GetInt32() : 0,

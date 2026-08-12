@@ -157,6 +157,8 @@ public partial class WorldPresentation : Node2D
         DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
         if (player.ManaShieldActive)
             DrawArc(center, 17, 0, Mathf.Tau, 32, new Color("6fffe9"), 3);
+        if (player.ReflectCharges > 0)
+            DrawArc(center, 20, 0, Mathf.Tau, 32, new Color("d4a5ff"), 2);
         if (isLocal && player.StatusEffects.Any(effect =>
                 effect.Behavior == StatusEffectBehavior.Infravision)) {
             DrawArc(center, 21, 0, Mathf.Tau, 32, new Color("ef6f6c"), 2);

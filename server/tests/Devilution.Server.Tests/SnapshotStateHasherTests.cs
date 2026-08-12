@@ -465,6 +465,23 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ReflectChargesChangeHashWithoutChangingInactiveLegacyState()
+    {
+        var inactive = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var active = inactive.Clone();
+        active.Players[0].ReflectCharges = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(inactive),
+            SnapshotStateHasher.Compute(active));
+        Assert.Equal(
+            SnapshotStateHasher.Compute(inactive),
+            SnapshotStateHasher.Compute(inactive.Clone()));
+    }
+
+    [Fact]
     public void TypedStatusBehaviorChangesHashWithoutChangingGenericStatusShape()
     {
         var generic = new Snapshot {

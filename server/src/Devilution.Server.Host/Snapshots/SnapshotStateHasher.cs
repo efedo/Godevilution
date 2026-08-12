@@ -35,6 +35,10 @@ public static class SnapshotStateHasher
                 hasher.AppendString("godevilution-player-mana-shield-v1");
                 hasher.AppendBool(true);
             }
+            if (player.ReflectCharges != 0) {
+                hasher.AppendString("godevilution-player-reflect-v1");
+                hasher.AppendUInt32(player.ReflectCharges);
+            }
             var memorizedSpells = player.MemorizedSpells
                 .OrderBy(spell => spell.SpellId)
                 .ThenBy(spell => spell.Level)

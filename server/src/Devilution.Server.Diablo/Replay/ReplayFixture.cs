@@ -86,6 +86,7 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 {
     public string CharacterName { get; init; } = string.Empty;
     public bool ManaShieldActive { get; init; }
+    public uint ReflectCharges { get; init; }
     public int LifeMaximum { get; init; }
 
     public int ManaMaximum { get; init; }
