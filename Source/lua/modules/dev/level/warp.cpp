@@ -25,26 +25,6 @@
 namespace devilution {
 namespace {
 
-std::string DebugCmdWarpToQuestLevel(uint8_t level)
-{
-	if (level < 1)
-		return StrCat("Quest level number must be 1 or higher!");
-	if (isSetLevel() && setLevelNumber() == level)
-		return StrCat("You are already on quest level", level, "!");
-
-	for (Quest &quest : Quests) {
-		if (level != quest._qslvl)
-			continue;
-
-		setLevelType() = quest._qlvltype;
-		StartNewLvl(*MyPlayer, WM_DIABSETLVL, level);
-
-		return StrCat("Moved you to quest level ", SetLevelNames[level], ".");
-	}
-
-	return StrCat("Quest level ", level, " does not exist!");
-}
-
 std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y)
 {
 	if (path.empty()) return "path is required";

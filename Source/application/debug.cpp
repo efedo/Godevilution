@@ -25,6 +25,7 @@
 #include "engine/gfx/backbuffer_state.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/levels/setmaps.h"
 #include "game/spells/spells.hpp"
 #include "game/quests/quests.hpp"
 #include "game/players/players.hpp"
@@ -520,6 +521,26 @@ std::string DebugCmdWarpToDungeonLevel(uint8_t level)
 	return StrCat("Moved you to level ", level, ".");
 }
 
+std::string DebugCmdWarpToQuestLevel(uint8_t level)
+{
+	if (level < 1)
+		return StrCat("Quest level number must be 1 or higher!");
+	if (isSetLevel() && setLevelNumber() == level)
+		return StrCat("You are already on quest level", level, "!");
+
+	for (Quest &quest : Quests) {
+		if (level != quest._qslvl)
+			continue;
+
+		setLevelType() = quest._qlvltype;
+		StartNewLvl(*MyPlayer, WM_DIABSETLVL, level);
+
+		return StrCat("Moved you to quest level ", SetLevelNames[level], ".");
+	}
+
+	return StrCat("Quest level ", level, " does not exist!");
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -631,6 +652,11 @@ void RegisterNativeDebugCommands()
 		if (arguments.empty() || HasInvalidLevelArgument(arguments))
 			return std::string("Expected a dungeon level number.");
 		return DebugCmdWarpToDungeonLevel(*ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.level.warp.quest", "Warp to a quest level.", [](std::string_view arguments) {
+		if (arguments.empty() || HasInvalidLevelArgument(arguments))
+			return std::string("Expected a quest level number.");
+		return DebugCmdWarpToQuestLevel(*ParseOptionalLevel(arguments));
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))

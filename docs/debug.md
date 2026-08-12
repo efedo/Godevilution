@@ -44,7 +44,8 @@ and search diagnostics. For example:
 Native equivalents include `debug.display.tileData [name]`,
 `debug.display.scrollView [on|off]`, `debug.level.map.reveal`,
 `debug.level.map.hide`, `debug.level.reset <level> [seed]`,
-`debug.level.warp.dungeon <level>`, `debug.level.seed [level]`, and
+`debug.level.warp.dungeon <level>`, `debug.level.warp.quest <level>`,
+`debug.level.seed [level]`, and
 `debug.search.item <name>` (with corresponding monster, object, and clear
 commands). Player diagnostics are available as `debug.player.arrow <effect>`
 and `debug.player.info [id]`; `debug.player.rejuvenate` restores life and mana,
