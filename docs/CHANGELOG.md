@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.45 with server-authoritative Reflect
+  charges (spell ID 43, native `SpellID` 43), native level/character scaling,
+  seeded 20–30% physical reflection, persisted protocol state, and Godot HUD
+  presentation.
 - Add same-instance Godot protocol reconnect, preserving the server-issued resume
   token and pending command sequence ledger while safely replacing the transport;
   cover the resumed handshake, snapshot, and retry path with a live transport test.
