@@ -72,6 +72,9 @@ handling, and the legacy level-transition mode remain compatibility behavior.
 The `dev.level.warp.quest` helper now delegates to
 `debug.level.warp.quest <level>`; quest lookup, set-level type selection, and
 legacy transition behavior remain native-owned compatibility behavior.
+The `dev.level.warp.map` helper now delegates to
+`debug.level.warp.map <path> <dunType> <x> <y>`; native path, dungeon-type,
+spawn-bound, and transition validation remain compatibility behavior.
 
 ## Bundled Scripts
 

@@ -114,6 +114,7 @@ std::string DebugCmdMapHide();
 std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed);
 std::string DebugCmdWarpToDungeonLevel(uint8_t level);
 std::string DebugCmdWarpToQuestLevel(uint8_t level);
+std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y);
 std::string DebugCmdLevelSeed(std::optional<uint8_t> level);
 std::string DebugCmdSearchMonster(std::string_view name);
 std::string DebugCmdSearchItem(std::string_view name);

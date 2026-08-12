@@ -133,6 +133,35 @@ std::optional<std::pair<uint8_t, std::optional<int>>> ParseLevelResetArguments(s
 	return seed.has_value() ? std::optional<std::pair<uint8_t, std::optional<int>>> { std::pair { *level, seed } } : std::nullopt;
 }
 
+struct CustomMapWarpArguments {
+	std::string_view path;
+	int dunType;
+	int x;
+	int y;
+};
+
+std::optional<CustomMapWarpArguments> ParseCustomMapWarpArguments(std::string_view value)
+{
+	std::array<std::string_view, 4> tokens;
+	size_t cursor = 0;
+	for (std::string_view &token : tokens) {
+		const size_t tokenStart = value.find_first_not_of(" \t", cursor);
+		if (tokenStart == std::string_view::npos)
+			return std::nullopt;
+		const size_t tokenEnd = value.find_first_of(" \t", tokenStart);
+		token = value.substr(tokenStart, tokenEnd == std::string_view::npos ? std::string_view::npos : tokenEnd - tokenStart);
+		cursor = tokenEnd == std::string_view::npos ? value.size() : tokenEnd;
+	}
+	if (value.find_first_not_of(" \t", cursor) != std::string_view::npos)
+		return std::nullopt;
+	const auto dunType = ParseRequiredInt(tokens[1]);
+	const auto x = ParseRequiredInt(tokens[2]);
+	const auto y = ParseRequiredInt(tokens[3]);
+	if (!dunType.has_value() || !x.has_value() || !y.has_value())
+		return std::nullopt;
+	return CustomMapWarpArguments { tokens[0], *dunType, *x, *y };
+}
+
 constexpr std::array<std::string_view, 23> DebugTileDataNames {
 	"microTiles",
 	"piece",
@@ -541,6 +570,23 @@ std::string DebugCmdWarpToQuestLevel(uint8_t level)
 	return StrCat("Quest level ", level, " does not exist!");
 }
 
+std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y)
+{
+	if (path.empty()) return "path is required";
+	if (dunType < DTYPE_CATHEDRAL || dunType > DTYPE_LAST) return "invalid dunType";
+
+	const Point spawn { x, y };
+	if (!InDungeonBounds(spawn)) return "spawn location is out of bounds";
+
+	TestMapPath = StrCat(path, ".dun");
+	setLevelType() = static_cast<dungeon_type>(dunType);
+	viewPosition() = spawn;
+
+	StartNewLvl(*MyPlayer, WM_DIABSETLVL, SL_NONE);
+
+	return StrCat("Moved you to ", TestMapPath, ".");
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -657,6 +703,10 @@ void RegisterNativeDebugCommands()
 		if (arguments.empty() || HasInvalidLevelArgument(arguments))
 			return std::string("Expected a quest level number.");
 		return DebugCmdWarpToQuestLevel(*ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.level.warp.map", "Warp to a custom dungeon map.", [](std::string_view arguments) {
+		const auto parsed = ParseCustomMapWarpArguments(arguments);
+		return parsed.has_value() ? DebugCmdWarpToCustomMap(parsed->path, parsed->dunType, parsed->x, parsed->y) : std::string("Expected a map path, dungeon type, and spawn x/y coordinates.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))
