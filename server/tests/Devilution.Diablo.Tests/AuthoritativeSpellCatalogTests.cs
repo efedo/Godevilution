@@ -13,6 +13,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(19, (int)AuthoritativeProjectileBehavior.HolyBolt);
         Assert.Equal(20, (int)AuthoritativeProjectileBehavior.BloodStar);
         Assert.Equal(21, (int)AuthoritativeProjectileBehavior.BoneSpirit);
+        Assert.Equal(30, (int)AuthoritativeProjectileBehavior.NovaController);
         Assert.Equal(35, (int)AuthoritativeProjectileBehavior.Elemental);
         Assert.Equal(36, (int)AuthoritativeProjectileBehavior.GuardianController);
         Assert.Equal(37, (int)AuthoritativeProjectileBehavior.Telekinesis);
@@ -96,6 +97,30 @@ public sealed class AuthoritativeSpellCatalogTests
             jester.MinimumManaCost,
             jester.ManaCostScale,
             jester.StaffLevel));
+    }
+
+    [Fact]
+    public void ShippedNovaCarriesNativeRadialLightningTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(18, out var nova));
+        Assert.Equal(18U, nova.NativeSpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.NovaController, nova.ProjectileBehavior);
+        Assert.Equal((60, 16, 255, 36, 4, 1, 64), (
+            nova.ManaCost,
+            nova.ProjectileSpeed,
+            nova.ProjectileLifetime,
+            nova.NovaProjectileCount,
+            nova.NovaSearchRadius,
+            nova.NovaControllerLifetime,
+            nova.DamageScale));
     }
 
     [Fact]
