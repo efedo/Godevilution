@@ -531,6 +531,11 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.53 adds Lightning Wall (stable spell ID `50`, native `SpellID` `40`).
+It reuses the server-owned wall-growth controller and persistent segment
+machinery while external content supplies native lightning damage and lifetime
+tuning.
+
 Schema 0.52 adds Warp (stable spell ID `49`, native `SpellID` `42`). A
 normalized external trigger table supplies native level destinations. The
 server selects the nearest trigger, performs a five-cell destination crawl,

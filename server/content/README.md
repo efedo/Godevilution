@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.52.0` schema in
+It declares its identity and `devilution.diablo@0.53.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,10 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.53 adds stable Lightning Wall spell row `50` (native `SpellID` `40`).
+The server reuses the authoritative wall-growth controller and persistent
+segments with native lightning damage, duration, and resistance tuning.
 
 Schema 0.52 adds stable Warp spell row `49` (native `SpellID` `42`). The
 server resolves the nearest normalized level trigger, crawls around the native
@@ -301,7 +305,7 @@ ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
 ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
 Monk's Search ability spell ID `46`, Telekinesis spell ID `33`, Berserk spell
-ID `48`, and Warp spell ID `49`.
+ID `48`, Warp spell ID `49`, and Lightning Wall spell ID `50`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned
