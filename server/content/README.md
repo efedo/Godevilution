@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.32.0` schema in
+It declares its identity and `devilution.diablo@0.33.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -151,6 +151,16 @@ Schema 0.32 adds the native Bone Spirit spell row (`38`) and its typed
 homing projectile, one-third-current-life damage, quarter magic resistance,
 seven-tick impact phase, and six-point physical self-damage cost.
 
+Schema 0.33 adds the native Fire Wall spell row (`6`) and its typed controller
+and segment behaviors. The controller grows a center segment and perpendicular
+branches for seven ticks, stopping each branch independently when blocked. Each
+segment persists for `(10 + 10 * effective spell level + character level) * 16`
+ticks, rolls `GenerateRnd(10) + GenerateRnd(10) + 2 + character level`, scales
+the result by eight, and applies shifted fire damage on every authoritative tick
+with quarter resistance for monsters. Controller branches, segment duration,
+damage, and hit directions are persisted and hashed so restored sessions resume
+deterministically.
+
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `charges` and
 `max_charges` preserve charged-item state. The content ID remains the key for
@@ -174,11 +184,11 @@ monsters are the only monster targets accepted by Holy Bolt. Both flags persist
 in snapshots and saves so a restored session cannot change future targeting
 rules.
 
-The current base `spells.tsv` implements spell IDs `1` through `5`, Stone Curse
+The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
-ID `34`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
+ID `34`, Fire Wall spell ID `6`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
 Monk's Search ability spell ID `46`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
@@ -217,6 +227,12 @@ after reaching its initial destination, deals one-third of the victim's current
 life before resistance, and remains in a seven-tick impact phase after a hit.
 Casting applies six whole points of physical self-damage through the same
 server-owned resource and death path.
+
+Spell `6` uses `FireWallController` behavior to place the native seven-tick
+controller, which grows a center segment and perpendicular branches. It emits
+`FireWallSegment` behavior with native duration and damage tuning; segments
+remain stationary and apply shifted fire damage every authoritative tick until
+their duration expires. Branch state is server-owned and persisted.
 
 Spell `2` uses `Healing` behavior. It rolls once from `0..9`, once from `0..3`
 per character level, and once from `0..5` per effective spell level, adding one
@@ -449,7 +465,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.32.0"
+    "version": "0.33.0"
   },
   "dependencyConstraints": [
     {
@@ -481,7 +497,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.32.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.33.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

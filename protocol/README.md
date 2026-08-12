@@ -174,6 +174,10 @@ Windows toolchain command.
   Bone Spirit uses behavior value `21` for its native homing projectile and
   seven-tick impact phase. Both remain server-owned, including resistance,
   current-life-third Bone Spirit damage, and their immediate self-damage.
+  Fire Wall uses behavior values `22` and `23` for its server-owned wall
+  controller and persistent segments. Additive projectile fields 30 through 38
+  carry branch positions, directions, stop flags, and segment hit direction so
+  clients can render restored walls without simulating growth or damage.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

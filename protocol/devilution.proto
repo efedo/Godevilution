@@ -474,6 +474,16 @@ message ProjectileSnapshot {
 	uint32 last_collision_target_entity_id = 28;
 	// Effective spell level captured when this projectile lifecycle was created.
 	int32 effective_spell_level = 29;
+	// Native Fire Wall controller branch state and segment collision direction.
+	int32 wall_left_x = 30;
+	int32 wall_left_y = 31;
+	int32 wall_right_x = 32;
+	int32 wall_right_y = 33;
+	int32 wall_left_direction = 34;
+	int32 wall_right_direction = 35;
+	bool wall_left_stopped = 36;
+	bool wall_right_stopped = 37;
+	int32 wall_hit_direction = 38;
 }
 
 message StatusEffectSnapshot {

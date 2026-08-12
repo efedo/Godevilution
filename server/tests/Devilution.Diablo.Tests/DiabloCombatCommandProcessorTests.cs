@@ -1001,6 +1001,126 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(1, world.Projectiles.Values.Single().PathIndex);
     }
 
+    [Fact]
+    public void FireWallControllerGrowsPerpendicularBranchesAndRetainsTypedSegments()
+    {
+        var spell = CreateFireWallSpell();
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(6, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(6, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.FireWallController, controller.Behavior);
+        Assert.Equal((8, 5, 7U), (controller.PositionX, controller.PositionY, controller.RemainingTicks));
+        Assert.Equal((5, 1), (controller.WallLeftDirection, controller.WallRightDirection));
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
+                && (projectile.PositionX, projectile.PositionY) == (8, 5));
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
+                && (projectile.PositionX, projectile.PositionY) == (8, 4));
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
+                && (projectile.PositionX, projectile.PositionY) == (8, 6));
+
+        for (ulong tick = 2; tick <= 7; tick++)
+            processor.AdvanceTick(tick, [player]);
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallController);
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment);
+    }
+
+    [Fact]
+    public void FireWallSegmentsApplyShiftedFireDamageOnEveryAuthoritativeTick()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            8,
+            5,
+            100,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireWallSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(6, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(6, 0, 8, 5, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+
+        var firstTick = processor.AdvanceTick(1, [player]);
+        var firstDamage = Assert.Single(firstTick).Event;
+        Assert.Equal(AuthoritativeDamageType.Fire, world.Projectiles.Values
+            .First(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment)
+            .DamageType);
+        Assert.True(firstDamage.AmountQ6 > 0);
+        var lifeAfterFirstTick = target.HitPointsQ6;
+
+        var secondTick = processor.AdvanceTick(2, [player]);
+
+        Assert.NotEqual(lifeAfterFirstTick, target.HitPointsQ6);
+        Assert.NotEmpty(secondTick);
+    }
+
+    private static AuthoritativeSpellDefinition CreateFireWallSpell()
+    {
+        return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.FireWallController,
+            RandomDamageRange = 10,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            DamageBonus = 2,
+            DamageScale = 8,
+            RandomDamageIterationsBonus = 2,
+            WallControlLifetime = 7,
+            WallSegmentBaseDuration = 10,
+            WallSegmentSpellLevelDurationStep = 10,
+            WallSegmentCharacterLevelDurationStep = 1,
+            WallSegmentDurationScale = 16,
+            WallCharacterLevelDamageMultiplier = 1,
+        };
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 1104)]
     [InlineData(DiabloGameVariant.Hellfire, 1360)]

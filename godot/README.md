@@ -116,6 +116,10 @@ Blood Star behavior `20` and Bone Spirit behavior `21` are likewise
 presentation-only. Godot renders their authoritative projectile state while
 the server owns movement, homing, resistance, impact lifetime, damage, and the
 physical self-damage applied at cast time.
+Fire Wall behaviors `22` and `23` are presentation-only as well. Godot renders
+the authoritative controller and persistent segment snapshots; the server owns
+branch growth and stopping, segment duration, repeated fire damage, resistance,
+and all persisted wall state.
 
 For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
 and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open

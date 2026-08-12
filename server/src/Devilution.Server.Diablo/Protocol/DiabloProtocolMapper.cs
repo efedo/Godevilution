@@ -128,8 +128,17 @@ internal static class DiabloProtocolMapper
                 Speed = projectile.Speed,
                 ImpactLifetime = projectile.ImpactLifetime,
                 ResistantDamageDivisor = projectile.ResistantDamageDivisor,
-                LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
-                EffectiveSpellLevel = projectile.EffectiveSpellLevel,
+                 LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
+                 EffectiveSpellLevel = projectile.EffectiveSpellLevel,
+                 WallLeftX = projectile.WallLeftX,
+                 WallLeftY = projectile.WallLeftY,
+                 WallRightX = projectile.WallRightX,
+                 WallRightY = projectile.WallRightY,
+                 WallLeftDirection = projectile.WallLeftDirection,
+                 WallRightDirection = projectile.WallRightDirection,
+                 WallLeftStopped = projectile.WallLeftStopped,
+                 WallRightStopped = projectile.WallRightStopped,
+                 WallHitDirection = projectile.WallHitDirection,
             });
         }
         if (source.ActiveStore is not null) {
@@ -341,8 +350,17 @@ internal static class DiabloProtocolMapper
                 ResistantDamageDivisor = projectile.ResistantDamageDivisor == 0
                     ? 1
                     : projectile.ResistantDamageDivisor,
-                LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
-                EffectiveSpellLevel = projectile.EffectiveSpellLevel,
+                 LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
+                 EffectiveSpellLevel = projectile.EffectiveSpellLevel,
+                 WallLeftX = projectile.WallLeftX,
+                 WallLeftY = projectile.WallLeftY,
+                 WallRightX = projectile.WallRightX,
+                 WallRightY = projectile.WallRightY,
+                 WallLeftDirection = projectile.WallLeftDirection,
+                 WallRightDirection = projectile.WallRightDirection,
+                 WallLeftStopped = projectile.WallLeftStopped,
+                 WallRightStopped = projectile.WallRightStopped,
+                 WallHitDirection = projectile.WallHitDirection,
             }).ToArray(),
             activeStore) {
             RandomState = source.RandomState,

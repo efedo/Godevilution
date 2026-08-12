@@ -123,6 +123,24 @@ public sealed record DiabloProjectileState(
     public int EffectiveSpellLevel { get; init; }
 
     public uint LastCollisionTargetEntityId { get; init; }
+
+    public int WallLeftX { get; init; }
+
+    public int WallLeftY { get; init; }
+
+    public int WallRightX { get; init; }
+
+    public int WallRightY { get; init; }
+
+    public int WallLeftDirection { get; init; } = -1;
+
+    public int WallRightDirection { get; init; } = -1;
+
+    public bool WallLeftStopped { get; init; }
+
+    public bool WallRightStopped { get; init; }
+
+    public int WallHitDirection { get; init; } = -1;
 }
 
 /** Remaining stock for the store visible to the projected player. */
@@ -291,6 +309,15 @@ public sealed partial class DiabloSimulation
                     ResistantDamageDivisor = projectile.ResistantDamageDivisor,
                     EffectiveSpellLevel = projectile.EffectiveSpellLevel,
                     LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
+                    WallLeftX = projectile.WallLeftX,
+                    WallLeftY = projectile.WallLeftY,
+                    WallRightX = projectile.WallRightX,
+                    WallRightY = projectile.WallRightY,
+                    WallLeftDirection = projectile.WallLeftDirection,
+                    WallRightDirection = projectile.WallRightDirection,
+                    WallLeftStopped = projectile.WallLeftStopped,
+                    WallRightStopped = projectile.WallRightStopped,
+                    WallHitDirection = projectile.WallHitDirection,
                 })
                 .ToArray(),
             activeStore) {
@@ -459,7 +486,41 @@ public sealed partial class DiabloSimulation
                         || (projectile.Phase == AuthoritativeProjectilePhase.Impact
                             && (projectile.VelocityX != 0
                                 || projectile.VelocityY != 0
-                                || projectile.RemainingTicks > projectile.ImpactLifetime))))
+                                 || projectile.RemainingTicks > projectile.ImpactLifetime))))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.WallLeftDirection is < 0 or > 7
+                        || projectile.WallRightDirection is < 0 or > 7
+                        || projectile.WallHitDirection != -1
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.WallLeftX,
+                            projectile.WallLeftY)
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.WallRightX,
+                            projectile.WallRightY)))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.WallLeftDirection != -1
+                        || projectile.WallRightDirection != -1
+                        || projectile.WallLeftStopped
+                        || projectile.WallRightStopped
+                        || projectile.WallLeftX != 0
+                        || projectile.WallLeftY != 0
+                        || projectile.WallRightX != 0
+                        || projectile.WallRightY != 0
+                        || projectile.WallHitDirection is < -1 or > 7))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
@@ -579,6 +640,15 @@ public sealed partial class DiabloSimulation
                 ResistantDamageDivisor = projectile.ResistantDamageDivisor,
                 EffectiveSpellLevel = projectile.EffectiveSpellLevel,
                 LastCollisionTargetEntityId = projectile.LastCollisionTargetEntityId,
+                WallLeftX = projectile.WallLeftX,
+                WallLeftY = projectile.WallLeftY,
+                WallRightX = projectile.WallRightX,
+                WallRightY = projectile.WallRightY,
+                WallLeftDirection = projectile.WallLeftDirection,
+                WallRightDirection = projectile.WallRightDirection,
+                WallLeftStopped = projectile.WallLeftStopped,
+                WallRightStopped = projectile.WallRightStopped,
+                WallHitDirection = projectile.WallHitDirection,
             };
         }).ToArray();
         if (restoredProjectiles

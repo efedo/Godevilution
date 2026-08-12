@@ -405,7 +405,8 @@ public sealed class DiabloCombatCommandProcessor
             || spell.CharacterLevelRandomDamageDivisor > 0
             || spell.MagicDamageDivisor > 0
             || spell.SpellLevelDamage > 0
-            || spell.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit;
+            || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
+                or AuthoritativeProjectileBehavior.FireWallController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -422,11 +423,15 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Search;
         var isPhasing = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Phasing;
+        var isFireWall = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.FireWallController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (isFireWall && intent.TargetEntityId != 0)
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -497,12 +502,12 @@ public sealed class DiabloCombatCommandProcessor
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
                     Math.Abs(centerY - player.PositionY)) > spell.Range
-                || (spell.AreaRadius == 0
+                || (!isFireWall && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
                     && target is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
-            var hasLineOfSight = spell.ProjectileSpeed > 0
+            var hasLineOfSight = isFireWall || spell.ProjectileSpeed > 0
                 ? world.HasMissileLineOfSight(
                     player.LevelId,
                     player.PositionX,
@@ -519,14 +524,16 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = world.CombatTargets.Values
-                .Where(candidate => candidate.HitPoints > 0
-                    && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
-                    && Math.Max(
-                        Math.Abs(candidate.PositionX - centerX),
-                        Math.Abs(candidate.PositionY - centerY)) <= spell.AreaRadius)
-                .OrderBy(candidate => candidate.EntityId)
-                .ToArray();
+            damageTargets = isFireWall
+                ? []
+                : world.CombatTargets.Values
+                    .Where(candidate => candidate.HitPoints > 0
+                        && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
+                        && Math.Max(
+                            Math.Abs(candidate.PositionX - centerX),
+                            Math.Abs(candidate.PositionY - centerY)) <= spell.AreaRadius)
+                    .OrderBy(candidate => candidate.EntityId)
+                    .ToArray();
             if (spell.AreaRadius == 0 && target is not null)
                 damageTargets = [target];
         }
@@ -557,6 +564,14 @@ public sealed class DiabloCombatCommandProcessor
             if (projectileTravelTicks > spell.ProjectileLifetime)
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        var wallDirection = isFireWall
+            ? GetDirection(player.PositionX, player.PositionY, centerX, centerY)
+            : -1;
+        var wallSpreadPosition = isFireWall
+            ? FindWallSpreadPosition(player, centerX, centerY)
+            : null;
+        if (isFireWall && !wallSpreadPosition.HasValue)
+            return DiabloCombatIntentResult.Accepted;
         if (source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
@@ -696,6 +711,17 @@ public sealed class DiabloCombatCommandProcessor
                     spell,
                     centerX,
                     centerY));
+        } else if (wallSpreadPosition.HasValue) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateWallController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel,
+                    wallSpreadPosition.Value,
+                    wallDirection));
         } else if (teleportDestination.HasValue) {
             var projectileEntityId = AllocateProjectileEntityId();
             world.Projectiles.Add(
@@ -1418,6 +1444,92 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private AuthoritativeProjectile CreateWallController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        (int X, int Y) spreadPosition,
+        int wallDirection)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            spreadPosition.X,
+            spreadPosition.Y,
+            spreadPosition.X,
+            spreadPosition.Y,
+            0,
+            spell.DamageType,
+            0,
+            checked((uint)spell.WallControlLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.FireWallController,
+            StartX = player.PositionX,
+            StartY = player.PositionY,
+            OriginalDirection = wallDirection,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = effectiveSpellLevel,
+            WallLeftX = spreadPosition.X,
+            WallLeftY = spreadPosition.Y,
+            WallRightX = spreadPosition.X,
+            WallRightY = spreadPosition.Y,
+            WallLeftDirection = RotateDirection(wallDirection, -2),
+            WallRightDirection = RotateDirection(wallDirection, 2),
+        };
+    }
+
+    private AuthoritativeProjectile CreateWallSegment(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY,
+        int wallDirection,
+        int wallHitDirection)
+    {
+        var durationUnits = checked(
+            spell.WallSegmentBaseDuration
+            + controller.EffectiveSpellLevel * spell.WallSegmentSpellLevelDurationStep
+            + checked((int)owner.CharacterLevel)
+                * spell.WallSegmentCharacterLevelDurationStep);
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < spell.RandomDamageIterationsBonus;
+             iteration++) {
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        }
+        damage = checked(
+            (damage
+                + spell.DamageBonus
+                + checked((int)owner.CharacterLevel)
+                    * spell.WallCharacterLevelDamageMultiplier)
+            * spell.DamageScale);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            0,
+            controller.SpellId,
+            controller.LevelId,
+            positionX,
+            positionY,
+            positionX,
+            positionY,
+            damage,
+            spell.DamageType,
+            0,
+            checked((uint)(durationUnits * spell.WallSegmentDurationScale))) {
+            Behavior = AuthoritativeProjectileBehavior.FireWallSegment,
+            OriginalDirection = wallDirection,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = controller.EffectiveSpellLevel,
+            WallHitDirection = wallHitDirection,
+        };
+    }
+
     private AuthoritativeProjectile CreateFireballProjectile(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -1824,6 +1936,36 @@ public sealed class DiabloCombatCommandProcessor
                     player.EntityId));
     }
 
+    private (int X, int Y)? FindWallSpreadPosition(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY)
+    {
+        return DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            5,
+            (candidateX, candidateY) =>
+                (candidateX != player.PositionX || candidateY != player.PositionY)
+                && !world.IsMissileGeometryBlocked(
+                    player.LevelId,
+                    candidateX,
+                    candidateY)
+                && world.HasMissileLineOfSight(
+                    player.LevelId,
+                    player.PositionX,
+                    player.PositionY,
+                    candidateX,
+                    candidateY));
+    }
+
+    private static int RotateDirection(int direction, int offset)
+    {
+        var rotated = (direction + offset) % DirectionDisplacements.Length;
+        return rotated < 0 ? rotated + DirectionDisplacements.Length : rotated;
+    }
+
     private (int X, int Y)? FindPhasingDestination(
         AuthoritativePlayerState player,
         AuthoritativeSpellDefinition spell,
@@ -2018,6 +2160,14 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
                     AdvanceBoneSpirit(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallController) {
+                    AdvanceFireWallController(projectile, players);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment) {
+                    AdvanceFireWallSegment(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -2342,6 +2492,251 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (expiresAfterMovement)
             EnterBoneSpiritImpact(projectile);
+    }
+
+    private void AdvanceFireWallController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        controller.RemainingTicks--;
+        if (controller.RemainingTicks == 0) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null
+            || !spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.FireWallController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var leftPosition = (X: controller.WallLeftX, Y: controller.WallLeftY);
+        var rightPosition = (X: controller.WallRightX, Y: controller.WallRightY);
+        if (leftPosition == rightPosition) {
+            if (!CanPlaceWall(controller.LevelId, leftPosition.X, leftPosition.Y)) {
+                world.Projectiles.Remove(controller.EntityId);
+                return;
+            }
+            PlaceWallSegment(
+                controller,
+                spell,
+                owner,
+                leftPosition.X,
+                leftPosition.Y,
+                controller.OriginalDirection,
+                -1);
+            controller.WallLeftX = checked(leftPosition.X
+                + DirectionDisplacements[controller.WallLeftDirection].X);
+            controller.WallLeftY = checked(leftPosition.Y
+                + DirectionDisplacements[controller.WallLeftDirection].Y);
+            controller.WallRightX = checked(rightPosition.X
+                + DirectionDisplacements[controller.WallRightDirection].X);
+            controller.WallRightY = checked(rightPosition.Y
+                + DirectionDisplacements[controller.WallRightDirection].Y);
+            return;
+        }
+
+        if (!controller.WallLeftStopped) {
+            if (TryGrowWall(
+                    controller,
+                    spell,
+                    owner,
+                    leftPosition.X,
+                    leftPosition.Y,
+                    controller.WallLeftDirection)) {
+                controller.WallLeftX = checked(leftPosition.X
+                    + DirectionDisplacements[controller.WallLeftDirection].X);
+                controller.WallLeftY = checked(leftPosition.Y
+                    + DirectionDisplacements[controller.WallLeftDirection].Y);
+            } else {
+                controller.WallLeftStopped = true;
+            }
+        }
+        if (!controller.WallRightStopped) {
+            if (TryGrowWall(
+                    controller,
+                    spell,
+                    owner,
+                    rightPosition.X,
+                    rightPosition.Y,
+                    controller.WallRightDirection)) {
+                controller.WallRightX = checked(rightPosition.X
+                    + DirectionDisplacements[controller.WallRightDirection].X);
+                controller.WallRightY = checked(rightPosition.Y
+                    + DirectionDisplacements[controller.WallRightDirection].Y);
+            } else {
+                controller.WallRightStopped = true;
+            }
+        }
+    }
+
+    private bool TryGrowWall(
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY,
+        int growDirection)
+    {
+        var rightDirection = RotateDirection(growDirection, 1);
+        var gapX = checked(positionX
+            + DirectionDisplacements[rightDirection].X
+            - DirectionDisplacements[growDirection].X);
+        var gapY = checked(positionY
+            + DirectionDisplacements[rightDirection].Y
+            - DirectionDisplacements[growDirection].Y);
+        if (CanPlaceWall(controller.LevelId, gapX, gapY)) {
+            PlaceWallSegment(
+                controller,
+                spell,
+                owner,
+                gapX,
+                gapY,
+                controller.OriginalDirection,
+                RotateDirection(growDirection, -2));
+        }
+
+        if (!CanPlaceWall(controller.LevelId, positionX, positionY))
+            return false;
+        PlaceWallSegment(
+            controller,
+            spell,
+            owner,
+            positionX,
+            positionY,
+            controller.OriginalDirection,
+            -1);
+        return true;
+    }
+
+    private void PlaceWallSegment(
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState owner,
+        int positionX,
+        int positionY,
+        int wallDirection,
+        int wallHitDirection)
+    {
+        var entityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            entityId,
+            CreateWallSegment(
+                entityId,
+                controller,
+                spell,
+                owner,
+                positionX,
+                positionY,
+                wallDirection,
+                wallHitDirection));
+    }
+
+    private bool CanPlaceWall(uint levelId, int positionX, int positionY)
+    {
+        return world.ContainsPosition(levelId, positionX, positionY)
+            && !world.IsMissileBlocked(levelId, positionX, positionY);
+    }
+
+    private void AdvanceFireWallSegment(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks == 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var target = FindWallMonster(projectile);
+        if (target is not null)
+            _ = TryResolvePersistentShiftedProjectileHit(projectile, target, players, events);
+        var playerTarget = FindWallPlayer(projectile, players);
+        if (playerTarget is not null) {
+            _ = TryResolvePersistentShiftedProjectilePlayerHit(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events);
+        }
+
+        if (world.TryGetMissileBlockingObject(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                out var @object)
+            && @object!.Breakable) {
+            @object.Destroyed = true;
+        }
+    }
+
+    private AuthoritativeCombatTarget? FindWallMonster(AuthoritativeProjectile projectile)
+    {
+        return world.CombatTargets.Values
+            .Where(target => target.HitPointsQ6 > 0
+                && (target.LevelId == 0 || target.LevelId == projectile.LevelId)
+                && IsWallOccupant(
+                    target.PositionX,
+                    target.PositionY,
+                    target.FuturePositionX,
+                    target.FuturePositionY,
+                    target.IsMoving,
+                    projectile.PositionX,
+                    projectile.PositionY,
+                    projectile.WallHitDirection))
+            .OrderBy(target => target.EntityId)
+            .FirstOrDefault();
+    }
+
+    private static AuthoritativePlayerState? FindWallPlayer(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        return players
+            .Where(player => player.Life > 0
+                && player.LevelId == projectile.LevelId
+                && !IsProjectileOwner(projectile, player)
+                && IsWallOccupant(
+                    player.PositionX,
+                    player.PositionY,
+                    player.FuturePositionX,
+                    player.FuturePositionY,
+                    player.IsMoving,
+                    projectile.PositionX,
+                    projectile.PositionY,
+                    projectile.WallHitDirection))
+            .OrderBy(player => player.EntityId)
+            .FirstOrDefault();
+    }
+
+    private static bool IsWallOccupant(
+        int currentX,
+        int currentY,
+        int futureX,
+        int futureY,
+        bool isMoving,
+        int wallX,
+        int wallY,
+        int wallHitDirection)
+    {
+        if (wallHitDirection < 0)
+            return currentX == wallX && currentY == wallY;
+        if (!isMoving)
+            return false;
+        var other = DirectionDisplacements[wallHitDirection];
+        return currentX == wallX
+                && currentY == wallY
+                && futureX == wallX + other.X
+                && futureY == wallY + other.Y
+            || currentX == wallX + other.X
+                && currentY == wallY + other.Y
+                && futureX == wallX
+                && futureY == wallY;
     }
 
     private void RetargetBoneSpirit(

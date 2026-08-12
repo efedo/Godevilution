@@ -302,7 +302,16 @@ public static class SnapshotStateHasher
                     || projectile.PathTicks != 0
                     || projectile.Speed != 0
                     || projectile.ImpactLifetime > 1
-                    || projectile.ResistantDamageDivisor > 1) {
+                    || projectile.ResistantDamageDivisor > 1
+                    || projectile.WallLeftX != 0
+                    || projectile.WallLeftY != 0
+                    || projectile.WallRightX != 0
+                    || projectile.WallRightY != 0
+                    || projectile.WallLeftDirection != -1
+                    || projectile.WallRightDirection != -1
+                    || projectile.WallLeftStopped
+                    || projectile.WallRightStopped
+                    || projectile.WallHitDirection != -1) {
                     hasher.AppendString("godevilution-projectile-runtime-v1");
                     hasher.AppendInt32(projectile.Behavior);
                     hasher.AppendInt32(projectile.Phase);
@@ -318,6 +327,15 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(projectile.Speed);
                     hasher.AppendInt32(projectile.ImpactLifetime);
                     hasher.AppendInt32(projectile.ResistantDamageDivisor);
+                    hasher.AppendInt32(projectile.WallLeftX);
+                    hasher.AppendInt32(projectile.WallLeftY);
+                    hasher.AppendInt32(projectile.WallRightX);
+                    hasher.AppendInt32(projectile.WallRightY);
+                    hasher.AppendInt32(projectile.WallLeftDirection);
+                    hasher.AppendInt32(projectile.WallRightDirection);
+                    hasher.AppendBool(projectile.WallLeftStopped);
+                    hasher.AppendBool(projectile.WallRightStopped);
+                    hasher.AppendInt32(projectile.WallHitDirection);
                 }
                 if (projectile.LastCollisionTargetEntityId != 0) {
                     hasher.AppendString("godevilution-projectile-collision-v1");

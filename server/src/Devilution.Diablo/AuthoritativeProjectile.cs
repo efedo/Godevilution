@@ -95,4 +95,27 @@ public sealed class AuthoritativeProjectile
 
     /** Stable occupant checked on the last stationary tick, matching native collision suppression. */
     public uint LastCollisionTargetEntityId { get; set; }
+
+    /** Native Fire Wall controller's current left branch position. */
+    public int WallLeftX { get; set; }
+
+    public int WallLeftY { get; set; }
+
+    /** Native Fire Wall controller's current right branch position. */
+    public int WallRightX { get; set; }
+
+    public int WallRightY { get; set; }
+
+    /** Native Fire Wall branch directions, encoded with the shared eight-way order. */
+    public int WallLeftDirection { get; init; } = -1;
+
+    public int WallRightDirection { get; init; } = -1;
+
+    /** Branches stop independently when the native wall cannot grow further. */
+    public bool WallLeftStopped { get; set; }
+
+    public bool WallRightStopped { get; set; }
+
+    /** Optional native only-hit-walking direction for a grown Fire Wall segment. */
+    public int WallHitDirection { get; init; } = -1;
 }
