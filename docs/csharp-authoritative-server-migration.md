@@ -531,6 +531,32 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.50 adds Jester (stable spell ID `47`, native `SpellID` `39`). The
+server performs the native ten-way deterministic dispatch into the existing
+authoritative Firebolt, Fireball, Fire Wall, Guardian, Chain Lightning, Town
+Portal, Teleport, Apocalypse, or Stone Curse path; no client-side rules fork
+is introduced.
+
+Schema 0.49 adds Immolation (stable spell ID `45`, native `SpellID` `41`). The
+server owns the moving controller, native 36-projectile radial burst, capped
+spell-level speed bonus, and FireballBow movement/impact lifecycle through the
+shared projectile state.
+
+Schema 0.48 adds Ring of Fire (stable spell ID `44`, native `SpellID` `45`).
+The server preserves the radius-three crawl order, first blocker termination,
+native RNG advancement, and Fire Wall segment lifecycle.
+
+Schema 0.47 adds Mana (stable spell ID `41`, native `SpellID` `37`). The server
+owns the native LCG draws, Q6 clamping, effective-level scaling, and class
+restoration multipliers.
+
+Schema 0.46 adds Magi (stable spell ID `40`, native `SpellID` `38`) as a
+server-owned immediate effect that restores current mana to its native maximum.
+
+Schema 0.45 adds Reflect (stable spell ID `43`, native `SpellID` `43`) with
+server-owned charge state, native level/character scaling, seeded reflection,
+and protocol/snapshot persistence.
+
 Schema 0.44 adds Town Portal (stable spell ID `39`, native `SpellID` `7`). The
 server owns native five-cell placement, one active portal per caster, the fixed
 town endpoint, bidirectional use, 100-tick expiry, and portal persistence in

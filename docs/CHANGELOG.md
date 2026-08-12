@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.50 with server-authoritative Jester
+  (stable spell ID 47, native `SpellID` 39), preserving native 10-way RNG
+  dispatch into the existing authoritative spell paths without a second
+  client-side rules implementation.
 - Advance the Diablo content schema to 0.49 with server-authoritative
   Immolation (stable spell ID 45, native `SpellID` 41), preserving the native
   moving controller, 36-projectile radial burst, level-scaled speed, and

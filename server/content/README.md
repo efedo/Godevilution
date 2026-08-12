@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.49.0` schema in
+It declares its identity and `devilution.diablo@0.50.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,10 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.50 adds stable Jester spell row `47` (native `SpellID` `39`). The
+server owns native ten-way deterministic dispatch into the existing typed spell
+paths, so single-player and multiplayer use the same authoritative result.
 
 Schema 0.49 adds stable Immolation spell row `45` (native `SpellID` `41`). The
 server owns the moving controller, native 36-projectile radial burst,
@@ -566,7 +570,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.49.0"
+    "version": "0.50.0"
   },
   "dependencyConstraints": [
     {
@@ -598,7 +602,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.49.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.50.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
