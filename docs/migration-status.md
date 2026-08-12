@@ -571,7 +571,7 @@ behavior uses typed projectile value `35`: the server preserves the native
 first-destination retarget, 14-tick nine-cell fire burst, fire resistance
 divisor, and burst-origin line-of-sight state through snapshots and protocol.
 
-Content schema 0.41 adds native spell ID `13` for Guardian. Its external
+Content schema 0.41 adds native spell ID `7` for Guardian. Its external
 behavior uses typed controller value `36`: the server owns the valid spawn
 search, native duration, six-tile scan cadence, Firebolt emission,
 line-of-sight filtering, and deterministic RNG state through snapshots and

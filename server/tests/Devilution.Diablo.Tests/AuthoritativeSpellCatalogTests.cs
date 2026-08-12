@@ -196,8 +196,7 @@ public sealed class AuthoritativeSpellCatalogTests
             "base",
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
-        Assert.True(catalog.TryGet(13, out var guardian));
-        Assert.False(catalog.TryGet(7, out _));
+        Assert.True(catalog.TryGet(7, out var guardian));
 
         Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, guardian.ProjectileBehavior);
         Assert.Equal(AuthoritativeDamageType.Fire, guardian.DamageType);

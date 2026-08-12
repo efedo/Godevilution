@@ -185,7 +185,7 @@ retargeting projectile behavior. The projectile preserves the native first
 destination, retargets once to the nearest eligible monster, then applies its
 14-tick nine-cell fire burst with native line-of-sight and resistance rules.
 
-Schema 0.41 adds the native Guardian spell row (`13`) and its typed turret
+Schema 0.41 adds the native Guardian spell row (`7`) and its typed turret
 controller behavior. The server finds a valid five-tile spawn, persists the
 native duration and firing cadence, scans the six-tile guardian arc in native
 order, and emits Firebolt-compatible projectiles with deterministic RNG and
