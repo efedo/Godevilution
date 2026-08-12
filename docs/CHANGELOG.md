@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Preserve legacy replay hashes for static catalog portals while hashing owned,
+  expiring Town Portal state, and refresh all base-content replay golden vectors
+  to the current manifest and authoritative snapshot projections.
 - Add generic Engine ruleset generation leases and explicit retired-activation
   draining, keeping replaced targets alive until in-flight operations release
   them while leaving session migration and resource disposal to the host.

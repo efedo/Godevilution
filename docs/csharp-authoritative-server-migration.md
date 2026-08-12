@@ -155,6 +155,11 @@ operation through that lease. Replaced activations leave `DrainRetired` only
 after all leases are released; the host still owns session migration and
 disposal of the returned game-specific target.
 
+Snapshot hashing treats static catalog portals as content rather than mutable
+simulation state, preserving legacy replay vectors. Owned, expiring portals are
+included in the canonical hash; base-content fixtures are refreshed whenever
+the current manifest or authoritative projection changes.
+
 The Diablo base pack's `classes.tsv` declares the six native-compatible class
 IDs, base-game/Hellfire availability, flags, attribute bounds, combat modifiers,
 Q6 life/mana scalars, and separate native self-Healing and Heal Other class

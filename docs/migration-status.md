@@ -174,7 +174,10 @@ provide gameplay modules rather than host adapters, live ruleset replacement
   now exposes generation leases and explicit retired-target draining, and the
   generic host routes each adapter operation through a lease; host session
   migration and safe old-target disposal still need integration, and authoritative
-content/gameplay coverage is still partial. Cast source ownership and immediate
+content/gameplay coverage is still partial. Static content portal routes remain
+  protocol-visible without perturbing legacy replay hashes; owned, expiring portal
+  state is hash-visible, and the base-content replay golden vectors track the
+  current manifest. Cast source ownership and immediate
 resource consumption are now authoritative, and every directly castable base
 loadout source resolves during activation, but the spell catalog still models
 only the current healing, damage, area, status, and projectile slice. Charged
