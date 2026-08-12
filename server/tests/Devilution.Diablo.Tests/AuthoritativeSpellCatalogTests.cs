@@ -13,6 +13,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(19, (int)AuthoritativeProjectileBehavior.HolyBolt);
         Assert.Equal(20, (int)AuthoritativeProjectileBehavior.BloodStar);
         Assert.Equal(21, (int)AuthoritativeProjectileBehavior.BoneSpirit);
+        Assert.Equal(35, (int)AuthoritativeProjectileBehavior.Elemental);
     }
 
     [Fact]
@@ -145,6 +146,43 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(AuthoritativeDamageType.Magic, boneSpirit.DamageType);
         Assert.Equal(4, boneSpirit.ResistantDamageDivisor);
         Assert.Equal(6, boneSpirit.SelfDamage);
+    }
+
+    [Fact]
+    public void ShippedElementalCarriesNativeRetargetAndBurstTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        Assert.True(catalog.TryGet(31, out var elemental));
+
+        Assert.Equal(AuthoritativeProjectileBehavior.Elemental, elemental.ProjectileBehavior);
+        Assert.Equal(AuthoritativeDamageType.Fire, elemental.DamageType);
+        Assert.Equal((35, 2, 20, 64), (
+            elemental.ManaCost,
+            elemental.ManaAdjustment,
+            elemental.MinimumManaCost,
+            elemental.ManaCostScale));
+        Assert.Equal((16, 256, 14, 1), (
+            elemental.ProjectileSpeed,
+            elemental.ProjectileLifetime,
+            elemental.ProjectileImpactLifetime,
+            elemental.AreaRadius));
+        Assert.Equal((10, 2, 4, 2, 8, 255, 2), (
+            elemental.RandomDamageRange,
+            elemental.RandomDamageIterationsBonus,
+            elemental.DamageAmount,
+            elemental.MagicDamageDivisor,
+            elemental.SpellEffectScaleDivisor,
+            elemental.ElementalRetargetLifetime,
+            elemental.ElementalCharacterLevelDamageMultiplier));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            elemental with { ElementalRetargetLifetime = 254 },
+        ]));
     }
 
     [Fact]

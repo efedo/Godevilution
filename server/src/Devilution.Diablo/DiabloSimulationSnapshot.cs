@@ -150,6 +150,10 @@ public sealed record DiabloProjectileState(
     public int ApocalypseScanY { get; init; }
 
     public bool ApocalypseHit { get; init; }
+
+    public int ElementalOriginX { get; init; }
+
+    public int ElementalOriginY { get; init; }
 }
 
 /** Remaining stock for the store visible to the projected player. */
@@ -331,6 +335,8 @@ public sealed partial class DiabloSimulation
                     ApocalypseScanX = projectile.ApocalypseScanX,
                     ApocalypseScanY = projectile.ApocalypseScanY,
                     ApocalypseHit = projectile.ApocalypseHit,
+                    ElementalOriginX = projectile.ElementalOriginX,
+                    ElementalOriginY = projectile.ElementalOriginY,
                 })
                 .ToArray(),
             activeStore) {
@@ -660,6 +666,26 @@ public sealed partial class DiabloSimulation
                         || projectile.ApocalypseScanX != 0
                         || projectile.ApocalypseScanY != 0
                         || projectile.ApocalypseHit))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.Elemental
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Fire
+                        || projectile.AreaRadius != 1
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.Speed != 16
+                        || projectile.ImpactLifetime != 14
+                        || projectile.Phase is not (
+                            AuthoritativeProjectilePhase.Travel
+                            or AuthoritativeProjectilePhase.Impact)
+                        || projectile.PathIndex is < 0 or > 1
+                        || !WorldState.ContainsPosition(
+                            projectile.LevelId,
+                            projectile.ElementalOriginX,
+                            projectile.ElementalOriginY)
+                        || (projectile.Phase == AuthoritativeProjectilePhase.Impact
+                            && (projectile.VelocityX != 0
+                                || projectile.VelocityY != 0
+                                || projectile.RemainingTicks > projectile.ImpactLifetime))))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
@@ -791,6 +817,8 @@ public sealed partial class DiabloSimulation
                 ApocalypseScanX = projectile.ApocalypseScanX,
                 ApocalypseScanY = projectile.ApocalypseScanY,
                 ApocalypseHit = projectile.ApocalypseHit,
+                ElementalOriginX = projectile.ElementalOriginX,
+                ElementalOriginY = projectile.ElementalOriginY,
             };
         }).ToArray();
         if (restoredProjectiles

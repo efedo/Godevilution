@@ -40,6 +40,7 @@ public enum AuthoritativeProjectileBehavior
     ApocalypseController = 32,
     ApocalypseBoom = 33,
     RageController = 34,
+    Elemental = 35,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -275,6 +276,12 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native Rage self-damage Q6 units applied per character level on expiry. */
     public int RageSelfDamageCharacterLevel { get; init; }
+
+    /** Native Elemental lifetime used after its first destination is reached. */
+    public int ElementalRetargetLifetime { get; init; }
+
+    /** Native Elemental character-level damage multiplier before spell scaling. */
+    public int ElementalCharacterLevelDamageMultiplier { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -361,6 +368,8 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.RageControllerLifetime < 0
                 || definition.RageCharacterLevelLifetimeScale < 0
                 || definition.RageSelfDamageCharacterLevel < 0
+                || definition.ElementalRetargetLifetime < 0
+                || definition.ElementalCharacterLevelDamageMultiplier < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
                 throw new InvalidDataException(
@@ -592,6 +601,30 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.RageSelfDamageCharacterLevel != 6)) {
                 throw new InvalidDataException(
                     "Rage behavior requires the native active/cooldown controller tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Elemental
+                && (definition.HealingAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range != 1
+                    || definition.AreaRadius != 1
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileLifetime != 256
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.RandomDamageRange != 10
+                    || definition.RandomDamageIterationsBonus != 2
+                    || definition.DamageAmount != 4
+                    || definition.MagicDamageDivisor != 2
+                    || definition.SpellEffectScaleDivisor != 8
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ProjectileImpactLifetime != 14
+                    || definition.ElementalRetargetLifetime != 255
+                    || definition.ElementalCharacterLevelDamageMultiplier != 2)) {
+                throw new InvalidDataException(
+                    "Elemental behavior requires the native retargeting fire-burst tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
@@ -891,6 +924,7 @@ public sealed class AuthoritativeSpellCatalog
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.BloodStar
                     or AuthoritativeProjectileBehavior.BoneSpirit
+                    or AuthoritativeProjectileBehavior.Elemental
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall)
                 && (definition.MagicDamageDivisor != 0
@@ -921,7 +955,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
                     or AuthoritativeProjectileBehavior.ApocalypseController
-                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom
+                    or AuthoritativeProjectileBehavior.Elemental)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -1021,7 +1056,8 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.NovaController
                     or AuthoritativeProjectileBehavior.NovaBall
                     or AuthoritativeProjectileBehavior.ApocalypseController
-                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom
+                    or AuthoritativeProjectileBehavior.Elemental)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -1089,6 +1125,12 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.RageSelfDamageCharacterLevel != 0)) {
                 throw new InvalidDataException(
                     "Rage tuning requires Rage behavior.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Elemental
+                && (definition.ElementalRetargetLifetime != 0
+                    || definition.ElementalCharacterLevelDamageMultiplier != 0)) {
+                throw new InvalidDataException(
+                    "Elemental tuning requires Elemental behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1263,6 +1305,10 @@ public sealed class AuthoritativeSpellCatalog
                 "rage_character_level_lifetime_scale"),
             RageSelfDamageCharacterLevel = row.OptionalInt32(
                 "rage_self_damage_character_level"),
+            ElementalRetargetLifetime = row.OptionalInt32(
+                "elemental_retarget_lifetime"),
+            ElementalCharacterLevelDamageMultiplier = row.OptionalInt32(
+                "elemental_character_level_damage_multiplier"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

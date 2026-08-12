@@ -1459,6 +1459,64 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(world.Projectiles);
     }
 
+    [Fact]
+    public void ElementalRetargetsAndAppliesPersistentNineCellFireBurst()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            14,
+            10,
+            1000,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateElementalSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(31, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(31, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        var elemental = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Elemental, elemental.Behavior);
+        Assert.Equal(256U, elemental.RemainingTicks);
+        Assert.Equal((12, 10), (elemental.TargetX, elemental.TargetY));
+        Assert.True(elemental.Damage > 0);
+
+        ulong tick = 1;
+        while (elemental.Phase == AuthoritativeProjectilePhase.Travel
+            && elemental.PathIndex == 0
+            && tick < 300) {
+            processor.AdvanceTick(tick++, [player]);
+        }
+        Assert.Equal(1, elemental.PathIndex);
+        Assert.Equal(255U, elemental.RemainingTicks);
+        Assert.Equal((14, 10), (elemental.TargetX, elemental.TargetY));
+
+        while (elemental.Phase == AuthoritativeProjectilePhase.Travel
+            && tick < 600) {
+            processor.AdvanceTick(tick++, [player]);
+        }
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, elemental.Phase);
+        Assert.Equal(14U, elemental.RemainingTicks);
+        var lifeAfterDirectHit = target.HitPointsQ6;
+        Assert.True(lifeAfterDirectHit < target.MaxHitPointsQ6);
+
+        for (var burstTick = 0; burstTick < 14; burstTick++)
+            processor.AdvanceTick(tick++, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.True(target.HitPointsQ6 < lifeAfterDirectHit);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1616,6 +1674,31 @@ public sealed class DiabloCombatCommandProcessorTests
             RageControllerLifetime = 245,
             RageCharacterLevelLifetimeScale = 2,
             RageSelfDamageCharacterLevel = 6,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateElementalSpell()
+    {
+        return new AuthoritativeSpellDefinition(31, 35, 0, 0, 1, 0) {
+            DamageAmount = 4,
+            AreaRadius = 1,
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Elemental,
+            RandomDamageRange = 10,
+            MagicDamageDivisor = 2,
+            RandomDamageIterationsBonus = 2,
+            SpellEffectScaleDivisor = 8,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 14,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 20,
+            ManaCostScale = 64,
+            StaffLevel = 6,
+            ElementalRetargetLifetime = 255,
+            ElementalCharacterLevelDamageMultiplier = 2,
         };
     }
 

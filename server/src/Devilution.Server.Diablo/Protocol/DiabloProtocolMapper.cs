@@ -143,6 +143,8 @@ internal static class DiabloProtocolMapper
                 ApocalypseScanX = projectile.ApocalypseScanX,
                 ApocalypseScanY = projectile.ApocalypseScanY,
                 ApocalypseHit = projectile.ApocalypseHit,
+                ElementalOriginX = projectile.ElementalOriginX,
+                ElementalOriginY = projectile.ElementalOriginY,
             });
         }
         if (source.ActiveStore is not null) {
@@ -369,6 +371,8 @@ internal static class DiabloProtocolMapper
                 ApocalypseScanX = projectile.ApocalypseScanX,
                 ApocalypseScanY = projectile.ApocalypseScanY,
                 ApocalypseHit = projectile.ApocalypseHit,
+                ElementalOriginX = projectile.ElementalOriginX,
+                ElementalOriginY = projectile.ElementalOriginY,
             }).ToArray(),
             activeStore) {
             RandomState = source.RandomState,

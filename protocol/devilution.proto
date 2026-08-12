@@ -490,6 +490,9 @@ message ProjectileSnapshot {
 	int32 apocalypse_scan_x = 39;
 	int32 apocalypse_scan_y = 40;
 	bool apocalypse_hit = 41;
+	// Native Elemental's first destination retained for burst line-of-sight checks.
+	int32 elemental_origin_x = 42;
+	int32 elemental_origin_y = 43;
 }
 
 message StatusEffectSnapshot {

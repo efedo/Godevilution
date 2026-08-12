@@ -53,8 +53,8 @@ public sealed class AuthoritativeProjectile
     public uint LevelId { get; }
     public int PositionX { get; set; }
     public int PositionY { get; set; }
-    public int TargetX { get; }
-    public int TargetY { get; }
+    public int TargetX { get; set; }
+    public int TargetY { get; set; }
     public int Damage { get; }
     public AuthoritativeDamageType DamageType { get; }
     public int AreaRadius { get; }
@@ -78,7 +78,7 @@ public sealed class AuthoritativeProjectile
     public int VelocityY { get; set; }
 
     /** Native eight-way direction encoded South=0 through SouthEast=7. */
-    public int OriginalDirection { get; init; }
+    public int OriginalDirection { get; set; }
 
     public int PathIndex { get; set; }
 
@@ -126,4 +126,9 @@ public sealed class AuthoritativeProjectile
 
     /** Apocalypse Boom stops retrying after its first successful hit. */
     public bool ApocalypseHit { get; set; }
+
+    /** Initial Elemental destination retained for native burst line-of-sight checks. */
+    public int ElementalOriginX { get; init; }
+
+    public int ElementalOriginY { get; init; }
 }

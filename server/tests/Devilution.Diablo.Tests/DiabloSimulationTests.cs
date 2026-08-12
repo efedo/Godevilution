@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.39.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.40.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.39.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.40.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -874,6 +874,59 @@ public sealed class DiabloSimulationTests
         Assert.Equal(47U, restored[0].RemainingTicks);
         Assert.Equal(AuthoritativeProjectilePhase.Impact, restored[1].Phase);
         Assert.Equal(9U, restored[1].RemainingTicks);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsElementalRetargetState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x8000000D,
+                        7,
+                        0,
+                        31,
+                        0,
+                        12,
+                        10,
+                        14,
+                        10,
+                        18,
+                        AuthoritativeDamageType.Fire,
+                        1,
+                        17) {
+                        Behavior = AuthoritativeProjectileBehavior.Elemental,
+                        OriginalDirection = 7,
+                        Speed = 16,
+                        ImpactLifetime = 14,
+                        ResistantDamageDivisor = 4,
+                        PathIndex = 1,
+                        VelocityX = 123,
+                        VelocityY = -456,
+                        ElementalOriginX = 12,
+                        ElementalOriginY = 10,
+                        EffectiveSpellLevel = 2,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Elemental, restored.Behavior);
+        Assert.Equal(1, restored.PathIndex);
+        Assert.Equal(17U, restored.RemainingTicks);
+        Assert.Equal((14, 10), (restored.TargetX, restored.TargetY));
+        Assert.Equal((12, 10), (restored.ElementalOriginX, restored.ElementalOriginY));
+        Assert.Equal((123, -456), (restored.VelocityX, restored.VelocityY));
     }
 
     [Fact]

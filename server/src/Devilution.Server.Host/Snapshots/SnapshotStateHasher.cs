@@ -318,7 +318,9 @@ public static class SnapshotStateHasher
                     || projectile.WallHitDirection != -1
                     || projectile.ApocalypseScanX != 0
                     || projectile.ApocalypseScanY != 0
-                    || projectile.ApocalypseHit) {
+                    || projectile.ApocalypseHit
+                    || projectile.ElementalOriginX != 0
+                    || projectile.ElementalOriginY != 0) {
                     hasher.AppendString("godevilution-projectile-runtime-v1");
                     hasher.AppendInt32(projectile.Behavior);
                     hasher.AppendInt32(projectile.Phase);
@@ -346,6 +348,8 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(projectile.ApocalypseScanX);
                     hasher.AppendInt32(projectile.ApocalypseScanY);
                     hasher.AppendBool(projectile.ApocalypseHit);
+                    hasher.AppendInt32(projectile.ElementalOriginX);
+                    hasher.AppendInt32(projectile.ElementalOriginY);
                 }
                 if (projectile.LastCollisionTargetEntityId != 0) {
                     hasher.AppendString("godevilution-projectile-collision-v1");

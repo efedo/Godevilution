@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.39.0` schema in
+It declares its identity and `devilution.diablo@0.40.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -180,6 +180,11 @@ the native crawl-radius monster bolts; each bolt reuses the Lightning movement,
 damage, segment lifetime, and collision rules with the chain spell's source
 level retained in its authoritative state.
 
+Schema 0.40 adds the native Elemental spell row (`31`) and its typed
+retargeting projectile behavior. The projectile preserves the native first
+destination, retargets once to the nearest eligible monster, then applies its
+14-tick nine-cell fire burst with native line-of-sight and resistance rules.
+
 Schema 0.39 adds the native Hellfire Rage spell row (`22`) and its typed
 active/cooldown controller behavior. The controller preserves the native
 character-level lifetime formula, rejects recasts while active or cooling down,
@@ -230,7 +235,7 @@ The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
-ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
+ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
 Monk's Search ability spell ID `46`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
@@ -519,7 +524,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.39.0"
+    "version": "0.40.0"
   },
   "dependencyConstraints": [
     {
@@ -551,7 +556,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.39.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.40.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

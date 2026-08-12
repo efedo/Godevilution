@@ -73,6 +73,19 @@ public sealed class DiabloCombatCommandProcessor
         (-1, -1),
     ];
 
+    // Native Elemental checks the center and all eight neighboring cells in this order.
+    private static readonly (int X, int Y)[] ElementalBurstOffsets = [
+        (0, 0),
+        (-1, 1),
+        (1, -1),
+        (1, 1),
+        (1, 0),
+        (0, 1),
+        (-1, -1),
+        (-1, 0),
+        (0, -1),
+    ];
+
     private static readonly (int X, int Y)[] ResurrectionInitialOffsets = [
         (0, 0),
         (1, 0),
@@ -442,12 +455,14 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.ApocalypseController;
         var isRage = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.RageController;
+        var isElemental = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Elemental;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse)
+        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
@@ -906,6 +921,14 @@ public sealed class DiabloCombatCommandProcessor
                             spell,
                             centerX,
                             centerY),
+                    AuthoritativeProjectileBehavior.Elemental =>
+                        CreateElementalProjectile(
+                            projectileEntityId,
+                            player,
+                            spell,
+                            effectiveSpellLevel,
+                            centerX,
+                            centerY),
                     _ => new AuthoritativeProjectile(
                         projectileEntityId,
                         player.EntityId == 0 ? 1U : player.EntityId,
@@ -1286,8 +1309,8 @@ public sealed class DiabloCombatCommandProcessor
             player.LevelId,
             player.PositionX,
             player.PositionY,
-            targetX,
-            targetY,
+            velocityTargetX,
+            velocityTargetY,
             damage,
             spell.DamageType,
             0,
@@ -1521,6 +1544,73 @@ public sealed class DiabloCombatCommandProcessor
             Speed = spell.ProjectileSpeed,
             ImpactLifetime = spell.ProjectileImpactLifetime,
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
+        };
+    }
+
+    private AuthoritativeProjectile CreateElementalProjectile(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            spell.ProjectileSpeed);
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < spell.RandomDamageIterationsBonus;
+             iteration++) {
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        }
+        damage = checked(
+            spell.ElementalCharacterLevelDamageMultiplier
+                * (checked((int)player.CharacterLevel) + damage)
+            + spell.DamageAmount);
+        for (var level = 0; level < effectiveSpellLevel; level++)
+            damage = checked(damage + damage / spell.SpellEffectScaleDivisor);
+        damage /= spell.MagicDamageDivisor;
+
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            spell.AreaRadius,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.Elemental,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
+            ImpactLifetime = spell.ProjectileImpactLifetime,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+            EffectiveSpellLevel = effectiveSpellLevel,
+            ElementalOriginX = velocityTargetX,
+            ElementalOriginY = velocityTargetY,
         };
     }
 
@@ -2658,6 +2748,10 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.RageController) {
                     AdvanceRageController(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.Elemental) {
+                    AdvanceElemental(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -3957,6 +4051,208 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 PlayerDeathReason.MonsterOrTrap);
         world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private void AdvanceElemental(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!spells.TryGet(projectile.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.Elemental) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(projectile, player));
+        if (owner is null || owner.LevelId != projectile.LevelId || owner.Life <= 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.RemainingTicks--;
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            ApplyElementalBurst(tick, projectile, players, events);
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        if (projectile.RemainingTicks == 0) {
+            if (projectile.PathIndex == 0) {
+                projectile.PathIndex = 1;
+                projectile.RemainingTicks = checked((uint)spell.ElementalRetargetLifetime);
+                RetargetElemental(projectile, owner);
+            } else {
+                EnterElementalImpact(projectile, spell);
+            }
+            return;
+        }
+
+        var visitedTiles = MoveNativeProjectile(projectile);
+        if (visitedTiles.Count == 0) {
+            var target = FindProjectileTarget(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY);
+            var playerTarget = FindProjectilePlayer(
+                projectile,
+                players,
+                projectile.PositionX,
+                projectile.PositionY);
+            var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
+            if (projectile.LastCollisionTargetEntityId != targetEntityId
+                && CheckProjectileCollision(
+                    tick,
+                    projectile,
+                    target,
+                    playerTarget,
+                    players,
+                    events)) {
+                EnterElementalImpact(projectile, spell);
+                return;
+            }
+            projectile.LastCollisionTargetEntityId = targetEntityId;
+        } else {
+            foreach (var tile in visitedTiles) {
+                projectile.PositionX = tile.X;
+                projectile.PositionY = tile.Y;
+                projectile.TraveledX = tile.TraveledX;
+                projectile.TraveledY = tile.TraveledY;
+                var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
+                var playerTarget = FindProjectilePlayer(projectile, players, tile.X, tile.Y);
+                var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
+                if (CheckProjectileCollision(
+                        tick,
+                        projectile,
+                        target,
+                        playerTarget,
+                        players,
+                        events)) {
+                    projectile.LastCollisionTargetEntityId = targetEntityId;
+                    EnterElementalImpact(projectile, spell);
+                    return;
+                }
+                projectile.LastCollisionTargetEntityId = targetEntityId;
+            }
+        }
+
+        if (projectile.PathIndex == 0
+            && projectile.PositionX == projectile.TargetX
+            && projectile.PositionY == projectile.TargetY) {
+            projectile.PathIndex = 1;
+            projectile.RemainingTicks = checked((uint)spell.ElementalRetargetLifetime);
+            RetargetElemental(projectile, owner);
+        }
+    }
+
+    private void RetargetElemental(
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState owner)
+    {
+        var nextMonster = world.CombatTargets.Values
+            .Where(target => target.HitPointsQ6 > 0
+                && !target.IsPlayerMinion
+                && (target.LevelId == 0 || target.LevelId == projectile.LevelId)
+                && Math.Max(
+                    Math.Abs(target.PositionX - projectile.PositionX),
+                    Math.Abs(target.PositionY - projectile.PositionY)) <= 19)
+            .OrderBy(target => Math.Max(
+                Math.Abs(target.PositionX - projectile.PositionX),
+                Math.Abs(target.PositionY - projectile.PositionY)))
+            .ThenBy(target => target.EntityId)
+            .FirstOrDefault();
+        var targetX = nextMonster?.PositionX
+            ?? checked(projectile.PositionX
+                + DiabloPlayerDirections.GetDisplacement(owner.FacingDirection).X);
+        var targetY = nextMonster?.PositionY
+            ?? checked(projectile.PositionY
+                + DiabloPlayerDirections.GetDisplacement(owner.FacingDirection).Y);
+        var direction = GetDirection(
+            projectile.PositionX,
+            projectile.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == projectile.PositionX && velocityTargetY == projectile.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        (projectile.VelocityX, projectile.VelocityY) = CalculateVelocity(
+            projectile.PositionX,
+            projectile.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            projectile.Speed);
+        projectile.TargetX = targetX;
+        projectile.TargetY = targetY;
+        projectile.OriginalDirection = direction;
+        projectile.TraveledX = 0;
+        projectile.TraveledY = 0;
+        projectile.LastCollisionTargetEntityId = 0;
+    }
+
+    private static void EnterElementalImpact(
+        AuthoritativeProjectile projectile,
+        AuthoritativeSpellDefinition spell)
+    {
+        projectile.Phase = AuthoritativeProjectilePhase.Impact;
+        projectile.RemainingTicks = checked((uint)spell.ProjectileImpactLifetime);
+        projectile.VelocityX = 0;
+        projectile.VelocityY = 0;
+    }
+
+    private void ApplyElementalBurst(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var startX = projectile.PathIndex == 1
+            ? projectile.ElementalOriginX
+            : projectile.StartX;
+        var startY = projectile.PathIndex == 1
+            ? projectile.ElementalOriginY
+            : projectile.StartY;
+        foreach (var offset in ElementalBurstOffsets) {
+            var positionX = checked(projectile.PositionX + offset.X);
+            var positionY = checked(projectile.PositionY + offset.Y);
+            if (!world.HasMissileLineOfSight(
+                    projectile.LevelId,
+                    startX,
+                    startY,
+                    positionX,
+                    positionY)) {
+                continue;
+            }
+            var target = FindProjectileTarget(projectile.LevelId, positionX, positionY);
+            var playerTarget = FindProjectilePlayer(projectile, players, positionX, positionY);
+            if (target is not null) {
+                _ = TryResolvePersistentShiftedProjectileHit(
+                    projectile,
+                    target,
+                    players,
+                    events);
+            } else if (playerTarget is not null) {
+                _ = TryResolvePersistentShiftedProjectilePlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events);
+            }
+            if (world.TryGetMissileBlockingObject(
+                    projectile.LevelId,
+                    positionX,
+                    positionY,
+                    out var @object)
+                && @object!.Breakable) {
+                @object.Destroyed = true;
+            }
+        }
     }
 
     private void CreateLightningSegment(

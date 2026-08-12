@@ -513,6 +513,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.40 adds Elemental (spell ID `31`). The server creates a typed moving
+projectile, preserves the native first-destination retarget and 14-tick
+nine-cell fire burst, and carries its current target, burst origin, phase, and
+movement state through snapshots, saves, hashes, and the existing projectile
+protocol fields.
+
 Schema 0.39 adds Hellfire Rage (spell ID `22`). The server creates a typed
 active/cooldown controller, preserves the native character-level lifetime
 formula and minimum-life Q6 self-damage on cooldown expiry, rejects recasts

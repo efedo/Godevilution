@@ -195,6 +195,8 @@ Windows toolchain command.
   its cursor, filtering, lifetime, and first-hit state.
   Rage uses behavior value `34` for its persistent active/cooldown controller;
   existing projectile phase and remaining-tick fields carry its resumable state.
+  Elemental uses behavior value `35`; existing target, phase, movement, and
+  new burst-origin fields carry its retargeting and persistent fire-burst state.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile
