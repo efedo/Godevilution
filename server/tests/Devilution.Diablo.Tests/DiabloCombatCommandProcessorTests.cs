@@ -1608,6 +1608,72 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemAdvancesTowardAndAttacksNearestMonster()
+    {
+        var enemy = new AuthoritativeCombatTarget(
+            9,
+            12,
+            10,
+            100,
+            armorClass: 0);
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            10,
+            10,
+            100,
+            levelId: 0,
+            attackDamage: 20,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            minDamage: 12,
+            maxDamage: 20);
+        var world = new DiabloWorldState(combatTargets: [enemy, golem]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 8,
+            positionY: 8,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.True(golem.IsMoving);
+        Assert.Equal((11, 10), (golem.FuturePositionX, golem.FuturePositionY));
+
+        processor.AdvanceTick(2, [player]);
+        Assert.False(golem.IsMoving);
+        Assert.Equal((11, 10), (golem.PositionX, golem.PositionY));
+        var hitPointsBeforeAttack = enemy.HitPointsQ6;
+
+        processor.AdvanceTick(3, [player]);
+        Assert.True(enemy.HitPointsQ6 < hitPointsBeforeAttack);
+    }
+
+    [Fact]
+    public void GolemIsRemovedWhenOwnerLeavesTheActiveLevel()
+    {
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            10,
+            10,
+            100,
+            levelId: 1,
+            attackDamage: 20,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            minDamage: 12,
+            maxDamage: 20);
+        var world = new DiabloWorldState(combatTargets: [golem]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 8,
+            positionY: 8,
+            levelId: 2,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Empty(world.CombatTargets);
+    }
+
+    [Fact]
     public void BerserkRejectsUniqueAndDiabloTargets()
     {
         var unique = new AuthoritativeCombatTarget(9, 12, 10, 100, unique: true);

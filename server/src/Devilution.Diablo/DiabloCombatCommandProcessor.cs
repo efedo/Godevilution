@@ -3185,6 +3185,10 @@ public sealed class DiabloCombatCommandProcessor
         foreach (var target in world.CombatTargets.Values.OrderBy(target => target.EntityId)) {
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
+            if (target.IsPlayerMinion) {
+                AdvancePlayerMinion(target, tick, players, events);
+                continue;
+            }
             if (target.HitPoints <= 0 || target.AggroRange <= 0)
                 continue;
             if (target.IsPetrified)
@@ -3276,6 +3280,85 @@ public sealed class DiabloCombatCommandProcessor
                 target.BeginMovement(candidate.X, candidate.Y);
                 break;
             }
+        }
+    }
+
+    private void AdvancePlayerMinion(
+        AuthoritativeCombatTarget minion,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(player => player.EntityId == minion.OwnerPlayerId);
+        // Preserve legacy faction-only minion markers used by non-Golem effects and
+        // older snapshots which did not carry an owner identity.
+        if (owner is null && minion.OwnerPlayerId == 0)
+            return;
+        if (owner is null
+            || owner.Life <= 0
+            || owner.CombatMode is DiabloPlayerCombatMode.NewLevel or DiabloPlayerCombatMode.Quit
+            || owner.LevelId != minion.LevelId
+            || minion.HitPoints <= 0) {
+            world.CombatTargets.Remove(minion.EntityId);
+            return;
+        }
+        if (minion.IsPetrified)
+            return;
+
+        var enemy = world.CombatTargets.Values
+            .Where(candidate => candidate.EntityId != minion.EntityId
+                && !candidate.IsPlayerMinion
+                && candidate.HitPoints > 0
+                && (candidate.LevelId == 0 || candidate.LevelId == minion.LevelId))
+            .OrderBy(candidate => Math.Max(
+                Math.Abs(candidate.PositionX - minion.PositionX),
+                Math.Abs(candidate.PositionY - minion.PositionY)))
+            .ThenBy(candidate => candidate.EntityId)
+            .FirstOrDefault();
+        if (enemy is null)
+            return;
+
+        var distance = Math.Max(
+            Math.Abs(enemy.PositionX - minion.PositionX),
+            Math.Abs(enemy.PositionY - minion.PositionY));
+        if (distance <= 1) {
+            var rolledDamage = random.RandomIntBetween(minion.MinDamage, minion.MaxDamage);
+            var damage = rules.ResolveAttackDamage(
+                rolledDamage,
+                enemy,
+                unchecked((uint)tick ^ minion.EntityId ^ enemy.EntityId));
+            var minionEvents = new List<DiabloGameplayEvent>();
+            ApplyResolvedDamageQ6(
+                owner,
+                enemy,
+                DiabloFixedPointQ6.FromWhole(damage),
+                minionEvents);
+            foreach (var minionEvent in minionEvents)
+                events.Add(new DiabloDirectedGameplayEvent(owner, minionEvent));
+            return;
+        }
+
+        var deltaX = Math.Sign(enemy.PositionX - minion.PositionX);
+        var deltaY = Math.Sign(enemy.PositionY - minion.PositionY);
+        var candidates = new[] {
+            (X: minion.PositionX + deltaX, Y: minion.PositionY + deltaY),
+            (X: minion.PositionX + deltaX, Y: minion.PositionY),
+            (X: minion.PositionX, Y: minion.PositionY + deltaY),
+        };
+        foreach (var candidate in candidates.Where(
+                     candidate => candidate.X != minion.PositionX
+                         || candidate.Y != minion.PositionY)) {
+            if (!world.IsWalkable(minion.LevelId, candidate.X, candidate.Y)
+                || world.IsOccupied(
+                    minion.LevelId,
+                    candidate.X,
+                    candidate.Y,
+                    players,
+                    minion.EntityId)) {
+                continue;
+            }
+            minion.BeginMovement(candidate.X, candidate.Y);
+            break;
         }
     }
 
