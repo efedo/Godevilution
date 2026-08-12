@@ -33,6 +33,39 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void StableSpellIdsResolveNativeSourceIdsExplicitly()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGetByNativeId(13, out var guardian));
+        Assert.Equal(7U, guardian.SpellId);
+        Assert.True(catalog.TryGetByNativeId(31, out var holyBolt));
+        Assert.Equal(5U, holyBolt.SpellId);
+        Assert.True(catalog.TryGetByNativeId(36, out var boneSpirit));
+        Assert.Equal(38U, boneSpirit.SpellId);
+    }
+
+    [Fact]
+    public void DuplicateNativeSpellIdsAreRejected()
+    {
+        var definitions = new[] {
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0) { NativeSpellId = 13 },
+            new AuthoritativeSpellDefinition(2, 1, 0, 0, 0, 0) { NativeSpellId = 13 },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => new AuthoritativeSpellCatalog(definitions));
+
+        Assert.Contains("Native spell ID 13", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedFireboltCarriesNativeManaDamageAndProjectileTuning()
     {
         var path = Path.Combine(

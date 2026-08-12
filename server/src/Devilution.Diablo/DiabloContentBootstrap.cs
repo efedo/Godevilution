@@ -100,6 +100,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerAnimationTable.SourcePath,
             playerAnimationTable.ToCanonicalTsv(),
             playerClasses);
+        var spells = content.TryGetTable("spells.tsv", out var spellsTable)
+            ? AuthoritativeSpellCatalog.LoadTsv(
+                spellsTable.SourcePath,
+                spellsTable.ToCanonicalTsv())
+            : null;
 
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
@@ -134,7 +139,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             itemCatalog = AuthoritativeItemCatalog.LoadLegacyTsv(
                 legacyItemTable.SourcePath,
                 legacyItemTable.ToCanonicalTsv(),
-                affixes);
+                affixes,
+                null,
+                spells);
         }
         if (itemCatalog is null) {
             throw new InvalidDataException(
@@ -190,11 +197,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
                 levelsTable.ToCanonicalTsv())
-            : null;
-        var spells = content.TryGetTable("spells.tsv", out var spellsTable)
-            ? AuthoritativeSpellCatalog.LoadTsv(
-                spellsTable.SourcePath,
-                spellsTable.ToCanonicalTsv())
             : null;
         playerLoadouts.ValidateCastSources(spells);
         if (world is not null)

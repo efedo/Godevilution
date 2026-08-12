@@ -253,7 +253,8 @@ public sealed class AuthoritativeItemCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemAffixCatalog? affixes = null,
-        AuthoritativeUniqueItemCatalog? uniqueItems = null)
+        AuthoritativeUniqueItemCatalog? uniqueItems = null,
+        AuthoritativeSpellCatalog? spellCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -280,7 +281,7 @@ public sealed class AuthoritativeItemCatalog
                     EquipLocation = ParseLegacyEquipLocation(row.Required("equipType")),
                     ItemClass = ParseLegacyItemClass(row.Required("class")),
                     MiscId = ParseLegacyMiscId(OptionalText(row, "miscId")),
-                    SpellId = ParseLegacySpellId(OptionalText(row, "spell")),
+                    SpellId = ParseLegacySpellId(OptionalText(row, "spell"), spellCatalog),
                     Flags = ParseLegacyFlags(OptionalText(row, "specialEffects")),
                     MinimumStrength = row.OptionalInt32("minStrength"),
                     MinimumMagic = row.OptionalInt32("minMagic"),
@@ -392,11 +393,13 @@ public sealed class AuthoritativeItemCatalog
         };
     }
 
-    private static int ParseLegacySpellId(string value)
+    private static int ParseLegacySpellId(
+        string value,
+        AuthoritativeSpellCatalog? spellCatalog = null)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Equals("Null", StringComparison.OrdinalIgnoreCase))
             return 0;
-        var spells = new[] {
+        var nativeSpellNames = new[] {
             "Null", "Firebolt", "Healing", "Lightning", "Flash", "Identify", "FireWall", "TownPortal",
             "StoneCurse", "Infravision", "Phasing", "ManaShield", "Fireball", "Guardian", "ChainLightning",
             "FlameWave", "DoomSerpents", "BloodRitual", "Nova", "Invisibility", "Inferno", "Golem", "Rage",
@@ -405,8 +408,20 @@ public sealed class AuthoritativeItemCatalog
             "Mana", "Magi", "Jester", "LightningWall", "Immolation", "Warp", "Reflect", "Berserk", "RingOfFire",
             "Search", "RuneOfFire", "RuneOfLight", "RuneOfNova", "RuneOfImmolation", "RuneOfStone",
         };
-        var index = Array.FindIndex(spells, spell => spell.Equals(value, StringComparison.OrdinalIgnoreCase));
-        return index >= 0 ? index : 0;
+        var nativeSpellId = Array.FindIndex(
+            nativeSpellNames,
+            spell => spell.Equals(value, StringComparison.OrdinalIgnoreCase));
+        if (nativeSpellId < 0)
+            return 0;
+        if (spellCatalog is not null
+            && spellCatalog.TryGetByNativeId(checked((uint)nativeSpellId), out var definition)) {
+            return checked((int)definition.SpellId);
+        }
+        if (spellCatalog is not null) {
+            throw new InvalidDataException(
+                $"Legacy spell '{value}' (native spell ID {nativeSpellId}) is not mapped by the active spell catalog.");
+        }
+        return nativeSpellId;
     }
 
     private static uint ParseLegacyFlags(string value)

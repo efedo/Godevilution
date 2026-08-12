@@ -53,6 +53,9 @@ public sealed record AuthoritativeSpellDefinition(
     uint StatusDuration,
     int StatusMagnitude)
 {
+    /** Native `SpellID` identity retained separately from the stable content ID. */
+    public uint NativeSpellId { get; init; }
+
     public int DamageAmount { get; init; }
 
     /** Per-level reduction applied after the first effective spell level. */
@@ -298,15 +301,21 @@ public sealed record AuthoritativeSpellDefinition(
 
 public sealed class AuthoritativeSpellCatalog
 {
+    private const uint MaximumNativeSpellId = 51;
     private readonly Dictionary<uint, AuthoritativeSpellDefinition> spells;
+    private readonly Dictionary<uint, AuthoritativeSpellDefinition> nativeSpells;
 
     public AuthoritativeSpellCatalog(IEnumerable<AuthoritativeSpellDefinition> definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         spells = new Dictionary<uint, AuthoritativeSpellDefinition>();
+        nativeSpells = new Dictionary<uint, AuthoritativeSpellDefinition>();
         foreach (var definition in definitions) {
             if (definition.SpellId == 0 || definition.ManaCost <= 0 || definition.HealingAmount < 0 || definition.DamageAmount < 0)
                 throw new InvalidDataException("Spell definitions require a non-zero ID, positive mana cost, and non-negative effects.");
+            if (definition.NativeSpellId > MaximumNativeSpellId)
+                throw new InvalidDataException(
+                    $"Spell {definition.SpellId} has an invalid native spell ID {definition.NativeSpellId}.");
             if (definition.ManaAdjustment < 0
                 || definition.ManaAdjustmentDivisor <= 0
                 || definition.CharacterLevelManaCost < 0
@@ -1244,6 +1253,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException("Status-bearing spells require a positive status duration.");
             if (!spells.TryAdd(definition.SpellId, definition))
                 throw new InvalidDataException($"Spell {definition.SpellId} is defined more than once.");
+            if (definition.NativeSpellId != 0
+                && !nativeSpells.TryAdd(definition.NativeSpellId, definition)) {
+                throw new InvalidDataException(
+                    $"Native spell ID {definition.NativeSpellId} is defined more than once.");
+            }
         }
         if (spells.Count == 0)
             throw new InvalidDataException("The spell catalog cannot be empty.");
@@ -1283,6 +1297,10 @@ public sealed class AuthoritativeSpellCatalog
 
     public bool TryGet(uint spellId, out AuthoritativeSpellDefinition definition) => spells.TryGetValue(spellId, out definition!);
 
+    /** Resolves a native source identity to its stable authoritative spell row. */
+    public bool TryGetByNativeId(uint nativeSpellId, out AuthoritativeSpellDefinition definition)
+        => nativeSpells.TryGetValue(nativeSpellId, out definition!);
+
     public static AuthoritativeSpellCatalog LoadTsv(string sourcePath, string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
@@ -1293,6 +1311,7 @@ public sealed class AuthoritativeSpellCatalog
             row.OptionalUInt32("status_effect_id"),
             row.OptionalUInt32("status_duration"),
             row.OptionalInt32("status_magnitude")) {
+            NativeSpellId = row.OptionalUInt32("native_spell_id"),
             DamageAmount = row.OptionalInt32("damage_amount"),
             ManaAdjustment = row.OptionalInt32("mana_adjustment"),
             ManaAdjustmentDivisor = row.OptionalInt32("mana_adjustment_divisor", 1),

@@ -237,6 +237,41 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LegacySpellSourcesResolveThroughTheActiveStableCatalog()
+    {
+        const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+            + "IDI_GUARDIAN_SCROLL\t1\tMisc\tUnequippable\tSCROLL_OF\tMisc\tNONE\tScroll of Guardian\t\t1\t0\t0\t0\t0\t0\t0\t0\t0\t\tSCROLLT\tGuardian\ttrue\t950\n";
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) { NativeSpellId = 13 },
+        ]);
+
+        var items = AuthoritativeItemCatalog.LoadLegacyTsv(
+            "itemdat.tsv",
+            itemData,
+            spellCatalog: spells);
+
+        Assert.Equal(7, Assert.Single(items.Definitions).SpellId);
+    }
+
+    [Fact]
+    public void UnmappedLegacySpellSourcesAreRejectedWhenAStableCatalogIsActive()
+    {
+        const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+            + "IDI_TOWN_PORTAL_SCROLL\t1\tMisc\tUnequippable\tSCROLL_OF\tMisc\tNONE\tScroll of Town Portal\t\t1\t0\t0\t0\t0\t0\t0\t0\t0\t\tSCROLLT\tTownPortal\ttrue\t950\n";
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) { NativeSpellId = 13 },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.LoadLegacyTsv(
+                "itemdat.tsv",
+                itemData,
+                spellCatalog: spells));
+
+        Assert.Contains("native spell ID 7", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LegacyUniquePowerUsesTheNativeRandomStream()
     {
         var items = new AuthoritativeItemCatalog([
