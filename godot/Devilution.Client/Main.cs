@@ -13,12 +13,15 @@ public partial class Main : Node2D
     private const uint RechargeSpellId = 27;
 
     private readonly AuthoritativeClientModel model = new();
+    private readonly CancellationTokenSource lifetime = new();
     private AuthoritativeClient? client;
     private WorldPresentation? world;
     private HudPresentation? hud;
     private PresentationFeedback? feedback;
     private Task? connectionTask;
     private Task? pollTask;
+    private Task? reconnectTask;
+    private string? pendingConnectionError;
     private string? selectedSpellSourceKey;
 
     public override void _Ready()
@@ -60,13 +63,19 @@ public partial class Main : Node2D
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
         hud.ClearEventsRequested += model.ClearRecentEvents;
         client = new AuthoritativeClient(ClientConnectionOptions.FromEnvironment());
-        connectionTask = ConnectAsync();
+        connectionTask = ConnectAsync(lifetime.Token);
         hud.SetStatus("Connecting to authoritative server...");
     }
 
     public override void _Process(double delta)
     {
         if (client is not null) {
+            if (Interlocked.Exchange(ref pendingConnectionError, null) is { } connectionError)
+                model.Apply(new AuthoritativeClientMessage(Error: new ProtocolError {
+                    Code = ProtocolErrorCode.NotAuthenticated,
+                    Detail = connectionError,
+                }));
+
             foreach (var message in client.DrainMessages()) {
                 try {
                     model.Apply(message);
@@ -75,8 +84,23 @@ public partial class Main : Node2D
                 }
             }
 
-            if (client.IsConnected && (pollTask is null || pollTask.IsCompleted))
-                pollTask = client.PollAsync();
+            if (pollTask is { IsCompleted: true }) {
+                var pollFailed = pollTask.IsFaulted;
+                _ = pollTask.Exception;
+                pollTask = null;
+                if (pollFailed)
+                    StartReconnect(force: true);
+            }
+
+            if (client.IsConnected
+                && pollTask is null
+                && (reconnectTask is null || reconnectTask.IsCompleted))
+                pollTask = client.PollAsync(lifetime.Token);
+
+            if (!client.IsConnected
+                && (connectionTask?.IsCompleted ?? true)
+                && (reconnectTask is null || reconnectTask.IsCompleted))
+                StartReconnect(force: false);
         }
 
         world?.Apply(model.Snapshot, delta, model.PredictedPlayerPosition);
@@ -253,19 +277,56 @@ public partial class Main : Node2D
 
     public override async void _ExitTree()
     {
+        lifetime.Cancel();
         if (client is not null)
             await client.DisposeAsync();
+        lifetime.Dispose();
     }
 
-    private async Task ConnectAsync()
+    private async Task ConnectAsync(CancellationToken cancellationToken)
     {
         try {
-            await client!.ConnectAsync();
+            await client!.ConnectAsync(cancellationToken);
+        } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
         } catch (Exception exception) {
-            model.Apply(new AuthoritativeClientMessage(Error: new ProtocolError {
-                Code = ProtocolErrorCode.NotAuthenticated,
-                Detail = exception.Message,
-            }));
+            Interlocked.Exchange(ref pendingConnectionError, exception.Message);
+        }
+    }
+
+    private void StartReconnect(bool force)
+    {
+        if (reconnectTask is null || reconnectTask.IsCompleted)
+            reconnectTask = ReconnectLoopAsync(force);
+    }
+
+    private async Task ReconnectLoopAsync(bool force)
+    {
+        var firstAttempt = true;
+        var delay = TimeSpan.Zero;
+        while (!lifetime.IsCancellationRequested && client is not null) {
+            if (!force && !firstAttempt && client.IsConnected)
+                return;
+            if (delay > TimeSpan.Zero) {
+                try {
+                    await Task.Delay(delay, lifetime.Token);
+                } catch (OperationCanceledException) when (lifetime.IsCancellationRequested) {
+                    return;
+                }
+            }
+
+            try {
+                await client.ReconnectAsync(lifetime.Token);
+                return;
+            } catch (OperationCanceledException) when (lifetime.IsCancellationRequested) {
+                return;
+            } catch (Exception exception) {
+                Interlocked.Exchange(ref pendingConnectionError, exception.Message);
+                delay = delay == TimeSpan.Zero
+                    ? TimeSpan.FromMilliseconds(250)
+                    : TimeSpan.FromMilliseconds(Math.Min(delay.TotalMilliseconds * 2, 5000));
+                force = false;
+            }
+            firstAttempt = false;
         }
     }
 

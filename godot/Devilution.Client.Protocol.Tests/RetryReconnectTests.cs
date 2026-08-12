@@ -73,6 +73,9 @@ public sealed class RetryReconnectTests
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         var sessionToken = client.SessionToken;
         _ = client.DrainMessages();
+        for (var attempt = 0; attempt < 50 && client.IsConnected; attempt++)
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        Assert.False(client.IsConnected);
         var sequence = client.Queue(
             new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
             100);

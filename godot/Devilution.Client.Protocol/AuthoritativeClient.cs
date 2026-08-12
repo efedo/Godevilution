@@ -25,6 +25,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private NetworkStream? stream;
     private Task? receiveTask;
     private CancellationTokenSource? transportLifetime;
+    private long transportGeneration;
+    private int transportConnected;
     private ulong nextClientSequence;
     private long lastSnapshotRequestMs;
     private double roundTripMilliseconds = 100;
@@ -46,7 +48,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         this.options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public bool IsConnected => stream is not null && tcpClient?.Connected == true;
+    public bool IsConnected => Volatile.Read(ref transportConnected) == 1;
 
     public int PendingCommandCount
     {
@@ -106,9 +108,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         Enqueue(initialSnapshot);
         var connectedStream = stream;
         var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        var connectionGeneration = Interlocked.Increment(ref transportGeneration);
         transportLifetime = connectionLifetime;
+        Volatile.Write(ref transportConnected, 1);
         receiveTask = Task.Run(
-            () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token),
+            () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token, connectionGeneration),
             CancellationToken.None);
     }
 
@@ -186,6 +190,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private async Task CloseTransportAsync()
     {
+        Interlocked.Increment(ref transportGeneration);
+        Volatile.Write(ref transportConnected, 0);
         transportLifetime?.Cancel();
         stream?.Dispose();
         tcpClient?.Dispose();
@@ -202,7 +208,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         transportLifetime = null;
     }
 
-    private async Task ReceiveLoopAsync(NetworkStream networkStream, CancellationToken cancellationToken)
+    private async Task ReceiveLoopAsync(
+        NetworkStream networkStream,
+        CancellationToken cancellationToken,
+        long connectionGeneration)
     {
         try {
             while (!cancellationToken.IsCancellationRequested) {
@@ -211,12 +220,21 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     break;
                 Enqueue(envelope);
             }
-        } catch (Exception exception) when (exception is IOException or SocketException or EndOfStreamException or OperationCanceledException or ObjectDisposedException) {
-            incoming.Enqueue(new AuthoritativeClientMessage(Error: new ProtocolError {
-                Code = ProtocolErrorCode.NotAuthenticated,
-                Detail = $"Authoritative connection closed: {exception.Message}",
-            }));
+        } catch (Exception exception) when (!cancellationToken.IsCancellationRequested
+            && (exception is IOException or SocketException or EndOfStreamException or ObjectDisposedException)) {
+            EnqueueConnectionClosed(exception.Message);
+        } finally {
+            if (Volatile.Read(ref transportGeneration) == connectionGeneration)
+                Volatile.Write(ref transportConnected, 0);
         }
+    }
+
+    private void EnqueueConnectionClosed(string detail = "The authoritative connection closed.")
+    {
+        incoming.Enqueue(new AuthoritativeClientMessage(Error: new ProtocolError {
+            Code = ProtocolErrorCode.NotAuthenticated,
+            Detail = $"Authoritative connection closed: {detail}",
+        }));
     }
 
     private void Enqueue(Envelope envelope)
