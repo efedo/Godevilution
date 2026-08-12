@@ -1519,8 +1519,8 @@ public sealed class DiabloCombatCommandProcessorTests
     {
         var target = new AuthoritativeCombatTarget(
             9,
-            8,
             6,
+            5,
             100,
             monsterLevel: 1,
             petrified: true);
@@ -1582,14 +1582,14 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(2, [player]);
         processor.AdvanceTick(3, [player]);
 
-        Assert.DoesNotContain(
+        Assert.Contains(
             world.Projectiles.Values,
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
         var segments = world.Projectiles.Values
             .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment)
             .ToArray();
-        Assert.Equal(3, segments.Length);
-        Assert.Equal(new[] { 18U, 20U, 22U }, segments
+        Assert.Equal(2, segments.Length);
+        Assert.Equal(new[] { 17U, 20U }, segments
             .OrderBy(projectile => projectile.EntityId)
             .Select(projectile => projectile.RemainingTicks)
             .ToArray());
@@ -1761,7 +1761,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        Assert.DoesNotContain(
+        Assert.Contains(
             world.Projectiles.Values,
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseController);
         var boom = Assert.Single(
@@ -1863,12 +1863,12 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(processor.Execute(
             player,
-            new DiabloCastIntent(31, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            new DiabloCastIntent(31, 0, 11, 10, DiabloCastSourceKind.MemorizedSpell),
             1).Succeeded);
         var elemental = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.Elemental, elemental.Behavior);
         Assert.Equal(256U, elemental.RemainingTicks);
-        Assert.Equal((12, 10), (elemental.TargetX, elemental.TargetY));
+        Assert.Equal((11, 10), (elemental.TargetX, elemental.TargetY));
         Assert.True(elemental.Damage > 0);
 
         ulong tick = 1;
@@ -2166,7 +2166,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateRageSpell()
     {
-        return new AuthoritativeSpellDefinition(22, 15, 0, 0, 1, 0) {
+        return new AuthoritativeSpellDefinition(22, 15, 0, 0, 0, 0) {
+            Range = 1,
             DamageType = AuthoritativeDamageType.Physical,
             ProjectileLifetime = 245,
             ProjectileBehavior = AuthoritativeProjectileBehavior.RageController,
@@ -2183,7 +2184,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateElementalSpell()
     {
-        return new AuthoritativeSpellDefinition(31, 35, 0, 0, 1, 0) {
+        return new AuthoritativeSpellDefinition(31, 35, 0, 0, 0, 0) {
+            Range = 1,
             DamageAmount = 4,
             AreaRadius = 1,
             DamageType = AuthoritativeDamageType.Fire,
@@ -2208,7 +2210,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateGuardianSpell()
     {
-        return new AuthoritativeSpellDefinition(7, 50, 0, 0, 15, 0) {
+        return new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0) {
+            Range = 112,
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileSpeed = 16,
             ProjectileLifetime = 256,

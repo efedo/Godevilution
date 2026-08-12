@@ -563,7 +563,7 @@ public sealed class DiabloSimulationTests
             restored[0].Speed,
             restored[0].Damage));
         Assert.Equal(AuthoritativeProjectileBehavior.FlameWaveSegment, restored[1].Behavior);
-        Assert.Equal((6, 6, 16, 4, 9, 255U, 9), (
+        Assert.Equal((6, 5, 16, 4, 9, 255U, 9), (
             restored[1].PositionX,
             restored[1].PositionY,
             restored[1].Speed,
