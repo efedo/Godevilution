@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add generic Engine ruleset generation leases and explicit retired-activation
   draining, keeping replaced targets alive until in-flight operations release
   them while leaving session migration and resource disposal to the host.
+- Route the generic server adapter boundary through those leases so commands,
+  ticks, snapshots, events, saves, and participant initialization cannot use a
+  retired game target mid-operation.
 - Expand the Godot cast cursor to enumerate and cycle every authoritative spell
   source—memorized spells, charged staff, consumables, and class ability—while
   preserving explicit server-owned source validation and resource consumption.

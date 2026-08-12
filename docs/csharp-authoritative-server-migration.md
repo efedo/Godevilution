@@ -149,9 +149,11 @@ locked publication replaces the active tuple. Stage-specific reload failures
 return the exact previous activation. The server uses this path at startup;
 live replacement still requires host session migration and safe retirement of
 the previous game adapter before it can be exposed operationally. Engine now
-provides a generation lease for each in-flight operation and returns replaced
-activations from `DrainRetired` only after all leases are released; the host
-still owns session migration and disposal of the returned game-specific target.
+provides a generation lease for each in-flight operation, and the generic host
+adapter routes every command, tick, snapshot, event, save, and participant
+operation through that lease. Replaced activations leave `DrainRetired` only
+after all leases are released; the host still owns session migration and
+disposal of the returned game-specific target.
 
 The Diablo base pack's `classes.tsv` declares the six native-compatible class
 IDs, base-game/Hellfire availability, flags, attribute bounds, combat modifiers,
