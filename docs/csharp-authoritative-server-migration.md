@@ -513,13 +513,18 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.42 makes the stable/native spell identity boundary explicit. The
+authoritative `spell_id` remains the command and persistence identity while
+`native_spell_id` records the source `SpellID`; legacy item spell names are
+resolved through the activated catalog before cast-source validation.
+
 Schema 0.40 adds Elemental (spell ID `31`). The server creates a typed moving
 projectile, preserves the native first-destination retarget and 14-tick
 nine-cell fire burst, and carries its current target, burst origin, phase, and
 movement state through snapshots, saves, hashes, and the existing projectile
 protocol fields.
 
-Schema 0.41 adds Guardian (spell ID `7`). The server creates a typed stationary
+Schema 0.41 adds Guardian (stable spell ID `7`, native `SpellID` `13`). The server creates a typed stationary
 turret, preserves the native spawn search, duration, six-tile scan cadence,
 Firebolt emission, line-of-sight filtering, and RNG ordering, and carries its
 controller state through snapshots, saves, hashes, and the existing projectile

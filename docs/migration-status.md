@@ -526,63 +526,71 @@ Rogue's cursor-driven Trap Disarm capability. Armed object state is external,
 server-owned, persisted, and cleared only by the authoritative additive
 Disarm Trap command; its nondefault state uses a tagged canonical-hash section.
 
-Content schema 0.31 adds stable native spell ID `36` for Hellfire Blood Star.
+Content schema 0.31 adds stable spell ID `36` for Hellfire Blood Star
+(`SpellID` `35`).
 Its external behavior owns the fixed magic damage formula, quarter-resistance
 resolution, projectile lifetime/speed, and immediate physical self-damage;
 server-owned casts retain those effects through the same source and persistence
 boundaries as other authoritative spells.
 
-Content schema 0.32 adds native spell ID `38` for Bone Spirit. Its external
+Content schema 0.32 adds stable spell ID `38` for Bone Spirit (`SpellID` `36`). Its external
 behavior owns the magic homing projectile, nearest-monster retarget, current-
 life-third damage, resistance, seven-tick impact phase, and six-point physical
 self-damage while preserving the shared authoritative source and persistence
 boundaries.
 
-Content schema 0.33 adds native spell ID `6` for Fire Wall. Its external
+Content schema 0.33 adds stable spell ID `6` for Fire Wall (`SpellID` `6`). Its external
 behavior owns the seven-tick wall controller, perpendicular branch growth with
 independent stopping, persistent typed segments, repeated shifted fire damage,
 quarter resistance, native duration scaling, and all branch state needed for
 deterministic protocol, save, hash, and replay continuation.
 
-Content schema 0.34 adds native spell ID `15` for Flame Wave. Its external
+Content schema 0.34 adds stable spell ID `15` for Flame Wave (`SpellID` `15`). Its external
 behavior owns the one-tick perpendicular wave placement controller and moving
 fire segments, including native facing-direction travel, branch count scaling,
 random character-level damage, missile blocking, resistance, lifetime, and
 deterministic persisted projectile state.
 
-Content schema 0.35 adds native spell ID `21` for Inferno. Its external
+Content schema 0.35 adds stable spell ID `21` for Inferno (`SpellID` `20`). Its external
 behavior owns the speed-32 controller, native three-segment cap, stepwise
 segment lifetime, character-level and two-value damage draws, repeated fire
 collision, and deterministic persisted controller/segment state.
 
-Content schema 0.36 adds native spell ID `16` for Chain Lightning. Its external
+Content schema 0.36 adds stable spell ID `16` for Chain Lightning (`SpellID` `14`). Its external
 behavior owns the one-tick native fan-out, crawl-radius target enumeration, and
 Lightning-compatible bolt/segment state, including source spell level, damage,
 resistance, lifetime, collision, and deterministic RNG ordering.
 
-Content schema 0.39 adds native spell ID `22` for Hellfire Rage. Its external
+Content schema 0.39 adds stable spell ID `22` for Hellfire Rage (`SpellID` `22`). Its external
 behavior uses typed controller value `34`: the server preserves the native
 character-level active and cooldown durations, rejects recasts while either
 phase exists, applies the Q6 self-damage floor at cooldown expiry, and carries
 the controller phase and remaining ticks through snapshots and protocol.
 
-Content schema 0.40 adds native spell ID `31` for Elemental. Its external
+Content schema 0.40 adds stable spell ID `31` for Elemental (`SpellID` `29`). Its external
 behavior uses typed projectile value `35`: the server preserves the native
 first-destination retarget, 14-tick nine-cell fire burst, fire resistance
 divisor, and burst-origin line-of-sight state through snapshots and protocol.
 
-Content schema 0.41 adds native spell ID `7` for Guardian. Its external
+Content schema 0.42 adds explicit stable/native spell identity mapping through
+the optional `native_spell_id` column. `spell_id` remains the authoritative
+content identity; legacy item spell names resolve from native IDs through the
+activated catalog, preserving intentional pairs such as Guardian `7`/`13`, Holy
+Bolt `5`/`31`, and Bone Spirit `38`/`36`.
+
+Content schema 0.41 adds stable spell ID `7` for native Guardian (`SpellID`
+`13`). Its external
 behavior uses typed controller value `36`: the server owns the valid spawn
 search, native duration, six-tile scan cadence, Firebolt emission,
 line-of-sight filtering, and deterministic RNG state through snapshots and
 protocol.
 
-Content schema 0.38 adds native spell ID `25` for Apocalypse. Its external
+Content schema 0.38 adds stable spell ID `25` for Apocalypse (`SpellID` `24`). Its external
 behavior uses typed controller value `32` and boom value `33`: the server scans
 the native eight-tile square row-major, skips player minions and blocked cells,
 applies Hellfire missile line-of-sight filtering, and persists cursor/first-hit
 state through snapshots and protocol. Content schema 0.37 adds native spell ID
-`18` for Nova. Its external behavior
+stable spell ID `18` for Nova (`SpellID` `18`). Its external behavior
 owns the one-tick radial controller, native nine-point quarter-radius order,
 four mirrored emissions, 36 continuing Lightning balls, damage scaling,
 resistance, lifetime, collision, and deterministic projectile state.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.41.0` schema in
+It declares its identity and `devilution.diablo@0.42.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -109,6 +109,16 @@ interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
 
+Schema 0.42 adds the optional `native_spell_id` column to `spells.tsv`.
+`spell_id` remains the stable authoritative content identity used by commands,
+snapshots, saves, and overlays; `native_spell_id` records the corresponding
+Devilution `SpellID` for compatibility imports. The catalog rejects duplicate
+native identities and legacy `itemdat.tsv` spell names resolve through this
+mapping before cast-source validation. This keeps deliberately different
+stable/native pairs explicit, including Guardian `7`/`13`, Holy Bolt `5`/`31`,
+Inferno `21`/`20`, Chain Lightning `16`/`14`, Elemental `31`/`29`, Blood Star
+`36`/`35`, Bone Spirit `38`/`36`, and Apocalypse `25`/`24`.
+
 Schema 0.26 requires stable `spell:identify` ID `5` for the Bard's declared
 class skill. Identify remains a cursor-driven item service rather than a row in
 `spells.tsv`: the module resolves that stable identity at activation, validates
@@ -141,17 +151,20 @@ cursor-driven Trap Disarm class capability. Armed object state is validated from
 `objects.tsv`, server-owned, persisted, hashed through an additive extension,
 and cleared only by an admitted authoritative Disarm Trap intent.
 
-Schema 0.31 adds the Hellfire Blood Star spell row (`36`) and its typed
+Schema 0.31 adds stable spell row (`36`) for the native Hellfire Blood Star
+(`SpellID` `35`) and its typed
 `BloodStar` projectile behavior. The server preserves the native fixed magic
 damage formula, quarter magic resistance, 16-tile speed, 256-tick lifetime,
 and five-point physical self-damage cost as validated content tuning.
 
-Schema 0.32 adds the native Bone Spirit spell row (`38`) and its typed
+Schema 0.32 adds stable spell row (`38`) for the native Bone Spirit
+(`SpellID` `36`) and its typed
 `BoneSpirit` projectile behavior. The server preserves the native magic
 homing projectile, one-third-current-life damage, quarter magic resistance,
 seven-tick impact phase, and six-point physical self-damage cost.
 
-Schema 0.33 adds the native Fire Wall spell row (`6`) and its typed controller
+Schema 0.33 adds stable spell row (`6`) for native Fire Wall (`SpellID` `6`)
+and its typed controller
 and segment behaviors. The controller grows a center segment and perpendicular
 branches for seven ticks, stopping each branch independently when blocked. Each
 segment persists for `(10 + 10 * effective spell level + character level) * 16`
@@ -161,50 +174,58 @@ with quarter resistance for monsters. Controller branches, segment duration,
 damage, and hit directions are persisted and hashed so restored sessions resume
 deterministically.
 
-Schema 0.34 adds the native Flame Wave spell row (`15`) and its typed controller
+Schema 0.34 adds stable spell row (`15`) for native Flame Wave (`SpellID` `15`)
+and its typed controller
 and segment behaviors. The one-tick controller places a center segment and
 perpendicular branches using the native `(effective spell level / 2) + 2`
 branch count. Each moving segment rolls `GenerateRnd(10) + character level + 1`,
 travels at speed `16` for `255` ticks in the caster's facing direction, applies
 fire collision and quarter resistance, and stops at missile-blocking geometry.
 
-Schema 0.35 adds the native Inferno spell row (`21`) and its typed controller
+Schema 0.35 adds stable spell row (`21`) for native Inferno (`SpellID` `20`)
+and its typed controller
 and segment behaviors. The controller travels at speed `32`, emits no more than
 three stationary segments, and increments each segment lifetime by one tick.
 Each segment rolls the native character-level and two-value damage formula and
 repeats fire collision until expiry.
 
-Schema 0.36 adds the native Chain Lightning spell row (`16`) and its typed
+Schema 0.36 adds stable spell row (`16`) for native Chain Lightning
+(`SpellID` `14`) and its typed
 fan-out controller and bolt behaviors. The controller emits a target bolt plus
 the native crawl-radius monster bolts; each bolt reuses the Lightning movement,
 damage, segment lifetime, and collision rules with the chain spell's source
 level retained in its authoritative state.
 
-Schema 0.40 adds the native Elemental spell row (`31`) and its typed
+Schema 0.40 adds stable spell row (`31`) for native Elemental (`SpellID` `29`)
+and its typed
 retargeting projectile behavior. The projectile preserves the native first
 destination, retargets once to the nearest eligible monster, then applies its
 14-tick nine-cell fire burst with native line-of-sight and resistance rules.
 
-Schema 0.41 adds the native Guardian spell row (`7`) and its typed turret
+Schema 0.41 adds stable spell row (`7`) for native Guardian (`SpellID` `13`)
+and its typed turret
 controller behavior. The server finds a valid five-tile spawn, persists the
 native duration and firing cadence, scans the six-tile guardian arc in native
 order, and emits Firebolt-compatible projectiles with deterministic RNG and
 line-of-sight rules.
 
-Schema 0.39 adds the native Hellfire Rage spell row (`22`) and its typed
+Schema 0.39 adds stable spell row (`22`) for native Hellfire Rage (`SpellID` `22`)
+and its typed
 active/cooldown controller behavior. The controller preserves the native
 character-level lifetime formula, rejects recasts while active or cooling down,
 and applies its Q6 self-damage at cooldown expiry without allowing the cast to
 kill the player. Phase and remaining lifetime persist through snapshots and the
 existing projectile protocol fields.
 
-Schema 0.38 adds the native Apocalypse spell row (`25`) and its typed row-major
+Schema 0.38 adds stable spell row (`25`) for native Apocalypse (`SpellID` `24`)
+and its typed row-major
 controller and boom behaviors. The controller scans the native eight-tile square
 in stable row-major order, excludes player minions and blocked cells, applies
 Hellfire missile line-of-sight filtering, and persists its cursor and boom
 first-hit state through snapshots and the protocol.
 
-Schema 0.37 adds the native Nova spell row (`18`) and its typed one-tick radial
+Schema 0.37 adds stable spell row (`18`) for native Nova (`SpellID` `18`) and
+its typed one-tick radial
 controller and ball behaviors. The controller preserves the native nine-point
 quarter-radius order and four mirrored emissions (36 balls total). Each ball
 travels at speed `16` for `255` ticks, uses the Lightning damage type and
@@ -501,7 +522,7 @@ the complete target header even when they upsert only one row.
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements and initial completion state. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources, typed projectile behavior, scaling, status, and damage rules. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, and damage rules. |
 | `items.tsv` | `item_id` | Normalized item identity, native compatibility metadata, placement, charges, and generation inputs. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
@@ -530,7 +551,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.41.0"
+    "version": "0.42.0"
   },
   "dependencyConstraints": [
     {
@@ -562,7 +583,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.41.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.42.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

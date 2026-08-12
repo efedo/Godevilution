@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.42 with explicit stable/native spell
+  identity mapping. `spells.tsv` now records `native_spell_id`, rejects duplicate
+  native identities, and resolves legacy item spell names to stable content IDs
+  before cast-source validation.
 - Advance the Diablo content schema to 0.41 with the externally validated
   Guardian turret (spell ID 7), preserving its native spawn search, duration,
   arc scan, Firebolt emission, line-of-sight filtering, RNG ordering, and
