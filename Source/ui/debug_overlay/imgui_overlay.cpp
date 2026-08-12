@@ -458,7 +458,7 @@ void DrawConsoleContent()
 		InputBuffer[0] = '\0';
 	}
 	ImGui::SameLine();
-	ImGui::TextUnformatted("Lua REPL");
+	ImGui::TextUnformatted("Debug console");
 	ImGui::Separator();
 
 	const float footerHeight = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();

@@ -60,7 +60,7 @@ namespace {
 constexpr std::string_view Prompt = "> ";
 constexpr std::string_view HelpText =
     // Displayed as the first console message
-    "Lua console\n"
+    "Debug console\n"
     "Shift+Enter to insert a newline, PageUp/Down to scroll,"
     " Up/Down to fill the input from history,"
     " Shift+Up/Down to fill the input from output history,"
@@ -89,6 +89,7 @@ constexpr std::string_view CommandHelpText =
     "  debug.player.god [on|off]\n"
     "  debug.player.invisible [on|off]\n"
     "  debug.player.info [id]\n"
+    "  debug.player.trn <asset-path|clear>\n"
     "  debug.display.grid [on|off]\n"
     "  debug.display.vision [on|off]\n"
     "  debug.display.path [on|off]\n"

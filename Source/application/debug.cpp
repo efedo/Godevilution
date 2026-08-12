@@ -20,6 +20,7 @@
 
 #include "engine/render/world_renderer.h"
 
+#include "engine/assets.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/players/players.hpp"
 #include "ui/automap.h"
@@ -196,6 +197,22 @@ std::string DebugCmdPlayerInfo(std::optional<uint8_t> id)
 	    "\nInvincible: ", player._pInvincible ? 1 : 0, " HitPoints: ", player.life.current);
 }
 
+std::string DebugCmdSetPlayerTrn(std::string_view path)
+{
+	if (!path.empty()) {
+		const AssetRef ref = FindAsset(path);
+		if (!ref.ok()) {
+			const char *error = ref.error();
+			return error == nullptr || *error == '\0' ? StrCat("File not found: ", path) : error;
+		}
+	}
+	debugTRN = path;
+	Player &player = *MyPlayer;
+	player.initGraphics();
+	player.startStand(player.direction);
+	return path.empty() ? "TRN unset" : "TRN set";
+}
+
 std::string DebugCmdShowGrid(std::optional<bool> on)
 {
 	DebugGrid = on.value_or(!DebugGrid);
@@ -251,6 +268,9 @@ void RegisterNativeDebugCommands()
 		if (HasInvalidLevelArgument(arguments))
 			return std::string("Expected an optional player ID.");
 		return DebugCmdPlayerInfo(ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
+		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);
 	});
 	registerToggle("debug.display.grid", "Toggle tile-grid highlighting.", DebugCmdShowGrid);
 	registerToggle("debug.display.vision", "Toggle vision highlighting.", DebugCmdVision);

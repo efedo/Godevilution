@@ -25,30 +25,15 @@ namespace devilution {
 
 namespace {
 
-std::string DebugSetPlayerTrn(std::string_view path)
-{
-	if (!path.empty()) {
-		if (const AssetRef ref = FindAsset(path); !ref.ok()) {
-			const char *error = ref.error();
-			return error == nullptr || *error == '\0' ? StrCat("File not found: ", path) : error;
-		}
-	}
-	debugTRN = path;
-	Player &player = *MyPlayer;
-	player.initGraphics();
-	player.startStand(player.direction);
-	return path.empty() ? "TRN unset" : "TRN set";
-}
-
 sol::table LuaDevPlayerTrnModule(sol::state_view &lua)
 {
 	sol::table table = lua.create_table();
 	LuaSetDocFn(table, "mon", "(name: string)", "Set player TRN to monsters\\${name}.trn",
-	    [](std::string_view name) { return DebugSetPlayerTrn(StrCat("monsters\\", name, ".trn")); });
+	    [](std::string_view name) { return DebugCmdSetPlayerTrn(StrCat("monsters\\", name, ".trn")); });
 	LuaSetDocFn(table, "plr", "(name: string)", "Set player TRN to plrgfx\\${name}.trn",
-	    [](std::string_view name) { return DebugSetPlayerTrn(StrCat("plrgfx\\", name, ".trn")); });
+	    [](std::string_view name) { return DebugCmdSetPlayerTrn(StrCat("plrgfx\\", name, ".trn")); });
 	LuaSetDocFn(table, "clear", "()", "Unset player TRN",
-	    []() { return DebugSetPlayerTrn(""); });
+	    []() { return DebugCmdSetPlayerTrn(""); });
 	return table;
 }
 

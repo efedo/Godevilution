@@ -45,7 +45,8 @@ Native equivalents include `debug.display.tileData [name]`,
 `debug.display.scrollView [on|off]`, `debug.level.seed [level]`, and
 `debug.search.item <name>` (with corresponding monster, object, and clear
 commands). Player diagnostics are available as `debug.player.arrow <effect>`
-and `debug.player.info [id]`.
+and `debug.player.info [id]`; `debug.player.trn <asset-path|clear>` selects
+or clears the native player TRN asset.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.
@@ -63,14 +64,14 @@ Some commands are still available from multiplayer chat:
 | `/seedinfo` | Shows seed info for the current level. |
 | `/ping` | Shows latency statistics for another player. |
 
-Debug quick messages using `/lua ...` continue to run through the Lua console
-for backward compatibility.
+Debug quick messages using `/lua ...` continue to run through the Lua
+compatibility frontend.
 
 ## Command-line parameters
 
 | Command | Description |
 | ------- | ----------- |
-| `+` | Executes a Lua console command when loading the first game. For example `+dev.player.god()` or `+dev.level.warp.dungeon(1)`. |
+| `+` | Executes a debug-console command when loading the first game. Native commands run first; Lua expressions such as `+dev.player.god()` remain supported for compatibility. |
 | `-f` | Display frames per second. |
 | `-i` | Disable network timeout. |
 | `-n` | Disable startup video. |

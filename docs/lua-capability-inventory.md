@@ -33,6 +33,8 @@ compatibility aliases. The display tile-data and scroll-view diagnostics now
 use native handlers as well; Lua remains only the compatibility frontend for
 these names. Player arrow-effect selection and player inspection use native
 handlers as well, with Lua retaining the old names as aliases.
+Player TRN selection is also a native debug command now, with the Lua `trn`
+module retained as a compatibility alias.
 
 ## Bundled Scripts
 
