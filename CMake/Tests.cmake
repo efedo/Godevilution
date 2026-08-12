@@ -16,6 +16,7 @@ set(tests
   automap_test
   cursor_test
   debug_console_history_test
+  debug_command_registry_test
   debug_overlay_state_test
   game_event_bus_test
   command_delivery_test

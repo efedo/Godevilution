@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -81,5 +82,16 @@ void AddDebugAutomapMonsterHighlight(std::string_view name);
 void AddDebugAutomapItemHighlight(std::string_view name);
 void AddDebugAutomapObjectHighlight(std::string_view name);
 void ClearDebugAutomapHighlights();
+
+#ifdef _DEBUG
+std::string DebugCmdGodMode(std::optional<bool> on);
+std::string DebugCmdInvisible(std::optional<bool> on);
+std::string DebugCmdShowGrid(std::optional<bool> on);
+std::string DebugCmdVision(std::optional<bool> on);
+std::string DebugCmdPath(std::optional<bool> on);
+std::string DebugCmdFullbright(std::optional<bool> on);
+std::string DebugCmdToggleFPS(std::optional<bool> on);
+void RegisterNativeDebugCommands();
+#endif
 
 } // namespace devilution

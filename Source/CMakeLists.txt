@@ -21,6 +21,7 @@ endif()
 
 set(libdevilutionx_SRCS
   application/fatal_error.cpp
+  application/debug_commands.cpp
   ui/automap.cpp
   application/capture.cpp
   engine/cursor.cpp

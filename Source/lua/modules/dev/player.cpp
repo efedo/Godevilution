@@ -47,12 +47,6 @@ std::string DebugCmdArrow(std::string_view effect)
 	return StrCat("Arrows changed to: ", effect);
 }
 
-std::string DebugCmdGodMode(std::optional<bool> on)
-{
-	DebugGodMode = on.value_or(!DebugGodMode);
-	return StrCat("God mode: ", DebugGodMode ? "On" : "Off");
-}
-
 std::string DebugCmdPlayerInfo(std::optional<uint8_t> id)
 {
 	const uint8_t playerId = id.value_or(0);
@@ -95,12 +89,6 @@ sol::table LuaDevPlayerTrnModule(sol::state_view &lua)
 	LuaSetDocFn(table, "clear", "()", "Unset player TRN",
 	    []() { return DebugSetPlayerTrn(""); });
 	return table;
-}
-
-std::string DebugCmdInvisible(std::optional<bool> on)
-{
-	DebugInvisible = on.value_or(!DebugInvisible);
-	return StrCat("Invisible: ", DebugInvisible ? "On" : "Off");
 }
 
 } // namespace

@@ -32,6 +32,8 @@
 #include "ui/panel/control.hpp"
 #include "ui/debug_overlay/imgui_overlay.hpp"
 #include "engine/assets.hpp"
+#include "application/debug_commands.hpp"
+#include "application/debug.h"
 #include "engine/math/displacement.hpp"
 #include "engine/gfx/graphics_pipeline.h"
 #include "engine/gfx/palette.h"
@@ -81,7 +83,17 @@ constexpr std::string_view CommandHelpText =
     "Other useful modules:\n"
     "  dev.items, dev.level, dev.monsters, dev.quests, dev.search, dev.towners\n"
     "\n"
-    "Tip: Tab autocompletes symbols (for example: dev.player.<Tab>).";
+    "\n"
+    "Native debug commands:\n"
+    "  debug.player.god [on|off]\n"
+    "  debug.player.invisible [on|off]\n"
+    "  debug.display.grid [on|off]\n"
+    "  debug.display.vision [on|off]\n"
+    "  debug.display.path [on|off]\n"
+    "  debug.display.fps [on|off]\n"
+    "  debug.display.fullbright\n"
+    "\n"
+    "Tip: Tab autocompletes Lua symbols (for example: dev.player.<Tab>).";
 
 std::optional<tl::expected<AssetData, std::string>> ConsolePrelude;
 
@@ -653,6 +665,7 @@ void InitConsole()
 {
 	if (!ConsoleLines.empty())
 		return;
+	RegisterNativeDebugCommands();
 	ConsolePrelude = LoadAsset("lua\\repl_prelude.lua");
 	AddInitialConsoleLines();
 	if (ConsolePrelude->has_value())
@@ -751,6 +764,11 @@ void RunInConsole(std::string_view code)
 		} else {
 			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Help, .text = BuildModuleHelp(*helpQuery) });
 		}
+		return;
+	}
+	if (const std::optional<std::string> result = CurrentDebugCommandRegistry.Execute(code); result.has_value()) {
+		if (!result->empty())
+			AddConsoleLine(ConsoleLine { .type = ConsoleLineType::Output, .text = *result });
 		return;
 	}
 	tl::expected<std::string, std::string> result = RunLuaReplLine(code);

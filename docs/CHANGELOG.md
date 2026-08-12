@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Add a deterministic native debug-command registry for core player and display
+  toggles. Route those commands through the debug console while retaining the
+  Lua modules as a compatibility frontend for the remaining developer REPL.
 - Move native sound and table-data refreshes into `ModManager` after active
   mod scripts run. Lua remains a compatibility hook rather than the owner of
   archive, sound, or data reload orchestration.

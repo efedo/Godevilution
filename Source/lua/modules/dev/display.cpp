@@ -23,30 +23,6 @@
 namespace devilution {
 namespace {
 
-std::string DebugCmdShowGrid(std::optional<bool> on)
-{
-	DebugGrid = on.value_or(!DebugGrid);
-	return StrCat("Tile grid highlighting: ", DebugGrid ? "On" : "Off");
-}
-
-std::string DebugCmdVision(std::optional<bool> on)
-{
-	DebugVision = on.value_or(!DebugVision);
-	return StrCat("Vision highlighting: ", DebugVision ? "On" : "Off");
-}
-
-std::string DebugCmdPath(std::optional<bool> on)
-{
-	DebugPath = on.value_or(!DebugPath);
-	return StrCat("Path highlighting: ", DebugPath ? "On" : "Off");
-}
-
-std::string DebugCmdFullbright(std::optional<bool> on)
-{
-	CurrentLightManager.ToggleLighting();
-	return StrCat("Fullbright: ", CurrentLightManager.disableLighting_ ? "On" : "Off");
-}
-
 std::string DebugCmdShowTileData(std::optional<std::string_view> dataType)
 {
 	static const std::array<std::string_view, 23> DataTypes {
@@ -120,12 +96,6 @@ std::string DebugCmdScrollView(std::optional<bool> on)
 	if (!DebugScrollViewEnabled)
 		InitMultiView();
 	return StrCat("Scroll view: ", DebugScrollViewEnabled ? "On" : "Off");
-}
-
-std::string DebugCmdToggleFPS(std::optional<bool> on)
-{
-	frameflag = on.value_or(!frameflag);
-	return StrCat("FPS counter: ", frameflag ? "On" : "Off");
 }
 
 } // namespace

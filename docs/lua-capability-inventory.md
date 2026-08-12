@@ -24,7 +24,10 @@ The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
 Lua reload hooks. Native `ModManager` now owns archive selection, sound
 reinitialization, and table-data reload after legacy scripts run; Lua remains
-only the optional compatibility script phase.
+only the optional compatibility script phase. Core player/display debug toggles
+now also have a deterministic native command registry; the debug console routes
+those commands natively and retains Lua as a compatibility frontend for the
+remaining REPL and module commands.
 
 ## Bundled Scripts
 

@@ -14,6 +14,9 @@
 #include <ankerl/unordered_dense.h>
 
 #include "application/debug.h"
+#include "application/debug_commands.hpp"
+
+#include "engine/render/world_renderer.h"
 
 #include "ui/automap.h"
 #include "engine/cursor.h"
@@ -57,6 +60,22 @@ std::vector<std::string> SearchMonsters;
 std::vector<std::string> SearchItems;
 std::vector<std::string> SearchObjects;
 
+std::optional<bool> ParseOptionalBool(std::string_view value)
+{
+	if (value.empty())
+		return std::nullopt;
+	if (value == "on" || value == "true" || value == "1")
+		return true;
+	if (value == "off" || value == "false" || value == "0")
+		return false;
+	return std::nullopt;
+}
+
+bool HasInvalidBoolArgument(std::string_view value)
+{
+	return !value.empty() && !ParseOptionalBool(value).has_value();
+}
+
 void PrintDebugMonster(const Monster &monster)
 {
 	EventPlrMsg(StrCat(
@@ -79,6 +98,77 @@ void PrintDebugMonster(const Monster &monster)
 }
 
 } // namespace
+
+std::string DebugCmdGodMode(std::optional<bool> on)
+{
+	DebugGodMode = on.value_or(!DebugGodMode);
+	return StrCat("God mode: ", DebugGodMode ? "On" : "Off");
+}
+
+std::string DebugCmdInvisible(std::optional<bool> on)
+{
+	DebugInvisible = on.value_or(!DebugInvisible);
+	return StrCat("Invisible: ", DebugInvisible ? "On" : "Off");
+}
+
+std::string DebugCmdShowGrid(std::optional<bool> on)
+{
+	DebugGrid = on.value_or(!DebugGrid);
+	return StrCat("Tile grid highlighting: ", DebugGrid ? "On" : "Off");
+}
+
+std::string DebugCmdVision(std::optional<bool> on)
+{
+	DebugVision = on.value_or(!DebugVision);
+	return StrCat("Vision highlighting: ", DebugVision ? "On" : "Off");
+}
+
+std::string DebugCmdPath(std::optional<bool> on)
+{
+	DebugPath = on.value_or(!DebugPath);
+	return StrCat("Path highlighting: ", DebugPath ? "On" : "Off");
+}
+
+std::string DebugCmdFullbright(std::optional<bool> /*on*/)
+{
+	CurrentLightManager.ToggleLighting();
+	return StrCat("Fullbright: ", CurrentLightManager.disableLighting_ ? "On" : "Off");
+}
+
+std::string DebugCmdToggleFPS(std::optional<bool> on)
+{
+	frameflag = on.value_or(!frameflag);
+	return StrCat("FPS counter: ", frameflag ? "On" : "Off");
+}
+
+void RegisterNativeDebugCommands()
+{
+	static bool registered = false;
+	if (registered)
+		return;
+	registered = true;
+
+	const auto registerToggle = [](std::string name, std::string description, auto handler) {
+		CurrentDebugCommandRegistry.Register(
+		    std::move(name),
+		    std::move(description),
+		    [handler](std::string_view arguments) {
+			    if (HasInvalidBoolArgument(arguments))
+				    return std::string("Expected an optional boolean: on, off, true, false, 1, or 0.");
+			    return handler(ParseOptionalBool(arguments));
+		    });
+	};
+
+	registerToggle("debug.player.god", "Toggle player god mode.", DebugCmdGodMode);
+	registerToggle("debug.player.invisible", "Toggle player invisibility.", DebugCmdInvisible);
+	registerToggle("debug.display.grid", "Toggle tile-grid highlighting.", DebugCmdShowGrid);
+	registerToggle("debug.display.vision", "Toggle vision highlighting.", DebugCmdVision);
+	registerToggle("debug.display.path", "Toggle path highlighting.", DebugCmdPath);
+	registerToggle("debug.display.fps", "Toggle the FPS counter.", DebugCmdToggleFPS);
+	CurrentDebugCommandRegistry.Register("debug.display.fullbright", "Toggle fullbright lighting.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdFullbright(std::nullopt) : std::string("This command takes no arguments.");
+	});
+}
 
 void LoadDebugGFX()
 {
