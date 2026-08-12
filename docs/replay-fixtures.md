@@ -78,6 +78,10 @@ fixture.
 - Additive fixture metadata may be ignored. Changes to command meaning or
   canonical hash order require both runners and their parity vectors to change
   together.
+- Base-content fixtures must carry the exact SHA-256 produced by the checked-in
+  content pack. Preserve existing checkpoint hashes when a change only updates
+  manifest identity or adds a non-observable catalog entry; regenerate hashes
+  only when canonical state actually changes, then verify both runners.
 
 ## Current Coverage
 

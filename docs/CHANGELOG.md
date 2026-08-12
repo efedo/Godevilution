@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   Externalize the undead monster capability, preserve native damage and speed
   scaling, pass non-undead monsters through, and carry the capability through
   protocol field 23, compatible saves, and conditional snapshot hashes.
+- Refresh the 22 base-content replay fixtures to the current manifest identity
+  while preserving their native-compatible snapshot checkpoints, and keep the
+  projectile behavior values stable as Holy Bolt is appended to the catalog.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

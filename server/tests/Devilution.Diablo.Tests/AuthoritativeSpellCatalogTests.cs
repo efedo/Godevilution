@@ -6,6 +6,14 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeSpellCatalogTests
 {
     [Fact]
+    public void ProjectileBehaviorValuesRemainProtocolCompatible()
+    {
+        Assert.Equal(16, (int)AuthoritativeProjectileBehavior.Fireball);
+        Assert.Equal(18, (int)AuthoritativeProjectileBehavior.Search);
+        Assert.Equal(19, (int)AuthoritativeProjectileBehavior.HolyBolt);
+    }
+
+    [Fact]
     public void ShippedChargedBoltCarriesNativeStaffLevel()
     {
         var path = Path.Combine(
