@@ -16,6 +16,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(35, (int)AuthoritativeProjectileBehavior.Elemental);
         Assert.Equal(36, (int)AuthoritativeProjectileBehavior.GuardianController);
         Assert.Equal(37, (int)AuthoritativeProjectileBehavior.Telekinesis);
+        Assert.Equal(38, (int)AuthoritativeProjectileBehavior.TownPortal);
     }
 
     [Fact]
@@ -51,6 +52,26 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(8, telekinesis.MinimumManaCost);
         Assert.Equal(2, telekinesis.StaffLevel);
         Assert.Equal(AuthoritativeProjectileBehavior.Telekinesis, telekinesis.ProjectileBehavior);
+    }
+
+    [Fact]
+    public void ShippedTownPortalCarriesNativePortalTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(39, out var townPortal));
+        Assert.Equal(7U, townPortal.NativeSpellId);
+        Assert.Equal(35, townPortal.ManaCost);
+        Assert.Equal(3, townPortal.ManaAdjustment);
+        Assert.Equal(18, townPortal.MinimumManaCost);
+        Assert.Equal(3, townPortal.StaffLevel);
+        Assert.Equal(AuthoritativeProjectileBehavior.TownPortal, townPortal.ProjectileBehavior);
     }
 
     [Fact]

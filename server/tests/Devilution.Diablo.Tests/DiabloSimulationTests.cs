@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.43.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.44.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.43.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.44.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -384,6 +384,49 @@ public sealed class DiabloSimulationTests
         Assert.Equal(112U, restoredStoneCurse.RemainingTicks);
         Assert.Equal(11, restoredStoneCurse.ImpactLifetime);
         Assert.Empty(replacementCatalog.GetItems(1));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsDynamicPortalState()
+    {
+        var portal = new AuthoritativePortal(
+            0x20000001,
+            1,
+            12,
+            10,
+            0,
+            57,
+            40) {
+            OwnerEntityId = 7,
+            Bidirectional = true,
+            RemainingTicks = 88,
+        };
+        var simulation = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            Portals = [portal],
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = 1;
+        var snapshot = simulation.CaptureSnapshot(sourcePlayer, 5);
+        var restored = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+
+        var destinationPlayer = CreatePlayer();
+        destinationPlayer.LevelId = 1;
+        restored.RestoreSnapshot(destinationPlayer, snapshot);
+
+        var restoredPortal = Assert.Single(restored.WorldState.Portals.Values);
+        Assert.Equal(portal.PortalId, restoredPortal.PortalId);
+        Assert.Equal(portal.RemainingTicks, restoredPortal.RemainingTicks);
+        Assert.Equal(portal.OwnerEntityId, restoredPortal.OwnerEntityId);
+        Assert.True(restoredPortal.Bidirectional);
     }
 
     [Fact]

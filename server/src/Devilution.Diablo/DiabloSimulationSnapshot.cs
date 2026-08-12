@@ -176,6 +176,9 @@ public sealed record DiabloSimulationSnapshot(
     DiabloStoreState? ActiveStore)
 {
     public uint RandomState { get; init; }
+
+    /** Dynamic and external portal routes owned by the authoritative world. */
+    public IReadOnlyList<DiabloPortalState> Portals { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -344,6 +347,21 @@ public sealed partial class DiabloSimulation
                 .ToArray(),
             activeStore) {
             RandomState = random.State,
+            Portals = WorldState.Portals.Values
+                .OrderBy(portal => portal.PortalId)
+                .Select(portal => new DiabloPortalState(
+                    portal.PortalId,
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY,
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY) {
+                    RemainingTicks = portal.RemainingTicks,
+                    OwnerEntityId = portal.OwnerEntityId,
+                    Bidirectional = portal.Bidirectional,
+                })
+                .ToArray(),
         };
     }
 
@@ -360,7 +378,8 @@ public sealed partial class DiabloSimulation
             || snapshot.WorldItems is null
             || snapshot.Objects is null
             || snapshot.Quests is null
-            || snapshot.Projectiles is null) {
+            || snapshot.Projectiles is null
+            || snapshot.Portals is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
@@ -391,6 +410,33 @@ public sealed partial class DiabloSimulation
             || snapshot.Projectiles.Count > 4096) {
             throw new InvalidDataException(
                 "The authoritative save contains invalid world entity identity.");
+        }
+
+        var savedPortals = snapshot.Portals
+            .Select(portal => {
+                if (portal.PortalId == 0
+                    || !WorldState.IsWalkable(
+                        portal.SourceLevelId,
+                        portal.SourcePositionX,
+                        portal.SourcePositionY)
+                    || !WorldState.IsWalkable(
+                        portal.DestinationLevelId,
+                        portal.DestinationPositionX,
+                        portal.DestinationPositionY)
+                    || (portal.Bidirectional
+                        && (portal.OwnerEntityId == 0 || portal.RemainingTicks == 0))
+                    || (!portal.Bidirectional && portal.OwnerEntityId != 0)
+                    || (!portal.Bidirectional && portal.RemainingTicks != 0)) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains an invalid portal.");
+                }
+                return portal;
+            })
+            .ToArray();
+        if (savedPortals.Length > 4096
+            || savedPortals.Select(portal => portal.PortalId).Distinct().Count() != savedPortals.Length) {
+            throw new InvalidDataException(
+                "The authoritative save contains invalid portal identity.");
         }
 
         var restoredWorldItems = snapshot.WorldItems.Select(item => {
@@ -883,6 +929,24 @@ public sealed partial class DiabloSimulation
         foreach (var item in restoredWorldItems)
             WorldState.WorldItems.Add(item.EntityId, item);
         RestoreObjects(restoredObjects);
+        WorldState.Portals.Clear();
+        foreach (var portal in savedPortals) {
+            WorldState.Portals.Add(
+                portal.PortalId,
+                new AuthoritativePortal(
+                    portal.PortalId,
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY,
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY) {
+                    RemainingTicks = portal.RemainingTicks,
+                    OwnerEntityId = portal.OwnerEntityId,
+                    Bidirectional = portal.Bidirectional,
+                });
+        }
+        WorldState.RestorePortalClock(snapshot.Tick);
         WorldState.Projectiles.Clear();
         foreach (var projectile in restoredProjectiles)
             WorldState.Projectiles.Add(projectile.EntityId, projectile);

@@ -215,6 +215,7 @@ public sealed class DiabloCombatCommandProcessor
         if (players.Any(player => player is null))
             throw new ArgumentException("Combat tick players cannot contain null state.", nameof(players));
 
+        world.AdvancePortals(tick);
         var events = new List<DiabloDirectedGameplayEvent>();
         foreach (var player in players)
             AdvancePlayerAction(player, tick, players, events);
@@ -476,6 +477,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.GuardianController;
         var isTelekinesis = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Telekinesis;
+        var isTownPortal = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.TownPortal;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -484,7 +487,7 @@ public sealed class DiabloCombatCommandProcessor
         if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis
+        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -644,6 +647,32 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(
                     telekinesisValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
         }
+        if (isTownPortal) {
+            if (worldCommands is null
+                || player.LevelId == AuthoritativePortalRules.TownLevelId
+                || intent.TargetEntityId != 0
+                || Math.Max(
+                    Math.Abs(intent.TargetX - player.PositionX),
+                    Math.Abs(intent.TargetY - player.PositionY)) > spell.Range
+                || !world.HasMissileLineOfSight(
+                    player.LevelId,
+                    player.PositionX,
+                    player.PositionY,
+                    intent.TargetX,
+                    intent.TargetY)) {
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+            var townPortalValidation = worldCommands.ExecuteTownPortal(
+                player,
+                intent.TargetX,
+                intent.TargetY,
+                appliedTick,
+                players,
+                applyEffects: false);
+            if (!townPortalValidation.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
+        }
         if (source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
@@ -694,6 +723,7 @@ public sealed class DiabloCombatCommandProcessor
             && !stoneCurseTarget.Value.Target.IsPetrified;
 
         ConsumeCastSource(player, source, manaCost);
+        var events = new List<DiabloGameplayEvent>();
         if (isTelekinesis) {
             var telekinesisResult = worldCommands!.ExecuteTelekinesis(
                 player,
@@ -705,8 +735,19 @@ public sealed class DiabloCombatCommandProcessor
             if (!telekinesisResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     telekinesisResult.Failure ?? DiabloRuleFailure.Malformed);
+            events.AddRange(telekinesisResult.Events);
         }
-        var events = new List<DiabloGameplayEvent>();
+        if (isTownPortal) {
+            var townPortalResult = worldCommands!.ExecuteTownPortal(
+                player,
+                intent.TargetX,
+                intent.TargetY,
+                appliedTick,
+                players);
+            if (!townPortalResult.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    townPortalResult.Failure ?? DiabloRuleFailure.Malformed);
+        }
         ApplyImmediateSelfDamage(
             player,
             spell,

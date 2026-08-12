@@ -154,6 +154,94 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TownPortalCreatesAReversibleServerOwnedPortalAndExpires()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTownPortalSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            levelId: 1,
+            entityId: 7,
+            mana: 3000,
+            manaMaximum: 3000,
+            memorizedSpells: [new MemorizedSpellState(39, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                39,
+                0,
+                12,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded);
+        Assert.Equal(760, player.Mana);
+        var portal = Assert.Single(world.Portals.Values);
+        Assert.Equal((12, 10), (portal.SourcePositionX, portal.SourcePositionY));
+        Assert.Equal((61, 40), (portal.DestinationPositionX, portal.DestinationPositionY));
+        Assert.Equal(7U, portal.OwnerEntityId);
+        Assert.True(portal.Bidirectional);
+        Assert.Equal(100U, portal.RemainingTicks);
+
+        player.PositionX = portal.SourcePositionX;
+        player.PositionY = portal.SourcePositionY;
+        Assert.True(worldCommands.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            2,
+            [player]).Succeeded);
+        Assert.Equal((0U, 61, 40), (player.LevelId, player.PositionX, player.PositionY));
+
+        Assert.True(worldCommands.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            3,
+            [player]).Succeeded);
+        Assert.Equal((1U, 12, 10), (player.LevelId, player.PositionX, player.PositionY));
+
+        processor.AdvanceTick(2, [player]);
+        processor.AdvanceTick(102, [player]);
+        Assert.Empty(world.Portals);
+    }
+
+    [Fact]
+    public void TownPortalRejectsTownCastingBeforeSpendingMana()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTownPortalSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 3000,
+            manaMaximum: 3000,
+            memorizedSpells: [new MemorizedSpellState(39, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                39,
+                0,
+                12,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(3000, player.Mana);
+        Assert.Empty(world.Portals);
+    }
+
+    [Fact]
     public void AttackAppliesDamageExperienceDropAndOrderedEvents()
     {
         var target = new AuthoritativeCombatTarget(
@@ -4125,6 +4213,21 @@ public sealed class DiabloCombatCommandProcessorTests
             ManaCostScale = 64,
             StaffLevel = 2,
             ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateTownPortalSpell()
+    {
+        return new AuthoritativeSpellDefinition(39, 35, 0, 0, 0, 0) {
+            NativeSpellId = 7,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.TownPortal,
+            ManaAdjustment = 3,
+            MinimumManaCost = 18,
+            ManaCostScale = 64,
+            StaffLevel = 3,
         };
     }
 

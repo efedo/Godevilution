@@ -43,6 +43,7 @@ public enum AuthoritativeProjectileBehavior
     Elemental = 35,
     GuardianController = 36,
     Telekinesis = 37,
+    TownPortal = 38,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -828,6 +829,21 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.AreaRadius != 0)) {
                 throw new InvalidDataException(
                     "Teleport behavior requires one stationary two-tick movement controller without gameplay effects.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.TownPortal
+                && (definition.HealingAmount != 0
+                    || hasDamage
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range <= 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0)) {
+                throw new InvalidDataException(
+                    "Town Portal behavior requires one targeted world transition without combat effects.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Resurrection
                 && (definition.HealingAmount != 0

@@ -3,7 +3,7 @@ namespace Devilution.Diablo;
 using Devilution.Data;
 
 /** Deterministic level transition owned by the authoritative world. */
-public sealed record AuthoritativePortal(
+public sealed partial record AuthoritativePortal(
     uint PortalId,
     uint SourceLevelId,
     int SourcePositionX,
@@ -11,6 +11,51 @@ public sealed record AuthoritativePortal(
     uint DestinationLevelId,
     int DestinationPositionX,
     int DestinationPositionY);
+
+public static class AuthoritativePortalRules
+{
+    /** Native town coordinates used by the four player portal slots. */
+    public const uint TownLevelId = 0;
+
+    public const int TownPositionY = 40;
+
+    public static int GetTownPositionX(uint ownerEntityId)
+    {
+        if (ownerEntityId == 0)
+            throw new ArgumentOutOfRangeException(nameof(ownerEntityId));
+        return 57 + (int)((ownerEntityId - 1) % 4) * 2;
+    }
+}
+
+/** Mutable lifetime and ownership metadata for a dynamic native town portal. */
+public sealed partial record AuthoritativePortal
+{
+    /** Zero denotes an external/static route that does not expire. */
+    public uint RemainingTicks { get; set; }
+
+    /** Player entity that owns a dynamic town portal; zero denotes static content. */
+    public uint OwnerEntityId { get; init; }
+
+    /** Dynamic town portals can be entered from either endpoint. */
+    public bool Bidirectional { get; init; }
+}
+
+/** Immutable snapshot projection of an authoritative portal. */
+public sealed record DiabloPortalState(
+    uint PortalId,
+    uint SourceLevelId,
+    int SourcePositionX,
+    int SourcePositionY,
+    uint DestinationLevelId,
+    int DestinationPositionX,
+    int DestinationPositionY)
+{
+    public uint RemainingTicks { get; init; }
+
+    public uint OwnerEntityId { get; init; }
+
+    public bool Bidirectional { get; init; }
+}
 
 /** External portal definitions used to validate level transitions. */
 public static class AuthoritativePortalCatalog

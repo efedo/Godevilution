@@ -7,6 +7,7 @@ public sealed class DiabloWorldState
     private readonly int fallbackHeight;
     private readonly HashSet<int> fallbackBlockedCells;
     private readonly HashSet<int> fallbackMissileBlockedCells;
+    private ulong? lastPortalTick;
 
     public DiabloWorldState(
         AuthoritativeWorld? world = null,
@@ -67,6 +68,35 @@ public sealed class DiabloWorldState
     public Dictionary<uint, AuthoritativeCombatTarget> CombatTargets { get; } = [];
 
     public Dictionary<uint, AuthoritativePortal> Portals { get; } = [];
+
+    /** Expires dynamic portals using elapsed authoritative simulation ticks. */
+    public void AdvancePortals(ulong tick)
+    {
+        if (lastPortalTick is not ulong previousTick) {
+            lastPortalTick = tick;
+            return;
+        }
+        if (tick <= previousTick)
+            return;
+
+        var elapsed = checked(tick - previousTick);
+        foreach (var portal in Portals.Values.ToArray()) {
+            if (portal.RemainingTicks == 0)
+                continue;
+            portal.RemainingTicks = elapsed >= portal.RemainingTicks
+                ? 0
+                : portal.RemainingTicks - (uint)elapsed;
+            if (portal.RemainingTicks == 0)
+                Portals.Remove(portal.PortalId);
+        }
+        lastPortalTick = tick;
+    }
+
+    /** Restores the authoritative clock used for dynamic portal expiry. */
+    public void RestorePortalClock(ulong tick)
+    {
+        lastPortalTick = tick;
+    }
 
     public Dictionary<uint, AuthoritativeWorldItem> WorldItems { get; } = [];
 

@@ -160,6 +160,97 @@ public sealed class DiabloWorldCommandProcessor
         return DiabloWorldIntentResult.Accepted;
     }
 
+    /** Creates the server-owned dynamic portal used by the native Town Portal spell. */
+    public DiabloWorldIntentResult ExecuteTownPortal(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
+        bool applyEffects = true)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        var participants = players.ToArray();
+        if (player.LevelId == AuthoritativePortalRules.TownLevelId
+            || !world.HasMissileLineOfSight(
+                player.LevelId,
+                player.PositionX,
+                player.PositionY,
+                targetX,
+                targetY)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        var portalPosition = DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            5,
+            (candidateX, candidateY) =>
+                world.IsWalkable(player.LevelId, candidateX, candidateY)
+                && !world.IsMissileBlocked(player.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    player.LevelId,
+                    candidateX,
+                    candidateY,
+                    participants)
+                && !IsPortalEndpoint(player.LevelId, candidateX, candidateY));
+
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
+
+        foreach (var existing in world.Portals.Values
+                     .Where(portal => portal.OwnerEntityId == player.EntityId)
+                     .Select(portal => portal.PortalId)
+                     .ToArray()) {
+            world.Portals.Remove(existing);
+        }
+        if (!portalPosition.HasValue)
+            return DiabloWorldIntentResult.Accepted;
+
+        var portalId = AllocatePortalId();
+        world.Portals.Add(
+            portalId,
+            new AuthoritativePortal(
+                portalId,
+                player.LevelId,
+                portalPosition.Value.X,
+                portalPosition.Value.Y,
+                AuthoritativePortalRules.TownLevelId,
+                AuthoritativePortalRules.GetTownPositionX(player.EntityId),
+                AuthoritativePortalRules.TownPositionY) {
+                OwnerEntityId = player.EntityId,
+                Bidirectional = true,
+                RemainingTicks = 100,
+            });
+        return DiabloWorldIntentResult.Accepted;
+    }
+
+    private uint AllocatePortalId()
+    {
+        const uint firstDynamicPortalId = 0x20000000;
+        var candidate = world.Portals.Keys
+            .Where(id => id >= firstDynamicPortalId)
+            .DefaultIfEmpty(firstDynamicPortalId - 1)
+            .Max();
+        do {
+            candidate = checked(candidate + 1);
+        } while (world.Portals.ContainsKey(candidate));
+        return candidate;
+    }
+
+    private bool IsPortalEndpoint(uint levelId, int positionX, int positionY)
+    {
+        return world.Portals.Values.Any(portal =>
+            (portal.SourceLevelId == levelId
+                && portal.SourcePositionX == positionX
+                && portal.SourcePositionY == positionY)
+            || (portal.DestinationLevelId == levelId
+                && portal.DestinationPositionX == positionX
+                && portal.DestinationPositionY == positionY));
+    }
+
     private DiabloWorldIntentResult RestartTown(
         AuthoritativePlayerState player,
         ulong appliedTick)
@@ -267,22 +358,38 @@ public sealed class DiabloWorldCommandProcessor
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players)
     {
-        if (!world.Portals.TryGetValue(portalId, out var portal)
-            || player.LevelId != portal.SourceLevelId
-            || player.PositionX != portal.SourcePositionX
-            || player.PositionY != portal.SourcePositionY) {
+        if (!world.Portals.TryGetValue(portalId, out var portal)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        var useSourceEndpoint = player.LevelId == portal.SourceLevelId
+            && player.PositionX == portal.SourcePositionX
+            && player.PositionY == portal.SourcePositionY;
+        var useDestinationEndpoint = portal.Bidirectional
+            && player.LevelId == portal.DestinationLevelId
+            && player.PositionX == portal.DestinationPositionX
+            && player.PositionY == portal.DestinationPositionY;
+        if (!useSourceEndpoint && !useDestinationEndpoint)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        var destinationLevelId = useSourceEndpoint
+            ? portal.DestinationLevelId
+            : portal.SourceLevelId;
+        var destinationPositionX = useSourceEndpoint
+            ? portal.DestinationPositionX
+            : portal.SourcePositionX;
+        var destinationPositionY = useSourceEndpoint
+            ? portal.DestinationPositionY
+            : portal.SourcePositionY;
         if (!world.IsWalkable(
-                portal.DestinationLevelId,
-                portal.DestinationPositionX,
-                portal.DestinationPositionY)) {
+                destinationLevelId,
+                destinationPositionX,
+                destinationPositionY)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (world.IsOccupied(
-                portal.DestinationLevelId,
-                portal.DestinationPositionX,
-                portal.DestinationPositionY,
+                destinationLevelId,
+                destinationPositionX,
+                destinationPositionY,
                 players,
                 player.EntityId)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
@@ -293,9 +400,9 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
-        player.LevelId = portal.DestinationLevelId;
-        player.PositionX = portal.DestinationPositionX;
-        player.PositionY = portal.DestinationPositionY;
+        player.LevelId = destinationLevelId;
+        player.PositionX = destinationPositionX;
+        player.PositionY = destinationPositionY;
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
