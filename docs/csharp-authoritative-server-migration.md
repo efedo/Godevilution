@@ -531,6 +531,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.52 adds Warp (stable spell ID `49`, native `SpellID` `42`). A
+normalized external trigger table supplies native level destinations. The
+server selects the nearest trigger, performs a five-cell destination crawl,
+excludes occupied and trigger tiles, and applies the transition through the
+existing server-owned level-action state.
+
 Schema 0.51 adds Berserk (stable spell ID `48`, native `SpellID` `44`). The
 server owns the radius-five target crawl, eligibility rules, resistance coin
 flip, deterministic four-channel damage scaling, and persisted berserked

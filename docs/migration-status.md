@@ -17,7 +17,7 @@ Status date: 2026-08-12
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
-| External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, and Jester spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
+| External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, Jester, Berserk, and Warp spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Broaden replacement-retirement fixtures and add further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
@@ -609,6 +609,11 @@ Content schema 0.47 adds stable Mana spell ID `41` (native `SpellID` `37`).
 The server owns native LCG draws for base, character-level, and spell-level
 restoration, including Sorcerer/Rogue/Bard multipliers and Q6 maximum clamping.
 
+Content schema 0.52 adds Warp (stable spell ID `49`, native `SpellID` `42`).
+The server selects the nearest normalized level trigger, crawls up to five
+cells around its authored destination while excluding trigger and occupied
+tiles, and applies the existing authoritative level-transition action.
+
 Content schema 0.51 adds Berserk (stable spell ID `48`, native `SpellID` `44`).
 The authoritative module crawls eligible monsters within radius five, applies
 the native resistance coin flip, scales all four persisted damage channels in
@@ -659,7 +664,7 @@ resistance, lifetime, collision, and deterministic projectile state.
 
 1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
    Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
-   Infravision, Search, Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town Portal, and Resurrection,
+   Infravision, Search, Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town Portal, Resurrection, Jester, Berserk, and Warp,
    including remaining class modifiers, scaling and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,
    level, quest, and item metadata and authoritative gameplay definitions.

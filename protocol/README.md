@@ -120,7 +120,8 @@ Windows toolchain command.
   the future position. Death (kind 4) is already applied, requires zero life,
   and retains Death mode after its content-timed action clears. Level transition
   (kind 5) records its portal target after applying the destination and holds
-  NewLevel for a one-tick barrier before Stand. Restart in Town (kind 6) has no
+  NewLevel for a one-tick barrier before Stand. Warp uses the same action kind
+  with its normalized level-trigger target and native two-tick lifetime. Restart in Town (kind 6) has no
   target, arrives after its destination and resource reset are already applied,
   and uses the same content-selected NewLevel barrier.
   Present state uses the tagged `godevilution-player-action-v1` hash extension;

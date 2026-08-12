@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.51.0` schema in
+It declares its identity and `devilution.diablo@0.52.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,15 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.52 adds stable Warp spell row `49` (native `SpellID` `42`). The
+server resolves the nearest normalized level trigger, crawls around the native
+destination while excluding trigger tiles and occupied cells, and applies the
+level transition through the shared player action state.
+
+Schema 0.51 adds stable Berserk spell row `48` (native `SpellID` `44`). The
+server owns the radius-five target crawl, eligibility rules, resistance coin
+flip, four-channel damage scaling, and persisted berserked state.
 
 Schema 0.50 adds stable Jester spell row `47` (native `SpellID` `39`). The
 server owns native ten-way deterministic dispatch into the existing typed spell
@@ -280,13 +289,19 @@ rules. Berserk also accepts optional `min_damage`, `max_damage`,
 row owns the radius-five crawl and 120% plus one-to-nine percent scaling; the
 server persists the active state and all channels.
 
+`warps.tsv` is the normalized level-trigger projection used by Warp. Each row
+binds a stable trigger to a source level and an authored destination level and
+tile. Activation validates both levels and all coordinates; runtime selection
+is nearest-trigger first, then stable warp ID, with the native five-cell
+destination crawl applied by the server.
+
 The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
 ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
-Monk's Search ability spell ID `46`, Telekinesis spell ID `33`, and Berserk
-spell ID `48`.
+Monk's Search ability spell ID `46`, Telekinesis spell ID `33`, Berserk spell
+ID `48`, and Warp spell ID `49`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned
@@ -541,6 +556,7 @@ the complete target header even when they upsert only one row.
 | `combat.tsv` | singleton | Variant, combat defaults, restart rules, death-gold rules, and PvP-ear identity. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
+| `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |

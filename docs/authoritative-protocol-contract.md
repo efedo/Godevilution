@@ -423,9 +423,9 @@ version-1 save envelope; no client computes loss, placement, topology, seed, or
 recovered balance. The action
 clears at the first inactive tick while Death mode remains terminal.
 Level-transition kind 5 is
-already applied after a valid portal changes level and position, records the
-portal as its target, and holds NewLevel for a one-tick barrier before a living
-player returns to Stand. Restart action kind 6 has no target and is admitted
+already applied after a valid portal or Warp target changes level and position,
+records that target, and holds NewLevel for the native transition lifetime
+before a living player returns to Stand. Restart action kind 6 has no target and is admitted
 only from terminal Death after the Death action clears. The server immediately
 applies the content-selected town level and tile, restores the configured Q6
 life capped by maximum life, zeroes mana, clears the active store, and holds
