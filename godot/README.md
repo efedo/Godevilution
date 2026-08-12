@@ -47,6 +47,12 @@ same new session. Manual launches use `DEVILUTION_CHARACTER_NAME`. The server
 validates, persists, and restores the name; a resume token takes precedence and
 cannot rename an existing character.
 
+`AuthoritativeClient.ReconnectAsync()` can reconnect the same client instance without
+losing its server-issued resume token or pending command sequence ledger. Pending
+commands become eligible for immediate retry after the replacement connection's
+authoritative snapshot is received, so the Godot presentation layer does not need to
+recreate its protocol model for a transient disconnect.
+
 An authoritative snapshot may also contain an in-progress movement, attack,
 cast, death, level-transition, or restart-in-town action. The protocol model
 validates its timing and payload. For deferred movement, local presentation predicts from the
