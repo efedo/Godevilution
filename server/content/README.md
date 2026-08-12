@@ -112,7 +112,9 @@ are server-owned and unique within the loadout.
 Schema 0.55 adds stable Golem spell row `52` (native `SpellID` `21`). The
 server validates the native targeted summon, replaces only the caster's prior
 owned minion, and persists the owner identity and native armor, life, and
-damage formulas through snapshots, saves, hashes, and protocol field 33.
+damage formulas through snapshots, saves, hashes, and protocol field 33. The
+authoritative module also drives deterministic nearest-monster targeting,
+movement, melee damage, experience attribution, and owner/level cleanup.
 
 Schema 0.54 adds stable Nova spell row `18` (native `SpellID` `18`). The
 server exposes the existing one-tick radial controller and 36 persistent

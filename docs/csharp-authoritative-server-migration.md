@@ -534,8 +534,10 @@ Recent spell slices
 Schema 0.55 adds Golem (stable spell ID `52`, native `SpellID` `21`). The
 server validates targeted summon placement, replaces the caster's prior owned
 minion, and persists owner identity plus native life, armor, and damage state
-through snapshots, saves, hashes, and protocol field 33. Full Golem AI and
-lifecycle parity remains follow-up work.
+through snapshots, saves, hashes, and protocol field 33. Golems use
+server-owned deterministic nearest-monster targeting, movement, melee damage,
+experience attribution, and owner/level lifecycle cleanup. Native path
+planning, idle wandering, and death-animation parity remain follow-up work.
 
 Schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
 existing authoritative radial controller and persistent lightning-ball

@@ -8,7 +8,10 @@ All notable changes to this fork are documented below.
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
   replacement of the caster's prior owned minion, native life/armor/damage
   state, owner identity, snapshot/save/hash/protocol persistence, and focused
-  parity coverage are now in the C# module; full Golem AI remains follow-up.
+  parity coverage are now in the C# module.
+- Add deterministic Golem nearest-monster targeting, movement, melee damage,
+  experience attribution, and owner/level lifecycle cleanup; native path
+  planning, idle wandering, and death-animation parity remain follow-up.
 - Refresh the 22 base-content replay fixtures to the resulting manifest
   identity while preserving all existing replay checkpoints.
 - Advance the Diablo content schema to 0.50 with server-authoritative Jester
