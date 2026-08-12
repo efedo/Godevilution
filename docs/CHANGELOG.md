@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Complete leased-host shutdown ownership: server disposal now releases the
+  operation barrier and drains retired adapters, and subsequent operations are
+  rejected deterministically.
 - Make the Host save contract explicitly expose complete session-state
   migration while retaining the legacy player-save method names; the Diablo
   adapter now documents its versioned snapshot as player-plus-world state.
