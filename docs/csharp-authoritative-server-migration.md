@@ -536,9 +536,10 @@ server validates targeted summon placement, replaces the caster's prior owned
 minion, and persists owner identity plus native life, armor, and damage state
 through snapshots, saves, hashes, and protocol field 33. Golems use
 server-owned deterministic nearest-monster targeting, movement, melee damage,
-experience attribution, owner/level lifecycle cleanup, and deterministic
-breadth-first path planning around blocked cells. Native idle wandering and
-death-animation parity remain follow-up work.
+experience attribution, owner/level lifecycle cleanup, deterministic
+breadth-first path planning around blocked cells, and owner-facing native
+random-walk ordering when idle. Native death-animation parity remains follow-up
+work.
 
 Schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
 existing authoritative radial controller and persistent lightning-ball

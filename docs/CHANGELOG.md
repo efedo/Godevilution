@@ -11,8 +11,8 @@ All notable changes to this fork are documented below.
   parity coverage are now in the C# module.
 - Add deterministic Golem nearest-monster targeting, movement, melee damage,
   experience attribution, and owner/level lifecycle cleanup; native path
-  planning now uses deterministic breadth-first routing around blocked cells;
-  idle wandering and death-animation parity remain follow-up.
+  planning now uses deterministic breadth-first routing around blocked cells and
+  owner-facing idle wandering; death-animation parity remains follow-up.
 - Refresh the 22 base-content replay fixtures to the resulting manifest
   identity while preserving all existing replay checkpoints.
 - Advance the Diablo content schema to 0.50 with server-authoritative Jester
