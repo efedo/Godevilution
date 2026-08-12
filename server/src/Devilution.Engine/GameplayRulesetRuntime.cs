@@ -54,6 +54,9 @@ public sealed class GameplayRulesetRuntime<TActivation>
     private readonly IAuthoritativeClock clock;
     private readonly GameplayEngineApiVersion engineApiVersion;
     private readonly Func<ComposedContent, GameplayModuleRegistry, TActivation> activateTarget;
+    private readonly Dictionary<GameplayRulesetActivation<TActivation>, int> leases =
+        new(ReferenceEqualityComparer.Instance);
+    private readonly List<GameplayRulesetActivation<TActivation>> retired = [];
     private GameplayRulesetActivation<TActivation> active;
 
     public GameplayRulesetRuntime(
@@ -80,6 +83,53 @@ public sealed class GameplayRulesetRuntime<TActivation>
         }
     }
 
+    /** Number of replaced generations awaiting lease release. */
+    public int RetiredActivationCount
+    {
+        get {
+            lock (publicationSynchronization)
+                return retired.Count;
+        }
+    }
+
+    /**
+     * Pins the currently published generation. Callers must dispose the lease
+     * after the session operation has completed before retiring old targets.
+     */
+    public GameplayRulesetLease<TActivation> Acquire()
+    {
+        lock (publicationSynchronization) {
+            var generation = active;
+            leases[generation] = leases.TryGetValue(generation, out var count)
+                ? checked(count + 1)
+                : 1;
+            return new GameplayRulesetLease<TActivation>(
+                generation,
+                () => Release(generation));
+        }
+    }
+
+    /**
+     * Removes replaced generations that no operation still pins and returns
+     * them to the host for disposal of game-specific resources.
+     */
+    public IReadOnlyList<GameplayRulesetActivation<TActivation>> DrainRetired()
+    {
+        lock (publicationSynchronization) {
+            if (retired.Count == 0)
+                return [];
+
+            var releasable = retired
+                .Where(generation => !leases.ContainsKey(generation))
+                .ToArray();
+            if (releasable.Length == 0)
+                return [];
+            var releasableSet = releasable.ToHashSet(ReferenceEqualityComparer.Instance);
+            retired.RemoveAll(releasableSet.Contains);
+            return releasable;
+        }
+    }
+
     public GameplayRulesetReloadResult<TActivation> TryReload(
         ContentManifest candidateManifest,
         IEnumerable<IGameplayModule> candidateModules)
@@ -89,8 +139,10 @@ public sealed class GameplayRulesetRuntime<TActivation>
         lock (reloadSynchronization) {
             try {
                 var candidate = Create(candidateManifest, candidateModules);
-                lock (publicationSynchronization)
+                lock (publicationSynchronization) {
+                    retired.Add(active);
                     active = candidate;
+                }
                 return new GameplayRulesetReloadResult<TActivation>(true, candidate, []);
             } catch (RulesetActivationStageException exception) {
                 return new GameplayRulesetReloadResult<TActivation>(
@@ -157,6 +209,18 @@ public sealed class GameplayRulesetRuntime<TActivation>
         Exception exception)
     {
         return new RulesetActivationStageException(code, exception);
+    }
+
+    private void Release(GameplayRulesetActivation<TActivation> generation)
+    {
+        lock (publicationSynchronization) {
+            if (!leases.TryGetValue(generation, out var count))
+                return;
+            if (count <= 1)
+                leases.Remove(generation);
+            else
+                leases[generation] = count - 1;
+        }
     }
 
     private sealed class RulesetActivationStageException(

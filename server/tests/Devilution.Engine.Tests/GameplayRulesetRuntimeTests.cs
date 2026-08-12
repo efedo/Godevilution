@@ -30,6 +30,49 @@ public sealed class GameplayRulesetRuntimeTests
     }
 
     [Fact]
+    public void ReplacedActivationWaitsForLeasesBeforeRetirement()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("1", "initial"),
+            new TestModule("rules", "1.0.0", "initial"));
+        using var lease = runtime.Acquire();
+        var original = lease.Activation;
+
+        var result = runtime.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0", "replacement")]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, runtime.RetiredActivationCount);
+        Assert.Empty(runtime.DrainRetired());
+
+        lease.Dispose();
+        var drained = runtime.DrainRetired();
+        Assert.Single(drained);
+        Assert.Same(original, drained[0]);
+        Assert.Equal(0, runtime.RetiredActivationCount);
+        lease.Dispose();
+    }
+
+    [Fact]
+    public void UnleasedReplacedActivationCanBeDrainedImmediately()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("1", "initial"),
+            new TestModule("rules", "1.0.0", "initial"));
+        var original = runtime.Active;
+
+        Assert.True(runtime.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0", "replacement")]).Succeeded);
+
+        var drained = runtime.DrainRetired();
+        Assert.Single(drained);
+        Assert.Same(original, drained[0]);
+        Assert.Empty(runtime.DrainRetired());
+    }
+
+    [Fact]
     public void FailedContentCompositionKeepsTheCompletePreviousActivation()
     {
         var runtime = CreateRuntime(
