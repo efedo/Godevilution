@@ -32,7 +32,14 @@ public sealed class AuthoritativeCombatTarget
         bool petrified = false,
         bool stoneCurseImmune = false,
         bool undead = false,
-        bool playerMinion = false)
+        bool playerMinion = false,
+        int? minDamage = null,
+        int? maxDamage = null,
+        int? minDamageSpecial = null,
+        int? maxDamageSpecial = null,
+        bool unique = false,
+        bool diablo = false,
+        bool berserkImmune = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -40,6 +47,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(hitPoints));
         if (attackDamage < 0 || aggroRange < 0)
             throw new ArgumentOutOfRangeException(nameof(attackDamage));
+        if (minDamage is < 0 || maxDamage is < 0 || minDamageSpecial is < 0 || maxDamageSpecial is < 0)
+            throw new ArgumentOutOfRangeException(nameof(minDamage));
         if (monsterLevel < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterLevel));
         if (fireResistance is < -100 or > 100 || lightningResistance is < -100 or > 100 || magicResistance is < -100 or > 100)
@@ -69,6 +78,9 @@ public sealed class AuthoritativeCombatTarget
         StoneCurseImmune = stoneCurseImmune;
         IsUndead = undead;
         IsPlayerMinion = playerMinion;
+        IsUnique = unique;
+        IsDiablo = diablo;
+        BerserkImmune = berserkImmune;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -76,6 +88,10 @@ public sealed class AuthoritativeCombatTarget
         LevelId = levelId;
         MonsterId = monsterId;
         AttackDamage = attackDamage;
+        MinDamage = minDamage ?? attackDamage;
+        MaxDamage = maxDamage ?? attackDamage;
+        MinDamageSpecial = minDamageSpecial ?? MinDamage;
+        MaxDamageSpecial = maxDamageSpecial ?? MaxDamage;
         AggroRange = aggroRange;
         FireResistance = fireResistance;
         LightningResistance = lightningResistance;
@@ -109,6 +125,25 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; set; }
+
+    /** Immutable native eligibility markers used by Berserk targeting. */
+    public bool IsUnique { get; set; }
+
+    public bool IsDiablo { get; set; }
+
+    public bool BerserkImmune { get; set; }
+
+    /** Native physical damage channels; AttackDamage remains the legacy projection. */
+    public int MinDamage { get; set; }
+
+    public int MaxDamage { get; set; }
+
+    public int MinDamageSpecial { get; set; }
+
+    public int MaxDamageSpecial { get; set; }
+
+    /** Native MFLAG_BERSERK state. */
+    public bool IsBerserked { get; set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
     public int HitPoints
     {

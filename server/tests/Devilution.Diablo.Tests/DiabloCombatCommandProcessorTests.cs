@@ -1476,6 +1476,82 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BerserkTransformsEligibleMonsterWithNativeDamageRollOrder()
+    {
+        const uint seed = 0x12345678;
+        var target = new AuthoritativeCombatTarget(
+            9,
+            12,
+            10,
+            100,
+            minDamage: 10,
+            maxDamage: 20,
+            minDamageSpecial: 30,
+            maxDamageSpecial: 40);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(seed);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateBerserkSpell()]),
+            random: random);
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            characterLevel: 4,
+            memorizedSpells: [new MemorizedSpellState(48, 2)]);
+
+        var expectedRandom = new DiabloRandom(seed);
+        var baseDamage = new[] { 10, 20, 30, 40 };
+        var expectedDamage = baseDamage
+            .Select(damage => (120 + expectedRandom.RandomIntLessThan(10)) * damage / 100 + 2)
+            .ToArray();
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(48, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(target.IsBerserked);
+        Assert.Equal(expectedDamage[0], target.MinDamage);
+        Assert.Equal(expectedDamage[1], target.MaxDamage);
+        Assert.Equal(expectedDamage[2], target.MinDamageSpecial);
+        Assert.Equal(expectedDamage[3], target.MaxDamageSpecial);
+        Assert.Equal(expectedDamage[1], target.AttackDamage);
+        Assert.Equal(5000 - 40 * 64, player.Mana);
+        Assert.Equal(expectedRandom.State, random.State);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void BerserkRejectsUniqueAndDiabloTargets()
+    {
+        var unique = new AuthoritativeCombatTarget(9, 12, 10, 100, unique: true);
+        var diablo = new AuthoritativeCombatTarget(10, 13, 10, 100, diablo: true);
+        var world = new DiabloWorldState(combatTargets: [unique, diablo]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateBerserkSpell()]));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            memorizedSpells: [new MemorizedSpellState(48, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(48, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, result.Failure);
+        Assert.False(unique.IsBerserked);
+        Assert.False(diablo.IsBerserked);
+    }
+
+    [Fact]
     public void FlameWaveControllerPlacesNativeMovingBranches()
     {
         var world = new DiabloWorldState();
@@ -2038,6 +2114,23 @@ public sealed class DiabloCombatCommandProcessorTests
             HealingScale = 1,
             ResurrectionLifeScale = 1,
             StaffLevel = 10,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateBerserkSpell()
+    {
+        return new AuthoritativeSpellDefinition(48, 40, 0, 0, 0, 0) {
+            NativeSpellId = 44,
+            Range = 5,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Berserk,
+            ManaCostScale = 64,
+            BerserkSearchRadius = 5,
+            BerserkDamagePercentBase = 120,
+            BerserkDamagePercentRandomRange = 10,
+            BerserkSpellLevelBonus = 1,
         };
     }
 

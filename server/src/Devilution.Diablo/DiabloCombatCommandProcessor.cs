@@ -467,6 +467,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.ImmolationController;
         var isJester = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Jester;
+        var isBerserk = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Berserk;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -505,7 +507,7 @@ public sealed class DiabloCombatCommandProcessor
         if ((isFireWall || isRingOfFire || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal
+        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis && !isTownPortal && !isBerserk
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -554,8 +556,16 @@ public sealed class DiabloCombatCommandProcessor
             centerX = healOtherTarget.PositionX;
             centerY = healOtherTarget.PositionY;
         }
-        if (hasDamage && !isSelfCenteredFlash && !isApocalypse && !isRingOfFire) {
-            if (intent.TargetEntityId != 0) {
+        if ((hasDamage || isBerserk) && !isSelfCenteredFlash && !isApocalypse && !isRingOfFire) {
+            if (isBerserk) {
+                target = FindBerserkTarget(
+                    player.LevelId,
+                    intent.TargetEntityId,
+                    intent.TargetX,
+                    intent.TargetY,
+                    spell.BerserkSearchRadius,
+                    respectMagicResistance: false);
+            } else if (intent.TargetEntityId != 0) {
                 world.CombatTargets.TryGetValue(intent.TargetEntityId, out target);
             } else {
                 target = world.CombatTargets.Values
@@ -569,6 +579,7 @@ public sealed class DiabloCombatCommandProcessor
             centerX = target?.PositionX ?? intent.TargetX;
             centerY = target?.PositionY ?? intent.TargetY;
             if ((intent.TargetEntityId != 0 && target is null)
+                || (isBerserk && target is null)
                 || (target is not null
                     && (target.HitPoints <= 0
                         || (target.LevelId != 0 && target.LevelId != player.LevelId)))
@@ -597,7 +608,7 @@ public sealed class DiabloCombatCommandProcessor
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            damageTargets = isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova
+            damageTargets = isBerserk || isFireWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -744,6 +755,15 @@ public sealed class DiabloCombatCommandProcessor
         if (!skipSourceValidation)
             ConsumeCastSource(player, source, manaCost);
         var events = new List<DiabloGameplayEvent>();
+        if (isBerserk) {
+            target = FindBerserkTarget(
+                player.LevelId,
+                intent.TargetEntityId,
+                intent.TargetX,
+                intent.TargetY,
+                spell.BerserkSearchRadius,
+                respectMagicResistance: true);
+        }
         if (isTelekinesis) {
             var telekinesisResult = worldCommands!.ExecuteTelekinesis(
                 player,
@@ -812,6 +832,8 @@ public sealed class DiabloCombatCommandProcessor
             player.Mana = Math.Min(
                 player.ManaMaximum,
                 checked(player.Mana + ResolveManaRestorationQ6(player, effectiveSpellLevel)));
+        } else if (isBerserk && target is not null) {
+            ApplyBerserk(target, spell, effectiveSpellLevel);
         } else if (isJester) {
             var jesterSpellId = SelectJesterSpellId();
             var jesterResult = ResolveCast(
@@ -2920,6 +2942,100 @@ public sealed class DiabloCombatCommandProcessor
         return target is null
             ? null
             : (target, position.Value.X, position.Value.Y);
+    }
+
+    private AuthoritativeCombatTarget? FindBerserkTarget(
+        uint levelId,
+        uint targetEntityId,
+        int targetX,
+        int targetY,
+        int searchRadius,
+        bool respectMagicResistance)
+    {
+        if (targetEntityId != 0) {
+            if (!world.CombatTargets.TryGetValue(targetEntityId, out var explicitTarget)
+                || !IsBerserkTargetEligible(explicitTarget, levelId)
+                || (respectMagicResistance && !PassesBerserkResistance(explicitTarget))) {
+                return null;
+            }
+            return explicitTarget;
+        }
+
+        AuthoritativeCombatTarget? selectedTarget = null;
+        var position = DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            searchRadius,
+            (candidateX, candidateY) => {
+                selectedTarget = world.CombatTargets.Values
+                .Where(candidate => candidate.PositionX == candidateX
+                    && candidate.PositionY == candidateY
+                    && IsBerserkTargetEligible(candidate, levelId))
+                .OrderBy(candidate => candidate.EntityId)
+                .FirstOrDefault(candidate => !respectMagicResistance || PassesBerserkResistance(candidate));
+                return selectedTarget is not null;
+            });
+        return position.HasValue ? selectedTarget : null;
+    }
+
+    private static bool IsBerserkTargetEligible(
+        AuthoritativeCombatTarget target,
+        uint levelId)
+    {
+        return target.HitPointsQ6 > 0
+            && (target.LevelId == 0 || target.LevelId == levelId)
+            && !target.IsPlayerMinion
+            && !target.IsBerserked
+            && !target.IsUnique
+            && !target.IsDiablo
+            && !target.BerserkImmune
+            && !target.IsPetrified;
+    }
+
+    private bool PassesBerserkResistance(AuthoritativeCombatTarget target)
+    {
+        if (target.MagicResistance >= 100)
+            return false;
+        return target.MagicResistance <= 0 || random.FlipCoin(2);
+    }
+
+    private void ApplyBerserk(
+        AuthoritativeCombatTarget target,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel)
+    {
+        target.IsBerserked = true;
+        target.MinDamage = ScaleBerserkDamage(
+            target.MinDamage,
+            spell,
+            effectiveSpellLevel);
+        target.MaxDamage = ScaleBerserkDamage(
+            target.MaxDamage,
+            spell,
+            effectiveSpellLevel);
+        target.MinDamageSpecial = ScaleBerserkDamage(
+            target.MinDamageSpecial,
+            spell,
+            effectiveSpellLevel);
+        target.MaxDamageSpecial = ScaleBerserkDamage(
+            target.MaxDamageSpecial,
+            spell,
+            effectiveSpellLevel);
+        target.AttackDamage = target.MaxDamage;
+    }
+
+    private int ScaleBerserkDamage(
+        int damage,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel)
+    {
+        var percent = checked(
+            spell.BerserkDamagePercentBase
+            + random.RandomIntLessThan(spell.BerserkDamagePercentRandomRange));
+        return checked(
+            percent * damage / 100
+            + spell.BerserkSpellLevelBonus * effectiveSpellLevel);
     }
 
     private AuthoritativeCombatTarget? FindStoneCurseTargetAt(

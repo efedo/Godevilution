@@ -39,6 +39,13 @@ public sealed class AuthoritativeMonsterCatalog
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has invalid player_minion value {playerMinion}.");
             }
+            var unique = row.OptionalInt32("unique");
+            var diablo = row.OptionalInt32("diablo");
+            var berserkImmune = row.OptionalInt32("berserk_immune");
+            if (unique is not (0 or 1) || diablo is not (0 or 1) || berserkImmune is not (0 or 1)) {
+                throw new InvalidDataException(
+                    $"Monster row {row.LineNumber} has an invalid Berserk eligibility capability.");
+            }
             var dropItemId = row.OptionalUInt32("drop_item_id");
             var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
             var dropItemSeed = row.OptionalUInt32("drop_item_seed");
@@ -81,7 +88,14 @@ public sealed class AuthoritativeMonsterCatalog
                 monsterLevel: row.OptionalInt32("monster_level"),
                 stoneCurseImmune: stoneCurseImmune == 1,
                 undead: undead == 1,
-                playerMinion: playerMinion == 1);
+                playerMinion: playerMinion == 1,
+                minDamage: row.OptionalInt32("min_damage", row.OptionalInt32("attack_damage")),
+                maxDamage: row.OptionalInt32("max_damage", row.OptionalInt32("attack_damage")),
+                minDamageSpecial: row.OptionalInt32("min_damage_special", row.OptionalInt32("attack_damage")),
+                maxDamageSpecial: row.OptionalInt32("max_damage_special", row.OptionalInt32("attack_damage")),
+                unique: unique == 1,
+                diablo: diablo == 1,
+                berserkImmune: berserkImmune == 1);
         }));
     }
 }

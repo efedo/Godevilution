@@ -423,6 +423,15 @@ message MonsterSnapshot {
 	bool is_undead = 23;
 	// Native monster faction marker used by Apocalypse's minion exclusion.
 	bool is_player_minion = 24;
+	// Immutable native eligibility and damage state used by Berserk.
+	bool is_unique = 25;
+	bool is_diablo = 26;
+	bool berserk_immune = 27;
+	int32 min_damage = 28;
+	int32 max_damage = 29;
+	int32 min_damage_special = 30;
+	int32 max_damage_special = 31;
+	bool is_berserked = 32;
 }
 
 message WorldItemSnapshot {

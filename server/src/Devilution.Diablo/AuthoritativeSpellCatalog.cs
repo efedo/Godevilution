@@ -50,6 +50,7 @@ public enum AuthoritativeProjectileBehavior
     RingOfFireController = 42,
     ImmolationController = 43,
     Jester = 44,
+    Berserk = 45,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -313,6 +314,15 @@ public sealed record AuthoritativeSpellDefinition(
     public int GuardianFireInterval { get; init; }
     public int GuardianProjectileSpeedLevelStep { get; init; }
     public int GuardianProjectileSpeedMaximumBonus { get; init; }
+
+    /** Native Berserk target search and four damage-channel scaling constants. */
+    public int BerserkSearchRadius { get; init; }
+
+    public int BerserkDamagePercentBase { get; init; }
+
+    public int BerserkDamagePercentRandomRange { get; init; }
+
+    public int BerserkSpellLevelBonus { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -429,6 +439,12 @@ public sealed class AuthoritativeSpellCatalog
                     + definition.RandomDamageIterationsBonus > 64) {
                 throw new InvalidDataException(
                     "Spell random-damage roll count exceeds the native supported range.");
+            }
+            if (definition.BerserkSearchRadius < 0
+                || definition.BerserkDamagePercentBase < 0
+                || definition.BerserkDamagePercentRandomRange < 0
+                || definition.BerserkSpellLevelBonus < 0) {
+                throw new InvalidDataException("Berserk tuning cannot be negative.");
             }
             if (definition.RandomHealingRange < 0
                 || definition.RandomHealingRange > short.MaxValue
@@ -1360,6 +1376,34 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Guardian tuning requires Guardian behavior.");
             }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Berserk
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range <= 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.BerserkSearchRadius <= 0
+                    || definition.BerserkDamagePercentBase != 120
+                    || definition.BerserkDamagePercentRandomRange != 10
+                    || definition.BerserkSpellLevelBonus != 1)) {
+                throw new InvalidDataException(
+                    "Berserk behavior requires the native monster-target mutation tuning.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Berserk
+                && (definition.BerserkSearchRadius != 0
+                    || definition.BerserkDamagePercentBase != 0
+                    || definition.BerserkDamagePercentRandomRange != 0
+                    || definition.BerserkSpellLevelBonus != 0)) {
+                throw new InvalidDataException(
+                    "Berserk tuning requires Berserk behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
                     || definition.ResurrectionLifeScale != 1
@@ -1563,6 +1607,10 @@ public sealed class AuthoritativeSpellCatalog
                 "guardian_projectile_speed_level_step"),
             GuardianProjectileSpeedMaximumBonus = row.OptionalInt32(
                 "guardian_projectile_speed_maximum_bonus"),
+            BerserkSearchRadius = row.OptionalInt32("berserk_search_radius"),
+            BerserkDamagePercentBase = row.OptionalInt32("berserk_damage_percent_base"),
+            BerserkDamagePercentRandomRange = row.OptionalInt32("berserk_damage_percent_random_range"),
+            BerserkSpellLevelBonus = row.OptionalInt32("berserk_spell_level_bonus"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

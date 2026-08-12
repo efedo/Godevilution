@@ -35,6 +35,22 @@ public sealed record DiabloMonsterState(
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; init; }
 
+    public bool IsUnique { get; init; }
+
+    public bool IsDiablo { get; init; }
+
+    public bool BerserkImmune { get; init; }
+
+    public int MinDamage { get; init; }
+
+    public int MaxDamage { get; init; }
+
+    public int MinDamageSpecial { get; init; }
+
+    public int MaxDamageSpecial { get; init; }
+
+    public bool IsBerserked { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -257,6 +273,14 @@ public sealed partial class DiabloSimulation
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
                     IsPlayerMinion = target.IsPlayerMinion,
+                    IsUnique = target.IsUnique,
+                    IsDiablo = target.IsDiablo,
+                    BerserkImmune = target.BerserkImmune,
+                    MinDamage = target.MinDamage,
+                    MaxDamage = target.MaxDamage,
+                    MinDamageSpecial = target.MinDamageSpecial,
+                    MaxDamageSpecial = target.MaxDamageSpecial,
+                    IsBerserked = target.IsBerserked,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -470,6 +494,12 @@ public sealed partial class DiabloSimulation
                 || monster.HitPoints != DiabloFixedPointQ6.ToWholeCeiling(monster.HitPointsQ6)
                 || monster.MaxHitPoints != DiabloFixedPointQ6.ToWholeCeiling(monster.MaxHitPointsQ6)
                 || monster.AttackDamage < 0
+                || monster.MinDamage < 0
+                || monster.MaxDamage < 0
+                || monster.MinDamageSpecial < 0
+                || monster.MaxDamageSpecial < 0
+                || monster.MaxDamage < monster.MinDamage
+                || monster.MaxDamageSpecial < monster.MinDamageSpecial
                 || monster.AggroRange < 0
                 || monster.MonsterLevel < 0
                 || (monster.Moving
@@ -1121,6 +1151,14 @@ public sealed partial class DiabloSimulation
                 target.StoneCurseImmune = monster.StoneCurseImmune;
                 target.IsUndead = monster.IsUndead;
                 target.IsPlayerMinion = monster.IsPlayerMinion;
+                target.IsUnique = monster.IsUnique;
+                target.IsDiablo = monster.IsDiablo;
+                target.BerserkImmune = monster.BerserkImmune;
+                target.MinDamage = monster.MinDamage;
+                target.MaxDamage = monster.MaxDamage;
+                target.MinDamageSpecial = monster.MinDamageSpecial;
+                target.MaxDamageSpecial = monster.MaxDamageSpecial;
+                target.IsBerserked = monster.IsBerserked;
                 target.RestoreOccupancy(
                     monster.Moving,
                     monster.FuturePositionX,
@@ -1148,10 +1186,18 @@ public sealed partial class DiabloSimulation
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,
-                    playerMinion: monster.IsPlayerMinion);
+                    playerMinion: monster.IsPlayerMinion,
+                    minDamage: monster.MinDamage,
+                    maxDamage: monster.MaxDamage,
+                    minDamageSpecial: monster.MinDamageSpecial,
+                    maxDamageSpecial: monster.MaxDamageSpecial,
+                    unique: monster.IsUnique,
+                    diablo: monster.IsDiablo,
+                    berserkImmune: monster.BerserkImmune);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);
+                restoredTarget.IsBerserked = monster.IsBerserked;
                 WorldState.CombatTargets.Add(monster.EntityId, restoredTarget);
             }
         }

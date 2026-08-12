@@ -224,6 +224,21 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-player-minion-v1");
                     hasher.AppendBool(true);
                 }
+                if (monster.IsUnique || monster.IsDiablo || monster.BerserkImmune || monster.IsBerserked
+                    || monster.MinDamage != monster.AttackDamage
+                    || monster.MaxDamage != monster.AttackDamage
+                    || monster.MinDamageSpecial != monster.AttackDamage
+                    || monster.MaxDamageSpecial != monster.AttackDamage) {
+                    hasher.AppendString("godevilution-monster-berserk-v1");
+                    hasher.AppendBool(monster.IsUnique);
+                    hasher.AppendBool(monster.IsDiablo);
+                    hasher.AppendBool(monster.BerserkImmune);
+                    hasher.AppendInt32(monster.MinDamage);
+                    hasher.AppendInt32(monster.MaxDamage);
+                    hasher.AppendInt32(monster.MinDamageSpecial);
+                    hasher.AppendInt32(monster.MaxDamageSpecial);
+                    hasher.AppendBool(monster.IsBerserked);
+                }
             }
         }
 
