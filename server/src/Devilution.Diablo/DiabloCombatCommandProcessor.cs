@@ -500,6 +500,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Elemental;
         var isGuardian = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.GuardianController;
+        var isGolem = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Golem;
         var isTelekinesis = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Telekinesis;
         var isTownPortal = spell.ProjectileBehavior
@@ -662,9 +664,14 @@ public sealed class DiabloCombatCommandProcessor
         var guardianSpawnPosition = isGuardian
             ? FindGuardianSpawnPosition(player, centerX, centerY, spell, players)
             : null;
+        var golemSpawnPosition = isGolem
+            ? FindGolemSpawnPosition(player, centerX, centerY, players)
+            : null;
         if ((isFireWall || isLightningWall) && !wallSpreadPosition.HasValue)
             return DiabloCombatIntentResult.Accepted;
         if (isGuardian && !guardianSpawnPosition.HasValue)
+            return DiabloCombatIntentResult.Accepted;
+        if (isGolem && !golemSpawnPosition.HasValue)
             return DiabloCombatIntentResult.Accepted;
         if (isTelekinesis) {
             if (worldCommands is null)
@@ -706,6 +713,20 @@ public sealed class DiabloCombatCommandProcessor
             if (!townPortalValidation.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
+        }
+        if (isGolem) {
+            if (intent.TargetEntityId != 0
+                || Math.Max(
+                    Math.Abs(intent.TargetX - player.PositionX),
+                    Math.Abs(intent.TargetY - player.PositionY)) > spell.Range
+                || !world.HasMissileLineOfSight(
+                    player.LevelId,
+                    player.PositionX,
+                    player.PositionY,
+                    intent.TargetX,
+                    intent.TargetY)) {
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
         }
         if (isWarp) {
             if (worldCommands is null)
@@ -858,6 +879,11 @@ public sealed class DiabloCombatCommandProcessor
             player.Mana = Math.Min(
                 player.ManaMaximum,
                 checked(player.Mana + ResolveManaRestorationQ6(player, effectiveSpellLevel)));
+        } else if (isGolem) {
+            SpawnGolem(
+                player,
+                golemSpawnPosition!.Value,
+                effectiveSpellLevel);
         } else if (isBerserk && target is not null) {
             ApplyBerserk(target, spell, effectiveSpellLevel);
         } else if (isJester) {
@@ -2906,6 +2932,73 @@ public sealed class DiabloCombatCommandProcessor
                     player.PositionY,
                     candidateX,
                     candidateY));
+    }
+
+    private (int X, int Y)? FindGolemSpawnPosition(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        return DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            5,
+            (candidateX, candidateY) =>
+                world.IsWalkable(player.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    player.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    player.EntityId)
+                && !world.IsMissileBlocked(player.LevelId, candidateX, candidateY)
+                && world.HasMissileLineOfSight(
+                    player.LevelId,
+                    player.PositionX,
+                    player.PositionY,
+                    candidateX,
+                    candidateY));
+    }
+
+    private void SpawnGolem(
+        AuthoritativePlayerState player,
+        (int X, int Y) position,
+        int effectiveSpellLevel)
+    {
+        foreach (var existing in world.CombatTargets.Values
+                     .Where(target => target.IsPlayerMinion
+                         && target.OwnerPlayerId == player.EntityId)
+                     .ToArray()) {
+            world.CombatTargets.Remove(existing.EntityId);
+        }
+
+        var entityId = AllocateProjectileEntityId();
+        var hitPointsQ6 = checked(
+            2 * (320 * effectiveSpellLevel
+                + DiabloFixedPointQ6.FromWhole(player.ManaMaximum) / 3));
+        var hitPoints = DiabloFixedPointQ6.ToWholeCeiling(hitPointsQ6);
+        var minimumDamage = checked(2 * (effectiveSpellLevel + 4));
+        var maximumDamage = checked(2 * (effectiveSpellLevel + 8));
+        var golem = new AuthoritativeCombatTarget(
+            entityId,
+            position.X,
+            position.Y,
+            hitPoints,
+            armorClass: 25,
+            maxHitPoints: hitPoints,
+            levelId: player.LevelId,
+            attackDamage: maximumDamage,
+            monsterLevel: checked((int)player.CharacterLevel),
+            playerMinion: true,
+            ownerPlayerId: player.EntityId,
+            minDamage: minimumDamage,
+            maxDamage: maximumDamage,
+            minDamageSpecial: minimumDamage,
+            maxDamageSpecial: maximumDamage);
+        golem.RestoreHitPointsQ6(hitPointsQ6, hitPointsQ6);
+        world.CombatTargets.Add(entityId, golem);
     }
 
     private static int RotateDirection(int direction, int offset)

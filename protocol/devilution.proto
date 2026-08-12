@@ -432,6 +432,8 @@ message MonsterSnapshot {
 	int32 min_damage_special = 30;
 	int32 max_damage_special = 31;
 	bool is_berserked = 32;
+	// Server-owned player entity that summoned this minion, when applicable.
+	uint32 owner_player_id = 33;
 }
 
 message WorldItemSnapshot {

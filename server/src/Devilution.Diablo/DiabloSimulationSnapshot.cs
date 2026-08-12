@@ -35,6 +35,9 @@ public sealed record DiabloMonsterState(
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; init; }
 
+    /** Authoritative owner entity for a summoned player minion, when present. */
+    public uint OwnerPlayerId { get; init; }
+
     public bool IsUnique { get; init; }
 
     public bool IsDiablo { get; init; }
@@ -273,6 +276,7 @@ public sealed partial class DiabloSimulation
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
                     IsPlayerMinion = target.IsPlayerMinion,
+                    OwnerPlayerId = target.OwnerPlayerId,
                     IsUnique = target.IsUnique,
                     IsDiablo = target.IsDiablo,
                     BerserkImmune = target.BerserkImmune,
@@ -515,7 +519,8 @@ public sealed partial class DiabloSimulation
                         || monster.FuturePositionY != monster.PositionY))
                 || monster.FireResistance is < -100 or > 100
                 || monster.LightningResistance is < -100 or > 100
-                || monster.MagicResistance is < -100 or > 100) {
+                || monster.MagicResistance is < -100 or > 100
+                || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid monster.");
             }
@@ -1152,6 +1157,7 @@ public sealed partial class DiabloSimulation
                 target.StoneCurseImmune = monster.StoneCurseImmune;
                 target.IsUndead = monster.IsUndead;
                 target.IsPlayerMinion = monster.IsPlayerMinion;
+                target.OwnerPlayerId = monster.OwnerPlayerId;
                 target.IsUnique = monster.IsUnique;
                 target.IsDiablo = monster.IsDiablo;
                 target.BerserkImmune = monster.BerserkImmune;
@@ -1188,6 +1194,7 @@ public sealed partial class DiabloSimulation
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,
                     playerMinion: monster.IsPlayerMinion,
+                    ownerPlayerId: monster.OwnerPlayerId,
                     minDamage: monster.MinDamage,
                     maxDamage: monster.MaxDamage,
                     minDamageSpecial: monster.MinDamageSpecial,

@@ -53,6 +53,7 @@ public enum AuthoritativeProjectileBehavior
     Berserk = 45,
     Warp = 46,
     LightningWallController = 47,
+    Golem = 48,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -824,6 +825,23 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.GuardianProjectileSpeedMaximumBonus != 47)) {
                 throw new InvalidDataException(
                     "Guardian behavior requires the native turret and Firebolt tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Golem
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.Range <= 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Fire
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.StaffLevel != 9)) {
+                throw new InvalidDataException(
+                    "Golem behavior requires the native targeted summon tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0

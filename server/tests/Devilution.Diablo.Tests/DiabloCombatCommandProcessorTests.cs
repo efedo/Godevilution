@@ -1564,6 +1564,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemCastSpawnsAndReplacesOwnedMinionWithNativeStats()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateGolemSpell()]));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            characterLevel: 4,
+            memorizedSpells: [new MemorizedSpellState(52, 2)]);
+
+        var first = processor.Execute(
+            player,
+            new DiabloCastIntent(52, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(first.Succeeded, first.Failure?.ToString());
+        var firstGolem = Assert.Single(world.CombatTargets.Values);
+        Assert.True(firstGolem.IsPlayerMinion);
+        Assert.Equal(7U, firstGolem.OwnerPlayerId);
+        Assert.Equal(25, firstGolem.ArmorClass);
+        Assert.Equal(12, firstGolem.MinDamage);
+        Assert.Equal(20, firstGolem.MaxDamage);
+        Assert.Equal(2 * (320 * 2 + (20000 * 64) / 3), firstGolem.MaxHitPointsQ6);
+        Assert.Equal(20000 - 94 * 64, player.Mana);
+
+        var second = processor.Execute(
+            player,
+            new DiabloCastIntent(52, 0, 13, 10, DiabloCastSourceKind.MemorizedSpell),
+            2);
+
+        Assert.True(second.Succeeded, second.Failure?.ToString());
+        var secondGolem = Assert.Single(world.CombatTargets.Values);
+        Assert.NotEqual(firstGolem.EntityId, secondGolem.EntityId);
+        Assert.Equal(13, secondGolem.PositionX);
+        Assert.Equal(10, secondGolem.PositionY);
+        Assert.Equal(7U, secondGolem.OwnerPlayerId);
+    }
+
+    [Fact]
     public void BerserkRejectsUniqueAndDiabloTargets()
     {
         var unique = new AuthoritativeCombatTarget(9, 12, 10, 100, unique: true);
@@ -2228,6 +2272,23 @@ public sealed class DiabloCombatCommandProcessorTests
             BerserkDamagePercentBase = 120,
             BerserkDamagePercentRandomRange = 10,
             BerserkSpellLevelBonus = 1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateGolemSpell()
+    {
+        return new AuthoritativeSpellDefinition(52, 100, 0, 0, 0, 0) {
+            NativeSpellId = 21,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Golem,
+            ManaAdjustment = 6,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 60,
+            ManaCostScale = 64,
+            StaffLevel = 9,
         };
     }
 

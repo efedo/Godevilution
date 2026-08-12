@@ -223,6 +223,8 @@ public static class SnapshotStateHasher
                 if (monster.IsPlayerMinion) {
                     hasher.AppendString("godevilution-monster-player-minion-v1");
                     hasher.AppendBool(true);
+                    hasher.AppendString("godevilution-monster-owner-v1");
+                    hasher.AppendUInt32(monster.OwnerPlayerId);
                 }
                 if (monster.IsUnique || monster.IsDiablo || monster.BerserkImmune || monster.IsBerserked
                     || monster.MinDamage != monster.AttackDamage

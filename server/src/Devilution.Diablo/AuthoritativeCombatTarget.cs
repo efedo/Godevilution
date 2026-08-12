@@ -33,6 +33,7 @@ public sealed class AuthoritativeCombatTarget
         bool stoneCurseImmune = false,
         bool undead = false,
         bool playerMinion = false,
+        uint ownerPlayerId = 0,
         int? minDamage = null,
         int? maxDamage = null,
         int? minDamageSpecial = null,
@@ -78,6 +79,7 @@ public sealed class AuthoritativeCombatTarget
         StoneCurseImmune = stoneCurseImmune;
         IsUndead = undead;
         IsPlayerMinion = playerMinion;
+        OwnerPlayerId = ownerPlayerId;
         IsUnique = unique;
         IsDiablo = diablo;
         BerserkImmune = berserkImmune;
@@ -125,6 +127,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; set; }
+
+    /** Authoritative owner entity for a summoned player minion, when present. */
+    public uint OwnerPlayerId { get; set; }
 
     /** Immutable native eligibility markers used by Berserk targeting. */
     public bool IsUnique { get; set; }

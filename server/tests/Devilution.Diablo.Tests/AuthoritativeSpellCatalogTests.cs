@@ -19,6 +19,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(37, (int)AuthoritativeProjectileBehavior.Telekinesis);
         Assert.Equal(38, (int)AuthoritativeProjectileBehavior.TownPortal);
         Assert.Equal(44, (int)AuthoritativeProjectileBehavior.Jester);
+        Assert.Equal(48, (int)AuthoritativeProjectileBehavior.Golem);
     }
 
     [Fact]
@@ -121,6 +122,27 @@ public sealed class AuthoritativeSpellCatalogTests
             nova.NovaSearchRadius,
             nova.NovaControllerLifetime,
             nova.DamageScale));
+    }
+
+    [Fact]
+    public void ShippedGolemCarriesNativeSummonIdentity()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(52, out var golem));
+        Assert.Equal(21U, golem.NativeSpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Golem, golem.ProjectileBehavior);
+        Assert.Equal((100, 6, 60, 9), (
+            golem.ManaCost,
+            golem.ManaAdjustment,
+            golem.MinimumManaCost,
+            golem.StaffLevel));
     }
 
     [Fact]
