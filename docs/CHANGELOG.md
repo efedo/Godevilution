@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.46 with server-authoritative Magi
+  (stable spell ID 40, native `SpellID` 38), restoring current mana to its
+  native maximum through the shared immediate-effect cast path.
 - Advance the Diablo content schema to 0.45 with server-authoritative Reflect
   charges (spell ID 43, native `SpellID` 43), native level/character scaling,
   seeded 20–30% physical reflection, persisted protocol state, and Godot HUD

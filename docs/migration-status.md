@@ -17,7 +17,7 @@ Status date: 2026-08-12
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
-| External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, and Reflect spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
+| External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, and Magi spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Broaden replacement-retirement fixtures and add further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
@@ -37,6 +37,9 @@ Status date: 2026-08-12
   monster hit, and applies the seeded 20–30% physical return damage; charges
   persist through snapshots, saves, hashes, replay fixtures, and protocol field
   30, while Godot presents the active count and aura.
+- Magi is now a content-selected immediate self effect. The server restores the
+  caster's current mana to its maximum through the shared authoritative cast
+  path, using stable spell ID 40 and native `SpellID` 38.
 - Store stock, purchases, sales, services, equipment, belt, inventory placement,
   item generation, affixes, and unique items for the current shipped slice.
 - The external class and loadout catalogs define all six native-compatible
@@ -590,6 +593,10 @@ Content schema 0.45 adds stable Reflect spell ID `43` (native `SpellID` `43`).
 The server owns native level/character-scaled uint16 charges, seeded 20–30%
 physical return damage on monster hits, and persisted protocol/save/hash state.
 
+Content schema 0.46 adds stable Magi spell ID `40` (native `SpellID` `38`).
+The server owns its immediate current-mana-to-maximum effect through the shared
+validated cast-source path.
+
 Content schema 0.44 adds stable Town Portal spell ID `39` (native `SpellID`
 `7`). The server performs native five-cell placement, replaces the owner's
 previous route, exposes a bidirectional dungeon/town portal, expires it after
@@ -628,7 +635,7 @@ resistance, lifetime, collision, and deterministic projectile state.
 
 1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
    Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
-   Infravision, Search, Phasing, Mana Shield, Teleport, Telekinesis, Town Portal, and Resurrection,
+   Infravision, Search, Phasing, Mana Shield, Magi, Teleport, Telekinesis, Town Portal, and Resurrection,
    including remaining class modifiers, scaling and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,
    level, quest, and item metadata and authoritative gameplay definitions.
