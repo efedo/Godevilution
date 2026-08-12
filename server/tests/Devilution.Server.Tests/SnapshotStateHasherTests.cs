@@ -16,20 +16,6 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
-    public void CanonicalPrimitivesMatchLittleEndianLengthPrefixedRules()
-    {
-        var hasher = new CanonicalStateHasher();
-        hasher.AppendBool(true);
-        hasher.AppendUInt8(7);
-        hasher.AppendInt32(-42);
-        hasher.AppendUInt32(9001);
-        hasher.AppendUInt64(123456789);
-        hasher.AppendString("griswold");
-
-        Assert.Equal("b23c2ac66840117b646028471a19b9e5928967f875de54c461e9a4a95edf7a1b", hasher.HexDigest());
-    }
-
-    [Fact]
     public void PlayerAndInventoryOrderingDoesNotChangeHash()
     {
         var first = new Snapshot {
@@ -128,6 +114,215 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void HeldItemChangesHashWithoutChangingAbsentLegacyState()
+    {
+        var baseline = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var held = baseline.Clone();
+        held.Players[0].HeldItem = new ItemSnapshot {
+            ItemSeed = 42,
+            Price = 65,
+            PurchasedAtTick = 9,
+            State = new ItemStateSnapshot {
+                ItemType = 11,
+                ItemIndex = 0,
+                Value = 65,
+                IdentifiedValue = 65,
+                StatFlag = true,
+            },
+        };
+        var changed = held.Clone();
+        changed.Players[0].HeldItem.Price = 64;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(held));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(held),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
+    public void NonzeroPlayerClassIdentityChangesTheStateHash()
+    {
+        var legacyWarrior = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var monk = legacyWarrior.Clone();
+        monk.Players[0].CharacterClassId = 3;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(legacyWarrior),
+            SnapshotStateHasher.Compute(monk));
+        Assert.Equal(
+            "76769ad0f438a4b3a3869e37c4a7f72d8b66dc1fdce6902e5fedfc42b17518ca",
+            SnapshotStateHasher.Compute(monk));
+    }
+
+    [Fact]
+    public void CharacterNameChangesTheHashWithoutChangingUnnamedLegacyState()
+    {
+        var unnamed = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var named = unnamed.Clone();
+        named.Players[0].CharacterName = "Dead-RogueDM";
+        var renamed = named.Clone();
+        renamed.Players[0].CharacterName = "Other-Rogue";
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(unnamed),
+            SnapshotStateHasher.Compute(unnamed.Clone()));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(unnamed),
+            SnapshotStateHasher.Compute(named));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(named),
+            SnapshotStateHasher.Compute(renamed));
+    }
+
+    [Fact]
+    public void HostileModeChangesTheStateHashWithoutChangingFriendlyLegacyHashes()
+    {
+        var friendly = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var hostile = friendly.Clone();
+        hostile.Players[0].HostileMode = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(friendly),
+            SnapshotStateHasher.Compute(hostile));
+    }
+
+    [Fact]
+    public void NonDefaultPlayerFacingChangesTheCanonicalHash()
+    {
+        var south = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var east = south.Clone();
+        east.Players[0].FacingDirection = PlayerDirection.East;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(south),
+            SnapshotStateHasher.Compute(east));
+        Assert.Equal(
+            SnapshotStateHasher.Compute(south),
+            SnapshotStateHasher.Compute(south.Clone()));
+    }
+
+    [Fact]
+    public void CombatModeChangesTheHashWithoutChangingStandingLegacyHashes()
+    {
+        var standing = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var blocking = standing.Clone();
+        blocking.Players[0].CombatMode = PlayerCombatMode.Block;
+        blocking.Players[0].CombatModeEndTick = 9;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(standing),
+            SnapshotStateHasher.Compute(blocking));
+        Assert.Equal(
+            "a5dee363d076a45767c93fc10fc90c0b5c3b1233772c80711b1a79fb78c0a0f1",
+            SnapshotStateHasher.Compute(blocking));
+    }
+
+    [Fact]
+    public void CurrentPlayerActionChangesEveryDeferredLifecycleHashBoundary()
+    {
+        var baseline = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                    CombatMode = PlayerCombatMode.Spell,
+                    CombatModeEndTick = 20,
+                },
+            },
+        };
+        var timed = baseline.Clone();
+        timed.Players[0].CurrentAction = new PlayerActionSnapshot {
+            Kind = PlayerActionKind.Cast,
+            StartedAtTick = 2,
+            EffectTick = 10,
+            ReadyTick = 10,
+            EndTick = 20,
+            EffectApplied = true,
+            Cast = new CastRequested {
+                SpellId = 30,
+                TargetEntityId = 9,
+                TargetX = 3,
+                TargetY = 4,
+                Source = CastSourceKind.ChargedItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+            },
+            TargetEntityId = 9,
+        };
+        var changed = timed.Clone();
+        changed.Players[0].CurrentAction.ReadyTick = 11;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(timed));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(timed),
+            SnapshotStateHasher.Compute(changed));
+        Assert.Equal(
+            "c89460e4f3faa810171be7ff6cfe5e81400c0fe970a41f47616c218de4252388",
+            SnapshotStateHasher.Compute(timed));
+    }
+
+    [Fact]
+    public void SpellKnowledgeChangesHashAndIgnoresMemorizedSpellOrder()
+    {
+        var first = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                    AbilitySpellId = 27,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 3, Level = 1 },
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 2 },
+                    },
+                },
+            },
+        };
+        var reordered = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                    AbilitySpellId = 27,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 2 },
+                        new PlayerSpellLevelSnapshot { SpellId = 3, Level = 1 },
+                    },
+                },
+            },
+        };
+        var changed = first.Clone();
+        changed.Players[0].MemorizedSpells[0].Level = 2;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(reordered));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changed));
+        Assert.Equal(
+            "55df082b2fffc775c1768adf67ce55dabaa2fa0cd811ce270fb1ddda0fad178e",
+            SnapshotStateHasher.Compute(first));
+    }
+
+    [Fact]
     public void ItemInventoryFootprintChangesTheStateHash()
     {
         var first = new Snapshot {
@@ -164,6 +359,68 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void FractionalMonsterHitPointsExtendHashWithoutChangingLegacyWholeHashes()
+    {
+        var legacy = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 10,
+                    Alive = true,
+                },
+            },
+        };
+        var aligned = legacy.Clone();
+        aligned.Monsters[0].HitPointsQ6 = 320;
+        aligned.Monsters[0].MaxHitPointsQ6 = 640;
+        var fractional = aligned.Clone();
+        fractional.Monsters[0].HitPointsQ6 = 304;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(legacy),
+            SnapshotStateHasher.Compute(aligned));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(aligned),
+            SnapshotStateHasher.Compute(fractional));
+    }
+
+    [Fact]
+    public void MonsterMovementPetrificationAndStoneCurseImmunityExtendTheStateHash()
+    {
+        var stationary = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var moving = stationary.Clone();
+        moving.Monsters[0].Moving = true;
+        moving.Monsters[0].FuturePositionX = 2;
+        moving.Monsters[0].FuturePositionY = 1;
+        var petrified = moving.Clone();
+        petrified.Monsters[0].Petrified = true;
+        var immune = petrified.Clone();
+        immune.Monsters[0].StoneCurseImmune = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(stationary),
+            SnapshotStateHasher.Compute(moving));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(moving),
+            SnapshotStateHasher.Compute(petrified));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(petrified),
+            SnapshotStateHasher.Compute(immune));
+    }
+
+    [Fact]
     public void WorldItemProjectionChangesTheStateHash()
     {
         var first = new Snapshot {
@@ -183,6 +440,87 @@ public sealed class SnapshotStateHasherTests
         second.WorldItems[0].PositionX = 4;
 
         Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
+    public void ManaShieldChangesHashWithoutChangingInactiveLegacyState()
+    {
+        var inactive = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 } },
+        };
+        var active = inactive.Clone();
+        active.Players[0].ManaShieldActive = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(inactive),
+            SnapshotStateHasher.Compute(active));
+        Assert.Equal(
+            SnapshotStateHasher.Compute(inactive),
+            SnapshotStateHasher.Compute(inactive.Clone()));
+    }
+
+    [Fact]
+    public void TypedStatusBehaviorChangesHashWithoutChangingGenericStatusShape()
+    {
+        var generic = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                    StatusEffects = {
+                        new StatusEffectSnapshot {
+                            EffectId = 9,
+                            RemainingTicks = 1584,
+                        },
+                    },
+                },
+            },
+        };
+        var typed = generic.Clone();
+        typed.Players[0].StatusEffects[0].Behavior = StatusEffectBehavior.Infravision;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(generic),
+            SnapshotStateHasher.Compute(generic.Clone()));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(generic),
+            SnapshotStateHasher.Compute(typed));
+    }
+
+    [Fact]
+    public void DynamicEarPresentationChangesEveryNewItemHashBoundary()
+    {
+        var baseline = new Snapshot {
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 20,
+                    ItemSeed = 1633955154,
+                    State = new ItemStateSnapshot {
+                        CreateInfo = 17509,
+                        ItemIndex = 23,
+                        MiscId = 44,
+                    },
+                },
+            },
+        };
+        var ear = baseline.Clone();
+        ear.WorldItems[0].State.BaseName = "Ear of Dead-RogueDM";
+        ear.WorldItems[0].State.IdentifiedName = "Dead-RogueDM";
+        ear.WorldItems[0].State.NativeCursorGraphic = 21;
+        var renamed = ear.Clone();
+        renamed.WorldItems[0].State.IdentifiedName = "Other-Rogue";
+        var recursored = ear.Clone();
+        recursored.WorldItems[0].State.NativeCursorGraphic = 20;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(ear));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(ear),
+            SnapshotStateHasher.Compute(renamed));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(ear),
+            SnapshotStateHasher.Compute(recursored));
     }
 
     [Fact]
@@ -207,6 +545,43 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void GameplayRngAndProjectileRuntimeStateChangeTheHash()
+    {
+        var first = new Snapshot {
+            RandomState = 1,
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 1,
+                    SpellId = 30,
+                    RemainingTicks = 256,
+                    Behavior = (int)AuthoritativeProjectileBehavior.ChargedBolt,
+                    PathIndex = 4,
+                    Speed = 8,
+                    ImpactLifetime = 8,
+                    ResistantDamageDivisor = 4,
+                },
+            },
+        };
+        var changedRng = first.Clone();
+        changedRng.RandomState = 2;
+        var changedPath = first.Clone();
+        changedPath.Projectiles[0].PathIndex = 5;
+        var changedSpellLevel = first.Clone();
+        changedSpellLevel.Projectiles[0].EffectiveSpellLevel = 3;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changedRng));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changedPath));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changedSpellLevel));
+    }
+
+    [Fact]
     public void ObjectEffectProjectionChangesTheStateHash()
     {
         var first = new Snapshot {
@@ -217,5 +592,33 @@ public sealed class SnapshotStateHasherTests
         second.Objects[0].EffectAmount = 10;
 
         Assert.NotEqual(SnapshotStateHasher.Compute(first), SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
+    public void ObjectAndProjectileCollisionStateChangeTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = { new ObjectSnapshot { EntityId = 20, ObjectId = 4 } },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 30,
+                    SourceEntityId = 7,
+                    SpellId = 30,
+                    RemainingTicks = 8,
+                },
+            },
+        };
+        var changedObject = baseline.Clone();
+        changedObject.Objects[0].Breakable = true;
+        changedObject.Objects[0].Destroyed = true;
+        var changedProjectile = baseline.Clone();
+        changedProjectile.Projectiles[0].LastCollisionTargetEntityId = 9;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changedObject));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changedProjectile));
     }
 }

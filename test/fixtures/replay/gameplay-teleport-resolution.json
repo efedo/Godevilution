@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/teleport-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 18,
+    "attack_action_frame": 10,
+    "casting_frames": 16,
+    "casting_action_frame": 12,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 1000,
+    "mana": 3000,
+    "mana_maximum": 3000,
+    "position_x": 1,
+    "position_y": 1,
+    "character_class": 1,
+    "character_level": 5,
+    "memorized_spells": [
+      { "spell_id": 23, "level": 3 }
+    ],
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 1000,
+      "position_x": 10,
+      "position_y": 10
+    },
+    "combat_target_entity_id": 30,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 11,
+    "combat_target_hit_points": 10,
+    "combat_target_max_hit_points": 10,
+    "object_entity_id": 40,
+    "object_id": 1,
+    "object_position_x": 10,
+    "object_position_y": 9
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 23,
+        "target_x": 10,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "5e6fea4d8ee4bf38610c1819ace77e2d8ab4b1175957a2b2e37752879a8abec5" },
+    { "tick": 13, "state_sha256": "d17c0c766bd19c79bb6bd161737438b6989552c9fc68510e8f5f7db04af16aa8" },
+    { "tick": 14, "state_sha256": "c9e425eba6e0a53e4d1a56d793a7e28906ef59e3b813da79640bffbfb38161ec" },
+    { "tick": 16, "state_sha256": "cf29cfc3e47d5f44699cccd57ff5e2d470c73cd6ec74d6c8e541adf7f6549e32" }
+  ]
+}

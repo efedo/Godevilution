@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/healing-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 5000,
+    "mana": 3000,
+    "mana_maximum": 3000,
+    "character_class": 1,
+    "character_level": 5,
+    "memorized_spells": [
+      { "spell_id": 2, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 2,
+        "target_x": 37,
+        "target_y": -5
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 2,
+        "target_x": 37,
+        "target_y": -5
+      }
+    },
+    {
+      "client_sequence": 3,
+      "target_tick": 3,
+      "server_receipt_sequence": 3,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 2,
+        "target_x": 37,
+        "target_y": -5
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "ef17372ec0251111f163a3b9b4802278c179a8e15a2add2f889fd666a4c307b7" },
+    { "tick": 2, "state_sha256": "f31446f1c11ebb45b01fd76582316bf573077ab5e67a1dc8ac8e7c6fd92c257f" },
+    { "tick": 3, "state_sha256": "832a65c43525add3d072cedbfa586036c7535281634c2bcbada83b59789a8f71" }
+  ]
+}

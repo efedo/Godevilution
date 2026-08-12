@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/pvp-ear-death",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "character_name": "Caster",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "life_maximum": 640,
+    "mana": 640,
+    "mana_maximum": 640,
+    "magic": 100,
+    "character_class": 2,
+    "character_level": 1,
+    "position_x": 0,
+    "position_y": 0,
+    "secondary_player": {
+      "player": "B",
+      "character_name": "Dead-RogueDM",
+      "entity_id": 8,
+      "life": 64,
+      "life_maximum": 64,
+      "position_x": 1,
+      "position_y": 1,
+      "character_level": 3,
+      "character_class": 1
+    },
+    "memorized_spells": [
+      { "spell_id": 30, "level": 2 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 30,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d6ca28f9787fd95829274b02e0b8c95eea9928bc9d38f9f8f9414a5fafd0174b" },
+    { "tick": 5, "state_sha256": "c79f3c35c28748141613e620fa4bc47484d999e16cac8e71c5e2f156eeb651cc" }
+  ]
+}

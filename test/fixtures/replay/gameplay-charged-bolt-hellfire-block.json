@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/charged-bolt-hellfire-block",
+  "protocol_schema_version": "0.1.0",
+  "game_variant": "Hellfire",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "charged-bolt-hellfire-block-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "mana": 640,
+    "mana_maximum": 640,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 640,
+      "position_x": 1,
+      "position_y": 1,
+      "character_level": 1,
+      "dexterity": 100,
+      "block_capable": true,
+      "combat_mode": 0
+    },
+    "memorized_spells": [
+      { "spell_id": 30, "level": 2 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 30,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "6a80fefeeecf3b71712cdb44b980ac7c7639f0b82aad138fe8b218e70de6147e" },
+    { "tick": 5, "state_sha256": "48967057017fae70638d2b1fe2ba1d05fa0c76555a815acc6d35490e2a0b139e" }
+  ]
+}

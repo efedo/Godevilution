@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.35.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
+    <ProjectReference Include="../Devilution.Data/Devilution.Data.csproj" />
+    <ProjectReference Include="../Devilution.Diablo/Devilution.Diablo.csproj" />
+    <ProjectReference Include="../Devilution.Domain/Devilution.Domain.csproj" />
+    <ProjectReference Include="../Devilution.Engine/Devilution.Engine.csproj" />
+    <ProjectReference Include="../Devilution.Server.Host/Devilution.Server.Host.csproj" />
+  </ItemGroup>
+</Project>

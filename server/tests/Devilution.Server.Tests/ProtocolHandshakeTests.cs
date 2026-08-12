@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Server.Host;
 using Devilution.Server.Protocol;
 using Xunit;
 
@@ -20,6 +21,24 @@ public sealed class ProtocolHandshakeTests
         Assert.True(result.Accepted);
         Assert.Equal("server-build", result.ServerHello!.ServerBuildId);
         Assert.Equal(20U, result.ServerHello.TickRateHz);
+        Assert.Equal(GameMode.SinglePlayer, result.ServerHello.GameMode);
+    }
+
+    [Fact]
+    public void ProjectsExplicitMultiplayerMode()
+    {
+        var handshake = new ProtocolHandshake(
+            new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20) {
+                GameMode = AuthoritativeGameMode.Multiplayer,
+            });
+
+        var result = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = "0.1.0",
+            ContentManifestHash = "content-hash",
+        });
+
+        Assert.True(result.Accepted);
+        Assert.Equal(GameMode.Multiplayer, result.ServerHello!.GameMode);
     }
 
     [Fact]

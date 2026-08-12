@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Devilution.Data/Devilution.Data.csproj" />
+    <ProjectReference Include="../Devilution.Domain/Devilution.Domain.csproj" />
+    <ProjectReference Include="../Devilution.Engine/Devilution.Engine.csproj" />
+  </ItemGroup>
+</Project>

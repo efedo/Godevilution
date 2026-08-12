@@ -1,0 +1,1 @@
+global using Devilution.Diablo;

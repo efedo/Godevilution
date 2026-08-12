@@ -1,0 +1,70 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/mana-shield-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2000,
+    "life_maximum": 2000,
+    "mana": 6000,
+    "mana_maximum": 6000,
+    "position_x": 0,
+    "position_y": 0,
+    "character_class": 0,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 10000,
+    "combat_target_max_hit_points": 10000,
+    "combat_target_attack_damage": 1000,
+    "combat_target_aggro_range": 1,
+    "memorized_spells": [
+      { "spell_id": 11, "level": 1 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 11,
+        "target_entity_id": 0,
+        "target_x": 0,
+        "target_y": 0
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 1,
+      "server_receipt_sequence": 2,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 11,
+        "target_entity_id": 0,
+        "target_x": 0,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 0, "state_sha256": "851bdaefb59b5510cb2272423678cc9fe4cb194a5cc6fd99b1beb1e23b3bc9c4" },
+    { "tick": 1, "state_sha256": "ad94ab6c62b24b57e761c3b007317ee7993941901f9df7b9d5c965d9200341fc" },
+    { "tick": 2, "state_sha256": "801069e2d14e276638aa20c452b664acf6343601e7d566b78e273109dccd92ce" },
+    { "tick": 3, "state_sha256": "5901c9852ba0e7cd4eb7c330c2955e16f3e2d1218dddf6b80831a4031bb3266a" },
+    { "tick": 4, "state_sha256": "605a6fcc69d0867a8454bc15b3d8a73042b77eb28ee4823bb5afd00ad23e06d9" },
+    { "tick": 5, "state_sha256": "e46d7fac077c988683809bdd857b24e2b30c76bbd2476e1c078bfed060b3b606" }
+  ]
+}

@@ -16,7 +16,10 @@
     "life": 20,
     "mana": 10,
     "mana_maximum": 10,
-    "character_level": 1
+    "character_level": 1,
+    "memorized_spells": [
+      { "spell_id": 1, "level": 1 }
+    ]
   },
   "commands": [
     {

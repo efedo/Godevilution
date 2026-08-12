@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/heal-other-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 12,
+    "attack_action_frame": 7,
+    "casting_frames": 18,
+    "casting_action_frame": 13,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 1000,
+    "mana": 3000,
+    "mana_maximum": 3000,
+    "position_x": 1,
+    "position_y": 1,
+    "character_class": 3,
+    "character_level": 5,
+    "memorized_spells": [
+      { "spell_id": 34, "level": 3 }
+    ],
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 1000,
+      "life_maximum": 10000,
+      "position_x": 10,
+      "position_y": 10
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 34,
+        "target_entity_id": 8
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "1181b1bddc9a5cdac50cbcbed5e1414c418322a56c1145f12ba6f1d2a630a317" },
+    { "tick": 14, "state_sha256": "e5acd20b19f34525b21598873c469b0d766fe906056bb0fc7d822f88ada2a28f" },
+    { "tick": 18, "state_sha256": "fa5b060c756537ac3400529e5aac928f5d3daf020454d8c94a5e95c4dac47065" }
+  ]
+}

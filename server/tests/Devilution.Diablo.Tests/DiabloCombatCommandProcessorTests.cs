@@ -1,0 +1,3355 @@
+using Devilution.Diablo;
+using Xunit;
+
+namespace Devilution.Diablo.Tests;
+
+public sealed class DiabloCombatCommandProcessorTests
+{
+    [Fact]
+    public void AttackAppliesDamageExperienceDropAndOrderedEvents()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            8,
+            armorClass: 2,
+            dropItemEntityId: 1009,
+            dropItemSeed: 6001,
+            dropItemPrice: 25);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, target.HitPoints);
+        Assert.Equal(100U, player.Experience);
+        Assert.Equal(2, result.Events.Count);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 9, 8),
+            result.Events[0]);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Experience, 7, 7, 100),
+            result.Events[1]);
+        var drop = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1009U, drop.EntityId);
+        Assert.Equal(6001U, drop.ItemSeed);
+    }
+
+    [Fact]
+    public void RejectedAttackDoesNotMutateCombatState()
+    {
+        var target = new AuthoritativeCombatTarget(9, 4, 4, 10);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(10, target.HitPoints);
+        Assert.Equal(0U, player.Experience);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
+    public void AreaCastUsesResistanceAndStableEntityOrdering()
+    {
+        var resistant = new AuthoritativeCombatTarget(9, 2, 0, 20, fireResistance: 50);
+        var normal = new AuthoritativeCombatTarget(10, 2, 1, 20);
+        var distant = new AuthoritativeCombatTarget(11, 4, 0, 20);
+        var world = new DiabloWorldState(combatTargets: [normal, distant, resistant]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 4, 0, 0, 0, 0) {
+                DamageAmount = 10,
+                Range = 4,
+                AreaRadius = 1,
+                DamageType = AuthoritativeDamageType.Fire,
+            },
+        ]);
+        var processor = CreateProcessor(world, spells);
+        var player = CreatePlayer(
+            mana: 10,
+            manaMaximum: 10,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(7, 1)]);
+
+        var result = processor.Execute(player, new DiabloCastIntent(7, 0, 2, 0), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6, player.Mana);
+        Assert.Equal(15, resistant.HitPoints);
+        Assert.Equal(10, normal.HitPoints);
+        Assert.Equal(20, distant.HitPoints);
+        Assert.Equal([9U, 10U], result.Events.Select(@event => @event.TargetEntityId));
+        Assert.Equal([5, 10], result.Events.Select(@event => @event.Amount));
+    }
+
+    [Fact]
+    public void BlockedCastIsRejectedBeforeSpendingMana()
+    {
+        var level = new AuthoritativeLevel(1, 5, 3, [1 * 5 + 2]);
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(level);
+        var target = new AuthoritativeCombatTarget(9, 4, 1, 10, levelId: 1);
+        var world = new DiabloWorldState(authoritativeWorld, combatTargets: [target]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(4, 2, 0, 0, 0, 0) {
+                DamageAmount = 6,
+                Range = 5,
+            },
+        ]);
+        var processor = CreateProcessor(world, spells);
+        var player = CreatePlayer(
+            positionY: 1,
+            levelId: 1,
+            mana: 10,
+            manaMaximum: 10,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(4, 1)]);
+
+        var result = processor.Execute(player, new DiabloCastIntent(4, 9, 0, 0), 1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(10, player.Mana);
+        Assert.Equal(10, target.HitPoints);
+    }
+
+    [Fact]
+    public void ProjectileResolvesOnFutureTickAndDirectsEventsToOwner()
+    {
+        var target = new AuthoritativeCombatTarget(9, 2, 0, 20);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 4, 0, 0, 0, 0) {
+                DamageAmount = 12,
+                Range = 4,
+                ProjectileSpeed = 1,
+                ProjectileLifetime = 8,
+            },
+        ]);
+        var processor = CreateProcessor(world, spells);
+        var player = CreatePlayer(
+            mana: 10,
+            manaMaximum: 10,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(7, 1)]);
+
+        var cast = processor.Execute(player, new DiabloCastIntent(7, 9, 0, 0), 1);
+
+        Assert.True(cast.Succeeded);
+        Assert.Empty(cast.Events);
+        Assert.Single(world.Projectiles);
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+
+        var deliveries = processor.AdvanceTick(3, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(8, target.HitPoints);
+        var delivery = Assert.Single(deliveries);
+        Assert.Same(player, delivery.Recipient);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 9, 12),
+            delivery.Event);
+    }
+
+    [Fact]
+    public void AutonomousMonsterMovesThenAttacksDeterministically()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.Equal(2, monster.PositionX);
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.FuturePositionX);
+
+        var deliveries = processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(1, monster.PositionX);
+        Assert.False(monster.IsMoving);
+        Assert.Equal(17, player.Life);
+        var delivery = Assert.Single(deliveries);
+        Assert.Same(player, delivery.Recipient);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 9, 7, 3),
+            delivery.Event);
+    }
+
+    [Fact]
+    public void LethalMonsterAttackDropsAndClearsTheAuthoritativeHeldItem()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var heldItem = new OwnedStoreItem(
+            0,
+            0,
+            91,
+            25,
+            13,
+            AuthoritativeItemState.Empty with { ItemType = 1, StatFlag = true });
+        var player = CreatePlayer(
+            life: 2,
+            lifeMaximum: 20,
+            entityId: 7,
+            heldItem: heldItem);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(0, player.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Death, player.CombatMode);
+        Assert.Null(player.HeldItem);
+        var droppedHeldItem = Assert.Single(
+            world.WorldItems.Values,
+            item => item.ItemSeed == heldItem.ItemSeed);
+        Assert.Equal(heldItem.Price, droppedHeldItem.Price);
+        Assert.Equal(heldItem.State, droppedHeldItem.State);
+        Assert.Same(player, Assert.Single(deliveries).Recipient);
+    }
+
+    [Fact]
+    public void MultiplayerSuppressionKeepsGoldButStillDropsTheHeldItem()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            16,
+            5,
+            5,
+            suppressMultiplayerDeathDrops: true));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            1,
+            10,
+            levelId: 16,
+            attackDamage: 3,
+            aggroRange: 5);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var random = new DiabloRandom(123);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer);
+        var heldItem = new OwnedStoreItem(
+            0,
+            0,
+            91,
+            25,
+            13,
+            AuthoritativeItemState.Empty with { ItemType = 1, StatFlag = true });
+        var player = CreatePlayer(
+            life: 2,
+            lifeMaximum: 20,
+            entityId: 7,
+            positionX: 1,
+            positionY: 1,
+            levelId: 16,
+            equipment: [new EquippedStoreItem(
+                0,
+                92,
+                AuthoritativeItemState.Empty with { ItemType = 1, StatFlag = true })],
+            heldItem: heldItem);
+
+        _ = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(0, player.Life);
+        Assert.Equal(100U, player.Gold);
+        Assert.Equal(123U, random.State);
+        Assert.Null(player.HeldItem);
+        Assert.Single(player.Equipment);
+        Assert.Equal(heldItem.ItemSeed, Assert.Single(world.WorldItems.Values).ItemSeed);
+    }
+
+    [Fact]
+    public void SinglePlayerStillDropsGoldOnASuppressedMultiplayerLevel()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            16,
+            5,
+            5,
+            suppressMultiplayerDeathDrops: true));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            1,
+            10,
+            levelId: 16,
+            attackDamage: 3,
+            aggroRange: 5);
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var random = new DiabloRandom(123);
+        var processor = CreateProcessor(world, random: random);
+        var player = CreatePlayer(
+            life: 2,
+            lifeMaximum: 20,
+            entityId: 7,
+            positionX: 1,
+            positionY: 1,
+            levelId: 16);
+
+        _ = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(50U, player.Gold);
+        Assert.Equal(50U, Assert.Single(world.WorldItems.Values).Price);
+        Assert.NotEqual(123U, random.State);
+    }
+
+    [Fact]
+    public void ChargedBoltIgnoresANormalWalkingMonstersFutureOccupancy()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            20,
+            attackDamage: 0,
+            aggroRange: 5);
+        var projectile = CreateStationaryChargedBolt(1, 0);
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.FuturePositionX);
+        Assert.Equal(20, monster.HitPoints);
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, projectile.Phase);
+    }
+
+    [Fact]
+    public void ChargedBoltHitsAPetrifiedWalkingMonstersFutureOccupancy()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            20,
+            moving: true,
+            futurePositionX: 1,
+            futurePositionY: 0,
+            petrified: true);
+        var projectile = CreateStationaryChargedBolt(1, 0);
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(18, monster.HitPoints);
+        Assert.True(monster.IsMoving);
+        Assert.True(monster.IsPetrified);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Same(player, Assert.Single(deliveries).Recipient);
+    }
+
+    [Fact]
+    public void MonsterChoosesNearestPlayerThenStableEntityId()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            1,
+            10,
+            levelId: 0,
+            attackDamage: 2,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var higherId = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            life: 20,
+            lifeMaximum: 20,
+            entityId: 8);
+        var lowerId = CreatePlayer(
+            positionX: 1,
+            positionY: 2,
+            life: 20,
+            lifeMaximum: 20,
+            entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [higherId, lowerId]);
+
+        Assert.Equal(20, higherId.Life);
+        Assert.Equal(18, lowerId.Life);
+        Assert.Same(lowerId, Assert.Single(deliveries).Recipient);
+    }
+
+    [Fact]
+    public void HealingStatusAndExpiryAreModuleOwned()
+    {
+        var world = new DiabloWorldState();
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 5, 20, 4, 10, 2),
+        ]);
+        var processor = CreateProcessor(world, spells);
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 25,
+            mana: 10,
+            manaMaximum: 10,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+
+        DiabloCombatCommandProcessor.AdvanceStatusEffects(player, 1);
+        var result = processor.Execute(player, new DiabloCastIntent(1, 0, 0, 0), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(25, player.Life);
+        Assert.Equal(5, player.Mana);
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal(4U, status.EffectId);
+        Assert.Equal(10U, status.RemainingTicks);
+
+        DiabloCombatCommandProcessor.AdvanceStatusEffects(player, 11);
+
+        Assert.Empty(player.StatusEffects);
+        Assert.Equal(11UL, player.LastAppliedTick);
+    }
+
+    [Fact]
+    public void AbilityCastRequiresOwnedAbilityAndConsumesNoMana()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(26, 9, 10, 0, 0, 0),
+        ]);
+        var processor = CreateProcessor(new DiabloWorldState(), spells);
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 10,
+            manaMaximum: 10,
+            abilitySpellId: 26);
+
+        var accepted = processor.Execute(
+            player,
+            new DiabloCastIntent(26, 0, 0, 0, DiabloCastSourceKind.Ability),
+            1);
+        var rejected = processor.Execute(
+            player,
+            new DiabloCastIntent(27, 0, 0, 0, DiabloCastSourceKind.Ability),
+            2);
+
+        Assert.True(accepted.Succeeded);
+        Assert.Equal(10, player.Mana);
+        Assert.Equal(20, player.Life);
+        AssertRejected(rejected, DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
+    public void ExplicitMemorizedCastRejectsUnlearnedSpellWithoutSpendingMana()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 5, 10, 0, 0, 0),
+        ]);
+        var processor = CreateProcessor(new DiabloWorldState(), spells);
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 10,
+            manaMaximum: 10);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(1, 0, 0, 0, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.NotAllowed);
+        Assert.Equal(10, player.Mana);
+        Assert.Equal(10, player.Life);
+    }
+
+    [Fact]
+    public void ChargedItemCastConsumesOneLeftHandStaffChargeAndNoMana()
+    {
+        var staffState = AuthoritativeItemState.Empty with {
+            MiscId = 23,
+            SpellId = 1,
+            Charges = 2,
+            MaxCharges = 2,
+        };
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 5, 10, 0, 0, 0),
+        ]);
+        var processor = CreateProcessor(new DiabloWorldState(), spells);
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 1,
+            manaMaximum: 10,
+            equipment: [new EquippedStoreItem(4, 77, staffState)]);
+        var reference = new DiabloPlayerItemReference(
+            DiabloPlayerItemLocation.Equipment,
+            4);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                reference),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, player.Mana);
+        Assert.Equal(1, Assert.Single(player.Equipment).State.Charges);
+    }
+
+    [Fact]
+    public void MultiProjectileStaffCastCreatesEveryProjectileButConsumesOneCharge()
+    {
+        var target = new AuthoritativeCombatTarget(9, 2, 0, 40);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
+                DamageAmount = 4,
+                DamageType = AuthoritativeDamageType.Lightning,
+                Range = 4,
+                ProjectileSpeed = 1,
+                ProjectileLifetime = 8,
+                ProjectileCount = 4,
+            },
+        ]);
+        var staff = AuthoritativeItemState.Empty with {
+            MiscId = 23,
+            SpellId = 30,
+            Charges = 2,
+            MaxCharges = 2,
+        };
+        var processor = CreateProcessor(world, spells);
+        var player = CreatePlayer(
+            mana: 1,
+            manaMaximum: 10,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 77, staff)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                30,
+                9,
+                0,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 4)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(4, world.Projectiles.Count);
+        Assert.All(world.Projectiles.Values, projectile => {
+            Assert.Equal(30U, projectile.SpellId);
+            Assert.Equal(4, projectile.Damage);
+            Assert.Equal(AuthoritativeDamageType.Lightning, projectile.DamageType);
+        });
+        Assert.Equal(1, player.Mana);
+        Assert.Equal(1, Assert.Single(player.Equipment).State.Charges);
+    }
+
+    [Fact]
+    public void ChargedBoltUsesNativeLevelCountDamageAndRngOrder()
+    {
+        var world = new DiabloWorldState();
+        var spell = CreateChargedBoltSpell();
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: random);
+        var staff = AuthoritativeItemState.Empty with {
+            MiscId = 23,
+            SpellId = 30,
+            Charges = 2,
+            MaxCharges = 2,
+            StatFlag = true,
+            SpellLevelAdd = 1,
+        };
+        var player = CreatePlayer(
+            mana: 1,
+            manaMaximum: 10,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(30, 2)],
+            equipment: [new EquippedStoreItem(4, 77, staff)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                30,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 4)),
+            1);
+
+        Assert.True(result.Succeeded);
+        var projectiles = world.Projectiles.Values.OrderBy(projectile => projectile.EntityId).ToArray();
+        Assert.Equal(5, projectiles.Length);
+        Assert.Equal([13, 11, 7, 11, 8], projectiles.Select(projectile => projectile.PathIndex));
+        Assert.Equal([7, 8, 6, 6, 1], projectiles.Select(projectile => projectile.Damage));
+        Assert.All(projectiles, projectile => {
+            Assert.Equal(AuthoritativeProjectileBehavior.ChargedBolt, projectile.Behavior);
+            Assert.Equal(7, projectile.OriginalDirection);
+            Assert.Equal(370720, projectile.VelocityX);
+            Assert.Equal(185360, projectile.VelocityY);
+            Assert.Equal(256U, projectile.RemainingTicks);
+        });
+        Assert.Equal(0x7162D42BU, random.State);
+        Assert.Equal(1, Assert.Single(player.Equipment).State.Charges);
+    }
+
+    [Theory]
+    [InlineData(DiabloGameVariant.Diablo, 680)]
+    [InlineData(DiabloGameVariant.Hellfire, 808)]
+    public void FireboltUsesNativeDamageVelocityAndVariantManaCost(
+        DiabloGameVariant variant,
+        int expectedMana)
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]),
+            new AuthoritativeCombatRules(10, 1, 100, gameVariant: variant),
+            random,
+            classes);
+        var player = CreatePlayer(
+            mana: 1000,
+            manaMaximum: 1000,
+            entityId: 7,
+            characterClassId: 2,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(1, 3)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(expectedMana, player.Mana);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
+        Assert.Equal(15, projectile.Damage);
+        Assert.Equal((1204840, 602420), (
+            projectile.VelocityX,
+            projectile.VelocityY));
+        Assert.Equal(256U, projectile.RemainingTicks);
+        Assert.Equal(0x955E76D9U, random.State);
+    }
+
+    [Fact]
+    public void FireboltTraversesNativePathAndAppliesQuarterResistanceDamage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            fireResistance: 25,
+            monsterLevel: 1);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]),
+            random: random,
+            playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 1,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(1, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(1, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((0, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(7, target.HitPoints);
+        Assert.Equal(400, target.HitPointsQ6);
+        var delivery = Assert.Single(deliveries);
+        Assert.Same(player, delivery.Recipient);
+        Assert.Equal(3, delivery.Event.Amount);
+        Assert.Equal(240, delivery.Event.AmountQ6);
+        Assert.Equal(0x3F10CD47U, random.State);
+
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Theory]
+    [InlineData(DiabloGameVariant.Diablo, 1104)]
+    [InlineData(DiabloGameVariant.Hellfire, 1360)]
+    public void FireballUsesNativeDamageLevelSpeedAndVariantManaCost(
+        DiabloGameVariant variant,
+        int expectedMana)
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireballSpell()]),
+            new AuthoritativeCombatRules(10, 1, 100, gameVariant: variant),
+            random,
+            classes);
+        var player = CreatePlayer(
+            mana: 2000,
+            manaMaximum: 2000,
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 12,
+            memorizedSpells: [new MemorizedSpellState(12, 3)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                12,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(expectedMana, player.Mana);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+        Assert.Equal(58, projectile.Damage);
+        Assert.Equal(22, projectile.Speed);
+        Assert.Equal((1019480, 509740), (
+            projectile.VelocityX,
+            projectile.VelocityY));
+        Assert.Equal((1, 14, 4), (
+            projectile.AreaRadius,
+            projectile.ImpactLifetime,
+            projectile.ResistantDamageDivisor));
+        Assert.Equal(3, projectile.EffectiveSpellLevel);
+        Assert.Equal(0x560EB8EEU, random.State);
+    }
+
+    [Fact]
+    public void FireballDirectHitCreatesNativeShiftedSplashAndPersistentImpact()
+    {
+        var directTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var splashTarget = new AuthoritativeCombatTarget(
+            10,
+            1,
+            1,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [directTarget, splashTarget]);
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireballSpell()]),
+            random: random,
+            playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 12,
+            abilitySpellId: 12,
+            memorizedSpells: [new MemorizedSpellState(12, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(12, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        var deliveries = processor.AdvanceTick(2, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((1, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal((0, 0), (projectile.VelocityX, projectile.VelocityY));
+        Assert.Equal(14U, projectile.RemainingTicks);
+        Assert.Equal(9030, directTarget.HitPointsQ6);
+        Assert.Equal(12742, splashTarget.HitPointsQ6);
+        Assert.Equal([3712, 58, 58], deliveries.Select(delivery => delivery.Event.AmountQ6));
+        Assert.Equal(0xDA029030U, random.State);
+
+        for (ulong tick = 3; tick <= 15; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [player]));
+        Assert.Single(world.Projectiles);
+        Assert.Empty(processor.AdvanceTick(16, [player]));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Theory]
+    [InlineData(DiabloGameVariant.Diablo, 488)]
+    [InlineData(DiabloGameVariant.Hellfire, 616)]
+    public void LightningCreatesNativeControllerAndUsesVariantManaCost(
+        DiabloGameVariant variant,
+        int expectedMana)
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateLightningSpell()]),
+            new AuthoritativeCombatRules(10, 1, 100, gameVariant: variant),
+            random,
+            classes);
+        var player = CreatePlayer(
+            mana: 1000,
+            manaMaximum: 1000,
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(3, 3)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                3,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(expectedMana, player.Mana);
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Lightning, controller.Behavior);
+        Assert.Equal(0, controller.Damage);
+        Assert.Equal(3, controller.EffectiveSpellLevel);
+        Assert.Equal((1482880, 741440), (
+            controller.VelocityX,
+            controller.VelocityY));
+        Assert.Equal(256U, controller.RemainingTicks);
+        Assert.Equal(0x955E76D9U, random.State);
+    }
+
+    [Fact]
+    public void LightningSpawnsPersistentSegmentAndAppliesNativeQ6Damage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            lightningResistance: 25,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0x12345678);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateLightningSpell()]),
+            random: random,
+            playerClasses: classes);
+        var player = CreatePlayer(
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 3,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(3, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(3, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        var projectiles = world.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, projectiles.Length);
+        var controller = projectiles[0];
+        var segment = projectiles[1];
+        Assert.Equal(AuthoritativeProjectileBehavior.Lightning, controller.Behavior);
+        Assert.Equal((1, 0), (controller.PositionX, controller.PositionY));
+        Assert.Equal(254U, controller.RemainingTicks);
+        Assert.Equal(AuthoritativeProjectileBehavior.LightningSegment, segment.Behavior);
+        Assert.Equal((1, 0), (segment.PositionX, segment.PositionY));
+        Assert.Equal((0, 0), (segment.StartX, segment.StartY));
+        Assert.Equal(768, segment.Damage);
+        Assert.Equal(6U, segment.RemainingTicks);
+        Assert.Equal(17, target.HitPoints);
+        Assert.Equal(1088, target.HitPointsQ6);
+        var delivery = Assert.Single(deliveries);
+        Assert.Equal(3, delivery.Event.Amount);
+        Assert.Equal(192, delivery.Event.AmountQ6);
+        Assert.Equal(0xE8098E4AU, random.State);
+    }
+
+    [Fact]
+    public void LightningControllerStopsAtBlockingObjectWithoutBreakingItOrSpawningSegment()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var world = new DiabloWorldState(objects: [blocker]);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateLightningSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 3,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(3, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(3, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.False(blocker.Destroyed);
+        Assert.Equal(0x3F10CD47U, random.State);
+    }
+
+    [Fact]
+    public void FlashCreatesNativeLayersAtThePlayerAndConsumesIndependentDamageRolls()
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            mana: 3000,
+            manaMaximum: 3000,
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            memorizedSpells: [new MemorizedSpellState(4, 3)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                4,
+                0,
+                999,
+                999,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1336, player.Mana);
+        var layers = world.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, layers.Length);
+        Assert.Equal(AuthoritativeProjectileBehavior.FlashBottom, layers[0].Behavior);
+        Assert.Equal(AuthoritativeProjectileBehavior.FlashTop, layers[1].Behavior);
+        Assert.Equal((253, 294), (layers[0].Damage, layers[1].Damage));
+        Assert.All(layers, layer => {
+            Assert.Equal((5, 5), (layer.PositionX, layer.PositionY));
+            Assert.Equal((5, 5), (layer.TargetX, layer.TargetY));
+            Assert.Equal(19U, layer.RemainingTicks);
+            Assert.Equal(AuthoritativeDamageType.Magic, layer.DamageType);
+            Assert.Equal(1, layer.AreaRadius);
+            Assert.Equal(4, layer.ResistantDamageDivisor);
+            Assert.Equal(3, layer.EffectiveSpellLevel);
+        });
+        Assert.Equal(0xEAC973D6U, random.State);
+
+        var rejected = processor.Execute(
+            player,
+            new DiabloCastIntent(4, 9, 5, 5, DiabloCastSourceKind.MemorizedSpell),
+            2);
+        AssertRejected(rejected, DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
+    public void FlashLayersRepeatNativeQ6CollisionAcrossTheirDisjointTiles()
+    {
+        var bottomTarget = new AuthoritativeCombatTarget(
+            9,
+            4,
+            5,
+            20,
+            magicResistance: 25,
+            monsterLevel: 1,
+            petrified: true);
+        var topTarget = new AuthoritativeCombatTarget(
+            10,
+            4,
+            4,
+            20,
+            magicResistance: 25,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [bottomTarget, topTarget]);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 4,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(4, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(4, 0, 0, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+        Assert.Equal(2, processor.AdvanceTick(1, [player]).Count);
+        Assert.Equal(2, processor.AdvanceTick(2, [player]).Count);
+
+        Assert.Equal(1154, bottomTarget.HitPointsQ6);
+        Assert.Equal(1134, topTarget.HitPointsQ6);
+        Assert.All(world.Projectiles.Values, layer => Assert.Equal(17U, layer.RemainingTicks));
+        Assert.Equal(0x079606CEU, random.State);
+    }
+
+    [Fact]
+    public void HealingMatchesNativeRogueRollsCapsAndFullLifeConsumption()
+    {
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateHealingSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            life: 1000,
+            lifeMaximum: 5000,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            characterClassId: 1,
+            characterLevel: 5,
+            memorizedSpells: [new MemorizedSpellState(2, 3)]);
+        var cast = new DiabloCastIntent(
+            2,
+            0,
+            37,
+            -5,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        var first = processor.Execute(player, cast, 1);
+
+        Assert.True(first.Succeeded);
+        Assert.Equal(4744, player.Life);
+        Assert.Equal(2552, player.Mana);
+        Assert.Equal(0xCB5679F1U, random.State);
+        var firstHealing = Assert.Single(first.Events);
+        Assert.Equal(DiabloGameplayEventKind.Healing, firstHealing.Kind);
+        Assert.Equal((7U, 7U), (firstHealing.SourceEntityId, firstHealing.TargetEntityId));
+        Assert.Equal(58, firstHealing.Amount);
+        Assert.Equal(3744, firstHealing.AmountQ6);
+
+        var second = processor.Execute(player, cast, 2);
+
+        Assert.True(second.Succeeded);
+        Assert.Equal(5000, player.Life);
+        Assert.Equal(2104, player.Mana);
+        Assert.Equal(0x2563F5DEU, random.State);
+        var cappedHealing = Assert.Single(second.Events);
+        Assert.Equal(4, cappedHealing.Amount);
+        Assert.Equal(256, cappedHealing.AmountQ6);
+
+        var fullLife = processor.Execute(player, cast, 3);
+
+        Assert.True(fullLife.Succeeded);
+        Assert.Empty(fullLife.Events);
+        Assert.Equal(5000, player.Life);
+        Assert.Equal(1656, player.Mana);
+        Assert.Equal(0x8C3C2F4FU, random.State);
+    }
+
+    [Fact]
+    public void HealOtherMatchesNativeMonkRollsCapsAndFullLifeConsumption()
+    {
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateHealOtherSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var caster = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            characterClassId: 3,
+            characterLevel: 5,
+            memorizedSpells: [new MemorizedSpellState(34, 3)]);
+        var target = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            life: 1000,
+            lifeMaximum: 10000,
+            entityId: 8);
+        var cast = new DiabloCastIntent(
+            34,
+            8,
+            0,
+            0,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        var first = processor.Execute(caster, cast, 1, [caster, target]);
+
+        Assert.True(first.Succeeded);
+        Assert.Equal(8488, target.Life);
+        Assert.Equal(2552, caster.Mana);
+        Assert.Equal(0xCB5679F1U, random.State);
+        var healing = Assert.Single(first.Events);
+        Assert.Equal(DiabloGameplayEventKind.Healing, healing.Kind);
+        Assert.Equal((7U, 8U), (healing.SourceEntityId, healing.TargetEntityId));
+        Assert.Equal(117, healing.Amount);
+        Assert.Equal(7488, healing.AmountQ6);
+
+        target.Life = target.LifeMaximum;
+        var fullLife = processor.Execute(caster, cast, 2, [caster, target]);
+
+        Assert.True(fullLife.Succeeded);
+        Assert.Empty(fullLife.Events);
+        Assert.Equal(10000, target.Life);
+        Assert.Equal(2104, caster.Mana);
+        Assert.Equal(0x2563F5DEU, random.State);
+    }
+
+    [Fact]
+    public void HealOtherRejectsInvalidPlayerTargetsWithoutMutation()
+    {
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateHealOtherSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var caster = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(34, 1)]);
+        var deadTarget = CreatePlayer(life: 0, entityId: 8);
+        var otherLevelTarget = CreatePlayer(levelId: 1, entityId: 9);
+        var distantTarget = CreatePlayer(positionX: 113, entityId: 10);
+        var players = new[] { caster, deadTarget, otherLevelTarget, distantTarget };
+
+        foreach (var targetId in new[] { 0U, 7U, 8U, 9U, 10U, 99U }) {
+            var result = processor.Execute(
+                caster,
+                new DiabloCastIntent(
+                    34,
+                    targetId,
+                    0,
+                    0,
+                    DiabloCastSourceKind.MemorizedSpell),
+                1,
+                players);
+            AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        }
+
+        Assert.Equal(3000, caster.Mana);
+        Assert.Equal(0x12345678U, random.State);
+    }
+
+    [Fact]
+    public void TeleportUsesNativeCrawlOrderAndParticipantOccupancy()
+    {
+        var blocker = new AuthoritativeCombatTarget(30, 10, 9, 10, 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [11 * 40 + 10],
+            combatTargets: [blocker],
+            objects: [new AuthoritativeWorldObject(40, 1, 0, 9, 10)]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTeleportSpell()]));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(23, 3)]);
+        var occupyingPlayer = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            entityId: 8);
+        var deadPlayer = CreatePlayer(
+            positionX: 11,
+            positionY: 10,
+            life: 0,
+            entityId: 9);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                23,
+                0,
+                10,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [player, occupyingPlayer, deadPlayer]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(result.Events);
+        Assert.Equal(1144, player.Mana);
+        Assert.Equal((1, 1), (player.PositionX, player.PositionY));
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Teleport, controller.Behavior);
+        Assert.Equal((11, 10, 11, 10, 2U), (
+            controller.PositionX,
+            controller.PositionY,
+            controller.TargetX,
+            controller.TargetY,
+            controller.RemainingTicks));
+
+        Assert.Empty(processor.AdvanceTick(1, [player, occupyingPlayer, deadPlayer]));
+        Assert.Equal((11, 10), (player.PositionX, player.PositionY));
+        Assert.Equal(1U, controller.RemainingTicks);
+        Assert.Empty(processor.AdvanceTick(2, [player, occupyingPlayer, deadPlayer]));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void TeleportFizzleDoesNotConsumeItsCastSource()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 1, fallbackHeight: 1);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTeleportSpell()]));
+        var player = CreatePlayer(
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(23, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                23,
+                0,
+                10,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3000, player.Mana);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+    }
+
+    [Fact]
+    public void PhasingUsesNativeCandidateOrderRngAndTwoTickMovement()
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreatePhasingSpell()]),
+            random: random);
+        var player = CreatePlayer(
+            positionX: 20,
+            positionY: 20,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(10, 3)]);
+        player.FacingDirection = DiabloPlayerDirection.East;
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                10,
+                0,
+                -100,
+                100,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(9488, player.Mana);
+        Assert.Equal(0x955E76D9U, random.State);
+        Assert.Equal(DiabloPlayerDirection.East, player.FacingDirection);
+        Assert.Equal((20, 20), (player.PositionX, player.PositionY));
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Phasing, controller.Behavior);
+        Assert.Equal((24, 15, 24, 15, 2U), (
+            controller.PositionX,
+            controller.PositionY,
+            controller.TargetX,
+            controller.TargetY,
+            controller.RemainingTicks));
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.Equal((24, 15), (player.PositionX, player.PositionY));
+        Assert.Equal(1U, controller.RemainingTicks);
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void PhasingWithoutCandidatesConsumesManaWithoutAdvancingRng()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 1, fallbackHeight: 1);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreatePhasingSpell()]),
+            random: random);
+        var player = CreatePlayer(
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(10, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                10,
+                0,
+                30,
+                30,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2232, player.Mana);
+        Assert.Equal(0x12345678U, random.State);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+    }
+
+    [Fact]
+    public void PhasingWithoutCandidatesConsumesTheSelectedScroll()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 1, fallbackHeight: 1);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreatePhasingSpell()]),
+            random: random);
+        var scroll = AuthoritativeItemState.Empty with { MiscId = 21, SpellId = 10 };
+        var player = CreatePlayer(
+            entityId: 7,
+            belt: [new BeltStoreItem(2, 72, scroll)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                10,
+                0,
+                30,
+                30,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.Equal(0x12345678U, random.State);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void ResurrectionRevivesAtNativePlacementAndCreatesTimedBeam()
+    {
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [
+                11 * 40 + 10,
+                11 * 40 + 11,
+                10 * 40 + 12,
+                12 * 40 + 10,
+                12 * 40 + 11,
+                11 * 40 + 12,
+            ],
+            combatTargets: [new AuthoritativeCombatTarget(30, 10, 10, 10, 0)],
+            portals: [new AuthoritativePortal(40, 0, 10, 9, 1, 1, 1)]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateResurrectionSpell()]));
+        var caster = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(32, 5)]);
+        var target = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            life: 0,
+            lifeMaximum: 1000,
+            mana: 600,
+            manaMaximum: 600,
+            entityId: 8);
+        target.CombatMode = DiabloPlayerCombatMode.Death;
+        target.CombatModeEndTick = 50;
+        target.CurrentAction = new AuthoritativePlayerActionState(
+            DiabloPlayerActionKind.Death,
+            0,
+            0,
+            50,
+            50) {
+            EffectApplied = true,
+        };
+        var occupyingPlayer = CreatePlayer(
+            positionX: 11,
+            positionY: 10,
+            entityId: 9);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                32,
+                8,
+                0,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target, occupyingPlayer]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(result.Events);
+        Assert.Equal(1720, caster.Mana);
+        Assert.Equal((9, 10), (target.PositionX, target.PositionY));
+        Assert.Equal(640, target.Life);
+        Assert.Equal(0, target.Mana);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, target.CombatMode);
+        Assert.Equal(0UL, target.CombatModeEndTick);
+        Assert.Null(target.CurrentAction);
+        var beam = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.ResurrectionBeam, beam.Behavior);
+        Assert.Equal((7U, 8U, 10, 10, 16U), (
+            beam.SourceEntityId,
+            beam.TargetEntityId,
+            beam.PositionX,
+            beam.PositionY,
+            beam.RemainingTicks));
+
+        for (ulong tick = 1; tick < 16; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [caster, target, occupyingPlayer]));
+        Assert.Equal(1U, beam.RemainingTicks);
+        Assert.Empty(processor.AdvanceTick(16, [caster, target, occupyingPlayer]));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void ResurrectionBeamsLivingTargetsButRejectsInvalidPlayerTargets()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateResurrectionSpell()]));
+        var caster = CreatePlayer(
+            mana: 6000,
+            manaMaximum: 6000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(32, 1)]);
+        var livingTarget = CreatePlayer(
+            positionX: 2,
+            positionY: 2,
+            life: 500,
+            lifeMaximum: 1000,
+            mana: 300,
+            manaMaximum: 600,
+            entityId: 8);
+        var otherLevelTarget = CreatePlayer(
+            levelId: 1,
+            life: 0,
+            entityId: 9);
+
+        var living = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                32,
+                8,
+                0,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, livingTarget, otherLevelTarget]);
+
+        Assert.True(living.Succeeded);
+        Assert.Equal(4720, caster.Mana);
+        Assert.Equal((500, 300), (livingTarget.Life, livingTarget.Mana));
+        Assert.Single(world.Projectiles);
+
+        foreach (var invalidTargetId in new[] { 0U, 7U, 9U, 99U }) {
+            var rejected = processor.Execute(
+                caster,
+                new DiabloCastIntent(
+                    32,
+                    invalidTargetId,
+                    0,
+                    0,
+                    DiabloCastSourceKind.MemorizedSpell),
+                2,
+                [caster, livingTarget, otherLevelTarget]);
+            AssertRejected(rejected, DiabloRuleFailure.InvalidTarget);
+        }
+        Assert.Equal(4720, caster.Mana);
+        Assert.Single(world.Projectiles);
+    }
+
+    [Fact]
+    public void FlashBreaksObjectsButPersistsAcrossBreakableAndStaticBlockers()
+    {
+        var breakable = new AuthoritativeWorldObject(20, 1, 0, 4, 5, breakable: true);
+        var staticBlocker = new AuthoritativeWorldObject(21, 1, 0, 5, 4);
+        var world = new DiabloWorldState(objects: [breakable, staticBlocker]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            characterLevel: 12,
+            entityId: 7,
+            abilitySpellId: 4,
+            memorizedSpells: [new MemorizedSpellState(4, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(4, 0, 0, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.True(breakable.Destroyed);
+        Assert.False(staticBlocker.Destroyed);
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.All(world.Projectiles.Values, layer => Assert.Equal(18U, layer.RemainingTicks));
+    }
+
+    [Fact]
+    public void FlashProtectionBeginsAfterItsFirstMissileTickAndEndsWithItsLayers()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            6,
+            5,
+            1000,
+            attackDamage: 10,
+            aggroRange: 1,
+            monsterLevel: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            random: new DiabloRandom(0x12345678),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 4,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(4, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(4, 0, 0, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+        _ = processor.AdvanceTick(1, [player]);
+        Assert.Equal(90, player.Life);
+        for (ulong tick = 2; tick <= 19; tick++)
+            _ = processor.AdvanceTick(tick, [player]);
+        Assert.Equal(90, player.Life);
+        Assert.Empty(world.Projectiles);
+
+        _ = processor.AdvanceTick(20, [player]);
+        Assert.Equal(80, player.Life);
+    }
+
+    [Fact]
+    public void ActiveFlashProtectionRejectsLaterPvpProjectileCollisionWithoutRng()
+    {
+        var world = new DiabloWorldState();
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var victim = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            life: 640,
+            lifeMaximum: 640,
+            characterLevel: 12,
+            entityId: 7,
+            characterClassId: 2,
+            abilitySpellId: 4,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(4, 3)]);
+        var attacker = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+
+        Assert.True(processor.Execute(
+            victim,
+            new DiabloCastIntent(4, 0, 0, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+        world.Projectiles.Add(0x80000002, new AuthoritativeProjectile(
+            0x80000002,
+            attacker.EntityId,
+            0,
+            3,
+            0,
+            5,
+            5,
+            0,
+            0,
+            128,
+            AuthoritativeDamageType.Lightning,
+            0,
+            6) {
+            Behavior = AuthoritativeProjectileBehavior.LightningSegment,
+            StartX = 0,
+            StartY = 0,
+            ResistantDamageDivisor = 4,
+        });
+
+        Assert.Empty(processor.AdvanceTick(1, [victim, attacker]));
+        Assert.Equal(640, victim.Life);
+        Assert.Equal(0xEAC973D6U, random.State);
+    }
+
+    [Fact]
+    public void ChargedBoltWandersHitsAndConsumesNativeCollisionRng()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            10,
+            lightningResistance: 25,
+            monsterLevel: 1);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var spell = CreateChargedBoltSpell() with {
+            ProjectileCount = 1,
+            ProjectileCountLevelDivisor = 0,
+        };
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: random);
+        var player = CreatePlayer(
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            abilitySpellId: 30);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(30, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+        IReadOnlyList<DiabloDirectedGameplayEvent> events = [];
+        for (ulong tick = 1; tick <= 4; tick++)
+            events = processor.AdvanceTick(tick, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((1, 1), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(8U, projectile.RemainingTicks);
+        Assert.Equal(9, target.HitPoints);
+        Assert.Equal(528, target.HitPointsQ6);
+        var damageEvent = Assert.Single(events).Event;
+        Assert.Equal(1, damageEvent.Amount);
+        Assert.Equal(112, damageEvent.AmountQ6);
+        Assert.Equal(0x49BFD245U, random.State);
+    }
+
+    [Fact]
+    public void ChargedBoltStopsAtMissileBlockingGeometryWithoutEnteringImpact()
+    {
+        var projectile = CreateTravelingChargedBolt(velocityY: 1 << 20);
+        var world = new DiabloWorldState(
+            fallbackWidth: 3,
+            fallbackHeight: 3,
+            projectiles: [projectile],
+            fallbackMissileBlockedCells: [4]);
+        var processor = CreateProcessor(world);
+
+        var events = processor.AdvanceTick(1, [CreatePlayer(entityId: 7)]);
+
+        Assert.Empty(events);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, projectile.Phase);
+    }
+
+    [Fact]
+    public void ChargedBoltPassesThroughMissilePassableObject()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            1,
+            missilePassable: true);
+        var projectile = CreateTravelingChargedBolt(velocityY: 1 << 20);
+        var world = new DiabloWorldState(objects: [@object], projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, [CreatePlayer(entityId: 7)]);
+
+        Assert.Same(projectile, Assert.Single(world.Projectiles.Values));
+        Assert.Equal((1, 1), (projectile.PositionX, projectile.PositionY));
+        Assert.False(@object.Destroyed);
+    }
+
+    [Fact]
+    public void ChargedBoltBreaksBlockingObjectAndIsRemovedWithoutImpact()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            1,
+            breakable: true);
+        var projectile = CreateTravelingChargedBolt(velocityY: 1 << 20);
+        var world = new DiabloWorldState(objects: [@object], projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+
+        var events = processor.AdvanceTick(1, [CreatePlayer(entityId: 7)]);
+
+        Assert.Empty(events);
+        Assert.True(@object.Destroyed);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, projectile.Phase);
+    }
+
+    [Fact]
+    public void ChargedBoltChecksSweptTilesAndPersistsIntermediateImpactPosition()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 1, 10);
+        var projectile = CreateTravelingChargedBolt(velocityY: 3 << 20);
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+
+        var events = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(9, target.HitPoints);
+        Assert.Single(events);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((1, 1), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal((0, 2 << 20), (projectile.TraveledX, projectile.TraveledY));
+        Assert.Equal(9U, projectile.LastCollisionTargetEntityId);
+    }
+
+    [Fact]
+    public void StationaryChargedBoltDoesNotRerollAgainstTheSameOccupant()
+    {
+        var target = new AuthoritativeCombatTarget(9, 0, 0, 10);
+        var projectile = CreateTravelingChargedBolt(velocityY: 1, pathTicks: 10);
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var random = new DiabloRandom(2);
+        var processor = CreateProcessor(world, random: random);
+        var player = CreatePlayer(entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        var randomStateAfterMiss = random.State;
+        Assert.Equal(9U, projectile.LastCollisionTargetEntityId);
+
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+
+        Assert.Equal(10, target.HitPoints);
+        Assert.Equal(randomStateAfterMiss, random.State);
+        Assert.Equal(9U, projectile.LastCollisionTargetEntityId);
+    }
+
+    [Fact]
+    public void ResistantOnePointChargedBoltPreservesQuarterPointDamage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            10,
+            lightningResistance: 25,
+            monsterLevel: 1);
+        var projectile = new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            0,
+            30,
+            0,
+            0,
+            0,
+            4,
+            0,
+            1,
+            AuthoritativeDamageType.Lightning,
+            0,
+            256) {
+            Behavior = AuthoritativeProjectileBehavior.ChargedBolt,
+            OriginalDirection = 7,
+            PathIndex = 13,
+            Speed = 8,
+            ImpactLifetime = 8,
+            ResistantDamageDivisor = 4,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            });
+
+        IReadOnlyList<DiabloDirectedGameplayEvent> events = [];
+        for (ulong tick = 1; tick <= 4; tick++)
+            events = processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(10, target.HitPoints);
+        Assert.Equal(624, target.HitPointsQ6);
+        var damageEvent = Assert.Single(events).Event;
+        Assert.Equal(0, damageEvent.Amount);
+        Assert.Equal(16, damageEvent.AmountQ6);
+    }
+
+    [Fact]
+    public void ChargedBoltDamagesAnotherPlayerInNativeQ6AndDirectsTheEventToTheVictim()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(world, random: random);
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8);
+
+        var deliveries = processor.AdvanceTick(1, [owner, victim]);
+
+        Assert.Equal(576, victim.Life);
+        Assert.Same(victim, Assert.Single(deliveries).Recipient);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal((7U, 8U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(1, damage.Amount);
+        Assert.Equal(64, damage.AmountQ6);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(8U, projectile.LastCollisionTargetEntityId);
+    }
+
+    [Fact]
+    public void LethalPlayerProjectileDoesNotDropVictimEquipment()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var equipped = new EquippedStoreItem(
+            0,
+            99,
+            AuthoritativeItemState.Empty with { ItemType = 1, StatFlag = true });
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 64,
+            lifeMaximum: 64,
+            entityId: 8,
+            equipment: [equipped]);
+
+        Assert.Single(processor.AdvanceTick(1, [owner, victim]));
+
+        Assert.Equal(0, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Death, victim.CombatMode);
+        Assert.Equal(equipped, Assert.Single(victim.Equipment));
+        Assert.DoesNotContain(world.WorldItems.Values, item => item.ItemSeed == equipped.ItemSeed);
+    }
+
+    [Fact]
+    public void LethalPlayerProjectileCreatesTheNativePvpEarFromExternalContent()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var random = new DiabloRandom(0);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            playerClasses: classes,
+            gameMode: DiabloGameMode.Multiplayer,
+            items: LoadShippedItems());
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var equipped = new EquippedStoreItem(
+            0,
+            99,
+            AuthoritativeItemState.Empty with { ItemType = 1, StatFlag = true });
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 64,
+            lifeMaximum: 64,
+            entityId: 8,
+            equipment: [equipped],
+            characterClassId: 1,
+            characterLevel: 3,
+            characterName: "Dead-RogueDM",
+            gold: 0);
+        var expectedRandom = new DiabloRandom(0);
+        _ = expectedRandom.RandomIntLessThan(100);
+        _ = expectedRandom.RandomIntBetween(2, 2);
+
+        Assert.Single(processor.AdvanceTick(1, [owner, victim]));
+
+        Assert.Equal(0, victim.Life);
+        Assert.Equal(equipped, Assert.Single(victim.Equipment));
+        var ear = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1633955154U, ear.ItemSeed);
+        Assert.Equal(0U, ear.Price);
+        Assert.Equal(17509U, ear.State.CreateInfo);
+        Assert.Equal(23, ear.State.ItemIndex);
+        Assert.Equal(44, ear.State.MiscId);
+        Assert.Equal(3, ear.State.Value);
+        Assert.Equal("Ear of Dead-RogueDM", ear.State.BaseName);
+        Assert.Equal("Dead-RogueDM", ear.State.IdentifiedName);
+        Assert.Equal(21, ear.State.NativeCursorGraphic);
+        Assert.Equal(expectedRandom.State, random.State);
+    }
+
+    [Fact]
+    public void DisabledFriendlyFireSkipsPlayerCollisionWithoutConsumingRng()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: false),
+            random: random);
+        var owner = CreatePlayer(entityId: 7);
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8);
+
+        var deliveries = processor.AdvanceTick(1, [owner, victim]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(640, victim.Life);
+        Assert.Equal(0x12345678U, random.State);
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(8U, projectile.LastCollisionTargetEntityId);
+    }
+
+    [Fact]
+    public void HostileCasterOverridesDisabledFriendlyFireGate()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: false),
+            random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        owner.FriendlyMode = false;
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8);
+
+        Assert.Single(processor.AdvanceTick(1, [owner, victim]));
+        Assert.Equal(576, victim.Life);
+    }
+
+    [Fact]
+    public void PlayerBlockConsumesDamageRollAndStopsChargedBoltDamage()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(world, random: random);
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var deliveries = processor.AdvanceTick(1, [owner, victim]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(640, victim.Life);
+        Assert.Equal(0x8082A52FU, random.State);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(5UL, victim.CombatModeEndTick);
+    }
+
+    [Fact]
+    public void OnlyStandAndMeleeAttackModesCanBlockPlayerMissiles()
+    {
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var rangedVictim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+        rangedVictim.CombatMode = DiabloPlayerCombatMode.RangedAttack;
+        rangedVictim.CombatModeEndTick = 10;
+        var rangedRandom = new DiabloRandom(0);
+        var rangedProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: rangedRandom);
+
+        Assert.Single(rangedProcessor.AdvanceTick(1, [owner, rangedVictim]));
+        Assert.Equal(576, rangedVictim.Life);
+
+        var expectedRangedRandom = new DiabloRandom(0);
+        _ = expectedRangedRandom.RandomIntLessThan(100);
+        _ = expectedRangedRandom.RandomIntBetween(2, 2);
+        Assert.Equal(expectedRangedRandom.State, rangedRandom.State);
+
+        var attackVictim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 9,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 100, shield)]);
+        attackVictim.CombatMode = DiabloPlayerCombatMode.Attack;
+        attackVictim.CombatModeEndTick = 10;
+        var attackProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0));
+
+        Assert.Empty(attackProcessor.AdvanceTick(1, [owner, attackVictim]));
+        Assert.Equal(640, attackVictim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, attackVictim.CombatMode);
+    }
+
+    [Fact]
+    public void FirstSameTickBlockMakesTheVictimIneligibleForTheNextBolt()
+    {
+        var first = CreateStationaryChargedBolt(1, 1, 0x80000000);
+        var second = CreateStationaryChargedBolt(1, 1, 0x80000001);
+        var processor = CreateProcessor(
+            new DiabloWorldState(projectiles: [second, first]),
+            random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var deliveries = processor.AdvanceTick(1, [owner, victim]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(576, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.GotHit, victim.CombatMode);
+        Assert.Equal(7UL, victim.CombatModeEndTick);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, first.Phase);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, second.Phase);
+    }
+
+    [Fact]
+    public void HellfireBlockConsumesTheNativeRotationSelectionDraw()
+    {
+        var diabloRandom = new DiabloRandom(0);
+        var hellfireRandom = new DiabloRandom(0);
+        var diabloVictim = CreateBlockingVictim();
+        var hellfireVictim = CreateBlockingVictim();
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var diablo = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Diablo),
+            random: diabloRandom);
+        var hellfire = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
+            random: hellfireRandom);
+
+        Assert.Empty(diablo.AdvanceTick(1, [owner, diabloVictim]));
+        Assert.Empty(hellfire.AdvanceTick(1, [owner, hellfireVictim]));
+
+        var expected = new DiabloRandom(diabloRandom.State);
+        _ = expected.RandomIntLessThan(2);
+        Assert.Equal(expected.State, hellfireRandom.State);
+    }
+
+    [Fact]
+    public void TimedCombatModeExpiresAtItsFirstInactiveTick()
+    {
+        var player = CreatePlayer();
+        player.CombatMode = DiabloPlayerCombatMode.Block;
+        player.CombatModeEndTick = 5;
+
+        DiabloCombatCommandProcessor.AdvanceCombatMode(player, 4);
+        Assert.Equal(DiabloPlayerCombatMode.Block, player.CombatMode);
+
+        DiabloCombatCommandProcessor.AdvanceCombatMode(player, 5);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(0UL, player.CombatModeEndTick);
+    }
+
+    [Fact]
+    public void ClassFramesAndUsableSpeedFlagsControlNativeModeDurations()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var rogue = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)],
+            characterClassId: 1);
+        var rogueProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Empty(rogueProcessor.AdvanceTick(1, [owner, rogue]));
+        Assert.Equal(11UL, rogue.CombatModeEndTick);
+
+        var fastShield = shield with { Flags = 1U << 24 };
+        var fastRogue = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 9,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 100, fastShield)],
+            characterClassId: 1);
+        var fastProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Empty(fastProcessor.AdvanceTick(1, [owner, fastRogue]));
+        Assert.Equal(5UL, fastRogue.CombatModeEndTick);
+
+        var staff = AuthoritativeItemState.Empty with {
+            ItemType = 10,
+            StatFlag = true,
+        };
+        var monk = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 10,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 101, staff)],
+            characterClassId: 3);
+        var monkProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Empty(monkProcessor.AdvanceTick(1, [owner, monk]));
+        Assert.Equal(5UL, monk.CombatModeEndTick);
+
+        var recoveryItem = AuthoritativeItemState.Empty with {
+            StatFlag = true,
+            Flags = 1U << 23,
+        };
+        var recoveringRogue = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 11,
+            equipment: [new EquippedStoreItem(0, 102, recoveryItem)],
+            characterClassId: 1);
+        var recoveryProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Single(recoveryProcessor.AdvanceTick(1, [owner, recoveringRogue]));
+        Assert.Equal(DiabloPlayerCombatMode.GotHit, recoveringRogue.CombatMode);
+        Assert.Equal(5UL, recoveringRogue.CombatModeEndTick);
+    }
+
+    [Fact]
+    public void LightningResistanceOverridesBlockAndUsesNativePercentageDamage()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var resistantShield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+            PlusLightningResistance = 25,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, resistantShield)]);
+
+        var damage = Assert.Single(processor.AdvanceTick(1, [owner, victim])).Event;
+
+        Assert.Equal(592, victim.Life);
+        Assert.Equal(0, damage.Amount);
+        Assert.Equal(48, damage.AmountQ6);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, victim.CombatMode);
+        Assert.Equal(0UL, victim.CombatModeEndTick);
+    }
+
+    [Fact]
+    public void ExhaustedOrNonLeftHandChargedItemIsRejectedWithoutMutation()
+    {
+        var staffState = AuthoritativeItemState.Empty with {
+            MiscId = 23,
+            SpellId = 1,
+            Charges = 0,
+            MaxCharges = 2,
+        };
+        var processor = CreateProcessor(new DiabloWorldState());
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            equipment: [
+                new EquippedStoreItem(4, 77, staffState),
+                new EquippedStoreItem(5, 78, staffState with { Charges = 2 }),
+            ]);
+
+        var exhausted = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 4)),
+            1);
+        var wrongHand = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 5)),
+            2);
+
+        AssertRejected(exhausted, DiabloRuleFailure.InsufficientResources);
+        AssertRejected(wrongHand, DiabloRuleFailure.NotAllowed);
+        Assert.Equal([0, 2], player.Equipment.OrderBy(item => item.Slot).Select(item => item.State.Charges));
+    }
+
+    [Fact]
+    public void ConsumableCastRemovesExactInventoryScrollAndCompactsGrid()
+    {
+        var scroll = AuthoritativeItemState.Empty with { MiscId = 21, SpellId = 1 };
+        var other = AuthoritativeItemState.Empty with { ItemType = 1 };
+        var processor = CreateProcessor(new DiabloWorldState());
+        var player = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            inventory: [
+                new OwnedStoreItem(0, 0, 71, 10, 0, other),
+                new OwnedStoreItem(0, 1, 72, 10, 0, scroll),
+            ],
+            inventoryGrid: [0, 1, 1, -1]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(71U, Assert.Single(player.Inventory).ItemSeed);
+        Assert.Equal([0, -1, -1, -1], player.InventoryGrid);
+    }
+
+    [Fact]
+    public void RejectedTargetDoesNotConsumeChargedOrConsumableItems()
+    {
+        var target = new AuthoritativeCombatTarget(9, 9, 9, 10);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 5, 0, 0, 0, 0) {
+                DamageAmount = 4,
+                Range = 1,
+            },
+        ]);
+        var staff = AuthoritativeItemState.Empty with {
+            MiscId = 23,
+            SpellId = 1,
+            Charges = 2,
+            MaxCharges = 2,
+        };
+        var scroll = AuthoritativeItemState.Empty with { MiscId = 21, SpellId = 1 };
+        var processor = CreateProcessor(new DiabloWorldState(combatTargets: [target]), spells);
+        var player = CreatePlayer(
+            equipment: [new EquippedStoreItem(4, 77, staff)],
+            belt: [new BeltStoreItem(2, 78, scroll)]);
+
+        var charged = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                9,
+                0,
+                0,
+                DiabloCastSourceKind.ChargedItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 4)),
+            1);
+        var consumable = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                1,
+                9,
+                0,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            2);
+
+        AssertRejected(charged, DiabloRuleFailure.InvalidTarget);
+        AssertRejected(consumable, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(2, Assert.Single(player.Equipment).State.Charges);
+        Assert.Single(player.Belt);
+    }
+
+    [Fact]
+    public void UnspecifiedLegacyCastInfersOnlyAnAuthoritativeOwnedSource()
+    {
+        var processor = CreateProcessor(new DiabloWorldState());
+        var unowned = CreatePlayer(life: 10, lifeMaximum: 20, mana: 10, manaMaximum: 10);
+        var learned = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 10,
+            manaMaximum: 10,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+
+        var rejected = processor.Execute(unowned, new DiabloCastIntent(1, 0, 0, 0), 1);
+        var accepted = processor.Execute(learned, new DiabloCastIntent(1, 0, 0, 0), 1);
+
+        AssertRejected(rejected, DiabloRuleFailure.NotAllowed);
+        Assert.True(accepted.Succeeded);
+        Assert.Equal(9, learned.Mana);
+    }
+
+    [Fact]
+    public void StoneCurseUsesNativeCrawlFutureOccupancyAndTimedRelease()
+    {
+        var immune = new AuthoritativeCombatTarget(
+            8,
+            10,
+            10,
+            20,
+            stoneCurseImmune: true);
+        var target = new AuthoritativeCombatTarget(
+            9,
+            9,
+            9,
+            20,
+            moving: true,
+            futurePositionX: 10,
+            futurePositionY: 9);
+        var world = new DiabloWorldState(combatTargets: [immune, target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateStoneCurseSpell()]));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(8, 3)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                8,
+                8,
+                10,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6544, player.Mana);
+        Assert.False(immune.IsPetrified);
+        Assert.True(target.IsPetrified);
+        Assert.True(target.IsMoving);
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.StoneCurse, controller.Behavior);
+        Assert.Equal((9U, 10, 9, 144U, 11, 3), (
+            controller.TargetEntityId,
+            controller.PositionX,
+            controller.PositionY,
+            controller.RemainingTicks,
+            controller.ImpactLifetime,
+            controller.EffectiveSpellLevel));
+
+        for (ulong tick = 1; tick <= 143; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [player]));
+        Assert.True(target.IsPetrified);
+        Assert.Equal((9, 9), (target.PositionX, target.PositionY));
+        Assert.Empty(processor.AdvanceTick(144, [player]));
+        Assert.False(target.IsPetrified);
+        Assert.Empty(world.Projectiles);
+        Assert.Empty(processor.AdvanceTick(145, [player]));
+        Assert.Equal((10, 9), (target.PositionX, target.PositionY));
+        Assert.False(target.IsMoving);
+    }
+
+    [Fact]
+    public void StoneCurseFizzlePreservesSourceButActiveRecastConsumesIt()
+    {
+        var spell = CreateStoneCurseSpell();
+        var immune = new AuthoritativeCombatTarget(
+            8,
+            2,
+            2,
+            20,
+            stoneCurseImmune: true);
+        var immuneWorld = new DiabloWorldState(combatTargets: [immune]);
+        var immuneProcessor = CreateProcessor(
+            immuneWorld,
+            new AuthoritativeSpellCatalog([spell]));
+        var fizzlePlayer = CreatePlayer(
+            mana: 5000,
+            manaMaximum: 5000,
+            memorizedSpells: [new MemorizedSpellState(8, 1)]);
+        var intent = new DiabloCastIntent(
+            8,
+            8,
+            2,
+            2,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        var fizzle = immuneProcessor.Execute(fizzlePlayer, intent, 1);
+
+        Assert.True(fizzle.Succeeded);
+        Assert.Equal(5000, fizzlePlayer.Mana);
+        Assert.Empty(immuneWorld.Projectiles);
+
+        var petrified = new AuthoritativeCombatTarget(
+            9,
+            2,
+            2,
+            20,
+            petrified: true);
+        var activeWorld = new DiabloWorldState(combatTargets: [petrified]);
+        var activeProcessor = CreateProcessor(
+            activeWorld,
+            new AuthoritativeSpellCatalog([spell]));
+        var recastPlayer = CreatePlayer(
+            mana: 5000,
+            manaMaximum: 5000,
+            memorizedSpells: [new MemorizedSpellState(8, 1)]);
+
+        var recast = activeProcessor.Execute(
+            recastPlayer,
+            intent with { TargetEntityId = 9 },
+            1);
+
+        Assert.True(recast.Succeeded);
+        Assert.Equal(1160, recastPlayer.Mana);
+        Assert.True(petrified.IsPetrified);
+        Assert.Empty(activeWorld.Projectiles);
+    }
+
+    [Fact]
+    public void StoneCurseDeadTargetRunsShatterPhaseAndStaysPetrified()
+    {
+        var target = new AuthoritativeCombatTarget(9, 2, 2, 20);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateStoneCurseSpell()]));
+        var player = CreatePlayer(
+            mana: 5000,
+            manaMaximum: 5000,
+            memorizedSpells: [new MemorizedSpellState(8, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(8, 9, 2, 2),
+            1).Succeeded);
+        target.HitPoints = 0;
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, controller.Phase);
+        Assert.Equal(11U, controller.RemainingTicks);
+        for (ulong tick = 2; tick <= 11; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [player]));
+        Assert.Equal(1U, controller.RemainingTicks);
+        Assert.Empty(processor.AdvanceTick(12, [player]));
+        Assert.Empty(world.Projectiles);
+        Assert.True(target.IsPetrified);
+    }
+
+    [Fact]
+    public void ManaShieldCastConsumesManaOnceAndActiveRecastFizzles()
+    {
+        var spell = new AuthoritativeSpellDefinition(11, 33, 0, 0, 0, 0) {
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ManaShield,
+            MinimumManaCost = 33,
+            ManaCostScale = 64,
+            ManaShieldBaseDamageReductionDivisor = 24,
+            ManaShieldDamageReductionLevelStep = 3,
+            ManaShieldDamageReductionMaximumLevel = 7,
+        };
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([spell]));
+        var player = CreatePlayer(
+            life: 6400,
+            lifeMaximum: 6400,
+            mana: 6400,
+            manaMaximum: 6400,
+            memorizedSpells: [new MemorizedSpellState(11, 1)]);
+        var intent = new DiabloCastIntent(
+            11,
+            0,
+            0,
+            0,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        var first = processor.Execute(player, intent, 1);
+        var second = processor.Execute(player, intent, 2);
+
+        Assert.True(first.Succeeded);
+        Assert.True(second.Succeeded);
+        Assert.True(player.ManaShieldActive);
+        Assert.Equal(4288, player.Mana);
+        Assert.Empty(first.Events);
+        Assert.Empty(second.Events);
+    }
+
+    [Fact]
+    public void InfravisionUsesNativeDurationScalingAndMaxUnionRecast()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateInfravisionSpell()]));
+        var player = CreatePlayer(
+            mana: 10000,
+            manaMaximum: 10000,
+            memorizedSpells: [new MemorizedSpellState(9, 3)]);
+        var intent = new DiabloCastIntent(
+            9,
+            0,
+            0,
+            0,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        var first = processor.Execute(player, intent, 1);
+
+        Assert.True(first.Succeeded);
+        Assert.Equal(8080, player.Mana);
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal((9U, 2254U, 0), (
+            status.EffectId,
+            status.RemainingTicks,
+            status.Magnitude));
+        Assert.Equal(AuthoritativeStatusEffectBehavior.Infravision, status.Behavior);
+
+        player.StatusEffects[0] = status with { RemainingTicks = 3000 };
+        var second = processor.Execute(player, intent, 2);
+
+        Assert.True(second.Succeeded);
+        Assert.Equal(6160, player.Mana);
+        Assert.Equal(3000U, Assert.Single(player.StatusEffects).RemainingTicks);
+    }
+
+    [Fact]
+    public void InfravisionScrollUsesLevelZeroDurationAndIsConsumed()
+    {
+        var scroll = AuthoritativeItemState.Empty with { MiscId = 21, SpellId = 9 };
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateInfravisionSpell()]));
+        var player = CreatePlayer(belt: [new BeltStoreItem(2, 72, scroll)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                9,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal(1584U, status.RemainingTicks);
+        Assert.Equal(AuthoritativeStatusEffectBehavior.Infravision, status.Behavior);
+    }
+
+    [Fact]
+    public void SearchAbilityUsesNativeDurationAndAdditiveRecastsWithoutMana()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateSearchSpell()]));
+        var player = CreatePlayer(
+            mana: 960,
+            manaMaximum: 960,
+            abilitySpellId: 46,
+            characterClassId: 3,
+            characterLevel: 5);
+        var intent = new DiabloCastIntent(
+            46,
+            0,
+            0,
+            0,
+            DiabloCastSourceKind.Ability);
+
+        Assert.True(processor.Execute(player, intent, 1).Succeeded);
+        var first = Assert.Single(player.StatusEffects);
+        Assert.Equal((46U, 255U, 0), (
+            first.EffectId,
+            first.RemainingTicks,
+            first.Magnitude));
+        Assert.Equal(AuthoritativeStatusEffectBehavior.Search, first.Behavior);
+        Assert.Equal(960, player.Mana);
+
+        Assert.True(processor.Execute(player, intent, 1).Succeeded);
+        Assert.Equal(510U, Assert.Single(player.StatusEffects).RemainingTicks);
+        DiabloCombatCommandProcessor.AdvanceStatusEffects(player, 1);
+        DiabloCombatCommandProcessor.AdvanceStatusEffects(player, 2);
+        Assert.Equal(509U, Assert.Single(player.StatusEffects).RemainingTicks);
+    }
+
+    [Fact]
+    public void SearchRecastRetainsNativeDurationWhenSignedAdditionWouldOverflow()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateSearchSpell()]));
+        var player = CreatePlayer(
+            abilitySpellId: 46,
+            characterClassId: 3,
+            characterLevel: 5);
+        var retainedDuration = (uint)int.MaxValue - 100;
+        player.StatusEffects.Add(new AuthoritativeStatusEffect(
+            46,
+            retainedDuration,
+            0) {
+            Behavior = AuthoritativeStatusEffectBehavior.Search,
+        });
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                46,
+                0,
+                0,
+                0,
+                DiabloCastSourceKind.Ability),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(
+            retainedDuration,
+            Assert.Single(player.StatusEffects).RemainingTicks);
+    }
+
+    private static DiabloCombatCommandProcessor CreateProcessor(
+        DiabloWorldState world,
+        AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeCombatRules? rules = null,
+        DiabloRandom? random = null,
+        AuthoritativePlayerClassCatalog? playerClasses = null,
+        AuthoritativePlayerAnimationCatalog? playerAnimations = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        AuthoritativeItemCatalog? items = null)
+    {
+        if (playerAnimations is null && playerClasses is not null)
+            playerAnimations = LoadShippedPlayerAnimations(playerClasses);
+        return new DiabloCombatCommandProcessor(
+            world,
+            spells ?? new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 1, 1, 0, 0, 0),
+            ]),
+            rules ?? new AuthoritativeCombatRules(10, 1, 100),
+            random,
+            playerClasses,
+            playerAnimations,
+            gameMode: gameMode,
+            items: items);
+    }
+
+    private static AuthoritativeSpellDefinition CreateChargedBoltSpell()
+    {
+        return new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
+            Range = 4,
+            DamageType = AuthoritativeDamageType.Lightning,
+            ProjectileSpeed = 8,
+            ProjectileLifetime = 256,
+            ProjectileCount = 4,
+            ProjectileCountLevelDivisor = 2,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ChargedBolt,
+            RandomMagicDamageDivisor = 4,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 8,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateFireboltSpell()
+    {
+        return new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 26,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Firebolt,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 2,
+            MinimumManaCost = 3,
+            ManaCostScale = 64,
+            RandomDamageRange = 10,
+            MagicDamageDivisor = 8,
+            SpellLevelDamage = 1,
+            DamageBonus = 1,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateFireballSpell()
+    {
+        return new AuthoritativeSpellDefinition(12, 16, 0, 0, 0, 0) {
+            Range = 112,
+            AreaRadius = 1,
+            DamageType = AuthoritativeDamageType.Fire,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Fireball,
+            ManaAdjustment = 1,
+            MinimumManaCost = 10,
+            ManaCostScale = 64,
+            RandomDamageRange = 10,
+            DamageBonus = 4,
+            DamageScale = 2,
+            RandomDamageIterationsBonus = 2,
+            CharacterLevelDamageDivisor = 1,
+            SpellEffectScaleDivisor = 8,
+            ProjectileSpeedSpellLevelStep = 2,
+            ProjectileSpeedMaximumBonus = 34,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 14,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateLightningSpell()
+    {
+        return new AuthoritativeSpellDefinition(3, 10, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Lightning,
+            ProjectileSpeed = 32,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Lightning,
+            ManaAdjustment = 1,
+            MinimumManaCost = 6,
+            ManaCostScale = 64,
+            RandomDamageRange = 2,
+            DamageBonus = 2,
+            CharacterLevelRandomDamageDivisor = 1,
+            DamageScale = 64,
+            SecondaryProjectileLifetime = 6,
+            SecondaryProjectileLifetimeSpellLevelDivisor = 2,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateFlashSpell()
+    {
+        return new AuthoritativeSpellDefinition(4, 30, 0, 0, 0, 0) {
+            Range = 1,
+            AreaRadius = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 19,
+            ProjectileCount = 2,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Flash,
+            ManaAdjustment = 2,
+            MinimumManaCost = 16,
+            ManaCostScale = 64,
+            RandomDamageRange = 20,
+            DamageBonus = 1,
+            RandomDamageIterationsCharacterLevelDivisor = 1,
+            RandomDamageIterationsBonus = 1,
+            CharacterLevelDamageDivisor = 1,
+            SpellEffectScaleDivisor = 8,
+            PostScaleDamagePercent = 50,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateHealingSpell()
+    {
+        return new AuthoritativeSpellDefinition(2, 5, 1, 0, 0, 0) {
+            Range = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Healing,
+            ManaAdjustment = 3,
+            CharacterLevelManaCost = 2,
+            MinimumManaCost = 1,
+            ManaCostScale = 64,
+            RandomHealingRange = 10,
+            CharacterLevelRandomHealingRange = 4,
+            CharacterLevelHealing = 1,
+            SpellLevelRandomHealingRange = 6,
+            SpellLevelHealing = 1,
+            HealingScale = 64,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateHealOtherSpell()
+    {
+        return CreateHealingSpell() with {
+            SpellId = 34,
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.HealOther,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateTeleportSpell()
+    {
+        return new AuthoritativeSpellDefinition(23, 35, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 2,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Teleport,
+            ManaAdjustment = 3,
+            MinimumManaCost = 15,
+            ManaCostScale = 64,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreatePhasingSpell()
+    {
+        return new AuthoritativeSpellDefinition(10, 12, 0, 0, 0, 0) {
+            Range = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 2,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+            ManaAdjustment = 2,
+            MinimumManaCost = 4,
+            ManaCostScale = 64,
+            PhasingMinimumAxisOffset = 4,
+            PhasingMaximumAxisOffset = 6,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateResurrectionSpell()
+    {
+        return new AuthoritativeSpellDefinition(32, 20, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 16,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Resurrection,
+            ManaAdjustment = 2,
+            MinimumManaCost = 20,
+            ManaCostScale = 64,
+            ResurrectionLife = 10,
+            ResurrectionLifeScale = 64,
+            ResurrectionSearchRadius = 50,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateStoneCurseSpell()
+    {
+        return new AuthoritativeSpellDefinition(8, 60, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.StoneCurse,
+            ProjectileImpactLifetime = 11,
+            ManaAdjustment = 3,
+            MinimumManaCost = 40,
+            ManaCostScale = 64,
+            StoneCurseBaseDuration = 6,
+            StoneCurseMaximumDuration = 15,
+            StoneCurseDurationScale = 16,
+            StoneCurseSearchRadius = 5,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateInfravisionSpell()
+    {
+        return new AuthoritativeSpellDefinition(9, 40, 0, 9, 1584, 0) {
+            Range = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Infravision,
+            ManaAdjustment = 5,
+            MinimumManaCost = 20,
+            ManaCostScale = 64,
+            InfravisionDurationGrowthDivisor = 8,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateSearchSpell()
+    {
+        return new AuthoritativeSpellDefinition(46, 15, 0, 46, 245, 0) {
+            Range = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Search,
+            ManaAdjustment = 1,
+            MinimumManaCost = 1,
+            ManaCostScale = 64,
+            SearchCharacterLevelDurationMultiplier = 2,
+            SearchSpellLevelDurationMultiplier = 10,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateTravelingChargedBolt(
+        int velocityY,
+        int pathTicks = 1)
+    {
+        return new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            0,
+            30,
+            0,
+            0,
+            0,
+            4,
+            4,
+            1,
+            AuthoritativeDamageType.Lightning,
+            0,
+            32) {
+            Behavior = AuthoritativeProjectileBehavior.ChargedBolt,
+            VelocityY = velocityY,
+            OriginalDirection = 0,
+            PathTicks = pathTicks,
+            Speed = 8,
+            ImpactLifetime = 8,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateStationaryChargedBolt(
+        int positionX,
+        int positionY,
+        uint entityId = 0x80000000)
+    {
+        return new AuthoritativeProjectile(
+            entityId,
+            7,
+            0,
+            30,
+            0,
+            positionX,
+            positionY,
+            positionX,
+            positionY,
+            2,
+            AuthoritativeDamageType.Lightning,
+            0,
+            32) {
+            Behavior = AuthoritativeProjectileBehavior.ChargedBolt,
+            OriginalDirection = 0,
+            PathTicks = 1,
+            Speed = 8,
+            ImpactLifetime = 8,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativePlayerState CreateBlockingVictim()
+    {
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        return CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+    }
+
+    private static AuthoritativePlayerClassCatalog LoadShippedPlayerClasses()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                var path = Path.Combine(
+                    directory.FullName,
+                    "server",
+                    "content",
+                    "base",
+                    "classes.tsv");
+                if (File.Exists(path))
+                    return AuthoritativePlayerClassCatalog.LoadTsv(path, File.ReadAllText(path));
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the shipped player-class catalog.");
+    }
+
+    private static AuthoritativePlayerAnimationCatalog LoadShippedPlayerAnimations(
+        AuthoritativePlayerClassCatalog playerClasses)
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                var path = Path.Combine(
+                    directory.FullName,
+                    "server",
+                    "content",
+                    "base",
+                    "class_animations.tsv");
+                if (File.Exists(path)) {
+                    return AuthoritativePlayerAnimationCatalog.LoadTsv(
+                        path,
+                        File.ReadAllText(path),
+                        playerClasses);
+                }
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the shipped player-animation catalog.");
+    }
+
+    private static AuthoritativeItemCatalog LoadShippedItems()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                var path = Path.Combine(
+                    directory.FullName,
+                    "server",
+                    "content",
+                    "base",
+                    "items.tsv");
+                if (File.Exists(path))
+                    return AuthoritativeItemCatalog.LoadTsv(path, File.ReadAllText(path));
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the shipped authoritative item catalog.");
+    }
+
+    private static AuthoritativePlayerState CreatePlayer(
+        int positionX = 0,
+        int positionY = 0,
+        uint levelId = 0,
+        int life = 50,
+        int lifeMaximum = 50,
+        int mana = 0,
+        int manaMaximum = 0,
+        uint entityId = 0,
+        uint abilitySpellId = 0,
+        IReadOnlyList<MemorizedSpellState>? memorizedSpells = null,
+        IReadOnlyList<EquippedStoreItem>? equipment = null,
+        IReadOnlyList<BeltStoreItem>? belt = null,
+        IReadOnlyList<OwnedStoreItem>? inventory = null,
+        IReadOnlyList<int>? inventoryGrid = null,
+        PlayerAttributesState? attributes = null,
+        uint characterClassId = 0,
+        uint characterLevel = 1,
+        OwnedStoreItem? heldItem = null,
+        string characterName = "",
+        uint gold = 100)
+    {
+        return new AuthoritativePlayerState(
+            gold,
+            0,
+            life,
+            mana,
+            manaMaximum,
+            attributes ?? PlayerAttributesState.Zero,
+            equipment ?? [],
+            inventoryGrid ?? Enumerable.Repeat(-1, 40).ToArray(),
+            belt ?? [],
+            positionX,
+            positionY,
+            lifeMaximum,
+            characterLevel,
+            levelId,
+            0,
+            characterClassId,
+            inventory: inventory,
+            abilitySpellId: abilitySpellId,
+            memorizedSpells: memorizedSpells,
+            heldItem: heldItem,
+            characterName: characterName) {
+            EntityId = entityId,
+        };
+    }
+
+    private static void AssertRejected(
+        DiabloCombatIntentResult result,
+        DiabloRuleFailure expectedFailure)
+    {
+        Assert.False(result.Succeeded);
+        Assert.Equal(expectedFailure, result.Failure);
+        Assert.Empty(result.Events);
+    }
+}

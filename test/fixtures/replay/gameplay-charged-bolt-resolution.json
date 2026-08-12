@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/charged-bolt-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "charged-bolt-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 20,
+    "mana_maximum": 20,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 1,
+    "combat_target_hit_points": 30,
+    "combat_target_max_hit_points": 30,
+    "combat_target_lightning_resistance": 25,
+    "combat_target_monster_level": 1,
+    "memorized_spells": [
+      { "spell_id": 30, "level": 2 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 30,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "c0431b478a0b3bc68c9dcc667a4ec1a1eee310185903dee139aaa0a2c4503c99" },
+    { "tick": 5, "state_sha256": "a0cba44b3941f79c05bdcd7d1830aa7252692381d3a748ad6c06437ec5234fc1" }
+  ]
+}

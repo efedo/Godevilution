@@ -7,11 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.35.1" />
-    <PackageReference Include="Grpc.Tools" Version="2.82.0" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="../../../protocol/devilution.proto" GrpcServices="None" Link="Protocol/devilution.proto" />
+    <ProjectReference Include="../Devilution.Data/Devilution.Data.csproj" />
+    <ProjectReference Include="../Devilution.Engine/Devilution.Engine.csproj" />
+    <ProjectReference Include="../Devilution.Server.Diablo/Devilution.Server.Diablo.csproj" />
+    <ProjectReference Include="../Devilution.Server.Host/Devilution.Server.Host.csproj" />
   </ItemGroup>
 </Project>

@@ -6,13 +6,13 @@ namespace Devilution.Server.Tests;
 public sealed class DeterministicPrimitiveTests
 {
     [Fact]
-    public void FixedPointQ6PreservesLegacyRawValuesAndTruncation()
+    public void DiabloFixedPointQ6PreservesLegacyRawValuesAndProjections()
     {
-        var value = FixedPointQ6.FromInt(10) + new FixedPointQ6(32);
+        var raw = DiabloFixedPointQ6.FromWhole(10) + 32;
 
-        Assert.Equal(672, value.Raw);
-        Assert.Equal(10, value.ToIntTruncated());
-        Assert.Equal(new FixedPointQ6(1344), value * 2);
+        Assert.Equal(672, raw);
+        Assert.Equal(10, DiabloFixedPointQ6.ToWholeTruncated(raw));
+        Assert.Equal(11, DiabloFixedPointQ6.ToWholeCeiling(raw));
     }
 
     [Fact]
@@ -26,6 +26,10 @@ public sealed class DeterministicPrimitiveTests
         random = new DiabloRandom(0x12345678);
         Assert.Equal(0, random.GenerateRnd(1));
         Assert.Equal(0x955E76D9U, random.State);
+
+        // Native chooses the high-bit path from the limit, not the rolled value.
+        random = new DiabloRandom(0);
+        Assert.Equal(1, random.GenerateRnd(40000));
     }
 
     [Fact]

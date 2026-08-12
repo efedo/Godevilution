@@ -12,15 +12,15 @@ message Envelope {
 		ServerHello server_hello = 11;
 		CommandBatch command_batch = 20;
 		CommandAck command_ack = 21;
-	Snapshot snapshot = 30;
-	EventBatch event_batch = 31;
-	SnapshotRequest snapshot_request = 32;
-	ProtocolError error = 40;
-}
+		Snapshot snapshot = 30;
+		EventBatch event_batch = 31;
+		SnapshotRequest snapshot_request = 32;
+		ProtocolError error = 40;
+	}
 
-// Requests the latest authoritative state after the client has no unresolved
-// command acknowledgement to consume.
-message SnapshotRequest {}
+	// Requests the latest authoritative state after the client has no unresolved
+	// command acknowledgement to consume.
+	message SnapshotRequest {}
 }
 
 message ClientHello {
@@ -30,6 +30,12 @@ message ClientHello {
 	string resume_token = 4;
 	// Optional additive identity for clients that understand ruleset hashes.
 	string ruleset_identity_hash = 5;
+	// New sessions may request a stable class/archetype ID from active content.
+	// Resumed authoritative state takes precedence over this selection.
+	optional uint32 requested_character_class_id = 6;
+	// Optional native-compatible character identity for a new participant.
+	// Resumed server-owned state takes precedence over this selection.
+	optional string requested_character_name = 7;
 }
 
 message ServerHello {
@@ -39,6 +45,13 @@ message ServerHello {
 	uint32 tick_rate_hz = 4;
 	string session_token = 5;
 	string ruleset_identity_hash = 6;
+	GameMode game_mode = 7;
+}
+
+enum GameMode {
+	GAME_MODE_UNSPECIFIED = 0;
+	GAME_MODE_SINGLE_PLAYER = 1;
+	GAME_MODE_MULTIPLAYER = 2;
 }
 
 message CommandBatch {
@@ -59,14 +72,17 @@ message Command {
 		SellItemRequested sell_item_requested = 15;
 		RepairItemRequested repair_item_requested = 16;
 		RechargeItemRequested recharge_item_requested = 17;
-	IdentifyItemRequested identify_item_requested = 18;
-	MoveInventoryItemRequested move_inventory_item_requested = 19;
-	RefillManaRequested refill_mana_requested = 20;
-	MoveItemRequested move_item_requested = 21;
-	UsePortalRequested use_portal_requested = 22;
+		IdentifyItemRequested identify_item_requested = 18;
+		MoveInventoryItemRequested move_inventory_item_requested = 19;
+		RefillManaRequested refill_mana_requested = 20;
+		MoveItemRequested move_item_requested = 21;
+		UsePortalRequested use_portal_requested = 22;
 		PickupWorldItemRequested pickup_world_item_requested = 23;
-	OperateObjectRequested operate_object_requested = 24;
-	AdvanceQuestRequested advance_quest_requested = 25;
+		OperateObjectRequested operate_object_requested = 24;
+		AdvanceQuestRequested advance_quest_requested = 25;
+		SetFriendlyModeRequested set_friendly_mode_requested = 26;
+		RestartTownRequested restart_town_requested = 27;
+		DropHeldItemRequested drop_held_item_requested = 28;
 	}
 }
 
@@ -74,6 +90,8 @@ message MoveRequested {
 	int32 direction_x = 1;
 	int32 direction_y = 2;
 }
+
+message RestartTownRequested {}
 
 message AttackRequested {
 	uint32 target_entity_id = 1;
@@ -84,6 +102,19 @@ message CastRequested {
 	uint32 target_entity_id = 2;
 	int32 target_x = 3;
 	int32 target_y = 4;
+	// Zero preserves additive compatibility: the server infers a deterministic
+	// source only from authoritative player state. Item-backed casts name the
+	// exact item to consume or decrement.
+	CastSourceKind source = 5;
+	PlayerItemReference source_item = 6;
+}
+
+enum CastSourceKind {
+	CAST_SOURCE_KIND_UNSPECIFIED = 0;
+	CAST_SOURCE_KIND_ABILITY = 1;
+	CAST_SOURCE_KIND_MEMORIZED_SPELL = 2;
+	CAST_SOURCE_KIND_CHARGED_ITEM = 3;
+	CAST_SOURCE_KIND_CONSUMABLE_ITEM = 4;
 }
 
 message OpenStoreRequested {
@@ -103,16 +134,30 @@ message SellItemRequested {
 message RepairItemRequested {
 	uint32 inventory_index = 1;
 	PlayerItemReference item = 2;
+	// Zero preserves paid vendor repair. Class ability requests are validated
+	// against the player's authoritative loadout.
+	ItemServiceSourceKind source = 3;
 }
 
 message RechargeItemRequested {
 	uint32 inventory_index = 1;
 	PlayerItemReference item = 2;
+	// Zero preserves paid vendor recharge. Class ability requests are validated
+	// against the player's authoritative loadout.
+	ItemServiceSourceKind source = 3;
 }
 
 message IdentifyItemRequested {
 	uint32 inventory_index = 1;
 	PlayerItemReference item = 2;
+	// Zero preserves the existing paid vendor-service behavior. Class ability
+	// requests are validated against the player's authoritative loadout.
+	ItemServiceSourceKind source = 3;
+}
+
+enum ItemServiceSourceKind {
+	ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED = 0;
+	ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY = 1;
 }
 
 message MoveInventoryItemRequested {
@@ -137,12 +182,22 @@ message PickupWorldItemRequested {
 	uint32 item_entity_id = 1;
 }
 
+message DropHeldItemRequested {
+	int32 target_x = 1;
+	int32 target_y = 2;
+}
+
 message OperateObjectRequested {
 	uint32 object_entity_id = 1;
 }
 
 message AdvanceQuestRequested {
 	uint32 quest_id = 1;
+}
+
+// Explicit state, rather than a toggle, keeps retries idempotent.
+message SetFriendlyModeRequested {
+	bool friendly_mode = 1;
 }
 
 message PlayerItemReference {
@@ -198,6 +253,8 @@ message Snapshot {
 	repeated ObjectSnapshot objects = 7;
 	repeated QuestSnapshot quests = 8;
 	repeated ProjectileSnapshot projectiles = 9;
+	// Current state of the module-owned native-compatible gameplay RNG.
+	uint32 random_state = 10;
 }
 
 message StoreSnapshot {
@@ -232,6 +289,83 @@ message PlayerSnapshot {
 	uint32 character_level = 16;
 	repeated StatusEffectSnapshot status_effects = 17;
 	uint32 level_id = 18;
+	// Stable ID from the active gameplay module's external class catalog.
+	uint32 character_class_id = 19;
+	// Native-compatible class skill and learned spell levels. Zero ability means
+	// no class skill; learned spell IDs and levels are always non-zero.
+	uint32 ability_spell_id = 20;
+	repeated PlayerSpellLevelSnapshot memorized_spells = 21;
+	// False is the native default friendly mode, preserving additive compatibility.
+	bool hostile_mode = 22;
+	// Server-owned native action mode and its first inactive tick. Stand/zero
+	// preserve additive compatibility with snapshots written before these fields.
+	PlayerCombatMode combat_mode = 23;
+	uint64 combat_mode_end_tick = 24;
+	// Complete in-progress action state. Absence preserves compatibility with
+	// snapshots created before authoritative animation-frame scheduling.
+	PlayerActionSnapshot current_action = 25;
+	// Item carried by the presentation cursor. It is not part of inventory Gold.
+	ItemSnapshot held_item = 26;
+	// Native eight-way facing, owned by the authoritative simulation.
+	PlayerDirection facing_direction = 27;
+	// Native-compatible character identity, owned and persisted by the server.
+	string character_name = 28;
+	// Persistent server-owned native Mana Shield defense state.
+	bool mana_shield_active = 29;
+}
+
+enum PlayerDirection {
+	PLAYER_DIRECTION_SOUTH = 0;
+	PLAYER_DIRECTION_SOUTH_WEST = 1;
+	PLAYER_DIRECTION_WEST = 2;
+	PLAYER_DIRECTION_NORTH_WEST = 3;
+	PLAYER_DIRECTION_NORTH = 4;
+	PLAYER_DIRECTION_NORTH_EAST = 5;
+	PLAYER_DIRECTION_EAST = 6;
+	PLAYER_DIRECTION_SOUTH_EAST = 7;
+}
+
+enum PlayerCombatMode {
+	PLAYER_COMBAT_MODE_STAND = 0;
+	PLAYER_COMBAT_MODE_WALK_NORTHWARDS = 1;
+	PLAYER_COMBAT_MODE_WALK_SOUTHWARDS = 2;
+	PLAYER_COMBAT_MODE_WALK_SIDEWAYS = 3;
+	PLAYER_COMBAT_MODE_ATTACK = 4;
+	PLAYER_COMBAT_MODE_RANGED_ATTACK = 5;
+	PLAYER_COMBAT_MODE_BLOCK = 6;
+	PLAYER_COMBAT_MODE_GOT_HIT = 7;
+	PLAYER_COMBAT_MODE_DEATH = 8;
+	PLAYER_COMBAT_MODE_SPELL = 9;
+	PLAYER_COMBAT_MODE_NEW_LEVEL = 10;
+	PLAYER_COMBAT_MODE_QUIT = 11;
+}
+
+enum PlayerActionKind {
+	PLAYER_ACTION_KIND_UNSPECIFIED = 0;
+	PLAYER_ACTION_KIND_MOVE = 1;
+	PLAYER_ACTION_KIND_ATTACK = 2;
+	PLAYER_ACTION_KIND_CAST = 3;
+	PLAYER_ACTION_KIND_DEATH = 4;
+	PLAYER_ACTION_KIND_LEVEL_TRANSITION = 5;
+	PLAYER_ACTION_KIND_RESTART_TOWN = 6;
+}
+
+message PlayerActionSnapshot {
+	PlayerActionKind kind = 1;
+	uint64 started_at_tick = 2;
+	uint64 effect_tick = 3;
+	uint64 ready_tick = 4;
+	uint64 end_tick = 5;
+	bool effect_applied = 6;
+	int32 direction_x = 7;
+	int32 direction_y = 8;
+	uint32 target_entity_id = 9;
+	CastRequested cast = 10;
+}
+
+message PlayerSpellLevelSnapshot {
+	uint32 spell_id = 1;
+	uint32 level = 2;
 }
 
 message MonsterSnapshot {
@@ -249,6 +383,20 @@ message MonsterSnapshot {
 	int32 fire_resistance = 12;
 	int32 lightning_resistance = 13;
 	int32 magic_resistance = 14;
+	int32 monster_level = 15;
+	// Exact native-compatible 26.6 values. Legacy readers may use the rounded-up
+	// whole-point projections above.
+	int32 hit_points_q6 = 16;
+	int32 max_hit_points_q6 = 17;
+	// Native walking keeps the origin positively occupied and the adjacent
+	// destination negatively occupied until movement completes. Petrification
+	// makes both occupied cells missile-hittable.
+	bool moving = 18;
+	int32 future_position_x = 19;
+	int32 future_position_y = 20;
+	bool petrified = 21;
+	// Immutable content capability persisted for deterministic future casts.
+	bool stone_curse_immune = 22;
 }
 
 message WorldItemSnapshot {
@@ -271,6 +419,10 @@ message ObjectSnapshot {
 	uint32 quest_id = 7;
 	int32 effect_kind = 8;
 	int32 effect_amount = 9;
+	// Native-compatible object collision and persistent breakage state.
+	bool missile_passable = 10;
+	bool breakable = 11;
+	bool destroyed = 12;
 }
 
 message QuestSnapshot {
@@ -295,12 +447,37 @@ message ProjectileSnapshot {
 	int32 damage_type = 11;
 	int32 area_radius = 12;
 	uint32 remaining_ticks = 13;
+	int32 behavior = 14;
+	int32 phase = 15;
+	int32 start_x = 16;
+	int32 start_y = 17;
+	int32 traveled_x = 18;
+	int32 traveled_y = 19;
+	int32 velocity_x = 20;
+	int32 velocity_y = 21;
+	int32 original_direction = 22;
+	int32 path_index = 23;
+	int32 path_ticks = 24;
+	int32 speed = 25;
+	int32 impact_lifetime = 26;
+	int32 resistant_damage_divisor = 27;
+	// Stable occupant already checked while this projectile remained on a tile.
+	uint32 last_collision_target_entity_id = 28;
+	// Effective spell level captured when this projectile lifecycle was created.
+	int32 effective_spell_level = 29;
 }
 
 message StatusEffectSnapshot {
 	uint32 effect_id = 1;
 	uint32 remaining_ticks = 2;
 	int32 magnitude = 3;
+	StatusEffectBehavior behavior = 4;
+}
+
+enum StatusEffectBehavior {
+	STATUS_EFFECT_BEHAVIOR_UNSPECIFIED = 0;
+	STATUS_EFFECT_BEHAVIOR_INFRAVISION = 1;
+	STATUS_EFFECT_BEHAVIOR_SEARCH = 2;
 }
 
 message ItemSnapshot {
@@ -373,6 +550,10 @@ message ItemStateSnapshot {
 	// one-cell default for older clients and content tables.
 	uint32 inventory_width = 57;
 	uint32 inventory_height = 58;
+	// Runtime-authored presentation identity for dynamic items such as PvP ears.
+	string base_name = 59;
+	string identified_name = 60;
+	optional int32 native_cursor_graphic = 61;
 }
 
 message PlayerAttributesSnapshot {
@@ -416,6 +597,8 @@ message DamageEvent {
 	uint32 source_entity_id = 1;
 	uint32 target_entity_id = 2;
 	int32 amount = 3;
+	// Exact native-compatible 26.6 damage; amount remains a legacy projection.
+	int32 amount_q6 = 4;
 }
 
 message ExperienceEvent {
@@ -425,7 +608,10 @@ message ExperienceEvent {
 
 message HealingEvent {
 	uint32 target_entity_id = 1;
+	// Legacy native-resource amount retained for readers predating amount_q6.
 	int32 amount = 2;
+	// Exact authoritative healing in native Q6 resource units.
+	int32 amount_q6 = 3;
 }
 
 message ProtocolError {

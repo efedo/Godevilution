@@ -13,6 +13,11 @@ public sealed class ServerHostTests
         Assert.Equal(IPAddress.Loopback, ServerHostOptions.Defaults.BindAddress);
         Assert.Equal(6113, ServerHostOptions.Defaults.Port);
         Assert.Equal(20U, ServerHostOptions.Defaults.TickRateHz);
+        Assert.Null(ServerHostOptions.Defaults.StartingGold);
+        Assert.Null(ServerHostOptions.Defaults.StartingLife);
+        Assert.Null(ServerHostOptions.Defaults.StartingMana);
+        Assert.Null(ServerHostOptions.Defaults.RandomSeed);
+        Assert.Equal(AuthoritativeGameMode.Multiplayer, ServerHostOptions.Defaults.GameMode);
     }
 
     [Fact]
@@ -24,10 +29,18 @@ public sealed class ServerHostTests
             "--content-root", "content/custom",
             "--content-id", "modded",
             "--content-version", "2.0.0",
+            "--content-overlay", "content/mod-a",
+            "--content-overlay", "content/mod-b",
+            "--module-package", "modules/rules-a",
+            "--module-package", "modules/rules-b",
             "--build-id", "test-server",
             "--protocol-version", "0.2.0",
             "--tick-rate", "30",
-            "--starting-gold", "900"],
+            "--starting-gold", "900",
+            "--starting-life", "4480",
+            "--starting-mana", "640",
+            "--game-mode", "single-player",
+            "--random-seed", "305419896"],
             out var options,
             out var error);
 
@@ -37,8 +50,14 @@ public sealed class ServerHostTests
         Assert.Equal("content/custom", options.ContentRoot);
         Assert.Equal("modded", options.ContentId);
         Assert.Equal("2.0.0", options.ContentVersion);
+        Assert.Equal(["content/mod-a", "content/mod-b"], options.ContentOverlayRoots);
+        Assert.Equal(["modules/rules-a", "modules/rules-b"], options.GameplayModulePackageRoots);
         Assert.Equal(30U, options.TickRateHz);
-        Assert.Equal(900U, options.StartingGold);
+        Assert.Equal(900U, options.StartingGold!.Value);
+        Assert.Equal(4480, options.StartingLife);
+        Assert.Equal(640, options.StartingMana);
+        Assert.Equal(AuthoritativeGameMode.SinglePlayer, options.GameMode);
+        Assert.Equal(305419896U, options.RandomSeed);
     }
 
     [Theory]
@@ -46,6 +65,10 @@ public sealed class ServerHostTests
     [InlineData("--port", "65536")]
     [InlineData("--tick-rate", "0")]
     [InlineData("--bind", "not-an-address")]
+    [InlineData("--starting-life", "-1")]
+    [InlineData("--starting-mana", "-1")]
+    [InlineData("--random-seed", "4294967296")]
+    [InlineData("--game-mode", "cooperative")]
     [InlineData("--unknown", "value")]
     public void RejectsInvalidOptions(string name, string value)
     {

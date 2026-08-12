@@ -1,0 +1,97 @@
+using Devilution.Diablo;
+using Xunit;
+
+namespace Devilution.Diablo.Tests;
+
+public sealed class AuthoritativeMonsterCatalogTests
+{
+    [Fact]
+    public void LoadsExternalEncounterDefinitionsInStableEntityOrder()
+    {
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t1\t2\t4\t5\t20\t25\t3\n");
+
+        var target = Assert.Single(catalog.Targets);
+        Assert.Equal(9U, target.EntityId);
+        Assert.Equal(1U, target.MonsterId);
+        Assert.Equal(2U, target.LevelId);
+        Assert.Equal(25, target.MaxHitPoints);
+        Assert.False(target.StoneCurseImmune);
+    }
+
+    [Fact]
+    public void LoadsAndValidatesStoneCurseImmunity()
+    {
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tstone_curse_immune\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t1\t2\t4\t5\t20\t25\t3\t1\n");
+
+        Assert.True(Assert.Single(catalog.Targets).StoneCurseImmune);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.LoadTsv(
+                "monsters.tsv",
+                header + "9\t1\t2\t4\t5\t20\t25\t3\t2\n"));
+    }
+
+    [Fact]
+    public void RejectsDuplicateMonsterEntityIds()
+    {
+        var targets = new[] {
+            new AuthoritativeCombatTarget(9, 0, 0, 10),
+            new AuthoritativeCombatTarget(9, 1, 0, 10),
+        };
+
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterCatalog(targets));
+    }
+
+    [Fact]
+    public void LoadsOptionalDropDefinitions()
+    {
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\n");
+
+        var drop = Assert.Single(catalog.Targets).Drop;
+        Assert.NotNull(drop);
+        Assert.Equal(6001U, drop.ItemSeed);
+    }
+
+    [Fact]
+    public void GeneratesCatalogBackedDropState()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ]);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t7\t1\n",
+            items);
+
+        Assert.Equal(7, Assert.Single(catalog.Targets).Drop!.State.ItemIndex);
+        Assert.Equal(4, catalog.Targets[0].Drop!.State.MinDamage);
+    }
+
+    [Fact]
+    public void GeneratesUniqueCatalogBackedDropState()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Ember Blade", 7, 1, 3650, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ], uniqueItems: uniques);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_unique_item_id\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t3650\t1001\t1\n",
+            items,
+            uniques);
+
+        Assert.Equal(1001, Assert.Single(catalog.Targets).Drop!.State.UniqueId);
+    }
+}

@@ -1,0 +1,256 @@
+using Xunit;
+
+namespace Devilution.Diablo.Tests;
+
+public sealed class AuthoritativePlayerClassCatalogTests
+{
+    [Fact]
+    public void ShippedCatalogPreservesBaseAndHellfireClassMetadata()
+    {
+        var catalog = LoadShippedCatalog();
+
+        Assert.Equal(6, catalog.Definitions.Count);
+        Assert.Equal("warrior", catalog.Default.Symbol);
+        Assert.Equal(0U, catalog.Default.ClassId);
+        Assert.Equal(200, catalog.Default.SelfHealingSpellPercent);
+        Assert.Equal(200, catalog.Default.HealOtherSpellPercent);
+        Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
+        Assert.Equal(
+            new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            catalog.Default.CreateStartingAttributes());
+
+        var monk = catalog.Resolve("monk");
+        Assert.Equal(3U, monk.ClassId);
+        Assert.Equal(DiabloPlayerClassAvailability.Hellfire, monk.Availability);
+        Assert.Equal(352, monk.ManaAdjustmentQ6);
+        Assert.Equal(96, monk.ItemLifePerVitalityQ6);
+        Assert.Equal(DiabloPlayerClassFlags.FlexibleBlock, monk.Flags);
+        Assert.Equal(25, monk.SpellManaReductionPercent);
+        Assert.Equal(25, monk.HellfireSpellManaReductionPercent);
+        Assert.Equal(200, monk.SelfHealingSpellPercent);
+        Assert.Equal(300, monk.HealOtherSpellPercent);
+
+        var sorcerer = catalog.Resolve("sorcerer");
+        Assert.Equal(0, sorcerer.SpellManaReductionPercent);
+        Assert.Equal(50, sorcerer.HellfireSpellManaReductionPercent);
+        Assert.Equal(100, sorcerer.SelfHealingSpellPercent);
+        Assert.Equal(100, sorcerer.HealOtherSpellPercent);
+        Assert.Equal(19, sorcerer.PvpEarCursorGraphic);
+
+        var bard = catalog.Resolve("bard");
+        Assert.Equal(DiabloPlayerClassAvailability.HellfireHidden, bard.Availability);
+        Assert.Equal(DiabloPlayerClassFlags.DualWield, bard.Flags);
+        Assert.Equal(112, bard.ItemManaPerMagicQ6);
+        Assert.Equal(150, bard.SelfHealingSpellPercent);
+        Assert.Equal(150, bard.HealOtherSpellPercent);
+        Assert.Equal(21, bard.PvpEarCursorGraphic);
+
+        var barbarian = catalog.Resolve("barbarian");
+        Assert.Equal(5U, barbarian.ClassId);
+        Assert.Equal(0, barbarian.MaximumMagic);
+        Assert.Equal(160, barbarian.ItemLifePerVitalityQ6);
+        Assert.Equal(200, barbarian.SelfHealingSpellPercent);
+        Assert.Equal(200, barbarian.HealOtherSpellPercent);
+        Assert.Equal(
+            DiabloPlayerClassFlags.CriticalStrike
+                | DiabloPlayerClassFlags.IronSkin
+                | DiabloPlayerClassFlags.NaturalResistance,
+            barbarian.Flags);
+    }
+
+    [Fact]
+    public void CatalogRequiresExactlyOneDeclarativeDefault()
+    {
+        var source = ReadShippedTable();
+        var withoutDefault = source.Replace(
+            "0\twarrior\tWarrior\tBaseGame\ttrue\t",
+            "0\twarrior\tWarrior\tBaseGame\tfalse\t",
+            StringComparison.Ordinal);
+        var withTwoDefaults = source.Replace(
+            "1\trogue\tRogue\tBaseGame\tfalse\t",
+            "1\trogue\tRogue\tBaseGame\ttrue\t",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", withoutDefault));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", withTwoDefaults));
+    }
+
+    [Fact]
+    public void ShippedClassesCalculateNativeStartingLifeAndManaInQ6Units()
+    {
+        var catalog = LoadShippedCatalog();
+        var expected = new Dictionary<string, (int Life, int Mana)> {
+            ["warrior"] = (4480, 640),
+            ["rogue"] = (2880, 1440),
+            ["sorcerer"] = (1920, 4480),
+            ["monk"] = (2880, 1440),
+            ["bard"] = (2880, 2240),
+            ["barbarian"] = (4480, 0),
+        };
+
+        foreach (var (symbol, resources) in expected) {
+            var definition = catalog.Resolve(symbol);
+            Assert.Equal(
+                resources.Life,
+                definition.CalculateBaseLifeQ6(1, definition.BaseVitality));
+            Assert.Equal(
+                resources.Mana,
+                definition.CalculateBaseManaQ6(1, definition.BaseMagic));
+        }
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            catalog.Default.CalculateBaseLifeQ6(0, catalog.Default.BaseVitality));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            catalog.Default.CalculateBaseManaQ6(1, catalog.Default.MaximumMagic + 1));
+    }
+
+    [Fact]
+    public void CatalogRejectsUnstableIdentityAndUnknownMetadata()
+    {
+        var source = ReadShippedTable();
+        var nonContiguousIds = source.Replace(
+            "5\tbarbarian\t",
+            "6\tbarbarian\t",
+            StringComparison.Ordinal);
+        var duplicateId = source.Replace(
+            "1\trogue\t",
+            "0\trogue\t",
+            StringComparison.Ordinal);
+        var duplicateSymbol = source.Replace(
+            "1\trogue\tRogue\t",
+            "1\twarrior\tRogue\t",
+            StringComparison.Ordinal);
+        var invalidSymbol = source.Replace(
+            "0\twarrior\t",
+            "0\tWarrior!\t",
+            StringComparison.Ordinal);
+        var unknownAvailability = source.Replace(
+            "\tHellfire\tfalse\t",
+            "\tExpansion\tfalse\t",
+            StringComparison.Ordinal);
+        var unknownFlag = source.Replace(
+            "\tCriticalStrike\t30\t",
+            "\tUnknownPower\t30\t",
+            StringComparison.Ordinal);
+        var numericAvailability = source.Replace(
+            "\tHellfire\tfalse\t",
+            "\t1\tfalse\t",
+            StringComparison.Ordinal);
+        var numericFlag = source.Replace(
+            "\tCriticalStrike\t30\t",
+            "\t1\t30\t",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", nonContiguousIds));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", duplicateId));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", duplicateSymbol));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidSymbol));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", unknownAvailability));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", unknownFlag));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", numericAvailability));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", numericFlag));
+    }
+
+    [Fact]
+    public void CatalogRejectsSchemaDriftAndInvalidNativeRanges()
+    {
+        var source = ReadShippedTable();
+        var changedSchema = source.Replace(
+            "class_id\tsymbol\t",
+            "id\tsymbol\t",
+            StringComparison.Ordinal);
+        var invalidAttributeBounds = source.Replace(
+            "\t30\t10\t20\t25\t250\t",
+            "\t251\t10\t20\t25\t250\t",
+            StringComparison.Ordinal);
+        var invalidPercentage = source.Replace(
+            "\t100\t30\t50\t70\t60\t",
+            "\t100\t101\t50\t70\t60\t",
+            StringComparison.Ordinal);
+        var invalidQ6 = source.Replace(
+            "\t1152\t-64\t",
+            "\t40000\t-64\t",
+            StringComparison.Ordinal);
+        var invalidHealingPercentage = source.Replace(
+            "\t0\t0\t200\t200\t20",
+            "\t0\t0\t401\t200\t20",
+            StringComparison.Ordinal);
+        var invalidHealOtherPercentage = source.Replace(
+            "\t0\t0\t200\t200\t20",
+            "\t0\t0\t200\t401\t20",
+            StringComparison.Ordinal);
+        var invalidEarCursor = source.Replace(
+            "\t0\t0\t200\t200\t20",
+            "\t0\t0\t200\t200\t256",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidAttributeBounds));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidPercentage));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidQ6));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidHealingPercentage));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidHealOtherPercentage));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidEarCursor));
+    }
+
+    private static AuthoritativePlayerClassCatalog LoadShippedCatalog()
+    {
+        return AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            ReadShippedTable());
+    }
+
+    private static string ReadShippedTable()
+    {
+        return File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "classes.tsv"));
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] {
+                configuredRoot!,
+                Directory.GetCurrentDirectory(),
+                AppContext.BaseDirectory,
+            };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
+    }
+}

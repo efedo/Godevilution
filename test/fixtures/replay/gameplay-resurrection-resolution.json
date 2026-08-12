@@ -1,0 +1,65 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/resurrection-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 18,
+    "attack_action_frame": 10,
+    "casting_frames": 16,
+    "casting_action_frame": 12,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 1000,
+    "mana": 3000,
+    "mana_maximum": 3000,
+    "position_x": 1,
+    "position_y": 1,
+    "character_class": 1,
+    "character_level": 5,
+    "memorized_spells": [
+      { "spell_id": 32, "level": 5 }
+    ],
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 0,
+      "life_maximum": 1000,
+      "position_x": 10,
+      "position_y": 10,
+      "combat_mode": 8
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 32,
+        "target_entity_id": 8
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "603eda435993dc5dec0073cd166c1971f7c5e014a52cec9aaf5082d3762771f5" },
+    { "tick": 13, "state_sha256": "16ddee372e3bceec058bada2a277445b2cc819eab72707fe4f8ea8dabbfe0392" },
+    { "tick": 16, "state_sha256": "63e8469e44bc2ecdd02f1fee26355b1c18cb50f623d3ae1a7e4fbdbc7da6fd87" },
+    { "tick": 27, "state_sha256": "424ab329c2939e8474f192f26703269ed1a34af7b3983f2f74103fb153ea75e8" },
+    { "tick": 28, "state_sha256": "938484a595aa730884486ab17d0d9d9b6c0273f64fac8409f613a78bf31cf327" }
+  ]
+}

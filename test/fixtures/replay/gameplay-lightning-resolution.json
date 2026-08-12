@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/lightning-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2560,
+    "mana": 1000,
+    "mana_maximum": 1000,
+    "magic": 35,
+    "character_class": 2,
+    "character_level": 12,
+    "position_x": 0,
+    "position_y": 0,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_lightning_resistance": 25,
+    "combat_target_monster_level": 1,
+    "combat_target_petrified": true,
+    "memorized_spells": [
+      { "spell_id": 3, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 3,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "67a427687db16ab61942da5ed16410abc70e7dfe1df8a435939b6ad0f2e0b164" },
+    { "tick": 2, "state_sha256": "8615d4c67a4f05cf9b0b04e34ffd48f37d145fe0f1168ee65a4730c7ff02409b" },
+    { "tick": 8, "state_sha256": "a153ffbdd25d07b1482dcd920fcb5daa6d199482a518ce38ff63e7fd55d964d7" },
+    { "tick": 9, "state_sha256": "e52b588709c2e17cef67975e073845effbc8d5d9df00f63966c0b99bff0ad328" }
+  ]
+}

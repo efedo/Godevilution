@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/gold-pickup-overflow",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "a4f2d11cb54e18c5df07eae670a7ab9ab739f5efbd83dc84fcefe956315e97"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 0,
+  "initial_state": {
+    "player": "A",
+    "gold": 4990,
+    "gold_stack_seed": 123,
+    "gold_stack_cell": 0,
+    "inventory_filler_count": 39,
+    "experience": 0,
+    "life": 40,
+    "mana": 0,
+    "mana_maximum": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 0,
+    "world_item_entity_id": 20,
+    "world_item_seed": 42,
+    "world_item_price": 75
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "PickupWorldItem",
+      "payload": { "item_entity_id": 20 }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 2,
+      "server_receipt_sequence": 2,
+      "kind": "DropHeldItem",
+      "payload": { "target_x": 1, "target_y": 0 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "67f6f13aff1172e8f4a68defb6f6f8d7536500a2422d76833acdba1fa03f6f08" },
+    { "tick": 2, "state_sha256": "61514c47aef9624965b42fb75f1043ae1744dfeaf90264eed1b36fa36c743a73" }
+  ]
+}

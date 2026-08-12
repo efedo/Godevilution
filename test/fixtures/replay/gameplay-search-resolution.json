@@ -1,0 +1,62 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/search-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1000,
+    "life_maximum": 1000,
+    "mana": 960,
+    "mana_maximum": 960,
+    "position_x": 1,
+    "position_y": 1,
+    "level_id": 1,
+    "character_class": 3,
+    "character_level": 5,
+    "ability_spell_id": 46
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 46,
+        "target_entity_id": 0,
+        "target_x": 1,
+        "target_y": 1,
+        "source": "Ability"
+      }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 1,
+      "server_receipt_sequence": 2,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 46,
+        "target_entity_id": 0,
+        "target_x": 1,
+        "target_y": 1,
+        "source": "Ability"
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 0, "state_sha256": "e5376c0ec1a5e9271185747f0df71b828dea378d7c1be7576a9a4676eb16cc45" },
+    { "tick": 1, "state_sha256": "a8a2c8189befc4fd1d36e292e9bb1374c6f5d3b6f01e7939d29e2be240e71927" },
+    { "tick": 509, "state_sha256": "776683391b3f5fdbbd7ef29ccf9ac53c7a424308cf0e458cd72a5d5fad20dedd" },
+    { "tick": 510, "state_sha256": "890b70acfa08e728bc2699ca6cc2d99cf23f48c0253eeb20c51e66acede7998f" }
+  ]
+}

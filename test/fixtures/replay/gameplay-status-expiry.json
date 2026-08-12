@@ -22,7 +22,10 @@
     "level_id": 0,
     "status_effect_id": 7,
     "status_duration": 10,
-    "status_magnitude": 3
+    "status_magnitude": 3,
+    "memorized_spells": [
+      { "spell_id": 2, "level": 1 }
+    ]
   },
   "commands": [
     {
@@ -41,7 +44,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "05505615c152fd7c2d776f3f425aca71f37055236dd2aecfa67bc4e43dc2e176" },
-    { "tick": 11, "state_sha256": "9fa1305aa3a27f7269590490903a9b288b5193ccd159add178a958ead0e45a78" }
+    { "tick": 1, "state_sha256": "5e250eab1bb461b697fb53dd8abbc0070b9cb7572879f1da5343f34075dd82ef" },
+    { "tick": 11, "state_sha256": "232ae9a80bc7734600f2617cffa7df47a65c66674a42dafd24ff4bfddfc3688d" }
   ]
 }

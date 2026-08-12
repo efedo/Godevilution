@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/player-restart-town",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 16,
+    "attack_action_frame": 9,
+    "casting_frames": 20,
+    "casting_action_frame": 14,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 5,
+    "life_maximum": 640,
+    "mana": 1280,
+    "mana_maximum": 1280,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_class": 0,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_attack_damage": 5,
+    "combat_target_aggro_range": 2
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 1 }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 42,
+      "server_receipt_sequence": 2,
+      "kind": "RestartTown",
+      "payload": {}
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "cfc73a42d212e335735e12cec2b958c4e730b3fbbf516d823ef44bbc32c4ece6" },
+    { "tick": 2, "state_sha256": "be84cb85d6ad8eb2e55dbe65d832667bf2fc0d517f3e3e46376dc43221e6e626" },
+    { "tick": 40, "state_sha256": "be84cb85d6ad8eb2e55dbe65d832667bf2fc0d517f3e3e46376dc43221e6e626" },
+    { "tick": 41, "state_sha256": "db9be07409d9ec50f6919e239cecccf08690011d86bf5476c69f198eda0fbd0c" },
+    { "tick": 42, "state_sha256": "f8df534860f270ce4e3fb8d0c5933329f3a82e9c785a7007323f1cda52f33b27" },
+    { "tick": 43, "state_sha256": "3bec114b5ae4e96099e9045b1ede799c11bd6a64c3edd368d9d8ee5bcba1327a" }
+  ]
+}

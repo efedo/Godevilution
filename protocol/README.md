@@ -1,73 +1,227 @@
-# Protocol package
+# Protocol Package
 
-`devilution.proto` is the canonical, transport-independent Protobuf schema
-for the C++ client, C# authoritative server, and future Godot client. The
-initial wire transport is TCP with a four-byte little-endian length-prefixed
-`Envelope` message. The server rejects empty or oversized envelopes; the
-current maximum payload is 1 MiB.
+`devilution.proto` is the canonical, transport-independent Protobuf schema for
+the native client, C# authoritative server, and Godot C# client. The initial
+transport is TCP: each serialized `Envelope` is prefixed by a four-byte
+little-endian payload length. Empty payloads and payloads larger than 1 MiB are
+rejected.
 
-`server/src/Devilution.Server` generates C# bindings from this schema at build
-time. The legacy C++ build does not generate or link Protobuf by default. An
-opt-in configure with `-DDEVILUTIONX_ENABLE_AUTHORITATIVE_CLIENT=ON` generates
-C++ bindings into the build tree and builds the standalone authoritative client
-against the optional `authoritative-client` vcpkg feature; the legacy packet
-transport remains the default.
+`protocol/Devilution.Protocol/Devilution.Protocol.csproj` is the only managed
+binding generator. The C# server host, Diablo adapter, Godot transport, and
+tests all reference that assembly, so a process contains one identity for every
+generated wire type. The native build generates C++ bindings only when
+configured with:
 
-## Compatibility rules
+```powershell
+cmake -S . -B build-authoritative -DDEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON
+```
 
-- `devilution.protocol.v1` is the initial package namespace. Breaking changes
-  require a new package version and a new `protocol_schema_version` value in
-  the handshake messages.
+That option activates the `authoritative-client` vcpkg manifest feature, which
+provides Protobuf for the native adapter. The legacy network provider remains
+the default when the option is off. See `docs/ai/msvc-build.md` for the verified
+Windows toolchain command.
+
+## Compatibility Rules
+
+- Package `devilution.protocol.v1` and schema version `0.1.0` identify the
+  current contract.
 - Existing field numbers and meanings are immutable. Removed fields must be
-  reserved rather than reused.
-- New fields and new `oneof` alternatives must be safely ignorable by older
-  peers. Required behavior is negotiated through the handshake, not inferred
-  from a missing field.
-- `client_sequence` is scoped to a session and is reused for retries. The
-  server returns the original result for duplicate commands.
-- Store transactions use explicit intent messages for opening, purchasing,
-  selling, repairing, recharging, identifying, and moving inventory items;
-  clients never send the resulting gold, durability, charges, or placement.
-- The server assigns `server_receipt_sequence` and reports the authoritative
-  `applied_tick`. Late-command acceptance, rejection, or rescheduling is
-  explicit in `CommandResult.status`.
-- Content manifest identity is part of the handshake. A mismatch is a
-  protocol error, not a best-effort compatibility mode.
-- A successful handshake returns a server-issued `session_token`. A reconnect
-  may present that token to resume the command ledger and authoritative entity
-  identity; an unknown token creates a new session.
-- `Snapshot` carries the authoritative tick and per-player state. The initial
-  store projection includes gold, experience, life, mana, primary attributes,
-  active store, equipment slots, purchased item fields, and inventory-grid
-  cells.
-  `state_sha256` hashes those authoritative fields using fixed-width
-  little-endian integers, length-prefixed UTF-8 strings, and SHA-256; future
-  state fields must extend the canonical order explicitly.
-- `ItemSnapshot.state` carries the current core item state used by the store
-  vertical slice. Localized names and other presentation-only values are not
-  part of the projection.
+  reserved, and breaking changes require a new package and schema version.
+- Additive fields and `oneof` alternatives must be safe for older peers to
+  ignore. Required behavior is negotiated during the handshake.
+- `client_sequence` is scoped to a resumable session. Retrying a command with
+  the same sequence returns the recorded result without applying it twice.
+- The server assigns `server_receipt_sequence` and `applied_tick`; command
+  acknowledgements explicitly report acceptance, rescheduling, rejection, or
+  duplication.
+- Clients submit intent. The server owns all resulting resources, damage,
+  placement, movement, world state, and persistence.
+- `CastRequested.source` declares an ability, memorized spell, charged item, or
+  consumable item. Item sources include an exact `PlayerItemReference`; the
+  server validates ownership and consumes mana, one charge, or the item only
+  after full cast validation. Source zero is compatibility inference from
+  authoritative owned state, never permission to cast an unowned spell.
+- `IdentifyItemRequested.source` distinguishes the Bard's zero-cost class skill
+  from the existing paid vendor service. Value zero retains vendor behavior for
+  older peers; class-ability requests must match the server-owned loadout and
+  exact owned item reference.
+- `RepairItemRequested.source` applies the same additive distinction to the
+  Warrior's class skill. Value zero remains full paid vendor repair; the class
+  source authorizes only the server's native random repair-and-degradation rule.
+- `RechargeItemRequested.source` distinguishes the Sorcerer's Staff Recharge
+  skill from paid vendor recharge. Value zero retains vendor behavior; the
+  class source authorizes only the server-owned native charge-restoration and
+  maximum-charge-loss rule for the exact selected staff.
+- `ClientHello.requested_character_class_id` is an optional new-session
+  selection from the active game module's validated catalog. When it is absent,
+  the module selects its content default. Existing in-memory or restored save
+  state takes precedence on resume, and an unknown requested ID is rejected.
+- `ClientHello.requested_character_name` is an optional new-session creation
+  hint. The Diablo module applies native multiplayer name validation before
+  creating state. Resumed in-memory or saved state keeps its existing name;
+  reconnect hints cannot rename a character.
+- `SetFriendlyModeRequested.friendly_mode` sets explicit state rather than
+  toggling it, so a retry is idempotent. `PlayerSnapshot.hostile_mode` is the
+  inverse projection: its absent/false Protobuf default preserves native
+  friendly mode for older peers.
+- `RestartTownRequested` is the empty command intent at field 27. The server
+  admits it only for terminal Death after the timed death action has cleared,
+  then owns the content-selected level, position, Q6 life, zero mana, cleared
+  store state, and transition timing.
+- `DropHeldItemRequested` is command field 28 and supplies only an intended
+  tile. The server validates distance, occupancy, and the held-item lifecycle;
+  accepted drops preserve the item seed, price, and full state.
+- A snapshot is the complete authoritative projection for its session. Events
+  are transient presentation aids and never replace the following snapshot.
+- `Snapshot.players` contains every assigned participant. The receiving
+  participant is first so a presentation client can identify its local player;
+  the remaining participants are sorted by stable entity ID. Player entity IDs
+  must be nonzero and unique. Canonical hashing independently sorts the complete
+  player set by entity ID, so receiver-specific wire order does not change the
+  state hash.
+- `PlayerSnapshot.character_class_id` is the stable ID from the active game
+  module's validated class catalog. An absent field has Protobuf's zero value;
+  shipped content reserves ID `0` for Warrior so older snapshots and peers keep
+  their original meaning. Nonzero class IDs participate in canonical hashes.
+- `PlayerSnapshot.character_name` field 28 is server-owned character identity.
+  Nonempty names use the tagged `godevilution-player-name-v1` canonical-hash
+  extension and cross saves, reconnect, native projection, and Godot
+  presentation. Empty remains the additive legacy default.
+- `PlayerSnapshot.mana_shield_active` field 29 is the server-owned persistent
+  Mana Shield state. True adds the tagged `godevilution-player-mana-shield-v1`
+  canonical-hash section and crosses version-1 saves plus native/Godot
+  presentation; false is the additive default. The Diablo module alone converts
+  incoming Q6 damage to mana, reverses the reduction on depletion, and clears
+  the flag on exact depletion or level-changing transitions.
+- `PlayerSnapshot.ability_spell_id` is the native-compatible class skill and
+  `memorized_spells` carries stable spell IDs with nonzero levels. The list is
+  canonicalized by spell ID. Native peers reject IDs above their supported
+  spell range and rebuild their ability/learned-spell masks from each snapshot.
+- Spell state extends the canonical player hash only when the ability is
+  nonzero or the learned-spell list is nonempty. The tagged
+  `godevilution-player-spells-v1` suffix preserves every pre-extension hash for
+  legacy zero-state snapshots while giving C++ and C# one deterministic order.
+- Hostile player state extends the canonical player hash only when
+  `hostile_mode` is true, using the tagged
+  `godevilution-player-hostile-mode-v1` suffix. Friendly legacy snapshots retain
+  their existing hashes. Charged Bolt player hits use exact Q6 damage events;
+  friendly-fire admission, hit, block, resistance, damage, and RNG order are
+  server-owned.
+- `PlayerSnapshot.combat_mode` field 23 mirrors native `PLR_MODE` ordinals and
+  `combat_mode_end_tick` field 24 is the first tick on which a timed mode is no
+  longer active. Stand/zero are additive defaults. Nondefault state uses the
+  tagged `godevilution-player-combat-mode-v1` hash extension and is preserved
+  by version-1 saves and both presentation clients.
+- `PlayerSnapshot.current_action` field 25 carries an optional move, attack,
+  ranged-attack, cast, death, level-transition, or restart-in-town lifecycle.
+  Its timing boundaries, applied flag, direction or target, and complete cast intent allow
+  saves and reconnecting clients to preserve an in-progress effect. A move
+  reserves its adjacent destination, which native and Godot clients present as
+  the future position. Death (kind 4) is already applied, requires zero life,
+  and retains Death mode after its content-timed action clears. Level transition
+  (kind 5) records its portal target after applying the destination and holds
+  NewLevel for a one-tick barrier before Stand. Restart in Town (kind 6) has no
+  target, arrives after its destination and resource reset are already applied,
+  and uses the same content-selected NewLevel barrier.
+  Present state uses the tagged `godevilution-player-action-v1` hash extension;
+  an absent action preserves all earlier hashes.
+- `PlayerSnapshot.held_item` field 26 is server-owned cursor state, outside the
+  inventory grid and cached Gold total. Partial Gold pickup preserves the
+  original world seed on the remainder; explicit drop and combat death return
+  it to the world. Present held state uses the tagged
+  `godevilution-player-held-item-v1` hash extension, while absence retains old
+  hashes and save compatibility.
+- `PlayerSnapshot.facing_direction` field 27 uses the native `Direction`
+  ordinal. South/zero is the additive legacy default. The server changes facing
+  only for accepted movement, attack, and cast intents, persists it in saves,
+  and uses it for directional death-drop placement. Non-South state uses the
+  tagged `godevilution-player-facing-v1` hash extension.
+- `ItemStateSnapshot.base_name`, `identified_name`, and optional
+  `native_cursor_graphic` fields 59-61 carry runtime-authored presentation for
+  dynamic items such as PvP ears. A dynamic identity is complete only when
+  both names and the byte-representable cursor are present. Present state uses
+  the tagged `godevilution-dynamic-item-presentation-v1` hash extension; absent
+  fields retain existing item hashes. Lethal player damage supplies these
+  fields from authoritative victim and content state, and clients project them
+  without generating the ear locally.
+- `Snapshot.random_state`, `MonsterSnapshot.monster_level`, exact Q6 monster
+  health fields 16-17, `DamageEvent.amount_q6`, `HealingEvent.amount_q6`,
+  projectile runtime fields 14-27,
+  `ProjectileSnapshot.last_collision_target_entity_id` field 28, and
+  `ProjectileSnapshot.effective_spell_level` field 29 are additive
+  authoritative state used by deterministic spell movement, collision
+  suppression, replay, events, and persistence. A missing Q6 health field is
+  reconstructed from its legacy whole-point field. Fractional values and a
+  nonzero last collision target use tagged canonical-hash extensions, while old
+  and whole-aligned snapshots keep their previous hashes. Firebolt uses these
+  fields for its native speed-26 16.16 path, swept collision, exact resistant
+  damage, impact phase, and deterministic resume point. Lightning uses field 29
+  with the other runtime fields to resume its invisible controller and
+  level-scaled persistent segments without consulting mutable player state.
+  Teleport uses behavior value `9` with the same existing position and lifetime
+  fields for an invisible two-tick controller; authoritative movement appears
+  through the existing player coordinates, so no new protocol field is needed.
+  Phasing uses behavior value `15` for another invisible two-tick movement
+  controller. Its destination and RNG are server-owned, and a no-candidate cast
+  can consume its source without producing a projectile. Clients observe only
+  existing projectile fields and authoritative player coordinates.
+  Fireball uses behavior value `16`; phase `0` is its server-owned 16.16 travel
+  and phase `1` is its stationary 14-tick impact. Existing origin, movement,
+  damage, resistance, lifetime, and spell-level fields preserve deterministic
+  resume without adding a protocol field. Clients render the two phases but do
+  not select splash targets or resolve damage.
+  Resurrection uses the existing cast `target_entity_id` for the selected
+  participant and runtime projectile behavior value `11` for its stationary
+  beam. The beam's target, position, and lifetime use existing projectile
+  fields, while revived position, life, mana, mode, and action state use the
+  existing complete player snapshot.
+  Heal Other also uses the existing cast `target_entity_id`. Its living,
+  distinct, same-level, and range checks, randomized Q6 healing, class modifier,
+  and resource consumption are server-owned; the result uses the existing
+  Healing event and complete player snapshot without a new protocol field.
+  Stone Curse uses behavior value `13` with the same target, position,
+  remaining-tick, phase, impact-lifetime, and effective-spell-level fields for
+  its stationary duration/shatter controller.
+- `StatusEffectSnapshot.behavior` field 4 identifies typed server-owned status
+  semantics without asking a client to infer them from an effect ID.
+  `STATUS_EFFECT_BEHAVIOR_INFRAVISION` value `1` drives native and Godot
+  presentation. `STATUS_EFFECT_BEHAVIOR_SEARCH` value `2` drives native
+  automap and Godot world-item highlighting. The server alone owns both
+  lifecycles, including Search's additive recasts and transition cleanup. A
+  nondefault behavior uses the tagged
+  `godevilution-status-effect-behavior-v1` canonical-hash extension; omitted
+  behavior preserves legacy generic-status hashes.
+- `ObjectSnapshot` fields 10-12 carry missile pass-through, breakability, and
+  persistent destruction. Nondefault object collision state uses the tagged
+  `godevilution-object-collision-v1` hash extension. Native projection removes
+  activated or destroyed objects from interaction and presentation occupancy.
+- `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
+  movement state, the adjacent future tile, and petrification. Native
+  projection marks the current tile as positive occupancy and the future tile
+  as negative occupancy. Charged Bolt can hit a normal walker only at its
+  current tile, while a petrified walker is hittable at either tile. Nondefault
+  movement or petrification uses the tagged
+  `godevilution-monster-occupancy-v1` hash extension.
+- `MonsterSnapshot.stone_curse_immune` field 22 persists the external monster
+  capability used by later server-owned casts. True uses the tagged
+  `godevilution-monster-stone-curse-immunity-v1` hash extension; false remains
+  the additive compatibility default.
 
-C++ descriptor compatibility checks will be added as the client surface grows.
+## Identity Note
 
-`test-vectors/command-delivery-retry.json` is the first language-neutral
-behavior vector. It covers a lost acknowledgement, a retry resolved as a
-duplicate, a gameplay-critical late rejection, and a lenient reschedule. The
-future generated-Protobuf client harness should consume this vector rather than
-re-encoding those expectations independently; the C# server test suite now
-loads and validates it directly.
+Protocol v1 predates a separate ruleset field. The current server therefore
+places the combined content-and-module ruleset SHA-256 in both
+`content_manifest_hash` and `ruleset_identity_hash`. Current clients must send
+that combined hash in `content_manifest_hash`; they should also send it in
+`ruleset_identity_hash`. The server log prints both the raw content manifest
+hash and the combined ruleset identity, so launchers must use the latter.
 
-## Current C++ client slice
+## Test Vectors
 
-`network/protocol/CommandDeliveryTracker` implements the client-side delivery
-policy without depending on generated Protobuf types. It allocates
-session-scoped sequence numbers, estimates RTT with a smoothed variance,
-resubmits unacknowledged commands, and resolves accepted, rejected,
-rescheduled, and duplicate outcomes. The opt-in
-`network/authoritative/AuthoritativeClient` now proves the initial C++ wire
-path: it performs the handshake, submits a command batch, receives an
-acknowledgement, reads a snapshot, and wires the tracker into initial sends,
-timeout-driven resubmissions, and acknowledgement resolution. The
-authoritative client is not yet selected by the legacy gameplay network
-provider. When the server is configured with a snapshot
-provider, callers set `expectInitialSnapshot` and consume the initial snapshot
-before submitting commands; this matches the current server session ordering.
+`test-vectors/command-delivery-retry.json` is the language-neutral delivery
+vector for lost acknowledgements, safe retries, strict late rejection, and
+lenient rescheduling. The C# tests consume it directly. Native protocol and
+replay behavior is covered by the opt-in CMake test targets.
+
+See `docs/authoritative-protocol-contract.md` for the complete boundary and
+evolution rules.

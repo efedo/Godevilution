@@ -1,0 +1,224 @@
+using Devilution.Protocol.V1;
+using Devilution.Server.Commands;
+using Devilution.Server.Stores;
+
+namespace Devilution.Server.Replay;
+
+public sealed record ReplayCheckpointResult(ulong Tick, string ExpectedStateSha256, string ActualStateSha256);
+
+public sealed record ReplayExecutionResult(
+    Snapshot InitialSnapshot,
+    Snapshot FinalSnapshot,
+    IReadOnlyList<CommandResult> Results,
+    IReadOnlyList<ReplayCheckpointResult> Checkpoints);
+
+/** Executes the fixture's supported authoritative commands and validates receipts. */
+public static class ReplayFixtureExecutor
+{
+    public static ReplayExecutionResult Execute(
+        ReplayFixture fixture,
+        StoreSimulationExecutor executor,
+        AuthoritativeCommandServer commandServer,
+        uint entityId = 1)
+    {
+        ArgumentNullException.ThrowIfNull(fixture);
+        ArgumentNullException.ThrowIfNull(executor);
+        ArgumentNullException.ThrowIfNull(commandServer);
+
+        var sessionId = fixture.InitialState.Player;
+        var initialSnapshot = executor.CreateSnapshot(sessionId, entityId, 0);
+        if (fixture.InitialState.SecondaryPlayer is { } secondary) {
+            if (string.Equals(sessionId, secondary.Player, StringComparison.Ordinal)
+                || secondary.EntityId == entityId) {
+                throw new InvalidDataException(
+                    "Replay secondary-player identity must differ from the primary player.");
+            }
+            executor.InitializeParticipant(
+                secondary.Player,
+                new DiabloPlayerTemplate(
+                    0,
+                    0,
+                    secondary.Life,
+                    0,
+                    0,
+                    PlayerAttributesState.Zero with {
+                        Magic = new PlayerAttributeState(
+                            secondary.Magic,
+                            secondary.Magic),
+                        Dexterity = new PlayerAttributeState(
+                            secondary.Dexterity,
+                            secondary.Dexterity),
+                    },
+                    secondary.BlockCapable
+                        ? [new EquippedStoreItem(
+                            5,
+                            1,
+                            AuthoritativeItemState.Empty with {
+                                ItemType = 5,
+                                StatFlag = true,
+                            })]
+                        : [],
+                    Enumerable.Repeat(-1, 40).ToArray(),
+                    [],
+                    secondary.PositionX,
+                    secondary.PositionY,
+                    secondary.LifeMaximum,
+                    secondary.CharacterLevel,
+                    secondary.LevelId,
+                    0,
+                    secondary.CharacterClass,
+                    friendlyMode: secondary.FriendlyMode,
+                    combatMode: secondary.CombatMode,
+                    combatModeEndTick: secondary.CombatModeEndTick,
+                    characterName: secondary.CharacterName));
+            _ = executor.CreateSnapshot(
+                secondary.Player,
+                secondary.EntityId,
+                0);
+        }
+        if (initialSnapshot.RandomState != checked((uint)fixture.RngSeed)) {
+            throw new InvalidDataException(
+                $"Replay RNG seed mismatch: fixture {fixture.RngSeed}, simulation {initialSnapshot.RandomState}.");
+        }
+        var results = new List<CommandResult>();
+        var checkpoints = new List<ReplayCheckpointResult>();
+        var orderedCommands = fixture.OrderedCommands;
+        var timelineTicks = orderedCommands.Select(command => command.TargetTick)
+            .Concat(fixture.ContentManifest is null
+                ? []
+                : fixture.Checkpoints.Select(checkpoint => checkpoint.Tick))
+            .Distinct()
+            .OrderBy(tick => tick)
+            .ToArray();
+        foreach (var tick in timelineTicks) {
+            foreach (var fixtureCommand in orderedCommands.Where(command => command.TargetTick == tick)) {
+                var command = ToProtocolCommand(fixtureCommand);
+                var result = commandServer.Process(sessionId, command, tick);
+                if (result.ServerReceiptSequence != fixtureCommand.ServerReceiptSequence) {
+                    throw new InvalidDataException(
+                        $"Replay receipt mismatch for client sequence {fixtureCommand.ClientSequence}.");
+                }
+                results.Add(result);
+            }
+
+            commandServer.AdvanceTo(tick);
+            if (fixture.ContentManifest is null)
+                continue;
+            var checkpoint = fixture.Checkpoints.SingleOrDefault(candidate => candidate.Tick == tick);
+            if (checkpoint is null)
+                continue;
+            var snapshot = executor.CreateSnapshot(sessionId, entityId, tick);
+            if (IsSha256(checkpoint.StateSha256)
+                && !string.Equals(
+                    checkpoint.StateSha256,
+                    snapshot.StateSha256,
+                    StringComparison.OrdinalIgnoreCase)) {
+                throw new InvalidDataException(
+                    $"Replay checkpoint hash mismatch at tick {checkpoint.Tick}: expected {checkpoint.StateSha256}, actual {snapshot.StateSha256}.");
+            }
+            checkpoints.Add(new ReplayCheckpointResult(
+                checkpoint.Tick,
+                checkpoint.StateSha256,
+                snapshot.StateSha256));
+        }
+
+        var finalTick = timelineTicks.LastOrDefault();
+        var finalSnapshot = executor.CreateSnapshot(sessionId, entityId, finalTick);
+        if (fixture.FinalStateSha256 is not null
+            && !string.Equals(fixture.FinalStateSha256, finalSnapshot.StateSha256, StringComparison.Ordinal))
+            throw new InvalidDataException("Replay final snapshot hash mismatch.");
+
+        return new ReplayExecutionResult(initialSnapshot, finalSnapshot, results, checkpoints);
+    }
+
+    private static Command ToProtocolCommand(ReplayFixtureCommand fixtureCommand)
+    {
+        return fixtureCommand.Kind switch {
+                "OpenStore" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    OpenStoreRequested = new OpenStoreRequested { StoreId = fixtureCommand.StoreId },
+                },
+                "BuyItem" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    PurchaseRequested = new PurchaseRequested {
+                        StoreId = fixtureCommand.StoreId,
+                        StoreSlot = fixtureCommand.StoreSlot,
+                    },
+                },
+                "SellItem" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    SellItemRequested = new SellItemRequested { InventoryIndex = fixtureCommand.StoreSlot },
+                },
+                "RefillMana" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    RefillManaRequested = new RefillManaRequested(),
+                },
+                "Move" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    MoveRequested = new MoveRequested {
+                        DirectionX = fixtureCommand.DirectionX,
+                        DirectionY = fixtureCommand.DirectionY,
+                    },
+                },
+                "Attack" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    AttackRequested = new AttackRequested { TargetEntityId = fixtureCommand.TargetEntityId },
+                },
+                "Cast" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    CastRequested = new CastRequested {
+                        SpellId = fixtureCommand.SpellId,
+                        TargetEntityId = fixtureCommand.TargetEntityId,
+                        TargetX = fixtureCommand.TargetX,
+                        TargetY = fixtureCommand.TargetY,
+                    },
+                },
+                "UsePortal" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    UsePortalRequested = new UsePortalRequested { PortalId = fixtureCommand.PortalId },
+                },
+                "RestartTown" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    RestartTownRequested = new RestartTownRequested(),
+                },
+                "PickupWorldItem" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = fixtureCommand.WorldItemEntityId },
+                },
+                "DropHeldItem" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    DropHeldItemRequested = new DropHeldItemRequested {
+                        TargetX = fixtureCommand.TargetX,
+                        TargetY = fixtureCommand.TargetY,
+                    },
+                },
+                "OperateObject" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = fixtureCommand.ObjectEntityId },
+                },
+                "AdvanceQuest" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    AdvanceQuestRequested = new AdvanceQuestRequested { QuestId = fixtureCommand.QuestId },
+                },
+                _ => throw new InvalidDataException($"Unsupported replay command '{fixtureCommand.Kind}'."),
+            };
+    }
+
+    private static bool IsSha256(string value)
+    {
+        return value.Length == 64 && value.All(character => Uri.IsHexDigit(character));
+    }
+}

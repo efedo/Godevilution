@@ -1,0 +1,401 @@
+using Devilution.Data;
+
+namespace Devilution.Diablo;
+
+[Flags]
+public enum DiabloPlayerClassFlags : uint
+{
+    None = 0,
+    CriticalStrike = 1U << 0,
+    DualWield = 1U << 1,
+    IronSkin = 1U << 2,
+    NaturalResistance = 1U << 3,
+    TrapSense = 1U << 4,
+    FlexibleBlock = 1U << 5,
+}
+
+public enum DiabloPlayerClassAvailability
+{
+    BaseGame,
+    Hellfire,
+    HellfireHidden,
+}
+
+/** Complete deterministic class metadata mirrored from the native tables. */
+public sealed record AuthoritativePlayerClassDefinition(
+    uint ClassId,
+    string Symbol,
+    string DisplayName,
+    DiabloPlayerClassAvailability Availability,
+    bool IsDefault,
+    DiabloPlayerClassFlags Flags,
+    int BaseStrength,
+    int BaseMagic,
+    int BaseDexterity,
+    int BaseVitality,
+    int MaximumStrength,
+    int MaximumMagic,
+    int MaximumDexterity,
+    int MaximumVitality,
+    int BaseBlockChance,
+    int BaseMagicToHit,
+    int BaseMeleeToHit,
+    int BaseRangedToHit,
+    int LifeAdjustmentQ6,
+    int ManaAdjustmentQ6,
+    int LifePerLevelQ6,
+    int ManaPerLevelQ6,
+    int LifePerVitalityQ6,
+    int ManaPerMagicQ6,
+    int ItemLifePerVitalityQ6,
+    int ItemManaPerMagicQ6)
+{
+    /** Native base-game spell-mana reduction, before the spell minimum. */
+    public int SpellManaReductionPercent { get; init; }
+
+    /** Native Hellfire spell-mana reduction, before the spell minimum. */
+    public int HellfireSpellManaReductionPercent { get; init; }
+
+    /** Native class multiplier applied to the self-Healing spell's Q6 result. */
+    public int SelfHealingSpellPercent { get; init; } = 100;
+
+    /** Native class multiplier applied when casting Heal Other. */
+    public int HealOtherSpellPercent { get; init; } = 100;
+
+    /** Native inventory cursor graphic used for this class's PvP ear. */
+    public int PvpEarCursorGraphic { get; init; }
+
+    public PlayerAttributesState CreateStartingAttributes()
+    {
+        return new PlayerAttributesState(
+            new PlayerAttributeState(BaseStrength, BaseStrength),
+            new PlayerAttributeState(BaseMagic, BaseMagic),
+            new PlayerAttributeState(BaseDexterity, BaseDexterity),
+            new PlayerAttributeState(BaseVitality, BaseVitality));
+    }
+
+    /** Mirrors native `Player::calculateBaseLife` in fixed-point Q6 units. */
+    public int CalculateBaseLifeQ6(uint characterLevel, int baseVitality)
+    {
+        ValidateResourceInputs(
+            characterLevel,
+            baseVitality,
+            MaximumVitality,
+            nameof(baseVitality));
+        return checked(
+            LifeAdjustmentQ6
+            + LifePerLevelQ6 * (int)characterLevel
+            + LifePerVitalityQ6 * baseVitality);
+    }
+
+    /** Mirrors native `Player::calculateBaseMana` in fixed-point Q6 units. */
+    public int CalculateBaseManaQ6(uint characterLevel, int baseMagic)
+    {
+        ValidateResourceInputs(
+            characterLevel,
+            baseMagic,
+            MaximumMagic,
+            nameof(baseMagic));
+        return checked(
+            ManaAdjustmentQ6
+            + ManaPerLevelQ6 * (int)characterLevel
+            + ManaPerMagicQ6 * baseMagic);
+    }
+
+    private static void ValidateResourceInputs(
+        uint characterLevel,
+        int attribute,
+        int maximumAttribute,
+        string parameterName)
+    {
+        if (characterLevel is < 1 or > 50)
+            throw new ArgumentOutOfRangeException(nameof(characterLevel));
+        if (attribute < 0 || attribute > maximumAttribute)
+            throw new ArgumentOutOfRangeException(parameterName);
+    }
+}
+
+/** Validated stable-ID catalog for base-game and Hellfire player classes. */
+public sealed class AuthoritativePlayerClassCatalog
+{
+    private static readonly IReadOnlyList<string> RequiredColumns = [
+        "class_id",
+        "symbol",
+        "display_name",
+        "availability",
+        "is_default",
+        "class_flags",
+        "base_strength",
+        "base_magic",
+        "base_dexterity",
+        "base_vitality",
+        "maximum_strength",
+        "maximum_magic",
+        "maximum_dexterity",
+        "maximum_vitality",
+        "base_block_chance",
+        "base_magic_to_hit",
+        "base_melee_to_hit",
+        "base_ranged_to_hit",
+        "life_adjustment_q6",
+        "mana_adjustment_q6",
+        "life_per_level_q6",
+        "mana_per_level_q6",
+        "life_per_vitality_q6",
+        "mana_per_magic_q6",
+        "item_life_per_vitality_q6",
+        "item_mana_per_magic_q6",
+        "spell_mana_reduction_percent",
+        "hellfire_spell_mana_reduction_percent",
+        "self_healing_spell_percent",
+        "heal_other_spell_percent",
+        "pvp_ear_cursor_graphic",
+    ];
+
+    private const DiabloPlayerClassFlags KnownFlags
+        = DiabloPlayerClassFlags.CriticalStrike
+            | DiabloPlayerClassFlags.DualWield
+            | DiabloPlayerClassFlags.IronSkin
+            | DiabloPlayerClassFlags.NaturalResistance
+            | DiabloPlayerClassFlags.TrapSense
+            | DiabloPlayerClassFlags.FlexibleBlock;
+
+    private readonly Dictionary<uint, AuthoritativePlayerClassDefinition> byId;
+    private readonly Dictionary<string, AuthoritativePlayerClassDefinition> bySymbol;
+
+    public AuthoritativePlayerClassCatalog(
+        IEnumerable<AuthoritativePlayerClassDefinition> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        byId = new Dictionary<uint, AuthoritativePlayerClassDefinition>();
+        bySymbol = new Dictionary<string, AuthoritativePlayerClassDefinition>(
+            StringComparer.Ordinal);
+        foreach (var definition in definitions) {
+            ArgumentNullException.ThrowIfNull(definition);
+            Validate(definition);
+            if (!byId.TryAdd(definition.ClassId, definition)) {
+                throw new InvalidDataException(
+                    $"Player class ID {definition.ClassId} is defined more than once.");
+            }
+            if (!bySymbol.TryAdd(definition.Symbol, definition)) {
+                throw new InvalidDataException(
+                    $"Player class symbol '{definition.Symbol}' is defined more than once.");
+            }
+        }
+        if (byId.Count == 0)
+            throw new InvalidDataException("The player-class catalog cannot be empty.");
+        var orderedIds = byId.Keys.Order().ToArray();
+        for (var index = 0; index < orderedIds.Length; index++) {
+            if (orderedIds[index] != (uint)index) {
+                throw new InvalidDataException(
+                    "Player class IDs must be contiguous and start at zero.");
+            }
+        }
+        var defaults = byId.Values.Where(definition => definition.IsDefault).ToArray();
+        if (defaults.Length != 1) {
+            throw new InvalidDataException(
+                "The player-class catalog requires exactly one default class.");
+        }
+        Default = defaults[0];
+    }
+
+    public IReadOnlyList<AuthoritativePlayerClassDefinition> Definitions
+        => byId.Values.OrderBy(definition => definition.ClassId).ToArray();
+
+    public AuthoritativePlayerClassDefinition Default { get; }
+
+    public bool TryGet(
+        uint classId,
+        out AuthoritativePlayerClassDefinition definition)
+        => byId.TryGetValue(classId, out definition!);
+
+    public AuthoritativePlayerClassDefinition GetRequired(uint classId)
+    {
+        return TryGet(classId, out var definition)
+            ? definition
+            : throw new KeyNotFoundException($"Player class ID {classId} is not defined.");
+    }
+
+    public AuthoritativePlayerClassDefinition Resolve(string symbol)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(symbol);
+        return bySymbol.TryGetValue(symbol, out var definition)
+            ? definition
+            : throw new KeyNotFoundException($"Player class '{symbol}' is not defined.");
+    }
+
+    public static AuthoritativePlayerClassCatalog LoadTsv(
+        string sourcePath,
+        string contents)
+    {
+        var table = TsvTable.Parse(sourcePath, contents);
+        if (!table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
+            throw new InvalidDataException(
+                $"Player-class table '{sourcePath}' does not match the required ordered schema.");
+        }
+        return new AuthoritativePlayerClassCatalog(table.Rows.Select(row =>
+            new AuthoritativePlayerClassDefinition(
+                row.RequiredUInt32("class_id"),
+                row.Required("symbol"),
+                row.Required("display_name"),
+                ParseAvailability(row),
+                ParseBoolean(row, "is_default"),
+                ParseFlags(row),
+                row.RequiredInt32("base_strength"),
+                row.RequiredInt32("base_magic"),
+                row.RequiredInt32("base_dexterity"),
+                row.RequiredInt32("base_vitality"),
+                row.RequiredInt32("maximum_strength"),
+                row.RequiredInt32("maximum_magic"),
+                row.RequiredInt32("maximum_dexterity"),
+                row.RequiredInt32("maximum_vitality"),
+                row.RequiredInt32("base_block_chance"),
+                row.RequiredInt32("base_magic_to_hit"),
+                row.RequiredInt32("base_melee_to_hit"),
+                row.RequiredInt32("base_ranged_to_hit"),
+                row.RequiredInt32("life_adjustment_q6"),
+                row.RequiredInt32("mana_adjustment_q6"),
+                row.RequiredInt32("life_per_level_q6"),
+                row.RequiredInt32("mana_per_level_q6"),
+                row.RequiredInt32("life_per_vitality_q6"),
+                row.RequiredInt32("mana_per_magic_q6"),
+                row.RequiredInt32("item_life_per_vitality_q6"),
+                row.RequiredInt32("item_mana_per_magic_q6")) {
+                SpellManaReductionPercent = row.RequiredInt32(
+                    "spell_mana_reduction_percent"),
+                HellfireSpellManaReductionPercent = row.RequiredInt32(
+                    "hellfire_spell_mana_reduction_percent"),
+                SelfHealingSpellPercent = row.RequiredInt32(
+                    "self_healing_spell_percent"),
+                HealOtherSpellPercent = row.RequiredInt32(
+                    "heal_other_spell_percent"),
+                PvpEarCursorGraphic = row.RequiredInt32(
+                    "pvp_ear_cursor_graphic"),
+            }));
+    }
+
+    private static void Validate(AuthoritativePlayerClassDefinition definition)
+    {
+        if (string.IsNullOrWhiteSpace(definition.Symbol)
+            || definition.Symbol.Any(character =>
+                !(character is >= 'a' and <= 'z'
+                    || character is >= '0' and <= '9'
+                    || character == '_'))
+            || string.IsNullOrWhiteSpace(definition.DisplayName)
+            || !Enum.IsDefined(definition.Availability)
+            || (definition.Flags & ~KnownFlags) != 0) {
+            throw new InvalidDataException(
+                $"Player class {definition.ClassId} has invalid identity metadata.");
+        }
+        ValidateAttribute(
+            definition.ClassId,
+            "strength",
+            definition.BaseStrength,
+            definition.MaximumStrength);
+        ValidateAttribute(
+            definition.ClassId,
+            "magic",
+            definition.BaseMagic,
+            definition.MaximumMagic);
+        ValidateAttribute(
+            definition.ClassId,
+            "dexterity",
+            definition.BaseDexterity,
+            definition.MaximumDexterity);
+        ValidateAttribute(
+            definition.ClassId,
+            "vitality",
+            definition.BaseVitality,
+            definition.MaximumVitality);
+        if (definition.BaseBlockChance is < 0 or > 100
+            || definition.BaseMagicToHit is < 0 or > 100
+            || definition.BaseMeleeToHit is < 0 or > 100
+            || definition.BaseRangedToHit is < 0 or > 100
+            || definition.SpellManaReductionPercent is < 0 or > 100
+            || definition.HellfireSpellManaReductionPercent is < 0 or > 100
+            || definition.SelfHealingSpellPercent is < 1 or > 400
+            || definition.HealOtherSpellPercent is < 1 or > 400
+            || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
+            throw new InvalidDataException(
+                $"Player class {definition.ClassId} has an invalid percentage.");
+        }
+        var q6Values = new[] {
+            definition.LifeAdjustmentQ6,
+            definition.ManaAdjustmentQ6,
+            definition.LifePerLevelQ6,
+            definition.ManaPerLevelQ6,
+            definition.LifePerVitalityQ6,
+            definition.ManaPerMagicQ6,
+            definition.ItemLifePerVitalityQ6,
+            definition.ItemManaPerMagicQ6,
+        };
+        if (q6Values.Any(value => value is < short.MinValue or > short.MaxValue)) {
+            throw new InvalidDataException(
+                $"Player class {definition.ClassId} has a Q6 value outside the native range.");
+        }
+    }
+
+    private static void ValidateAttribute(
+        uint classId,
+        string name,
+        int @base,
+        int maximum)
+    {
+        if (@base is < 0 or > byte.MaxValue
+            || maximum is < 0 or > byte.MaxValue
+            || @base > maximum) {
+            throw new InvalidDataException(
+                $"Player class {classId} has invalid {name} bounds.");
+        }
+    }
+
+    private static DiabloPlayerClassAvailability ParseAvailability(TsvRow row)
+    {
+        var value = row.Required("availability");
+        if (Enum.TryParse<DiabloPlayerClassAvailability>(
+            value,
+            ignoreCase: false,
+            out var availability)
+            && Enum.IsDefined(availability)
+            && Enum.GetName(availability) == value) {
+            return availability;
+        }
+        throw new InvalidDataException(
+            $"Player-class row {row.LineNumber} contains unknown availability '{value}'.");
+    }
+
+    private static bool ParseBoolean(TsvRow row, string column)
+    {
+        var value = row.Required(column);
+        if (bool.TryParse(value, out var result))
+            return result;
+        throw new InvalidDataException(
+            $"Column '{column}' on TSV row {row.LineNumber} must be true or false.");
+    }
+
+    private static DiabloPlayerClassFlags ParseFlags(TsvRow row)
+    {
+        if (!row.TryGet("class_flags", out var value)
+            || string.IsNullOrWhiteSpace(value)) {
+            return DiabloPlayerClassFlags.None;
+        }
+        var result = DiabloPlayerClassFlags.None;
+        var names = value.Split(',', StringSplitOptions.TrimEntries);
+        if (names.Any(string.IsNullOrWhiteSpace)
+            || names.Distinct(StringComparer.Ordinal).Count() != names.Length) {
+            throw new InvalidDataException(
+                $"Player-class row {row.LineNumber} contains duplicate or empty flags.");
+        }
+        foreach (var name in names) {
+            if (!Enum.TryParse<DiabloPlayerClassFlags>(name, ignoreCase: false, out var flag)
+                || flag == DiabloPlayerClassFlags.None
+                || !Enum.IsDefined(flag)
+                || Enum.GetName(flag) != name) {
+                throw new InvalidDataException(
+                    $"Player-class row {row.LineNumber} contains unknown flag '{name}'.");
+            }
+            result |= flag;
+        }
+        return result;
+    }
+}

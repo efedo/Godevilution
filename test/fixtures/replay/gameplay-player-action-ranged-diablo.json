@@ -1,0 +1,71 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/player-action-ranged-diablo",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 12,
+    "attack_action_frame": 7,
+    "casting_frames": 16,
+    "casting_action_frame": 12,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20,
+    "mana": 0,
+    "mana_maximum": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "character_class": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 3,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 10,
+    "combat_target_max_hit_points": 10,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 3,
+        "item_class": 1,
+        "flags": 262144,
+        "stat_flag": true
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 10,
+      "server_receipt_sequence": 1,
+      "kind": "Attack",
+      "payload": { "target_entity_id": 9 }
+    },
+    {
+      "client_sequence": 2,
+      "target_tick": 16,
+      "server_receipt_sequence": 2,
+      "kind": "Move",
+      "payload": { "direction_x": 1, "direction_y": 0 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 10, "state_sha256": "753457b3df40fd0fdf76e914d60e8b5c5724ebbfed8ab368bc4db3e8d95665f6" },
+    { "tick": 14, "state_sha256": "753457b3df40fd0fdf76e914d60e8b5c5724ebbfed8ab368bc4db3e8d95665f6" },
+    { "tick": 15, "state_sha256": "e662e128a63174bffbe12761a19154ea7108f1343ef1a8a6f3283e862e031919" },
+    { "tick": 16, "state_sha256": "1ec9b251a126eb424177fa573853331eca7a93e97161082defce8d7515e64bec" },
+    { "tick": 24, "state_sha256": "04989452ac8d45b75a68c0ce7411635ebd77416dd7800227231c18ce2f94e6c7" }
+  ]
+}

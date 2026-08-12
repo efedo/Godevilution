@@ -17,16 +17,49 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Devilution.Server/Devilution.Server.csproj" />
+    <ProjectReference Include="../Devilution.ModuleDependencyFixture/Devilution.ModuleDependencyFixture.csproj" />
+    <ProjectReference Include="../Devilution.ModuleFixture/Devilution.ModuleFixture.csproj" />
+    <ProjectReference Include="../Devilution.ModuleWithDependencyFixture/Devilution.ModuleWithDependencyFixture.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="../../../test/fixtures/replay/stores/basic-buy.json" Link="Fixtures/basic-buy.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/stores/base-content-purchase.json" Link="Fixtures/base-content-purchase.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/stores/transaction-parity.json" Link="Fixtures/transaction-parity.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/stores/gold-topology-parity.json" Link="Fixtures/gold-topology-parity.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-movement-combat.json" Link="Fixtures/gameplay-movement-combat.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-action-lifecycle.json" Link="Fixtures/gameplay-player-action-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-action-ranged-diablo.json" Link="Fixtures/gameplay-player-action-ranged-diablo.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-action-ranged-hellfire.json" Link="Fixtures/gameplay-player-action-ranged-hellfire.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-death-lifecycle.json" Link="Fixtures/gameplay-player-death-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-equipped-death-drops.json" Link="Fixtures/gameplay-player-equipped-death-drops.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-multiplayer-death-suppression.json" Link="Fixtures/gameplay-multiplayer-death-suppression.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-restart-town.json" Link="Fixtures/gameplay-player-restart-town.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-player-level-transition.json" Link="Fixtures/gameplay-player-level-transition.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-spell-cast.json" Link="Fixtures/gameplay-spell-cast.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt.json" Link="Fixtures/gameplay-charged-bolt.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-resolution.json" Link="Fixtures/gameplay-charged-bolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-pvp.json" Link="Fixtures/gameplay-charged-bolt-pvp.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-pvp-ear-death.json" Link="Fixtures/gameplay-pvp-ear-death.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-block.json" Link="Fixtures/gameplay-charged-bolt-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-object-collision.json" Link="Fixtures/gameplay-charged-bolt-object-collision.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-moving-occupancy.json" Link="Fixtures/gameplay-charged-bolt-moving-occupancy.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-firebolt-resolution.json" Link="Fixtures/gameplay-firebolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fireball-resolution.json" Link="Fixtures/gameplay-fireball-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-lightning-resolution.json" Link="Fixtures/gameplay-lightning-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-flash-resolution.json" Link="Fixtures/gameplay-flash-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-healing-resolution.json" Link="Fixtures/gameplay-healing-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-mana-shield-resolution.json" Link="Fixtures/gameplay-mana-shield-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-stone-curse-resolution.json" Link="Fixtures/gameplay-stone-curse-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-infravision-resolution.json" Link="Fixtures/gameplay-infravision-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-search-resolution.json" Link="Fixtures/gameplay-search-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-teleport-resolution.json" Link="Fixtures/gameplay-teleport-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-phasing-resolution.json" Link="Fixtures/gameplay-phasing-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-resurrection-resolution.json" Link="Fixtures/gameplay-resurrection-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-heal-other-resolution.json" Link="Fixtures/gameplay-heal-other-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-portal-transition.json" Link="Fixtures/gameplay-portal-transition.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-world-item-pickup.json" Link="Fixtures/gameplay-world-item-pickup.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-gold-pickup-overflow.json" Link="Fixtures/gameplay-gold-pickup-overflow.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-object-quest.json" Link="Fixtures/gameplay-object-quest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multi-level-occupancy.json" Link="Fixtures/gameplay-multi-level-occupancy.json" CopyToOutputDirectory="PreserveNewest" />

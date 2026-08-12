@@ -1,8 +1,8 @@
 using Devilution.Protocol.V1;
-using Devilution.Server.Content;
+using Devilution.Data;
+using Devilution.Engine;
 using Devilution.Server.Gameplay;
 using Devilution.Server.Protocol;
-using Devilution.Server.Simulation;
 using Devilution.Server.Stores;
 using Xunit;
 
@@ -10,17 +10,6 @@ namespace Devilution.Server.Tests;
 
 public sealed class ContentAndGameplayModuleTests
 {
-    [Fact]
-    public void TsvLoaderPreservesRowsAndRejectsRaggedRows()
-    {
-        var table = TsvTable.Parse("items.tsv", "\uFEFFid\tvalue\n# comment\na\t42\r\nb\t7\n");
-
-        Assert.Equal(["id", "value"], table.Columns);
-        Assert.Equal(["a", "b"], table.Rows.Select(row => row.Required("id")));
-        Assert.Equal(42, table.Rows[0].RequiredInt32("value"));
-        Assert.Throws<InvalidDataException>(() => TsvTable.Parse("bad.tsv", "id\tvalue\na\n"));
-    }
-
     [Fact]
     public void PortalCatalogLoadsStableDefinitionsAndRejectsDuplicateIds()
     {
@@ -78,38 +67,6 @@ public sealed class ContentAndGameplayModuleTests
     }
 
     [Fact]
-    public void ContentManifestHashMatchesNativeGoldenVectors()
-    {
-        var items = TsvTable.Parse("items.tsv", "id\tname\nshort-sword\tShort Sword\nbuckler\tBuckler\n");
-        var monsters = TsvTable.Parse("monsters.tsv", "id\tname\ngoat\tGoatman\n");
-        var baseline = new ContentManifest("baseline", "1", [new ContentPack("core", "1", [items]), new ContentPack("expansion", "2", [monsters])]);
-        var reordered = new ContentManifest("baseline", "1", [new ContentPack("expansion", "2", [monsters]), new ContentPack("core", "1", [items])]);
-        var changedItems = TsvTable.Parse("items.tsv", "id\tname\nshort-sword\tShort Sword\nbuckler\tTower Shield\n");
-        var changed = new ContentManifest("baseline", "1", [new ContentPack("core", "1", [changedItems]), new ContentPack("expansion", "2", [monsters])]);
-
-        Assert.Equal("40d13766d2726d36216120e9cd36e064c72fee0395a46d23abcf6d316c9ff34c", baseline.Sha256);
-        Assert.Equal("5c536ffd249de81cefd8d74bcf35b4738f129d950a89e339f521c0f1994ee35f", reordered.Sha256);
-        Assert.Equal("5d12a34dddd0fdaa81382946736e6637afc5e319e5228a89571144da2a24cf59", changed.Sha256);
-    }
-
-    [Fact]
-    public void ContentPackDirectoryLoaderUsesStableRelativeTableOrder()
-    {
-        var root = Path.Combine(Path.GetTempPath(), $"devilution-content-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(Path.Combine(root, "nested"));
-        try {
-            File.WriteAllText(Path.Combine(root, "z.tsv"), "id\nlast\n");
-            File.WriteAllText(Path.Combine(root, "nested", "a.tsv"), "id\nfirst\n");
-
-            var pack = ContentPackLoader.LoadDirectory("base", "1", root);
-
-            Assert.Equal(["nested/a.tsv", "z.tsv"], pack.Tables.Select(table => table.SourcePath));
-        } finally {
-            Directory.Delete(root, recursive: true);
-        }
-    }
-
-    [Fact]
     public void RulesetIdentityIsUsedAsTheHandshakeContentIdentity()
     {
         var content = new ContentManifest("base", "1", [new ContentPack("base", "1", [TsvTable.Parse("items.tsv", "id\n1\n")])]);
@@ -125,7 +82,7 @@ public sealed class ContentAndGameplayModuleTests
     public void GameplayModulesLoadDependenciesInDeclaredOrder()
     {
         var content = new ContentManifest("base", "1", [new ContentPack("base", "1", [TsvTable.Parse("empty.tsv", "id\nvalue\n")])]);
-        var clock = new DelegateAuthoritativeClock(() => 0);
+        var clock = new Devilution.Engine.DelegateAuthoritativeClock(() => 0);
         var registry = new GameplayModuleRegistry();
         var dependency = new TestGameplayModule(new GameplayModuleIdentity("base.rules", "1", "hash-a"));
         var dependent = new TestGameplayModule(new GameplayModuleIdentity("diablo.rules", "1", "hash-b", ["base.rules"]));
@@ -143,7 +100,11 @@ public sealed class ContentAndGameplayModuleTests
         var registry = new GameplayModuleRegistry();
         var module = new TestGameplayModule(new GameplayModuleIdentity("diablo.rules", "1", "hash", ["missing"]));
 
-        Assert.Throws<InvalidOperationException>(() => registry.Load([module], new GameplayModuleContext(content, new DelegateAuthoritativeClock(() => 0))));
+        Assert.Throws<GameplayModuleCompatibilityException>(() => registry.Load(
+            [module],
+            new GameplayModuleContext(
+                content,
+                new Devilution.Engine.DelegateAuthoritativeClock(() => 0))));
     }
 
     [Fact]
@@ -196,6 +157,32 @@ public sealed class ContentAndGameplayModuleTests
         Assert.Equal(10U, rules.GetManaRefillPrice(32, 640));
     }
 
+    [Fact]
+    public void CustomHostStoreRulesRemainSupportedByTheModuleBridge()
+    {
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, [new StoreItem(0, 42, 75)]);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            startingGold: 100,
+            gameplayRules: new RejectPurchaseRules());
+        var server = new Commands.AuthoritativeCommandServer(executor);
+
+        Assert.Equal(CommandStatus.Accepted, server.Process("player", new Command {
+            ClientSequence = 1,
+            OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
+        }, 0).Status);
+        var result = server.Process("player", new Command {
+            ClientSequence = 2,
+            RequestedTick = 1,
+            PurchaseRequested = new PurchaseRequested { StoreId = 1, StoreSlot = 0 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Rejected, result.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.RejectReason);
+        Assert.Single(catalog.GetItems(1));
+    }
+
     private sealed class TestGameplayModule(GameplayModuleIdentity identity) : IGameplayModule
     {
         public GameplayModuleIdentity Identity { get; } = identity;
@@ -207,5 +194,35 @@ public sealed class ContentAndGameplayModuleTests
             RegistrationOrder.AddRange(registry.Modules.Select(module => module.Identity.Id));
             RegistrationOrder.Add(Identity.Id);
         }
+    }
+
+    private sealed class RejectPurchaseRules : IStoreGameplayRules
+    {
+        public CommandRejectReason? ValidatePurchase(StoreItem item, uint playerGold)
+            => CommandRejectReason.NotAllowed;
+
+        public CommandRejectReason? ValidateSale(OwnedStoreItem item) => throw Unused();
+
+        public CommandRejectReason? ValidateRepair(OwnedStoreItem item, uint playerGold) => throw Unused();
+
+        public CommandRejectReason? ValidateRecharge(OwnedStoreItem item, uint playerGold) => throw Unused();
+
+        public CommandRejectReason? ValidateIdentification(OwnedStoreItem item, uint playerGold) => throw Unused();
+
+        public CommandRejectReason? ValidateManaRefill(int currentMana, int maximumMana, uint playerGold)
+            => throw Unused();
+
+        public uint GetSalePrice(OwnedStoreItem item) => throw Unused();
+
+        public uint GetRepairPrice(OwnedStoreItem item) => throw Unused();
+
+        public uint GetRechargePrice(OwnedStoreItem item) => throw Unused();
+
+        public uint GetIdentificationPrice(OwnedStoreItem item) => throw Unused();
+
+        public uint GetManaRefillPrice(int currentMana, int maximumMana) => throw Unused();
+
+        private static InvalidOperationException Unused()
+            => new("The test bridge called an unrelated store rule.");
     }
 }

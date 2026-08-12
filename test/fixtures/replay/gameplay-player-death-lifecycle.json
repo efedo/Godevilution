@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/player-death-lifecycle",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "5193350904777b1bacf5abe0a9e23c05cd1aab2b6755b8b0d4194994dea7d9b1"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "player_action_timing": {
+    "walking_frames": 8,
+    "attack_frames": 16,
+    "attack_action_frame": 9,
+    "casting_frames": 20,
+    "casting_action_frame": 14,
+    "death_frames": 20
+  },
+  "initial_state": {
+    "player": "A",
+    "gold": 101,
+    "experience": 0,
+    "life": 5,
+    "mana": 0,
+    "mana_maximum": 0,
+    "position_x": 0,
+    "position_y": 0,
+    "gold_stack_seed": 123,
+    "gold_stack_cell": 0,
+    "character_class": 0,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_attack_damage": 5,
+    "combat_target_aggro_range": 2
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "49c3e790cefe38a12b0266570603a4a49cf2b6eb54cf12e9d5f5d5afef86e313" },
+    { "tick": 2, "state_sha256": "fb0dd7a322b0103b04c518a7f0e2638b7c0a5ae91dc6355d6417ed99f50464b1" },
+    { "tick": 40, "state_sha256": "fb0dd7a322b0103b04c518a7f0e2638b7c0a5ae91dc6355d6417ed99f50464b1" },
+    { "tick": 41, "state_sha256": "27116b6cc98af6450bc19c737fab0def8b85f2be52c0e255bfe8de6ca7693352" }
+  ]
+}

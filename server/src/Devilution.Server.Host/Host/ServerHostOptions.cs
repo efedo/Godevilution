@@ -1,0 +1,218 @@
+using System.Globalization;
+using System.Net;
+
+namespace Devilution.Server.Host;
+
+/** Command-line configuration for the standalone authoritative server host. */
+public sealed record ServerHostOptions(
+    IPAddress BindAddress,
+    int Port,
+    string ContentRoot,
+    string ContentId,
+    string ContentVersion,
+    string BuildId,
+    string ProtocolSchemaVersion,
+    uint TickRateHz,
+    uint? StartingGold)
+{
+    public int? StartingLife { get; init; }
+
+    public int? StartingMana { get; init; }
+
+    /** Null requests a fresh server-owned seed at process startup. */
+    public uint? RandomSeed { get; init; }
+
+    public string SaveRoot { get; init; } = Path.Combine("server", "saves");
+
+    public IReadOnlyList<string> ContentOverlayRoots { get; init; } = [];
+
+    public IReadOnlyList<string> GameplayModulePackageRoots { get; init; } = [];
+
+    /** Standalone servers are multiplayer unless a local single-player launch opts out. */
+    public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.Multiplayer;
+
+    public static ServerHostOptions Defaults { get; } = new(
+        IPAddress.Loopback,
+        6113,
+        Path.Combine("server", "content", "base"),
+        "devilution.base",
+        "0.1.0",
+        "devilution-server",
+        "0.1.0",
+        20,
+        null);
+
+    public static bool TryParse(IReadOnlyList<string> args, out ServerHostOptions options, out string error)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        var current = Defaults;
+        for (var index = 0; index < args.Count; index++) {
+            var argument = args[index];
+            if (argument is "--help" or "-h") {
+                options = current;
+                error = string.Empty;
+                return false;
+            }
+
+            if (!argument.StartsWith("--", StringComparison.Ordinal) || index + 1 >= args.Count) {
+                options = current;
+                error = $"Unknown or incomplete option '{argument}'.";
+                return false;
+            }
+
+            var value = args[++index];
+            switch (argument) {
+            case "--bind":
+                if (!IPAddress.TryParse(value, out var bindAddress)) {
+                    options = current;
+                    error = $"'{value}' is not a valid bind address.";
+                    return false;
+                }
+                current = current with { BindAddress = bindAddress };
+                break;
+            case "--port":
+                if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var port) || port is < 0 or > 65535) {
+                    options = current;
+                    error = $"'{value}' is not a valid TCP port.";
+                    return false;
+                }
+                current = current with { Port = port };
+                break;
+            case "--content-root":
+                current = current with { ContentRoot = value };
+                break;
+            case "--content-id":
+                current = current with { ContentId = value };
+                break;
+            case "--content-version":
+                current = current with { ContentVersion = value };
+                break;
+            case "--content-overlay":
+                current = current with {
+                    ContentOverlayRoots = current.ContentOverlayRoots.Append(value).ToArray(),
+                };
+                break;
+            case "--module-package":
+                current = current with {
+                    GameplayModulePackageRoots = current.GameplayModulePackageRoots
+                        .Append(value)
+                        .ToArray(),
+                };
+                break;
+            case "--build-id":
+                current = current with { BuildId = value };
+                break;
+            case "--protocol-version":
+                current = current with { ProtocolSchemaVersion = value };
+                break;
+            case "--tick-rate":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var tickRate) || tickRate == 0) {
+                    options = current;
+                    error = $"'{value}' is not a valid tick rate.";
+                    return false;
+                }
+                current = current with { TickRateHz = tickRate };
+                break;
+            case "--starting-gold":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var startingGold)) {
+                    options = current;
+                    error = $"'{value}' is not a valid starting gold amount.";
+                    return false;
+                }
+                current = current with { StartingGold = startingGold };
+                break;
+            case "--starting-life":
+                if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var startingLife) || startingLife < 0) {
+                    options = current;
+                    error = $"'{value}' is not a valid starting life amount.";
+                    return false;
+                }
+                current = current with { StartingLife = startingLife };
+                break;
+            case "--starting-mana":
+                if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var startingMana) || startingMana < 0) {
+                    options = current;
+                    error = $"'{value}' is not a valid starting mana amount.";
+                    return false;
+                }
+                current = current with { StartingMana = startingMana };
+                break;
+            case "--random-seed":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var randomSeed)) {
+                    options = current;
+                    error = $"'{value}' is not a valid 32-bit random seed.";
+                    return false;
+                }
+                current = current with { RandomSeed = randomSeed };
+                break;
+            case "--game-mode":
+                if (!TryParseGameMode(value, out var gameMode)) {
+                    options = current;
+                    error = $"'{value}' is not a valid game mode.";
+                    return false;
+                }
+                current = current with { GameMode = gameMode };
+                break;
+            case "--save-root":
+                current = current with { SaveRoot = value };
+                break;
+            default:
+                options = current;
+                error = $"Unknown option '{argument}'.";
+                return false;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(current.ContentRoot)
+            || string.IsNullOrWhiteSpace(current.ContentId)
+            || string.IsNullOrWhiteSpace(current.ContentVersion)
+            || string.IsNullOrWhiteSpace(current.BuildId)
+            || string.IsNullOrWhiteSpace(current.ProtocolSchemaVersion)) {
+            options = current;
+            error = "Content, build, and protocol identity values cannot be empty.";
+            return false;
+        }
+
+        options = current;
+        error = string.Empty;
+        return true;
+    }
+
+    private static bool TryParseGameMode(
+        string value,
+        out AuthoritativeGameMode gameMode)
+    {
+        switch (value) {
+        case "single-player":
+            gameMode = AuthoritativeGameMode.SinglePlayer;
+            return true;
+        case "multiplayer":
+            gameMode = AuthoritativeGameMode.Multiplayer;
+            return true;
+        default:
+            gameMode = default;
+            return false;
+        }
+    }
+
+    public static string Usage => """
+        Usage: Devilution.Server [options]
+
+          --bind <address>             Bind address (default: 127.0.0.1)
+          --port <port>                TCP port, 0 chooses an available port
+          --content-root <directory>   External TSV content root
+          --content-id <id>            Content pack identity
+          --content-version <version>  Content pack version
+          --content-overlay <directory> Ordered pack with content-pack.json; repeatable
+          --module-package <directory> Hash-verified gameplay-module package; repeatable
+          --build-id <id>              Server build identity
+          --protocol-version <version> Protocol schema version
+          --tick-rate <hz>             Authoritative simulation rate
+          --starting-gold <amount>     Override content-defined initial wallet
+          --starting-life <amount>     Override content-derived initial life (Q6)
+          --starting-mana <amount>     Override content-derived initial mana (Q6)
+          --random-seed <uint32>       Deterministic simulation seed (default: generated)
+          --game-mode <mode>           single-player or multiplayer (default: multiplayer)
+          --save-root <directory>      Server-owned authoritative save directory
+        """;
+}

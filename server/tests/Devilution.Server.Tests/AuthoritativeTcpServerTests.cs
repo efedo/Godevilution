@@ -183,9 +183,179 @@ public sealed class AuthoritativeTcpServerTests
         var firstSnapshot = await EnvelopeCodec.ReadAsync(firstStream, cancellationToken);
         var secondSnapshot = await EnvelopeCodec.ReadAsync(secondStream, cancellationToken);
 
-        var firstEntityId = Assert.Single(firstSnapshot!.Snapshot.Players).EntityId;
-        var secondEntityId = Assert.Single(secondSnapshot!.Snapshot.Players).EntityId;
+        var firstEntityId = firstSnapshot!.Snapshot.Players[0].EntityId;
+        var secondEntityId = secondSnapshot!.Snapshot.Players[0].EntityId;
         Assert.NotEqual(firstEntityId, secondEntityId);
+
+        await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+            CommandBatch = new CommandBatch {
+                Commands = {
+                    new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        SetFriendlyModeRequested = new SetFriendlyModeRequested {
+                            FriendlyMode = true,
+                        },
+                    },
+                },
+            },
+        }, cancellationToken);
+        await EnvelopeCodec.WriteAsync(secondStream, new Envelope {
+            CommandBatch = new CommandBatch {
+                Commands = {
+                    new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        SetFriendlyModeRequested = new SetFriendlyModeRequested {
+                            FriendlyMode = true,
+                        },
+                    },
+                },
+            },
+        }, cancellationToken);
+        Assert.Equal(
+            Envelope.PayloadOneofCase.CommandAck,
+            (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.PayloadCase);
+        Assert.Equal(
+            Envelope.PayloadOneofCase.CommandAck,
+            (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.PayloadCase);
+        var firstCompleteSnapshot = (await EnvelopeCodec.ReadAsync(
+            firstStream,
+            cancellationToken))!.Snapshot;
+        var secondCompleteSnapshot = (await EnvelopeCodec.ReadAsync(
+            secondStream,
+            cancellationToken))!.Snapshot;
+
+        Assert.Equal(
+            [firstEntityId, secondEntityId],
+            firstCompleteSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(
+            [secondEntityId, firstEntityId],
+            secondCompleteSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(firstCompleteSnapshot.StateSha256, secondCompleteSnapshot.StateSha256);
+    }
+
+    [Fact]
+    public async Task NewSessionSelectionIsInitializedOnceAndIgnoredOnResume()
+    {
+        var executor = new RecordingExecutor();
+        var initializer = new RecordingParticipantInitializer();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor,
+            participantInitializer: initializer);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string resumeToken;
+
+        using (var firstClient = new TcpClient()) {
+            await firstClient.ConnectAsync(
+                IPAddress.Loopback,
+                server.Port,
+                cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await SendHelloAsync(
+                firstStream,
+                cancellationToken,
+                requestedClassId: 3,
+                requestedCharacterName: "Dead-Monk");
+            resumeToken = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.ServerHello.SessionToken;
+            Assert.Equal(
+                Envelope.PayloadOneofCase.Snapshot,
+                (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.PayloadCase);
+        }
+
+        using (var resumedClient = new TcpClient()) {
+            await resumedClient.ConnectAsync(
+                IPAddress.Loopback,
+                server.Port,
+                cancellationToken);
+            await using var resumedStream = resumedClient.GetStream();
+            await SendHelloAsync(
+                resumedStream,
+                cancellationToken,
+                resumeToken,
+                requestedClassId: 1,
+                requestedCharacterName: "Ignored-Rogue");
+            Assert.Equal(
+                resumeToken,
+                (await EnvelopeCodec.ReadAsync(
+                    resumedStream,
+                    cancellationToken))!.ServerHello.SessionToken);
+            Assert.Equal(
+                Envelope.PayloadOneofCase.Snapshot,
+                (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.PayloadCase);
+        }
+
+        var initialized = Assert.Single(initializer.Selections);
+        Assert.Equal(3U, initialized.Selection.ArchetypeId);
+        Assert.Equal("Dead-Monk", initialized.Selection.CharacterName);
+    }
+
+    [Fact]
+    public async Task SimulationLoopDoesNotSaveSessionBeforeParticipantInitializationCompletes()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Initialization-Race-" + Guid.NewGuid().ToString("N"));
+        try {
+            var executor = new RecordingExecutor();
+            var initializer = new BlockingParticipantInitializer();
+            var saveProvider = new RecordingSaveProvider();
+            var commandServer = new AuthoritativeCommandServer(executor);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            ulong tick = 0;
+            await using var server = new AuthoritativeTcpServer(
+                commandServer,
+                handshake,
+                () => Interlocked.Increment(ref tick),
+                snapshotProvider: executor,
+                saveStore: new AuthoritativeSaveStore(saveRoot),
+                saveProvider: saveProvider,
+                participantInitializer: initializer);
+            server.Start();
+            var cancellationToken = TestContext.Current.CancellationToken;
+
+            using var client = new TcpClient();
+            await client.ConnectAsync(
+                IPAddress.Loopback,
+                server.Port,
+                cancellationToken);
+            await using var stream = client.GetStream();
+            await SendHelloAsync(stream, cancellationToken, requestedClassId: 2);
+            await initializer.Entered.Task.WaitAsync(cancellationToken);
+            await Task.Delay(100, cancellationToken);
+
+            Assert.Equal(0, saveProvider.ExportCount);
+
+            initializer.Release();
+            Assert.Equal(
+                Envelope.PayloadOneofCase.ServerHello,
+                (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+            Assert.Equal(
+                Envelope.PayloadOneofCase.Snapshot,
+                (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+            await WaitUntilAsync(
+                () => saveProvider.ExportCount > 0,
+                cancellationToken);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
     }
 
     [Fact]
@@ -404,15 +574,39 @@ public sealed class AuthoritativeTcpServerTests
         };
     }
 
-    private static ValueTask SendHelloAsync(Stream stream, CancellationToken cancellationToken)
+    private static ValueTask SendHelloAsync(
+        Stream stream,
+        CancellationToken cancellationToken,
+        string resumeToken = "",
+        uint? requestedClassId = null,
+        string? requestedCharacterName = null)
     {
-        return EnvelopeCodec.WriteAsync(stream, new Envelope {
-            ClientHello = new ClientHello {
-                ClientBuildId = "client-build",
-                ProtocolSchemaVersion = "0.1.0",
-                ContentManifestHash = "content-hash",
-            },
-        }, cancellationToken);
+        var hello = new ClientHello {
+            ClientBuildId = "client-build",
+            ProtocolSchemaVersion = "0.1.0",
+            ContentManifestHash = "content-hash",
+            ResumeToken = resumeToken,
+        };
+        if (requestedClassId.HasValue)
+            hello.RequestedCharacterClassId = requestedClassId.Value;
+        if (requestedCharacterName is not null)
+            hello.RequestedCharacterName = requestedCharacterName;
+        return EnvelopeCodec.WriteAsync(
+            stream,
+            new Envelope { ClientHello = hello },
+            cancellationToken);
+    }
+
+    private static async Task WaitUntilAsync(
+        Func<bool> predicate,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; attempt < 100; attempt++) {
+            if (predicate())
+                return;
+            await Task.Delay(10, cancellationToken);
+        }
+        throw new TimeoutException("Timed out waiting for the server condition.");
     }
 
     private sealed class RecordingExecutor : IAuthoritativeCommandExecutor, IAuthoritativeSnapshotProvider
@@ -431,6 +625,60 @@ public sealed class AuthoritativeTcpServerTests
                 Tick = tick,
                 Players = { new PlayerSnapshot { EntityId = entityId } },
             };
+        }
+    }
+
+    private sealed class RecordingParticipantInitializer
+        : IAuthoritativeParticipantInitializer
+    {
+        public List<(string SessionId, AuthoritativeParticipantSelection Selection)>
+            Selections { get; } = [];
+
+        public void InitializeParticipant(
+            string sessionId,
+            AuthoritativeParticipantSelection selection)
+        {
+            Selections.Add((sessionId, selection));
+        }
+    }
+
+    private sealed class BlockingParticipantInitializer
+        : IAuthoritativeParticipantInitializer
+    {
+        private readonly ManualResetEventSlim release = new(initialState: false);
+
+        public TaskCompletionSource Entered { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void InitializeParticipant(
+            string sessionId,
+            AuthoritativeParticipantSelection selection)
+        {
+            Entered.TrySetResult();
+            if (!release.Wait(TimeSpan.FromSeconds(5)))
+                throw new TimeoutException("The participant initializer was not released.");
+        }
+
+        public void Release()
+        {
+            release.Set();
+        }
+    }
+
+    private sealed class RecordingSaveProvider : IAuthoritativeSaveProvider
+    {
+        private int exportCount;
+
+        public int ExportCount => Volatile.Read(ref exportCount);
+
+        public string ExportPlayerSave(string sessionId)
+        {
+            Interlocked.Increment(ref exportCount);
+            return "{}";
+        }
+
+        public void ImportPlayerSave(string sessionId, string serializedSave)
+        {
         }
     }
 }
