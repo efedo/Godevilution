@@ -3,6 +3,7 @@ using Devilution.Engine;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Host;
+using Devilution.Server.Protocol;
 using Devilution.Server.Snapshots;
 using Devilution.Server.Stores;
 using Xunit;
@@ -54,6 +55,123 @@ public sealed class RulesetLeaseHostAdapterTests
         Assert.Equal("replacement", adapter.ExportPlayerSave("session"));
     }
 
+    [Fact]
+    public void ReloadMigratesSessionsBeforePublishingAndDisposesRetiredAdapters()
+    {
+        var initial = new FakeAdapter("initial");
+        var replacement = new FakeAdapter("replacement");
+        var candidates = new Queue<FakeAdapter>([initial, replacement]);
+        var runtime = CreateRuntime(candidates);
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+
+        var result = adapter.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0")],
+            ["session"]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("initial", replacement.ExportPlayerSave("session"));
+        Assert.Equal(1, adapter.DisposeRetiredAdapters());
+        Assert.True(initial.Disposed);
+        Assert.False(replacement.Disposed);
+        Assert.Empty(runtime.DrainRetired());
+    }
+
+    [Fact]
+    public void FailedSessionMigrationLeavesThePreviousGenerationActive()
+    {
+        var initial = new FakeAdapter("initial");
+        var replacement = new FakeAdapter("replacement") { ThrowOnImport = true };
+        var candidates = new Queue<FakeAdapter>([initial, replacement]);
+        var runtime = CreateRuntime(candidates);
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+
+        var result = adapter.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0")],
+            ["session"]);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(
+            "ruleset-target-preparation-failed",
+            Assert.Single(result.Diagnostics).Code);
+        Assert.Same(initial, runtime.Active.Target);
+        Assert.Equal(0, runtime.RetiredActivationCount);
+        Assert.True(replacement.Disposed);
+        Assert.Equal("initial", adapter.ExportPlayerSave("session"));
+    }
+
+    [Fact]
+    public async Task ReloadWaitsForInFlightHostOperations()
+    {
+        using var operationStarted = new ManualResetEventSlim();
+        using var releaseOperation = new ManualResetEventSlim();
+        var initial = new FakeAdapter(
+            "initial",
+            () => {
+                operationStarted.Set();
+                releaseOperation.Wait(TestContext.Current.CancellationToken);
+            });
+        var replacement = new FakeAdapter("replacement");
+        var candidates = new Queue<FakeAdapter>([initial, replacement]);
+        var runtime = CreateRuntime(candidates);
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+
+        var operation = Task.Run(
+            () => adapter.Execute("session", new Command(), 1),
+            TestContext.Current.CancellationToken);
+        Assert.True(operationStarted.Wait(
+            TimeSpan.FromSeconds(5),
+            TestContext.Current.CancellationToken));
+
+        var reload = Task.Run(
+            () => adapter.TryReload(
+                CreateManifest("2", "replacement"),
+                [new TestModule("rules", "2.0.0")],
+                ["session"]),
+            TestContext.Current.CancellationToken);
+        try {
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+            Assert.False(reload.IsCompleted);
+        } finally {
+            releaseOperation.Set();
+        }
+
+        Assert.True((await operation).Succeeded);
+        Assert.True((await reload).Succeeded);
+        Assert.Equal("initial", adapter.ExportPlayerSave("session"));
+    }
+
+    [Fact]
+    public async Task TcpHostPublishesTheReplacementHandshakeIdentity()
+    {
+        var initial = new FakeAdapter("initial");
+        var replacement = new FakeAdapter("replacement");
+        var runtime = CreateRuntime(new Queue<FakeAdapter>([initial, replacement]));
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "initial-content",
+            20) {
+            RulesetIdentityHash = "initial-ruleset",
+        });
+        await using var server = new AuthoritativeTcpServer(
+            new AuthoritativeCommandServer(adapter),
+            handshake,
+            new DelegateAuthoritativeClock(() => 0),
+            adapter);
+
+        var result = server.TryReloadRuleset(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0")]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(initial.Disposed);
+        Assert.Equal(result.Active.Identity.CombinedSha256, handshake.Identity.ContentManifestHash);
+        Assert.Equal(result.Active.Identity.CombinedSha256, handshake.Identity.RulesetIdentityHash);
+    }
+
     private static GameplayRulesetRuntime<IAuthoritativeGameHostAdapter> CreateRuntime(
         Queue<FakeAdapter> candidates)
     {
@@ -77,8 +195,14 @@ public sealed class RulesetLeaseHostAdapterTests
 
     private sealed class FakeAdapter(
         string name,
-        Action? onExecute = null) : IAuthoritativeGameHostAdapter
+        Action? onExecute = null) : IAuthoritativeGameHostAdapter, IDisposable
     {
+        private readonly Dictionary<string, string> saves = new(StringComparer.Ordinal);
+
+        public bool ThrowOnImport { get; init; }
+
+        public bool Disposed { get; private set; }
+
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
             onExecute?.Invoke();
@@ -101,11 +225,21 @@ public sealed class RulesetLeaseHostAdapterTests
 
         public string ExportPlayerSave(string sessionId)
         {
-            return name;
+            return saves.TryGetValue(sessionId, out var save)
+                ? save
+                : name;
         }
 
         public void ImportPlayerSave(string sessionId, string serializedSave)
         {
+            if (ThrowOnImport)
+                throw new InvalidDataException("session migration rejected");
+            saves[sessionId] = serializedSave;
+        }
+
+        public void Dispose()
+        {
+            Disposed = true;
         }
 
         public void InitializeParticipant(

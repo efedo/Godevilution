@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using EngineClock = Devilution.Engine.IAuthoritativeClock;
 using System.Security.Cryptography;
 using System.Text;
+using Devilution.Data;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Protocol;
@@ -31,6 +32,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private readonly AuthoritativeSaveStore? saveStore;
     private readonly IAuthoritativeSaveProvider? saveProvider;
     private readonly IAuthoritativeParticipantInitializer? participantInitializer;
+    private IAuthoritativeGameHostAdapter? gameAdapter;
     private readonly StableEntityIdAllocator entityIds = new();
     private readonly ConcurrentDictionary<TcpClient, byte> clients = new();
     private readonly ConcurrentDictionary<string, SessionState> sessionsByToken = new(StringComparer.Ordinal);
@@ -60,6 +62,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             gameAdapter)
     {
         ArgumentNullException.ThrowIfNull(gameAdapter);
+        this.gameAdapter = gameAdapter;
     }
 
     public AuthoritativeTcpServer(
@@ -127,6 +130,42 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     public int Port => ((IPEndPoint?)listener.LocalEndpoint)?.Port ?? 0;
 
+    /** Returns initialized sessions in deterministic identity order. */
+    public IReadOnlyList<string> ActiveSessionIds => sessionsByToken.Values
+        .Where(session => session.ParticipantInitialized)
+        .Select(session => session.Id)
+        .OrderBy(sessionId => sessionId, StringComparer.Ordinal)
+        .ToArray();
+
+    /**
+     * Reloads the active ruleset through the leased adapter and updates the
+     * handshake identity only after every initialized session has migrated.
+     */
+    public Devilution.Engine.GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter> TryReloadRuleset(
+        ContentManifest candidateManifest,
+        IEnumerable<Devilution.Engine.IGameplayModule> candidateModules)
+    {
+        if (gameAdapter is not LeasedAuthoritativeGameHostAdapter leasedAdapter)
+            throw new InvalidOperationException(
+                "Live ruleset replacement requires the leased host adapter.");
+
+        var result = leasedAdapter.TryReload(
+            candidateManifest,
+            candidateModules,
+            ActiveSessionIds);
+        if (result.Succeeded) {
+            leasedAdapter.DisposeRetiredAdapters();
+            var currentIdentity = handshake.Identity;
+            handshake.UpdateIdentity(ProtocolServerIdentity.FromRuleset(
+                currentIdentity.BuildId,
+                currentIdentity.ProtocolSchemaVersion,
+                currentIdentity.TickRateHz,
+                result.Active.Identity,
+                currentIdentity.GameMode));
+        }
+        return result;
+    }
+
     public void Start()
     {
         if (cancellation is not null)
@@ -165,6 +204,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         cancellation = null;
         acceptLoop = null;
         simulationLoop = null;
+        if (gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter)
+            leasedAdapter.DisposeRetiredAdapters();
     }
 
     private async Task AcceptLoopAsync(CancellationToken cancellationToken)

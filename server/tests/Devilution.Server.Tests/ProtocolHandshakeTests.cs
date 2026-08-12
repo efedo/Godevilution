@@ -91,6 +91,33 @@ public sealed class ProtocolHandshakeTests
         Assert.Equal("ruleset-hash", matching.ServerHello!.RulesetIdentityHash);
     }
 
+    [Fact]
+    public void RulesetIdentityCanBeUpdatedAfterAHostMigration()
+    {
+        var handshake = CreateHandshake();
+        handshake.UpdateIdentity(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "replacement-content",
+            20) {
+            RulesetIdentityHash = "replacement-ruleset",
+        });
+
+        var old = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = "0.1.0",
+            ContentManifestHash = "content-hash",
+        });
+        var replacement = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = "0.1.0",
+            ContentManifestHash = "replacement-content",
+            RulesetIdentityHash = "replacement-ruleset",
+        });
+
+        Assert.Equal(ProtocolErrorCode.ContentMismatch, old.Error!.Code);
+        Assert.True(replacement.Accepted);
+        Assert.Equal("replacement-ruleset", handshake.Identity.RulesetIdentityHash);
+    }
+
     private static ProtocolHandshake CreateHandshake()
     {
         return new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
