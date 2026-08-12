@@ -92,6 +92,8 @@ constexpr std::string_view CommandHelpText =
     "  debug.player.rejuvenate\n"
     "  debug.player.health <amount>\n"
     "  debug.player.mana <amount>\n"
+    "  debug.player.attributes.max\n"
+    "  debug.player.attributes.min\n"
     "  debug.player.trn <asset-path|clear>\n"
     "  debug.display.grid [on|off]\n"
     "  debug.display.vision [on|off]\n"

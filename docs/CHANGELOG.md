@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   preserving `dev.player.stats.rejuvenate` as a Lua compatibility alias.
 - Move player health and mana adjustment into native debug commands while
   preserving the Lua stat helpers as compatibility aliases.
+- Move player attribute max/min helpers into native debug commands while
+  preserving their Lua names as compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

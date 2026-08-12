@@ -43,6 +43,9 @@ The `dev.player.stats.adjustHealth` and `adjustMana` helpers likewise delegate
 to `debug.player.health` and `debug.player.mana`; their native commands retain
 the original Q6 adjustment, death handling, mana-base recalculation, and redraw
 behavior.
+The `dev.player.stats.setAttrToMax` and `setAttrToMin` helpers now delegate to
+`debug.player.attributes.max` and `.min`; the native handlers own the four
+attribute mutations while the Lua names remain compatibility aliases.
 
 ## Bundled Scripts
 

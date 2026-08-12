@@ -31,26 +31,6 @@ std::string DebugCmdLevelUp(std::optional<int> levels)
 	return StrCat("New character level: ", myPlayer.getCharacterLevel() + levelsToAdd);
 }
 
-std::string DebugCmdMaxStats()
-{
-	Player &myPlayer = *MyPlayer;
-	myPlayer.modifyStrength(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Strength) - myPlayer.attributes.strength.base);
-	myPlayer.modifyMagic(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Magic) - myPlayer.attributes.magic.base);
-	myPlayer.modifyDexterity(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Dexterity) - myPlayer.attributes.dexterity.base);
-	myPlayer.modifyVitality(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Vitality) - myPlayer.attributes.vitality.base);
-	return "Set all character base attributes to maximum.";
-}
-
-std::string DebugCmdMinStats()
-{
-	Player &myPlayer = *MyPlayer;
-	myPlayer.modifyStrength(-myPlayer.attributes.strength.base);
-	myPlayer.modifyMagic(-myPlayer.attributes.magic.base);
-	myPlayer.modifyDexterity(-myPlayer.attributes.dexterity.base);
-	myPlayer.modifyVitality(-myPlayer.attributes.vitality.base);
-	return "Set all character base attributes to minimum.";
-}
-
 } // namespace
 
 sol::table LuaDevPlayerStatsModule(sol::state_view &lua)

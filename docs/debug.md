@@ -49,6 +49,8 @@ and `debug.player.info [id]`; `debug.player.rejuvenate` restores life and mana,
 while `debug.player.health <amount>` and `debug.player.mana <amount>` adjust
 the corresponding pools by whole points. `debug.player.trn <asset-path|clear>` selects
 or clears the native player TRN asset.
+`debug.player.attributes.max` and `.min` set all four base attributes to their
+native maximum or minimum.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.

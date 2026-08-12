@@ -91,6 +91,8 @@ std::string DebugCmdPlayerInfo(std::optional<uint8_t> id);
 std::string DebugCmdRejuvenate();
 std::string DebugCmdChangeHealth(int change);
 std::string DebugCmdChangeMana(int change);
+std::string DebugCmdMaxStats();
+std::string DebugCmdMinStats();
 std::string DebugCmdSetPlayerTrn(std::string_view path);
 std::string DebugCmdShowGrid(std::optional<bool> on);
 std::string DebugCmdVision(std::optional<bool> on);

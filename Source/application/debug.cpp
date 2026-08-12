@@ -246,6 +246,26 @@ std::string DebugCmdChangeMana(int change)
 	return StrCat("Changed mana by ", change);
 }
 
+std::string DebugCmdMaxStats()
+{
+	Player &myPlayer = *MyPlayer;
+	myPlayer.modifyStrength(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Strength) - myPlayer.attributes.strength.base);
+	myPlayer.modifyMagic(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Magic) - myPlayer.attributes.magic.base);
+	myPlayer.modifyDexterity(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Dexterity) - myPlayer.attributes.dexterity.base);
+	myPlayer.modifyVitality(myPlayer.GetMaximumAttributeValue(CharacterAttribute::Vitality) - myPlayer.attributes.vitality.base);
+	return "Set all character base attributes to maximum.";
+}
+
+std::string DebugCmdMinStats()
+{
+	Player &myPlayer = *MyPlayer;
+	myPlayer.modifyStrength(-myPlayer.attributes.strength.base);
+	myPlayer.modifyMagic(-myPlayer.attributes.magic.base);
+	myPlayer.modifyDexterity(-myPlayer.attributes.dexterity.base);
+	myPlayer.modifyVitality(-myPlayer.attributes.vitality.base);
+	return "Set all character base attributes to minimum.";
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -328,6 +348,12 @@ void RegisterNativeDebugCommands()
 	CurrentDebugCommandRegistry.Register("debug.player.mana", "Adjust player mana by a whole-point amount.", [](std::string_view arguments) {
 		const auto amount = ParseRequiredInt(arguments);
 		return amount.has_value() ? DebugCmdChangeMana(*amount) : std::string("Expected an integer mana amount.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.attributes.max", "Set all character base attributes to maximum.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdMaxStats() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.attributes.min", "Set all character base attributes to minimum.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdMinStats() : std::string("This command takes no arguments.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);
