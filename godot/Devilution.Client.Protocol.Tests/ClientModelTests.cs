@@ -7,6 +7,65 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void EnumeratesAndCyclesAuthoritativeSpellSourcesWithoutChangingTheirOwnership()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    AbilitySpellId = 28,
+                    MemorizedSpells = {
+                        new PlayerSpellLevelSnapshot { SpellId = 3, Level = 2 },
+                        new PlayerSpellLevelSnapshot { SpellId = 1, Level = 1 },
+                    },
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 4,
+                            ItemSeed = 99,
+                            State = new ItemStateSnapshot { SpellId = 30, Charges = 3, MiscId = 23 },
+                        },
+                    },
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 100,
+                            State = new ItemStateSnapshot { SpellId = 32, MiscId = 22 },
+                        },
+                    },
+                    Belt = {
+                        new BeltItemSnapshot {
+                            Slot = 2,
+                            ItemSeed = 101,
+                            State = new ItemStateSnapshot { SpellId = 33, MiscId = 22 },
+                        },
+                    },
+                },
+            },
+        };
+
+        var sources = AuthoritativeSpellSourceSelector.GetSources(snapshot);
+
+        Assert.Equal(
+            ["memorized:1:1", "memorized:3:2", "equipment:4:99", "inventory:0", "belt:2", "ability:28"],
+            sources.Select(source => source.Key));
+        Assert.Equal(CastSourceKind.MemorizedSpell, sources[0].Kind);
+        Assert.Equal(CastSourceKind.ChargedItem, sources[2].Kind);
+        Assert.Equal(PlayerItemLocation.Equipment, sources[2].SourceItem!.Location);
+        Assert.Equal(4U, sources[2].SourceItem!.Slot);
+        Assert.Equal(CastSourceKind.ConsumableItem, sources[3].Kind);
+        Assert.Equal(PlayerItemLocation.Inventory, sources[3].SourceItem!.Location);
+        Assert.Equal(CastSourceKind.Ability, sources[^1].Kind);
+
+        var selected = AuthoritativeSpellSourceSelector.Select(sources, "memorized:3:2");
+        Assert.Equal("memorized:3:2", selected!.Key);
+        Assert.Equal("equipment:4:99", AuthoritativeSpellSourceSelector
+            .Cycle(sources, selected.Key, 1)!.Key);
+        Assert.Equal("ability:28", AuthoritativeSpellSourceSelector
+            .Cycle(sources, "memorized:1:1", -1)!.Key);
+        Assert.Equal("memorized:1:1", AuthoritativeSpellSourceSelector
+            .Select(sources, "missing")!.Key);
+    }
+
+    [Fact]
     public void AppliesAuthoritativeSnapshotAndEvents()
     {
         var model = new AuthoritativeClientModel();
