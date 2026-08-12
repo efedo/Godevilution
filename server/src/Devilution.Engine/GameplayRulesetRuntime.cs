@@ -132,13 +132,24 @@ public sealed class GameplayRulesetRuntime<TActivation>
 
     public GameplayRulesetReloadResult<TActivation> TryReload(
         ContentManifest candidateManifest,
-        IEnumerable<IGameplayModule> candidateModules)
+        IEnumerable<IGameplayModule> candidateModules,
+        Action<TActivation>? prepareCandidate = null)
     {
         ArgumentNullException.ThrowIfNull(candidateManifest);
         ArgumentNullException.ThrowIfNull(candidateModules);
         lock (reloadSynchronization) {
             try {
                 var candidate = Create(candidateManifest, candidateModules);
+                try {
+                    prepareCandidate?.Invoke(candidate.Target);
+                } catch (Exception exception) {
+                    return new GameplayRulesetReloadResult<TActivation>(
+                        false,
+                        Active,
+                        [new GameplayRulesetActivationDiagnostic(
+                            "ruleset-target-preparation-failed",
+                            exception.Message)]);
+                }
                 lock (publicationSynchronization) {
                     retired.Add(active);
                     active = candidate;

@@ -73,6 +73,51 @@ public sealed class GameplayRulesetRuntimeTests
     }
 
     [Fact]
+    public void CandidatePreparationRunsBeforePublication()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("1", "initial"),
+            new TestModule("rules", "1.0.0", "initial"));
+        var original = runtime.Active;
+        var prepared = false;
+
+        var result = runtime.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0", "replacement")],
+            candidate => {
+                prepared = true;
+                Assert.Equal("replacement", candidate.Value);
+                Assert.Same(original, runtime.Active);
+            });
+
+        Assert.True(result.Succeeded);
+        Assert.True(prepared);
+        Assert.Same(result.Active, runtime.Active);
+    }
+
+    [Fact]
+    public void FailedCandidatePreparationKeepsThePreviousActivation()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("1", "initial"),
+            new TestModule("rules", "1.0.0", "initial"));
+        var original = runtime.Active;
+
+        var result = runtime.TryReload(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0", "replacement")],
+            _ => throw new InvalidDataException("session migration rejected"));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(
+            "ruleset-target-preparation-failed",
+            Assert.Single(result.Diagnostics).Code);
+        Assert.Same(original, result.Active);
+        Assert.Same(original, runtime.Active);
+        Assert.Equal(0, runtime.RetiredActivationCount);
+    }
+
+    [Fact]
     public void FailedContentCompositionKeepsTheCompletePreviousActivation()
     {
         var runtime = CreateRuntime(
