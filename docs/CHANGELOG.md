@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.49 with server-authoritative
+  Immolation (stable spell ID 45, native `SpellID` 41), preserving the native
+  moving controller, 36-projectile radial burst, level-scaled speed, and
+  FireballBow projectile impact path.
 - Advance the Diablo content schema to 0.48 with server-authoritative Ring of
   Fire (stable spell ID 44, native `SpellID` 45), preserving native
   radius-three crawl ordering, first-blocker termination, RNG draw order, and
