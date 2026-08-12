@@ -194,6 +194,15 @@ restore. True adds the tagged
 additive legacy default. Clients may present the capability but never decide
 whether a cast succeeds.
 
+`MonsterSnapshot.is_unique`, `is_diablo`, and `berserk_immune` fields 25-27,
+`min_damage`, `max_damage`, `min_damage_special`, and `max_damage_special`
+fields 28-31, and `is_berserked` field 32 carry the server-owned Berserk
+contract. The server alone selects an eligible target, performs the native
+radius-five crawl and resistance coin flip, and scales each damage channel in
+native RNG order. Nondefault values add the tagged
+`godevilution-monster-berserk-v1` canonical-hash section; missing fields retain
+legacy defaults.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

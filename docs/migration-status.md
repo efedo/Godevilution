@@ -609,6 +609,12 @@ Content schema 0.47 adds stable Mana spell ID `41` (native `SpellID` `37`).
 The server owns native LCG draws for base, character-level, and spell-level
 restoration, including Sorcerer/Rogue/Bard multipliers and Q6 maximum clamping.
 
+Content schema 0.51 adds Berserk (stable spell ID `48`, native `SpellID` `44`).
+The authoritative module crawls eligible monsters within radius five, applies
+the native resistance coin flip, scales all four persisted damage channels in
+native RNG order, and preserves berserked state through snapshots, saves,
+protocol, and canonical hashes.
+
 Content schema 0.48 adds stable Ring of Fire spell ID `44` (native `SpellID`
 `45`). Its typed controller value `42` performs the native radius-three crawl,
 stops at the first missile blocker, consumes the native pre-crawl RNG draws,

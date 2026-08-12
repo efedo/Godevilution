@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.50.0` schema in
+It declares its identity and `devilution.diablo@0.51.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -270,19 +270,23 @@ exact item. The shipped Sorcerer staff therefore uses native miscellaneous type
 Diablo module rather than trusted from a client.
 
 `monsters.tsv` keeps encounter state and immutable gameplay capabilities outside
-the engine. Its optional `stone_curse_immune`, `undead`, and `player_minion`
-columns accept `0` or
-`1`; immune monsters are skipped by Stone Curse's native crawl, while undead
-monsters are the only monster targets accepted by Holy Bolt. Both flags persist
+the engine. Its optional `stone_curse_immune`, `undead`, `player_minion`,
+`unique`, `diablo`, and `berserk_immune` columns accept `0` or `1`; immune
+monsters are skipped by Stone Curse's native crawl, while undead
+monsters are the only monster targets accepted by Holy Bolt. These flags persist
 in snapshots and saves so a restored session cannot change future targeting
-rules.
+rules. Berserk also accepts optional `min_damage`, `max_damage`,
+`min_damage_special`, and `max_damage_special` channels. Its schema `0.51.0`
+row owns the radius-five crawl and 120% plus one-to-nine percent scaling; the
+server persists the active state and all channels.
 
 The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
 ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
-Monk's Search ability spell ID `46`, and Telekinesis spell ID `33`.
+Monk's Search ability spell ID `46`, Telekinesis spell ID `33`, and Berserk
+spell ID `48`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned

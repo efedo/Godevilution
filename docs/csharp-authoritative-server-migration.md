@@ -531,6 +531,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.51 adds Berserk (stable spell ID `48`, native `SpellID` `44`). The
+server owns the radius-five target crawl, eligibility rules, resistance coin
+flip, deterministic four-channel damage scaling, and persisted berserked
+monster state. Mode-specific animation and light-radius presentation remain
+client concerns in this bounded slice.
+
 Schema 0.50 adds Jester (stable spell ID `47`, native `SpellID` `39`). The
 server performs the native ten-way deterministic dispatch into the existing
 authoritative Firebolt, Fireball, Fire Wall, Guardian, Chain Lightning, Town
