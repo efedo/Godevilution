@@ -30,9 +30,7 @@
 #include <config.h>
 
 #include "application/fatal_error.h"
-#include "data/game_data_manager.hpp"
 #include "data/mod_manager.hpp"
-#include "engine/audio/effects.h"
 #include "engine/assets.hpp"
 #include "lua/lua_event.hpp"
 #include "lua/modules/audio.hpp"
@@ -253,7 +251,6 @@ void LuaReloadActiveMods()
 
 	CurrentStoreManager.ClearTownerDialogOptions();
 
-	gbIsHellfire = false;
 	std::vector<std::string_view> modnames = CurrentModManager.ReloadActiveMods();
 
 	for (const std::string_view modname : modnames) {
@@ -270,15 +267,7 @@ void LuaReloadActiveMods()
 		handler();
 	}
 
-	// Reload sound effects in case a mod archive overrides effects.tsv
-	effects_cleanup_sfx();
-	if (gbRunGame)
-		sound_init();
-	else
-		ui_sound_init();
-
-	// Reload game data (this can probably be done later in the process to avoid having to reload it)
-	CurrentGameDataManager.Reload();
+	CurrentModManager.ReloadActiveModData();
 
 }
 

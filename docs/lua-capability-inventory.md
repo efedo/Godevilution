@@ -22,7 +22,9 @@ experience. Pointer-derived Lua identities, including the legacy monster ID,
 must never cross the protocol boundary; stable server entity IDs are required.
 The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
-Lua reload hooks. Native Lua loading remains frozen for compatibility.
+Lua reload hooks. Native `ModManager` now owns archive selection, sound
+reinitialization, and table-data reload after legacy scripts run; Lua remains
+only the optional compatibility script phase.
 
 ## Bundled Scripts
 

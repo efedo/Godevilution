@@ -8,6 +8,8 @@
 #include "data/mod_manager.hpp"
 
 #include "application/game_mode.hpp"
+#include "data/game_data_manager.hpp"
+#include "engine/audio/effects.h"
 #include "engine/assets.hpp"
 #include "persistence/options.h"
 
@@ -34,6 +36,20 @@ std::vector<std::string_view> ModManager::ReloadActiveMods()
 	}
 
 	return activeMods;
+}
+
+void ModManager::ReloadActiveModData()
+{
+	// Sound and table data are native data-layer responsibilities. Keeping this
+	// phase separate lets legacy Lua scripts retain their existing pre-reload
+	// hooks without making Lua the owner of the reload pipeline.
+	effects_cleanup_sfx();
+	if (gbRunGame)
+		sound_init();
+	else
+		ui_sound_init();
+
+	CurrentGameDataManager.Reload();
 }
 
 } // namespace devilution

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Move native sound and table-data refreshes into `ModManager` after active
+  mod scripts run. Lua remains a compatibility hook rather than the owner of
+  archive, sound, or data reload orchestration.
 - Move Hellfire activation from the Lua `init.lua` bootstrap into the native
   declarative mod manager. Preserve archive priorities, game-mode selection,
   and data reload behavior while allowing content-only mods to omit Lua.
