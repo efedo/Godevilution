@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
 - Externalize the Rogue's Trap Disarm capability identity and armed-object
   state, then route an additive protocol command through the authoritative
   Diablo world module with snapshot, save, and hash coverage.
+- Give the shipped base content an explicit versioned manifest and make the
+  standalone host prefer it while retaining legacy loading for unmanifested
+  external roots.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

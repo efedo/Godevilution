@@ -9,6 +9,20 @@ namespace Devilution.Diablo.Tests;
 public sealed class ShippedContentTests
 {
     [Fact]
+    public void BaseContentPackUsesTheExplicitVersionedManifest()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+
+        Assert.Equal("devilution.base", pack.Id);
+        Assert.Equal("0.1.0", pack.Version);
+        Assert.Equal(
+            new ContentSchemaIdentity("devilution.diablo", "0.30.0"),
+            pack.Schema);
+        Assert.Empty(pack.Overlays);
+    }
+
+    [Fact]
     public void BaseContentManifestAndAuthoritativeCatalogsLoadDeterministically()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
@@ -24,6 +38,7 @@ public sealed class ShippedContentTests
         Assert.Equal(5U, stableIds.Resolve("spell", "identify"));
         Assert.Equal(26U, stableIds.Resolve("spell", "repair"));
         Assert.Equal(27U, stableIds.Resolve("spell", "recharge"));
+        Assert.Equal(28U, stableIds.Resolve("spell", "trap_disarm"));
         Assert.Equal(30U, stableIds.Resolve("spell", "charged_bolt"));
         Assert.Equal(46U, stableIds.Resolve("spell", "search"));
 

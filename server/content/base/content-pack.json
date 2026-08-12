@@ -1,0 +1,10 @@
+{
+  "formatVersion": 1,
+  "id": "devilution.base",
+  "version": "0.1.0",
+  "schema": {
+    "id": "devilution.diablo",
+    "version": "0.30.0"
+  },
+  "overlays": []
+}

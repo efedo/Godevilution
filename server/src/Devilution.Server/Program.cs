@@ -33,7 +33,7 @@ internal static class Program
     {
         var contentRoot = Path.GetFullPath(options.ContentRoot);
         var contentPacks = new List<ContentPack> {
-            ContentPackLoader.LoadDirectory(options.ContentId, options.ContentVersion, contentRoot),
+            LoadBaseContentPack(options, contentRoot),
         };
         foreach (var overlayRoot in options.ContentOverlayRoots)
             contentPacks.Add(ContentPackLoader.LoadManifestDirectory(overlayRoot));
@@ -123,5 +123,17 @@ internal static class Program
         } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
         }
         return 0;
+    }
+
+    private static ContentPack LoadBaseContentPack(
+        ServerHostOptions options,
+        string contentRoot)
+    {
+        return File.Exists(Path.Combine(contentRoot, ContentPackLoader.ManifestFileName))
+            ? ContentPackLoader.LoadManifestDirectory(contentRoot)
+            : ContentPackLoader.LoadDirectory(
+                options.ContentId,
+                options.ContentVersion,
+                contentRoot);
     }
 }
