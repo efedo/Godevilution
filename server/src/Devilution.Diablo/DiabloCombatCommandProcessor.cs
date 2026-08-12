@@ -3315,8 +3315,10 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(candidate.PositionY - minion.PositionY)))
             .ThenBy(candidate => candidate.EntityId)
             .FirstOrDefault();
-        if (enemy is null)
+        if (enemy is null) {
+            TryBeginPlayerMinionIdleWalk(minion, owner, players);
             return;
+        }
 
         var distance = Math.Max(
             Math.Abs(enemy.PositionX - minion.PositionX),
@@ -3341,6 +3343,62 @@ public sealed class DiabloCombatCommandProcessor
         var nextStep = FindPlayerMinionStep(minion, enemy, players);
         if (nextStep.HasValue)
             minion.BeginMovement(nextStep.Value.X, nextStep.Value.Y);
+    }
+
+    private void TryBeginPlayerMinionIdleWalk(
+        AuthoritativeCombatTarget minion,
+        AuthoritativePlayerState owner,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var ownerDirection = (int)owner.FacingDirection;
+        var directions = new List<int> { ownerDirection };
+        if (random.FlipCoin(2)) {
+            directions.Add(RotateDirection(ownerDirection, 1));
+            directions.Add(RotateDirection(ownerDirection, -1));
+        } else {
+            directions.Add(RotateDirection(ownerDirection, -1));
+            directions.Add(RotateDirection(ownerDirection, 1));
+        }
+        if (random.FlipCoin(2)) {
+            directions.Add(RotateDirection(ownerDirection, -2));
+            directions.Add(RotateDirection(ownerDirection, 2));
+        } else {
+            directions.Add(RotateDirection(ownerDirection, 2));
+            directions.Add(RotateDirection(ownerDirection, -2));
+        }
+
+        foreach (var direction in directions) {
+            if (TryBeginPlayerMinionWalk(minion, direction, players))
+                return;
+        }
+
+        var fallbackDirection = RotateDirection(ownerDirection, -1);
+        for (var index = 0; index < DirectionDisplacements.Length; index++) {
+            fallbackDirection = RotateDirection(fallbackDirection, 1);
+            if (TryBeginPlayerMinionWalk(minion, fallbackDirection, players))
+                return;
+        }
+    }
+
+    private bool TryBeginPlayerMinionWalk(
+        AuthoritativeCombatTarget minion,
+        int direction,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var displacement = DirectionDisplacements[direction];
+        var candidateX = checked(minion.PositionX + displacement.X);
+        var candidateY = checked(minion.PositionY + displacement.Y);
+        if (!world.IsWalkable(minion.LevelId, candidateX, candidateY)
+            || world.IsOccupied(
+                minion.LevelId,
+                candidateX,
+                candidateY,
+                players,
+                minion.EntityId)) {
+            return false;
+        }
+        minion.BeginMovement(candidateX, candidateY);
+        return true;
     }
 
     private (int X, int Y)? FindPlayerMinionStep(

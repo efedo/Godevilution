@@ -1673,6 +1673,31 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemWandersInOwnerFacingDirectionWhenNoMonsterIsAvailable()
+    {
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            10,
+            10,
+            100,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            minDamage: 12,
+            maxDamage: 20);
+        var world = new DiabloWorldState(combatTargets: [golem]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(golem.IsMoving);
+        Assert.Equal((11, 11), (golem.FuturePositionX, golem.FuturePositionY));
+    }
+
+    [Fact]
     public void GolemIsRemovedWhenOwnerLeavesTheActiveLevel()
     {
         var golem = new AuthoritativeCombatTarget(
