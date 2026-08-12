@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.47 with server-authoritative Mana
+  (stable spell ID 41, native `SpellID` 37), preserving native LCG draws,
+  Q6 clamping, effective-level scaling, and class multipliers.
+- Refresh the 22 base-content replay fixtures to the manifest identity produced
+  by the new Mana definition.
 - Advance the Diablo content schema to 0.46 with server-authoritative Magi
   (stable spell ID 40, native `SpellID` 38), restoring current mana to its
   native maximum through the shared immediate-effect cast path.
