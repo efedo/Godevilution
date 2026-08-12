@@ -15,6 +15,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(21, (int)AuthoritativeProjectileBehavior.BoneSpirit);
         Assert.Equal(35, (int)AuthoritativeProjectileBehavior.Elemental);
         Assert.Equal(36, (int)AuthoritativeProjectileBehavior.GuardianController);
+        Assert.Equal(37, (int)AuthoritativeProjectileBehavior.Telekinesis);
     }
 
     [Fact]
@@ -30,6 +31,26 @@ public sealed class AuthoritativeSpellCatalogTests
 
         Assert.True(catalog.TryGet(30, out var chargedBolt));
         Assert.Equal(1, chargedBolt.StaffLevel);
+    }
+
+    [Fact]
+    public void ShippedTelekinesisCarriesNativeTargetInteractionTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(33, out var telekinesis));
+        Assert.Equal(33U, telekinesis.NativeSpellId);
+        Assert.Equal(15, telekinesis.ManaCost);
+        Assert.Equal(2, telekinesis.ManaAdjustment);
+        Assert.Equal(8, telekinesis.MinimumManaCost);
+        Assert.Equal(2, telekinesis.StaffLevel);
+        Assert.Equal(AuthoritativeProjectileBehavior.Telekinesis, telekinesis.ProjectileBehavior);
     }
 
     [Fact]

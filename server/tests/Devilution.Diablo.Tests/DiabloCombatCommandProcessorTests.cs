@@ -6,6 +6,154 @@ namespace Devilution.Diablo.Tests;
 public sealed class DiabloCombatCommandProcessorTests
 {
     [Fact]
+    public void TelekinesisPicksUpAVisibleWorldItemWithoutAdjacency()
+    {
+        var item = new AuthoritativeWorldItem(
+            100,
+            0,
+            4,
+            0,
+            42,
+            25,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [item]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                100,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1040, player.Mana);
+        Assert.Empty(world.WorldItems);
+        Assert.Equal(42U, Assert.Single(player.Inventory).ItemSeed);
+    }
+
+    [Fact]
+    public void TelekinesisActivatesAVisibleObject()
+    {
+        var @object = new AuthoritativeWorldObject(
+            200,
+            2,
+            0,
+            4,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.Heal,
+            effectAmount: 5);
+        var world = new DiabloWorldState(objects: [@object]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 10,
+            lifeMaximum: 20,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                200,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        Assert.Equal(15, player.Life);
+        Assert.Equal(DiabloGameplayEventKind.Healing, Assert.Single(result.Events).Kind);
+    }
+
+    [Fact]
+    public void TelekinesisKnocksBackAVisibleMonsterOneCell()
+    {
+        var target = new AuthoritativeCombatTarget(9, 4, 0, 10);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                9,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((5, 0), (target.PositionX, target.PositionY));
+        Assert.Equal(1040, player.Mana);
+    }
+
+    [Fact]
+    public void TelekinesisRejectsAnObstructedTargetBeforeSpendingMana()
+    {
+        var target = new AuthoritativeCombatTarget(9, 4, 0, 10);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [1],
+            combatTargets: [target]);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateTelekinesisSpell()]),
+            worldCommands: worldCommands);
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 2000,
+            manaMaximum: 2000,
+            memorizedSpells: [new MemorizedSpellState(33, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                33,
+                9,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(2000, player.Mana);
+        Assert.Equal((4, 0), (target.PositionX, target.PositionY));
+    }
+
+    [Fact]
     public void AttackAppliesDamageExperienceDropAndOrderedEvents()
     {
         var target = new AuthoritativeCombatTarget(
@@ -3948,7 +4096,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativePlayerClassCatalog? playerClasses = null,
         AuthoritativePlayerAnimationCatalog? playerAnimations = null,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
-        AuthoritativeItemCatalog? items = null)
+        AuthoritativeItemCatalog? items = null,
+        DiabloWorldCommandProcessor? worldCommands = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -3962,7 +4111,21 @@ public sealed class DiabloCombatCommandProcessorTests
             playerClasses,
             playerAnimations,
             gameMode: gameMode,
-            items: items);
+            items: items,
+            worldCommands: worldCommands);
+    }
+
+    private static AuthoritativeSpellDefinition CreateTelekinesisSpell()
+    {
+        return new AuthoritativeSpellDefinition(33, 15, 0, 0, 0, 0) {
+            NativeSpellId = 33,
+            Range = 112,
+            ManaAdjustment = 2,
+            MinimumManaCost = 8,
+            ManaCostScale = 64,
+            StaffLevel = 2,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Telekinesis,
+        };
     }
 
     private static AuthoritativeSpellDefinition CreateChargedBoltSpell()

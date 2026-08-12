@@ -113,6 +113,14 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             combatRules.ValidateItems(options.Items);
         var random = new DiabloRandom(options.RandomSeed);
         var playerDamage = new AuthoritativePlayerDamageResolver(spells);
+        var worldCommands = new DiabloWorldCommandProcessor(
+            worldState,
+            options.PlayerAnimations,
+            options.UseNativePlayerActionTiming,
+            combatRules,
+            random,
+            playerDamage,
+            options.TrapDisarmAbilitySpellId);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -125,14 +133,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.RepairAbilitySpellId,
                 options.RechargeAbilitySpellId,
                 spells),
-            new DiabloWorldCommandProcessor(
-                worldState,
-                options.PlayerAnimations,
-                options.UseNativePlayerActionTiming,
-                combatRules,
-                random,
-                playerDamage,
-                options.TrapDisarmAbilitySpellId),
+            worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,
                 spells,
@@ -143,7 +144,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.UseNativePlayerActionTiming,
                 options.GameMode,
                 options.Items,
-                playerDamage),
+                playerDamage,
+                worldCommands),
             random,
             combatRules,
             options.PlayerClasses,

@@ -182,6 +182,15 @@ public sealed class AuthoritativeCombatTarget
         IsMoving = false;
     }
 
+    internal void ApplyKnockback(int positionX, int positionY)
+    {
+        PositionX = positionX;
+        PositionY = positionY;
+        FuturePositionX = positionX;
+        FuturePositionY = positionY;
+        IsMoving = false;
+    }
+
     internal void RestoreOccupancy(
         bool moving,
         int futurePositionX,

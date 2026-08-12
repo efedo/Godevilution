@@ -19,6 +19,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
+    private readonly DiabloWorldCommandProcessor? worldCommands;
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextProjectileEntityId = 0x80000000;
 
@@ -118,7 +119,8 @@ public sealed class DiabloCombatCommandProcessor
         bool useNativePlayerActionTiming = false,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
-        AuthoritativePlayerDamageResolver? playerDamage = null)
+        AuthoritativePlayerDamageResolver? playerDamage = null,
+        DiabloWorldCommandProcessor? worldCommands = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -132,6 +134,7 @@ public sealed class DiabloCombatCommandProcessor
             : throw new ArgumentOutOfRangeException(nameof(gameMode));
         this.items = items;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
+        this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -471,6 +474,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Elemental;
         var isGuardian = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.GuardianController;
+        var isTelekinesis = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Telekinesis;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -479,7 +484,7 @@ public sealed class DiabloCombatCommandProcessor
         if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse || isElemental || isGuardian)
             && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
+        if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse && !isTelekinesis
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -624,6 +629,21 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Accepted;
         if (isGuardian && !guardianSpawnPosition.HasValue)
             return DiabloCombatIntentResult.Accepted;
+        if (isTelekinesis) {
+            if (worldCommands is null)
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            var telekinesisValidation = worldCommands.ExecuteTelekinesis(
+                player,
+                intent.TargetEntityId,
+                intent.TargetX,
+                intent.TargetY,
+                appliedTick,
+                players,
+                applyEffects: false);
+            if (!telekinesisValidation.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    telekinesisValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
+        }
         if (source.Kind == DiabloCastSourceKind.MemorizedSpell
             && player.Mana < manaCost) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
@@ -674,6 +694,18 @@ public sealed class DiabloCombatCommandProcessor
             && !stoneCurseTarget.Value.Target.IsPetrified;
 
         ConsumeCastSource(player, source, manaCost);
+        if (isTelekinesis) {
+            var telekinesisResult = worldCommands!.ExecuteTelekinesis(
+                player,
+                intent.TargetEntityId,
+                intent.TargetX,
+                intent.TargetY,
+                appliedTick,
+                players);
+            if (!telekinesisResult.Succeeded)
+                return DiabloCombatIntentResult.Rejected(
+                    telekinesisResult.Failure ?? DiabloRuleFailure.Malformed);
+        }
         var events = new List<DiabloGameplayEvent>();
         ApplyImmediateSelfDamage(
             player,

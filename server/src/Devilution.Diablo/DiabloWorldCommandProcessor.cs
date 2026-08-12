@@ -82,6 +82,84 @@ public sealed class DiabloWorldCommandProcessor
         };
     }
 
+    /** Applies the native Telekinesis target operation after cast validation. */
+    public DiabloWorldIntentResult ExecuteTelekinesis(
+        AuthoritativePlayerState player,
+        uint targetEntityId,
+        int targetX,
+        int targetY,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
+        bool applyEffects = true)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        var participants = players.ToArray();
+        if (targetEntityId == 0
+            || !world.HasLineOfSight(
+                player.LevelId,
+                player.PositionX,
+                player.PositionY,
+                targetX,
+                targetY)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        if (world.WorldItems.TryGetValue(targetEntityId, out var item)) {
+            if (item.LevelId != player.LevelId
+                || item.PositionX != targetX
+                || item.PositionY != targetY) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+            return PickupWorldItem(
+                player,
+                targetEntityId,
+                appliedTick,
+                requireAdjacent: false,
+                applyEffects: applyEffects);
+        }
+
+        if (world.Objects.TryGetValue(targetEntityId, out var @object)) {
+            if (@object.LevelId != player.LevelId
+                || @object.PositionX != targetX
+                || @object.PositionY != targetY) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+            return OperateObject(
+                player,
+                targetEntityId,
+                requireAdjacent: false,
+                applyEffects: applyEffects);
+        }
+
+        if (!world.CombatTargets.TryGetValue(targetEntityId, out var target)
+            || target.LevelId != player.LevelId
+            || target.HitPoints <= 0
+            || target.PositionX != targetX
+            || target.PositionY != targetY) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
+
+        var directionX = Math.Sign(target.PositionX - player.PositionX);
+        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        if (directionX == 0 && directionY == 0)
+            return DiabloWorldIntentResult.Accepted;
+        var destinationX = target.PositionX + directionX;
+        var destinationY = target.PositionY + directionY;
+        if (world.IsWalkable(target.LevelId, destinationX, destinationY)
+            && !world.IsOccupied(
+                target.LevelId,
+                destinationX,
+                destinationY,
+                participants,
+                target.EntityId)) {
+            target.ApplyKnockback(destinationX, destinationY);
+        }
+        return DiabloWorldIntentResult.Accepted;
+    }
+
     private DiabloWorldIntentResult RestartTown(
         AuthoritativePlayerState player,
         ulong appliedTick)
@@ -249,13 +327,15 @@ public sealed class DiabloWorldCommandProcessor
     private DiabloWorldIntentResult PickupWorldItem(
         AuthoritativePlayerState player,
         uint itemEntityId,
-        ulong appliedTick)
+        ulong appliedTick,
+        bool requireAdjacent = true,
+        bool applyEffects = true)
     {
         if (!world.WorldItems.TryGetValue(itemEntityId, out var item)
             || item.LevelId != player.LevelId
-            || Math.Max(
+            || (requireAdjacent && Math.Max(
                 Math.Abs(item.PositionX - player.PositionX),
-                Math.Abs(item.PositionY - player.PositionY)) > 1) {
+                Math.Abs(item.PositionY - player.PositionY)) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
         if (player.HeldItem is not null)
@@ -278,6 +358,8 @@ public sealed class DiabloWorldCommandProcessor
                     out var topologyTotal)) {
                 if (uint.MaxValue - topologyTotal < item.Price)
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
+                if (!applyEffects)
+                    return DiabloWorldIntentResult.Accepted;
                 if (!DiabloGoldInventory.TryAddPartial(
                         player,
                         item.Price,
@@ -301,6 +383,8 @@ public sealed class DiabloWorldCommandProcessor
                         });
                 }
             } else {
+                if (!applyEffects)
+                    return DiabloWorldIntentResult.Accepted;
                 player.Gold += item.Price;
             }
             world.WorldItems.Remove(itemEntityId);
@@ -313,6 +397,8 @@ public sealed class DiabloWorldCommandProcessor
             item.State.InventoryHeight);
         if (targetCell < 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
 
         var inventoryIndex = player.Inventory.Count;
         player.Inventory.Add(new OwnedStoreItem(
@@ -397,16 +483,20 @@ public sealed class DiabloWorldCommandProcessor
 
     private DiabloWorldIntentResult OperateObject(
         AuthoritativePlayerState player,
-        uint objectEntityId)
+        uint objectEntityId,
+        bool requireAdjacent = true,
+        bool applyEffects = true)
     {
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
             || @object.Activated
             || @object.LevelId != player.LevelId
-            || Math.Max(
+            || (requireAdjacent && Math.Max(
                 Math.Abs(@object.PositionX - player.PositionX),
-                Math.Abs(@object.PositionY - player.PositionY)) > 1) {
+                Math.Abs(@object.PositionY - player.PositionY)) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (!applyEffects)
+            return DiabloWorldIntentResult.Accepted;
 
         @object.Activated = true;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)

@@ -42,6 +42,7 @@ public enum AuthoritativeProjectileBehavior
     RageController = 34,
     Elemental = 35,
     GuardianController = 36,
+    Telekinesis = 37,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
