@@ -119,6 +119,8 @@ std::string DebugCmdWarpToQuestLevel(uint8_t level);
 std::string DebugCmdWarpToCustomMap(std::string_view path, int dunType, int x, int y);
 const Item *DebugCmdGetSelectedItem();
 std::string DebugCmdItemInfo();
+std::string DebugCmdTalkToTowner(std::string_view name);
+std::string DebugCmdVisitTowner(std::string_view name);
 std::string DebugCmdLevelSeed(std::optional<uint8_t> level);
 std::string DebugCmdSearchMonster(std::string_view name);
 std::string DebugCmdSearchItem(std::string_view name);

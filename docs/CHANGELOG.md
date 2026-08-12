@@ -46,6 +46,8 @@ All notable changes to this fork are documented below.
   preserving path, dungeon-type, spawn-bound, and transition validation.
 - Move selected-item diagnostics into the native debug command registry while
   preserving Lua compatibility and network-pack validation.
+- Move towner talk and visit helpers into native debug commands while
+  preserving their town checks and Lua compatibility aliases.
 - Move quest activation and diagnostics into native debug commands while
   preserving the `dev.quests` Lua compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel

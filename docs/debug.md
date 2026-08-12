@@ -46,7 +46,8 @@ Native equivalents include `debug.display.tileData [name]`,
 `debug.level.map.hide`, `debug.level.reset <level> [seed]`,
 `debug.level.warp.dungeon <level>`, `debug.level.warp.quest <level>`,
 `debug.level.warp.map <path> <dunType> <x> <y>`, `debug.level.seed [level]`,
-`debug.items.info`, and `debug.search.item <name>` (with corresponding monster, object, and clear
+`debug.items.info`, `debug.towners.talk <name>`, `debug.towners.visit <name>`,
+and `debug.search.item <name>` (with corresponding monster, object, and clear
 commands). Player diagnostics are available as `debug.player.arrow <effect>`
 and `debug.player.info [id]`; `debug.player.rejuvenate` restores life and mana,
 while `debug.player.health <amount>` and `debug.player.mana <amount>` adjust

@@ -38,6 +38,7 @@
 #include "game/missiles/missiles.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
+#include "game/towners/towners.hpp"
 #include "network/protocol/msg.h"
 #include "persistence/pack.h"
 #include "tables/spelldat.h"
@@ -76,6 +77,30 @@ int DebugMonsterId;
 std::vector<std::string> SearchMonsters;
 std::vector<std::string> SearchItems;
 std::vector<std::string> SearchObjects;
+
+ankerl::unordered_dense::map<std::string_view, _talker_id> TownerShortNameToTownerId = {
+	{ "griswold", _talker_id::TOWN_SMITH },
+	{ "smith", _talker_id::TOWN_SMITH },
+	{ "pepin", _talker_id::TOWN_HEALER },
+	{ "healer", _talker_id::TOWN_HEALER },
+	{ "ogden", _talker_id::TOWN_TAVERN },
+	{ "tavern", _talker_id::TOWN_TAVERN },
+	{ "cain", _talker_id::TOWN_STORY },
+	{ "story", _talker_id::TOWN_STORY },
+	{ "farnham", _talker_id::TOWN_DRUNK },
+	{ "drunk", _talker_id::TOWN_DRUNK },
+	{ "adria", _talker_id::TOWN_WITCH },
+	{ "witch", _talker_id::TOWN_WITCH },
+	{ "gillian", _talker_id::TOWN_BMAID },
+	{ "bmaid", _talker_id::TOWN_BMAID },
+	{ "wirt", _talker_id::TOWN_PEGBOY },
+	{ "pegboy", _talker_id::TOWN_PEGBOY },
+	{ "lester", _talker_id::TOWN_FARMER },
+	{ "farmer", _talker_id::TOWN_FARMER },
+	{ "girl", _talker_id::TOWN_GIRL },
+	{ "nut", _talker_id::TOWN_COWFARM },
+	{ "cowfarm", _talker_id::TOWN_COWFARM },
+};
 
 std::optional<bool> ParseOptionalBool(std::string_view value)
 {
@@ -634,6 +659,56 @@ std::string DebugCmdItemInfo()
 	return StrCat("Num items: ", ActiveItemCount);
 }
 
+std::string DebugCmdVisitTowner(std::string_view name)
+{
+	Player &myPlayer = *MyPlayer;
+
+	if (isSetLevel() || !myPlayer.isOnLevel(0))
+		return StrCat("This command is only available in Town!");
+
+	if (name.empty()) {
+		std::string ret = StrCat("Please provide the name of a Towner: ");
+		for (const auto &[townerName, _] : TownerShortNameToTownerId) {
+			ret += ' ';
+			ret.append(townerName);
+		}
+		return ret;
+	}
+
+	const auto it = TownerShortNameToTownerId.find(name);
+	if (it == TownerShortNameToTownerId.end())
+		return StrCat(name, " is invalid!");
+
+	for (const Towner &towner : Towners) {
+		if (towner._ttype != it->second)
+			continue;
+		CastSpell(myPlayer, SpellID::Teleport, myPlayer.position.tile, towner.position, /*spllvl=*/1);
+		return StrCat("Moved you to ", name, ".");
+	}
+
+	return StrCat("Unable to locate ", name, "!");
+}
+
+std::string DebugCmdTalkToTowner(std::string_view name)
+{
+	if (name.empty()) {
+		std::string ret = StrCat("Please provide the name of a Towner: ");
+		for (const auto &[townerName, _] : TownerShortNameToTownerId) {
+			ret += ' ';
+			ret.append(townerName);
+		}
+		return ret;
+	}
+
+	const auto it = TownerShortNameToTownerId.find(name);
+	if (it == TownerShortNameToTownerId.end())
+		return StrCat(name, " is invalid!");
+
+	if (!DebugTalkToTowner(it->second))
+		return StrCat("Towner not found!");
+	return StrCat("Opened ", name, " talk window.");
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -758,6 +833,8 @@ void RegisterNativeDebugCommands()
 	CurrentDebugCommandRegistry.Register("debug.items.info", "Show information about the selected item.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdItemInfo() : std::string("This command takes no arguments.");
 	});
+	CurrentDebugCommandRegistry.Register("debug.towners.talk", "Open a towner talk window.", DebugCmdTalkToTowner);
+	CurrentDebugCommandRegistry.Register("debug.towners.visit", "Teleport to a towner in town.", DebugCmdVisitTowner);
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))
 			return std::string("Expected an optional level number.");
