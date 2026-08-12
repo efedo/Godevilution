@@ -462,7 +462,7 @@ public sealed class DiabloSimulationTests
                 Projectiles = [
                     new AuthoritativeProjectile(
                         0x80000001,
-                        7,
+                        13,
                         0,
                         15,
                         1,
@@ -479,7 +479,7 @@ public sealed class DiabloSimulationTests
                     },
                     new AuthoritativeProjectile(
                         0x80000002,
-                        7,
+                        13,
                         0,
                         15,
                         1,
@@ -941,7 +941,7 @@ public sealed class DiabloSimulationTests
                         0x8000000E,
                         7,
                         0,
-                        7,
+                        13,
                         0,
                         12,
                         10,

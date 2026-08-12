@@ -1538,11 +1538,11 @@ public sealed class DiabloCombatCommandProcessorTests
             manaMaximum: 10000,
             entityId: 7,
             characterLevel: 4,
-            memorizedSpells: [new MemorizedSpellState(7, 1)]);
+            memorizedSpells: [new MemorizedSpellState(13, 1)]);
 
         Assert.True(processor.Execute(
             player,
-            new DiabloCastIntent(7, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            new DiabloCastIntent(13, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
             1).Succeeded);
         var guardian = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.GuardianController, guardian.Behavior);
@@ -1750,7 +1750,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeSpellDefinition CreateGuardianSpell()
     {
-        return new AuthoritativeSpellDefinition(7, 50, 0, 0, 15, 0) {
+        return new AuthoritativeSpellDefinition(13, 50, 0, 0, 15, 0) {
             DamageType = AuthoritativeDamageType.Fire,
             ProjectileSpeed = 16,
             ProjectileLifetime = 256,
