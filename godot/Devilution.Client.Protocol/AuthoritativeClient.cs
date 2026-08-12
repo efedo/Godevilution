@@ -24,6 +24,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private TcpClient? tcpClient;
     private NetworkStream? stream;
     private Task? receiveTask;
+    private CancellationTokenSource? transportLifetime;
     private ulong nextClientSequence;
     private long lastSnapshotRequestMs;
     private double roundTripMilliseconds = 100;
@@ -63,6 +64,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
+        if (IsConnected)
+            throw new InvalidOperationException("The authoritative client is already connected.");
         if (string.IsNullOrWhiteSpace(options.ContentManifestHash))
             throw new InvalidOperationException("DEVILUTION_CONTENT_HASH must match the server manifest before connecting.");
 
@@ -101,7 +104,31 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
             ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");
         Enqueue(initialSnapshot);
-        receiveTask = Task.Run(() => ReceiveLoopAsync(stream, lifetime.Token), CancellationToken.None);
+        var connectedStream = stream;
+        var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        transportLifetime = connectionLifetime;
+        receiveTask = Task.Run(
+            () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token),
+            CancellationToken.None);
+    }
+
+    /**
+     * Reconnects this client instance using its existing resume token and
+     * client-sequence ledger. Pending commands are made immediately eligible
+     * for retry after the new authoritative snapshot arrives.
+     */
+    public async Task ReconnectAsync(CancellationToken cancellationToken = default)
+    {
+        if (lifetime.IsCancellationRequested)
+            throw new ObjectDisposedException(nameof(AuthoritativeClient));
+
+        await CloseTransportAsync();
+        lock (pendingLock) {
+            foreach (var pendingCommand in pending.Values)
+                pendingCommand.LastSentMs = null;
+        }
+        lastSnapshotRequestMs = 0;
+        await ConnectAsync(cancellationToken);
     }
 
     public ulong Queue(Command command, ulong requestedTick)
@@ -152,16 +179,27 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         lifetime.Cancel();
+        await CloseTransportAsync();
+        lifetime.Dispose();
+        writeLock.Dispose();
+    }
+
+    private async Task CloseTransportAsync()
+    {
+        transportLifetime?.Cancel();
         stream?.Dispose();
         tcpClient?.Dispose();
+        stream = null;
+        tcpClient = null;
         if (receiveTask is not null) {
             try {
                 await receiveTask;
             } catch (Exception) {
             }
+            receiveTask = null;
         }
-        lifetime.Dispose();
-        writeLock.Dispose();
+        transportLifetime?.Dispose();
+        transportLifetime = null;
     }
 
     private async Task ReceiveLoopAsync(NetworkStream networkStream, CancellationToken cancellationToken)

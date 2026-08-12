@@ -57,6 +57,38 @@ public sealed class RetryReconnectTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task SameClientInstanceReconnectsAndRetainsResumeIdentity()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunSameInstanceReconnectServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var sessionToken = client.SessionToken;
+        _ = client.DrainMessages();
+        var sequence = client.Queue(
+            new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
+            100);
+
+        await client.ReconnectAsync(TestContext.Current.CancellationToken);
+        await client.PollAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(sessionToken, client.SessionToken);
+        var snapshot = Assert.Single(client.DrainMessages()).Snapshot;
+        Assert.NotNull(snapshot);
+        Assert.Equal(9UL, snapshot!.Tick);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+        await serverTask;
+    }
+
     private static async Task<CommandResult> WaitForAcknowledgementAsync(AuthoritativeClient client, ulong sequence)
     {
         for (var attempt = 0; attempt < 50; attempt++) {
@@ -109,6 +141,44 @@ public sealed class RetryReconnectTests
             });
             await WriteEnvelopeAsync(stream, new Envelope {
                 Snapshot = new Snapshot { Tick = 8, Players = { new PlayerSnapshot { EntityId = 7 } } },
+            });
+        }
+        listener.Stop();
+    }
+
+    private static async Task RunSameInstanceReconnectServerAsync(TcpListener listener)
+    {
+        using (var firstClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
+            await using var stream = firstClient.GetStream();
+            await CompleteHandshakeAsync(stream, "same-instance-token", 7);
+        }
+        using (var resumedClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
+            await using var stream = resumedClient.GetStream();
+            var hello = await ReadEnvelopeAsync(stream);
+            Assert.Equal("same-instance-token", hello.ClientHello.ResumeToken);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                ServerHello = new ServerHello {
+                    ServerBuildId = "test-server",
+                    ProtocolSchemaVersion = "0.1.0",
+                    ContentManifestHash = "content-hash",
+                    RulesetIdentityHash = "content-hash",
+                    TickRateHz = 20,
+                    SessionToken = "same-instance-token",
+                },
+            });
+            await WriteEnvelopeAsync(stream, new Envelope {
+                Snapshot = new Snapshot { Tick = 9, Players = { new PlayerSnapshot { EntityId = 7 } } },
+            });
+            var commandEnvelope = await ReadEnvelopeAsync(stream);
+            var command = Assert.Single(commandEnvelope.CommandBatch.Commands);
+            Assert.Equal(1UL, command.ClientSequence);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                CommandAck = new CommandAck {
+                    Results = { new CommandResult {
+                        ClientSequence = command.ClientSequence,
+                        Status = CommandStatus.Accepted,
+                    } },
+                },
             });
         }
         listener.Stop();
