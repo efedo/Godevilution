@@ -521,6 +521,11 @@ native level-scaled magic projectile and accepts only explicitly undead
 monsters; the capability persists through protocol field 23, compatible saves,
 conditional hashes, and future replay state.
 
+Content schema 0.30 adds stable `spell:trap_disarm` identity `28` for the
+Rogue's cursor-driven Trap Disarm capability. Armed object state is external,
+server-owned, persisted, and cleared only by the authoritative additive
+Disarm Trap command; its nondefault state uses a tagged canonical-hash section.
+
 ## Near-term priorities
 
 1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,

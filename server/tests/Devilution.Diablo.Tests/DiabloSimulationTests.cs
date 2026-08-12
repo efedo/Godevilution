@@ -8,6 +8,14 @@ namespace Devilution.Diablo.Tests;
 public sealed class DiabloSimulationTests
 {
     [Fact]
+    public void CurrentContentSchemaIncludesTrapDisarmCapability()
+    {
+        Assert.Equal(
+            new ContentSchemaIdentity("devilution.diablo", "0.30.0"),
+            DiabloContentSchema.Current);
+    }
+
+    [Fact]
     public void ModuleRegistersRulesAndSimulationFactoryCapabilities()
     {
         var module = new DiabloModule();
@@ -44,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.29.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.30.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

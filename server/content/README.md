@@ -133,6 +133,11 @@ Schema 0.29 adds Holy Bolt behavior and the optional `undead` monster
 capability. The behavior requires one moving physical-damage missile and uses the
 external capability to reject non-undead monster collisions.
 
+Schema 0.30 adds the stable `spell:trap_disarm` identity `28` for the Rogue's
+cursor-driven Trap Disarm class capability. Armed object state is validated from
+`objects.tsv`, server-owned, persisted, hashed through an additive extension,
+and cleared only by an admitted authoritative Disarm Trap intent.
+
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `charges` and
 `max_charges` preserve charged-item state. The content ID remains the key for
@@ -381,7 +386,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.29.0"
+    "version": "0.30.0"
   },
   "dependencyConstraints": [
     {
@@ -413,7 +418,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.29.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.30.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
