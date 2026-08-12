@@ -7,6 +7,7 @@
 #include "application/debug.h"
 #ifdef _DEBUG
 
+#include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -18,6 +19,7 @@
 
 #include "engine/render/world_renderer.h"
 
+#include "game/levels/dungeon_common.h"
 #include "ui/automap.h"
 #include "engine/cursor.h"
 #include "engine/load/load_cel.hpp"
@@ -74,6 +76,22 @@ std::optional<bool> ParseOptionalBool(std::string_view value)
 bool HasInvalidBoolArgument(std::string_view value)
 {
 	return !value.empty() && !ParseOptionalBool(value).has_value();
+}
+
+std::optional<uint8_t> ParseOptionalLevel(std::string_view value)
+{
+	if (value.empty())
+		return std::nullopt;
+	uint16_t parsed = 0;
+	const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
+	if (error != std::errc {} || end != value.data() + value.size() || parsed > UINT8_MAX)
+		return std::nullopt;
+	return static_cast<uint8_t>(parsed);
+}
+
+bool HasInvalidLevelArgument(std::string_view value)
+{
+	return !value.empty() && !ParseOptionalLevel(value).has_value();
 }
 
 void PrintDebugMonster(const Monster &monster)
@@ -168,6 +186,17 @@ void RegisterNativeDebugCommands()
 	CurrentDebugCommandRegistry.Register("debug.display.fullbright", "Toggle fullbright lighting.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdFullbright(std::nullopt) : std::string("This command takes no arguments.");
 	});
+	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
+		if (HasInvalidLevelArgument(arguments))
+			return std::string("Expected an optional level number.");
+		return DebugCmdLevelSeed(ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.search.clear", "Remove all automap search markers.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdClearSearch() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.search.item", "Highlight matching item names on the automap.", DebugCmdSearchItem);
+	CurrentDebugCommandRegistry.Register("debug.search.monster", "Highlight matching monster names on the automap.", DebugCmdSearchMonster);
+	CurrentDebugCommandRegistry.Register("debug.search.object", "Highlight matching object names on the automap.", DebugCmdSearchObject);
 }
 
 void LoadDebugGFX()
@@ -415,6 +444,44 @@ void ClearDebugAutomapHighlights()
 	SearchMonsters.clear();
 	SearchItems.clear();
 	SearchObjects.clear();
+}
+
+std::string DebugCmdLevelSeed(std::optional<uint8_t> level)
+{
+	constexpr size_t NumLevels = sizeof(DungeonSeeds) / sizeof(DungeonSeeds[0]);
+	if (level.has_value() && *level >= NumLevels)
+		return StrCat("level out of range, max: ", NumLevels - 1);
+	return StrCat(DungeonSeeds[level.value_or(currentLevelNumber())]);
+}
+
+std::string DebugCmdSearchMonster(std::string_view name)
+{
+	if (name.empty())
+		return "Missing monster name!";
+	AddDebugAutomapMonsterHighlight(AsciiStrToLower(name));
+	return StrCat("Added automap marker for monster ", name, ".");
+}
+
+std::string DebugCmdSearchItem(std::string_view name)
+{
+	if (name.empty())
+		return "Missing item name!";
+	AddDebugAutomapItemHighlight(AsciiStrToLower(name));
+	return StrCat("Added automap marker for item ", name, ".");
+}
+
+std::string DebugCmdSearchObject(std::string_view name)
+{
+	if (name.empty())
+		return "Missing object name!";
+	AddDebugAutomapObjectHighlight(AsciiStrToLower(name));
+	return StrCat("Added automap marker for object ", name, ".");
+}
+
+std::string DebugCmdClearSearch()
+{
+	ClearDebugAutomapHighlights();
+	return "Removed all automap search markers.";
 }
 
 } // namespace devilution

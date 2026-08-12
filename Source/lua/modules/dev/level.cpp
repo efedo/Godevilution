@@ -15,6 +15,7 @@
 
 #include <sol/sol.hpp>
 
+#include "application/debug.h"
 #include "application/diablo.h"
 #include "game/levels/dungeon_common.h"
 #include "lua/metadoc.hpp"
@@ -114,15 +115,6 @@ std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed)
 		return StrCat("Successfully reset level ", level, " with seed ", *seed, ".");
 	}
 	return StrCat("Successfully reset level ", level, ".");
-}
-
-std::string DebugCmdLevelSeed(std::optional<uint8_t> level)
-{
-	constexpr size_t NumLevels = sizeof(DungeonSeeds) / sizeof(DungeonSeeds[0]);
-	if (level.has_value() && *level >= NumLevels) {
-		return StrCat("level out of range, max: ", NumLevels - 1);
-	}
-	return StrCat(DungeonSeeds[level.value_or(currentLevelNumber())]);
 }
 
 } // namespace

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Move level-seed inspection and automap search diagnostics into the native
+  debug-command registry. Preserve the existing Lua module names as aliases
+  while routing the debug console through native handlers.
 - Add a deterministic native debug-command registry for core player and display
   toggles. Route those commands through the debug console while retaining the
   Lua modules as a compatibility frontend for the remaining developer REPL.

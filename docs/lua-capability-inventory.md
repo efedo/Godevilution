@@ -27,7 +27,9 @@ reinitialization, and table-data reload after legacy scripts run; Lua remains
 only the optional compatibility script phase. Core player/display debug toggles
 now also have a deterministic native command registry; the debug console routes
 those commands natively and retains Lua as a compatibility frontend for the
-remaining REPL and module commands.
+remaining REPL and module commands. Level-seed inspection and automap search
+markers now use the same native registry, while their Lua names remain as
+compatibility aliases.
 
 ## Bundled Scripts
 

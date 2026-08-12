@@ -92,6 +92,11 @@ constexpr std::string_view CommandHelpText =
     "  debug.display.path [on|off]\n"
     "  debug.display.fps [on|off]\n"
     "  debug.display.fullbright\n"
+    "  debug.level.seed [level]\n"
+    "  debug.search.clear\n"
+    "  debug.search.item <name>\n"
+    "  debug.search.monster <name>\n"
+    "  debug.search.object <name>\n"
     "\n"
     "Tip: Tab autocompletes Lua symbols (for example: dev.player.<Tab>).";
 

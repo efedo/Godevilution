@@ -6,46 +6,15 @@
 
 
 #ifdef _DEBUG
-#include "lua/modules/dev/quests.hpp"
-
-#include <string>
+#include "lua/modules/dev/search.hpp"
 
 #include <sol/sol.hpp>
 
 #include "application/debug.h"
 #include "lua/metadoc.hpp"
-#include "utils/string/str_case.hpp"
-#include "utils/string/str_cat.hpp"
 
 namespace devilution {
 namespace {
-
-std::string DebugCmdSearchMonster(std::string_view name)
-{
-	if (name.empty()) return "Missing monster name!";
-	AddDebugAutomapMonsterHighlight(AsciiStrToLower(name));
-	return StrCat("Added automap marker for monster ", name, ".");
-}
-
-std::string DebugCmdSearchItem(std::string_view name)
-{
-	if (name.empty()) return "Missing item name!";
-	AddDebugAutomapItemHighlight(AsciiStrToLower(name));
-	return StrCat("Added automap marker for item ", name, ".");
-}
-
-std::string DebugCmdSearchObject(std::string_view name)
-{
-	if (name.empty()) return "Missing object name!";
-	AddDebugAutomapObjectHighlight(AsciiStrToLower(name));
-	return StrCat("Added automap marker for object ", name, ".");
-}
-
-std::string DebugCmdClearSearch()
-{
-	ClearDebugAutomapHighlights();
-	return "Removed all automap search markers.";
-}
 
 } // namespace
 
