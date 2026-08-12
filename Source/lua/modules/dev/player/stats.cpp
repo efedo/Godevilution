@@ -12,6 +12,7 @@
 
 #include <sol/sol.hpp>
 
+#include "application/debug.h"
 #include "engine/gfx/backbuffer_state.hpp"
 #include "lua/metadoc.hpp"
 #include "game/players/players.hpp"
@@ -51,16 +52,6 @@ std::string DebugCmdMinStats()
 	return "Set all character base attributes to minimum.";
 }
 
-std::string DebugCmdRefillHealthMana()
-{
-	Player &myPlayer = *MyPlayer;
-	myPlayer.RestoreFullLife();
-	myPlayer.RestoreFullMana();
-	RedrawComponent(PanelDrawComponent::Health);
-	RedrawComponent(PanelDrawComponent::Mana);
-	return StrCat("Restored life and mana to full.");
-}
-
 std::string DebugCmdChangeHealth(int change)
 {
 	Player &myPlayer = *MyPlayer;
@@ -97,7 +88,7 @@ sol::table LuaDevPlayerStatsModule(sol::state_view &lua)
 	LuaSetDocFn(table, "adjustHealth", "(amount: number)", "Adjust HP (amount can be negative)", &DebugCmdChangeHealth);
 	LuaSetDocFn(table, "adjustMana", "(amount: number)", "Adjust mana (amount can be negative)", &DebugCmdChangeMana);
 	LuaSetDocFn(table, "levelUp", "(amount: number = 1)", "Level the player up.", &DebugCmdLevelUp);
-	LuaSetDocFn(table, "rejuvenate", "()", "Refill health", &DebugCmdRefillHealthMana);
+	LuaSetDocFn(table, "rejuvenate", "()", "Refill health", &DebugCmdRejuvenate);
 	LuaSetDocFn(table, "setAttrToMax", "()", "Set Str, Mag, Dex, and Vit to maximum.", &DebugCmdMaxStats);
 	LuaSetDocFn(table, "setAttrToMin", "()", "Set Str, Mag, Dex, and Vit to minimum.", &DebugCmdMinStats);
 	return table;

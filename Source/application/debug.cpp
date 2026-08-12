@@ -21,6 +21,7 @@
 #include "engine/render/world_renderer.h"
 
 #include "engine/assets.hpp"
+#include "engine/gfx/backbuffer_state.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/players/players.hpp"
 #include "ui/automap.h"
@@ -197,6 +198,16 @@ std::string DebugCmdPlayerInfo(std::optional<uint8_t> id)
 	    "\nInvincible: ", player._pInvincible ? 1 : 0, " HitPoints: ", player.life.current);
 }
 
+std::string DebugCmdRejuvenate()
+{
+	Player &myPlayer = *MyPlayer;
+	myPlayer.RestoreFullLife();
+	myPlayer.RestoreFullMana();
+	RedrawComponent(PanelDrawComponent::Health);
+	RedrawComponent(PanelDrawComponent::Mana);
+	return "Restored life and mana to full.";
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -268,6 +279,9 @@ void RegisterNativeDebugCommands()
 		if (HasInvalidLevelArgument(arguments))
 			return std::string("Expected an optional player ID.");
 		return DebugCmdPlayerInfo(ParseOptionalLevel(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.rejuvenate", "Restore player life and mana to full.", [](std::string_view arguments) {
+		return arguments.empty() ? DebugCmdRejuvenate() : std::string("This command takes no arguments.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);

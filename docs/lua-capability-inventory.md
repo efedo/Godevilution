@@ -35,6 +35,10 @@ these names. Player arrow-effect selection and player inspection use native
 handlers as well, with Lua retaining the old names as aliases.
 Player TRN selection is also a native debug command now, with the Lua `trn`
 module retained as a compatibility alias.
+The `dev.player.stats.rejuvenate` helper now delegates to the native
+`debug.player.rejuvenate` command; the Lua function remains only as a
+compatibility alias while the native command owns the health/mana mutation and
+panel redraw.
 
 ## Bundled Scripts
 

@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
 - Consume authoritative armed-trap state in the Godot presentation client,
   including typed Rogue Trap Disarm command routing and server-only visual
   state changes.
+- Move player rejuvenation into the native debug-command registry while
+  preserving `dev.player.stats.rejuvenate` as a Lua compatibility alias.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.
