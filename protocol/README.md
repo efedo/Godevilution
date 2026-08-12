@@ -193,6 +193,8 @@ Windows toolchain command.
   Apocalypse uses behavior value `32` for its row-major scan controller and
   value `33` for each persistent Physical boom. Existing projectile fields carry
   its cursor, filtering, lifetime, and first-hit state.
+  Rage uses behavior value `34` for its persistent active/cooldown controller;
+  existing projectile phase and remaining-tick fields carry its resumable state.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

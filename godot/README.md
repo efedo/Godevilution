@@ -129,7 +129,8 @@ server owns emission count, damage, lifetime, collision, and persistence.
 Chain Lightning behaviors `28` and `29` are presentation-only. Godot renders
 the authoritative fan-out and moving bolts; the server owns crawl order,
 damage, segment creation, collision, and RNG.
-Nova behaviors `30` and `31` and Apocalypse behaviors `32` and `33` are
+Nova behaviors `30` and `31`, Apocalypse behaviors `32` and `33`, and Rage
+behavior `34` are
 presentation-only. Godot renders the
 authoritative radial controller and continuing Lightning balls; the server owns
 the native mirrored fan-out order, movement, target collision, damage, lifetime,

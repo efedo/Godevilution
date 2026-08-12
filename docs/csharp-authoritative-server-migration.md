@@ -513,6 +513,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.39 adds Hellfire Rage (spell ID `22`). The server creates a typed
+active/cooldown controller, preserves the native character-level lifetime
+formula and minimum-life Q6 self-damage on cooldown expiry, rejects recasts
+while either phase is active, and carries the phase and remaining ticks through
+snapshots, saves, hashes, and the existing projectile protocol fields.
+
 Schema 0.29 externalizes Holy Bolt as a typed projectile. Schema 0.30 adds the
 Rogue Trap Disarm item capability, schema 0.31 adds Hellfire Blood Star, schema
 0.32 adds Bone Spirit, and schema 0.33 adds Fire Wall. Each slice keeps its

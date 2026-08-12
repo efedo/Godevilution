@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.39 with the externally validated
+  Hellfire Rage controller (spell ID 22), preserving its native active and
+  cooldown phases, character-level duration scaling, minimum-life self-damage,
+  and deterministic persisted controller state.
 - Advance the Diablo content schema to 0.38 with the externally validated
   Apocalypse row-major controller and persistent Physical boom behaviors (spell
   ID 25), preserving native damage rolls, blocked-cell/minion filtering,

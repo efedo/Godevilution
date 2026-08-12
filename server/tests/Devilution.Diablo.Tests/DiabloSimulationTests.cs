@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.38.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.39.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.38.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.39.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -807,6 +807,73 @@ public sealed class DiabloSimulationTests
         Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseBoom, restored[1].Behavior);
         Assert.True(restored[1].ApocalypseHit);
         Assert.Equal(14U, restored[1].RemainingTicks);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsRageActiveAndCooldownState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x8000000B,
+                        7,
+                        0,
+                        22,
+                        0,
+                        10,
+                        10,
+                        10,
+                        10,
+                        18,
+                        AuthoritativeDamageType.Physical,
+                        0,
+                        47) {
+                        Behavior = AuthoritativeProjectileBehavior.RageController,
+                        EffectiveSpellLevel = 1,
+                    },
+                    new AuthoritativeProjectile(
+                        0x8000000C,
+                        7,
+                        0,
+                        22,
+                        0,
+                        10,
+                        10,
+                        10,
+                        10,
+                        18,
+                        AuthoritativeDamageType.Physical,
+                        0,
+                        9) {
+                        Behavior = AuthoritativeProjectileBehavior.RageController,
+                        Phase = AuthoritativeProjectilePhase.Impact,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = replacement.WorldState.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, restored.Length);
+        Assert.All(
+            restored,
+            projectile => Assert.Equal(
+                AuthoritativeProjectileBehavior.RageController,
+                projectile.Behavior));
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, restored[0].Phase);
+        Assert.Equal(47U, restored[0].RemainingTicks);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, restored[1].Phase);
+        Assert.Equal(9U, restored[1].RemainingTicks);
     }
 
     [Fact]

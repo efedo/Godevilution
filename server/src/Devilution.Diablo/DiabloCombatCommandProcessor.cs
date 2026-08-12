@@ -440,6 +440,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.NovaController;
         var isApocalypse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.ApocalypseController;
+        var isRage = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.RageController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -601,6 +603,13 @@ public sealed class DiabloCombatCommandProcessor
         // is consumed, while still accepting the cast action itself.
         if (isManaShield && player.ManaShieldActive)
             return DiabloCombatIntentResult.Accepted;
+        if (isRage
+            && (player.Life <= checked((int)player.CharacterLevel * 64)
+                || world.Projectiles.Values.Any(projectile =>
+                    projectile.Behavior == AuthoritativeProjectileBehavior.RageController
+                    && IsProjectileOwner(projectile, player)))) {
+            return DiabloCombatIntentResult.Accepted;
+        }
 
         (int X, int Y)? teleportDestination = null;
         if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Teleport) {
@@ -804,6 +813,15 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Add(
                 projectileEntityId,
                 CreateApocalypseController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel));
+        } else if (isRage) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateRageController(
                     projectileEntityId,
                     player,
                     spell,
@@ -1897,6 +1915,36 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private static AuthoritativeProjectile CreateRageController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel)
+    {
+        var lifetime = checked(
+            spell.RageControllerLifetime
+            + checked((int)player.CharacterLevel * spell.RageCharacterLevelLifetimeScale));
+        var selfDamage = checked(
+            (int)player.CharacterLevel * spell.RageSelfDamageCharacterLevel);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            player.PositionX,
+            player.PositionY,
+            selfDamage,
+            spell.DamageType,
+            0,
+            checked((uint)lifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.RageController,
+            EffectiveSpellLevel = effectiveSpellLevel,
+        };
+    }
+
     private AuthoritativeProjectile CreateFlameWaveController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2606,6 +2654,10 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom) {
                     AdvanceApocalypseBoom(projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.RageController) {
+                    AdvanceRageController(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -3850,6 +3902,61 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (projectile.RemainingTicks == 0)
             world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private void AdvanceRageController(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!spells.TryGet(projectile.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.RageController) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(projectile, player));
+        if (owner is null || owner.LevelId != projectile.LevelId || owner.Life <= 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks != 0)
+            return;
+
+        if (projectile.Phase == AuthoritativeProjectilePhase.Travel) {
+            projectile.Phase = AuthoritativeProjectilePhase.Impact;
+            projectile.RemainingTicks = checked((uint)(
+                spell.RageControllerLifetime
+                + checked((int)owner.CharacterLevel * spell.RageCharacterLevelLifetimeScale)));
+            return;
+        }
+
+        var damageResult = playerDamage.Apply(
+            owner,
+            projectile.Damage,
+            minimumLifeQ6: 1);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                owner,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    owner.EntityId,
+                    owner.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (owner.Life == 0)
+            StartPlayerDeath(
+                owner,
+                owner.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        world.Projectiles.Remove(projectile.EntityId);
     }
 
     private void CreateLightningSegment(

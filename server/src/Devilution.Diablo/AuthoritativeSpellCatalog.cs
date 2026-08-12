@@ -39,6 +39,7 @@ public enum AuthoritativeProjectileBehavior
     NovaBall = 31,
     ApocalypseController = 32,
     ApocalypseBoom = 33,
+    RageController = 34,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -265,6 +266,15 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native Apocalypse controller animation lifetime. */
     public int ApocalypseControllerLifetime { get; init; }
+
+    /** Native Rage active/cooldown lifetime before the character-level extension. */
+    public int RageControllerLifetime { get; init; }
+
+    /** Native Rage lifetime added for each character level. */
+    public int RageCharacterLevelLifetimeScale { get; init; }
+
+    /** Native Rage self-damage Q6 units applied per character level on expiry. */
+    public int RageSelfDamageCharacterLevel { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -348,6 +358,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.PostScaleDamagePercent is < 0 or > 400
                 || definition.SecondaryProjectileLifetime < 0
                 || definition.SecondaryProjectileLifetimeSpellLevelDivisor < 0
+                || definition.RageControllerLifetime < 0
+                || definition.RageCharacterLevelLifetimeScale < 0
+                || definition.RageSelfDamageCharacterLevel < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
                 throw new InvalidDataException(
@@ -562,6 +575,24 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
                 throw new InvalidDataException(
                     "ApocalypseBoom is runtime-owned and cannot be selected by spell content.");
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.RageController
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 245
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Physical
+                    || definition.RageControllerLifetime != 245
+                    || definition.RageCharacterLevelLifetimeScale != 2
+                    || definition.RageSelfDamageCharacterLevel != 6)) {
+                throw new InvalidDataException(
+                    "Rage behavior requires the native active/cooldown controller tuning.");
+            }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -1052,6 +1083,13 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Apocalypse tuning requires Apocalypse behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.RageController
+                && (definition.RageControllerLifetime != 0
+                    || definition.RageCharacterLevelLifetimeScale != 0
+                    || definition.RageSelfDamageCharacterLevel != 0)) {
+                throw new InvalidDataException(
+                    "Rage tuning requires Rage behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
                     || definition.ResurrectionLifeScale != 1
@@ -1220,6 +1258,11 @@ public sealed class AuthoritativeSpellCatalog
             NovaProjectileCount = row.OptionalInt32("nova_projectile_count"),
             ApocalypseControllerLifetime = row.OptionalInt32("apocalypse_controller_lifetime"),
             ApocalypseSearchRadius = row.OptionalInt32("apocalypse_search_radius"),
+            RageControllerLifetime = row.OptionalInt32("rage_controller_lifetime"),
+            RageCharacterLevelLifetimeScale = row.OptionalInt32(
+                "rage_character_level_lifetime_scale"),
+            RageSelfDamageCharacterLevel = row.OptionalInt32(
+                "rage_self_damage_character_level"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

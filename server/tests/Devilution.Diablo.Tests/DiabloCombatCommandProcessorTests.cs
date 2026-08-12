@@ -1396,6 +1396,69 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(100, world.CombatTargets[9].HitPoints);
     }
 
+    [Fact]
+    public void RageRunsNativeActiveCooldownAndQ6ExpiryDamage()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateRageSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            life: 6400,
+            lifeMaximum: 6400,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(22, 1)]);
+        var intent = new DiabloCastIntent(
+            22,
+            0,
+            0,
+            0,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        Assert.True(processor.Execute(player, intent, 1).Succeeded);
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.RageController, controller.Behavior);
+        Assert.Equal(251U, controller.RemainingTicks);
+        Assert.Equal(18, controller.Damage);
+        var manaAfterCast = player.Mana;
+
+        Assert.True(processor.Execute(player, intent, 2).Succeeded);
+        Assert.Equal(manaAfterCast, player.Mana);
+
+        for (ulong tick = 1; tick <= 251; tick++)
+            processor.AdvanceTick(tick, [player]);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, controller.Phase);
+        Assert.Equal(251U, controller.RemainingTicks);
+
+        for (ulong tick = 252; tick <= 501; tick++)
+            processor.AdvanceTick(tick, [player]);
+        Assert.Equal(1U, controller.RemainingTicks);
+
+        var expiryEvents = processor.AdvanceTick(502, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(6382, player.Life);
+        var damage = Assert.Single(expiryEvents).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(18, damage.AmountQ6);
+
+        var lowLifePlayer = CreatePlayer(
+            life: 192,
+            lifeMaximum: 6400,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 8,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(22, 1)]);
+        var lowLifeMana = lowLifePlayer.Mana;
+        Assert.True(processor.Execute(lowLifePlayer, intent, 503).Succeeded);
+        Assert.Equal(lowLifeMana, lowLifePlayer.Mana);
+        Assert.Empty(world.Projectiles);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1536,6 +1599,23 @@ public sealed class DiabloCombatCommandProcessorTests
             StaffLevel = 15,
             ApocalypseControllerLifetime = 255,
             ApocalypseSearchRadius = 8,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateRageSpell()
+    {
+        return new AuthoritativeSpellDefinition(22, 15, 0, 0, 1, 0) {
+            DamageType = AuthoritativeDamageType.Physical,
+            ProjectileLifetime = 245,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.RageController,
+            ResistantDamageDivisor = 1,
+            ProjectileImpactLifetime = 1,
+            MinimumManaCost = 1,
+            ManaCostScale = 64,
+            StaffLevel = -1,
+            RageControllerLifetime = 245,
+            RageCharacterLevelLifetimeScale = 2,
+            RageSelfDamageCharacterLevel = 6,
         };
     }
 

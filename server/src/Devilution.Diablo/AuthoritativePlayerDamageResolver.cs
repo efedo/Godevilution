@@ -24,17 +24,22 @@ public sealed class AuthoritativePlayerDamageResolver
 
     public AuthoritativePlayerDamageResult Apply(
         AuthoritativePlayerState player,
-        int incomingDamageQ6)
+        int incomingDamageQ6,
+        int minimumLifeQ6 = 0)
     {
         ArgumentNullException.ThrowIfNull(player);
         if (incomingDamageQ6 < 0)
             throw new ArgumentOutOfRangeException(nameof(incomingDamageQ6));
+        if (minimumLifeQ6 < 0 || minimumLifeQ6 > player.Life)
+            throw new ArgumentOutOfRangeException(nameof(minimumLifeQ6));
         if (incomingDamageQ6 == 0) {
             return new AuthoritativePlayerDamageResult(0, 0, 0, false);
         }
 
         if (!player.ManaShieldActive || HasNoManaItem(player)) {
-            var unshieldedLifeDamageQ6 = Math.Min(player.Life, incomingDamageQ6);
+            var unshieldedLifeDamageQ6 = Math.Min(
+                player.Life - minimumLifeQ6,
+                incomingDamageQ6);
             player.Life -= unshieldedLifeDamageQ6;
             return new AuthoritativePlayerDamageResult(
                 incomingDamageQ6,
@@ -81,7 +86,7 @@ public sealed class AuthoritativePlayerDamageResolver
             lifeDamageQ6 = checked(lifeDamageQ6 + lifeDamageQ6 / (divisor - 1));
         player.Mana = 0;
         player.ManaShieldActive = false;
-        lifeDamageQ6 = Math.Min(player.Life, lifeDamageQ6);
+        lifeDamageQ6 = Math.Min(player.Life - minimumLifeQ6, lifeDamageQ6);
         player.Life -= lifeDamageQ6;
         return new AuthoritativePlayerDamageResult(
             incomingDamageQ6,

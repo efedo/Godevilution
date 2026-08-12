@@ -640,6 +640,26 @@ public sealed partial class DiabloSimulation
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.ApocalypseScanX != 0
                         || projectile.ApocalypseScanY != 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.RageController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase is not (
+                            AuthoritativeProjectilePhase.Travel
+                            or AuthoritativeProjectilePhase.Impact)
+                        || projectile.PositionX != projectile.TargetX
+                        || projectile.PositionY != projectile.TargetY
+                        || projectile.StartX != projectile.PositionX
+                        || projectile.StartY != projectile.PositionY
+                        || projectile.TraveledX != 0
+                        || projectile.TraveledY != 0
+                        || projectile.VelocityX != 0
+                        || projectile.VelocityY != 0
+                        || projectile.ApocalypseScanX != 0
+                        || projectile.ApocalypseScanY != 0
+                        || projectile.ApocalypseHit))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
