@@ -631,4 +631,31 @@ public sealed class SnapshotStateHasherTests
             SnapshotStateHasher.Compute(baseline),
             SnapshotStateHasher.Compute(changedProjectile));
     }
+
+    [Fact]
+    public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
+    {
+        var baseline = new Snapshot();
+        var staticRoute = baseline.Clone();
+        staticRoute.Portals.Add(new PortalSnapshot {
+            PortalId = 1,
+            SourceLevelId = 1,
+            SourcePositionX = 2,
+            SourcePositionY = 3,
+            DestinationLevelId = 2,
+            DestinationPositionX = 4,
+            DestinationPositionY = 5,
+        });
+        var dynamicRoute = staticRoute.Clone();
+        dynamicRoute.Portals[0].OwnerEntityId = 7;
+        dynamicRoute.Portals[0].RemainingTicks = 100;
+        dynamicRoute.Portals[0].Bidirectional = true;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(staticRoute));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(staticRoute),
+            SnapshotStateHasher.Compute(dynamicRoute));
+    }
 }

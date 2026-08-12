@@ -364,7 +364,16 @@ public static class SnapshotStateHasher
             }
         }
 
-        var portals = snapshot.Portals.OrderBy(portal => portal.PortalId).ToArray();
+        // Static catalog routes are content, not mutable simulation state. Keep
+        // them in the protocol snapshot without changing the legacy replay
+        // hash; dynamic portals carry ownership/lifetime metadata and must be
+        // included so their authoritative state remains hash-visible.
+        var portals = snapshot.Portals
+            .Where(portal => portal.RemainingTicks != 0
+                || portal.OwnerEntityId != 0
+                || portal.Bidirectional)
+            .OrderBy(portal => portal.PortalId)
+            .ToArray();
         if (portals.Length > 0) {
             hasher.AppendString("godevilution-portals-v1");
             hasher.AppendUInt64((ulong)portals.Length);
