@@ -24,6 +24,7 @@
 #include "engine/gfx/backbuffer_state.hpp"
 #include "game/items/items.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/spells/spells.hpp"
 #include "game/players/players.hpp"
 #include "ui/automap.h"
 #include "engine/cursor.h"
@@ -34,6 +35,7 @@
 #include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "network/protocol/msg.h"
+#include "tables/spelldat.h"
 #include "ui/player_messages.h"
 #include "utils/string/str_case.hpp"
 #include "utils/string/str_cat.hpp"
@@ -346,6 +348,18 @@ std::string DebugCmdTakeGoldCheat(int amount)
 	return StrCat("Set your gold to ", myPlayer._pGold, ", removed ", goldAmountBefore - myPlayer._pGold, ".");
 }
 
+std::string DebugCmdSetSpellsLevel(uint8_t level)
+{
+	for (auto i = static_cast<uint8_t>(SpellID::Firebolt); i < SpellsData.size(); i++) {
+		if (GetSpellBookLevel(static_cast<SpellID>(i)) != -1)
+			NetSendCmdParam2(true, CMD_CHANGE_SPELL_LEVEL, i, level);
+	}
+	if (level == 0)
+		MyPlayer->_pMemSpells = 0;
+
+	return StrCat("Set all spell levels to ", level);
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -452,6 +466,12 @@ void RegisterNativeDebugCommands()
 			return DebugCmdTakeGoldCheat(GOLD_MAX_LIMIT * InventoryGridCells);
 		const auto amount = ParseRequiredInt(arguments);
 		return amount.has_value() ? DebugCmdTakeGoldCheat(*amount) : std::string("Expected an integer gold amount.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.spells.setLevel", "Set all learned spell levels.", [](std::string_view arguments) {
+		const auto amount = ParseRequiredInt(arguments);
+		if (!amount.has_value() || *amount < 0 || *amount > UINT8_MAX)
+			return std::string("Expected a spell level from 0 to 255.");
+		return DebugCmdSetSpellsLevel(static_cast<uint8_t>(*amount));
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);

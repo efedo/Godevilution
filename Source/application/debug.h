@@ -96,6 +96,7 @@ std::string DebugCmdMinStats();
 std::string DebugCmdLevelUp(int levels);
 std::string DebugCmdGiveGoldCheat(int amount);
 std::string DebugCmdTakeGoldCheat(int amount);
+std::string DebugCmdSetSpellsLevel(uint8_t level);
 std::string DebugCmdSetPlayerTrn(std::string_view path);
 std::string DebugCmdShowGrid(std::optional<bool> on);
 std::string DebugCmdVision(std::optional<bool> on);

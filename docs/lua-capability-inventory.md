@@ -53,6 +53,9 @@ The `dev.player.gold.give` and `take` helpers now delegate to native gold
 commands. The native handlers retain stack filling/removal order, inventory
 recalculation, and omitted-amount behavior while Lua remains a compatibility
 alias.
+The `dev.player.spells.setLevel` helper now delegates to
+`debug.player.spells.setLevel`; the native command preserves the learned-spell
+filter, per-spell network updates, and zero-level memorization reset.
 
 ## Bundled Scripts
 

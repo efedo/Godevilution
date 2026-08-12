@@ -32,6 +32,8 @@ All notable changes to this fork are documented below.
   alias.
 - Move player gold give/take into native debug commands while preserving exact
   inventory-stack behavior and Lua compatibility aliases.
+- Move the player spell-level helper into a native debug command while
+  preserving learned-spell filtering and the Lua compatibility alias.
 - Move player TRN selection into the native debug-command registry and relabel
   the overlay as a general debug console. Preserve the Lua `dev.player.trn`
   functions as compatibility aliases.

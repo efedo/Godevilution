@@ -9,31 +9,13 @@
 #include "lua/modules/dev/player/spells.hpp"
 
 #include <cstdint>
-#include <string>
 
 #include <sol/sol.hpp>
 
+#include "application/debug.h"
 #include "lua/metadoc.hpp"
-#include "network/protocol/msg.h"
-#include "game/spells/spells.hpp"
-#include "tables/spelldat.h"
-#include "utils/string/str_cat.hpp"
 
 namespace devilution {
-namespace {
-std::string DebugCmdSetSpellsLevel(uint8_t level)
-{
-	for (auto i = static_cast<uint8_t>(SpellID::Firebolt); i < SpellsData.size(); i++) {
-		if (GetSpellBookLevel(static_cast<SpellID>(i)) != -1) {
-			NetSendCmdParam2(true, CMD_CHANGE_SPELL_LEVEL, i, level);
-		}
-	}
-	if (level == 0)
-		MyPlayer->_pMemSpells = 0;
-
-	return StrCat("Set all spell levels to ", level);
-}
-} // namespace
 
 sol::table LuaDevPlayerSpellsModule(sol::state_view &lua)
 {

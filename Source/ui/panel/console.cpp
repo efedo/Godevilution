@@ -97,6 +97,7 @@ constexpr std::string_view CommandHelpText =
     "  debug.player.levelUp [amount]\n"
     "  debug.player.gold.give [amount]\n"
     "  debug.player.gold.take [amount]\n"
+    "  debug.player.spells.setLevel <level>\n"
     "  debug.player.trn <asset-path|clear>\n"
     "  debug.display.grid [on|off]\n"
     "  debug.display.vision [on|off]\n"
