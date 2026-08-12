@@ -86,6 +86,8 @@ void ClearDebugAutomapHighlights();
 #ifdef _DEBUG
 std::string DebugCmdGodMode(std::optional<bool> on);
 std::string DebugCmdInvisible(std::optional<bool> on);
+std::string DebugCmdArrow(std::string_view effect);
+std::string DebugCmdPlayerInfo(std::optional<uint8_t> id);
 std::string DebugCmdShowGrid(std::optional<bool> on);
 std::string DebugCmdVision(std::optional<bool> on);
 std::string DebugCmdPath(std::optional<bool> on);

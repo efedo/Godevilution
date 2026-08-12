@@ -44,7 +44,8 @@ and search diagnostics. For example:
 Native equivalents include `debug.display.tileData [name]`,
 `debug.display.scrollView [on|off]`, `debug.level.seed [level]`, and
 `debug.search.item <name>` (with corresponding monster, object, and clear
-commands).
+commands). Player diagnostics are available as `debug.player.arrow <effect>`
+and `debug.player.info [id]`.
 
 The multiplayer chat remains available for player chat and multiplayer chat
 commands. Debug commands should be run from the overlay console.

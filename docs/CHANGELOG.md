@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Move player arrow-effect selection and player inspection into the native
+  debug-command registry. Preserve the existing Lua module names as aliases
+  while routing the debug console through native handlers.
 - Move display tile-data inspection and scroll-view diagnostics into the native
   debug-command registry. Preserve the existing Lua module names as aliases
   while routing the debug console through native handlers.

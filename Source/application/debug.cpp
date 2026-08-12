@@ -157,6 +157,45 @@ std::string DebugCmdInvisible(std::optional<bool> on)
 	return StrCat("Invisible: ", DebugInvisible ? "On" : "Off");
 }
 
+std::string DebugCmdArrow(std::string_view effect)
+{
+	Player &myPlayer = *MyPlayer;
+
+	myPlayer._pIFlags &= ~ItemSpecialEffect::FireArrows;
+	myPlayer._pIFlags &= ~ItemSpecialEffect::LightningArrows;
+
+	if (effect == "normal") {
+		// The flags were cleared above.
+	} else if (effect == "fire") {
+		myPlayer._pIFlags |= ItemSpecialEffect::FireArrows;
+	} else if (effect == "lightning") {
+		myPlayer._pIFlags |= ItemSpecialEffect::LightningArrows;
+	} else if (effect == "spectral") {
+		myPlayer._pIFlags |= (ItemSpecialEffect::FireArrows | ItemSpecialEffect::LightningArrows);
+	} else {
+		return "Invalid effect!";
+	}
+
+	return StrCat("Arrows changed to: ", effect);
+}
+
+std::string DebugCmdPlayerInfo(std::optional<uint8_t> id)
+{
+	const uint8_t playerId = id.value_or(0);
+	if (playerId >= Players.size())
+		return StrCat("Invalid player ID (max: ", Players.size() - 1, ")");
+	Player &player = Players[playerId];
+	if (!player.plractive)
+		return StrCat("Player ", playerId, " is not active!");
+
+	const Point target = player.GetTargetPosition();
+	return StrCat("Plr ", playerId, " is ", player._pName,
+	    "\nLvl: ", player.plrlevel, " Changing: ", player._pLvlChanging,
+	    "\nTile.x: ", player.position.tile.x, " Tile.y: ", player.position.tile.y, " Target.x: ", target.x, " Target.y: ", target.y,
+	    "\nMode: ", player._pmode, " destAction: ", player.destAction, " walkpath[0]: ", player.walkpath[0],
+	    "\nInvincible: ", player._pInvincible ? 1 : 0, " HitPoints: ", player.life.current);
+}
+
 std::string DebugCmdShowGrid(std::optional<bool> on)
 {
 	DebugGrid = on.value_or(!DebugGrid);
@@ -207,6 +246,12 @@ void RegisterNativeDebugCommands()
 
 	registerToggle("debug.player.god", "Toggle player god mode.", DebugCmdGodMode);
 	registerToggle("debug.player.invisible", "Toggle player invisibility.", DebugCmdInvisible);
+	CurrentDebugCommandRegistry.Register("debug.player.arrow", "Set the player arrow effect.", DebugCmdArrow);
+	CurrentDebugCommandRegistry.Register("debug.player.info", "Show player diagnostics.", [](std::string_view arguments) {
+		if (HasInvalidLevelArgument(arguments))
+			return std::string("Expected an optional player ID.");
+		return DebugCmdPlayerInfo(ParseOptionalLevel(arguments));
+	});
 	registerToggle("debug.display.grid", "Toggle tile-grid highlighting.", DebugCmdShowGrid);
 	registerToggle("debug.display.vision", "Toggle vision highlighting.", DebugCmdVision);
 	registerToggle("debug.display.path", "Toggle path highlighting.", DebugCmdPath);
