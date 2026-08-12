@@ -25,6 +25,7 @@ public enum AuthoritativeProjectileBehavior
     HealOther = 17,
     Search = 18,
     HolyBolt = 19,
+    BloodStar = 20,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -81,11 +82,17 @@ public sealed record AuthoritativeSpellDefinition(
     /** Divides current magic before it contributes to projectile damage. */
     public int MagicDamageDivisor { get; init; }
 
+    /** Divides current magic before it is subtracted from Blood Star damage. */
+    public int MagicDamageReductionDivisor { get; init; }
+
     /** Whole-point damage contributed by each effective spell level. */
     public int SpellLevelDamage { get; init; }
 
     /** Constant whole-point projectile damage added after scaling. */
     public int DamageBonus { get; init; }
+
+    /** Whole life/mana-shield damage applied immediately when this spell is cast. */
+    public int SelfDamage { get; init; }
 
     /** Divides character level before it supplies a native random-damage bound. */
     public int CharacterLevelRandomDamageDivisor { get; init; }
@@ -217,7 +224,9 @@ public sealed class AuthoritativeSpellCatalog
             var hasDamage = definition.DamageAmount > 0
                 || definition.RandomMagicDamageDivisor > 0
                 || definition.RandomDamageRange > 0
-                || definition.CharacterLevelRandomDamageDivisor > 0;
+                || definition.CharacterLevelRandomDamageDivisor > 0
+                || definition.MagicDamageDivisor > 0
+                || definition.SpellLevelDamage > 0;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -242,8 +251,10 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.RandomMagicDamageDivisor < 0
                 || definition.RandomDamageRange < 0
                 || definition.MagicDamageDivisor < 0
+                || definition.MagicDamageReductionDivisor < 0
                 || definition.SpellLevelDamage < 0
                 || definition.DamageBonus < 0
+                || definition.SelfDamage < 0
                 || definition.CharacterLevelRandomDamageDivisor < 0
                 || definition.DamageScale <= 0
                 || definition.DamageScale > 64
@@ -298,6 +309,27 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.MagicDamageDivisor == 0)) {
                 throw new InvalidDataException(
                     "Firebolt behavior requires one moving, random, magic-scaled projectile.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BloodStar
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileLifetime != 256
+                    || definition.AreaRadius != 0
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.MagicDamageDivisor != 2
+                    || definition.MagicDamageReductionDivisor != 8
+                    || definition.SpellLevelDamage != 3
+                    || definition.SelfDamage != 5
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ProjectileImpactLifetime != 1)) {
+                throw new InvalidDataException(
+                    "Blood Star behavior requires the native fixed magic projectile and self-damage tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
@@ -581,11 +613,19 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Native random damage columns require Firebolt, HolyBolt, Lightning, Flash, or Fireball projectile behavior.");
             }
-            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Firebolt
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.Firebolt
+                    or AuthoritativeProjectileBehavior.BloodStar)
                 && (definition.MagicDamageDivisor != 0
-                    || definition.SpellLevelDamage != 0)) {
+                    || definition.SpellLevelDamage != 0
+                    || definition.MagicDamageReductionDivisor != 0)) {
                 throw new InvalidDataException(
-                    "Magic and spell-level damage scaling requires Firebolt projectile behavior.");
+                    "Magic and spell-level damage scaling requires Firebolt or BloodStar projectile behavior.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.BloodStar
+                && definition.SelfDamage != 0) {
+                throw new InvalidDataException(
+                    "Immediate self-damage tuning requires BloodStar projectile behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Flash
@@ -648,6 +688,7 @@ public sealed class AuthoritativeSpellCatalog
                     AuthoritativeProjectileBehavior.ChargedBolt
                     or AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
+                    or AuthoritativeProjectileBehavior.BloodStar
                     or AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.StoneCurse
@@ -766,8 +807,10 @@ public sealed class AuthoritativeSpellCatalog
             RandomMagicDamageDivisor = row.OptionalInt32("random_magic_damage_divisor"),
             RandomDamageRange = row.OptionalInt32("random_damage_range"),
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
+            MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),
+            SelfDamage = row.OptionalInt32("self_damage"),
             CharacterLevelRandomDamageDivisor = row.OptionalInt32(
                 "character_level_random_damage_divisor"),
             DamageScale = row.OptionalInt32("damage_scale", 1),

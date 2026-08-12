@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.31 with the externally validated
+  Hellfire Blood Star spell (ID 36). Preserve its native fixed magic damage,
+  quarter-resistance projectile behavior, 16-tile speed, 256-tick lifetime, and
+  five-point physical self-damage through the authoritative C# module.
 - Advance the Diablo content schema to 0.30 and add server-owned Holy Bolt and
   Rogue Trap Disarm capabilities.
   Externalize the undead monster capability, preserve native damage and speed

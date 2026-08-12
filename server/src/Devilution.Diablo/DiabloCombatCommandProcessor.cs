@@ -232,6 +232,7 @@ public sealed class DiabloCombatCommandProcessor
                         action.CastIntent
                             ?? throw new InvalidOperationException(
                                 "A timed cast action has no cast intent."),
+                        appliedTick: tick,
                         players: players),
                     events);
                 break;
@@ -354,7 +355,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         if (!useNativePlayerActionTiming)
-            return ResolveCast(player, intent, players: players);
+            return ResolveCast(player, intent, appliedTick, players: players);
         if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
@@ -362,6 +363,7 @@ public sealed class DiabloCombatCommandProcessor
             player,
             intent,
             applyEffects: false,
+            appliedTick: appliedTick,
             players: players);
         if (!validation.Succeeded)
             return validation;
@@ -388,6 +390,7 @@ public sealed class DiabloCombatCommandProcessor
     private DiabloCombatIntentResult ResolveCast(
         AuthoritativePlayerState player,
         DiabloCastIntent intent,
+        ulong appliedTick,
         bool applyEffects = true,
         IReadOnlyList<AuthoritativePlayerState>? players = null)
     {
@@ -595,6 +598,12 @@ public sealed class DiabloCombatCommandProcessor
 
         ConsumeCastSource(player, source, manaCost);
         var events = new List<DiabloGameplayEvent>();
+        ApplyImmediateSelfDamage(
+            player,
+            spell,
+            appliedTick,
+            players,
+            events);
         if (resurrectionTarget is not null && resurrectionTarget.Life <= 0) {
             ApplyResurrection(resurrectionTarget, spell, players);
         } else if (healOtherTarget is not null) {
@@ -757,6 +766,14 @@ public sealed class DiabloCombatCommandProcessor
                             effectiveSpellLevel,
                             centerX,
                             centerY),
+                    AuthoritativeProjectileBehavior.BloodStar =>
+                        CreateBloodStarProjectile(
+                            projectileEntityId,
+                            player,
+                            spell,
+                            effectiveSpellLevel,
+                            centerX,
+                            centerY),
                     AuthoritativeProjectileBehavior.Fireball =>
                         CreateFireballProjectile(
                             projectileEntityId,
@@ -797,6 +814,38 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    private void ApplyImmediateSelfDamage(
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        if (spell.SelfDamage == 0)
+            return;
+
+        var damageResult = playerDamage.Apply(
+            player,
+            DiabloFixedPointQ6.FromWhole(spell.SelfDamage));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Damage,
+                player.EntityId,
+                player.EntityId,
+                DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                AmountQ6 = damageResult.IncomingDamageQ6,
+            });
+        }
+        if (player.Life == 0) {
+            StartPlayerDeath(
+                player,
+                player.EntityId,
+                appliedTick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        }
     }
 
     private static bool TryResolveCastSource(
@@ -1249,6 +1298,61 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = speed,
+            ImpactLifetime = spell.ProjectileImpactLifetime,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+        };
+    }
+
+    private AuthoritativeProjectile CreateBloodStarProjectile(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            spell.ProjectileSpeed);
+        var damage = checked(
+            player.Attributes.Magic.Current / spell.MagicDamageDivisor
+            + effectiveSpellLevel * spell.SpellLevelDamage
+            - player.Attributes.Magic.Current / spell.MagicDamageReductionDivisor);
+
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            Math.Max(0, damage),
+            spell.DamageType,
+            0,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.BloodStar,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
             ImpactLifetime = spell.ProjectileImpactLifetime,
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
         };
@@ -1848,6 +1952,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar) {
+                    AdvanceFirebolt(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
                     AdvanceFireball(tick, projectile, players, events);
                     continue;
@@ -1994,7 +2102,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         projectile.RemainingTicks--;
         if (projectile.RemainingTicks == 0) {
-            if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar
+                || projectile.Phase == AuthoritativeProjectilePhase.Impact) {
                 world.Projectiles.Remove(projectile.EntityId);
             } else {
                 EnterProjectileImpact(projectile);
@@ -2028,6 +2137,10 @@ public sealed class DiabloCombatCommandProcessor
                     playerTarget,
                     players,
                     events)) {
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar) {
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
                 EnterProjectileImpact(projectile);
                 return;
             }
@@ -2057,6 +2170,10 @@ public sealed class DiabloCombatCommandProcessor
                     playerTarget,
                     players,
                     events)) {
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar) {
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
                 projectile.PositionX = previousX;
                 projectile.PositionY = previousY;
                 projectile.TraveledX = previousTraveledX;

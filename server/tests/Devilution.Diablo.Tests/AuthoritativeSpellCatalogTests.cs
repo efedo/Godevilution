@@ -11,6 +11,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(16, (int)AuthoritativeProjectileBehavior.Fireball);
         Assert.Equal(18, (int)AuthoritativeProjectileBehavior.Search);
         Assert.Equal(19, (int)AuthoritativeProjectileBehavior.HolyBolt);
+        Assert.Equal(20, (int)AuthoritativeProjectileBehavior.BloodStar);
     }
 
     [Fact]
@@ -84,6 +85,44 @@ public sealed class AuthoritativeSpellCatalogTests
             holyBolt.ProjectileSpeedSpellLevelStep,
             holyBolt.ProjectileSpeedMaximumBonus,
             holyBolt.ProjectileLifetime));
+    }
+
+    [Fact]
+    public void ShippedBloodStarCarriesNativeMagicProjectileAndSelfDamageTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(36, out var bloodStar));
+        Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, bloodStar.ProjectileBehavior);
+        Assert.Equal(AuthoritativeDamageType.Magic, bloodStar.DamageType);
+        Assert.Equal((25, 2, 1, 14, 64), (
+            bloodStar.ManaCost,
+            bloodStar.ManaAdjustment,
+            bloodStar.ManaAdjustmentDivisor,
+            bloodStar.MinimumManaCost,
+            bloodStar.ManaCostScale));
+        Assert.Equal((16, 256, 112, 4), (
+            bloodStar.ProjectileSpeed,
+            bloodStar.ProjectileLifetime,
+            bloodStar.Range,
+            bloodStar.ResistantDamageDivisor));
+        Assert.Equal((2, 8, 3, 5), (
+            bloodStar.MagicDamageDivisor,
+            bloodStar.MagicDamageReductionDivisor,
+            bloodStar.SpellLevelDamage,
+            bloodStar.SelfDamage));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            bloodStar with { SelfDamage = 0 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            bloodStar with { MagicDamageReductionDivisor = 4 },
+        ]));
     }
 
     [Fact]

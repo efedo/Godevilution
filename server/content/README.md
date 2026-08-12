@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.30.0` schema in
+It declares its identity and `devilution.diablo@0.31.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -141,6 +141,11 @@ cursor-driven Trap Disarm class capability. Armed object state is validated from
 `objects.tsv`, server-owned, persisted, hashed through an additive extension,
 and cleared only by an admitted authoritative Disarm Trap intent.
 
+Schema 0.31 adds the Hellfire Blood Star spell row (`36`) and its typed
+`BloodStar` projectile behavior. The server preserves the native fixed magic
+damage formula, quarter magic resistance, 16-tile speed, 256-tick lifetime,
+and five-point physical self-damage cost as validated content tuning.
+
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `charges` and
 `max_charges` preserve charged-item state. The content ID remains the key for
@@ -168,7 +173,8 @@ The current base `spells.tsv` implements spell IDs `1` through `5`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
 ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
-ID `34`, plus the Monk's Search ability spell ID `46`.
+ID `34`, Hellfire Blood Star spell ID `36`, plus the Monk's Search ability
+spell ID `46`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned
@@ -191,6 +197,14 @@ Collision uses the native magic hit roll but accepts only monsters marked
 `undead=1`; non-undead monsters are passed through without consuming a hit
 or damage event. The explicit capability crosses authoritative snapshots,
 saves, protocol field 23, conditional hashes, and future replay state.
+
+Hellfire spell `36` uses `BloodStar` behavior. Its external row preserves
+the native damage `current magic / 2 + 3 * effective spell level - current
+magic / 8`, fixed magic damage type, quarter positive magic resistance,
+speed `16`, and lifetime `256`. Casting also applies five whole points of
+physical self-damage through the same server-owned Mana Shield and death-drop
+path as other player damage. The projectile and self-damage event remain
+authoritative while the legacy native client retains its compatibility path.
 
 Spell `2` uses `Healing` behavior. It rolls once from `0..9`, once from `0..3`
 per character level, and once from `0..5` per effective spell level, adding one
@@ -423,7 +437,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "0.30.0"
+    "version": "0.31.0"
   },
   "dependencyConstraints": [
     {
@@ -455,7 +469,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.30.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.31.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

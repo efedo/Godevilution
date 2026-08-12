@@ -730,6 +730,88 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BloodStarUsesNativeMagicDamageAndAppliesItsPhysicalSelfDamage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            magicResistance: 25,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var spell = new AuthoritativeSpellDefinition(36, 25, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.BloodStar,
+            ManaAdjustment = 2,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 14,
+            ManaCostScale = 64,
+            MagicDamageDivisor = 2,
+            MagicDamageReductionDivisor = 8,
+            SpellLevelDamage = 3,
+            SelfDamage = 5,
+            ResistantDamageDivisor = 4,
+        };
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            life: 1280,
+            lifeMaximum: 1280,
+            mana: 2000,
+            manaMaximum: 2000,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(36, 2)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                36,
+                0,
+                1,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(960, player.Life);
+        Assert.Equal(528, player.Mana);
+        var selfDamage = Assert.Single(result.Events);
+        Assert.Equal(new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 7, 5), selfDamage);
+        Assert.Equal(320, selfDamage.AmountQ6);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
+        Assert.Equal(19, projectile.Damage);
+        Assert.Equal(AuthoritativeDamageType.Magic, projectile.DamageType);
+        Assert.Equal((16, 256U, 4), (
+            projectile.Speed,
+            projectile.RemainingTicks,
+            projectile.ResistantDamageDivisor));
+
+        IReadOnlyList<DiabloDirectedGameplayEvent> deliveries = [];
+        for (ulong tick = 1; tick <= 32 && target.HitPoints == 40; tick++)
+            deliveries = processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(36, target.HitPoints);
+        Assert.Equal(2256, target.HitPointsQ6);
+        var delivery = Assert.Single(deliveries);
+        Assert.Equal(4, delivery.Event.Amount);
+        Assert.Equal(304, delivery.Event.AmountQ6);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void HolyBoltDamagesUndeadButPassesThroughLivingMonsters()
     {
         var spell = new AuthoritativeSpellDefinition(5, 1, 0, 0, 0, 0) {
