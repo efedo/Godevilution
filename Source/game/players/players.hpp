@@ -386,11 +386,11 @@ public:
 	void Stop();
 
 	[[nodiscard]] bool isWalking() const override; // Is the player currently walking?
-	item_equip_type GetItemLocation(const Item &item) const; // Returns item location taking into consideration barbarian's 
+	item_equip_type GetItemLocation(const Item &item) const; // Returns item location taking into consideration barbarian's
 															 // ability to hold two-handed maces and clubs in one hand.
 	int GetArmor() const; // Return player's armor value
 	int GetMeleeToHit() const; // Return player's melee to hit value
-	int GetMeleePiercingToHit() const; // Return player's melee to hit value, including armor piercing	
+	int GetMeleePiercingToHit() const; // Return player's melee to hit value, including armor piercing
 	int GetRangedToHit() const; // Return player's ranged to hit value
 	int GetRangedPiercingToHit() const;
 	int GetMagicToHit() const; // Return magic hit chance
@@ -486,14 +486,14 @@ public:
 	void setLevel(uint8_t level);
 	void setLevel(_setlevels level);
 
-	int32_t calculateBaseLife() const; // Returns a character's life based on starting life, level, and base vitality.	
+	int32_t calculateBaseLife() const; // Returns a character's life based on starting life, level, and base vitality.
 	int32_t calculateBaseMana() const; // Returns a character's mana based on starting mana, level, and base magic.
 
 	// Sets a tile/dPlayer to be occupied by the player
 	// position: tile to update
 	// isMoving: specifies whether the player is moving or not (true/moving results in a negative index in dPlayer)
 	void occupyTile(Point position, bool isMoving) const;
-	
+
 	bool isLevelOwnedByLocalClient() const; // Checks if the player level is owned by local client
 
 	bool isHoldingItem(const ItemType type) const; // Checks if the player is holding an item of the provided type, and is usable
@@ -559,6 +559,8 @@ void FixPlrWalkTags(const Player &player);
 void StripTopGold(Player &player); // Strip the top off gold piles that are larger than MaxGold
 void StartNewLvl(Player &player, interface_mode fom, int lvl);
 void RestartTownLvl(Player &player);
+/** Starts the legacy town-loading presentation without deciding authoritative resources or position. */
+void PresentRestartTown(Player &player);
 void StartWarpLvl(Player &player, size_t pidx);
 void ProcessPlayers();
 void CheckPlrSpell(bool isShiftHeld, SpellID spellID = MyPlayer->_pRSpell, SpellType spellType = MyPlayer->_pRSplType);

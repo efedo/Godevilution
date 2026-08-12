@@ -3230,6 +3230,20 @@ void RestartTownLvl(Player &player)
 	}
 }
 
+void PresentRestartTown(Player &player)
+{
+	InitLevelChange(player);
+	player._pInvincible = false;
+	player._pmode = PM_NEWLVL;
+
+	if (&player == MyPlayer) {
+		player._pInvincible = true;
+		SDL_Event event;
+		CustomEventToSdlEvent(event, WM_DIABRETOWN);
+		SDL_PushEvent(&event);
+	}
+}
+
 void StartWarpLvl(Player &player, size_t pidx)
 {
 	InitLevelChange(player);
@@ -3406,6 +3420,54 @@ void Player::makePath(Point targetPosition, bool endspace)
 	player.walkpath[path] = WALK_NONE;
 }
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+tl::expected<authoritative::ServerBackedCastSource, std::string> MakeServerBackedCastSource(
+    const Player &player,
+    SpellID spellId,
+    SpellType spellType)
+{
+	using authoritative::ServerBackedCastSource;
+	using authoritative::ServerBackedCastSourceKind;
+	using authoritative::ServerBackedItemLocation;
+	using authoritative::ServerBackedItemReference;
+
+	switch (spellType) {
+	case SpellType::Skill:
+		return ServerBackedCastSource { ServerBackedCastSourceKind::Ability, std::nullopt };
+	case SpellType::Spell:
+		return ServerBackedCastSource { ServerBackedCastSourceKind::MemorizedSpell, std::nullopt };
+	case SpellType::Charges:
+		return ServerBackedCastSource {
+			ServerBackedCastSourceKind::ChargedItem,
+			ServerBackedItemReference { ServerBackedItemLocation::Equipment, INVLOC_HAND_LEFT },
+		};
+	case SpellType::Scroll:
+		for (uint32_t index = 0; index < InventoryGridCells; ++index) {
+			const Item &item = player.InvList[index];
+			if (item.isScrollOf(spellId) || item.isRuneOf(spellId)) {
+				return ServerBackedCastSource {
+					ServerBackedCastSourceKind::ConsumableItem,
+					ServerBackedItemReference { ServerBackedItemLocation::Inventory, index },
+				};
+			}
+		}
+		for (uint32_t index = 0; index < MaxBeltItems; ++index) {
+			const Item &item = player.SpdList[index];
+			if (item.isScrollOf(spellId) || item.isRuneOf(spellId)) {
+				return ServerBackedCastSource {
+					ServerBackedCastSourceKind::ConsumableItem,
+					ServerBackedItemReference { ServerBackedItemLocation::Belt, index },
+				};
+			}
+		}
+		return tl::make_unexpected("The authoritative scroll source is no longer present.");
+	case SpellType::Invalid:
+		return tl::make_unexpected("Cannot submit an invalid authoritative cast source.");
+	}
+	return tl::make_unexpected("Cannot submit an unknown authoritative cast source.");
+}
+#endif
+
 void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 {
 	bool addflag = false;
@@ -3480,17 +3542,44 @@ void CheckPlrSpell(bool isShiftHeld, SpellID spellID, SpellType spellType)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if ((spellID == SpellID::Identify || spellID == SpellID::ItemRepair || spellID == SpellID::StaffRecharge) && spellType == SpellType::Skill) {
+			if (SpellbookFlag)
+				SpellbookFlag = false;
+			if (!invflag) {
+				invflag = true;
+				if (ControlMode != ControlTypes::KeyboardAndMouse)
+					FocusOnInventory();
+			}
+			cursor_id cursor = CURSOR_IDENTIFY;
+			if (spellID == SpellID::ItemRepair)
+				cursor = CURSOR_REPAIR;
+			else if (spellID == SpellID::StaffRecharge)
+				cursor = CURSOR_RECHARGE;
+			NewCursor(cursor);
+			LastPlayerAction = PlayerActionType::Spell;
+			return;
+		}
 		uint32_t targetEntityId = 0;
-		if (pcursmonst != -1) {
+		if (PlayerUnderCursor != nullptr) {
+			if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+				targetEntityId = *entityId;
+		} else if (pcursmonst != -1) {
 			if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
 				targetEntityId = *entityId;
 		}
 		if (PlayerUnderCursor != nullptr && targetEntityId == 0)
 			LogError("Server-backed spell target is not an authoritative entity.");
+		auto source = MakeServerBackedCastSource(myPlayer, spellID, spellType);
+		if (!source.has_value()) {
+			LogError("Server-backed spell source failed: {}", source.error());
+			return;
+		}
 		if (auto result = authoritative::GetServerBackedRuntime().Cast(
-		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+		        static_cast<uint32_t>(spellID), targetEntityId, cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value())
 			LogError("Server-backed spell cast failed: {}", result.error());
-		LastPlayerAction = targetEntityId != 0 ? PlayerActionType::SpellMonsterTarget : PlayerActionType::Spell;
+		LastPlayerAction = PlayerUnderCursor != nullptr
+		    ? PlayerActionType::SpellPlayerTarget
+		    : targetEntityId != 0 ? PlayerActionType::SpellMonsterTarget : PlayerActionType::Spell;
 		return;
 	}
 #endif

@@ -14,13 +14,13 @@
 
 #include <expected.hpp>
 
-#include "game/stores/stores.hpp"
 #include "game/players/players.hpp"
+#include "game/stores/stores.hpp"
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/server_backed_session.hpp"
 #include "network/authoritative/server_backed_vendor_ui.hpp"
-#include "network/authoritative/server_backed_world_projection.hpp"
 #include "network/authoritative/server_backed_world_presentation.hpp"
+#include "network/authoritative/server_backed_world_projection.hpp"
 
 namespace devilution::authoritative {
 
@@ -54,8 +54,11 @@ public:
 	tl::expected<void, std::string> IdentifyItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> SellItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RepairItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> RepairItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RechargeItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> RechargeItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> IdentifyItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> IdentifyItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RefillMana(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> MoveInventoryItem(uint32_t inventoryIndex, uint32_t targetCell, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> MoveItem(ServerBackedItemReference item, ServerBackedItemReference destination, uint64_t requestedTick, uint64_t nowMs);
@@ -63,10 +66,14 @@ public:
 	tl::expected<void, std::string> Attack(uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Cast(uint32_t spellId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> UsePortal(uint32_t portalId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> PickupWorldItem(uint32_t itemEntityId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Poll(uint64_t nowMs);
 
 	[[nodiscard]] std::optional<uint32_t> SmithStoreSlotAt(std::size_t index) const noexcept;
@@ -77,6 +84,8 @@ public:
 	[[nodiscard]] std::optional<uint32_t> WorldItemEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the lowest-ID live authoritative monster at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> MonsterEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
+	/** Finds the lowest-ID remote authoritative player at a projected cell. */
+	[[nodiscard]] std::optional<uint32_t> PlayerEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the lowest-ID authoritative object at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> ObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the authoritative location of an item, including while it is held by the legacy cursor. */

@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
 #include "devilution.pb.h"
+#include "engine/cursor.h"
+#include "game/spells/spells.hpp"
 #include "network/authoritative/player_snapshot.hpp"
 #include "network/authoritative/server_backed_player_ui.hpp"
+#include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
+#include "ui/automap.h"
 
 namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
@@ -23,10 +27,23 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_gold(125);
 	player->set_experience(99);
 	player->set_character_level(3);
+	player->set_character_class_id(3);
+	player->set_character_name("Dead-RogueDM");
+	player->set_mana_shield_active(true);
+	player->set_ability_spell_id(static_cast<uint32_t>(SpellID::Search));
+	player->set_hostile_mode(true);
+	player->set_facing_direction(protocol::PLAYER_DIRECTION_NORTH_EAST);
+	auto *memorizedSpell = player->add_memorized_spells();
+	memorizedSpell->set_spell_id(static_cast<uint32_t>(SpellID::Firebolt));
+	memorizedSpell->set_level(2);
 	player->set_level_id(7);
 	player->add_status_effects()->set_effect_id(1);
 	player->mutable_status_effects(0)->set_remaining_ticks(10);
-	player->mutable_status_effects(0)->set_magnitude(1);
+	player->mutable_status_effects(0)->set_behavior(protocol::STATUS_EFFECT_BEHAVIOR_INFRAVISION);
+	auto *search = player->add_status_effects();
+	search->set_effect_id(static_cast<uint32_t>(SpellID::Search));
+	search->set_remaining_ticks(255);
+	search->set_behavior(protocol::STATUS_EFFECT_BEHAVIOR_SEARCH);
 	player->mutable_attributes()->mutable_strength()->set_current(12);
 	player->mutable_attributes()->mutable_strength()->set_base(10);
 	player->mutable_inventory_grid()->Add(0);
@@ -46,6 +63,13 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	belt->set_slot(2);
 	belt->set_item_seed(88);
 	belt->mutable_state()->set_item_type(6);
+	auto *heldItem = player->mutable_held_item();
+	heldItem->set_item_seed(99);
+	heldItem->set_price(65);
+	heldItem->mutable_state()->set_item_type(static_cast<int32_t>(ItemType::Gold));
+	heldItem->mutable_state()->set_item_index(IDI_GOLD);
+	heldItem->mutable_state()->set_value(65);
+	heldItem->mutable_state()->set_stat_flag(true);
 
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
 	ASSERT_TRUE(projected.has_value()) << projected.error();
@@ -56,9 +80,21 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->manaMaximum, 640);
 	EXPECT_EQ(projected->gold, 125U);
 	EXPECT_EQ(projected->characterLevel, 3U);
+	EXPECT_EQ(projected->characterClassId, 3U);
+	EXPECT_EQ(projected->characterName, "Dead-RogueDM");
+	EXPECT_TRUE(projected->manaShieldActive);
+	EXPECT_EQ(projected->abilitySpellId, static_cast<uint32_t>(SpellID::Search));
+	EXPECT_FALSE(projected->friendlyMode);
+	EXPECT_EQ(projected->facingDirection, static_cast<uint32_t>(Direction::NorthEast));
+	ASSERT_EQ(projected->memorizedSpells.size(), 1U);
+	EXPECT_EQ(projected->memorizedSpells[0].spellId, static_cast<uint32_t>(SpellID::Firebolt));
+	EXPECT_EQ(projected->memorizedSpells[0].level, 2U);
 	EXPECT_EQ(projected->levelId, 7U);
-	ASSERT_EQ(projected->statusEffects.size(), 1U);
+	ASSERT_EQ(projected->statusEffects.size(), 2U);
 	EXPECT_EQ(projected->statusEffects[0].remainingTicks, 10U);
+	EXPECT_EQ(projected->statusEffects[0].behavior, 1U);
+	EXPECT_EQ(projected->statusEffects[1].remainingTicks, 255U);
+	EXPECT_EQ(projected->statusEffects[1].behavior, 2U);
 	EXPECT_EQ(projected->strength.base, 10);
 	EXPECT_EQ(projected->strength.current, 12);
 	ASSERT_EQ(projected->inventory.size(), 1U);
@@ -69,6 +105,10 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	ASSERT_EQ(projected->belt.size(), 1U);
 	EXPECT_EQ(projected->belt[0].slot, 2U);
 	EXPECT_EQ(projected->belt[0].itemSeed, 88U);
+	ASSERT_TRUE(projected->heldItem.has_value());
+	EXPECT_EQ(projected->heldItem->itemSeed, 99U);
+	EXPECT_EQ(projected->heldItem->item._itype, ItemType::Gold);
+	EXPECT_EQ(projected->heldItem->item._ivalue, 65);
 	EXPECT_EQ(projected->inventoryGrid, std::vector<int32_t>({ 0, -1 }));
 }
 
@@ -82,29 +122,90 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources
 	protocol::EventBatch events;
 	auto *damage = events.add_events()->mutable_damage();
 	damage->set_target_entity_id(7);
-	damage->set_amount(25);
+	damage->set_amount_q6(25);
 	auto *experience = events.add_events()->mutable_experience();
 	experience->set_player_entity_id(7);
 	experience->set_amount(40);
 	auto *healing = events.add_events()->mutable_healing();
 	healing->set_target_entity_id(7);
 	healing->set_amount(10);
+	auto *exactHealing = events.add_events()->mutable_healing();
+	exactHealing->set_target_entity_id(7);
+	exactHealing->set_amount_q6(5);
 
 	ApplyServerBackedEventBatch(player, events, 7);
 
-	EXPECT_EQ(player.life.current, 65);
+	EXPECT_EQ(player.life.current, 70);
 	EXPECT_EQ(player._pExperience, 40U);
 }
 
-TEST(ServerBackedPlayerSnapshot, RejectsMissingAndDuplicateEntities)
+TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
+{
+	protocol::Snapshot snapshot;
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
+	player->set_combat_mode_end_tick(20);
+	auto *action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_CAST);
+	action->set_started_at_tick(2);
+	action->set_effect_tick(10);
+	action->set_ready_tick(10);
+	action->set_end_tick(20);
+	action->set_effect_applied(true);
+	action->set_target_entity_id(9);
+	action->mutable_cast()->set_spell_id(30);
+	action->mutable_cast()->set_target_entity_id(9);
+	action->mutable_cast()->set_target_x(3);
+	action->mutable_cast()->set_target_y(4);
+	action->mutable_cast()->set_source(protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
+	action->mutable_cast()->mutable_source_item()->set_location(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT);
+	action->mutable_cast()->mutable_source_item()->set_slot(4);
+
+	auto projected = ProjectPlayerSnapshot(snapshot, 7);
+
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_TRUE(projected->currentAction.has_value());
+	EXPECT_EQ(projected->currentAction->kind, 3U);
+	EXPECT_EQ(projected->currentAction->effectTick, 10U);
+	EXPECT_TRUE(projected->currentAction->effectApplied);
+	EXPECT_TRUE(projected->currentAction->hasCast);
+	EXPECT_EQ(projected->currentAction->spellId, 30U);
+	EXPECT_EQ(projected->currentAction->castTargetEntityId, 9U);
+	EXPECT_TRUE(projected->currentAction->hasCastSourceItem);
+	EXPECT_EQ(projected->currentAction->castSourceItemLocation, 2U);
+	EXPECT_EQ(projected->currentAction->castSourceItemSlot, 4U);
+}
+
+TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySets)
 {
 	protocol::Snapshot missing;
 	EXPECT_FALSE(ProjectPlayerSnapshot(missing, 7).has_value());
 
+	protocol::Snapshot multiple;
+	multiple.add_players()->set_entity_id(8);
+	multiple.add_players()->set_entity_id(7);
+	auto selected = ProjectPlayerSnapshot(multiple, 7);
+	ASSERT_TRUE(selected.has_value()) << selected.error();
+	EXPECT_EQ(selected->entityId, 7U);
+	auto allPlayers = ProjectPlayerSnapshots(multiple);
+	ASSERT_TRUE(allPlayers.has_value()) << allPlayers.error();
+	ASSERT_EQ(allPlayers->size(), 2U);
+	EXPECT_EQ((*allPlayers)[0].entityId, 7U);
+	EXPECT_EQ((*allPlayers)[1].entityId, 8U);
+
 	protocol::Snapshot duplicate;
 	duplicate.add_players()->set_entity_id(7);
-	duplicate.add_players()->set_entity_id(7);
+	duplicate.add_players()->set_entity_id(8);
+	duplicate.add_players()->set_entity_id(8);
 	EXPECT_FALSE(ProjectPlayerSnapshot(duplicate, 7).has_value());
+	EXPECT_FALSE(ProjectPlayerSnapshots(duplicate).has_value());
+
+	protocol::Snapshot invalid;
+	invalid.add_players()->set_entity_id(7);
+	invalid.add_players()->set_entity_id(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalid, 7).has_value());
+	EXPECT_FALSE(ProjectPlayerSnapshots(invalid).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
@@ -118,6 +219,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_position_y(5);
 	second->set_hit_points(7);
 	second->set_max_hit_points(20);
+	second->set_hit_points_q6(432);
+	second->set_max_hit_points_q6(1280);
 	second->set_armor_class(3);
 	second->set_alive(true);
 	second->set_attack_damage(11);
@@ -125,6 +228,11 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	second->set_fire_resistance(25);
 	second->set_lightning_resistance(-10);
 	second->set_magic_resistance(40);
+	second->set_moving(true);
+	second->set_future_position_x(5);
+	second->set_future_position_y(5);
+	second->set_petrified(true);
+	second->set_stone_curse_immune(true);
 	const auto first = snapshot.add_monsters();
 	first->set_entity_id(3);
 	first->set_hit_points(0);
@@ -139,11 +247,18 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_EQ((*projected)[1].entityId, 9U);
 	EXPECT_EQ((*projected)[1].monsterId, 12U);
 	EXPECT_EQ((*projected)[1].hitPoints, 7);
+	EXPECT_EQ((*projected)[1].hitPointsQ6, 432);
+	EXPECT_EQ((*projected)[1].maxHitPointsQ6, 1280);
 	EXPECT_EQ((*projected)[1].attackDamage, 11);
 	EXPECT_EQ((*projected)[1].aggroRange, 6);
 	EXPECT_EQ((*projected)[1].fireResistance, 25);
 	EXPECT_EQ((*projected)[1].lightningResistance, -10);
 	EXPECT_EQ((*projected)[1].magicResistance, 40);
+	EXPECT_TRUE((*projected)[1].moving);
+	EXPECT_EQ((*projected)[1].futurePositionX, 5);
+	EXPECT_EQ((*projected)[1].futurePositionY, 5);
+	EXPECT_TRUE((*projected)[1].petrified);
+	EXPECT_TRUE((*projected)[1].stoneCurseImmune);
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
@@ -153,7 +268,11 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
 	second->set_entity_id(20);
 	second->set_item_seed(42);
 	second->set_price(75);
-	second->mutable_state()->set_item_type(1);
+	second->mutable_state()->set_item_type(static_cast<int32_t>(ItemType::Gold));
+	second->mutable_state()->set_item_index(IDI_GOLD);
+	second->mutable_state()->set_value(75);
+	second->mutable_state()->set_identified_value(75);
+	second->mutable_state()->set_stat_flag(true);
 	auto *first = snapshot.add_world_items();
 	first->set_entity_id(10);
 	first->set_item_seed(43);
@@ -166,6 +285,60 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeWorldItems)
 	EXPECT_EQ((*projected)[0].entityId, 10U);
 	EXPECT_EQ((*projected)[1].entityId, 20U);
 	EXPECT_EQ((*projected)[0].itemSeed, 43U);
+	EXPECT_EQ((*projected)[1].item._itype, ItemType::Gold);
+	EXPECT_EQ((*projected)[1].item.IDidx, IDI_GOLD);
+	EXPECT_EQ((*projected)[1].item._ivalue, 75);
+	EXPECT_EQ((*projected)[1].item._iSeed, 42U);
+	EXPECT_TRUE((*projected)[1].item._iStatFlag);
+}
+
+TEST(ServerBackedPlayerSnapshot, ProjectsZeroSeedPvpEarDynamicPresentation)
+{
+	protocol::Snapshot snapshot;
+	auto *source = snapshot.add_world_items();
+	source->set_entity_id(20);
+	source->set_item_seed(0);
+	auto *state = source->mutable_state();
+	state->set_create_info(0x4100);
+	state->set_item_type(static_cast<int32_t>(ItemType::Misc));
+	state->set_equip_location(ILOC_UNEQUIPABLE);
+	state->set_item_class(ICLASS_MISC);
+	state->set_value(3);
+	state->set_misc_id(IMISC_EAR);
+	state->set_item_index(IDI_EAR);
+	state->set_base_name("Ear of A");
+	state->set_identified_name("A");
+	state->set_native_cursor_graphic(ICURS_EAR_ROGUE);
+
+	auto projected = ProjectWorldItemSnapshots(snapshot);
+
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 1U);
+	const Item &ear = projected->front().item;
+	EXPECT_EQ(ear._iSeed, 0U);
+	EXPECT_EQ(ear._iCreateInfo, 0x4100);
+	EXPECT_EQ(ear.IDidx, IDI_EAR);
+	EXPECT_EQ(ear._iMiscId, IMISC_EAR);
+	EXPECT_EQ(ear._ivalue, 3);
+	EXPECT_STREQ(ear._iName, "Ear of A");
+	EXPECT_STREQ(ear._iIName, "A");
+	EXPECT_EQ(ear._iCurs, ICURS_EAR_ROGUE);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsIncompleteDynamicItemIdentity)
+{
+	protocol::Snapshot worldSnapshot;
+	auto *worldItem = worldSnapshot.add_world_items();
+	worldItem->set_entity_id(20);
+	worldItem->mutable_state()->set_base_name("Ear of A");
+	worldItem->mutable_state()->set_native_cursor_graphic(ICURS_EAR_ROGUE);
+	EXPECT_FALSE(ProjectWorldItemSnapshots(worldSnapshot).has_value());
+
+	protocol::Snapshot playerSnapshot;
+	auto *player = playerSnapshot.add_players();
+	player->set_entity_id(7);
+	player->mutable_held_item()->mutable_state()->set_identified_name("A");
+	EXPECT_FALSE(ProjectPlayerSnapshot(playerSnapshot, 7).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
@@ -179,6 +352,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_position_y(9);
 	second->set_activated(true);
 	second->set_quest_id(30);
+	second->set_breakable(true);
+	second->set_destroyed(true);
 	auto *first = snapshot.add_objects();
 	first->set_entity_id(10);
 	first->set_object_id(1);
@@ -195,6 +370,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].entityId, 20U);
 	EXPECT_TRUE((*projected)[1].activated);
 	EXPECT_EQ((*projected)[1].questId, 30U);
+	EXPECT_TRUE((*projected)[1].breakable);
+	EXPECT_TRUE((*projected)[1].destroyed);
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
@@ -212,11 +389,43 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 	first->set_spell_id(4);
 	first->set_remaining_ticks(1);
 	first->set_damage(6);
+	first->set_behavior(7);
+	first->set_phase(1);
+	first->set_start_x(2);
+	first->set_start_y(3);
+	first->set_traveled_x(4);
+	first->set_traveled_y(5);
+	first->set_velocity_x(-6);
+	first->set_velocity_y(7);
+	first->set_original_direction(8);
+	first->set_path_index(9);
+	first->set_path_ticks(10);
+	first->set_speed(11);
+	first->set_impact_lifetime(12);
+	first->set_resistant_damage_divisor(13);
+	first->set_last_collision_target_entity_id(9);
+	first->set_effective_spell_level(14);
 
 	auto projected = ProjectProjectileSnapshots(snapshot);
 	ASSERT_TRUE(projected.has_value());
 	ASSERT_EQ(projected->size(), 2u);
 	EXPECT_EQ((*projected)[0].entityId, 11u);
+	EXPECT_EQ((*projected)[0].behavior, 7);
+	EXPECT_EQ((*projected)[0].phase, 1);
+	EXPECT_EQ((*projected)[0].startX, 2);
+	EXPECT_EQ((*projected)[0].startY, 3);
+	EXPECT_EQ((*projected)[0].traveledX, 4);
+	EXPECT_EQ((*projected)[0].traveledY, 5);
+	EXPECT_EQ((*projected)[0].velocityX, -6);
+	EXPECT_EQ((*projected)[0].velocityY, 7);
+	EXPECT_EQ((*projected)[0].originalDirection, 8);
+	EXPECT_EQ((*projected)[0].pathIndex, 9);
+	EXPECT_EQ((*projected)[0].pathTicks, 10);
+	EXPECT_EQ((*projected)[0].speed, 11);
+	EXPECT_EQ((*projected)[0].impactLifetime, 12);
+	EXPECT_EQ((*projected)[0].resistantDamageDivisor, 13);
+	EXPECT_EQ((*projected)[0].lastCollisionTargetEntityId, 9u);
+	EXPECT_EQ((*projected)[0].effectiveSpellLevel, 14);
 	EXPECT_EQ((*projected)[1].entityId, 12u);
 }
 
@@ -227,7 +436,7 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 	monster.entityId = 7;
 	monster.levelId = 2;
 
-	ASSERT_TRUE(projection.Apply({ monster }, {}, {}, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
 	ASSERT_EQ(projection.Monsters().size(), 1U);
 	EXPECT_EQ(projection.Monsters()[0].levelId, 2U);
 }
@@ -241,6 +450,9 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	monster.positionX = 4;
 	monster.positionY = 5;
 	monster.alive = true;
+	monster.moving = true;
+	monster.futurePositionX = 5;
+	monster.futurePositionY = 5;
 	ProjectedWorldItemSnapshot item;
 	item.entityId = 20;
 	item.levelId = 2;
@@ -254,14 +466,62 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 
 	ASSERT_TRUE(projection.Apply({ monster }, { item }, { object }, 1).has_value());
 	EXPECT_EQ(projection.MonsterAt(4, 5), std::optional<uint32_t> { 40 });
-	EXPECT_FALSE(projection.MonsterAt(5, 5).has_value());
+	EXPECT_EQ(projection.MonsterAt(5, 5), std::optional<uint32_t> { 40 });
+	EXPECT_FALSE(projection.MonsterAt(6, 5).has_value());
 	EXPECT_FALSE(projection.WorldItemAt(4, 5).has_value());
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t>(30));
 	object.activated = true;
-	ASSERT_TRUE(projection.Apply({}, { item }, { object }, 1).has_value());
+	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
 	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());
-	ASSERT_TRUE(projection.Apply({}, { item }, {}, 2).has_value());
+	object.activated = false;
+	object.destroyed = true;
+	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
+	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());
+	ASSERT_TRUE(projection.Apply({ }, { item }, { }, 2).has_value());
 	EXPECT_EQ(projection.WorldItemAt(4, 5), std::optional<uint32_t>(20));
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterOccupancy)
+{
+	protocol::Snapshot distantDestination;
+	auto *monster = distantDestination.add_monsters();
+	monster->set_entity_id(7);
+	monster->set_position_x(1);
+	monster->set_position_y(1);
+	monster->set_moving(true);
+	monster->set_future_position_x(3);
+	monster->set_future_position_y(1);
+	EXPECT_FALSE(ProjectMonsterSnapshots(distantDestination).has_value());
+
+	protocol::Snapshot inconsistentStationary;
+	monster = inconsistentStationary.add_monsters();
+	monster->set_entity_id(7);
+	monster->set_position_x(1);
+	monster->set_position_y(1);
+	monster->set_future_position_x(2);
+	monster->set_future_position_y(1);
+	EXPECT_FALSE(ProjectMonsterSnapshots(inconsistentStationary).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsMovingDestinationOutsideNativeDungeon)
+{
+	ProjectedMonsterSnapshot monster;
+	monster.entityId = 31;
+	monster.levelId = 1;
+	monster.positionX = 0;
+	monster.positionY = 1;
+	monster.alive = true;
+	monster.moving = true;
+	monster.futurePositionX = -1;
+	monster.futurePositionY = 1;
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ monster }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+
+	const auto result = presentation.Apply(projection, 1);
+
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative moving monster destination cannot be represented by the native world tile type.");
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
@@ -276,6 +536,21 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	duplicate.add_objects()->set_entity_id(7);
 	duplicate.mutable_objects(1)->set_object_id(2);
 	EXPECT_FALSE(ProjectObjectSnapshots(duplicate).has_value());
+
+	protocol::Snapshot passableBreakable;
+	auto *invalidFlags = passableBreakable.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_missile_passable(true);
+	invalidFlags->set_breakable(true);
+	EXPECT_FALSE(ProjectObjectSnapshots(passableBreakable).has_value());
+
+	protocol::Snapshot destroyedUnbreakable;
+	invalidFlags = destroyedUnbreakable.add_objects();
+	invalidFlags->set_entity_id(7);
+	invalidFlags->set_object_id(1);
+	invalidFlags->set_destroyed(true);
+	EXPECT_FALSE(ProjectObjectSnapshots(destroyedUnbreakable).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)
@@ -283,9 +558,13 @@ TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_BLOCK);
+	player->set_combat_mode_end_tick(9);
 	player->add_inventory()->set_item_seed(1);
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
 	ASSERT_TRUE(projected.has_value()) << projected.error();
+	EXPECT_EQ(projected->combatMode, static_cast<uint32_t>(PM_BLOCK));
+	EXPECT_EQ(projected->combatModeEndTick, 9U);
 
 	ServerBackedPlayerState state;
 	ASSERT_TRUE(state.ApplySnapshot(std::move(*projected)));
@@ -314,6 +593,24 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	snapshot.gold = 450;
 	snapshot.experience = 99;
 	snapshot.characterLevel = 4;
+	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::Monk);
+	snapshot.characterName = "Dead-Monk";
+	snapshot.manaShieldActive = true;
+	snapshot.statusEffects.push_back({
+	    .effectId = static_cast<uint32_t>(SpellID::Infravision),
+	    .remainingTicks = 1584,
+	    .behavior = 1,
+	});
+	snapshot.statusEffects.push_back({
+	    .effectId = static_cast<uint32_t>(SpellID::Search),
+	    .remainingTicks = 255,
+	    .behavior = 2,
+	});
+	snapshot.friendlyMode = false;
+	snapshot.combatMode = static_cast<uint32_t>(PM_BLOCK);
+	snapshot.combatModeEndTick = 9;
+	snapshot.abilitySpellId = static_cast<uint32_t>(SpellID::Search);
+	snapshot.memorizedSpells.push_back({ static_cast<uint32_t>(SpellID::Firebolt), 2 });
 	snapshot.strength = { 10, 12 };
 	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
 	Item inventoryItem;
@@ -326,12 +623,34 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	Item beltItem;
 	beltItem._itype = ItemType::Misc;
 	snapshot.belt.push_back({ .slot = 2, .item = beltItem });
+	Item heldItem;
+	heldItem._itype = ItemType::Gold;
+	heldItem._iSeed = 99;
+	heldItem._iCurs = 4;
+	heldItem._ivalue = 65;
+	snapshot.heldItem = ProjectedInventoryItem {
+		.itemSeed = 99,
+		.price = 65,
+		.item = heldItem,
+	};
 
 	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
 	EXPECT_EQ(player.position.tile.x, 12);
 	EXPECT_EQ(player.position.tile.y, 13);
 	EXPECT_EQ(player._pGold, 450);
 	EXPECT_EQ(player._pExperience, 99U);
+	EXPECT_EQ(player._pClass, HeroClass::Monk);
+	EXPECT_STREQ(player._pName, "Dead-Monk");
+	EXPECT_TRUE(player.pManaShield);
+	EXPECT_TRUE(player._pInfraFlag);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_FALSE(player.friendlyMode);
+	EXPECT_EQ(player._pmode, PM_BLOCK);
+	EXPECT_EQ(player._pAblSpells, GetSpellBitmask(SpellID::Search));
+	EXPECT_EQ(player._pMemSpells, GetSpellBitmask(SpellID::Firebolt));
+	EXPECT_EQ(player._pSplLvl[static_cast<size_t>(SpellID::Firebolt)], 2);
+	EXPECT_EQ(player._pRSpell, SpellID::Firebolt);
+	EXPECT_EQ(player._pRSplType, SpellType::Spell);
 	EXPECT_EQ(player.attributes.strength.base, 10);
 	EXPECT_EQ(player.attributes.strength.current, 12);
 	EXPECT_EQ(player.life.current, 800);
@@ -344,6 +663,114 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_EQ(player.InvBody[INVLOC_HAND_LEFT]._itype, ItemType::Shield);
 	EXPECT_EQ(player.InvGrid[0], 1);
 	EXPECT_EQ(player.InvGrid[1], 0);
+	EXPECT_EQ(player.HoldItem._itype, ItemType::Gold);
+	EXPECT_EQ(player.HoldItem._iSeed, 99U);
+	EXPECT_EQ(pcurs, CURSOR_FIRSTITEM + 4);
+
+	snapshot.heldItem.reset();
+	snapshot.statusEffects.clear();
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_TRUE(player.HoldItem.isEmpty());
+	EXPECT_FALSE(player._pInfraFlag);
+	EXPECT_FALSE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_EQ(pcurs, CURSOR_HAND);
+}
+
+TEST(ServerBackedPlayerSnapshot, AppliesTimedMoveDestinationToNativeFuturePosition)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.positionX = 12;
+	snapshot.positionY = 13;
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::SouthEast);
+	snapshot.combatMode = static_cast<uint32_t>(PM_WALK_SOUTHWARDS);
+	snapshot.combatModeEndTick = 18;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 10,
+		.effectTick = 18,
+		.readyTick = 18,
+		.endTick = 18,
+		.directionX = 1,
+	};
+	Player player;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player.position.tile.x, 12);
+	EXPECT_EQ(player.position.tile.y, 13);
+	EXPECT_EQ(player.position.future.x, 13);
+	EXPECT_EQ(player.position.future.y, 13);
+	EXPECT_EQ(player.direction, Direction::SouthEast);
+}
+
+TEST(ServerBackedPlayerSnapshot, AppliesDeathAndLevelTransitionActions)
+{
+	ProjectedPlayerSnapshot death;
+	death.entityId = 7;
+	death.life = 0;
+	death.lifeMaximum = 20;
+	death.combatMode = static_cast<uint32_t>(PM_DEATH);
+	death.combatModeEndTick = 40;
+	death.inventoryGrid.assign(InventoryGridCells, -1);
+	death.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 4,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 40,
+		.endTick = 40,
+		.effectApplied = true,
+		.targetEntityId = 9,
+	};
+	Player deadPlayer;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(deadPlayer, death).has_value());
+	EXPECT_EQ(deadPlayer._pmode, PM_DEATH);
+	EXPECT_EQ(deadPlayer.life.current, 0);
+
+	ProjectedPlayerSnapshot transition;
+	transition.entityId = 7;
+	transition.life = 20;
+	transition.lifeMaximum = 20;
+	transition.levelId = 2;
+	transition.positionX = 3;
+	transition.positionY = 4;
+	transition.combatMode = static_cast<uint32_t>(PM_NEWLVL);
+	transition.combatModeEndTick = 2;
+	transition.inventoryGrid.assign(InventoryGridCells, -1);
+	transition.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 5,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 2,
+		.endTick = 2,
+		.effectApplied = true,
+		.targetEntityId = 5,
+	};
+	Player transitioningPlayer;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(
+	                transitioningPlayer,
+	                transition)
+	                .has_value());
+	EXPECT_EQ(transitioningPlayer._pmode, PM_NEWLVL);
+	EXPECT_TRUE(transitioningPlayer.isOnLevel(2));
+	EXPECT_EQ(transitioningPlayer.position.tile.x, 3);
+	EXPECT_EQ(transitioningPlayer.position.tile.y, 4);
+
+	ProjectedPlayerSnapshot restartTown = transition;
+	restartTown.levelId = 0;
+	restartTown.positionX = 75;
+	restartTown.positionY = 68;
+	restartTown.currentAction->kind = 6;
+	restartTown.currentAction->targetEntityId = 0;
+	Player restartedPlayer;
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(restartedPlayer, restartTown).has_value());
+	EXPECT_TRUE(restartedPlayer.isOnLevel(0));
+	EXPECT_EQ(restartedPlayer._pmode, PM_NEWLVL);
+	EXPECT_EQ(restartedPlayer.position.tile.x, 75);
+	EXPECT_EQ(restartedPlayer.position.tile.y, 68);
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedSnapshotWithoutMutation)
@@ -359,6 +786,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedSnapshotWithoutMutation)
 	EXPECT_EQ(player._pGold, 42);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsLevelOutsideNativeRangeWithoutMutation)
+{
+	Player player;
+	player.setLevel(2);
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.levelId = 256;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_TRUE(player.isOnLevel(2));
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEquipmentSlots)
 {
 	ProjectedPlayerSnapshot snapshot;
@@ -369,6 +809,79 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEquipmentSlots)
 
 	Player player;
 	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsUnknownCharacterClassWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.characterClassId = static_cast<uint32_t>(HeroClass::LAST) + 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	Player player;
+	player._pClass = HeroClass::Rogue;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player._pClass, HeroClass::Rogue);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidMemorizedSpellWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.memorizedSpells.push_back({ static_cast<uint32_t>(SpellID::Firebolt), MaxSpellLevel + 1 });
+
+	Player player;
+	player._pRSpell = SpellID::Healing;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player._pRSpell, SpellID::Healing);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidOrDuplicateStatusEffectsWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	snapshot.statusEffects.push_back({ .effectId = 9, .remainingTicks = 10, .behavior = 1 });
+	snapshot.statusEffects.push_back({ .effectId = 9, .remainingTicks = 8 });
+
+	Player player;
+	player._pInfraFlag = true;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_TRUE(player._pInfraFlag);
+
+	snapshot.statusEffects.resize(1);
+	snapshot.statusEffects[0].magnitude = 1;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+
+	snapshot.statusEffects[0] = { .effectId = 46, .remainingTicks = 10, .magnitude = 1, .behavior = 2 };
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidCombatModeWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.combatMode = static_cast<uint32_t>(PM_QUIT) + 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	Player player;
+	player._pmode = PM_ATTACK;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player._pmode, PM_ATTACK);
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidFacingDirectionWithoutMutation)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::SouthEast) + 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+
+	Player player;
+	player.direction = Direction::West;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(player.direction, Direction::West);
 }
 
 } // namespace

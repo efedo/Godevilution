@@ -114,6 +114,10 @@ tl::expected<void, std::string> ServerBackedClient::ConnectTransport(bool expect
 	if (!configuration_.rulesetIdentityHash.empty())
 		clientHello->set_ruleset_identity_hash(configuration_.rulesetIdentityHash);
 	clientHello->set_resume_token(configuration_.resumeToken);
+	if (configuration_.requestedCharacterClassId.has_value())
+		clientHello->set_requested_character_class_id(*configuration_.requestedCharacterClassId);
+	if (configuration_.requestedCharacterName.has_value())
+		clientHello->set_requested_character_name(*configuration_.requestedCharacterName);
 	if (auto result = WriteEnvelope(hello); !result.has_value())
 		return tl::make_unexpected(result.error());
 
@@ -191,6 +195,7 @@ std::string ServerBackedClient::WriteHandshakeDiagnosticDump(std::string_view re
 			dump << "actual.content_manifest_hash=" << DiagnosticValue(serverHello.content_manifest_hash()) << '\n';
 			dump << "actual.ruleset_identity_hash=" << DiagnosticValue(serverHello.ruleset_identity_hash()) << '\n';
 			dump << "actual.tick_rate_hz=" << serverHello.tick_rate_hz() << '\n';
+			dump << "actual.game_mode=" << protocol::GameMode_Name(serverHello.game_mode()) << '\n';
 		} else if (response != nullptr && response->payload_case() == protocol::Envelope::kError) {
 			dump << "server_error.code=" << response->error().code() << '\n';
 			dump << "server_error.detail=" << DiagnosticValue(response->error().detail()) << '\n';

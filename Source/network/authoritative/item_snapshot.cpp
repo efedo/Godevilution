@@ -30,6 +30,11 @@ bool AssignIfRepresentable(Target &target, Source source)
 
 tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnapshot &state, uint32_t itemSeed, uint32_t price)
 {
+	if (state.base_name().size() >= ItemNameLength
+	    || state.identified_name().size() >= ItemNameLength
+	    || state.base_name().find('\0') != std::string::npos
+	    || state.identified_name().find('\0') != std::string::npos)
+		return tl::make_unexpected("Server-backed item contains a dynamic name outside the native representation.");
 	Item item;
 	item._iSeed = itemSeed;
 	if (!AssignIfRepresentable(item._iCreateInfo, state.create_info())
@@ -94,6 +99,15 @@ tl::expected<Item, std::string> ProjectNativeItem(const protocol::ItemStateSnaps
 		CopyUtf8(item._iName, baseItem.iName, ItemNameLength);
 		CopyUtf8(item._iIName, baseItem.iName, ItemNameLength);
 		item._iCurs = baseItem.iCurs;
+		item.setNewAnimation(false);
+	}
+	if (!state.base_name().empty())
+		CopyUtf8(item._iName, state.base_name(), ItemNameLength);
+	if (!state.identified_name().empty())
+		CopyUtf8(item._iIName, state.identified_name(), ItemNameLength);
+	if (state.has_native_cursor_graphic()) {
+		if (!AssignIfRepresentable(item._iCurs, state.native_cursor_graphic()))
+			return tl::make_unexpected("Server-backed item cursor graphic is outside the native representation.");
 		item.setNewAnimation(false);
 	}
 	return item;

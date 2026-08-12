@@ -4,35 +4,39 @@
  * Implementation of game control panel.
  */
 
-
 #include "control_panel.hpp"
 #include "control.hpp"
 #include "control_chat.hpp"
 #include "control_flasks.hpp"
 
-#include "ui/automap.h"
+#include "application/headless_mode.hpp"
 #include "controls/control_mode.hpp"
 #include "controls/modifier_hints.h"
-#include "ui/diablo_msg.hpp"
 #include "engine/gfx/backbuffer_state.hpp"
+#include "engine/gfx/translation_table.hpp"
 #include "engine/load/load_cel.hpp"
 #include "engine/render/clx_render.hpp"
-#include "engine/gfx/translation_table.hpp"
-#include "ui/gamemenu.h"
-#include "application/headless_mode.hpp"
-#include "ui/minitext.h"
+#include "game/stores/stores.hpp"
 #include "persistence/options.h"
+#include "persistence/save_file.h"
+#include "qol/stash.h"
+#include "qol/visual_store.h"
+#include "ui/automap.h"
+#include "ui/diablo_msg.hpp"
+#include "ui/gamemenu.h"
+#include "ui/minitext.h"
 #include "ui/panel/charpanel.hpp"
 #include "ui/panel/mainpanel.hpp"
 #include "ui/panel/partypanel.hpp"
 #include "ui/panel/spell_book.hpp"
 #include "ui/panel/spell_icons.hpp"
 #include "ui/panel/spell_list.hpp"
-#include "persistence/save_file.h"
-#include "qol/stash.h"
-#include "qol/visual_store.h"
-#include "game/stores/stores.hpp"
+#include "utils/log.hpp"
 #include "utils/sdl/sdl_compat.h"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -412,8 +416,8 @@ tl::expected<void, std::string> InitMainPanel()
 	for (bool &buttonEnabled : CharPanelButton)
 		buttonEnabled = false;
 	CharPanelButtonActive = false;
-	InfoString = StringOrView {};
-	FloatingInfoString = StringOrView {};
+	InfoString = StringOrView { };
+	FloatingInfoString = StringOrView { };
 	RedrawComponent(PanelDrawComponent::Health);
 	RedrawComponent(PanelDrawComponent::Mana);
 	CloseCharPanel();
@@ -432,7 +436,7 @@ tl::expected<void, std::string> InitMainPanel()
 	if (!HeadlessMode)
 		InitModifierHints();
 
-	return {};
+	return { };
 }
 
 void DrawMainPanel(const Surface &out)
@@ -591,6 +595,12 @@ void CheckMainPanelButtonUp()
 					else
 						gamemenu_exit_game(false);
 				} else {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (authoritative::GetServerBackedRuntime().IsConnected()) {
+						if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, SDL_GetTicks()); !result.has_value())
+							LogError("Server-backed restart-in-town failed: {}", result.error());
+					} else
+#endif
 					NetSendCmd(true, CMD_RETOWN);
 				}
 				break;
@@ -622,6 +632,13 @@ void CheckMainPanelButtonUp()
 			break;
 		case PanelButtonFriendly:
 			// Toggle friendly Mode
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				if (auto result = authoritative::GetServerBackedRuntime().SetFriendlyMode(!MyPlayer->friendlyMode, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed friendly-mode change failed: {}", result.error());
+				break;
+			}
+#endif
 			NetSendCmd(true, CMD_FRIENDLYMODE);
 			break;
 		}

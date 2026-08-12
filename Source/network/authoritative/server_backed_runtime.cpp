@@ -1,6 +1,7 @@
 #include "network/authoritative/server_backed_runtime.hpp"
 
 #include "network/authoritative/server_backed_player_ui.hpp"
+#include "network/protocol/multi.h"
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -19,10 +20,10 @@ constexpr uint32_t AdriaStoreId = 10;
 std::string LoadResumeToken(const std::string &path)
 {
 	if (path.empty())
-		return {};
+		return { };
 	std::ifstream tokenFile(path, std::ios::binary);
 	if (!tokenFile)
-		return {};
+		return { };
 	std::string token;
 	std::getline(tokenFile, token);
 	return token;
@@ -31,7 +32,7 @@ std::string LoadResumeToken(const std::string &path)
 tl::expected<void, std::string> SaveResumeToken(const std::string &path, const std::string &token)
 {
 	if (path.empty() || token.empty())
-		return {};
+		return { };
 	try {
 		const std::filesystem::path tokenPath(path);
 		if (tokenPath.has_parent_path())
@@ -40,7 +41,7 @@ tl::expected<void, std::string> SaveResumeToken(const std::string &path, const s
 		if (!tokenFile)
 			return tl::make_unexpected("Could not write the authoritative resume token to " + tokenPath.string() + ".");
 		tokenFile << token << '\n';
-		return {};
+		return { };
 	} catch (const std::exception &exception) {
 		return tl::make_unexpected("Could not persist the authoritative resume token: " + std::string(exception.what()));
 	}
@@ -62,7 +63,7 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 {
 	Stop();
 	if (!configuration.enabled && configuration.mode != ServerBackedRuntimeConfiguration::GameMode::Authoritative)
-		return {};
+		return { };
 	if (configuration.clientBuildId.empty() || configuration.protocolSchemaVersion.empty() || configuration.contentManifestHash.empty())
 		return tl::make_unexpected("Server-backed runtime requires client build, protocol, and content identity values.");
 	authoritativeMode_ = true;
@@ -70,15 +71,21 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 
 	ServerBackedSession::Configuration sessionConfiguration {
 		.client = {
-			.host = configuration.host,
-			.port = configuration.port,
-			.clientBuildId = configuration.clientBuildId,
-			.protocolSchemaVersion = configuration.protocolSchemaVersion,
-			.contentManifestHash = configuration.contentManifestHash,
-			.rulesetIdentityHash = configuration.rulesetIdentityHash,
-			.resumeToken = resumeToken,
-			.diagnosticsDirectory = configuration.diagnosticsDirectory,
-			.expectInitialSnapshot = true,
+		    .host = configuration.host,
+		    .port = configuration.port,
+		    .clientBuildId = configuration.clientBuildId,
+		    .protocolSchemaVersion = configuration.protocolSchemaVersion,
+		    .contentManifestHash = configuration.contentManifestHash,
+		    .rulesetIdentityHash = configuration.rulesetIdentityHash,
+		    .resumeToken = resumeToken,
+		    .requestedCharacterClassId = player == nullptr
+		        ? std::nullopt
+		        : std::optional<uint32_t> { static_cast<uint32_t>(player->_pClass) },
+		    .requestedCharacterName = player == nullptr
+		        ? std::nullopt
+		        : std::optional<std::string> { player->_pName },
+		    .diagnosticsDirectory = configuration.diagnosticsDirectory,
+		    .expectInitialSnapshot = true,
 		},
 	};
 	auto session = ServerBackedSession::Connect(std::move(sessionConfiguration));
@@ -88,6 +95,22 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 	}
 
 	session_ = std::move(*session);
+	const auto gameMode = session_->Client().ServerHello().game_mode();
+	switch (gameMode) {
+	case protocol::GAME_MODE_UNSPECIFIED:
+		// Additive compatibility: older servers omit the field, so retain the
+		// launch-selected legacy mode until the server declares one explicitly.
+		break;
+	case protocol::GAME_MODE_SINGLE_PLAYER:
+		gbIsMultiplayer = false;
+		break;
+	case protocol::GAME_MODE_MULTIPLAYER:
+		gbIsMultiplayer = true;
+		break;
+	default:
+		Stop();
+		return tl::make_unexpected("Authoritative server declared an invalid game mode.");
+	}
 	if (auto result = SaveResumeToken(configuration.resumeTokenPath, session_->Client().ServerHello().session_token()); !result.has_value()) {
 		Stop();
 		return result;
@@ -100,7 +123,7 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 			return result;
 		}
 	}
-	return {};
+	return { };
 }
 
 void ServerBackedRuntime::Stop() noexcept
@@ -226,6 +249,17 @@ tl::expected<void, std::string> ServerBackedRuntime::RepairItem(ServerBackedItem
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::RepairItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->RepairItemWithAbility(item, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::RechargeItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
 	return RechargeItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
@@ -242,6 +276,17 @@ tl::expected<void, std::string> ServerBackedRuntime::RechargeItem(ServerBackedIt
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::RechargeItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->RechargeItemWithAbility(item, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::IdentifyItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
 	return IdentifyItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
@@ -252,6 +297,17 @@ tl::expected<void, std::string> ServerBackedRuntime::IdentifyItem(ServerBackedIt
 	if (!session_)
 		return tl::make_unexpected("The server-backed runtime is not connected.");
 	if (auto result = session_->IdentifyItem(item, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::IdentifyItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->IdentifyItemWithAbility(item, requestedTick, nowMs); !result.has_value())
 		return result;
 	if (auto result = EnsureCommandAccepted(); !result.has_value())
 		return result;
@@ -320,9 +376,14 @@ tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint
 
 tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
 {
+	return Cast(spellId, targetEntityId, targetX, targetY, { }, requestedTick, nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick, uint64_t nowMs)
+{
 	if (!session_)
 		return tl::make_unexpected("The server-backed runtime is not connected.");
-	if (auto result = session_->Cast(spellId, targetEntityId, targetX, targetY, requestedTick, nowMs); !result.has_value())
+	if (auto result = session_->Cast(spellId, targetEntityId, targetX, targetY, source, requestedTick, nowMs); !result.has_value())
 		return result;
 	if (auto result = EnsureCommandAccepted(); !result.has_value())
 		return result;
@@ -351,6 +412,17 @@ tl::expected<void, std::string> ServerBackedRuntime::PickupWorldItem(uint32_t it
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->DropHeldItem(targetX, targetY, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)
@@ -373,10 +445,36 @@ tl::expected<void, std::string> ServerBackedRuntime::AdvanceQuest(uint32_t quest
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->SetFriendlyMode(friendlyMode, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::RestartTown(uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->RestartTown(requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	if (auto result = ApplyCurrentPlayerSnapshot(); !result.has_value())
+		return result;
+	if (player_ != nullptr)
+		PresentRestartTown(*player_);
+	return { };
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::Poll(uint64_t nowMs)
 {
 	if (!session_)
-		return {};
+		return { };
 	if (auto result = session_->Poll(nowMs); !result.has_value())
 		return result;
 	return ApplyCurrentPlayerSnapshot();
@@ -412,6 +510,31 @@ std::optional<uint32_t> ServerBackedRuntime::MonsterEntityIdAt(int32_t positionX
 	return worldProjection_.MonsterAt(positionX, positionY);
 }
 
+std::optional<uint32_t> ServerBackedRuntime::PlayerEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
+{
+	if (!session_)
+		return std::nullopt;
+	const auto *local = session_->PlayerState().Snapshot();
+	if (local == nullptr)
+		return std::nullopt;
+	for (const auto &player : session_->PlayerStates()) {
+		if (player.entityId == 0 || player.entityId == session_->EntityId()
+		    || player.levelId != local->levelId) {
+			continue;
+		}
+		const bool atCurrentPosition = player.positionX == positionX
+		    && player.positionY == positionY;
+		const bool atFuturePosition = player.currentAction.has_value()
+		    && player.currentAction->kind == 1
+		    && !player.currentAction->effectApplied
+		    && player.positionX + player.currentAction->directionX == positionX
+		    && player.positionY + player.currentAction->directionY == positionY;
+		if (atCurrentPosition || atFuturePosition)
+			return player.entityId;
+	}
+	return std::nullopt;
+}
+
 std::optional<uint32_t> ServerBackedRuntime::ObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
 {
 	return worldProjection_.ObjectAt(positionX, positionY);
@@ -419,7 +542,7 @@ std::optional<uint32_t> ServerBackedRuntime::ObjectEntityIdAt(int32_t positionX,
 
 std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept
 {
-	if (!session_ || itemSeed == 0)
+	if (!session_)
 		return std::nullopt;
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
@@ -442,7 +565,7 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot()
 {
 	if (!session_ || player_ == nullptr)
-		return {};
+		return { };
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
@@ -462,13 +585,13 @@ tl::expected<void, std::string> ServerBackedRuntime::EnsureCommandAccepted() con
 	switch (session_->LastCommandResolution()) {
 	case ServerBackedSession::CommandResolution::Accepted:
 	case ServerBackedSession::CommandResolution::Duplicate:
-		return {};
+		return { };
 	case ServerBackedSession::CommandResolution::Rejected:
-		return tl::make_unexpected("The authoritative server rejected the store command.");
+		return tl::make_unexpected("The authoritative server rejected the command.");
 	case ServerBackedSession::CommandResolution::Rescheduled:
-		return tl::make_unexpected("The authoritative server rescheduled the store command; it was not applied locally.");
+		return tl::make_unexpected("The authoritative server rescheduled the command; it was not applied locally.");
 	case ServerBackedSession::CommandResolution::None:
-		return tl::make_unexpected("The authoritative server did not resolve the store command.");
+		return tl::make_unexpected("The authoritative server did not resolve the command.");
 	}
 	return tl::make_unexpected("The authoritative server returned an unknown command status.");
 }

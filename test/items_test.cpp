@@ -9,6 +9,7 @@
 #include "game/items/items.hpp"
 #include "game/players/players.hpp"
 #include "game/spells/spells.hpp"
+#include "tables/playerdat.hpp"
 #include "utils/string/str_cat.hpp"
 
 namespace devilution {
@@ -28,6 +29,7 @@ public:
 	{
 		LoadItemData();
 		LoadSpellData();
+		LoadPlayerDataFiles();
 		gbIsSpawn = false;
 		gbIsMultiplayer = false; // to also test UniqueItemFlags
 	}
@@ -142,6 +144,37 @@ TEST_F(ItemsTest, ShippedBaseDefinitionsMatchAuthoritativeCatalog)
 	EXPECT_EQ(cleaver._iMaxDam, 24);
 	EXPECT_EQ(cleaver._ivalue, 2000);
 	EXPECT_EQ(cleaver._iLoc, ILOC_TWOHAND);
+}
+
+TEST_F(ItemsTest, WarriorRepairUsesNativeDurabilityLossAndRandomSequence)
+{
+	Item item = {};
+	item._iDurability = 1;
+	item._iMaxDur = 20;
+	SetRndSeed(0);
+
+	RepairItem(item, 10);
+
+	EXPECT_EQ(item._iDurability, 18);
+	EXPECT_EQ(item._iMaxDur, 18);
+	EXPECT_EQ(GetLCGEngineState(), 22695478U);
+}
+
+TEST_F(ItemsTest, SorcererStaffRechargeUsesNativeChargeLossAndRandomSequence)
+{
+	Item item = {};
+	InitializeItem(item, IDI_SHORTSTAFF);
+	item._iSpell = SpellID::ChargedBolt;
+	item._iCharges = 1;
+	item._iMaxCharges = 10;
+	MyPlayer->setCharacterLevel(10);
+	SetRndSeed(1);
+
+	RechargeItem(item, *MyPlayer);
+
+	EXPECT_EQ(item._iCharges, 8);
+	EXPECT_EQ(item._iMaxCharges, 8);
+	EXPECT_EQ(GetLCGEngineState(), 22695478U);
 }
 
 } // namespace

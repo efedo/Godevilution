@@ -65,6 +65,9 @@ void NewCursor(const Item &item);
 
 void NewCursor(int cursId);
 
+/** Synchronize the cursor with an already-authoritative held item without invoking item-drop behavior. */
+void SyncCursorToHeldItem(const Item &item);
+
 void InitLevelCursor();
 void CheckRportal();
 void CheckTown();

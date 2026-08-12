@@ -535,6 +535,12 @@ void PressKey(SDL_Keycode vkey, uint16_t modState)
 				else
 					gamemenu_exit_game(false);
 			} else {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				if (authoritative::GetServerBackedRuntime().IsConnected()) {
+					if (auto result = authoritative::GetServerBackedRuntime().RestartTown(0, SDL_GetTicks()); !result.has_value())
+						LogError("Server-backed restart-in-town failed: {}", result.error());
+				} else
+#endif
 				NetSendCmd(true, CMD_RETOWN);
 			}
 			return;
@@ -2948,9 +2954,37 @@ bool TryIconCurs()
 	Player &myPlayer = *MyPlayer;
 
 	if (pcurs == CURSOR_IDENTIFY) {
-		if (pcursinvitem != -1 && !IsInspectingPlayer())
+		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				authoritative::ServerBackedItemReference reference;
+				if (pcursinvitem < NUM_INVLOC) {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Equipment,
+						.slot = static_cast<uint32_t>(pcursinvitem),
+					};
+				} else {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Inventory,
+						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
+					};
+				}
+				if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed Identify ability failed: {}", result.error());
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			CheckIdentify(myPlayer, pcursinvitem);
+		}
 		else if (pcursstashitem != StashStruct::EmptyCell) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				LogError("Server-backed Identify ability does not support stash items");
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			Item &item = Stash.stashList[pcursstashitem];
 			item._iIdentified = true;
 		}
@@ -2960,11 +2994,41 @@ bool TryIconCurs()
 
 	if (pcurs == CURSOR_REPAIR) {
 		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected() && !IsVisualStoreOpen) {
+				authoritative::ServerBackedItemReference reference;
+				if (pcursinvitem < NUM_INVLOC) {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Equipment,
+						.slot = static_cast<uint32_t>(pcursinvitem),
+					};
+				} else {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Inventory,
+						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
+					};
+				}
+				if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value()) {
+					LogError("Server-backed Repair ability failed: {}", result.error());
+				} else {
+					PlaySfxLoc(SfxID::SpellRepair, myPlayer.position.tile);
+				}
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			if (IsVisualStoreOpen)
 				VisualStoreRepairItem(pcursinvitem);
 			else
 				DoRepair(myPlayer, pcursinvitem);
 		} else if (pcursstashitem != StashStruct::EmptyCell) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				LogError("Server-backed Repair ability does not support stash items");
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			Item &item = Stash.stashList[pcursstashitem];
 			RepairItem(item, myPlayer.getCharacterLevel());
 		}
@@ -2973,9 +3037,36 @@ bool TryIconCurs()
 	}
 
 	if (pcurs == CURSOR_RECHARGE) {
-		if (pcursinvitem != -1 && !IsInspectingPlayer())
+		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				authoritative::ServerBackedItemReference reference;
+				if (pcursinvitem < NUM_INVLOC) {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Equipment,
+						.slot = static_cast<uint32_t>(pcursinvitem),
+					};
+				} else {
+					reference = {
+						.location = authoritative::ServerBackedItemLocation::Inventory,
+						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
+					};
+				}
+				if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed Staff Recharge ability failed: {}", result.error());
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			DoRecharge(myPlayer, pcursinvitem);
-		else if (pcursstashitem != StashStruct::EmptyCell) {
+		} else if (pcursstashitem != StashStruct::EmptyCell) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				LogError("Server-backed Staff Recharge ability does not support stash items");
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			Item &item = Stash.stashList[pcursstashitem];
 			RechargeItem(item, myPlayer);
 		}

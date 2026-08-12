@@ -1,14 +1,15 @@
 #include "network/authoritative/server_backed_world_presentation.hpp"
 
 #include <algorithm>
+#include <cstdlib>
 #include <limits>
 #include <unordered_set>
 
 #include "game/items/item_pool.hpp"
 #include "game/items/items.hpp"
+#include "game/levels/dungeon_common.h"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
-#include "game/levels/dungeon_common.h"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "tables/objdat.h"
@@ -24,9 +25,9 @@ bool IsCurrentLevel(uint32_t entityLevelId, uint32_t currentLevelId)
 bool IsValidWorldPosition(int32_t x, int32_t y)
 {
 	return x >= 0 && y >= 0
-		&& x <= std::numeric_limits<WorldTileCoord>::max()
-		&& y <= std::numeric_limits<WorldTileCoord>::max()
-		&& InDungeonBounds({ x, y });
+	    && x <= std::numeric_limits<WorldTileCoord>::max()
+	    && y <= std::numeric_limits<WorldTileCoord>::max()
+	    && InDungeonBounds({ x, y });
 }
 
 int FindActiveItemListIndex(unsigned itemSlot)
@@ -58,23 +59,43 @@ int FindActiveObjectListIndex(int objectSlot)
 
 void ClearMonsterTile(unsigned monsterSlot, const Point &position)
 {
-	if (tileAt(position).monster() == static_cast<int>(monsterSlot + 1))
+	if (InDungeonBounds(position)
+	    && std::abs(tileAt(position).monster()) == static_cast<int>(monsterSlot + 1)) {
 		tileAt(position).setMonster(0);
+	}
 }
 
 void ApplyMonsterSnapshot(Monster &monster, const ProjectedMonsterSnapshot &snapshot)
 {
 	const Point position { snapshot.positionX, snapshot.positionY };
+	const Point futurePosition { snapshot.futurePositionX, snapshot.futurePositionY };
 	const Point oldPosition { monster.position.tile.x, monster.position.tile.y };
+	const Point oldFuturePosition { monster.position.future.x, monster.position.future.y };
 	ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldPosition);
+	if (oldFuturePosition != oldPosition)
+		ClearMonsterTile(static_cast<unsigned>(monster.getId()), oldFuturePosition);
+	if (!snapshot.petrified && monster.mode == MonsterMode::Petrified)
+		monster.startStand(monster.direction);
 	monster.position.old = position;
 	monster.position.last = position;
-	monster.position.future = position;
+	monster.position.future = futurePosition;
 	monster.position.tile = position;
-	if (snapshot.alive)
+	if (snapshot.alive) {
 		monster.occupyTile(position, false);
-	monster.hitPoints = std::max(0, snapshot.hitPoints) << 6;
-	monster.maxHitPoints = std::max(monster.hitPoints, std::max(0, snapshot.maxHitPoints) << 6);
+		if (snapshot.moving)
+			monster.occupyTile(futurePosition, true);
+	}
+	monster.animInfo.isPetrified = snapshot.petrified;
+	if (snapshot.petrified)
+		monster.mode = MonsterMode::Petrified;
+	const int32_t hitPointsQ6 = snapshot.hitPointsQ6 == 0 && snapshot.hitPoints != 0
+	    ? static_cast<int32_t>(static_cast<int64_t>(snapshot.hitPoints) * 64)
+	    : snapshot.hitPointsQ6;
+	const int32_t maxHitPointsQ6 = snapshot.maxHitPointsQ6 == 0 && snapshot.maxHitPoints != 0
+	    ? static_cast<int32_t>(static_cast<int64_t>(snapshot.maxHitPoints) * 64)
+	    : snapshot.maxHitPointsQ6;
+	monster.hitPoints = std::max(0, hitPointsQ6);
+	monster.maxHitPoints = std::max(monster.hitPoints, std::max(0, maxHitPointsQ6));
 	monster.armorClass = static_cast<uint8_t>(std::clamp(snapshot.armorClass, 0, 255));
 	monster.minDamage = static_cast<uint8_t>(std::clamp(snapshot.attackDamage, 0, 255));
 	monster.maxDamage = monster.minDamage;
@@ -102,9 +123,9 @@ void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSn
 			tileAt(object.position).setObject(0);
 		object.position = position;
 	}
-	if (!snapshot.activated)
+	if (!snapshot.activated && !snapshot.destroyed)
 		tileAt(position).setObject(objectSlot + 1);
-	object._oDelFlag = snapshot.activated;
+	object._oDelFlag = snapshot.activated || snapshot.destroyed;
 }
 
 void RemoveMappedItem(unsigned itemSlot)
@@ -119,7 +140,10 @@ void RemoveMappedItem(unsigned itemSlot)
 void RemoveMappedMonster(unsigned monsterSlot)
 {
 	if (const int activeIndex = FindActiveMonsterListIndex(monsterSlot); activeIndex >= 0) {
-		ClearMonsterTile(monsterSlot, Monsters[monsterSlot].position.tile);
+		const auto &monster = Monsters[monsterSlot];
+		ClearMonsterTile(monsterSlot, monster.position.tile);
+		if (monster.position.future != monster.position.tile)
+			ClearMonsterTile(monsterSlot, monster.position.future);
 		DeleteMonsterAtActiveIndex(activeIndex);
 	}
 }
@@ -138,8 +162,8 @@ void RemoveMappedObject(int objectSlot)
 } // namespace
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
-	const ServerBackedWorldProjection &projection,
-	uint32_t levelId)
+    const ServerBackedWorldProjection &projection,
+    uint32_t levelId)
 {
 	std::unordered_set<uint32_t> currentMonsterEntities;
 	std::unordered_set<uint32_t> currentItemEntities;
@@ -153,6 +177,8 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			continue;
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
 			return tl::make_unexpected("Authoritative monster position cannot be represented by the native world tile type.");
+		if (snapshot.moving && !IsValidWorldPosition(snapshot.futurePositionX, snapshot.futurePositionY))
+			return tl::make_unexpected("Authoritative moving monster destination cannot be represented by the native world tile type.");
 		currentMonsterEntities.insert(snapshot.entityId);
 		unsigned slot = std::numeric_limits<unsigned>::max();
 		if (const auto mapped = monsterSlots_.find(snapshot.entityId); mapped != monsterSlots_.end()
@@ -274,7 +300,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		it = objectSlots_.erase(it);
 	}
 
-	return {};
+	return { };
 }
 
 void ServerBackedWorldPresentation::Clear() noexcept

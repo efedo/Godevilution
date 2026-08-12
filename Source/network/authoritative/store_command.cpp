@@ -109,17 +109,71 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeSellItemComma
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(ServerBackedItemReference item, uint64_t requestedTick)
 {
-	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_repair_item_requested(); });
+	return MakeRepairItemCommand(item, ServerBackedItemServiceSourceKind::Vendor, requestedTick);
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeRepairItemCommand(ServerBackedItemReference item, ServerBackedItemServiceSourceKind source, uint64_t requestedTick)
+{
+	auto command = MakeItemCommand(item, requestedTick, [](protocol::v1::Command &value) { return value.mutable_repair_item_requested(); });
+	if (!command.has_value())
+		return command;
+	switch (source) {
+	case ServerBackedItemServiceSourceKind::Vendor:
+		command->mutable_repair_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+		break;
+	case ServerBackedItemServiceSourceKind::ClassAbility:
+		command->mutable_repair_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+		break;
+	default:
+		return tl::make_unexpected("The server-backed item-service source is invalid.");
+	}
+	return command;
 }
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRechargeItemCommand(ServerBackedItemReference item, uint64_t requestedTick)
 {
-	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_recharge_item_requested(); });
+	return MakeRechargeItemCommand(item, ServerBackedItemServiceSourceKind::Vendor, requestedTick);
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeRechargeItemCommand(ServerBackedItemReference item, ServerBackedItemServiceSourceKind source, uint64_t requestedTick)
+{
+	auto command = MakeItemCommand(item, requestedTick, [](protocol::v1::Command &value) { return value.mutable_recharge_item_requested(); });
+	if (!command.has_value())
+		return command;
+	switch (source) {
+	case ServerBackedItemServiceSourceKind::Vendor:
+		command->mutable_recharge_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+		break;
+	case ServerBackedItemServiceSourceKind::ClassAbility:
+		command->mutable_recharge_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+		break;
+	default:
+		return tl::make_unexpected("The server-backed item-service source is invalid.");
+	}
+	return command;
 }
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeIdentifyItemCommand(ServerBackedItemReference item, uint64_t requestedTick)
 {
-	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_identify_item_requested(); });
+	return MakeIdentifyItemCommand(item, ServerBackedItemServiceSourceKind::Vendor, requestedTick);
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeIdentifyItemCommand(ServerBackedItemReference item, ServerBackedItemServiceSourceKind source, uint64_t requestedTick)
+{
+	auto command = MakeItemCommand(item, requestedTick, [](protocol::v1::Command &value) { return value.mutable_identify_item_requested(); });
+	if (!command.has_value())
+		return command;
+	switch (source) {
+	case ServerBackedItemServiceSourceKind::Vendor:
+		command->mutable_identify_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+		break;
+	case ServerBackedItemServiceSourceKind::ClassAbility:
+		command->mutable_identify_item_requested()->set_source(protocol::v1::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+		break;
+	default:
+		return tl::make_unexpected("The server-backed item-service source is invalid.");
+	}
+	return command;
 }
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRefillManaCommand(uint64_t requestedTick)
@@ -188,14 +242,49 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(u
 
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick)
 {
+	return MakeCastCommand(spellId, targetEntityId, targetX, targetY, { }, requestedTick);
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick)
+{
 	if (spellId == 0)
 		return tl::make_unexpected("Cannot cast an invalid spell.");
+	const bool requiresItem = source.kind == ServerBackedCastSourceKind::ChargedItem
+	    || source.kind == ServerBackedCastSourceKind::ConsumableItem;
+	if (source.item.has_value() != requiresItem)
+		return tl::make_unexpected("The server-backed cast source has an invalid item reference.");
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
-	command.mutable_cast_requested()->set_spell_id(spellId);
-	command.mutable_cast_requested()->set_target_entity_id(targetEntityId);
-	command.mutable_cast_requested()->set_target_x(targetX);
-	command.mutable_cast_requested()->set_target_y(targetY);
+	auto *request = command.mutable_cast_requested();
+	request->set_spell_id(spellId);
+	request->set_target_entity_id(targetEntityId);
+	request->set_target_x(targetX);
+	request->set_target_y(targetY);
+	switch (source.kind) {
+	case ServerBackedCastSourceKind::Unspecified:
+		request->set_source(protocol::v1::CAST_SOURCE_KIND_UNSPECIFIED);
+		break;
+	case ServerBackedCastSourceKind::Ability:
+		request->set_source(protocol::v1::CAST_SOURCE_KIND_ABILITY);
+		break;
+	case ServerBackedCastSourceKind::MemorizedSpell:
+		request->set_source(protocol::v1::CAST_SOURCE_KIND_MEMORIZED_SPELL);
+		break;
+	case ServerBackedCastSourceKind::ChargedItem:
+		request->set_source(protocol::v1::CAST_SOURCE_KIND_CHARGED_ITEM);
+		break;
+	case ServerBackedCastSourceKind::ConsumableItem:
+		request->set_source(protocol::v1::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
+		break;
+	default:
+		return tl::make_unexpected("The server-backed cast source is invalid.");
+	}
+	if (source.item.has_value()) {
+		auto reference = MakeItemReference(*source.item);
+		if (!reference.has_value())
+			return tl::make_unexpected(reference.error());
+		request->mutable_source_item()->CopyFrom(*reference);
+	}
 	return command;
 }
 
@@ -219,6 +308,16 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakePickupWorldIt
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeDropHeldItemCommand(int32_t targetX, int32_t targetY, uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_drop_held_item_requested();
+	request->set_target_x(targetX);
+	request->set_target_y(targetY);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeOperateObjectCommand(uint32_t objectEntityId, uint64_t requestedTick)
 {
 	if (objectEntityId == 0)
@@ -236,6 +335,22 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestC
 	protocol::v1::Command command;
 	command.set_requested_tick(requestedTick);
 	command.mutable_advance_quest_requested()->set_quest_id(questId);
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyModeCommand(bool friendlyMode, uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_set_friendly_mode_requested()->set_friendly_mode(friendlyMode);
+	return command;
+}
+
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeRestartTownCommand(uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	command.mutable_restart_town_requested();
 	return command;
 }
 

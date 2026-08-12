@@ -6,8 +6,8 @@
  * Parser for the small, versioned replay fixture envelope used by tests.
  */
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -26,6 +26,8 @@ struct ReplayFixtureCommand {
 	int32_t directionY = 0;
 	uint32_t targetEntityId = 0;
 	uint32_t spellId = 0;
+	int32_t targetX = 0;
+	int32_t targetY = 0;
 	uint32_t portalId = 0;
 	uint32_t worldItemEntityId = 0;
 	uint32_t objectEntityId = 0;
@@ -44,18 +46,75 @@ struct ReplayFixtureCheckpoint {
 	std::string stateSha256;
 };
 
+struct ReplayFixtureMemorizedSpell {
+	uint32_t spellId = 0;
+	uint32_t level = 0;
+};
+
+struct ReplayFixtureSecondaryPlayer {
+	bool defined = false;
+	std::string player;
+	std::string characterName;
+	uint32_t entityId = 0;
+	int32_t life = 0;
+	int32_t lifeMaximum = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	uint32_t levelId = 0;
+	uint32_t characterLevel = 1;
+	uint32_t characterClass = 0;
+	int32_t magic = 0;
+	int32_t dexterity = 0;
+	bool friendlyMode = true;
+	bool blockCapable = false;
+	uint32_t combatMode = 0;
+	uint64_t combatModeEndTick = 0;
+};
+
+/** Minimal protocol-shaped equipment state carried by replay initial state. */
+struct ReplayFixtureEquippedItem {
+	uint32_t slot = 0;
+	uint32_t itemSeed = 0;
+	int32_t itemType = -1;
+	int32_t itemClass = 0;
+	uint32_t flags = 0;
+	bool statFlag = false;
+	int32_t itemIndex = -1;
+	int32_t value = 0;
+	int32_t identifiedValue = 0;
+};
+
+/** Minimal protocol-shaped belt item used by consumable-cast fixtures. */
+struct ReplayFixtureBeltItem {
+	uint32_t slot = 0;
+	uint32_t itemSeed = 0;
+	int32_t itemType = 0;
+	int32_t itemIndex = -1;
+	int32_t miscId = 0;
+	int32_t spellId = 0;
+	bool statFlag = false;
+};
+
 struct ReplayFixtureInitialState {
 	std::string player;
+	std::string characterName;
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	int32_t life = 0;
+	int32_t lifeMaximum = 0;
 	int32_t mana = 0;
 	int32_t manaMaximum = 0;
+	int32_t magic = 0;
 	int32_t characterClass = 0;
 	uint8_t characterLevel = 1;
 	int32_t positionX = 0;
 	int32_t positionY = 0;
 	uint32_t levelId = 0;
+	uint32_t facingDirection = 0;
+	bool suppressMultiplayerDeathDrops = false;
+	uint32_t goldStackSeed = 0;
+	uint32_t goldStackCell = 0;
+	uint32_t inventoryFillerCount = 0;
 	uint32_t worldItemEntityId = 0;
 	uint32_t worldItemSeed = 0;
 	uint32_t worldItemPrice = 0;
@@ -63,11 +122,40 @@ struct ReplayFixtureInitialState {
 	uint32_t objectId = 0;
 	int32_t objectPositionX = 0;
 	int32_t objectPositionY = 0;
+	bool objectMissilePassable = false;
+	bool objectBreakable = false;
+	bool objectDestroyed = false;
+	uint32_t combatTargetEntityId = 0;
+	uint32_t combatTargetLevelId = 0;
+	int32_t combatTargetPositionX = 0;
+	int32_t combatTargetPositionY = 0;
+	int32_t combatTargetHitPoints = 0;
+	int32_t combatTargetMaxHitPoints = 0;
+	int32_t combatTargetArmorClass = 0;
+	int32_t combatTargetAttackDamage = 0;
+	int32_t combatTargetAggroRange = 0;
+	int32_t combatTargetFireResistance = 0;
+	int32_t combatTargetLightningResistance = 0;
+	int32_t combatTargetMagicResistance = 0;
+	int32_t combatTargetMonsterLevel = 0;
+	bool combatTargetMoving = false;
+	int32_t combatTargetFuturePositionX = 0;
+	int32_t combatTargetFuturePositionY = 0;
+	bool combatTargetPetrified = false;
+	bool combatTargetStoneCurseImmune = false;
 	uint32_t questId = 0;
 	uint32_t questRequiredProgress = 0;
 	uint32_t statusEffectId = 0;
 	uint32_t statusDuration = 0;
 	int32_t statusMagnitude = 0;
+	uint32_t abilitySpellId = 0;
+	bool manaShieldActive = false;
+	uint32_t combatMode = 0;
+	uint64_t combatModeEndTick = 0;
+	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells;
+	std::vector<ReplayFixtureEquippedItem> equipment;
+	std::vector<ReplayFixtureBeltItem> belt;
+	ReplayFixtureSecondaryPlayer secondaryPlayer;
 };
 
 struct ReplayFixtureStoreState {
@@ -77,15 +165,30 @@ struct ReplayFixtureStoreState {
 	std::vector<uint32_t> premiumItemSeeds { 42 };
 };
 
+/** Content-derived animation boundaries for a deferred player-action fixture. */
+struct ReplayFixturePlayerActionTiming {
+	bool defined = false;
+	uint32_t definedFields = 0;
+	uint32_t walkingFrames = 0;
+	uint32_t attackFrames = 0;
+	uint32_t attackActionFrame = 0;
+	uint32_t castingFrames = 0;
+	uint32_t castingActionFrame = 0;
+	uint32_t deathFrames = 0;
+};
+
 struct ReplayFixture {
 	uint32_t formatVersion = 0;
 	std::string fixtureId;
 	std::string protocolSchemaVersion;
 	uint32_t tickRateHz = 0;
 	uint64_t rngSeed = 0;
+	std::string gameVariant = "Diablo";
+	std::string gameMode = "SinglePlayer";
 	ReplayFixtureContentManifest contentManifest;
 	ReplayFixtureInitialState initialState;
 	ReplayFixtureStoreState storeState;
+	ReplayFixturePlayerActionTiming playerActionTiming;
 	std::vector<ReplayFixtureCommand> commands;
 	std::vector<ReplayFixtureCheckpoint> checkpoints;
 	std::string initialStateSha256;
@@ -151,6 +254,10 @@ struct ReplayFixtureItemState {
 	uint32_t buff = 0;
 	uint32_t inventoryWidth = 1;
 	uint32_t inventoryHeight = 1;
+	std::string baseName;
+	std::string identifiedName;
+	bool hasNativeCursorGraphic = false;
+	int32_t nativeCursorGraphic = 0;
 };
 
 struct ReplayFixtureInventoryItem {
@@ -168,6 +275,16 @@ struct ReplayFixtureSlottedItem {
 	ReplayFixtureItemState state;
 };
 
+struct ReplayFixtureWorldItemState {
+	uint32_t entityId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	uint32_t itemSeed = 0;
+	uint32_t price = 0;
+	ReplayFixtureItemState state;
+};
+
 struct ReplayFixtureStoreItem {
 	uint32_t storeSlot = 0;
 	uint32_t itemSeed = 0;
@@ -175,9 +292,65 @@ struct ReplayFixtureStoreItem {
 	ReplayFixtureItemState state;
 };
 
+/** Protocol-shaped projectile state used by cross-language replay parity. */
+struct ReplayFixtureProjectileState {
+	uint32_t entityId = 0;
+	uint32_t sourceEntityId = 0;
+	uint32_t targetEntityId = 0;
+	uint32_t spellId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	int32_t targetX = 0;
+	int32_t targetY = 0;
+	int32_t damage = 0;
+	int32_t damageType = 0;
+	int32_t areaRadius = 0;
+	uint32_t remainingTicks = 0;
+	int32_t behavior = 0;
+	int32_t phase = 0;
+	int32_t startX = 0;
+	int32_t startY = 0;
+	int32_t traveledX = 0;
+	int32_t traveledY = 0;
+	int32_t velocityX = 0;
+	int32_t velocityY = 0;
+	int32_t originalDirection = 0;
+	int32_t pathIndex = 0;
+	int32_t pathTicks = 0;
+	int32_t speed = 0;
+	int32_t impactLifetime = 1;
+	int32_t resistantDamageDivisor = 1;
+	int32_t effectiveSpellLevel = 0;
+	uint32_t lastCollisionTargetEntityId = 0;
+};
+
+struct ReplayFixturePlayerActionState {
+	bool defined = false;
+	uint32_t kind = 0;
+	uint64_t startedAtTick = 0;
+	uint64_t effectTick = 0;
+	uint64_t readyTick = 0;
+	uint64_t endTick = 0;
+	bool effectApplied = false;
+	int32_t directionX = 0;
+	int32_t directionY = 0;
+	uint32_t targetEntityId = 0;
+	bool hasCast = false;
+	uint32_t spellId = 0;
+	uint32_t castTargetEntityId = 0;
+	int32_t targetX = 0;
+	int32_t targetY = 0;
+	uint32_t castSource = 0;
+	bool hasCastSourceItem = false;
+	uint32_t castSourceItemLocation = 0;
+	uint32_t castSourceItemSlot = 0;
+};
+
 /** Minimal protocol-shaped state used by native replay transition tests. */
 struct ReplayFixtureExecutionState {
 	uint32_t entityId = 1;
+	std::string characterName;
 	int32_t positionX = 0;
 	int32_t positionY = 0;
 	int32_t life = 0;
@@ -186,32 +359,73 @@ struct ReplayFixtureExecutionState {
 	int32_t lifeMaximum = 0;
 	uint32_t characterLevel = 1;
 	uint32_t levelId = 0;
+	uint32_t facingDirection = 0;
+	bool multiplayer = false;
+	bool suppressMultiplayerDeathDrops = false;
+	uint32_t characterClassId = 0;
+	uint32_t abilitySpellId = 0;
+	bool manaShieldActive = false;
+	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells;
+	uint32_t combatMode = 0;
+	uint64_t combatModeEndTick = 0;
+	ReplayFixturePlayerActionState currentAction;
 	struct StatusEffect {
 		uint32_t effectId = 0;
 		uint32_t remainingTicks = 0;
 		int32_t magnitude = 0;
+		uint32_t behavior = 0;
 	};
 	std::vector<StatusEffect> statusEffects;
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	uint32_t activeStoreId = 0;
-	std::array<int32_t, 8> attributes {};
+	std::array<int32_t, 8> attributes { };
 	std::vector<ReplayFixtureInventoryItem> inventory;
+	bool heldItemDefined = false;
+	ReplayFixtureInventoryItem heldItem;
 	std::vector<ReplayFixtureSlottedItem> equipment;
 	std::vector<ReplayFixtureSlottedItem> belt;
 	std::vector<int32_t> inventoryGrid;
 	std::vector<ReplayFixtureStoreItem> activeStoreItems;
+	std::vector<ReplayFixtureProjectileState> projectiles;
+	uint32_t randomState = 0;
+	std::string secondaryPlayer;
+	std::string secondaryPlayerCharacterName;
+	uint32_t secondaryPlayerEntityId = 0;
+	int32_t secondaryPlayerLife = 0;
+	int32_t secondaryPlayerLifeMaximum = 0;
+	int32_t secondaryPlayerPositionX = 0;
+	int32_t secondaryPlayerPositionY = 0;
+	uint32_t secondaryPlayerLevelId = 0;
+	uint32_t secondaryPlayerCharacterLevel = 1;
+	uint32_t secondaryPlayerCharacterClassId = 0;
+	int32_t secondaryPlayerMagic = 0;
+	int32_t secondaryPlayerDexterity = 0;
+	bool secondaryPlayerFriendlyMode = true;
+	bool secondaryPlayerBlockCapable = false;
+	uint32_t secondaryPlayerCombatMode = 0;
+	uint64_t secondaryPlayerCombatModeEndTick = 0;
+	bool hellfire = false;
 	uint32_t combatTargetEntityId = 0;
+	uint32_t combatTargetLevelId = 0;
 	int32_t combatTargetPositionX = 0;
 	int32_t combatTargetPositionY = 0;
 	int32_t combatTargetHitPoints = 0;
 	int32_t combatTargetMaxHitPoints = 0;
+	int32_t combatTargetHitPointsQ6 = 0;
+	int32_t combatTargetMaxHitPointsQ6 = 0;
 	int32_t combatTargetArmorClass = 0;
 	int32_t combatTargetAttackDamage = 0;
 	int32_t combatTargetAggroRange = 0;
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
 	int32_t combatTargetMagicResistance = 0;
+	int32_t combatTargetMonsterLevel = 0;
+	bool combatTargetMoving = false;
+	int32_t combatTargetFuturePositionX = 0;
+	int32_t combatTargetFuturePositionY = 0;
+	bool combatTargetPetrified = false;
+	bool combatTargetStoneCurseImmune = false;
 	uint32_t worldItemEntityId = 0;
 	uint32_t worldItemLevelId = 0;
 	int32_t worldItemPositionX = 0;
@@ -219,12 +433,16 @@ struct ReplayFixtureExecutionState {
 	uint32_t worldItemSeed = 0;
 	uint32_t worldItemPrice = 0;
 	ReplayFixtureItemState worldItemState;
+	std::vector<ReplayFixtureWorldItemState> worldItems;
 	uint32_t objectEntityId = 0;
 	uint32_t objectId = 0;
 	uint32_t objectLevelId = 0;
 	int32_t objectPositionX = 0;
 	int32_t objectPositionY = 0;
 	bool objectActivated = false;
+	bool objectMissilePassable = false;
+	bool objectBreakable = false;
+	bool objectDestroyed = false;
 	uint32_t questId = 0;
 	uint32_t questLevelId = 0;
 	uint32_t questProgress = 0;
@@ -232,6 +450,7 @@ struct ReplayFixtureExecutionState {
 	bool questCompleted = false;
 	uint32_t spellHealingAmount = 20;
 	uint32_t spellManaCost = 5;
+	int32_t spellProjectileBehavior = 0;
 	uint32_t spellStatusEffectId = 0;
 	uint32_t spellStatusDuration = 0;
 	int32_t spellStatusMagnitude = 0;
@@ -258,10 +477,10 @@ struct ReplayFixtureExecutionResult {
 
 /** Applies supported fixture commands and validates every command checkpoint. */
 [[nodiscard]] bool ExecuteReplayFixture(
-	const ReplayFixture &fixture,
-	ReplayFixtureExecutionState &state,
-	ReplayFixtureExecutionResult &result,
-	std::string &error);
+    const ReplayFixture &fixture,
+    ReplayFixtureExecutionState &state,
+    ReplayFixtureExecutionResult &result,
+    std::string &error);
 
 /**
  * Parses the replay fixture fields needed by the baseline tests.

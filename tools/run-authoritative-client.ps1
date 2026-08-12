@@ -13,7 +13,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('DevilutionY-Authoritative-' + [guid]::NewGuid().ToString('N'))
+$captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Authoritative-' + [guid]::NewGuid().ToString('N'))
 $serverOutput = Join-Path $captureRoot 'server.stdout.log'
 $serverError = Join-Path $captureRoot 'server.stderr.log'
 $resumeTokenPath = Join-Path $captureRoot 'resume-token.txt'
@@ -69,7 +69,8 @@ try {
         $authoritativeArguments = @(
             '--game-mode', 'authoritative',
             '--authoritative-server', $ServerEndpoint,
-            '--authoritative-content-hash', $detectedContentHash,
+            # Protocol v1 aliases content_manifest_hash to the combined ruleset identity.
+            '--authoritative-content-hash', $detectedRulesetHash,
             '--authoritative-ruleset-hash', $detectedRulesetHash,
             '--authoritative-resume-token', $resumeTokenPath,
             '--authoritative-diagnostics', $DiagnosticsDirectory

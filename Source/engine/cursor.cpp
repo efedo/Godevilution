@@ -571,17 +571,10 @@ void NewCursor(const Item &item)
 	}
 }
 
-void NewCursor(int cursId)
-{
-	if (pcurs >= CURSOR_FIRSTITEM && cursId > CURSOR_HAND && cursId < CURSOR_HOURGLASS) {
-		if (!TryDropItem()) {
-			return;
-		}
-	}
+namespace {
 
-	if (cursId < CURSOR_HOURGLASS && MyPlayer != nullptr) {
-		MyPlayer->HoldItem.clear();
-	}
+void SetCursor(int cursId)
+{
 	pcurs = cursId;
 
 	if (IsHardwareCursorEnabled() && ControlDevice == ControlTypes::KeyboardAndMouse) {
@@ -594,6 +587,27 @@ void NewCursor(int cursId)
 		if (newCursor != GetCurrentCursorInfo())
 			SetHardwareCursor(newCursor);
 	}
+}
+
+} // namespace
+
+void NewCursor(int cursId)
+{
+	if (pcurs >= CURSOR_FIRSTITEM && cursId > CURSOR_HAND && cursId < CURSOR_HOURGLASS) {
+		if (!TryDropItem()) {
+			return;
+		}
+	}
+
+	if (cursId < CURSOR_HOURGLASS && MyPlayer != nullptr) {
+		MyPlayer->HoldItem.clear();
+	}
+	SetCursor(cursId);
+}
+
+void SyncCursorToHeldItem(const Item &item)
+{
+	SetCursor(item.isEmpty() ? CURSOR_HAND : item._iCurs + CURSOR_FIRSTITEM);
 }
 
 void DrawSoftwareCursor(const Surface &out, Point position, int cursId)

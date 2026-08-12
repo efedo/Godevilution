@@ -63,6 +63,13 @@ jobs:
         ./build-authoritative/server_backed_configuration_test --gtest_color=yes
         ./build-authoritative/server_backed_vendor_ui_test --gtest_color=yes
 
+    - name: Run managed architecture boundary tests
+      run: |
+        dotnet run --project server/tests/Devilution.Domain.Tests/Devilution.Domain.Tests.csproj --configuration Release
+        dotnet run --project server/tests/Devilution.Data.Tests/Devilution.Data.Tests.csproj --configuration Release
+        dotnet run --project server/tests/Devilution.Engine.Tests/Devilution.Engine.Tests.csproj --configuration Release
+        dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --configuration Release
+
     - name: Restore authoritative server tests
       run: dotnet restore server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
 

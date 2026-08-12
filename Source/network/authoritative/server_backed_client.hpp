@@ -36,6 +36,10 @@ public:
 		/** Optional additive ruleset identity for newer servers. */
 		std::string rulesetIdentityHash;
 		std::string resumeToken;
+		/** Stable active-content class ID requested for a new session. */
+		std::optional<uint32_t> requestedCharacterClassId;
+		/** Native-compatible character identity requested for a new session. */
+		std::optional<std::string> requestedCharacterName;
 		/** Directory for detailed handshake failure dumps. */
 		std::string diagnosticsDirectory;
 		bool expectInitialSnapshot = false;

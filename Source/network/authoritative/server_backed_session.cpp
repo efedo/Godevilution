@@ -1,5 +1,7 @@
 #include "network/authoritative/server_backed_session.hpp"
 
+#include <algorithm>
+
 #include "network/authoritative/store_command.hpp"
 
 namespace devilution::authoritative {
@@ -67,6 +69,11 @@ tl::expected<void, std::string> ServerBackedSession::RepairItem(ServerBackedItem
 	return SubmitInventoryCommand(MakeRepairItemCommand(item, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::RepairItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeRepairItemCommand(item, ServerBackedItemServiceSourceKind::ClassAbility, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::RechargeItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
 	return RechargeItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
@@ -77,6 +84,11 @@ tl::expected<void, std::string> ServerBackedSession::RechargeItem(ServerBackedIt
 	return SubmitInventoryCommand(MakeRechargeItemCommand(item, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::RechargeItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeRechargeItemCommand(item, ServerBackedItemServiceSourceKind::ClassAbility, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::IdentifyItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
 	return IdentifyItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
@@ -85,6 +97,11 @@ tl::expected<void, std::string> ServerBackedSession::IdentifyItem(uint32_t inven
 tl::expected<void, std::string> ServerBackedSession::IdentifyItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitInventoryCommand(MakeIdentifyItemCommand(item, requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::IdentifyItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeIdentifyItemCommand(item, ServerBackedItemServiceSourceKind::ClassAbility, requestedTick), nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::RefillMana(uint64_t requestedTick, uint64_t nowMs)
@@ -119,7 +136,12 @@ tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint
 
 tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
 {
-	return SubmitGameplayCommand(MakeCastCommand(spellId, targetEntityId, targetX, targetY, requestedTick), nowMs);
+	return Cast(spellId, targetEntityId, targetX, targetY, { }, requestedTick, nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint32_t targetEntityId, int32_t targetX, int32_t targetY, ServerBackedCastSource source, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeCastCommand(spellId, targetEntityId, targetX, targetY, source, requestedTick), nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::UsePortal(uint32_t portalId, uint64_t requestedTick, uint64_t nowMs)
@@ -132,6 +154,11 @@ tl::expected<void, std::string> ServerBackedSession::PickupWorldItem(uint32_t it
 	return SubmitGameplayCommand(MakePickupWorldItemCommand(itemEntityId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeDropHeldItemCommand(targetX, targetY, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeOperateObjectCommand(objectEntityId, requestedTick), nowMs);
@@ -140,6 +167,16 @@ tl::expected<void, std::string> ServerBackedSession::OperateObject(uint32_t obje
 tl::expected<void, std::string> ServerBackedSession::AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeAdvanceQuestCommand(questId, requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeSetFriendlyModeCommand(friendlyMode, requestedTick), nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::RestartTown(uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeRestartTownCommand(requestedTick), nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::SubmitInventoryCommand(tl::expected<protocol::Command, std::string> command, uint64_t nowMs)
@@ -178,12 +215,12 @@ tl::expected<void, std::string> ServerBackedSession::Poll(uint64_t nowMs)
 				return tl::make_unexpected(snapshot.error());
 			return ApplySnapshot(*snapshot);
 		}
-		return {};
+		return { };
 	}
 
 	constexpr uint64_t SnapshotPollIntervalMs = 50;
 	if (lastSnapshotRequestMs_.has_value() && nowMs - *lastSnapshotRequestMs_ < SnapshotPollIntervalMs)
-		return {};
+		return { };
 	lastSnapshotRequestMs_ = nowMs;
 	auto snapshot = client_->RequestSnapshot();
 	if (!snapshot.has_value())
@@ -202,7 +239,7 @@ tl::expected<void, std::string> ServerBackedSession::Reconnect(uint64_t nowMs)
 	if (auto result = ApplySnapshot(*snapshot); !result.has_value())
 		return tl::make_unexpected(result.error());
 	if (client_->PendingTrackedCommandCount() == 0)
-		return {};
+		return { };
 	return Flush(nowMs);
 }
 
@@ -220,11 +257,17 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 			return tl::make_unexpected("Server-backed snapshot contains no player entity.");
 		entityId_ = snapshot.players(0).entity_id();
 	}
-	auto player = ProjectPlayerSnapshot(snapshot, entityId_);
-	if (!player.has_value())
-		return tl::make_unexpected(player.error());
-	if (!playerState_.ApplySnapshot(std::move(*player)))
+	auto players = ProjectPlayerSnapshots(snapshot);
+	if (!players.has_value())
+		return tl::make_unexpected(players.error());
+	const auto player = std::find_if(players->begin(), players->end(), [&](const auto &candidate) {
+		return candidate.entityId == entityId_;
+	});
+	if (player == players->end())
+		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
+	if (!playerState_.ApplySnapshot(*player))
 		return tl::make_unexpected("Server-backed player snapshot could not be applied.");
+	playerStates_ = std::move(*players);
 	auto monsters = ProjectMonsterSnapshots(snapshot);
 	if (!monsters.has_value())
 		return tl::make_unexpected(monsters.error());
@@ -253,13 +296,13 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	} else {
 		vendorState_.ClearSnapshot();
 	}
-	return {};
+	return { };
 }
 
 tl::expected<void, std::string> ServerBackedSession::Flush(uint64_t nowMs, std::optional<uint64_t> focusSequence)
 {
 	if (pendingIntents_.empty())
-		return {};
+		return { };
 	if (auto result = client_->SendQueuedCommands(nowMs); !result.has_value())
 		return result;
 	auto acknowledgement = client_->ReceiveCommandAcknowledgement(nowMs);

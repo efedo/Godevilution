@@ -3335,7 +3335,10 @@ void ProcessLightningControl(Missile &missile)
 		dam = GenerateRnd(currentLevelNumber()) + 2 * currentLevelNumber();
 	} else if (missile._micaster == TARGET_MONSTERS) {
 		// BUGFIX: damage of missile should be encoded in missile struct; player can be dead/have left the game before missile arrives.
-		dam = (GenerateRnd(2) + GenerateRnd(Players[missile._misource].getCharacterLevel()) + 2) << 6;
+		// Preserve MSVC's established evaluation order explicitly for cross-platform parity.
+		const int levelDamage = GenerateRnd(Players[missile._misource].getCharacterLevel());
+		const int randomDamage = GenerateRnd(2);
+		dam = (randomDamage + levelDamage + 2) << 6;
 	} else {
 		const Monster &monster = Monsters[missile._misource];
 		dam = 2 * RandomIntBetween(monster.minDamage, monster.maxDamage);

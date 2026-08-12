@@ -44,7 +44,11 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		    || hello.payload_case() != protocol::Envelope::kClientHello)
 			return;
 		if (hello.client_hello().protocol_schema_version() != "1"
-		    || hello.client_hello().content_manifest_hash() != "content")
+		    || hello.client_hello().content_manifest_hash() != "content"
+		    || !hello.client_hello().has_requested_character_class_id()
+		    || hello.client_hello().requested_character_class_id() != 2
+		    || !hello.client_hello().has_requested_character_name()
+		    || hello.client_hello().requested_character_name() != "Godot-Rogue")
 			return;
 
 		protocol::Envelope serverHello;
@@ -53,6 +57,7 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
 		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
 		serverHello.mutable_server_hello()->set_session_token("session");
+		serverHello.mutable_server_hello()->set_game_mode(protocol::GAME_MODE_MULTIPLAYER);
 		WriteEnvelope(socket, serverHello);
 
 		protocol::Envelope initialSnapshot;
@@ -90,11 +95,14 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 		.clientBuildId = "client",
 		.protocolSchemaVersion = "1",
 		.contentManifestHash = "content",
+		.requestedCharacterClassId = 2,
+		.requestedCharacterName = "Godot-Rogue",
 		.expectInitialSnapshot = true,
 	};
 	auto client = ServerBackedClient::Connect(configuration);
 	ASSERT_TRUE(client.has_value()) << client.error();
 	ASSERT_EQ((*client)->ServerHello().session_token(), "session");
+	EXPECT_EQ((*client)->ServerHello().game_mode(), protocol::GAME_MODE_MULTIPLAYER);
 	auto initialSnapshot = (*client)->ReadSnapshot();
 	ASSERT_TRUE(initialSnapshot.has_value()) << initialSnapshot.error();
 	EXPECT_EQ(initialSnapshot->tick(), 11U);
@@ -162,6 +170,7 @@ TEST(ServerBackedClient, RequestsAutonomousSnapshotsAfterHandshake)
 	};
 	auto client = ServerBackedClient::Connect(configuration);
 	ASSERT_TRUE(client.has_value()) << client.error();
+	EXPECT_EQ((*client)->ServerHello().game_mode(), protocol::GAME_MODE_UNSPECIFIED);
 	auto snapshot = (*client)->RequestSnapshot();
 	ASSERT_TRUE(snapshot.has_value()) << snapshot.error();
 	EXPECT_EQ(snapshot->tick(), 25U);

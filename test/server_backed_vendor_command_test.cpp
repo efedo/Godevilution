@@ -75,6 +75,42 @@ TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 	EXPECT_EQ(refill->intent_case(), protocol::Command::kRefillManaRequested);
 }
 
+TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
+{
+	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };
+	const auto identifyVendor = MakeIdentifyItemCommand(inventory, 10);
+	const auto identifyAbility = MakeIdentifyItemCommand(
+	    inventory,
+	    ServerBackedItemServiceSourceKind::ClassAbility,
+	    11);
+	const auto repairVendor = MakeRepairItemCommand(inventory, 12);
+	const auto repairAbility = MakeRepairItemCommand(
+	    inventory,
+	    ServerBackedItemServiceSourceKind::ClassAbility,
+	    13);
+	const auto rechargeVendor = MakeRechargeItemCommand(inventory, 14);
+	const auto rechargeAbility = MakeRechargeItemCommand(
+	    inventory,
+	    ServerBackedItemServiceSourceKind::ClassAbility,
+	    15);
+
+	ASSERT_TRUE(identifyVendor.has_value()) << identifyVendor.error();
+	ASSERT_TRUE(identifyAbility.has_value()) << identifyAbility.error();
+	ASSERT_TRUE(repairVendor.has_value()) << repairVendor.error();
+	ASSERT_TRUE(repairAbility.has_value()) << repairAbility.error();
+	ASSERT_TRUE(rechargeVendor.has_value()) << rechargeVendor.error();
+	ASSERT_TRUE(rechargeAbility.has_value()) << rechargeAbility.error();
+	EXPECT_EQ(identifyVendor->identify_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+	EXPECT_EQ(identifyAbility->identify_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+	EXPECT_EQ(repairVendor->repair_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+	EXPECT_EQ(repairAbility->repair_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+	EXPECT_EQ(rechargeVendor->recharge_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED);
+	EXPECT_EQ(rechargeAbility->recharge_item_requested().source(), protocol::ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY);
+	EXPECT_EQ(repairAbility->repair_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(repairAbility->repair_item_requested().item().slot(), 2U);
+	EXPECT_EQ(repairAbility->requested_tick(), 13U);
+}
+
 TEST(ServerBackedVendorCommand, BuildsExplicitInventoryToBeltTransfer)
 {
 	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };
@@ -95,23 +131,36 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	const auto cast = MakeCastCommand(2, 7, 22);
 	const auto portal = MakeUsePortalCommand(4, 23);
 	const auto pickup = MakePickupWorldItemCommand(20, 24);
+	const auto drop = MakeDropHeldItemCommand(-2, 5, 25);
 	const auto object = MakeOperateObjectCommand(30, 25);
 	const auto quest = MakeAdvanceQuestCommand(40, 26);
+	const auto friendlyMode = MakeSetFriendlyModeCommand(false, 27);
+	const auto restartTown = MakeRestartTownCommand(28);
 	ASSERT_TRUE(move.has_value());
 	ASSERT_TRUE(attack.has_value());
 	ASSERT_TRUE(cast.has_value());
 	ASSERT_TRUE(portal.has_value());
 	ASSERT_TRUE(pickup.has_value());
+	ASSERT_TRUE(drop.has_value());
 	ASSERT_TRUE(object.has_value());
 	ASSERT_TRUE(quest.has_value());
+	ASSERT_TRUE(friendlyMode.has_value());
+	ASSERT_TRUE(restartTown.has_value());
 	EXPECT_EQ(move->move_requested().direction_x(), 1);
 	EXPECT_EQ(move->move_requested().direction_y(), -1);
 	EXPECT_EQ(attack->attack_requested().target_entity_id(), 9U);
 	EXPECT_EQ(cast->cast_requested().spell_id(), 2U);
 	EXPECT_EQ(portal->use_portal_requested().portal_id(), 4U);
 	EXPECT_EQ(pickup->pickup_world_item_requested().item_entity_id(), 20U);
+	EXPECT_EQ(drop->requested_tick(), 25U);
+	EXPECT_EQ(drop->drop_held_item_requested().target_x(), -2);
+	EXPECT_EQ(drop->drop_held_item_requested().target_y(), 5);
 	EXPECT_EQ(object->operate_object_requested().object_entity_id(), 30U);
 	EXPECT_EQ(quest->advance_quest_requested().quest_id(), 40U);
+	EXPECT_TRUE(friendlyMode->has_set_friendly_mode_requested());
+	EXPECT_FALSE(friendlyMode->set_friendly_mode_requested().friendly_mode());
+	EXPECT_EQ(restartTown->requested_tick(), 28U);
+	EXPECT_TRUE(restartTown->has_restart_town_requested());
 }
 
 TEST(ServerBackedVendorCommand, BuildsCellTargetedCastIntent)
@@ -122,6 +171,59 @@ TEST(ServerBackedVendorCommand, BuildsCellTargetedCastIntent)
 	EXPECT_EQ(cast->cast_requested().target_entity_id(), 0U);
 	EXPECT_EQ(cast->cast_requested().target_x(), 4);
 	EXPECT_EQ(cast->cast_requested().target_y(), 5);
+}
+
+TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
+{
+	const auto memorized = MakeCastCommand(
+	    1,
+	    0,
+	    4,
+	    5,
+	    { ServerBackedCastSourceKind::MemorizedSpell, std::nullopt },
+	    22);
+	const auto charged = MakeCastCommand(
+	    30,
+	    0,
+	    4,
+	    5,
+	    {
+	        ServerBackedCastSourceKind::ChargedItem,
+	        ServerBackedItemReference { ServerBackedItemLocation::Equipment, 4 },
+	    },
+	    23);
+
+	ASSERT_TRUE(memorized.has_value()) << memorized.error();
+	EXPECT_EQ(memorized->cast_requested().source(), protocol::CAST_SOURCE_KIND_MEMORIZED_SPELL);
+	EXPECT_FALSE(memorized->cast_requested().has_source_item());
+	ASSERT_TRUE(charged.has_value()) << charged.error();
+	EXPECT_EQ(charged->cast_requested().source(), protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
+	EXPECT_EQ(charged->cast_requested().source_item().location(), protocol::PLAYER_ITEM_LOCATION_EQUIPMENT);
+	EXPECT_EQ(charged->cast_requested().source_item().slot(), 4U);
+}
+
+TEST(ServerBackedVendorCommand, RejectsInvalidSourceItemCombinations)
+{
+	const auto itemlessCharge = MakeCastCommand(
+	    30,
+	    0,
+	    0,
+	    0,
+	    { ServerBackedCastSourceKind::ChargedItem, std::nullopt },
+	    22);
+	const auto itemBackedAbility = MakeCastCommand(
+	    26,
+	    0,
+	    0,
+	    0,
+	    {
+	        ServerBackedCastSourceKind::Ability,
+	        ServerBackedItemReference { ServerBackedItemLocation::Equipment, 4 },
+	    },
+	    23);
+
+	EXPECT_FALSE(itemlessCharge.has_value());
+	EXPECT_FALSE(itemBackedAbility.has_value());
 }
 
 } // namespace

@@ -2468,6 +2468,16 @@ bool TryDropItem()
 		return false;
 	}
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (auto result = authoritative::GetServerBackedRuntime().DropHeldItem(itemTile->x, itemTile->y, 0, SDL_GetTicks()); !result.has_value()) {
+			LogError("Server-backed held-item drop failed: {}", result.error());
+			return false;
+		}
+		return true;
+	}
+#endif
+
 	NetSendCmdPItem(true, CMD_PUTITEM, *itemTile, myPlayer.HoldItem);
 	myPlayer.HoldItem.clear();
 	NewCursor(CURSOR_HAND);
