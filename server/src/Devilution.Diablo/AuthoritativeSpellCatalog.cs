@@ -54,6 +54,7 @@ public enum AuthoritativeProjectileBehavior
     Warp = 46,
     LightningWallController = 47,
     Golem = 48,
+    Etherealize = 49,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -1118,6 +1119,23 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Search behavior requires one immediate self status with safe character- and spell-level duration scaling.");
             }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Etherealize
+                && (definition.HealingAmount != 0
+                    || hasDamage
+                    || definition.StatusEffectId == 0
+                    || definition.StatusDuration != uint.MaxValue
+                    || definition.StatusMagnitude != 0
+                    || definition.Range != 1
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.StaffLevel != -1)) {
+                throw new InvalidDataException(
+                    "Etherealize behavior requires one level-scoped immediate self status.");
+            }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Phasing
                 && (definition.HealingAmount != 0
                     || hasDamage
@@ -1532,11 +1550,16 @@ public sealed class AuthoritativeSpellCatalog
             throw new InvalidDataException(
                 "The spell catalog can define at most one Infravision behavior.");
         }
-        if (spells.Values.Count(definition =>
+            if (spells.Values.Count(definition =>
                 definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Search) > 1) {
             throw new InvalidDataException(
-                "The spell catalog can define at most one Search behavior.");
-        }
+                    "The spell catalog can define at most one Search behavior.");
+            }
+            if (spells.Values.Count(definition =>
+                definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Etherealize) > 1) {
+                throw new InvalidDataException(
+                    "The spell catalog can define at most one Etherealize behavior.");
+            }
         if (spells.Values.Count(definition =>
                 definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Phasing) > 1) {
             throw new InvalidDataException(

@@ -183,11 +183,13 @@ public sealed class DiabloCombatCommandProcessor
 
         var elapsed = tick - previousTick;
         player.StatusEffects = player.StatusEffects
-            .Select(effect => effect with {
-                RemainingTicks = effect.RemainingTicks > elapsed
-                    ? effect.RemainingTicks - (uint)elapsed
-                    : 0,
-            })
+            .Select(effect => effect.Behavior == AuthoritativeStatusEffectBehavior.Etherealize
+                ? effect
+                : effect with {
+                    RemainingTicks = effect.RemainingTicks > elapsed
+                        ? effect.RemainingTicks - (uint)elapsed
+                        : 0,
+                })
             .Where(effect => effect.RemainingTicks > 0)
             .ToList();
         player.LastAppliedTick = tick;
@@ -478,6 +480,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Infravision;
         var isSearch = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Search;
+        var isEtherealize = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Etherealize;
         var isPhasing = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Phasing;
         var isFireWall = spell.ProjectileBehavior
@@ -941,6 +945,8 @@ public sealed class DiabloCombatCommandProcessor
                     ? AuthoritativeStatusEffectBehavior.Infravision
                     : isSearch
                         ? AuthoritativeStatusEffectBehavior.Search
+                    : isEtherealize
+                        ? AuthoritativeStatusEffectBehavior.Etherealize
                     : AuthoritativeStatusEffectBehavior.None,
             });
         }
@@ -3214,7 +3220,8 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
             if (distance <= 1) {
-                if (IsPlayerProtectedByFlash(victim))
+                if (IsPlayerProtectedByFlash(victim)
+                    || IsPlayerEtherealized(victim))
                     continue;
                 var damage = rules.ResolveAttackDamage(
                     target.AttackDamage,
@@ -6933,6 +6940,12 @@ public sealed class DiabloCombatCommandProcessor
             && spells.TryGet(projectile.SpellId, out var spell)
             && spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Flash
             && projectile.RemainingTicks < spell.ProjectileLifetime);
+    }
+
+    private static bool IsPlayerEtherealized(AuthoritativePlayerState player)
+    {
+        return player.StatusEffects.Any(effect =>
+            effect.Behavior == AuthoritativeStatusEffectBehavior.Etherealize);
     }
 
     private static bool IsProjectileOwner(

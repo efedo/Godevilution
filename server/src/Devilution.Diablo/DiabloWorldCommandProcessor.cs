@@ -496,7 +496,8 @@ public sealed class DiabloWorldCommandProcessor
     {
         player.StatusEffects.RemoveAll(effect =>
             effect.Behavior is AuthoritativeStatusEffectBehavior.Infravision
-                or AuthoritativeStatusEffectBehavior.Search);
+                or AuthoritativeStatusEffectBehavior.Search
+                or AuthoritativeStatusEffectBehavior.Etherealize);
     }
 
     private DiabloWorldIntentResult PickupWorldItem(

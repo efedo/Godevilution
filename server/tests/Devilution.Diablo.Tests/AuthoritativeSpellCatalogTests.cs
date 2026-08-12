@@ -20,6 +20,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(38, (int)AuthoritativeProjectileBehavior.TownPortal);
         Assert.Equal(44, (int)AuthoritativeProjectileBehavior.Jester);
         Assert.Equal(48, (int)AuthoritativeProjectileBehavior.Golem);
+        Assert.Equal(49, (int)AuthoritativeProjectileBehavior.Etherealize);
     }
 
     [Fact]
@@ -143,6 +144,25 @@ public sealed class AuthoritativeSpellCatalogTests
             golem.ManaAdjustment,
             golem.MinimumManaCost,
             golem.StaffLevel));
+    }
+
+    [Fact]
+    public void ShippedEtherealizeCarriesNativeLevelScopedStatusIdentity()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(53, out var etherealize));
+        Assert.Equal(26U, etherealize.NativeSpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Etherealize, etherealize.ProjectileBehavior);
+        Assert.Equal(53U, etherealize.StatusEffectId);
+        Assert.Equal(uint.MaxValue, etherealize.StatusDuration);
+        Assert.Equal(-1, etherealize.StaffLevel);
     }
 
     [Fact]

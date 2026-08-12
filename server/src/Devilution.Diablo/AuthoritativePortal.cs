@@ -84,6 +84,7 @@ public enum AuthoritativeStatusEffectBehavior
     None,
     Infravision,
     Search,
+    Etherealize,
 }
 
 public sealed record AuthoritativeStatusEffect(

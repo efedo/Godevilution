@@ -4715,6 +4715,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void EtherealizeCreatesLevelScopedStatusAndBlocksMonsterDamage()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 20,
+            aggroRange: 2);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateEtherealizeSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 10000,
+            manaMaximum: 10000,
+            memorizedSpells: [new MemorizedSpellState(53, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                53,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal((53U, uint.MaxValue, 0), (
+            status.EffectId,
+            status.RemainingTicks,
+            status.Magnitude));
+        Assert.Equal(AuthoritativeStatusEffectBehavior.Etherealize, status.Behavior);
+        var lifeBefore = player.Life;
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(lifeBefore, player.Life);
+        Assert.Equal(uint.MaxValue, Assert.Single(player.StatusEffects).RemainingTicks);
+    }
+
+    [Fact]
     public void SearchAbilityUsesNativeDurationAndAdditiveRecastsWithoutMana()
     {
         var processor = CreateProcessor(
@@ -5170,6 +5215,19 @@ public sealed class DiabloCombatCommandProcessorTests
             MinimumManaCost = 20,
             ManaCostScale = 64,
             InfravisionDurationGrowthDivisor = 8,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateEtherealizeSpell()
+    {
+        return new AuthoritativeSpellDefinition(53, 100, 0, 53, uint.MaxValue, 0) {
+            NativeSpellId = 26,
+            Range = 1,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Etherealize,
+            ManaCostScale = 64,
+            StaffLevel = -1,
         };
     }
 
