@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.55.0` schema in
+It declares its identity and `devilution.diablo@0.56.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -116,6 +116,10 @@ damage formulas through snapshots, saves, hashes, and protocol field 33. The
 authoritative module also drives deterministic nearest-monster targeting,
 movement with blocked-cell path planning and owner-facing idle wandering, melee
 damage, experience attribution, and owner/level cleanup.
+
+Schema 0.56 adds stable Etherealize spell row `53` (native `SpellID` `26`).
+The server owns its level-scoped status identity, protocol/snapshot/hash
+projection, transition cleanup, and monster-damage immunity.
 
 Schema 0.54 adds stable Nova spell row `18` (native `SpellID` `18`). The
 server exposes the existing one-tick radial controller and 36 persistent

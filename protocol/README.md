@@ -223,10 +223,12 @@ Windows toolchain command.
   `STATUS_EFFECT_BEHAVIOR_INFRAVISION` value `1` drives native and Godot
   presentation. `STATUS_EFFECT_BEHAVIOR_SEARCH` value `2` drives native
   automap and Godot world-item highlighting. The server alone owns both
-  lifecycles, including Search's additive recasts and transition cleanup. A
-  nondefault behavior uses the tagged
+  lifecycles, including Search's additive recasts and transition cleanup.
+  `STATUS_EFFECT_BEHAVIOR_ETHEREALIZE` value `3` marks the level-scoped native
+  monster-immunity status. A nondefault behavior uses the tagged
   `godevilution-status-effect-behavior-v1` canonical-hash extension; omitted
-  behavior preserves legacy generic-status hashes.
+  behavior preserves legacy generic-status hashes. The server alone owns each
+  status lifecycle and transition cleanup.
 - `ObjectSnapshot` fields 10-12 carry missile pass-through, breakability, and
   persistent destruction, while field 13 carries additive armed-trap state for
   the Rogue Trap Disarm capability. Nondefault object collision state uses the tagged

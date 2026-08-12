@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.56 with server-authoritative
+  Etherealize (stable spell ID 53, native `SpellID` 26), including its
+  level-scoped status, transition cleanup, protocol/snapshot/hash persistence,
+  and monster-damage immunity.
+
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
   replacement of the caster's prior owned minion, native life/armor/damage

@@ -531,6 +531,10 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.56 adds Etherealize (stable spell ID `53`, native `SpellID` `26`).
+The server owns its level-scoped status identity, transition cleanup,
+protocol/snapshot/hash persistence, and monster-damage immunity.
+
 Schema 0.55 adds Golem (stable spell ID `52`, native `SpellID` `21`). The
 server validates targeted summon placement, replaces the caster's prior owned
 minion, and persists owner identity plus native life, armor, and damage state
