@@ -81,7 +81,7 @@ internal static class Program
         var activeRuleset = rulesetRuntime.Active;
         var modulePlan = activeRuleset.ModulePlan;
         var ruleset = activeRuleset.Identity;
-        var gameAdapter = activeRuleset.Target;
+        var gameAdapter = new LeasedAuthoritativeGameHostAdapter(rulesetRuntime);
         var commandServer = new AuthoritativeCommandServer(gameAdapter);
         var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
         var handshake = new ProtocolHandshake(ProtocolServerIdentity.FromRuleset(
