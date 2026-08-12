@@ -12,7 +12,7 @@ Status date: 2026-08-12
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
-| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm presentation | Production assets, broader prediction, menus, packaging, and complete play flow |
+| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm presentation and a stable authoritative spell-source selector | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and add host-controlled live reload with safe session migration |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, atomic candidate registration, and coordinated ruleset publication, depending only on Domain and Data | Add safe retirement policy for replaced rulesets while keeping filesystem/reflection outside Engine |
@@ -81,6 +81,10 @@ Status date: 2026-08-12
   consumables are removed only after all target validation succeeds. Native and
   Godot clients send the selected source; source-zero compatibility commands can
   infer only an actually owned source in a stable order.
+- The Godot presentation client enumerates those authoritative sources in a
+  stable order, lets the player cycle them with `Q`/`E`, and sends the exact
+  selected source and item reference. Selection is presentation state only; the
+  server still owns admission, timing, targeting, and resource consumption.
 - Content activation cross-validates every directly castable starting learned,
   charged-item, scroll, and rune source against `spells.tsv`. Class-skill IDs are
   kept distinct because repair, recharge, trap disarm, and similar native

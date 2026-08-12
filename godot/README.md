@@ -146,5 +146,12 @@ world and quest interactions, event feedback, diagnostics, and accessibility
 HUD toggles. World layout under `Devilution.Client/assets/levels` is
 presentation data and must stay consistent with server content.
 
+The cast cursor now exposes every source present in the authoritative snapshot.
+Memorized spells, the charged left-hand staff, inventory consumables, belt
+consumables, and the class ability appear in stable order; `Q` and `E` cycle
+the selected source, and the HUD shows the active selection. This changes only
+which explicit source the client requests. The server still validates ownership,
+targeting, timing, and resource consumption.
+
 See `docs/ai/godot-build.md` for local build details and
 `docs/authoritative-protocol-contract.md` for the client/server boundary.

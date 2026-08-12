@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Expand the Godot cast cursor to enumerate and cycle every authoritative spell
+  source—memorized spells, charged staff, consumables, and class ability—while
+  preserving explicit server-owned source validation and resource consumption.
 - Advance the Diablo content schema to 0.44 with server-authoritative Town
   Portal (spell ID 39, native `SpellID` 7), including native five-cell
   placement, owner replacement, bidirectional dungeon/town use, 100-tick

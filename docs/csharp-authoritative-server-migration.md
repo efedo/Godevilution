@@ -263,6 +263,12 @@ charges, or the item only after all other cast validation succeeds. Legacy
 source-zero commands remain additive-compatible by deterministic server-side
 inference from owned state; they cannot cast an unowned spell.
 
+The Godot presentation client enumerates the same authoritative source set in
+stable order—memorized spells, the charged left-hand staff, inventory and belt
+consumables, then the class ability—and cycles it with `Q`/`E`. It sends the
+selected source and exact item reference; the selector never validates or
+executes gameplay locally.
+
 Spell definitions declare a bounded base projectile count and can select a
 typed module-owned behavior with level-count scaling, random-damage,
 resistance, impact, speed, and lifetime tuning. One accepted cast allocates the
