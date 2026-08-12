@@ -7,18 +7,29 @@
 #include "application/debug.h"
 #ifdef _DEBUG
 
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <climits>
 #include <cstdint>
 #include <cstdio>
+#include <random>
 #include <utility>
 
 #include <ankerl/unordered_dense.h>
 
+#ifdef USE_SDL3
+#include <SDL3/SDL_timer.h>
+#else
+#include <SDL.h>
+#endif
+
 #include "application/debug.h"
 #include "application/debug_commands.hpp"
 
+#include "engine/crawl.hpp"
+#include "engine/random.hpp"
 #include "engine/render/world_renderer.h"
 
 #include "engine/assets.hpp"
@@ -27,6 +38,7 @@
 #include "game/items/item_pool.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/setmaps.h"
+#include "game/levels/tile_properties.hpp"
 #include "game/objects/objects.hpp"
 #include "game/spells/spells.hpp"
 #include "game/quests/quests.hpp"
@@ -80,6 +92,8 @@ int DebugMonsterId;
 std::vector<std::string> SearchMonsters;
 std::vector<std::string> SearchItems;
 std::vector<std::string> SearchObjects;
+
+std::mt19937 BetterRng;
 
 ankerl::unordered_dense::map<std::string_view, _talker_id> TownerShortNameToTownerId = {
 	{ "griswold", _talker_id::TOWN_SMITH },
@@ -141,6 +155,30 @@ std::optional<int> ParseRequiredInt(std::string_view value)
 	return error == std::errc {} && end == value.data() + value.size()
 	    ? std::optional<int> { parsed }
 	    : std::nullopt;
+}
+
+struct NamedCountArguments {
+	std::string_view name;
+	std::optional<unsigned> count;
+};
+
+NamedCountArguments ParseNamedCountArguments(std::string_view value)
+{
+	const size_t separator = value.find_last_of(" \t");
+	if (separator == std::string_view::npos)
+		return NamedCountArguments { value, std::nullopt };
+
+	const std::string_view countText = value.substr(separator + 1);
+	unsigned count = 0;
+	const auto [end, error] = std::from_chars(countText.data(), countText.data() + countText.size(), count);
+	if (error != std::errc {} || end != countText.data() + countText.size())
+		return NamedCountArguments { value, std::nullopt };
+
+	const size_t nameEnd = value.find_last_not_of(" \t", separator);
+	return NamedCountArguments {
+	    nameEnd == std::string_view::npos ? std::string_view {} : value.substr(0, nameEnd + 1),
+	    count,
+	};
 }
 
 std::optional<std::pair<uint8_t, std::optional<int>>> ParseLevelResetArguments(std::string_view value)
@@ -684,6 +722,280 @@ std::string DebugCmdExportDun()
 	return StrCat("Successfully exported ", levelName, ".");
 }
 
+std::string DebugCmdSpawnItem(std::string itemName)
+{
+	if (ActiveItemCount >= MAXITEMS) return "No space to generate the item!";
+
+	const int max_time = 3000;
+	const int max_iter = 1000000;
+
+	AsciiStrToLower(itemName);
+
+	Item testItem;
+
+	uint32_t begin = SDL_GetTicks();
+	int i = 0;
+	for (;; i++) {
+		// using a better rng here to seed the item to prevent getting stuck repeating same values using old one
+		std::uniform_int_distribution<int32_t> dist(0, INT_MAX);
+		SetRndSeed(dist(BetterRng));
+		if (SDL_GetTicks() - begin > max_time)
+			return StrCat("Item not found in ", max_time / 1000, " seconds!");
+
+		if (i > max_iter)
+			return StrCat("Item not found in ", max_iter, " tries!");
+
+		const int8_t monsterLevel = (dist(BetterRng) % CF_LEVEL) + 1;
+		_item_indexes idx = RndItemForMonsterLevel(monsterLevel);
+		if (IsAnyOf(idx, IDI_NONE, IDI_GOLD))
+			continue;
+
+		testItem = {};
+		SetupAllItems(*MyPlayer, testItem, idx, AdvanceRndSeed(), monsterLevel, 1, false, false);
+		TryRandomUniqueItem(testItem, idx, monsterLevel, 1, false, false);
+		SetupItem(testItem);
+
+		std::string tmp = AsciiStrToLower(testItem._iIName);
+		if (tmp.find(itemName) != std::string::npos)
+			break;
+	}
+
+	int ii = AllocateItem();
+	auto &item = Items[ii];
+	item = testItem.pop();
+	item._iIdentified = true;
+	Point pos = MyPlayer->position.tile;
+	GetSuperItemSpace(pos, ii);
+	NetSendCmdPItem(false, CMD_SPAWNITEM, item.position, item);
+	return StrCat("Item generated successfully - iterations: ", i);
+}
+
+std::string DebugCmdSpawnUniqueItem(std::string itemName)
+{
+	if (ActiveItemCount >= MAXITEMS) return "No space to generate the item!";
+
+	AsciiStrToLower(itemName);
+	UniqueItem uniqueItem;
+	bool foundUnique = false;
+	int uniqueIndex = 0;
+	for (const auto &item : UniqueItems) {
+		const std::string tmp = AsciiStrToLower(std::string_view(item.UIName));
+		if (tmp.find(itemName) != std::string::npos) {
+			itemName = tmp;
+			uniqueItem = item;
+			foundUnique = true;
+			break;
+		}
+		++uniqueIndex;
+	}
+	if (!foundUnique) return "No unique item found!";
+
+	_item_indexes uniqueBaseIndex = IDI_GOLD;
+	for (size_t j = 0; j < AllItemsList.size(); j++) {
+		if (!IsItemAvailable(static_cast<int>(j)))
+			continue;
+		if (AllItemsList[j].iItemId == uniqueItem.UIItemId) {
+			uniqueBaseIndex = static_cast<_item_indexes>(j);
+			break;
+		}
+	}
+
+	if (uniqueBaseIndex == IDI_GOLD) return "Base item not available!";
+
+	auto &baseItemData = AllItemsList[static_cast<size_t>(uniqueBaseIndex)];
+
+	Item testItem;
+
+	int i = 0;
+	for (uint32_t begin = SDL_GetTicks();; i++) {
+		constexpr int max_time = 3000;
+		if (SDL_GetTicks() - begin > max_time)
+			return StrCat("Item not found in ", max_time / 1000, " seconds!");
+
+		constexpr int max_iter = 1000000;
+		if (i > max_iter)
+			return StrCat("Item not found in ", max_iter, " tries!");
+
+		testItem = {};
+		testItem._iMiscId = baseItemData.iMiscId;
+		std::uniform_int_distribution<int32_t> dist(0, INT_MAX);
+		SetRndSeed(dist(BetterRng));
+		for (auto &flag : UniqueItemFlags)
+			flag = true;
+		UniqueItemFlags[uniqueIndex] = false;
+		SetupAllItems(*MyPlayer, testItem, uniqueBaseIndex, testItem._iMiscId == IMISC_UNIQUE ? uniqueIndex : AdvanceRndSeed(), uniqueItem.UIMinLvl, 1, false, false);
+		TryRandomUniqueItem(testItem, uniqueBaseIndex, uniqueItem.UIMinLvl, 1, false, false);
+		SetupItem(testItem);
+		for (auto &flag : UniqueItemFlags)
+			flag = false;
+
+		if (testItem._iMagical != ITEM_QUALITY_UNIQUE)
+			continue;
+
+		const std::string tmp = AsciiStrToLower(testItem._iIName);
+		if (tmp.find(itemName) != std::string::npos)
+			break;
+	}
+
+	int ii = AllocateItem();
+	auto &item = Items[ii];
+	item = testItem.pop();
+	Point pos = MyPlayer->position.tile;
+	GetSuperItemSpace(pos, ii);
+	item._iIdentified = true;
+	NetSendCmdPItem(false, CMD_SPAWNITEM, item.position, item);
+
+	return StrCat("Item generated successfully - iterations: ", i);
+}
+
+std::string DebugCmdSpawnUniqueMonster(std::string name, std::optional<unsigned> countOpt)
+{
+	if (levelType() == DTYPE_TOWN) return "Can't spawn monsters in town";
+	if (name.empty()) return "name is required";
+	const unsigned count = countOpt.value_or(1);
+	if (count < 1) return "count must be positive";
+
+	AsciiStrToLower(name);
+
+	int mtype = -1;
+	UniqueMonsterType uniqueIndex = UniqueMonsterType::None;
+	for (size_t i = 0; i < UniqueMonstersData.size(); ++i) {
+		const auto &mondata = UniqueMonstersData[i];
+		const std::string monsterName = AsciiStrToLower(std::string_view(mondata.mName));
+		if (monsterName.find(name) == std::string::npos)
+			continue;
+		mtype = mondata.mtype;
+		uniqueIndex = static_cast<UniqueMonsterType>(i);
+		if (monsterName == name)
+			break;
+	}
+
+	if (mtype == -1) return "Monster not found";
+
+	size_t id = MaxLvlMTypes - 1;
+	bool found = false;
+
+	for (size_t i = 0; i < LevelBestiary.size(); i++) {
+		if (LevelBestiary[i].type == mtype) {
+			id = i;
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		if (LevelBestiary.size() == MaxLvlMTypes)
+			LevelBestiary.decrementSize();
+		tl::expected<size_t, std::string> idResult = AddMonsterType(uniqueIndex, PLACE_SCATTER);
+		if (!idResult.has_value()) return std::move(idResult).error();
+		id = idResult.value();
+		CMonster &monsterType = LevelBestiary[id];
+		Bestiary::initGraphics(monsterType);
+		monsterType.corpseId = 1;
+	}
+
+	Player &myPlayer = *MyPlayer;
+
+	unsigned spawnedMonster = 0;
+
+	auto ret = Crawl(0, MaxCrawlRadius, [&](Displacement displacement) -> std::optional<std::string> {
+		Point pos = myPlayer.position.tile + displacement;
+		const Tile &tile = tileAt(pos);
+		if (tile.hasPlayer() || tile.hasMonster())
+			return {};
+		if (!IsTileWalkable(pos))
+			return {};
+
+		Monster *monster = AddMonster(pos, myPlayer.direction, id, true);
+		if (monster == nullptr)
+			return StrCat("Spawned ", spawnedMonster, " monsters. (Unable to spawn more)");
+		PrepareUniqueMonst(*monster, uniqueIndex, 0, 0, UniqueMonstersData[static_cast<size_t>(uniqueIndex)]);
+		monster->corpseId = 1;
+		spawnedMonster += 1;
+
+		if (spawnedMonster >= count)
+			return StrCat("Spawned ", spawnedMonster, " monsters.");
+
+		return {};
+	});
+
+	if (!ret.has_value())
+		ret = StrCat("Spawned ", spawnedMonster, " monsters. (Unable to spawn more)");
+	return *ret;
+}
+
+std::string DebugCmdSpawnMonster(std::string name, std::optional<unsigned> countOpt)
+{
+	if (levelType() == DTYPE_TOWN) return "Can't spawn monsters in town";
+	if (name.empty()) return "name is required";
+	const unsigned count = countOpt.value_or(1);
+	if (count < 1) return "count must be positive";
+
+	AsciiStrToLower(name);
+
+	int mtype = -1;
+
+	for (size_t i = 0; i < MonstersData.size(); i++) {
+		const auto &mondata = MonstersData[i];
+		const std::string monsterName = AsciiStrToLower(std::string_view(mondata.name));
+		if (monsterName.find(name) == std::string::npos)
+			continue;
+		mtype = static_cast<int>(i);
+		if (monsterName == name)
+			break;
+	}
+
+	if (mtype == -1) return "Monster not found";
+	if (!MyPlayer->isLevelOwnedByLocalClient()) return "You are not the level owner.";
+
+	size_t id = MaxLvlMTypes - 1;
+	bool found = false;
+
+	for (size_t i = 0; i < LevelBestiary.size(); i++) {
+		if (LevelBestiary[i].type == mtype) {
+			id = i;
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		if (LevelBestiary.size() == MaxLvlMTypes)
+			LevelBestiary.decrementSize();
+		tl::expected<size_t, std::string> idResult = AddMonsterType(static_cast<_monster_id>(mtype), PLACE_SCATTER);
+		if (!idResult.has_value()) return std::move(idResult).error();
+		id = idResult.value();
+		CMonster &monsterType = LevelBestiary[id];
+		Bestiary::initGraphics(monsterType);
+		monsterType.corpseId = 1;
+	}
+
+	Player &myPlayer = *MyPlayer;
+
+	size_t monstersToSpawn = std::min<size_t>(MaxMonsters - MonsterPoolAdapter::ActiveMonsterCountValue(), count);
+	if (monstersToSpawn == 0)
+		return "Can't spawn any monsters";
+
+	size_t spawnedMonster = 0;
+	Crawl(0, MaxCrawlRadius, [&](Displacement displacement) {
+		Point pos = myPlayer.position.tile + displacement;
+		const Tile &tile = tileAt(pos);
+		if (tile.hasPlayer() || tile.hasMonster())
+			return false;
+		if (!IsTileWalkable(pos))
+			return false;
+
+		SpawnMonster(pos, myPlayer.direction, id);
+		spawnedMonster += 1;
+
+		return spawnedMonster == monstersToSpawn;
+	});
+
+	if (monstersToSpawn != count)
+		return StrCat("Spawned ", spawnedMonster, " monsters. (Unable to spawn more)");
+	return StrCat("Spawned ", spawnedMonster, " monsters.");
+}
+
 const Item *DebugCmdGetSelectedItem()
 {
 	const Player &myPlayer = *MyPlayer;
@@ -902,6 +1214,20 @@ void RegisterNativeDebugCommands()
 	});
 	CurrentDebugCommandRegistry.Register("debug.items.info", "Show information about the selected item.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdItemInfo() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.items.spawn", "Generate an item matching a name.", [](std::string_view arguments) {
+		return DebugCmdSpawnItem(std::string(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.items.spawnUnique", "Generate a unique item matching a name.", [](std::string_view arguments) {
+		return DebugCmdSpawnUniqueItem(std::string(arguments));
+	});
+	CurrentDebugCommandRegistry.Register("debug.monsters.spawn", "Spawn monsters matching a name.", [](std::string_view arguments) {
+		const auto parsed = ParseNamedCountArguments(arguments);
+		return DebugCmdSpawnMonster(std::string(parsed.name), parsed.count);
+	});
+	CurrentDebugCommandRegistry.Register("debug.monsters.spawnUnique", "Spawn unique monsters matching a name.", [](std::string_view arguments) {
+		const auto parsed = ParseNamedCountArguments(arguments);
+		return DebugCmdSpawnUniqueMonster(std::string(parsed.name), parsed.count);
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.exportDun", "Export the current level as a dun file.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdExportDun() : std::string("This command takes no arguments.");

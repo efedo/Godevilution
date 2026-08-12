@@ -46,7 +46,9 @@ Native equivalents include `debug.display.tileData [name]`,
 `debug.level.map.hide`, `debug.level.reset <level> [seed]`,
 `debug.level.warp.dungeon <level>`, `debug.level.warp.quest <level>`,
 `debug.level.warp.map <path> <dunType> <x> <y>`, `debug.level.seed [level]`,
-`debug.items.info`, `debug.level.exportDun`, `debug.towners.talk <name>`,
+`debug.items.info`, `debug.items.spawn <name>`, `debug.items.spawnUnique <name>`,
+`debug.monsters.spawn <name> [count]`, `debug.monsters.spawnUnique <name> [count]`,
+`debug.level.exportDun`, `debug.towners.talk <name>`,
 `debug.towners.visit <name>`,
 and `debug.search.item <name>` (with corresponding monster, object, and clear
 commands). Player diagnostics are available as `debug.player.arrow <effect>`

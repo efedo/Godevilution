@@ -50,6 +50,8 @@ All notable changes to this fork are documented below.
   preserving their town checks and Lua compatibility aliases.
 - Move level `.dun` export into the native debug command registry while
   preserving the legacy binary layout and Lua compatibility alias.
+- Move item and monster spawning helpers into native debug commands while
+  preserving their generation, placement, count, and Lua compatibility behavior.
 - Move quest activation and diagnostics into native debug commands while
   preserving the `dev.quests` Lua compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel
