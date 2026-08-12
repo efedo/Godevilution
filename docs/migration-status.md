@@ -614,8 +614,9 @@ The server validates targeted summon placement, replaces the caster's prior
 owned minion, and persists owner identity plus native life, armor, and damage
 state through snapshots, saves, hashes, and protocol field 33. Golems now use
 server-owned deterministic nearest-monster targeting, movement, melee damage,
-experience attribution, and owner/level lifecycle cleanup. Native path
-planning, idle wandering, and death-animation parity remain follow-up work.
+experience attribution, and owner/level lifecycle cleanup. Golem path planning
+now routes around blocked cells with deterministic breadth-first selection.
+Native idle wandering and death-animation parity remain follow-up work.
 
 Content schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
 existing authoritative radial controller and persistent lightning-ball
@@ -682,7 +683,7 @@ resistance, lifetime, collision, and deterministic projectile state.
    Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
    Infravision, Search, Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town Portal, Resurrection, Jester, Berserk, Warp, Lightning Wall, and Golem,
    including remaining class modifiers, scaling, targeting rules, and Golem
-   minion AI/lifecycle parity.
+   idle/death-animation parity.
 2. Expand external content coverage, including remaining Hellfire monster,
    level, quest, and item metadata and authoritative gameplay definitions.
 3. Grow the Godot client from a protocol demonstration into a complete playable
