@@ -37,7 +37,6 @@
 #include "lua/lua_event.hpp"
 #include "lua/modules/audio.hpp"
 #include "lua/modules/floatingnumbers.hpp"
-#include "lua/modules/hellfire.hpp"
 #include "lua/modules/i18n.hpp"
 #include "lua/modules/items.hpp"
 #include "lua/modules/log.hpp"
@@ -259,6 +258,11 @@ void LuaReloadActiveMods()
 
 	for (const std::string_view modname : modnames) {
 		const std::string packageName = StrCat("mods.", modname, ".init");
+		const std::string scriptPath = StrCat("lua\\mods\\", modname, "\\init.lua");
+		// Mods may be entirely declarative. Lua remains an optional compatibility
+		// bootstrap for legacy mods that still ship an init.lua file.
+		if (!FindAsset(scriptPath).ok())
+			continue;
 		RunScript(CreateLuaSandbox(), packageName, /*optional=*/true);
 	}
 
@@ -311,7 +315,6 @@ void LuaInitialize()
 	    "devilutionx.player", LuaPlayerModule(lua),
 	    "devilutionx.render", LuaRenderModule(lua),
 	    "devilutionx.towners", LuaTownersModule(lua),
-	    "devilutionx.hellfire", LuaHellfireModule(lua),
 	    "devilutionx.system", LuaSystemModule(lua),
 	    "devilutionx.floatingnumbers", LuaFloatingNumbersModule(lua),
 	    "devilutionx.message", [](std::string_view text) { EventPlrMsg(text, UiFlags::ColorRed); },

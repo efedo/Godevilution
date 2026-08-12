@@ -10,7 +10,7 @@ should be added to Lua.
 | Legacy surface | Current role | Target owner |
 | --- | --- | --- |
 | Bootstrap, sandbox, `require`, mod reload | Loads legacy scripts and data hooks | Validated C# content packs and module registry |
-| `devilutionx.player`, `items`, `monsters`, `towners`, `hellfire` | Gameplay state, data mutation, and interaction | C# authoritative domains and protocol intent |
+| `devilutionx.player`, `items`, `monsters`, `towners` | Gameplay state, data mutation, and interaction | C# authoritative domains and protocol intent |
 | `devilutionx.events` | Legacy callback adapter | Typed server events and protocol event batches |
 | `devilutionx.audio`, `floatingnumbers`, `render`, `i18n` | Presentation | Godot services |
 | `devilutionx.system`, `log`, debug namespaces, REPL | Diagnostics and developer commands | Client/server diagnostics and authenticated admin tools |
@@ -28,7 +28,8 @@ Lua reload hooks. Native Lua loading remains frozen for compatibility.
 
 The clock and floating-number mods are presentation candidates for Godot. The
 Adria mana-refill mod maps to trusted server store rules. Hellfire activation
-maps to declarative content selection. All six Diablo/Hellfire character
+now uses a native declarative archive-selection path rather than a Lua
+bootstrap. All six Diablo/Hellfire character
 classes, new-session class selection, starting attributes, and native Q6
 life/mana formulas now live in validated content and the C# Diablo module.
 Content-defined starting gold, equipment, belt, inventory, class skills, and

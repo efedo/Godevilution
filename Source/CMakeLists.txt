@@ -132,7 +132,6 @@ set(libdevilutionx_SRCS
   lua/lua_event.cpp
   lua/lua_global.cpp
   lua/modules/audio.cpp
-  lua/modules/hellfire.cpp
   lua/modules/dev.cpp
   lua/modules/dev/display.cpp
   lua/modules/dev/items.cpp

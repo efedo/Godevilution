@@ -6,7 +6,6 @@ if(NOT DEFINED DEVILUTIONX_MODS_OUTPUT_DIRECTORY)
 endif()
 
 set(hellfire_mod
-  lua/mods/Hellfire/init.lua
   nlevels/cutl5w.clx
   nlevels/cutl6w.clx
   nlevels/l5data/cornerstone.dun

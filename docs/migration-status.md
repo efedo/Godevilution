@@ -20,7 +20,7 @@ Status date: 2026-08-11
 | External content | Base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, and authoritative definitions for every directly castable starting source | Externalize cursor-driven class capabilities and remaining native spells, Hellfire monster, level, quest, and item metadata; migrate the base pack to an explicit manifest when compatibility permits; and complete table documentation |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Add replacement-retirement policy and further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
-| Lua removal | Compatibility inventory established; authoritative data extensions use validated overlays | Replace native bootstrap, debug/admin, remaining compatibility reload, and presentation capabilities |
+| Lua removal | Hellfire archive activation no longer requires a Lua bootstrap; compatibility inventory established; authoritative data extensions use validated overlays | Replace native debug/admin, remaining compatibility reload, and presentation capabilities |
 
 ## Implemented authoritative systems
 

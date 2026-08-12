@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-11
 
+- Move Hellfire activation from the Lua `init.lua` bootstrap into the native
+  declarative mod manager. Preserve archive priorities, game-mode selection,
+  and data reload behavior while allowing content-only mods to omit Lua.
 - Advance the Diablo content schema to 0.28 and make the Sorcerer's declared
   Staff Recharge skill a server-owned item action. Externalize native staff
   levels, preserve the single recharge-strength RNG roll, permanent
