@@ -46,6 +46,7 @@ public enum AuthoritativeProjectileBehavior
     TownPortal = 38,
     Reflect = 39,
     Magi = 40,
+    Mana = 41,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -884,6 +885,21 @@ public sealed class AuthoritativeSpellCatalog
                             * definition.ManaShieldDamageReductionMaximumLevel <= 1)) {
                 throw new InvalidDataException(
                     "Mana Shield behavior requires one immediate self effect with a safe positive damage-reduction reciprocal.");
+            }
+            if (definition.ProjectileBehavior is (AuthoritativeProjectileBehavior.Magi
+                or AuthoritativeProjectileBehavior.Mana)
+                && (definition.HealingAmount != 0
+                    || hasDamage
+                    || definition.StatusEffectId != 0
+                    || definition.Range != 1
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 1
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0)) {
+                throw new InvalidDataException(
+                    "Magi and Mana behaviors require one immediate self effect without combat or status effects.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.StoneCurse
                 && (definition.HealingAmount != 0

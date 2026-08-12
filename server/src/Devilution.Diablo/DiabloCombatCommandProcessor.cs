@@ -453,6 +453,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Reflect;
         var isMagi = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Magi;
+        var isMana = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Mana;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -501,10 +503,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
-        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi
+        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana
             ? player.PositionX
             : intent.TargetX;
-        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi
+        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana
             ? player.PositionY
             : intent.TargetY;
         if (isResurrection) {
@@ -792,6 +794,10 @@ public sealed class DiabloCombatCommandProcessor
                 player.ReflectCharges += chargeIncrement;
         } else if (isMagi) {
             player.Mana = player.ManaMaximum;
+        } else if (isMana) {
+            player.Mana = Math.Min(
+                player.ManaMaximum,
+                checked(player.Mana + ResolveManaRestorationQ6(player, effectiveSpellLevel)));
         } else if (createStoneCurseController) {
             stoneCurseTarget!.Value.Target.IsPetrified = true;
         } else if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Healing) {
@@ -1308,6 +1314,32 @@ public sealed class DiabloCombatCommandProcessor
                 return uint.MaxValue;
         }
         return (uint)duration;
+    }
+
+    /** Native AddMana Q6 restoration, including Hellfire class multipliers. */
+    private int ResolveManaRestorationQ6(
+        AuthoritativePlayerState player,
+        int effectiveSpellLevel)
+    {
+        var manaQ6 = checked(random.RandomIntBetween(1, 10) * 64);
+        for (var level = 0; level < player.CharacterLevel; level++)
+            manaQ6 = checked(manaQ6 + random.RandomIntBetween(1, 4) * 64);
+        for (var level = 0; level < effectiveSpellLevel; level++)
+            manaQ6 = checked(manaQ6 + random.RandomIntBetween(1, 6) * 64);
+
+        var classSymbol = playerClasses?.TryGet(player.CharacterClassId, out var playerClass) == true
+            ? playerClass.Symbol
+            : string.Empty;
+        if (classSymbol.Equals("sorcerer", StringComparison.OrdinalIgnoreCase)
+            || player.CharacterClassId == 2) {
+            return checked(manaQ6 * 2);
+        }
+        if (classSymbol.Equals("rogue", StringComparison.OrdinalIgnoreCase)
+            || classSymbol.Equals("bard", StringComparison.OrdinalIgnoreCase)
+            || player.CharacterClassId is 1 or 4) {
+            return checked(manaQ6 + manaQ6 / 2);
+        }
+        return manaQ6;
     }
 
     private static uint ResolveSearchDuration(

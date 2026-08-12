@@ -4185,8 +4185,8 @@ public sealed class DiabloCombatCommandProcessorTests
         var player = CreatePlayer(
             entityId: 7,
             characterLevel: 3,
-            mana: 1000,
-            manaMaximum: 1000,
+            mana: 10000,
+            manaMaximum: 10000,
             memorizedSpells: [new MemorizedSpellState(43, 2)]);
 
         var result = processor.Execute(
@@ -4201,7 +4201,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(6U, player.ReflectCharges);
-        Assert.Equal(965, player.Mana);
+        Assert.Equal(7760, player.Mana);
     }
 
     [Fact]
@@ -4228,6 +4228,77 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(100, player.Mana);
+    }
+
+    [Fact]
+    public void ManaCastUsesNativeLcgLevelAndClassScaling()
+    {
+        const uint seed = 0x12345678;
+        var random = new DiabloRandom(seed);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateManaSpell()]),
+            random: random,
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 3,
+            mana: 64,
+            manaMaximum: 1_000_000,
+            abilitySpellId: 41,
+            memorizedSpells: [new MemorizedSpellState(41, 2)]);
+
+        var expectedManaQ6 = random.RandomIntBetween(1, 10);
+        for (var level = 0; level < player.CharacterLevel; level++)
+            expectedManaQ6 += random.RandomIntBetween(1, 4);
+        for (var level = 0; level < 2; level++)
+            expectedManaQ6 += random.RandomIntBetween(1, 6);
+        expectedManaQ6 *= 64 * 2;
+        var expectedRandomState = random.State;
+        random.Restore(seed);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                41,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.Ability),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(64 + expectedManaQ6, player.Mana);
+        Assert.Equal(expectedRandomState, random.State);
+    }
+
+    [Fact]
+    public void ManaCastClampsAtTheNativeMaximum()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateManaSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterLevel: 1,
+            mana: 60,
+            manaMaximum: 64,
+            abilitySpellId: 41);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                41,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.Ability),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(64, player.Mana);
     }
 
     private static DiabloCombatCommandProcessor CreateProcessor(
@@ -4532,6 +4603,20 @@ public sealed class DiabloCombatCommandProcessorTests
             ProjectileLifetime = 1,
             ProjectileCount = 1,
             ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+            ManaAdjustmentDivisor = 1,
+            ManaCostScale = 64,
+            StaffLevel = -1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateManaSpell()
+    {
+        return new AuthoritativeSpellDefinition(41, 255, 0, 0, 0, 0) {
+            NativeSpellId = 37,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Mana,
             ManaAdjustmentDivisor = 1,
             ManaCostScale = 64,
             StaffLevel = -1,
