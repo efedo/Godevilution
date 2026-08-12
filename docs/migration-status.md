@@ -609,6 +609,10 @@ Content schema 0.47 adds stable Mana spell ID `41` (native `SpellID` `37`).
 The server owns native LCG draws for base, character-level, and spell-level
 restoration, including Sorcerer/Rogue/Bard multipliers and Q6 maximum clamping.
 
+Content schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
+existing authoritative radial controller and persistent lightning-ball
+projectiles are now available through the shipped validated content row.
+
 Content schema 0.53 adds Lightning Wall (stable spell ID `50`, native `SpellID` `40`). It reuses the authoritative wall-growth controller and persistent
 segments, with native lightning damage, duration, and resistance tuning in the
 external spell row.

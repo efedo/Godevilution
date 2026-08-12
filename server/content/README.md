@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.53.0` schema in
+It declares its identity and `devilution.diablo@0.54.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,10 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.54 adds stable Nova spell row `18` (native `SpellID` `18`). The
+server exposes the existing one-tick radial controller and 36 persistent
+lightning balls through the validated external row.
 
 Schema 0.53 adds stable Lightning Wall spell row `50` (native `SpellID` `40`).
 The server reuses the authoritative wall-growth controller and persistent
