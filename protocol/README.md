@@ -251,6 +251,9 @@ Windows toolchain command.
   native damage channels, and active berserked state. Nondefault values use the
   tagged `godevilution-monster-berserk-v1` canonical-hash extension; old
   readers may ignore these additive fields.
+- `MonsterSnapshot.owner_player_id` field 33 identifies the authoritative
+  player that owns a summoned minion. It is zero for ordinary monsters and is
+  retained through snapshot restore and canonical state identity.
 
 ## Identity Note
 

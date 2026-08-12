@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.55 with server-authoritative Golem
+  (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
+  replacement of the caster's prior owned minion, native life/armor/damage
+  state, owner identity, snapshot/save/hash/protocol persistence, and focused
+  parity coverage are now in the C# module; full Golem AI remains follow-up.
+- Refresh the 22 base-content replay fixtures to the resulting manifest
+  identity while preserving all existing replay checkpoints.
 - Advance the Diablo content schema to 0.50 with server-authoritative Jester
   (stable spell ID 47, native `SpellID` 39), preserving native 10-way RNG
   dispatch into the existing authoritative spell paths without a second

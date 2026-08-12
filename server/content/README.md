@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.54.0` schema in
+It declares its identity and `devilution.diablo@0.55.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,11 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.55 adds stable Golem spell row `52` (native `SpellID` `21`). The
+server validates the native targeted summon, replaces only the caster's prior
+owned minion, and persists the owner identity and native armor, life, and
+damage formulas through snapshots, saves, hashes, and protocol field 33.
 
 Schema 0.54 adds stable Nova spell row `18` (native `SpellID` `18`). The
 server exposes the existing one-tick radial controller and 36 persistent
@@ -309,7 +314,8 @@ ID `11`, Fireball spell ID `12`, Teleport spell ID `23`, the Sorcerer's
 charged-staff spell ID `30`, Resurrection spell ID `32`, and Heal Other spell
 ID `34`, Fire Wall spell ID `6`, Flame Wave spell ID `15`, Inferno spell ID `21`, Chain Lightning spell ID `16`, Nova spell ID `18`, Apocalypse spell ID `25`, Rage spell ID `22`, Elemental spell ID `31`, Hellfire Blood Star spell ID `36`, Bone Spirit spell ID `38`, plus the
 Monk's Search ability spell ID `46`, Telekinesis spell ID `33`, Berserk spell
-ID `48`, Warp spell ID `49`, and Lightning Wall spell ID `50`.
+ID `48`, Warp spell ID `49`, Lightning Wall spell ID `50`, and Golem spell ID
+`52`.
 `projectile_count` supplies the base
 count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned

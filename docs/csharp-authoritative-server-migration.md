@@ -531,6 +531,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.55 adds Golem (stable spell ID `52`, native `SpellID` `21`). The
+server validates targeted summon placement, replaces the caster's prior owned
+minion, and persists owner identity plus native life, armor, and damage state
+through snapshots, saves, hashes, and protocol field 33. Full Golem AI and
+lifecycle parity remains follow-up work.
+
 Schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
 existing authoritative radial controller and persistent lightning-ball
 projectiles are now available through the shipped validated content row.
