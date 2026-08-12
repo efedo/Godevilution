@@ -25,18 +25,6 @@
 namespace devilution {
 namespace {
 
-std::string DebugCmdWarpToDungeonLevel(uint8_t level)
-{
-	Player &myPlayer = *MyPlayer;
-	if (level > (gbIsHellfire ? 24 : 16))
-		return StrCat("Level ", level, " does not exist!");
-	if (!isSetLevel() && myPlayer.isOnLevel(level))
-		return StrCat("You are already on level ", level, "!");
-
-	StartNewLvl(myPlayer, (level != 21) ? interface_mode::WM_DIABNEXTLVL : interface_mode::WM_DIABTOWNWARP, level);
-	return StrCat("Moved you to level ", level, ".");
-}
-
 std::string DebugCmdWarpToQuestLevel(uint8_t level)
 {
 	if (level < 1)

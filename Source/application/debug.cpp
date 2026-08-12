@@ -38,6 +38,7 @@
 #include "game/monsters/monster_pool.hpp"
 #include "network/protocol/msg.h"
 #include "tables/spelldat.h"
+#include "ui/load_screens.h"
 #include "ui/player_messages.h"
 #include "utils/is_of.hpp"
 #include "utils/string/str_case.hpp"
@@ -507,6 +508,18 @@ std::string DebugCmdResetLevel(uint8_t level, std::optional<int> seed)
 	return StrCat("Successfully reset level ", level, ".");
 }
 
+std::string DebugCmdWarpToDungeonLevel(uint8_t level)
+{
+	Player &myPlayer = *MyPlayer;
+	if (level > (gbIsHellfire ? 24 : 16))
+		return StrCat("Level ", level, " does not exist!");
+	if (!isSetLevel() && myPlayer.isOnLevel(level))
+		return StrCat("You are already on level ", level, "!");
+
+	StartNewLvl(myPlayer, (level != 21) ? interface_mode::WM_DIABNEXTLVL : interface_mode::WM_DIABTOWNWARP, level);
+	return StrCat("Moved you to level ", level, ".");
+}
+
 void RegisterNativeDebugCommands()
 {
 	static bool registered = false;
@@ -613,6 +626,11 @@ void RegisterNativeDebugCommands()
 	CurrentDebugCommandRegistry.Register("debug.level.reset", "Reset a dungeon level, optionally selecting its seed.", [](std::string_view arguments) {
 		const auto parsed = ParseLevelResetArguments(arguments);
 		return parsed.has_value() ? DebugCmdResetLevel(parsed->first, parsed->second) : std::string("Expected a level number and optional integer seed.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.level.warp.dungeon", "Warp to a dungeon level.", [](std::string_view arguments) {
+		if (arguments.empty() || HasInvalidLevelArgument(arguments))
+			return std::string("Expected a dungeon level number.");
+		return DebugCmdWarpToDungeonLevel(*ParseOptionalLevel(arguments));
 	});
 	CurrentDebugCommandRegistry.Register("debug.level.seed", "Show the current or selected level seed.", [](std::string_view arguments) {
 		if (HasInvalidLevelArgument(arguments))

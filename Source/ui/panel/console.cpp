@@ -113,6 +113,7 @@ constexpr std::string_view CommandHelpText =
     "  debug.level.map.reveal\n"
     "  debug.level.map.hide\n"
     "  debug.level.reset <level> [seed]\n"
+    "  debug.level.warp.dungeon <level>\n"
     "  debug.level.seed [level]\n"
     "  debug.search.clear\n"
     "  debug.search.item <name>\n"

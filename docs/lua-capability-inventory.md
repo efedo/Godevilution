@@ -66,6 +66,9 @@ aliases.
 The `dev.level.reset` helper now delegates to `debug.level.reset <level> [seed]`;
 native reset validation, visited-state clearing, delta clearing, and optional
 seed selection remain behaviorally compatible with the Lua helper.
+The `dev.level.warp.dungeon` helper now delegates to
+`debug.level.warp.dungeon <level>`; native level validation, already-there
+handling, and the legacy level-transition mode remain compatibility behavior.
 
 ## Bundled Scripts
 

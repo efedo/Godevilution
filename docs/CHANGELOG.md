@@ -38,6 +38,8 @@ All notable changes to this fork are documented below.
   preserving the Lua compatibility aliases.
 - Move level reset into the native debug command registry while preserving
   optional seed selection and the Lua compatibility alias.
+- Move dungeon-level warp into the native debug command registry while
+  preserving legacy transition modes and the Lua compatibility alias.
 - Move quest activation and diagnostics into native debug commands while
   preserving the `dev.quests` Lua compatibility aliases.
 - Move player TRN selection into the native debug-command registry and relabel
