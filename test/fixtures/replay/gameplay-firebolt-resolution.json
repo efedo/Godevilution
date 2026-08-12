@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "devilution.base",
     "version": "0.1.0",
-    "sha256": "4b3aa852db32d628106cccfc0e34e09ab739e6feed70a155392f82e8fd9d2687"
+    "sha256": "6b1ad17f5d3c486464c8c94d31ab2deb8cb231fc62a59df7cc2d4289dc1e95ab"
   },
   "tick_rate_hz": 20,
   "rng_seed": 305419896,
@@ -47,8 +47,8 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "b59d6569abb743dfa19cb9c59103378d1e09661ef5da1cd1c2c59d659e7a219b" },
-    { "tick": 2, "state_sha256": "2cac4f476a8dc71b806e04f9f153ce42129a09f0a3875b54f442555c42eb08ca" },
+    { "tick": 1, "state_sha256": "c488e77de33ead5c4d481ca0a430d08272eace127b76613ece5c49ba26d7753f" },
+    { "tick": 2, "state_sha256": "48600b42f2448df5d322694215c39a739716046b10a03a67fed7b5375d5f21a8" },
     { "tick": 3, "state_sha256": "7267dee3d1b5eb0f0fe4c743205e60b74feb713163ae4852eb02a4edc3fac083" }
   ]
 }
