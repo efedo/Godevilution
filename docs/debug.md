@@ -45,7 +45,9 @@ Native equivalents include `debug.display.tileData [name]`,
 `debug.display.scrollView [on|off]`, `debug.level.seed [level]`, and
 `debug.search.item <name>` (with corresponding monster, object, and clear
 commands). Player diagnostics are available as `debug.player.arrow <effect>`
-and `debug.player.info [id]`; `debug.player.trn <asset-path|clear>` selects
+and `debug.player.info [id]`; `debug.player.rejuvenate` restores life and mana,
+while `debug.player.health <amount>` and `debug.player.mana <amount>` adjust
+the corresponding pools by whole points. `debug.player.trn <asset-path|clear>` selects
 or clears the native player TRN asset.
 
 The multiplayer chat remains available for player chat and multiplayer chat

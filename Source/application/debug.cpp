@@ -93,6 +93,17 @@ std::optional<uint8_t> ParseOptionalLevel(std::string_view value)
 	return static_cast<uint8_t>(parsed);
 }
 
+std::optional<int> ParseRequiredInt(std::string_view value)
+{
+	if (value.empty())
+		return std::nullopt;
+	int parsed = 0;
+	const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), parsed);
+	return error == std::errc {} && end == value.data() + value.size()
+	    ? std::optional<int> { parsed }
+	    : std::nullopt;
+}
+
 constexpr std::array<std::string_view, 23> DebugTileDataNames {
 	"microTiles",
 	"piece",
@@ -208,6 +219,33 @@ std::string DebugCmdRejuvenate()
 	return "Restored life and mana to full.";
 }
 
+std::string DebugCmdChangeHealth(int change)
+{
+	Player &myPlayer = *MyPlayer;
+	if (change == 0)
+		return StrCat("Enter a value not equal to 0 to change life!");
+
+	const int newHealth = myPlayer.life.current + (change * 64);
+	myPlayer.setHitPoints(newHealth);
+	if (newHealth <= 0)
+		myPlayer.syncKill(DeathReason::MonsterOrTrap);
+
+	return StrCat("Changed life by ", change);
+}
+
+std::string DebugCmdChangeMana(int change)
+{
+	Player &myPlayer = *MyPlayer;
+	if (change == 0)
+		return StrCat("Enter a value not equal to 0 to change mana!");
+
+	myPlayer.mana.current += change * 64;
+	myPlayer.mana.base = myPlayer.mana.current + myPlayer.mana.maximumBase - myPlayer.mana.maximum;
+	RedrawComponent(PanelDrawComponent::Mana);
+
+	return StrCat("Changed mana by ", change);
+}
+
 std::string DebugCmdSetPlayerTrn(std::string_view path)
 {
 	if (!path.empty()) {
@@ -282,6 +320,14 @@ void RegisterNativeDebugCommands()
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.rejuvenate", "Restore player life and mana to full.", [](std::string_view arguments) {
 		return arguments.empty() ? DebugCmdRejuvenate() : std::string("This command takes no arguments.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.health", "Adjust player life by a whole-point amount.", [](std::string_view arguments) {
+		const auto amount = ParseRequiredInt(arguments);
+		return amount.has_value() ? DebugCmdChangeHealth(*amount) : std::string("Expected an integer life amount.");
+	});
+	CurrentDebugCommandRegistry.Register("debug.player.mana", "Adjust player mana by a whole-point amount.", [](std::string_view arguments) {
+		const auto amount = ParseRequiredInt(arguments);
+		return amount.has_value() ? DebugCmdChangeMana(*amount) : std::string("Expected an integer mana amount.");
 	});
 	CurrentDebugCommandRegistry.Register("debug.player.trn", "Set or clear the player TRN asset.", [](std::string_view arguments) {
 		return DebugCmdSetPlayerTrn(arguments == "clear" ? std::string_view {} : arguments);

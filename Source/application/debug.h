@@ -89,6 +89,8 @@ std::string DebugCmdInvisible(std::optional<bool> on);
 std::string DebugCmdArrow(std::string_view effect);
 std::string DebugCmdPlayerInfo(std::optional<uint8_t> id);
 std::string DebugCmdRejuvenate();
+std::string DebugCmdChangeHealth(int change);
+std::string DebugCmdChangeMana(int change);
 std::string DebugCmdSetPlayerTrn(std::string_view path);
 std::string DebugCmdShowGrid(std::optional<bool> on);
 std::string DebugCmdVision(std::optional<bool> on);

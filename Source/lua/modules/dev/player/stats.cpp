@@ -13,7 +13,6 @@
 #include <sol/sol.hpp>
 
 #include "application/debug.h"
-#include "engine/gfx/backbuffer_state.hpp"
 #include "lua/metadoc.hpp"
 #include "game/players/players.hpp"
 #include "utils/string/str_cat.hpp"
@@ -50,34 +49,6 @@ std::string DebugCmdMinStats()
 	myPlayer.modifyDexterity(-myPlayer.attributes.dexterity.base);
 	myPlayer.modifyVitality(-myPlayer.attributes.vitality.base);
 	return "Set all character base attributes to minimum.";
-}
-
-std::string DebugCmdChangeHealth(int change)
-{
-	Player &myPlayer = *MyPlayer;
-	if (change == 0)
-		return StrCat("Enter a value not equal to 0 to change life!");
-
-	int newHealth = myPlayer.life.current + (change * 64);
-	myPlayer.setHitPoints(newHealth);
-	if (newHealth <= 0)
-		myPlayer.syncKill(DeathReason::MonsterOrTrap);
-
-	return StrCat("Changed life by ", change);
-}
-
-std::string DebugCmdChangeMana(int change)
-{
-	Player &myPlayer = *MyPlayer;
-	if (change == 0)
-		return StrCat("Enter a value not equal to 0 to change mana!");
-
-	int newMana = myPlayer.mana.current + (change * 64);
-	myPlayer.mana.current = newMana;
-	myPlayer.mana.base = myPlayer.mana.current + myPlayer.mana.maximumBase - myPlayer.mana.maximum;
-	RedrawComponent(PanelDrawComponent::Mana);
-
-	return StrCat("Changed mana by ", change);
 }
 
 } // namespace

@@ -39,6 +39,10 @@ The `dev.player.stats.rejuvenate` helper now delegates to the native
 `debug.player.rejuvenate` command; the Lua function remains only as a
 compatibility alias while the native command owns the health/mana mutation and
 panel redraw.
+The `dev.player.stats.adjustHealth` and `adjustMana` helpers likewise delegate
+to `debug.player.health` and `debug.player.mana`; their native commands retain
+the original Q6 adjustment, death handling, mana-base recalculation, and redraw
+behavior.
 
 ## Bundled Scripts
 
