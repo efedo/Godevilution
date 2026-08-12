@@ -402,7 +402,10 @@ public sealed class DiabloCombatCommandProcessor
         var hasDamage = spell.DamageAmount > 0
             || spell.RandomMagicDamageDivisor > 0
             || spell.RandomDamageRange > 0
-            || spell.CharacterLevelRandomDamageDivisor > 0;
+            || spell.CharacterLevelRandomDamageDivisor > 0
+            || spell.MagicDamageDivisor > 0
+            || spell.SpellLevelDamage > 0
+            || spell.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -772,6 +775,13 @@ public sealed class DiabloCombatCommandProcessor
                             player,
                             spell,
                             effectiveSpellLevel,
+                            centerX,
+                            centerY),
+                    AuthoritativeProjectileBehavior.BoneSpirit =>
+                        CreateBoneSpiritProjectile(
+                            projectileEntityId,
+                            player,
+                            spell,
                             centerX,
                             centerY),
                     AuthoritativeProjectileBehavior.Fireball =>
@@ -1349,6 +1359,56 @@ public sealed class DiabloCombatCommandProcessor
             0,
             (uint)spell.ProjectileLifetime) {
             Behavior = AuthoritativeProjectileBehavior.BloodStar,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = spell.ProjectileSpeed,
+            ImpactLifetime = spell.ProjectileImpactLifetime,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+        };
+    }
+
+    private AuthoritativeProjectile CreateBoneSpiritProjectile(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int targetX,
+        int targetY)
+    {
+        var direction = GetDirection(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var velocityTargetX = targetX;
+        var velocityTargetY = targetY;
+        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            velocityTargetX += displacement.X;
+            velocityTargetY += displacement.Y;
+        }
+        var (velocityX, velocityY) = CalculateVelocity(
+            player.PositionX,
+            player.PositionY,
+            velocityTargetX,
+            velocityTargetY,
+            spell.ProjectileSpeed);
+
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY,
+            0,
+            spell.DamageType,
+            0,
+            (uint)spell.ProjectileLifetime) {
+            Behavior = AuthoritativeProjectileBehavior.BoneSpirit,
             VelocityX = velocityX,
             VelocityY = velocityY,
             OriginalDirection = direction,
@@ -1956,6 +2016,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
+                    AdvanceBoneSpirit(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
                     AdvanceFireball(tick, projectile, players, events);
                     continue;
@@ -2187,6 +2251,147 @@ public sealed class DiabloCombatCommandProcessor
             previousTraveledX = tile.TraveledX;
             previousTraveledY = tile.TraveledY;
         }
+    }
+
+    private void AdvanceBoneSpirit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var expiresAfterMovement = projectile.RemainingTicks == 0;
+        var visitedTiles = MoveNativeProjectile(projectile);
+        foreach (var tile in visitedTiles) {
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            var target = FindProjectileTarget(
+                projectile.LevelId,
+                tile.X,
+                tile.Y);
+            var playerTarget = FindProjectilePlayer(
+                projectile,
+                players,
+                tile.X,
+                tile.Y);
+            var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
+            if (CheckBoneSpiritCollision(
+                    tick,
+                    projectile,
+                    target,
+                    playerTarget,
+                    players,
+                    events)) {
+                projectile.LastCollisionTargetEntityId = targetEntityId;
+                if (projectile.PathIndex == 0
+                    && tile.X == projectile.TargetX
+                    && tile.Y == projectile.TargetY) {
+                    RetargetBoneSpirit(projectile, players);
+                } else {
+                    EnterBoneSpiritImpact(projectile);
+                }
+                return;
+            }
+            projectile.LastCollisionTargetEntityId = targetEntityId;
+        }
+
+        if (visitedTiles.Count == 0) {
+            var target = FindProjectileTarget(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY);
+            var playerTarget = FindProjectilePlayer(
+                projectile,
+                players,
+                projectile.PositionX,
+                projectile.PositionY);
+            var targetEntityId = target?.EntityId ?? playerTarget?.EntityId ?? 0;
+            if (projectile.LastCollisionTargetEntityId != targetEntityId
+                && CheckBoneSpiritCollision(
+                    tick,
+                    projectile,
+                    target,
+                    playerTarget,
+                    players,
+                    events)) {
+                projectile.LastCollisionTargetEntityId = targetEntityId;
+                if (projectile.PathIndex == 0
+                    && projectile.PositionX == projectile.TargetX
+                    && projectile.PositionY == projectile.TargetY) {
+                    RetargetBoneSpirit(projectile, players);
+                } else {
+                    EnterBoneSpiritImpact(projectile);
+                }
+                return;
+            }
+            projectile.LastCollisionTargetEntityId = targetEntityId;
+        }
+
+        if (projectile.PathIndex == 0
+            && projectile.PositionX == projectile.TargetX
+            && projectile.PositionY == projectile.TargetY) {
+            RetargetBoneSpirit(projectile, players);
+        }
+        if (expiresAfterMovement)
+            EnterBoneSpiritImpact(projectile);
+    }
+
+    private void RetargetBoneSpirit(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        projectile.PathIndex = 1;
+        var target = world.CombatTargets.Values
+            .Where(candidate => candidate.HitPointsQ6 > 0
+                && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId)
+                && Math.Max(
+                    Math.Abs(candidate.PositionX - projectile.PositionX),
+                    Math.Abs(candidate.PositionY - projectile.PositionY)) <= 19)
+            .OrderBy(candidate => Math.Max(
+                Math.Abs(candidate.PositionX - projectile.PositionX),
+                Math.Abs(candidate.PositionY - projectile.PositionY)))
+            .ThenBy(candidate => candidate.EntityId)
+            .FirstOrDefault();
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        var targetX = target?.PositionX ?? projectile.PositionX;
+        var targetY = target?.PositionY ?? projectile.PositionY;
+        if (target is null && owner is not null) {
+            var displacement = DiabloPlayerDirections.GetDisplacement(owner.FacingDirection);
+            targetX += displacement.X;
+            targetY += displacement.Y;
+        }
+        var direction = GetDirection(
+            projectile.PositionX,
+            projectile.PositionY,
+            targetX,
+            targetY);
+        var displacementForDirection = DirectionDisplacements[direction];
+        if (targetX == projectile.PositionX && targetY == projectile.PositionY) {
+            targetX += displacementForDirection.X;
+            targetY += displacementForDirection.Y;
+        }
+        (projectile.VelocityX, projectile.VelocityY) = CalculateVelocity(
+            projectile.PositionX,
+            projectile.PositionY,
+            targetX,
+            targetY,
+            projectile.Speed);
+    }
+
+    private void EnterBoneSpiritImpact(AuthoritativeProjectile projectile)
+    {
+        projectile.Phase = AuthoritativeProjectilePhase.Impact;
+        projectile.RemainingTicks = checked((uint)projectile.ImpactLifetime);
+        projectile.VelocityX = 0;
+        projectile.VelocityY = 0;
     }
 
     private void AdvanceFireball(
@@ -2781,6 +2986,14 @@ public sealed class DiabloCombatCommandProcessor
                 playerTarget,
                 players,
                 events)
+            : projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit
+                ? CheckBoneSpiritCollision(
+                    tick,
+                    projectile,
+                    target,
+                    playerTarget,
+                    players,
+                    events)
             : CheckFireboltCollision(
                 tick,
                 projectile,
@@ -2887,6 +3100,149 @@ public sealed class DiabloCombatCommandProcessor
         ApplyResolvedDamageQ6(owner, target, damageQ6, gameplayEvents);
         foreach (var gameplayEvent in gameplayEvents)
             events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
+    }
+
+    private bool CheckBoneSpiritCollision(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget? target,
+        AuthoritativePlayerState? playerTarget,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var hitTarget = target is not null
+            && TryResolveBoneSpiritHit(projectile, target, players, events);
+        var playerHit = playerTarget is not null
+            && TryResolveBoneSpiritPlayerHit(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events);
+        var blocked = world.IsMissileBlocked(
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (blocked
+            && world.TryGetMissileBlockingObject(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY,
+                    out var @object)
+            && @object!.Breakable) {
+            @object.Destroyed = true;
+        }
+        return blocked || hitTarget || playerHit;
+    }
+
+    private bool TryResolveBoneSpiritHit(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var resistance = GetMonsterResistance(target, projectile.DamageType);
+        if (resistance >= 100)
+            return false;
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        if (owner is null)
+            return false;
+
+        var ownerClass = GetPlayerClass(owner);
+        var hitChance = Math.Clamp(
+            owner.Attributes.Magic.Current
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - target.MonsterLevel * 2,
+            5,
+            95);
+        if (!target.IsPetrified && random.RandomIntLessThan(100) >= hitChance)
+            return false;
+
+        var damageQ6 = target.HitPointsQ6 / 3 / DiabloFixedPointQ6.Scale
+            * DiabloFixedPointQ6.Scale;
+        if (resistance > 0)
+            damageQ6 /= projectile.ResistantDamageDivisor;
+        var gameplayEvents = new List<DiabloGameplayEvent>();
+        ApplyResolvedDamageQ6(owner, target, damageQ6, gameplayEvents);
+        foreach (var gameplayEvent in gameplayEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
+    }
+
+    private bool TryResolveBoneSpiritPlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        if (owner is null
+            || IsPlayerProtectedByFlash(target)
+            || (!rules.FriendlyFire && owner.FriendlyMode)) {
+            return false;
+        }
+
+        var ownerClass = GetPlayerClass(owner);
+        var hitChance = Math.Clamp(
+            owner.Attributes.Magic.Current
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - checked((int)target.CharacterLevel * 2),
+            5,
+            95);
+        if (random.RandomIntLessThan(100) >= hitChance)
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var resistance = GetPlayerResistance(
+            target,
+            targetClass,
+            projectile.DamageType);
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * 2)
+                - checked((int)owner.CharacterLevel * 2),
+            0,
+            100);
+        var damageQ6 = target.Life / 3;
+        if (resistance > 0) {
+            damageQ6 -= damageQ6 * resistance / 100;
+        } else if (blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            if (rules.GameVariant == DiabloGameVariant.Hellfire)
+                _ = random.RandomIntLessThan(2);
+            return true;
+        }
+
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    owner.EntityId,
+                    target.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0) {
+            StartPlayerDeath(
+                target,
+                owner.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.Player);
+        } else if (resistance == 0
+            && ShouldStartHit(target, targetClass, damageQ6)) {
+            StartHit(target, targetClass, tick);
+        }
         return true;
     }
 

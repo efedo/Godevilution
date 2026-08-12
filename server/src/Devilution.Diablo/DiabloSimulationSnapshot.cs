@@ -446,6 +446,20 @@ public sealed partial class DiabloSimulation
                         || projectile.AreaRadius != 0
                         || projectile.ImpactLifetime <= 0
                         || projectile.ResistantDamageDivisor <= 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit
+                    && (projectile.TargetEntityId != 0
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.PathIndex is < 0 or > 1
+                        || projectile.Speed <= 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Magic
+                        || projectile.AreaRadius != 0
+                        || projectile.ImpactLifetime != 7
+                        || projectile.ResistantDamageDivisor != 4
+                        || (projectile.Phase == AuthoritativeProjectilePhase.Impact
+                            && (projectile.VelocityX != 0
+                                || projectile.VelocityY != 0
+                                || projectile.RemainingTicks > projectile.ImpactLifetime))))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

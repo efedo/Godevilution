@@ -862,6 +862,145 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Contains(deliveries, delivery => delivery.Event.TargetEntityId == undead.EntityId);
     }
 
+    [Fact]
+    public void BoneSpiritUsesCurrentLifeDamageHomingAndPhysicalSelfDamage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            magicResistance: 25,
+            monsterLevel: 1,
+            petrified: true);
+        var spell = new AuthoritativeSpellDefinition(38, 24, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.BoneSpirit,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 12,
+            ManaCostScale = 64,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 7,
+            SelfDamage = 6,
+        };
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            life: 1280,
+            lifeMaximum: 1280,
+            mana: 2000,
+            manaMaximum: 2000,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(38, 2)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                38,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(896, player.Life);
+        Assert.Equal(528, player.Mana);
+        var selfDamage = Assert.Single(result.Events);
+        Assert.Equal(384, selfDamage.AmountQ6);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BoneSpirit, projectile.Behavior);
+        Assert.Equal(0, projectile.Damage);
+        Assert.Equal((16, 256U, 4), (
+            projectile.Speed,
+            projectile.RemainingTicks,
+            projectile.ResistantDamageDivisor));
+
+        IReadOnlyList<DiabloDirectedGameplayEvent> deliveries = [];
+        for (ulong tick = 1; tick <= 32 && target.HitPoints == 40; tick++)
+            deliveries = processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(37, target.HitPoints);
+        Assert.Equal(2352, target.HitPointsQ6);
+        var delivery = Assert.Single(deliveries);
+        Assert.Equal(3, delivery.Event.Amount);
+        Assert.Equal(208, delivery.Event.AmountQ6);
+        projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(7U, projectile.RemainingTicks);
+
+        for (ulong tick = 2; tick <= 8; tick++)
+            processor.AdvanceTick(tick, [player]);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void BoneSpiritRetargetsTheNearestMonsterAfterItsInitialDestination()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            30,
+            monsterLevel: 1,
+            petrified: true);
+        var spell = new AuthoritativeSpellDefinition(38, 24, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.BoneSpirit,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 12,
+            ManaCostScale = 64,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 7,
+            SelfDamage = 6,
+        };
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            mana: 2000,
+            manaMaximum: 2000,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            },
+            memorizedSpells: [new MemorizedSpellState(38, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(
+                38,
+                0,
+                1,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+
+        for (ulong tick = 1; tick <= 64 && target.HitPoints == 30; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(20, target.HitPoints);
+        Assert.Equal(1, world.Projectiles.Values.Single().PathIndex);
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 1104)]
     [InlineData(DiabloGameVariant.Hellfire, 1360)]

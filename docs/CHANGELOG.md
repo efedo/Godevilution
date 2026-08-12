@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.32 with the externally validated
+  Bone Spirit spell (ID 38), preserving its native homing, current-life-third
+  magic damage, resistance, impact lifetime, and physical self-damage rules.
 - Advance the Diablo content schema to 0.31 with the externally validated
   Hellfire Blood Star spell (ID 36). Preserve its native fixed magic damage,
   quarter-resistance projectile behavior, 16-tile speed, 256-tick lifetime, and

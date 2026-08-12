@@ -170,6 +170,10 @@ Windows toolchain command.
   damage, resistance, lifetime, and spell-level fields preserve deterministic
   resume without adding a protocol field. Clients render the two phases but do
   not select splash targets or resolve damage.
+  Blood Star uses behavior value `20` for its fixed native magic projectile;
+  Bone Spirit uses behavior value `21` for its native homing projectile and
+  seven-tick impact phase. Both remain server-owned, including resistance,
+  current-life-third Bone Spirit damage, and their immediate self-damage.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

@@ -532,10 +532,16 @@ resolution, projectile lifetime/speed, and immediate physical self-damage;
 server-owned casts retain those effects through the same source and persistence
 boundaries as other authoritative spells.
 
+Content schema 0.32 adds native spell ID `38` for Bone Spirit. Its external
+behavior owns the magic homing projectile, nearest-monster retarget, current-
+life-third damage, resistance, seven-tick impact phase, and six-point physical
+self-damage while preserving the shared authoritative source and persistence
+boundaries.
+
 ## Near-term priorities
 
 1. Expand authoritative combat and spell coverage beyond Firebolt, Holy Bolt,
-   Blood Star, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
+   Blood Star, Bone Spirit, Charged Bolt, Fireball, Lightning, Flash, Healing, Heal Other, Stone Curse,
    Infravision, Search, Phasing, Mana Shield, Teleport, and Resurrection,
    including remaining class modifiers, scaling and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,

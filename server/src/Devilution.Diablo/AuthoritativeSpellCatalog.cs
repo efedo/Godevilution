@@ -26,6 +26,7 @@ public enum AuthoritativeProjectileBehavior
     Search = 18,
     HolyBolt = 19,
     BloodStar = 20,
+    BoneSpirit = 21,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -226,7 +227,8 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.RandomDamageRange > 0
                 || definition.CharacterLevelRandomDamageDivisor > 0
                 || definition.MagicDamageDivisor > 0
-                || definition.SpellLevelDamage > 0;
+                || definition.SpellLevelDamage > 0
+                || definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -330,6 +332,24 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
                     "Blood Star behavior requires the native fixed magic projectile and self-damage tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit
+                && (definition.HealingAmount != 0
+                    || definition.DamageAmount != 0
+                    || definition.StatusEffectId != 0
+                    || definition.StatusDuration != 0
+                    || definition.StatusMagnitude != 0
+                    || definition.ProjectileSpeed != 16
+                    || definition.ProjectileLifetime != 256
+                    || definition.AreaRadius != 0
+                    || definition.ProjectileCount != 1
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ResistantDamageDivisor != 4
+                    || definition.ProjectileImpactLifetime != 7
+                    || definition.SelfDamage != 6)) {
+                throw new InvalidDataException(
+                    "Bone Spirit behavior requires the native homing magic projectile and self-damage tuning.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
@@ -615,17 +635,20 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
-                    or AuthoritativeProjectileBehavior.BloodStar)
+                    or AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.BoneSpirit)
                 && (definition.MagicDamageDivisor != 0
                     || definition.SpellLevelDamage != 0
                     || definition.MagicDamageReductionDivisor != 0)) {
                 throw new InvalidDataException(
-                    "Magic and spell-level damage scaling requires Firebolt or BloodStar projectile behavior.");
+                    "Magic and spell-level damage scaling requires Firebolt, BloodStar, or BoneSpirit projectile behavior.");
             }
-            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.BloodStar
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.BoneSpirit)
                 && definition.SelfDamage != 0) {
                 throw new InvalidDataException(
-                    "Immediate self-damage tuning requires BloodStar projectile behavior.");
+                    "Immediate self-damage tuning requires BloodStar or BoneSpirit projectile behavior.");
             }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Flash
@@ -689,6 +712,7 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
                     or AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.BoneSpirit
                     or AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.StoneCurse

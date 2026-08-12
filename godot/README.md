@@ -112,6 +112,10 @@ and never predicts either relocation.
 Fireball behavior `16` is also presentation-only: Godot renders an orange
 travel projectile for phase `0` and a larger orange explosion for phase `1`.
 The server owns its path, direct collision, splash targets, damage, and expiry.
+Blood Star behavior `20` and Bone Spirit behavior `21` are likewise
+presentation-only. Godot renders their authoritative projectile state while
+the server owns movement, homing, resistance, impact lifetime, damage, and the
+physical self-damage applied at cast time.
 
 For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
 and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open
