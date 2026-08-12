@@ -3338,29 +3338,82 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var deltaX = Math.Sign(enemy.PositionX - minion.PositionX);
-        var deltaY = Math.Sign(enemy.PositionY - minion.PositionY);
-        var candidates = new[] {
-            (X: minion.PositionX + deltaX, Y: minion.PositionY + deltaY),
-            (X: minion.PositionX + deltaX, Y: minion.PositionY),
-            (X: minion.PositionX, Y: minion.PositionY + deltaY),
-        };
-        foreach (var candidate in candidates.Where(
-                     candidate => candidate.X != minion.PositionX
-                         || candidate.Y != minion.PositionY)) {
-            if (!world.IsWalkable(minion.LevelId, candidate.X, candidate.Y)
-                || world.IsOccupied(
-                    minion.LevelId,
-                    candidate.X,
-                    candidate.Y,
-                    players,
-                    minion.EntityId)) {
-                continue;
-            }
-            minion.BeginMovement(candidate.X, candidate.Y);
-            break;
-        }
+        var nextStep = FindPlayerMinionStep(minion, enemy, players);
+        if (nextStep.HasValue)
+            minion.BeginMovement(nextStep.Value.X, nextStep.Value.Y);
     }
+
+    private (int X, int Y)? FindPlayerMinionStep(
+        AuthoritativeCombatTarget minion,
+        AuthoritativeCombatTarget enemy,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var start = (X: minion.PositionX, Y: minion.PositionY);
+        var goals = new HashSet<(int X, int Y)>();
+        for (var offsetY = -1; offsetY <= 1; offsetY++) {
+            for (var offsetX = -1; offsetX <= 1; offsetX++) {
+                if (offsetX == 0 && offsetY == 0)
+                    continue;
+                var goal = (X: enemy.PositionX + offsetX, Y: enemy.PositionY + offsetY);
+                if (world.IsWalkable(minion.LevelId, goal.X, goal.Y)
+                    && !world.IsOccupied(
+                        minion.LevelId,
+                        goal.X,
+                        goal.Y,
+                        players,
+                        minion.EntityId)) {
+                    goals.Add(goal);
+                }
+            }
+        }
+        if (goals.Count == 0)
+            return null;
+
+        var queue = new Queue<(int X, int Y)>();
+        var previous = new Dictionary<(int X, int Y), (int X, int Y)>();
+        queue.Enqueue(start);
+        previous[start] = start;
+        while (queue.Count > 0) {
+            var current = queue.Dequeue();
+            if (goals.Contains(current)) {
+                var step = current;
+                while (previous[step] != start)
+                    step = previous[step];
+                return step;
+            }
+
+            foreach (var displacement in MinionPathDisplacements) {
+                var candidate = (
+                    X: current.X + displacement.X,
+                    Y: current.Y + displacement.Y);
+                if (previous.ContainsKey(candidate)
+                    || !world.IsWalkable(minion.LevelId, candidate.X, candidate.Y)
+                    || (!goals.Contains(candidate)
+                        && world.IsOccupied(
+                            minion.LevelId,
+                            candidate.X,
+                            candidate.Y,
+                            players,
+                            minion.EntityId))) {
+                    continue;
+                }
+                previous[candidate] = current;
+                queue.Enqueue(candidate);
+            }
+        }
+        return null;
+    }
+
+    private static readonly (int X, int Y)[] MinionPathDisplacements = [
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (-1, 1),
+        (-1, 0),
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+    ];
 
     private void AdvanceProjectiles(
         ulong tick,

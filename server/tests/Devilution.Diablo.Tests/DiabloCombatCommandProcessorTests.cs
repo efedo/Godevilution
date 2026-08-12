@@ -1648,6 +1648,31 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemPlansAroundBlockedDirectRoute()
+    {
+        var enemy = new AuthoritativeCombatTarget(9, 13, 10, 100);
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            10,
+            10,
+            100,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            minDamage: 12,
+            maxDamage: 20);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [10 * 40 + 11],
+            combatTargets: [enemy, golem]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(golem.IsMoving);
+        Assert.Equal((11, 11), (golem.FuturePositionX, golem.FuturePositionY));
+    }
+
+    [Fact]
     public void GolemIsRemovedWhenOwnerLeavesTheActiveLevel()
     {
         var golem = new AuthoritativeCombatTarget(
