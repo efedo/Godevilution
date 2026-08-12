@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Add generic Engine ruleset generation leases and explicit retired-activation
+  draining, keeping replaced targets alive until in-flight operations release
+  them while leaving session migration and resource disposal to the host.
 - Expand the Godot cast cursor to enumerate and cycle every authoritative spell
   source—memorized spells, charged staff, consumables, and class ability—while
   preserving explicit server-owned source validation and resource consumption.

@@ -15,7 +15,7 @@ Status date: 2026-08-12
 | Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm presentation and a stable authoritative spell-source selector | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and add host-controlled live reload with safe session migration |
-| Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, atomic candidate registration, and coordinated ruleset publication, depending only on Domain and Data | Add safe retirement policy for replaced rulesets while keeping filesystem/reflection outside Engine |
+| Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Integrate lease boundaries with host session migration and safe old-target disposal while keeping filesystem/reflection outside Engine |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
 | External content | Explicitly manifested base pack plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, and Town Portal spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Add replacement-retirement policy and further first-party capabilities |
@@ -171,7 +171,8 @@ generic network and operational behavior. Remaining debt is behavioral and
 extensibility work rather than a collapsed project boundary: the adapter still
 retains the legacy-named protocol executor and replay helpers, format-1 packages
 provide gameplay modules rather than host adapters, live ruleset replacement
-still needs session migration and safe old-target retirement, and authoritative
+  now exposes generation leases and explicit retired-target draining, but host
+  session migration and safe old-target disposal still need integration, and authoritative
 content/gameplay coverage is still partial. Cast source ownership and immediate
 resource consumption are now authoritative, and every directly castable base
 loadout source resolves during activation, but the spell catalog still models

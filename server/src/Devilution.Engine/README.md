@@ -14,6 +14,8 @@ The engine currently owns:
 - typed capability registration with per-module transactional publication;
 - validated content and authoritative-clock module context;
 - ordered content-plus-module ruleset identity;
+- generation leases and explicit retired-activation draining so replaced
+  targets remain alive until in-flight session operations release them;
 - capability lookup used by hosts to construct a game simulation;
 - deterministic generic session/state coordination, reverse participant lookup,
   and per-session transient-event queues;
