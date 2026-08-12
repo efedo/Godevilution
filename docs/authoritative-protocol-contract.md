@@ -258,6 +258,11 @@ nine-point quarter-radius order and mirrored emissions, then owns ball movement,
 target collision, resistance, lifetime, and RNG. Clients render the resulting
 authoritative projectiles and never emit balls or apply damage.
 
+An Apocalypse cast uses behavior value `32` for its row-major scan controller
+and value `33` for each persistent Physical boom. The server owns cursor
+progression, blocked-cell and player-minion filtering, Hellfire line-of-sight,
+and first-hit persistence; clients only render the resulting state.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

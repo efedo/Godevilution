@@ -32,6 +32,9 @@ public sealed record DiabloMonsterState(
 
     public bool IsUndead { get; init; }
 
+    /** Native monster faction marker used by Apocalypse's minion exclusion. */
+    public bool IsPlayerMinion { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -141,6 +144,12 @@ public sealed record DiabloProjectileState(
     public bool WallRightStopped { get; init; }
 
     public int WallHitDirection { get; init; } = -1;
+
+    public int ApocalypseScanX { get; init; }
+
+    public int ApocalypseScanY { get; init; }
+
+    public bool ApocalypseHit { get; init; }
 }
 
 /** Remaining stock for the store visible to the projected player. */
@@ -235,6 +244,7 @@ public sealed partial class DiabloSimulation
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
+                    IsPlayerMinion = target.IsPlayerMinion,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -318,6 +328,9 @@ public sealed partial class DiabloSimulation
                     WallLeftStopped = projectile.WallLeftStopped,
                     WallRightStopped = projectile.WallRightStopped,
                     WallHitDirection = projectile.WallHitDirection,
+                    ApocalypseScanX = projectile.ApocalypseScanX,
+                    ApocalypseScanY = projectile.ApocalypseScanY,
+                    ApocalypseHit = projectile.ApocalypseHit,
                 })
                 .ToArray(),
             activeStore) {
@@ -608,6 +621,25 @@ public sealed partial class DiabloSimulation
                         || projectile.VelocityX == 0
                             && projectile.VelocityY == 0
                         || projectile.ResistantDamageDivisor != 4))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseController
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Magic
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.ApocalypseScanX < 1
+                        || projectile.ApocalypseScanY < 1
+                        || projectile.ApocalypseHit))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.ApocalypseScanX != 0
+                        || projectile.ApocalypseScanY != 0))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7
@@ -736,6 +768,9 @@ public sealed partial class DiabloSimulation
                 WallLeftStopped = projectile.WallLeftStopped,
                 WallRightStopped = projectile.WallRightStopped,
                 WallHitDirection = projectile.WallHitDirection,
+                ApocalypseScanX = projectile.ApocalypseScanX,
+                ApocalypseScanY = projectile.ApocalypseScanY,
+                ApocalypseHit = projectile.ApocalypseHit,
             };
         }).ToArray();
         if (restoredProjectiles
@@ -943,6 +978,7 @@ public sealed partial class DiabloSimulation
                 target.MonsterLevel = monster.MonsterLevel;
                 target.StoneCurseImmune = monster.StoneCurseImmune;
                 target.IsUndead = monster.IsUndead;
+                target.IsPlayerMinion = monster.IsPlayerMinion;
                 target.RestoreOccupancy(
                     monster.Moving,
                     monster.FuturePositionX,
@@ -969,7 +1005,8 @@ public sealed partial class DiabloSimulation
                     futurePositionY: monster.FuturePositionY,
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
-                    undead: monster.IsUndead);
+                    undead: monster.IsUndead,
+                    playerMinion: monster.IsPlayerMinion);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

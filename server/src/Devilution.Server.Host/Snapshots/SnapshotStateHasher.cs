@@ -216,6 +216,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-undead-v1");
                     hasher.AppendBool(true);
                 }
+                if (monster.IsPlayerMinion) {
+                    hasher.AppendString("godevilution-monster-player-minion-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 
@@ -311,7 +315,10 @@ public static class SnapshotStateHasher
                     || projectile.WallRightDirection != -1
                     || projectile.WallLeftStopped
                     || projectile.WallRightStopped
-                    || projectile.WallHitDirection != -1) {
+                    || projectile.WallHitDirection != -1
+                    || projectile.ApocalypseScanX != 0
+                    || projectile.ApocalypseScanY != 0
+                    || projectile.ApocalypseHit) {
                     hasher.AppendString("godevilution-projectile-runtime-v1");
                     hasher.AppendInt32(projectile.Behavior);
                     hasher.AppendInt32(projectile.Phase);
@@ -336,6 +343,9 @@ public static class SnapshotStateHasher
                     hasher.AppendBool(projectile.WallLeftStopped);
                     hasher.AppendBool(projectile.WallRightStopped);
                     hasher.AppendInt32(projectile.WallHitDirection);
+                    hasher.AppendInt32(projectile.ApocalypseScanX);
+                    hasher.AppendInt32(projectile.ApocalypseScanY);
+                    hasher.AppendBool(projectile.ApocalypseHit);
                 }
                 if (projectile.LastCollisionTargetEntityId != 0) {
                     hasher.AppendString("godevilution-projectile-collision-v1");

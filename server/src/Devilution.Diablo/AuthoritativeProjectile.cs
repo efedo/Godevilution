@@ -118,4 +118,12 @@ public sealed class AuthoritativeProjectile
 
     /** Optional native only-hit-walking direction for a grown Fire Wall segment. */
     public int WallHitDirection { get; init; } = -1;
+
+    /** Native Apocalypse row-major scan cursor. */
+    public int ApocalypseScanX { get; set; }
+
+    public int ApocalypseScanY { get; set; }
+
+    /** Apocalypse Boom stops retrying after its first successful hit. */
+    public bool ApocalypseHit { get; set; }
 }

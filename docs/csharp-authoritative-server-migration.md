@@ -540,6 +540,11 @@ the existing Lightning controller and segment rules while retaining the chain
 spell ID and effective level. Clients observe only the resulting authoritative
 projectiles and damage events.
 
+Schema 0.38 adds Apocalypse (spell ID `25`). The server resolves its native
+row-major scan controller and persistent Physical boom entirely from external
+spell tuning, including deterministic cursor progression, player-minion
+exclusion, Hellfire line-of-sight filtering, and snapshot/protocol state.
+
 Schema 0.37 adds Nova (spell ID `18`). The server resolves its one-tick native
 radial controller in the nine-point quarter-radius order, emits four mirrored
 balls per point, and advances each Lightning ball independently through 16.16

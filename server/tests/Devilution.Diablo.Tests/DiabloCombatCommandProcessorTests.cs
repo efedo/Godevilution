@@ -1339,6 +1339,63 @@ public sealed class DiabloCombatCommandProcessorTests
         });
     }
 
+    [Fact]
+    public void ApocalypseControllerScansRowMajorAndEmitsPhysicalBooms()
+    {
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2 * 40 + 3],
+            combatTargets: [
+                new AuthoritativeCombatTarget(
+                    9,
+                    2,
+                    2,
+                    100,
+                    petrified: true,
+                    playerMinion: true),
+                new AuthoritativeCombatTarget(
+                    10,
+                    4,
+                    2,
+                    100,
+                    petrified: true),
+            ]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateApocalypseSpell()]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(25, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(25, 0, 0, 0, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        var controller = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, controller.Behavior);
+        Assert.Equal((2, 2), (controller.ApocalypseScanX, controller.ApocalypseScanY));
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseController);
+        var boom = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.Equal((4, 2), (boom.PositionX, boom.PositionY));
+        Assert.Equal(AuthoritativeDamageType.Physical, boom.DamageType);
+        Assert.Equal(14U, boom.RemainingTicks);
+        Assert.True(boom.ApocalypseHit);
+        Assert.True(world.CombatTargets[10].HitPoints < 100);
+        Assert.Equal(100, world.CombatTargets[9].HitPoints);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 112, 0) {
@@ -1459,6 +1516,26 @@ public sealed class DiabloCombatCommandProcessorTests
             NovaControllerLifetime = 1,
             NovaSearchRadius = 4,
             NovaProjectileCount = 36,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateApocalypseSpell()
+    {
+        return new AuthoritativeSpellDefinition(25, 150, 0, 0, 112, 0) {
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 15,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ApocalypseController,
+            RandomDamageRange = 6,
+            RandomDamageIterationsCharacterLevelDivisor = 1,
+            ResistantDamageDivisor = 1,
+            ProjectileImpactLifetime = 1,
+            ManaAdjustment = 6,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 90,
+            ManaCostScale = 64,
+            StaffLevel = 15,
+            ApocalypseControllerLifetime = 255,
+            ApocalypseSearchRadius = 8,
         };
     }
 

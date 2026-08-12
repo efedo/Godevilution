@@ -404,6 +404,8 @@ message MonsterSnapshot {
 	bool stone_curse_immune = 22;
 	// Immutable content capability used by the undead-only Holy Bolt spell.
 	bool is_undead = 23;
+	// Native monster faction marker used by Apocalypse's minion exclusion.
+	bool is_player_minion = 24;
 }
 
 message WorldItemSnapshot {
@@ -484,6 +486,10 @@ message ProjectileSnapshot {
 	bool wall_left_stopped = 36;
 	bool wall_right_stopped = 37;
 	int32 wall_hit_direction = 38;
+	// Native Apocalypse row-major scan cursor and first-hit state.
+	int32 apocalypse_scan_x = 39;
+	int32 apocalypse_scan_y = 40;
+	bool apocalypse_hit = 41;
 }
 
 message StatusEffectSnapshot {

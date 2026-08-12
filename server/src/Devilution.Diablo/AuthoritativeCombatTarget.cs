@@ -31,7 +31,8 @@ public sealed class AuthoritativeCombatTarget
         int? futurePositionY = null,
         bool petrified = false,
         bool stoneCurseImmune = false,
-        bool undead = false)
+        bool undead = false,
+        bool playerMinion = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -67,6 +68,7 @@ public sealed class AuthoritativeCombatTarget
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
         IsUndead = undead;
+        IsPlayerMinion = playerMinion;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -104,6 +106,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** External monster capability used by Holy Bolt targeting. */
     public bool IsUndead { get; set; }
+
+    /** Native monster faction marker used by Apocalypse's minion exclusion. */
+    public bool IsPlayerMinion { get; set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
     public int HitPoints
     {

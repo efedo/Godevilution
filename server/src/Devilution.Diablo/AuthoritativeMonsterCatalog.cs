@@ -34,6 +34,11 @@ public sealed class AuthoritativeMonsterCatalog
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has invalid undead value {undead}.");
             }
+            var playerMinion = row.OptionalInt32("player_minion");
+            if (playerMinion is not (0 or 1)) {
+                throw new InvalidDataException(
+                    $"Monster row {row.LineNumber} has invalid player_minion value {playerMinion}.");
+            }
             var dropItemId = row.OptionalUInt32("drop_item_id");
             var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
             var dropItemSeed = row.OptionalUInt32("drop_item_seed");
@@ -75,7 +80,8 @@ public sealed class AuthoritativeMonsterCatalog
                 magicResistance: row.OptionalInt32("magic_resistance"),
                 monsterLevel: row.OptionalInt32("monster_level"),
                 stoneCurseImmune: stoneCurseImmune == 1,
-                undead: undead == 1);
+                undead: undead == 1,
+                playerMinion: playerMinion == 1);
         }));
     }
 }

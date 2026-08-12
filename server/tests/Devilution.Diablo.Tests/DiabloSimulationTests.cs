@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.37.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.38.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.37.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.38.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -741,6 +741,72 @@ public sealed class DiabloSimulationTests
             restored[1].Speed,
             restored[1].RemainingTicks,
             restored[1].ResistantDamageDivisor));
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsApocalypseControllerAndBoomState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x80000009,
+                        7,
+                        0,
+                        25,
+                        0,
+                        10,
+                        10,
+                        10,
+                        10,
+                        12,
+                        AuthoritativeDamageType.Magic,
+                        0,
+                        255) {
+                        Behavior = AuthoritativeProjectileBehavior.ApocalypseController,
+                        StartX = 10,
+                        StartY = 10,
+                        ApocalypseScanX = 4,
+                        ApocalypseScanY = 3,
+                    },
+                    new AuthoritativeProjectile(
+                        0x8000000A,
+                        7,
+                        0,
+                        25,
+                        0,
+                        4,
+                        3,
+                        4,
+                        3,
+                        12,
+                        AuthoritativeDamageType.Physical,
+                        0,
+                        14) {
+                        Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+                        ApocalypseHit = true,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = replacement.WorldState.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, restored.Length);
+        Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, restored[0].Behavior);
+        Assert.Equal((4, 3), (restored[0].ApocalypseScanX, restored[0].ApocalypseScanY));
+        Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseBoom, restored[1].Behavior);
+        Assert.True(restored[1].ApocalypseHit);
+        Assert.Equal(14U, restored[1].RemainingTicks);
     }
 
     [Fact]

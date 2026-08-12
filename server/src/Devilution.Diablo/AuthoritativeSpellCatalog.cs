@@ -37,6 +37,8 @@ public enum AuthoritativeProjectileBehavior
     ChainLightningBolt = 29,
     NovaController = 30,
     NovaBall = 31,
+    ApocalypseController = 32,
+    ApocalypseBoom = 33,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -257,6 +259,12 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Number of Nova projectiles emitted by one controller. */
     public int NovaProjectileCount { get; init; }
+
+    /** Native Apocalypse scan radius in tiles. */
+    public int ApocalypseSearchRadius { get; init; }
+
+    /** Native Apocalypse controller animation lifetime. */
+    public int ApocalypseControllerLifetime { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -296,7 +304,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall;
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom;
             if (hasDamage && definition.Range <= 0)
                 throw new InvalidDataException("Damage-bearing spells require a positive range.");
             if (definition.AreaRadius < 0)
@@ -531,6 +541,27 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.NovaBall)
                 throw new InvalidDataException(
                     "NovaBall is runtime-owned and cannot be selected by spell content.");
+            if ((definition.ProjectileBehavior is AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
+                && (definition.ProjectileSpeed != 0
+                    || definition.ProjectileLifetime != 15
+                    || definition.AreaRadius != 0
+                    || definition.DamageType != AuthoritativeDamageType.Magic
+                    || definition.ResistantDamageDivisor != 1
+                    || definition.ApocalypseControllerLifetime != 255
+                    || definition.ApocalypseSearchRadius != 8
+                    || definition.RandomDamageRange != 6
+                    || definition.RandomDamageIterationsCharacterLevelDivisor != 1
+                    || definition.RandomDamageIterationsBonus != 0
+                    || definition.CharacterLevelDamageDivisor != 0
+                    || definition.DamageBonus != 0
+                    || definition.DamageScale != 1)) {
+                throw new InvalidDataException(
+                    "Apocalypse behavior requires the native row-major Magic controller tuning.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
+                throw new InvalidDataException(
+                    "ApocalypseBoom is runtime-owned and cannot be selected by spell content.");
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HealingAmount != 0
                     || definition.DamageAmount != 0
@@ -817,7 +848,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && (definition.RandomDamageRange != 0
                     || definition.DamageBonus != 0)) {
                 throw new InvalidDataException(
@@ -855,7 +888,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && (definition.RandomDamageIterationsCharacterLevelDivisor != 0
                     || definition.RandomDamageIterationsBonus != 0
                     || definition.SpellEffectScaleDivisor != 0)) {
@@ -898,7 +933,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && (definition.CharacterLevelRandomDamageDivisor != 0
                     || definition.SecondaryProjectileLifetime != 0
                     || definition.SecondaryProjectileLifetimeSpellLevelDivisor != 0)) {
@@ -917,7 +954,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && definition.DamageScale != 1) {
                 throw new InvalidDataException(
                     "Scaled native projectile damage requires Lightning, Fireball, Fire Wall, Flame Wave, Inferno, Chain Lightning, or Nova behavior.");
@@ -949,7 +988,9 @@ public sealed class AuthoritativeSpellCatalog
                     or AuthoritativeProjectileBehavior.ChainLightningController
                     or AuthoritativeProjectileBehavior.ChainLightningBolt
                     or AuthoritativeProjectileBehavior.NovaController
-                    or AuthoritativeProjectileBehavior.NovaBall)
+                    or AuthoritativeProjectileBehavior.NovaBall
+                    or AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
                 && (definition.ResistantDamageDivisor != 1
                     || definition.ProjectileImpactLifetime != 1)) {
                 throw new InvalidDataException(
@@ -1002,6 +1043,14 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.NovaProjectileCount != 0)) {
                 throw new InvalidDataException(
                     "Nova tuning requires Nova behavior.");
+            }
+            if (definition.ProjectileBehavior is not (
+                    AuthoritativeProjectileBehavior.ApocalypseController
+                    or AuthoritativeProjectileBehavior.ApocalypseBoom)
+                && (definition.ApocalypseControllerLifetime != 0
+                    || definition.ApocalypseSearchRadius != 0)) {
+                throw new InvalidDataException(
+                    "Apocalypse tuning requires Apocalypse behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
@@ -1169,6 +1218,8 @@ public sealed class AuthoritativeSpellCatalog
             NovaControllerLifetime = row.OptionalInt32("nova_controller_lifetime"),
             NovaSearchRadius = row.OptionalInt32("nova_search_radius"),
             NovaProjectileCount = row.OptionalInt32("nova_projectile_count"),
+            ApocalypseControllerLifetime = row.OptionalInt32("apocalypse_controller_lifetime"),
+            ApocalypseSearchRadius = row.OptionalInt32("apocalypse_search_radius"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

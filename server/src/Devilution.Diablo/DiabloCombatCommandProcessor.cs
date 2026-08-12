@@ -410,7 +410,8 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.FlameWaveController
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ChainLightningController
-                or AuthoritativeProjectileBehavior.NovaController;
+                or AuthoritativeProjectileBehavior.NovaController
+                or AuthoritativeProjectileBehavior.ApocalypseController;
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -437,12 +438,15 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.ChainLightningController;
         var isNova = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.NovaController;
+        var isApocalypse = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.ApocalypseController;
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if ((isFireWall || isInferno || isChainLightning || isNova) && intent.TargetEntityId != 0)
+        if ((isFireWall || isInferno || isChainLightning || isNova || isApocalypse)
+            && intent.TargetEntityId != 0)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!hasDamage && !isResurrection && !isHealOther && !isStoneCurse
             && intent.TargetEntityId != 0
@@ -454,10 +458,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
-        var centerX = isSelfCenteredFlash || isPhasing
+        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse
             ? player.PositionX
             : intent.TargetX;
-        var centerY = isSelfCenteredFlash || isPhasing
+        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse
             ? player.PositionY
             : intent.TargetY;
         if (isResurrection) {
@@ -493,7 +497,7 @@ public sealed class DiabloCombatCommandProcessor
             centerX = healOtherTarget.PositionX;
             centerY = healOtherTarget.PositionY;
         }
-        if (hasDamage && !isSelfCenteredFlash) {
+        if (hasDamage && !isSelfCenteredFlash && !isApocalypse) {
             if (intent.TargetEntityId != 0) {
                 world.CombatTargets.TryGetValue(intent.TargetEntityId, out target);
             } else {
@@ -795,6 +799,15 @@ public sealed class DiabloCombatCommandProcessor
                     effectiveSpellLevel,
                     centerX,
                     centerY));
+        } else if (isApocalypse) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                CreateApocalypseController(
+                    projectileEntityId,
+                    player,
+                    spell,
+                    effectiveSpellLevel));
         } else if (spell.ProjectileSpeed > 0) {
             var projectileCount = checked(
                 spell.ProjectileCount
@@ -1816,6 +1829,74 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private AuthoritativeProjectile CreateApocalypseController(
+        uint projectileEntityId,
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int effectiveSpellLevel)
+    {
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < checked((int)player.CharacterLevel);
+             iteration++) {
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        }
+        damage = checked(damage + checked((int)player.CharacterLevel));
+        var minimumX = Math.Max(
+            player.PositionX - spell.ApocalypseSearchRadius,
+            1);
+        var minimumY = Math.Max(
+            player.PositionY - spell.ApocalypseSearchRadius,
+            1);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            player.PositionX,
+            player.PositionY,
+            player.PositionX,
+            player.PositionY,
+            damage,
+            spell.DamageType,
+            0,
+            checked((uint)spell.ApocalypseControllerLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseController,
+            StartX = player.PositionX,
+            StartY = player.PositionY,
+            EffectiveSpellLevel = effectiveSpellLevel,
+            ApocalypseScanX = minimumX,
+            ApocalypseScanY = minimumY,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateApocalypseBoom(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        int positionX,
+        int positionY)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            0,
+            controller.SpellId,
+            controller.LevelId,
+            positionX,
+            positionY,
+            positionX,
+            positionY,
+            controller.Damage,
+            AuthoritativeDamageType.Physical,
+            0,
+            checked((uint)spell.ProjectileLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+            EffectiveSpellLevel = controller.EffectiveSpellLevel,
+        };
+    }
+
     private AuthoritativeProjectile CreateFlameWaveController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2510,6 +2591,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceNovaController(projectile);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseController) {
+                    AdvanceApocalypseController(projectile, players);
+                    continue;
+                }
                 if (projectile.Behavior is AuthoritativeProjectileBehavior.Lightning
                     or AuthoritativeProjectileBehavior.ChainLightningBolt) {
                     AdvanceLightningController(projectile, players);
@@ -2517,6 +2602,10 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.NovaBall) {
                     AdvanceNovaBall(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom) {
+                    AdvanceApocalypseBoom(projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Fireball) {
@@ -3651,6 +3740,61 @@ public sealed class DiabloCombatCommandProcessor
         world.Projectiles.Remove(controller.EntityId);
     }
 
+    private void AdvanceApocalypseController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (!spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ApocalypseController
+            || !players.Any(player => IsProjectileOwner(controller, player))) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var maximumX = controller.StartX + spell.ApocalypseSearchRadius;
+        var maximumY = controller.StartY + spell.ApocalypseSearchRadius;
+        var minimumX = Math.Max(
+            controller.StartX - spell.ApocalypseSearchRadius,
+            1);
+        var scanY = Math.Max(controller.ApocalypseScanY, 1);
+        var scanX = Math.Max(controller.ApocalypseScanX, minimumX);
+        for (var y = scanY; y < maximumY; y++) {
+            var firstX = y == scanY ? scanX : minimumX;
+            for (var x = firstX; x < maximumX; x++) {
+                controller.ApocalypseScanX = checked(x + 1);
+                controller.ApocalypseScanY = y;
+                if (!world.ContainsPosition(controller.LevelId, x, y)
+                    || world.IsMissileBlocked(controller.LevelId, x, y)) {
+                    continue;
+                }
+                var target = FindProjectileTarget(controller.LevelId, x, y);
+                if (target is null || target.IsPlayerMinion)
+                    continue;
+                if (rules.GameVariant == DiabloGameVariant.Hellfire
+                    && !world.HasMissileLineOfSight(
+                        controller.LevelId,
+                        controller.StartX,
+                        controller.StartY,
+                        x,
+                        y)) {
+                    continue;
+                }
+
+                var entityId = AllocateProjectileEntityId();
+                world.Projectiles.Add(
+                    entityId,
+                    CreateApocalypseBoom(
+                        entityId,
+                        controller,
+                        spell,
+                        x,
+                        y));
+                return;
+            }
+        }
+        world.Projectiles.Remove(controller.EntityId);
+    }
+
     private void AdvanceNovaBall(
         ulong tick,
         AuthoritativeProjectile projectile,
@@ -3685,6 +3829,27 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.LastCollisionTargetEntityId = 0;
             }
         }
+    }
+
+    private void AdvanceApocalypseBoom(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        if (!projectile.ApocalypseHit) {
+            var target = FindProjectileTarget(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY);
+            if (target is not null
+                && !target.IsPlayerMinion
+                && TryResolveFireboltHit(projectile, target, players, events)) {
+                projectile.ApocalypseHit = true;
+            }
+        }
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
     }
 
     private void CreateLightningSegment(

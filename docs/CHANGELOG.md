@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.38 with the externally validated
+  Apocalypse row-major controller and persistent Physical boom behaviors (spell
+  ID 25), preserving native damage rolls, blocked-cell/minion filtering,
+  Hellfire line-of-sight, and deterministic cursor/boom state.
 - Advance the Diablo content schema to 0.35 with the externally validated
   Inferno controller and stationary segment behaviors (spell ID 21), preserving
   native speed, three-segment emission, stepwise lifetime, fire damage rolls,
