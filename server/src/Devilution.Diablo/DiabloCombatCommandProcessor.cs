@@ -451,6 +451,8 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.ManaShield;
         var isReflect = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Reflect;
+        var isMagi = spell.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.Magi;
         var isStoneCurse = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.StoneCurse;
         var isInfravision = spell.ProjectileBehavior
@@ -499,10 +501,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
-        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect
+        var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi
             ? player.PositionX
             : intent.TargetX;
-        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect
+        var centerY = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi
             ? player.PositionY
             : intent.TargetY;
         if (isResurrection) {
@@ -788,6 +790,8 @@ public sealed class DiabloCombatCommandProcessor
             var chargeIncrement = checked((uint)reflectSpellLevel * player.CharacterLevel);
             if (chargeIncrement <= ushort.MaxValue - player.ReflectCharges)
                 player.ReflectCharges += chargeIncrement;
+        } else if (isMagi) {
+            player.Mana = player.ManaMaximum;
         } else if (createStoneCurseController) {
             stoneCurseTarget!.Value.Target.IsPetrified = true;
         } else if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Healing) {

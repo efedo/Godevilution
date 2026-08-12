@@ -4204,6 +4204,32 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(965, player.Mana);
     }
 
+    [Fact]
+    public void MagiCastRestoresCurrentManaToTheNativeMaximum()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([CreateMagiSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            mana: 10,
+            manaMaximum: 100,
+            abilitySpellId: 40);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                40,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.Ability),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(100, player.Mana);
+    }
+
     private static DiabloCombatCommandProcessor CreateProcessor(
         DiabloWorldState world,
         AuthoritativeSpellCatalog? spells = null,
@@ -4492,6 +4518,20 @@ public sealed class DiabloCombatCommandProcessorTests
             ProjectileLifetime = 1,
             ProjectileCount = 1,
             ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
+            ManaAdjustmentDivisor = 1,
+            ManaCostScale = 64,
+            StaffLevel = -1,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateMagiSpell()
+    {
+        return new AuthoritativeSpellDefinition(40, 255, 0, 0, 0, 0) {
+            NativeSpellId = 38,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileCount = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
             ManaAdjustmentDivisor = 1,
             ManaCostScale = 64,
             StaffLevel = -1,

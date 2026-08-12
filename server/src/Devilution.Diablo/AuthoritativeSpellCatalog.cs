@@ -45,6 +45,7 @@ public enum AuthoritativeProjectileBehavior
     Telekinesis = 37,
     TownPortal = 38,
     Reflect = 39,
+    Magi = 40,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
