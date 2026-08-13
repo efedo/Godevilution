@@ -72,4 +72,16 @@ public sealed class AuthoritativeQuestCatalogTests
         Assert.False(quest.Active);
         Assert.True(quest.Logged);
     }
+
+    [Fact]
+    public void QuestStateCanLoadNativeVariablesAndMessageIdentity()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tvariable1\tvariable2\tmessage_id\n"
+                + "3001\t1\t3\t0\t0\t2\t7\t123\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
+    }
 }

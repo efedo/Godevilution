@@ -105,7 +105,10 @@ public sealed record DiabloQuestState(
     bool Completed,
     bool Unavailable = false,
     bool Active = true,
-    bool Logged = false);
+    bool Logged = false,
+    int Variable1 = 0,
+    int Variable2 = 0,
+    int MessageId = 0);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -339,7 +342,10 @@ public sealed partial class DiabloSimulation
                     quest.Completed,
                     quest.Unavailable,
                     quest.Active,
-                    quest.Logged))
+                    quest.Logged,
+                    quest.Variable1,
+                    quest.Variable2,
+                    quest.MessageId))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -962,7 +968,10 @@ public sealed partial class DiabloSimulation
             if (quest.QuestId == 0
                 || quest.RequiredProgress == 0
                 || quest.Progress > quest.RequiredProgress
-                || (quest.Unavailable && (quest.Completed || quest.Progress != 0))) {
+                || (quest.Unavailable && (quest.Completed || quest.Progress != 0))
+                || quest.Variable1 is < 0 or > byte.MaxValue
+                || quest.Variable2 is < 0 or > byte.MaxValue
+                || quest.MessageId is < 0 or > short.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -1300,6 +1309,9 @@ public sealed partial class DiabloSimulation
                 target.Unavailable = quest.Unavailable;
                 target.Active = quest.Active && !quest.Completed && !quest.Unavailable;
                 target.Logged = quest.Logged && !quest.Unavailable;
+                target.Variable1 = quest.Variable1;
+                target.Variable2 = quest.Variable2;
+                target.MessageId = quest.MessageId;
             } else {
                 WorldState.Quests.Add(quest.QuestId, new AuthoritativeQuestState(
                     quest.QuestId,
@@ -1309,7 +1321,10 @@ public sealed partial class DiabloSimulation
                     quest.Completed,
                     quest.Unavailable,
                     quest.Active,
-                    quest.Logged));
+                    quest.Logged,
+                    quest.Variable1,
+                    quest.Variable2,
+                    quest.MessageId));
             }
         }
     }

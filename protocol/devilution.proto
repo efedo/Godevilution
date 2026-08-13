@@ -479,6 +479,10 @@ message QuestSnapshot {
 	bool initial = 7;
 	// Native quest-log visibility bit.
 	bool logged = 8;
+	// Native quest-specific synchronization variables and speech identity.
+	int32 variable_1 = 9;
+	int32 variable_2 = 10;
+	int32 message_id = 11;
 }
 
 message ProjectileSnapshot {

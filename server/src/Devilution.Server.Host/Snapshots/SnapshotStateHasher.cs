@@ -311,6 +311,12 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-quest-logged-v1");
                     hasher.AppendBool(true);
                 }
+                if (quest.Variable1 != 0 || quest.Variable2 != 0 || quest.MessageId != 0) {
+                    hasher.AppendString("godevilution-quest-native-state-v1");
+                    hasher.AppendInt32(quest.Variable1);
+                    hasher.AppendInt32(quest.Variable2);
+                    hasher.AppendInt32(quest.MessageId);
+                }
             }
         }
 

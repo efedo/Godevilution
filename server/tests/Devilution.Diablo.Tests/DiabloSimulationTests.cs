@@ -164,6 +164,29 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsNativeQuestVariablesAndMessage()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                Quests = [new AuthoritativeQuestState(
+                    40,
+                    0,
+                    2,
+                    variable1: 2,
+                    variable2: 7,
+                    messageId: 123)],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var quest = Assert.Single(replacement.WorldState.Quests.Values);
+        Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
+    }
+
+    [Fact]
     public void SnapshotCaptureAndRestoreOwnPlayerWorldAndActiveStoreState()
     {
         var catalog = new StoreCatalog();

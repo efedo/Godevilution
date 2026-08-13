@@ -112,6 +112,9 @@ internal static class DiabloProtocolMapper
                 Unavailable = quest.Unavailable,
                 Initial = !quest.Active && !quest.Completed && !quest.Unavailable,
                 Logged = quest.Logged,
+                Variable1 = quest.Variable1,
+                Variable2 = quest.Variable2,
+                MessageId = quest.MessageId,
             });
         }
         foreach (var projectile in source.Projectiles) {
@@ -369,7 +372,10 @@ internal static class DiabloProtocolMapper
                 quest.Completed,
                 quest.Unavailable,
                 !quest.Initial && !quest.Completed && !quest.Unavailable,
-                quest.Logged)).ToArray(),
+                quest.Logged,
+                quest.Variable1,
+                quest.Variable2,
+                quest.MessageId)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

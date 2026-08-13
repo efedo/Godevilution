@@ -1753,6 +1753,7 @@ public sealed class StoreSimulationExecutorTests
                 new AuthoritativeQuestState(40, 0, 2, progress: 1),
                 new AuthoritativeQuestState(41, 0, 2, unavailable: true),
                 new AuthoritativeQuestState(42, 0, 2, active: false, logged: true),
+                new AuthoritativeQuestState(43, 0, 2, variable1: 2, variable2: 7, messageId: 123),
             ]);
         var state = executor.GetPlayerState("player-a");
         var save = executor.ExportPlayerSave("player-a");
@@ -1789,6 +1790,8 @@ public sealed class StoreSimulationExecutorTests
         Assert.True(restoredSnapshot.Quests.Single(quest => quest.QuestId == 41).Unavailable);
         Assert.True(restoredSnapshot.Quests.Single(quest => quest.QuestId == 42).Initial);
         Assert.True(restoredSnapshot.Quests.Single(quest => quest.QuestId == 42).Logged);
+        var nativeQuest = restoredSnapshot.Quests.Single(quest => quest.QuestId == 43);
+        Assert.Equal((2, 7, 123), (nativeQuest.Variable1, nativeQuest.Variable2, nativeQuest.MessageId));
         Assert.Throws<InvalidDataException>(() => replacement.ImportPlayerSave("player-a", "{\"FormatVersion\":99}"));
     }
 
