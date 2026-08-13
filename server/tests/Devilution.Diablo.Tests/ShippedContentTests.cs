@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.36.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.37.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.36.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.37.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1130,6 +1130,21 @@ public sealed class ShippedContentTests
         Assert.Equal(-15, scavengerCarapace.PlusGetHit);
         Assert.Equal(5, scavengerCarapace.PlusDexterity);
         Assert.Equal(40, scavengerCarapace.PlusLightningResistance);
+        var nightscape = hellfireItems.GenerateUnique(1078, 0x12345678, 16);
+        Assert.Equal(1078, nightscape.UniqueId);
+        Assert.Equal(11600, nightscape.Value);
+        Assert.Equal(55, nightscape.ItemIndex);
+        Assert.Equal(15, nightscape.ArmorClass);
+        Assert.Equal(12, nightscape.Durability);
+        Assert.Equal(12, nightscape.MaxDurability);
+        Assert.Equal(0, nightscape.MinimumStrength);
+        Assert.Equal(4, nightscape.EquipLocation);
+        Assert.Equal(3, nightscape.PlusDexterity);
+        Assert.Equal(20, nightscape.PlusFireResistance);
+        Assert.Equal(20, nightscape.PlusLightningResistance);
+        Assert.Equal(20, nightscape.PlusMagicResistance);
+        Assert.Equal(-4, nightscape.PlusLight);
+        Assert.NotEqual(0U, nightscape.Flags & 0x00400000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

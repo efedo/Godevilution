@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Nightscape (`unique_id=1078`) through schema 1.37,
+  adding its native Cape base item with fast-recovery, light-curse, armor,
+  dexterity, and all-resistance powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Scavenger Carapace (`unique_id=1077`) through schema
   1.36, adding its native Breast Plate base item with armor, get-hit,
   armor-curse, dexterity, and light-resistance powers.

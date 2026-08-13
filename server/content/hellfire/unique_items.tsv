@@ -308,3 +308,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1077	Scavenger Carapace	162	13	14000	AC_CURSE	30	30
 1077	Scavenger Carapace	162	13	14000	DEX	5	5
 1077	Scavenger Carapace	162	13	14000	LIGHTRES	40	40
+1078	Nightscape	163	16	11600	FASTRECOVER	2	2
+1078	Nightscape	163	16	11600	LIGHT_CURSE	4	4
+1078	Nightscape	163	16	11600	SETAC	15	15
+1078	Nightscape	163	16	11600	DEX	3	3
+1078	Nightscape	163	16	11600	ALLRES	20	20

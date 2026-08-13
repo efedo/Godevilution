@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.37 adds the native-derived Hellfire Nightscape base item and unique
+definition (`unique_id=1078`) with its Cape identity, fast-recovery,
+light-curse, armor, dexterity, and all-resistance powers.
+
 Schema 1.36 adds the native-derived Hellfire Scavenger Carapace base item
 and unique definition (`unique_id=1077`) with its Breast Plate identity,
 armor, get-hit, armor-curse, dexterity, and light-resistance powers.
