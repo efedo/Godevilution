@@ -26,6 +26,11 @@
       "mode": "upsert"
     },
     {
+      "table": "levels.tsv",
+      "keys": ["level_id"],
+      "mode": "upsert"
+    },
+    {
       "table": "items.tsv",
       "keys": ["item_id"],
       "mode": "upsert"

@@ -90,7 +90,11 @@ is not a client-side filter.
 The checked-in Hellfire overlay replaces the base combat row by its stable
 `base_attack_damage` key and selects `game_variant=Hellfire`. Variant selection
 therefore remains external validated content rather than executable startup or
-client state; monster, level, quest, and item overlays remain separate steps.
+client state. It also adds native-derived level identities 3, 4, 9, and 17
+through 24 at the native 40-by-40 dungeon bounds, so level references can cross
+the same composed-world validation boundary. These rows intentionally provide
+only the current normalized geometry metadata; blocked-cell generation and the
+remaining Hellfire quest, monster, and item catalogs remain separate migrations.
 The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire monster

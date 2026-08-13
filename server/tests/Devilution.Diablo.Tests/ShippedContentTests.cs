@@ -46,6 +46,10 @@ public sealed class ShippedContentTests
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
+        Assert.Equal(
+            [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],
+            activation.Simulation.WorldState.World!.Levels.Select(level => level.LevelId));
+        Assert.True(activation.Simulation.WorldState.World!.IsWalkable(24, 39, 39));
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);
