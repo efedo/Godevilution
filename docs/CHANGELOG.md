@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Inferno (`unique_id=1035`) through schema 0.94,
+  reusing the validated Long Sword base item with fire damage, light, mana,
+  and fire-resistance powers.
+
 - Externalize Hellfire The Falcon's Talon (`unique_id=1034`) through schema
   0.93, including its native Scimitar base item with fast-attack, to-hit,
   damage-curse, and dexterity powers.

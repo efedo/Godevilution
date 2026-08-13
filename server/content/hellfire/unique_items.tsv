@@ -122,3 +122,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1034	The Falcon's Talon	134	15	7867	TOHIT	20	20
 1034	The Falcon's Talon	134	15	7867	DAMP_CURSE	33	33
 1034	The Falcon's Talon	134	15	7867	DEX	10	10
+1035	Inferno	131	17	34600	FIREDAM	2	12
+1035	Inferno	131	17	34600	LIGHT	3	3
+1035	Inferno	131	17	34600	MANA	20	20
+1035	Inferno	131	17	34600	FIRERES	80	80
