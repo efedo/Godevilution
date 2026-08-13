@@ -223,6 +223,10 @@ native normal and special attack accuracy. Normal autonomous attacks apply the
 native level-delta, armor, and minimum-hit formula on the server; clients never
 resolve these rolls. Zero values retain the additive compatibility fallback.
 
+`MonsterSnapshot.native_ai` field 43 carries the validated native `MonsterAIID`
+dispatch identity. The server owns AI execution; clients do not dispatch
+behavior from this metadata.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

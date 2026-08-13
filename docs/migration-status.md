@@ -64,6 +64,10 @@ Status date: 2026-08-13
   remain incremental; native acid resistance is now externalized as a typed
   acid damage channel and persisted through encounters, snapshots, saves,
   hashes, and protocol field 36.
+- Those same type rows now carry validated native `MonsterAIID` dispatch
+  identities in schema 1.79; identity crosses authoritative targets,
+  snapshots, saves, protocol field 43, and canonical hashes while behavior
+  dispatch remains server-owned and incremental.
 - Usable, identified equipment with native `TripleDemonDamage` now triples
   authoritative physical damage only against externally classified demons;
   the demon capability persists through snapshots, saves, hashes, and protocol
@@ -121,6 +125,11 @@ Status date: 2026-08-13
 - Monster-type normal and special attack accuracy are now validated in schema
   1.78; Hellfire normal autonomous attacks use the native level, armor, and
   minimum-hit formula, with accuracy persisted through snapshots and protocol.
+- Monster native `MonsterAIID` identities are now validated in schema 1.79 from
+  the retained native Hellfire `monstdat.tsv` rows and persisted through
+  authoritative targets, snapshots, saves, protocol field 43, and canonical
+  hashes. AI-specific special behaviors remain incremental and are not inferred
+  by clients.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

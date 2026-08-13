@@ -715,6 +715,7 @@ public sealed class DiabloCombatCommandProcessor
             experienceReward: target.ExperienceReward,
             toHit: target.ToHit,
             toHitSpecial: target.ToHitSpecial,
+            nativeAi: target.NativeAi,
             demon: target.IsDemon,
             animal: target.IsAnimal,
             knockback: target.HasKnockback);

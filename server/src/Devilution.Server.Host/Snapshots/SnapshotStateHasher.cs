@@ -280,6 +280,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.ToHit);
                     hasher.AppendInt32(monster.ToHitSpecial);
                 }
+                if (!string.IsNullOrEmpty(monster.NativeAi)) {
+                    hasher.AppendString("godevilution-monster-native-ai-v1");
+                    hasher.AppendString(monster.NativeAi);
+                }
             }
         }
 

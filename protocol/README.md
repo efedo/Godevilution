@@ -327,6 +327,9 @@ Windows toolchain command.
   accuracy at the autonomous attack boundary; clients never resolve monster
   hit rolls. Zero values preserve the additive compatibility fallback for
   older hand-built targets and peers.
+- `MonsterSnapshot.native_ai` field 43 carries the validated native
+  `MonsterAIID` dispatch identity. The server owns AI execution; clients treat
+  this as state metadata and do not dispatch behavior from it.
 
 ## Identity Note
 

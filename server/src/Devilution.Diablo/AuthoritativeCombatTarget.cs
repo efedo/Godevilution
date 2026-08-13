@@ -48,7 +48,8 @@ public sealed class AuthoritativeCombatTarget
         bool knockback = false,
         uint experienceReward = 0,
         int toHit = 0,
-        int toHitSpecial = 0)
+        int toHitSpecial = 0,
+        string nativeAi = "")
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -66,6 +67,9 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(experienceReward));
         if (toHit is < 0 or > 255 || toHitSpecial is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(toHit));
+        if (!string.IsNullOrEmpty(nativeAi)
+            && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
+            throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -107,6 +111,7 @@ public sealed class AuthoritativeCombatTarget
         ExperienceReward = experienceReward;
         ToHit = toHit;
         ToHitSpecial = toHitSpecial;
+        NativeAi = nativeAi;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -195,6 +200,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native special-attack chance to hit imported from active monster data. */
     public int ToHitSpecial { get; }
+
+    /** Native MonsterAIID dispatch identity imported from validated content. */
+    public string NativeAi { get; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }

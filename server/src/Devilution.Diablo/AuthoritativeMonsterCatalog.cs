@@ -107,6 +107,10 @@ public sealed class AuthoritativeMonsterCatalog
             var toHitSpecial = row.TryGet("to_hit_special", out _)
                 ? row.OptionalInt32("to_hit_special")
                 : monsterType?.ToHitSpecial ?? 0;
+            var nativeAi = row.TryGet("native_ai", out var nativeAiValue)
+                && !string.IsNullOrWhiteSpace(nativeAiValue)
+                ? nativeAiValue
+                : monsterType?.NativeAi ?? string.Empty;
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
@@ -194,6 +198,7 @@ public sealed class AuthoritativeMonsterCatalog
                 experienceReward: experienceReward,
                 toHit: toHit,
                 toHitSpecial: toHitSpecial,
+                nativeAi: nativeAi,
                 animal: animal,
                 knockback: knockback);
         }).ToArray();

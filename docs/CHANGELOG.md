@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+## Unreleased
+
+- Add schema 1.79 native monster AI identities, validated from the native
+  `monstdat.tsv` catalog and carried through authoritative state, snapshots,
+  protocol field 43, replay fixtures, and canonical hashes.
+
 ## 2026-08-13
 
 - Extend the authoritative reconnect soak to twelve consecutive resume cycles
@@ -45,6 +51,9 @@ All notable changes to this fork are documented below.
   1.78 and apply the native normal-attack level, armor, and minimum-hit formula
   at the authoritative autonomous attack boundary, retaining the legacy global
   fallback for hand-built targets.
+- Externalize native monster `MonsterAIID` dispatch identities through schema
+  1.79, validating them from native Hellfire data and carrying them through
+  authoritative state, protocol, saves, replay fixtures, and canonical hashes.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

@@ -118,6 +118,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
                 ExperienceReward = 77,
                 ToHit = 61,
                 ToHitSpecial = 43,
+                NativeAi = "SkeletonRanged",
             },
         ]);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -142,6 +143,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(9, target.DeathAnimationTicks);
         Assert.Equal(77U, target.ExperienceReward);
         Assert.Equal((61, 43), (target.ToHit, target.ToHitSpecial));
+        Assert.Equal("SkeletonRanged", target.NativeAi);
         Assert.Equal(2, target.MinDamage);
         Assert.Equal(3, target.MaxDamage);
     }

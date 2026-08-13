@@ -1566,6 +1566,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.False(copy.IsDiablo);
         Assert.Equal(target.DeathAnimationTicks, copy.DeathAnimationTicks);
         Assert.Equal((target.ToHit, target.ToHitSpecial), (copy.ToHit, copy.ToHitSpecial));
+        Assert.Equal(target.NativeAi, copy.NativeAi);
     }
 
     [Fact]

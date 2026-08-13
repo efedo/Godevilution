@@ -50,11 +50,22 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native special-attack chance to hit before level, difficulty, and armor adjustments. */
     public int ToHitSpecial { get; init; }
+
+    /** Native MonsterAIID dispatch identity used by incremental authoritative AI ports. */
+    public string NativeAi { get; init; } = "Zombie";
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
 public sealed class AuthoritativeMonsterTypeCatalog
 {
+    private static readonly HashSet<string> ValidNativeAis = new(StringComparer.Ordinal) {
+        "Acid", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
+        "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "GoatMelee", "GoatRanged",
+        "Golem", "Lich", "Magma", "Mega", "Necromorb", "Psychorb", "Rhino", "Scavenger",
+        "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Storm",
+        "Succubus", "Torchant", "Zombie",
+    };
+
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitions;
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitionsByNativeId;
     private readonly HashSet<uint> ambiguousNativeIds;
@@ -88,6 +99,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.ExperienceReward > 1_000_000
                 || definition.ToHit is < 0 or > 255
                 || definition.ToHitSpecial is < 0 or > 255
+                || !IsValidNativeAi(definition.NativeAi)
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -105,6 +117,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
 
     public bool TryGet(uint monsterId, out AuthoritativeMonsterTypeDefinition definition)
         => definitions.TryGetValue(monsterId, out definition!);
+
+    public static bool IsValidNativeAi(string nativeAi)
+        => !string.IsNullOrWhiteSpace(nativeAi) && ValidNativeAis.Contains(nativeAi);
 
     /** Returns validated monster types whose native dungeon-level range includes the level. */
     public IReadOnlyList<AuthoritativeMonsterTypeDefinition> GetAvailableForDungeonLevel(
@@ -164,6 +179,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 ExperienceReward = row.OptionalUInt32("experience_reward"),
                 ToHit = row.OptionalInt32("to_hit"),
                 ToHitSpecial = row.OptionalInt32("to_hit_special"),
+                NativeAi = row.TryGet("native_ai", out var nativeAi)
+                    && !string.IsNullOrWhiteSpace(nativeAi)
+                    ? nativeAi
+                    : "Zombie",
             }));
     }
 

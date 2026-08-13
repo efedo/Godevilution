@@ -454,6 +454,8 @@ message MonsterSnapshot {
 	int32 to_hit = 41;
 	// Immutable native special-attack chance to hit before runtime adjustments.
 	int32 to_hit_special = 42;
+	// Native MonsterAIID dispatch identity; clients do not execute AI behavior.
+	string native_ai = 43;
 }
 
 message WorldItemSnapshot {

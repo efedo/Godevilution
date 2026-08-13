@@ -203,6 +203,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             experienceReward: spawn.Definition.ExperienceReward,
             toHit: spawn.Definition.ToHit,
             toHitSpecial: spawn.Definition.ToHitSpecial,
+            nativeAi: spawn.Definition.NativeAi,
             knockback: spawn.Definition.Knockback);
     }
 
