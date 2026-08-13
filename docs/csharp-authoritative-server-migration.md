@@ -549,7 +549,8 @@ progress and completion state.
 External quest-type route levels now also activate `QUEST_INIT` rows when the
 server enters the matching level, with explicit single-player/multiplayer mode
 selection rather than participant-count inference.
-Multiplayer activation leaves pool exclusions disabled.
+Multiplayer activation leaves pool exclusions disabled and skips quest types
+marked `single_player_only`.
 Linked quest objects may declare a validated progress amount; authoritative
 activation applies and clamps that amount instead of assuming one progress point.
 

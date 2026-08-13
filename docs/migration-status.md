@@ -678,7 +678,8 @@ memorized-source admission, and typed status projection.
 Content schema 0.66 adds validated quest pools and native set-level names and
 restores stable set-level identities in quest type rows. Single-player
 activation now applies the deterministic pool exclusions to server-owned quest
-state, while multiplayer activation preserves the full pool. Quest state also
+state, while multiplayer activation preserves the full pool and skips quest
+types marked `single_player_only`. Quest state also
 preserves native initial/active/done and quest-log flags plus optional route
 activation, `_qvar1`, `_qvar2`, `_qmsg`, monster-completion triggers, and linked
 object progress amounts through the same

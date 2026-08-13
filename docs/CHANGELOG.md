@@ -26,6 +26,9 @@ All notable changes to this fork are documented below.
   authoritative player enters the configured level, using explicit session
   mode to select single-player or multiplayer routing.
 
+- Honor `single_player_only` when activating externally routed quests in
+  multiplayer sessions.
+
 - Externalize linked-object quest progress amounts. Object activation now uses
   validated `quest_progress` data and clamps progress at the quest requirement,
   with the rule preserved through snapshots, saves, protocol field 14, and

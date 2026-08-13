@@ -139,7 +139,8 @@ activate linked objects, native lifecycle/log flags are retained, and the state
 is retained by snapshots and saves.
 Initial quest rows activate from their validated native route level when an
 authoritative player enters that level; explicit session mode selects the
-single-player or multiplayer route.
+single-player or multiplayer route, and multiplayer skips quest types marked
+`single_player_only`.
 
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
