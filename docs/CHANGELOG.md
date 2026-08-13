@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Wicked Axe (`unique_id=1042`) through schema 1.1,
+  reusing the validated Large Axe base item with to-hit, dexterity,
+  vitality-curse, hit-curse, and indestructibility powers.
+
 - Externalize Hellfire The Celestial Axe (`unique_id=1041`) through schema 1.0,
   including its native Battle Axe base item with no-strength requirement,
   to-hit, life, and strength-curse powers.
