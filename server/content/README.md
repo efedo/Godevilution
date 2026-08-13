@@ -101,7 +101,10 @@ same composition and activation boundary; the complete Hellfire monster
 catalog is still pending.
 It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
-is a separate normalized row.
+is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its
+ring base item are also externalized with native attribute, light, recovery,
+and trap-resistance powers; the remaining Hellfire item catalog is still
+incremental.
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
 

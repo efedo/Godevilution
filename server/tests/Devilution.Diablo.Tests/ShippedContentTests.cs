@@ -70,6 +70,15 @@ public sealed class ShippedContentTests
         Assert.Equal(16650, crown.Value);
         Assert.Equal(15, crown.ArmorClass);
         Assert.Equal(0x00000002U, crown.Flags);
+        var band = hellfireItems.GenerateUnique(1004, 0x12345678, 1);
+        Assert.Equal(1004, band.UniqueId);
+        Assert.Equal(8000, band.Value);
+        Assert.Equal(2, band.PlusStrength);
+        Assert.Equal(2, band.PlusMagic);
+        Assert.Equal(2, band.PlusDexterity);
+        Assert.Equal(2, band.PlusVitality);
+        Assert.Equal(2, band.PlusLight);
+        Assert.Equal(0x00200000U | 0x10000000U, band.Flags);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

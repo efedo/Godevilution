@@ -1,2 +1,6 @@
 unique_id	name	base_item_id	min_level	value	power	value1	value2
 1003	The Undead Crown	111	1	16650	RNDSTEALLIFE	0	0
+1004	Empyrean Band	113	1	8000	ATTRIBS	2	2
+1004	Empyrean Band	113	1	8000	LIGHT	2	2
+1004	Empyrean Band	113	1	8000	FASTRECOVER	1	1
+1004	Empyrean Band	113	1	8000	ABSHALFTRAP	0	0
