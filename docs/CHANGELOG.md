@@ -37,6 +37,9 @@ All notable changes to this fork are documented below.
 - Extend live Godot protocol coverage through the Monk's server-owned Search
   ability, including explicit class-ability source validation and typed status
   projection with authoritative duration.
+- Extend live Godot protocol coverage through the Barbarian's server-owned Rage
+  ability, including explicit class-ability source validation and active
+  controller projection with server-owned life state.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,

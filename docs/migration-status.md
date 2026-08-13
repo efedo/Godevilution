@@ -12,7 +12,7 @@ Status date: 2026-08-12
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
-| Godot client | Complete for protocol-boundary demonstrations, including typed Monk Search, Rogue Trap Disarm, and Etherealize presentation, live Monk Search, Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
+| Godot client | Complete for protocol-boundary demonstrations, including typed Monk Search, Rogue Trap Disarm, and Etherealize presentation, live Barbarian Rage, Monk Search, Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
@@ -609,7 +609,9 @@ Content schema 0.39 adds stable spell ID `22` for Hellfire Rage (`SpellID` `22`)
 behavior uses typed controller value `34`: the server preserves the native
 character-level active and cooldown durations, rejects recasts while either
 phase exists, applies the Q6 self-damage floor at cooldown expiry, and carries
-the controller phase and remaining ticks through snapshots and protocol.
+the controller phase and remaining ticks through snapshots and protocol. The
+live Godot protocol suite now verifies the Barbarian class loadout, explicit
+ability source, active controller projection, and server-owned life boundary.
 
 Content schema 0.40 adds stable spell ID `31` for Elemental (`SpellID` `29`). Its external
 behavior uses typed projectile value `35`: the server preserves the native
