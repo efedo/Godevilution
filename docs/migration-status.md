@@ -12,7 +12,7 @@ Status date: 2026-08-12
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
-| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm presentation, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
+| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm and Etherealize presentation, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
@@ -35,6 +35,8 @@ Status date: 2026-08-12
 - Golem death-animation timing is externalized from the native 12-frame data;
   remaining terminal ticks are server-owned and deterministic through minion
   cleanup, snapshots, saves, hashes, and protocol projection.
+- Etherealize status state is projected as a typed server-owned effect and
+  surfaced by the Godot HUD without client-side immunity or timing logic.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges

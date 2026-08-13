@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
   Etherealize (stable spell ID 53, native `SpellID` 26), including its
   level-scoped status, transition cleanup, protocol/snapshot/hash persistence,
   and monster-damage immunity.
+- Surface the authoritative Etherealize status in the Godot HUD and extend
+  client-model regression coverage for its typed protocol projection.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
