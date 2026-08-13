@@ -40,7 +40,8 @@ Status date: 2026-08-12
 - The checked-in Hellfire pack selects the native game variant through a
   validated `combat.tsv` overlay, adds native-derived dungeon level identities
   3, 4, 9, and 17 through 24 with normalized 40-by-40 bounds, and carries a
-  native-derived encounter set plus the Undead Crown, Empyrean Band, and
+  native-derived encounter set plus the Undead Crown, Empyrean Band, Optic
+  Amulet, Ring of Truth, and
   Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -645,6 +646,11 @@ Stable player loadouts, saves, and replay state now retain the authoritative
 stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
+
+Content schema 0.61 adds native-derived Hellfire Optic Amulet and Ring of Truth
+base-item and unique definitions. Their item identities, values, native indexes,
+and unique powers cross the same validated overlay and activation boundary as
+the earlier Hellfire item slice.
 
 Content schema 0.60 completes validated `consumable_misc_id` spell mappings for
 native rune sources. The base pack maps Rune of Lightning ID `48` to stable

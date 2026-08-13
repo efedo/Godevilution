@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.61 with native-derived Hellfire
+  Optic Amulet and Ring of Truth item and unique definitions, including their
+  base-item identities and authoritative unique powers.
+
 - Advance the Diablo content schema to 0.59 with external mappings for Rune of
   Lightning, Greater Rune of Lightning, Greater Rune of Fire, and Rune of Stone
   to existing authoritative Lightning Wall, Nova, Immolation, and Stone Curse
