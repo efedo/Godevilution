@@ -95,6 +95,9 @@ The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire monster
 catalog is still pending.
+It also adds the normalized Undead Crown base item and unique definition
+(`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
+is a separate normalized row.
 
 `class_loadouts.tsv` starting Gold is materialized as canonical inventory state:
 the first pile uses native cell 30, values above the configured maximum split

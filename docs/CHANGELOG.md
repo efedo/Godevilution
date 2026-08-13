@@ -20,6 +20,8 @@ All notable changes to this fork are documented below.
   Hellfire world and catalog metadata separate for later migration slices.
 - Expand the native-derived Hellfire encounter set and validate monster
   identity, stats, and faction through composed Diablo activation.
+- Add the Hellfire Undead Crown as normalized base/unique content with
+  deterministic catalog-generation coverage.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
