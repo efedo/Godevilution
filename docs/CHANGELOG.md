@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gnarled Root (`unique_id=1052`) through schema 1.11,
+  reusing the validated Spiked Club base item with to-hit, damage, dexterity,
+  magic, all-resistance, and armor-curse powers.
+
 - Externalize Hellfire Baranar's Star (`unique_id=1051`) through schema 1.10,
   adding its native Morning Star base item with to-hit, damage, attack-speed,
   vitality, dexterity-curse, and durability powers.

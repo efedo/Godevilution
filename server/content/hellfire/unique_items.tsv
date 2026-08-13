@@ -195,3 +195,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1051	Baranar's Star	145	5	6850	VIT	4	4
 1051	Baranar's Star	145	5	6850	DEX_CURSE	4	4
 1051	Baranar's Star	145	5	6850	SETDUR	60	60
+1052	Gnarled Root	110	9	9820	TOHIT	20	20
+1052	Gnarled Root	110	9	9820	DAMP	300	300
+1052	Gnarled Root	110	9	9820	DEX	10	10
+1052	Gnarled Root	110	9	9820	MAG	5	5
+1052	Gnarled Root	110	9	9820	ALLRES	10	10
+1052	Gnarled Root	110	9	9820	AC_CURSE	10	10

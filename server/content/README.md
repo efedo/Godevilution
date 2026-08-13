@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.10.0` schema in
+It declares its identity and `devilution.diablo@1.11.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -208,6 +208,8 @@ The Celestial Star (`unique_id=1050`) adds its native Flail base item with
 no-strength, light, damage-modifier, and armor-curse powers.
 Baranar's Star (`unique_id=1051`) adds its native Morning Star base item with
 to-hit, damage, attack-speed, vitality, dexterity-curse, and durability powers.
+Gnarled Root (`unique_id=1052`) reuses the validated Spiked Club base item with
+to-hit, damage, dexterity, magic, all-resistance, and armor-curse powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -795,7 +797,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.10.0"
+      "version": "1.11.0"
   },
   "dependencyConstraints": [
     {
@@ -827,7 +829,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.10.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.11.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

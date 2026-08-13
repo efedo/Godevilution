@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.10.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.11.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.10.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.11.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -761,6 +761,22 @@ public sealed class ShippedContentTests
         Assert.Equal(-4, baranarsStar.PlusDexterity);
         Assert.Equal(60, baranarsStar.Durability);
         Assert.Equal(60, baranarsStar.MaxDurability);
+        var gnarledRoot = hellfireItems.GenerateUnique(1052, 0x12345678, 9);
+        Assert.Equal(1052, gnarledRoot.UniqueId);
+        Assert.Equal(9820, gnarledRoot.Value);
+        Assert.Equal(139, gnarledRoot.ItemIndex);
+        Assert.Equal(3, gnarledRoot.MinDamage);
+        Assert.Equal(6, gnarledRoot.MaxDamage);
+        Assert.Equal(18, gnarledRoot.MinimumStrength);
+        Assert.Equal(1, gnarledRoot.EquipLocation);
+        Assert.Equal(20, gnarledRoot.PlusToHit);
+        Assert.Equal(300, gnarledRoot.PlusDamage);
+        Assert.Equal(10, gnarledRoot.PlusDexterity);
+        Assert.Equal(5, gnarledRoot.PlusMagic);
+        Assert.Equal(10, gnarledRoot.PlusFireResistance);
+        Assert.Equal(10, gnarledRoot.PlusLightningResistance);
+        Assert.Equal(10, gnarledRoot.PlusMagicResistance);
+        Assert.Equal(-10, gnarledRoot.PlusArmorClass);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
