@@ -554,6 +554,10 @@ marked `single_player_only`.
 Linked quest objects may declare a validated progress amount; authoritative
 activation applies and clamps that amount instead of assuming one progress point.
 
+Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
+Encounter rows may override those values per instance; otherwise the validated
+type metadata supplies the authoritative resistance projection.
+
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster
 density, multiplayer multiplier, and trap-percentage rules to the server-owned

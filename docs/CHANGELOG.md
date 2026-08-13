@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize native monster resistance percentages through validated monster
+  type metadata; encounter rows inherit type resistances unless they provide
+  an explicit instance override, with the content schema advanced to 0.67.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,
