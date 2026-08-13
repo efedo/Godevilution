@@ -110,6 +110,8 @@ Status date: 2026-08-13
 - Procedural monster targets can now inherit validated `monsters.tsv` drop
   policies through the item/unique catalogs; generated world-item IDs, seeds,
   values, and unique flags are deterministic and server-owned.
+- Procedural target conversion now also preserves the validated monster
+  Berserk-immunity capability used by authoritative spell targeting.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

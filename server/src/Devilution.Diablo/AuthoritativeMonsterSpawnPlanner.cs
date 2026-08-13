@@ -190,6 +190,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             acidResistance: spawn.Definition.AcidResistance,
             stoneCurseImmune: spawn.Definition.StoneCurseImmune,
             undead: spawn.Definition.Undead,
+            berserkImmune: spawn.Definition.BerserkImmune,
             minDamage: spawn.Definition.MinimumDamage,
             maxDamage: spawn.Definition.MaximumDamage,
             minDamageSpecial: spawn.Definition.MinimumSpecialDamage,

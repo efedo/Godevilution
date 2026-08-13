@@ -111,6 +111,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
             CreateType(2, 1, 1, 4, 4, 2, 3) with {
                 ArmorClass = 7,
                 Undead = true,
+                BerserkImmune = true,
                 FireResistance = 25,
                 Knockback = true,
             },
@@ -132,6 +133,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(25, target.FireResistance);
         Assert.Equal(6, target.AggroRange);
         Assert.True(target.IsUndead);
+        Assert.True(target.BerserkImmune);
         Assert.True(target.HasKnockback);
         Assert.Equal(2, target.MinDamage);
         Assert.Equal(3, target.MaxDamage);
