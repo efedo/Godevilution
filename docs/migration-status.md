@@ -7,7 +7,7 @@ Status date: 2026-08-12
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, and resume precedence | Broaden reconnect/soak compatibility tests and eventually separate content/ruleset identity in a new protocol version |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state | Add Hellfire activation, broader quest selection, and longer soak fixtures |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire overlay | Add an end-to-end Hellfire replay, broader quest selection, and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
