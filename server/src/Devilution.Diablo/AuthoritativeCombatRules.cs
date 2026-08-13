@@ -183,6 +183,34 @@ public sealed class AuthoritativeCombatRules
         return hitRoll < hitChancePercent;
     }
 
+    /** Mirrors native physical hit chance after armor and piercing rules. */
+    public int ResolvePhysicalHitChance(
+        int attackerToHit,
+        int targetArmorClass,
+        int armorPiercingBonus = 0,
+        bool barbarianMelee = false)
+    {
+        var effectiveArmor = targetArmorClass;
+        if (armorPiercingBonus > 0) {
+            if (GameVariant == DiabloGameVariant.Hellfire) {
+                var armorPiercingShift = armorPiercingBonus - 1;
+                effectiveArmor = armorPiercingShift > 0
+                    ? effectiveArmor >> armorPiercingShift
+                    : effectiveArmor - effectiveArmor / 4;
+            }
+            if (barbarianMelee)
+                effectiveArmor -= targetArmorClass / 8;
+        }
+        effectiveArmor = Math.Max(0, effectiveArmor);
+        var piercing = GameVariant == DiabloGameVariant.Diablo
+            ? armorPiercingBonus
+            : 0;
+        return Math.Clamp(
+            checked(attackerToHit + piercing - effectiveArmor),
+            5,
+            95);
+    }
+
     public int ResolveDamage(int baseDamage, int armorClass, AuthoritativeDamageType damageType, AuthoritativeCombatTarget target)
     {
         if (baseDamage <= 0)

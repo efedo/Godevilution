@@ -139,6 +139,34 @@ public sealed class AuthoritativeCombatRulesTests
         Assert.Equal(4, rules.ResolveAttackDamage(3, armorClass: 2, seed: 1));
     }
 
+    [Fact]
+    public void PhysicalHitChanceSubtractsArmorAndClampsToNativeBounds()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+
+        Assert.Equal(5, rules.ResolvePhysicalHitChance(20, targetArmorClass: 30));
+        Assert.Equal(65, rules.ResolvePhysicalHitChance(70, targetArmorClass: 10, armorPiercingBonus: 5));
+        Assert.Equal(95, rules.ResolvePhysicalHitChance(200, targetArmorClass: 0));
+        Assert.Equal(57, rules.ResolvePhysicalHitChance(
+            70,
+            targetArmorClass: 16,
+            armorPiercingBonus: 1,
+            barbarianMelee: true));
+    }
+
+    [Fact]
+    public void HellfirePhysicalHitChanceDoesNotApplyArmorPiercingBonus()
+    {
+        var rules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            gameVariant: DiabloGameVariant.Hellfire);
+
+        Assert.Equal(62, rules.ResolvePhysicalHitChance(70, targetArmorClass: 10, armorPiercingBonus: 1));
+        Assert.Equal(70, rules.ResolvePhysicalHitChance(70, targetArmorClass: 10, armorPiercingBonus: 50));
+    }
+
     private static AuthoritativeItemDefinition CreateEarDefinition(
         int nativeItemIndex,
         int miscId)

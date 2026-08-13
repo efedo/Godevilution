@@ -31,6 +31,7 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FastAttackFlag = 1U << 18;
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
+    private const uint NativeBarbarianClassId = 5;
 
     private static readonly int[] ChargedBoltPath = [
         -1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0,
@@ -540,17 +541,24 @@ public sealed class DiabloCombatCommandProcessor
         var playerClass = GetPlayerClass(player);
         // Legacy hand-built fixtures may omit class-derived attributes; retain
         // the historical global hit fallback for those compatibility templates.
-        var classHitChance = playerClass is null
-            || player.Attributes.Dexterity.Current == 0
+        var usesNativeClassToHit = playerClass is not null
+            && player.Attributes.Dexterity.Current != 0;
+        var classHitChance = !usesNativeClassToHit
             ? rules.HitChancePercent
-            : playerClass.CalculatePhysicalToHit(
+            : playerClass!.CalculatePhysicalToHit(
                 player.CharacterLevel,
                 player.Attributes.Dexterity.Current,
                 ranged);
-        var effectiveHitChance = Math.Clamp(
-            checked(classHitChance + hitBonus + armorPiercingBonus),
-            0,
-            100);
+        var effectiveHitChance = usesNativeClassToHit
+            ? rules.ResolvePhysicalHitChance(
+                checked(classHitChance + hitBonus),
+                target.ArmorClass,
+                armorPiercingBonus,
+                barbarianMelee: playerClass!.ClassId == NativeBarbarianClassId && !ranged)
+            : Math.Clamp(
+                checked(classHitChance + hitBonus + armorPiercingBonus),
+                0,
+                100);
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
         var criticalDamage = damage;
         if (attackHit

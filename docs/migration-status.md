@@ -103,6 +103,11 @@ Status date: 2026-08-13
   or `level + dexterity`, respectively, plus each class's external base
   modifier. Legacy hand-built templates with uninitialized dexterity retain the
   global-hit compatibility fallback.
+- Initialized physical hit resolution now subtracts target armor and clamps to
+  the native 5–95 range. Base Diablo adds `PlusEnemyArmorClass` to to-hit;
+  Hellfire applies its native armor shift/quarter rule, including the
+  Barbarian melee reduction. Legacy uninitialized templates remain on the
+  compatibility path.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each

@@ -10,6 +10,10 @@ All notable changes to this fork are documented below.
   content players use `level + dexterity / 2` for melee or `level + dexterity`
   for ranged attacks, with the class's external base modifier and a preserved
   global-hit fallback for legacy templates without class attributes.
+- Resolve initialized physical hits against target armor using native 5–95
+  clamping, base-game armor-piercing addition, Hellfire armor scaling, and the
+  Barbarian melee armor reduction; legacy uninitialized templates retain their
+  compatibility hit path.
 - Apply the native class `CriticalStrike` rule to eligible authoritative player
   attacks: a level-based post-hit roll doubles physical damage before armor and
   downstream class/item effects, with the native RNG draw order preserved.

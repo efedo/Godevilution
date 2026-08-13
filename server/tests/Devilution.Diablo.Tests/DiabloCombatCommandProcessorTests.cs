@@ -320,6 +320,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void InitializedClassPhysicalHitSubtractsTargetArmorBeforeNativeClamp()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(world, playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 0,
+            characterLevel: 1,
+            attributes: classes.GetRequired(0).CreateStartingAttributes());
+
+        var armored = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(armored.Succeeded);
+        Assert.Equal(100, target.HitPoints);
+
+        target.ArmorClass = 0;
+        var unarmored = processor.Execute(player, new DiabloAttackIntent(9), 2);
+
+        Assert.True(unarmored.Succeeded);
+        Assert.Equal(80, target.HitPoints);
+    }
+
+    [Fact]
     public void TripleDemonDamageMultipliesOnlyDemonHitsFromUsableEquipment()
     {
         var demon = new AuthoritativeCombatTarget(

@@ -33,6 +33,9 @@ the native class adjustment applied before each spell's minimum mana cost.
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
 equipment bonuses and deterministic hit resolution.
+That resolution subtracts target armor and clamps to native 5–95%; base Diablo
+adds `plus_enemy_armor_class` to to-hit, while Hellfire applies its native
+armor-shift/quarter rule and Barbarian melee reduction.
 `self_healing_spell_percent` externalizes the native Warrior/Monk/Barbarian
 double and Rogue/Bard half-again self-Healing modifiers.
 `heal_other_spell_percent` separately externalizes Heal Other's class modifier;
