@@ -40,6 +40,9 @@ All notable changes to this fork are documented below.
   more validated fire, storm, and demon identities, including supported
   special-damage and resistance baselines.
 
+- Extend the Hellfire monster-type catalog through native ID 95 with twelve
+  more validated demon identities and their supported resistance baselines.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,
