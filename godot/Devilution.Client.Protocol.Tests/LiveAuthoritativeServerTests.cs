@@ -237,6 +237,84 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesRogueTrapDisarmAbilityOnArmedObject()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Trap-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.trap-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "0.57.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "objects.tsv",
+                      "keys": ["entity_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "objects.tsv"),
+                "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tactivated\tquest_id\teffect_kind\teffect_amount\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\n2001\t1\t1\t0\t1\t0\t0\tNone\t0\t0\t0\t0\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-rogue-trap-disarm", requestedClassId: 1));
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            var initial = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null);
+            var model = new AuthoritativeClientModel();
+            model.Apply(initial);
+            var player = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(1U, player.CharacterClassId);
+            Assert.Equal(28U, player.AbilitySpellId);
+            var trap = Assert.Single(model.Snapshot.Objects, @object => @object.EntityId == 2001);
+            Assert.True(trap.TrapArmed);
+
+            var sequence = client.Queue(new Command {
+                DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = trap.EntityId },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Rogue Trap Disarm was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; trap {trap.EntityId} was armed.");
+
+            var disarmed = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Objects
+                    .Single(@object => @object.EntityId == trap.EntityId).TrapArmed == false);
+            Assert.False(
+                Assert.Single(disarmed.Snapshot!.Objects, @object => @object.EntityId == trap.EntityId).TrapArmed);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
