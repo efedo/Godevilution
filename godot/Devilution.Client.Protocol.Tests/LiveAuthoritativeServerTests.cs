@@ -55,6 +55,33 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerProjectsTheCheckedInHellfireOverlayEncounter()
+    {
+        var hellfireRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "hellfire");
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            hellfireRoot);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-hellfire-overlay", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var monster = Assert.Single(
+            initial.Snapshot!.Monsters,
+            candidate => candidate.EntityId == 10);
+
+        Assert.Equal(2U, monster.MonsterId);
+        Assert.Equal(11, monster.MaxHitPoints);
+        Assert.True(monster.IsUndead);
+    }
+
+    [Fact]
     public async Task LiveServerConsumesTheExactDeclaredCastSource()
     {
         using var server = await StartedServer.StartAsync(
