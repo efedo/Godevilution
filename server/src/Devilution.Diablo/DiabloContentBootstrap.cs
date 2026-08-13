@@ -2,6 +2,19 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Optional server-owned encounter policy used during content activation. */
+public sealed record DiabloMonsterSpawnConfiguration(
+    int MaximumMonsters,
+    uint? LevelId = null)
+{
+    public DiabloMonsterSpawnConfiguration Validate()
+    {
+        if (MaximumMonsters < 0)
+            throw new ArgumentOutOfRangeException(nameof(MaximumMonsters));
+        return this;
+    }
+}
+
 /** Fully validated module-owned game state created from composed content. */
 public sealed record DiabloContentActivation
 {
@@ -67,7 +80,8 @@ public interface IDiabloContentBootstrap
     DiabloContentActivation Activate(
         ComposedContent content,
         uint randomSeed = 0,
-        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer);
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null);
 }
 
 /** First-party content activation kept entirely inside the Diablo module. */
@@ -91,9 +105,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
     public DiabloContentActivation Activate(
         ComposedContent content,
         uint randomSeed = 0,
-        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null)
     {
         ArgumentNullException.ThrowIfNull(content);
+        monsterSpawns?.Validate();
         if (content.Manifest.Schema is not null
             && content.Manifest.Schema != Schema) {
             throw new InvalidDataException(
@@ -295,10 +311,31 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 randomSeed);
         }
 
+        var defaultStartingLevelId = world?.DefaultStartingLevelId
+            ?? world?.Levels.FirstOrDefault()?.LevelId
+            ?? stableIds?.Resolve("level", "town")
+            ?? 0;
+        var monsterSpawnPlanner = world is not null
+            && monsterTypes is not null
+            && levelGeneration is not null
+            ? new AuthoritativeMonsterSpawnPlanner(world, monsterTypes, levelGeneration)
+            : null;
+        IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = monsters?.Targets;
+        if (monsterSpawns is not null) {
+            if (monsterSpawnPlanner is null)
+                throw new InvalidDataException(
+                    "Procedural monster spawning requires levels.tsv, level_generation.tsv, and monster_types.tsv.");
+            combatTargets = monsterSpawnPlanner.PlanCombatTargets(
+                monsterSpawns.LevelId ?? defaultStartingLevelId,
+                randomSeed,
+                gameMode == DiabloGameMode.Multiplayer,
+                monsterSpawns.MaximumMonsters);
+        }
+
         var rules = new DiabloStoreRules(pricing);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
-            CombatTargets = monsters?.Targets,
+            CombatTargets = combatTargets,
             Portals = portals,
             Objects = objects,
             Quests = quests,
@@ -316,15 +353,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             RandomSeed = randomSeed,
             GameMode = gameMode,
         });
-        var defaultStartingLevelId = world?.DefaultStartingLevelId
-            ?? world?.Levels.FirstOrDefault()?.LevelId
-            ?? stableIds?.Resolve("level", "town")
-            ?? 0;
-        var monsterSpawnPlanner = world is not null
-            && monsterTypes is not null
-            && levelGeneration is not null
-            ? new AuthoritativeMonsterSpawnPlanner(world, monsterTypes, levelGeneration)
-            : null;
         return new DiabloContentActivation(
             simulation,
             rules,

@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   separate.
 - Expose the spawn planner through validated Diablo content activation so the
   server adapter can consume it without bypassing module/data boundaries.
+- Convert planned placements into authoritative combat targets and add an
+  opt-in standalone-server path (`--procedural-monsters`, plus an optional
+  level override); static encounter rows remain the compatibility default.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

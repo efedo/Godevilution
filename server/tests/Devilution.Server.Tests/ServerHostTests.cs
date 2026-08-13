@@ -22,6 +22,8 @@ public sealed class ServerHostTests
         Assert.Null(ServerHostOptions.Defaults.StartingMana);
         Assert.Null(ServerHostOptions.Defaults.RandomSeed);
         Assert.Equal(AuthoritativeGameMode.Multiplayer, ServerHostOptions.Defaults.GameMode);
+        Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLimit);
+        Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLevelId);
     }
 
     [Fact]
@@ -44,7 +46,9 @@ public sealed class ServerHostTests
             "--starting-life", "4480",
             "--starting-mana", "640",
             "--game-mode", "single-player",
-            "--random-seed", "305419896"],
+            "--random-seed", "305419896",
+            "--procedural-monsters", "12",
+            "--procedural-monster-level", "24"],
             out var options,
             out var error);
 
@@ -62,6 +66,8 @@ public sealed class ServerHostTests
         Assert.Equal(640, options.StartingMana);
         Assert.Equal(AuthoritativeGameMode.SinglePlayer, options.GameMode);
         Assert.Equal(305419896U, options.RandomSeed);
+        Assert.Equal(12, options.ProceduralMonsterLimit);
+        Assert.Equal(24U, options.ProceduralMonsterLevelId);
     }
 
     [Theory]
@@ -72,12 +78,24 @@ public sealed class ServerHostTests
     [InlineData("--starting-life", "-1")]
     [InlineData("--starting-mana", "-1")]
     [InlineData("--random-seed", "4294967296")]
+    [InlineData("--procedural-monsters", "-1")]
+    [InlineData("--procedural-monster-level", "not-a-level")]
     [InlineData("--game-mode", "cooperative")]
     [InlineData("--unknown", "value")]
     public void RejectsInvalidOptions(string name, string value)
     {
         Assert.False(ServerHostOptions.TryParse([name, value], out _, out var error));
         Assert.NotEmpty(error);
+    }
+
+    [Fact]
+    public void RejectsAProceduralLevelWithoutAnEncounterLimit()
+    {
+        Assert.False(ServerHostOptions.TryParse(
+            ["--procedural-monster-level", "24"],
+            out _,
+            out var error));
+        Assert.Contains("--procedural-monsters", error, StringComparison.Ordinal);
     }
 
     [Fact]

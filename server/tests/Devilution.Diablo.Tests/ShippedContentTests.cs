@@ -64,6 +64,23 @@ public sealed class ShippedContentTests
             Assert.True(spawn.Definition.MinimumDungeonLevel <= 24);
             Assert.True(spawn.Definition.MaximumDungeonLevel >= 24);
         });
+        var proceduralActivation = DiabloModule.Instance.ContentBootstrap.Activate(
+            composed,
+            randomSeed: 0x1234,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterSpawns: new DiabloMonsterSpawnConfiguration(3, 24));
+        Assert.Equal(3, proceduralActivation.Simulation.WorldState.CombatTargets.Count);
+        Assert.All(
+            proceduralActivation.Simulation.WorldState.CombatTargets.Values,
+            target => {
+                Assert.InRange(
+                    target.EntityId,
+                    AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId,
+                    AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId + 2);
+                Assert.Equal(24U, target.LevelId);
+                Assert.True(target.HitPoints > 0);
+                Assert.True(target.MonsterId > 0);
+            });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
         var baseQuest = Assert.Single(activation.Simulation.WorldState.Quests.Values);

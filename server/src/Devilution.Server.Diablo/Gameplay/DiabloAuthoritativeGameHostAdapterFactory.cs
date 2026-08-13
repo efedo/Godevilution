@@ -39,7 +39,12 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     AuthoritativeGameMode.SinglePlayer => DiabloGameMode.SinglePlayer,
                     AuthoritativeGameMode.Multiplayer => DiabloGameMode.Multiplayer,
                     _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
-                });
+                },
+                playerStart.ProceduralMonsterLimit is int maximumMonsters
+                    ? new DiabloMonsterSpawnConfiguration(
+                        maximumMonsters,
+                        playerStart.ProceduralMonsterLevelId)
+                    : null);
         return new StoreSimulationExecutor(
             activatedContent,
             (sessionId, requestedClassId) => {

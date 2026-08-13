@@ -69,6 +69,8 @@ internal static class Program
             options.StartingMana) {
             RandomSeed = randomSeed,
             GameMode = options.GameMode,
+            ProceduralMonsterLimit = options.ProceduralMonsterLimit,
+            ProceduralMonsterLevelId = options.ProceduralMonsterLevelId,
         };
         var rulesetRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
             contentManifest,
@@ -112,6 +114,12 @@ internal static class Program
         Console.WriteLine($"Protocol schema: {options.ProtocolSchemaVersion}");
         Console.WriteLine($"Simulation RNG seed: {randomSeed}");
         Console.WriteLine($"Game mode: {options.GameMode}");
+        if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
+            Console.WriteLine(
+                $"Procedural monsters: max {proceduralMonsterLimit}"
+                + (options.ProceduralMonsterLevelId is uint levelId
+                    ? $" on level {levelId}"
+                    : " on the default starting level"));
         Console.WriteLine("Press Ctrl+C to stop.");
 
         using var cancellation = new CancellationTokenSource();

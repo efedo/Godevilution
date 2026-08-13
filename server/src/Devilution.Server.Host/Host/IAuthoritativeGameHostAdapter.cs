@@ -48,6 +48,12 @@ public sealed record AuthoritativePlayerStartConfiguration(
 
     public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.SinglePlayer;
 
+    /** Optional server-owned encounter replacement for the selected start level. */
+    public int? ProceduralMonsterLimit { get; init; }
+
+    /** Optional level override for the procedural encounter replacement. */
+    public uint? ProceduralMonsterLevelId { get; init; }
+
     public AuthoritativePlayerStartConfiguration Validate()
     {
         if (Life < 0)
@@ -56,6 +62,11 @@ public sealed record AuthoritativePlayerStartConfiguration(
             throw new ArgumentOutOfRangeException(nameof(Mana));
         if (!Enum.IsDefined(GameMode))
             throw new ArgumentOutOfRangeException(nameof(GameMode));
+        if (ProceduralMonsterLimit is < 0)
+            throw new ArgumentOutOfRangeException(nameof(ProceduralMonsterLimit));
+        if (ProceduralMonsterLevelId.HasValue && !ProceduralMonsterLimit.HasValue)
+            throw new InvalidOperationException(
+                "A procedural monster level requires a procedural monster limit.");
         return this;
     }
 }

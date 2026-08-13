@@ -77,6 +77,40 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Empty(planner.Plan(1, 2, multiplayer: false, maximumMonsters: 20));
     }
 
+    [Fact]
+    public void ConvertsPlacementsIntoAuthoritativeCombatTargets()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 3) with {
+                ArmorClass = 7,
+                Undead = true,
+                FireResistance = 25,
+                Knockback = true,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 4, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var target = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+
+        Assert.Equal(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, target.EntityId);
+        Assert.Equal(1U, target.LevelId);
+        Assert.Equal(2U, target.MonsterId);
+        Assert.Equal(4, target.HitPoints);
+        Assert.Equal(4, target.MaxHitPoints);
+        Assert.Equal(7, target.ArmorClass);
+        Assert.Equal(25, target.FireResistance);
+        Assert.True(target.IsUndead);
+        Assert.True(target.HasKnockback);
+        Assert.Equal(2, target.MinDamage);
+        Assert.Equal(3, target.MaxDamage);
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

@@ -16,6 +16,9 @@ public sealed record AuthoritativeMonsterSpawn(
  */
 public sealed class AuthoritativeMonsterSpawnPlanner
 {
+    /** Reserved entity range shared with the authoritative combat processor. */
+    public const uint FirstGeneratedMonsterEntityId = 0x10000000;
+
     private readonly AuthoritativeWorld world;
     private readonly AuthoritativeMonsterTypeCatalog monsterTypes;
     private readonly AuthoritativeLevelGenerationCatalog levelGeneration;
@@ -87,6 +90,46 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 attackDamage);
         }
         return spawns;
+    }
+
+    /**
+     * Converts planned placements into combat targets accepted by the
+     * authoritative simulation. Generated targets intentionally have no item
+     * drops or unique flags until those catalogs are part of spawn planning.
+     */
+    public IReadOnlyList<AuthoritativeCombatTarget> PlanCombatTargets(
+        uint levelId,
+        uint seed,
+        bool multiplayer,
+        int maximumMonsters)
+    {
+        var spawns = Plan(levelId, seed, multiplayer, maximumMonsters);
+        return spawns
+            .Select((spawn, index) => new AuthoritativeCombatTarget(
+                checked(FirstGeneratedMonsterEntityId + (uint)index),
+                spawn.PositionX,
+                spawn.PositionY,
+                spawn.HitPoints,
+                spawn.Definition.ArmorClass,
+                spawn.Definition.MaximumHitPoints,
+                spawn.LevelId,
+                spawn.Definition.MonsterId,
+                attackDamage: spawn.AttackDamage,
+                monsterLevel: spawn.Definition.MonsterLevel,
+                fireResistance: spawn.Definition.FireResistance,
+                lightningResistance: spawn.Definition.LightningResistance,
+                magicResistance: spawn.Definition.MagicResistance,
+                acidResistance: spawn.Definition.AcidResistance,
+                stoneCurseImmune: spawn.Definition.StoneCurseImmune,
+                undead: spawn.Definition.Undead,
+                minDamage: spawn.Definition.MinimumDamage,
+                maxDamage: spawn.Definition.MaximumDamage,
+                minDamageSpecial: spawn.Definition.MinimumSpecialDamage,
+                maxDamageSpecial: spawn.Definition.MaximumSpecialDamage,
+                demon: spawn.Definition.Demon,
+                animal: spawn.Definition.Animal,
+                knockback: spawn.Definition.Knockback))
+            .ToArray();
     }
 
     private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)

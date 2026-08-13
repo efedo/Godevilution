@@ -133,8 +133,13 @@ available at a requested dungeon level; procedural map layout and spawn
 placement remain separate migrations. Its server-owned spawn planner can now
 turn those candidates and validated level-density metadata into bounded,
 walkable, seed-stable placements. Diablo content activation exposes that
-planner to the server adapter without bypassing the validated content boundary;
-native map synthesis remains separate.
+planner to the server adapter without bypassing the validated content boundary.
+Passing `--procedural-monsters <n>` to the standalone server replaces static
+encounter rows with at most `n` generated targets on the default starting level;
+`--procedural-monster-level <id>` selects another validated level. The default
+still consumes static `monsters.tsv` rows, and generated targets intentionally
+do not synthesize drops or unique flags until those catalogs join spawn
+planning. Native map synthesis remains separate.
 Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class

@@ -32,6 +32,12 @@ public sealed record ServerHostOptions(
     /** Standalone servers are multiplayer unless a local single-player launch opts out. */
     public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.Multiplayer;
 
+    /** Optional bounded server-owned encounter replacement for the start level. */
+    public int? ProceduralMonsterLimit { get; init; }
+
+    /** Optional level override for the procedural encounter replacement. */
+    public uint? ProceduralMonsterLevelId { get; init; }
+
     public static ServerHostOptions Defaults { get; } = new(
         IPAddress.Loopback,
         6113,
@@ -154,6 +160,23 @@ public sealed record ServerHostOptions(
                 }
                 current = current with { GameMode = gameMode };
                 break;
+            case "--procedural-monsters":
+                if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var monsterLimit)
+                    || monsterLimit < 0) {
+                    options = current;
+                    error = $"'{value}' is not a valid procedural monster limit.";
+                    return false;
+                }
+                current = current with { ProceduralMonsterLimit = monsterLimit };
+                break;
+            case "--procedural-monster-level":
+                if (!uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var monsterLevelId)) {
+                    options = current;
+                    error = $"'{value}' is not a valid procedural monster level ID.";
+                    return false;
+                }
+                current = current with { ProceduralMonsterLevelId = monsterLevelId };
+                break;
             case "--save-root":
                 current = current with { SaveRoot = value };
                 break;
@@ -171,6 +194,12 @@ public sealed record ServerHostOptions(
             || string.IsNullOrWhiteSpace(current.ProtocolSchemaVersion)) {
             options = current;
             error = "Content, build, and protocol identity values cannot be empty.";
+            return false;
+        }
+        if (current.ProceduralMonsterLevelId.HasValue
+            && !current.ProceduralMonsterLimit.HasValue) {
+            options = current;
+            error = "A procedural monster level requires --procedural-monsters.";
             return false;
         }
 
@@ -214,6 +243,8 @@ public sealed record ServerHostOptions(
           --starting-mana <amount>     Override content-derived initial mana (Q6)
           --random-seed <uint32>       Deterministic simulation seed (default: generated)
           --game-mode <mode>           single-player or multiplayer (default: multiplayer)
+          --procedural-monsters <n>    Replace static encounters with at most n generated monsters
+          --procedural-monster-level <id> Level for generated encounters (default: start level)
           --save-root <directory>      Server-owned authoritative save directory
         """;
 }
