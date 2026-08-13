@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.78.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.79.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.78.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.79.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -365,6 +365,15 @@ public sealed class ShippedContentTests
         Assert.Equal(1, flamedart.FireMinDamage);
         Assert.Equal(6, flamedart.FireMaxDamage);
         Assert.NotEqual(0U, flamedart.Flags & 0x00000010U);
+        var fleshstinger = hellfireItems.GenerateUnique(1020, 0x12345678, 13);
+        Assert.Equal(1020, fleshstinger.UniqueId);
+        Assert.Equal(16500, fleshstinger.Value);
+        Assert.Equal(146, fleshstinger.ItemIndex);
+        Assert.Equal(15, fleshstinger.PlusDexterity);
+        Assert.Equal(40, fleshstinger.PlusToHit);
+        Assert.Equal(80, fleshstinger.PlusDamage);
+        Assert.Equal(37, fleshstinger.Durability);
+        Assert.Equal(37, fleshstinger.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

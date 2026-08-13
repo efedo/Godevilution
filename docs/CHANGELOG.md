@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Fleshstinger (`unique_id=1020`) through schema 0.79,
+  reusing the validated Long Bow base item with native dexterity, hit, damage,
+  and durability powers.
+
 - Externalize Hellfire Flamedart (`unique_id=1019`) through schema 0.78,
   including its native Hunter's Bow base item and fire-arrow, hit, and
   fire-resistance powers.

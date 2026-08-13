@@ -65,3 +65,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1019	Flamedart	124	10	14250	FIRE_ARROWS	1	6
 1019	Flamedart	124	10	14250	TOHIT	20	20
 1019	Flamedart	124	10	14250	FIRERES	40	40
+1020	Fleshstinger	122	13	16500	DEX	15	15
+1020	Fleshstinger	122	13	16500	TOHIT	40	40
+1020	Fleshstinger	122	13	16500	DAMP	80	80
+1020	Fleshstinger	122	13	16500	DUR	6	6
