@@ -9,6 +9,11 @@ All notable changes to this fork are documented below.
   object interaction, and their state persists through snapshots, saves,
   protocol field 6, and canonical hashes.
 
+- Preserve the native quest initial/active/done lifecycle and quest-log bit in
+  external quest rows, server transitions, snapshots, saves, protocol fields
+  7-8, and canonical hashes; refresh the affected deterministic replay
+  checkpoints.
+
 ## 2026-08-12
 
 - Advance the Diablo content schema to 0.66 with validated quest pools and

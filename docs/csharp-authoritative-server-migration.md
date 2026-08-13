@@ -538,7 +538,9 @@ to the server-owned module. Single-player activation now applies the native
 deterministic pool exclusions to mutable quest state, preserves the historical
 bad-seed discard behavior, rejects excluded quest progression and linked object
 use, and carries the state through snapshots, saves, protocol field 6, and
-canonical hashes. Multiplayer activation leaves pool exclusions disabled.
+canonical hashes. Quest rows and transitions also preserve the native
+initial/active/done lifecycle and quest-log bit through protocol fields 7-8.
+Multiplayer activation leaves pool exclusions disabled.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

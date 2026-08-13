@@ -135,7 +135,8 @@ during activation.
 The module's quest-pool selector preserves native seed ordering and the known
 bad-seed compatibility discard. Single-player activation applies those
 exclusions to server-owned quest state; excluded quests cannot advance or
-activate linked objects and the state is retained by snapshots and saves.
+activate linked objects, native lifecycle/log flags are retained, and the state
+is retained by snapshots and saves.
 
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
@@ -667,7 +668,7 @@ the complete target header even when they upsert only one row.
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, and capability metadata. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
-| `quests.tsv` | `quest_id` | Level-scoped progress requirements, initial completion state, and optional single-player pool exclusion state. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, and optional single-player pool exclusion state. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
