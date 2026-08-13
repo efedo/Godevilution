@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Aguinara's Hatchet (`unique_id=1044`) through schema 1.3,
+  adding its native Small Axe base item with spell-level, magic, and
+  magic-resistance powers.
+
 - Externalize Hellfire Stonecleaver (`unique_id=1043`) through schema 1.2,
   reusing the validated Broad Axe base item with life, to-hit, damage,
   and lightning-resistance powers.

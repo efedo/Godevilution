@@ -160,3 +160,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1043	Stonecleaver	138	7	23900	TOHIT	20	20
 1043	Stonecleaver	138	7	23900	DAMP	50	50
 1043	Stonecleaver	138	7	23900	LIGHTRES	40	40
+1044	Aguinara's Hatchet	140	12	24800	SPLLVLADD	1	1
+1044	Aguinara's Hatchet	140	12	24800	MAG	10	10
+1044	Aguinara's Hatchet	140	12	24800	MAGICRES	80	80
