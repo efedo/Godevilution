@@ -98,6 +98,10 @@ Status date: 2026-08-13
 - Native class `IronSkin` is now authoritative in effective armor: the
   validated class flag adds character level divided by four after dexterity and
   usable equipment armor are applied, across creation, transfers, and restore.
+- Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
+  player receives `TrapArmed` in the network projection, while saves, hashes,
+  and internal authoritative snapshots retain the complete armed state; each
+  recipient's projected hash matches its visibility boundary.
 - External unique and affix catalogs now project every native Hellfire
   damage/armor power identity into the authoritative effect flags,
   so these effects no longer depend on hard-coded content-side interpretation.
@@ -690,8 +694,10 @@ Content schema 0.30 adds stable `spell:trap_disarm` identity `28` for the
 Rogue's cursor-driven Trap Disarm capability. Armed object state is external,
 server-owned, persisted, and cleared only by the authoritative additive
 Disarm Trap command; its nondefault state uses a tagged canonical-hash section.
-The live Godot protocol suite now verifies the Rogue class loadout, an external
-armed object overlay, adjacency validation, and server-owned disarm mutation.
+Network projection now exposes that state only to a TrapSense recipient. The
+live Godot protocol suite verifies Rogue visibility, non-TrapSense concealment,
+an external armed-object overlay, adjacency validation, and server-owned
+disarm mutation.
 
 Content schema 0.31 adds stable spell ID `36` for Hellfire Blood Star
 (`SpellID` `35`).

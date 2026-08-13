@@ -8,7 +8,8 @@ internal static class DiabloProtocolMapper
 {
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
-        IReadOnlyList<StorePlayerSnapshot>? participants = null)
+        IReadOnlyList<StorePlayerSnapshot>? participants = null,
+        bool revealTraps = true)
     {
         ArgumentNullException.ThrowIfNull(source);
         var visibleParticipants = participants?
@@ -104,7 +105,7 @@ internal static class DiabloProtocolMapper
                 MissilePassable = @object.MissilePassable,
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
-                TrapArmed = @object.TrapArmed,
+                TrapArmed = revealTraps && @object.TrapArmed,
             });
         }
         foreach (var quest in source.Quests) {

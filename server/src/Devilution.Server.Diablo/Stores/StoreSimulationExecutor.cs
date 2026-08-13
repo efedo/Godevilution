@@ -339,7 +339,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 .ToArray();
             return DiabloProtocolMapper.ToProtocolSnapshot(
                 simulation.CaptureSnapshot(state, tick),
-                participantSnapshots);
+                participantSnapshots,
+                state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true);
         });
     }
 

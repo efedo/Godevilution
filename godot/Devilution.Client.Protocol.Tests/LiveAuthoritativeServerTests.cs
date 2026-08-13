@@ -293,6 +293,22 @@ public sealed class LiveAuthoritativeServerTests
             var trap = Assert.Single(model.Snapshot.Objects, @object => @object.EntityId == 2001);
             Assert.True(trap.TrapArmed);
 
+            await using var warriorClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-warrior-trap-view", requestedClassId: 0));
+            await warriorClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var warriorInitial = await WaitForMessageAsync(
+                warriorClient,
+                message => message.Snapshot is not null);
+            var warriorModel = new AuthoritativeClientModel();
+            warriorModel.Apply(warriorInitial);
+            Assert.Contains(
+                warriorModel.Snapshot!.Players,
+                player => player.CharacterClassId == 0);
+            Assert.False(
+                Assert.Single(
+                    warriorModel.Snapshot.Objects,
+                    @object => @object.EntityId == 2001).TrapArmed);
+
             var sequence = client.Queue(new Command {
                 DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = trap.EntityId },
             }, client.SuggestedCommandTick(model.CurrentTick));

@@ -38,6 +38,10 @@ The `IronSkin` class flag adds the native character-level-divided-by-four armor
 bonus after dexterity and usable equipment armor are calculated. The
 `CriticalStrike` flag likewise selects its native combat rule; both behaviors
 remain server-owned after content activation.
+The `TrapSense` class flag controls recipient-scoped armed-object visibility:
+only a TrapSense player receives `trap_armed` in the network projection. The
+authoritative world, saves, and internal snapshots retain the complete
+trap state, while each projected hash matches its recipient boundary.
 `pvp_ear_cursor_graphic` supplies the native inventory graphic used when that
 class dies to another player. Activation bounds it to the native byte-sized
 cursor range.
