@@ -63,10 +63,13 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(7, monsterTypes.Definitions.Count);
+        Assert.Equal(13, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal("Carver", monsterTypes.Definitions[6].Name);
+        Assert.Equal("Horror", monsterTypes.Definitions[^1].Name);
+        Assert.True(monsterTypes.Definitions[^1].Undead);
+        Assert.Equal(11U, monsterTypes.Definitions[^1].NativeMonsterId);
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
