@@ -6,7 +6,7 @@ Status date: 2026-08-13
 
 | Area | State | Remaining work |
 | --- | --- | --- |
-| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, a twelve-cycle reconnect soak while another participant remains connected, and protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias | Add broader reconnect/multiplayer fixtures and client-side long-running coverage |
+| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, and protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias | Add broader reconnect/multiplayer fixtures and production-client soak coverage |
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Add broader quest selection and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
@@ -237,6 +237,9 @@ Status date: 2026-08-13
   first participant resumes through twelve consecutive cycles, preserving the
   resume token, entity identity, complete participant set, self-first ordering,
   and snapshot hash on every cycle.
+- The live Godot protocol client now reconnects through eight v0.2 cycles
+  against the launched authoritative server while a second client remains
+  connected, preserving the resume token and self-first participant ordering.
 - Engine-neutral inventory-grid geometry, footprint validation, placement, and
   index compaction extracted into the dependency-free `Devilution.Domain`
   assembly with an independent test project.

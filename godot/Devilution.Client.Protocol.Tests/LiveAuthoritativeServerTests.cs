@@ -777,6 +777,57 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveClientReconnectsThroughEightCyclesWithSecondParticipantConnected()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var first = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-reconnect-first", requestedClassId: 2));
+        await first.ConnectAsync(TestContext.Current.CancellationToken);
+        var firstInitial = await WaitForMessageAsync(
+            first,
+            message => message.Snapshot is not null);
+        var firstEntityId = Assert.Single(firstInitial.Snapshot!.Players).EntityId;
+        var sessionToken = first.SessionToken;
+
+        await using var second = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-reconnect-second", requestedClassId: 1));
+        await second.ConnectAsync(TestContext.Current.CancellationToken);
+        var secondInitial = await WaitForMessageAsync(
+            second,
+            message => message.Snapshot is not null);
+        var secondEntityId = secondInitial.Snapshot!.Players[0].EntityId;
+        Assert.NotEqual(firstEntityId, secondEntityId);
+        Assert.Equal(
+            [secondEntityId, firstEntityId],
+            secondInitial.Snapshot.Players.Select(player => player.EntityId));
+
+        const int reconnectCycles = 8;
+        for (var cycle = 0; cycle < reconnectCycles; cycle++) {
+            await first.ReconnectAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(sessionToken, first.SessionToken);
+
+            var firstResumed = await WaitForMessageAsync(
+                first,
+                message => message.Snapshot is { Players.Count: 2 });
+            Assert.Equal(
+                [firstEntityId, secondEntityId],
+                firstResumed.Snapshot!.Players.Select(player => player.EntityId));
+            Assert.NotEmpty(firstResumed.Snapshot.StateSha256);
+            Assert.True(second.IsConnected);
+
+            await second.PollAsync(TestContext.Current.CancellationToken);
+            var secondResumed = await WaitForMessageAsync(
+                second,
+                message => message.Snapshot is { Players.Count: 2 });
+            Assert.Equal(
+                [secondEntityId, firstEntityId],
+                secondResumed.Snapshot!.Players.Select(player => player.EntityId));
+            Assert.NotEmpty(secondResumed.Snapshot.StateSha256);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerAppliesDeclaredContentOverlayToAuthoritativeStore()
     {
         var overlayRoot = Path.Combine(
