@@ -91,7 +91,8 @@ public sealed class LiveAuthoritativeServerTests
             "hellfire");
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            hellfireRoot);
+            hellfireRoot,
+            randomSeed: 0x12345678);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-hellfire-sorcerer", requestedClassId: 2));
 
@@ -142,6 +143,50 @@ public sealed class LiveAuthoritativeServerTests
             resolved.Snapshot!.Monsters,
             monster => monster.EntityId == target.EntityId);
         Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < target.HitPoints);
+    }
+
+    [Fact]
+    public async Task LiveServerUsesBardIdentifyAbilityOnEquipment()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-bard-identify", requestedClassId: 4));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(4U, player.CharacterClassId);
+        Assert.Equal(5U, player.AbilitySpellId);
+        var item = Assert.Single(player.Equipment, candidate => candidate.Slot == 4);
+        Assert.False(item.State.Identified);
+
+        var sequence = client.Queue(new Command {
+            IdentifyItemRequested = new IdentifyItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Bard Identify was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; class was {player.CharacterClassId}, ability was {player.AbilitySpellId}.");
+
+        var identified = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(candidate => candidate.Slot == 4).State.Identified == true);
+        Assert.True(
+            Assert.Single(identified.Snapshot!.Players).Equipment
+                .Single(candidate => candidate.Slot == 4).State.Identified);
     }
 
     [Fact]
