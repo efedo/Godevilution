@@ -11,7 +11,8 @@ public sealed record DiabloContentActivation
         AuthoritativePlayerClassCatalog playerClasses,
         AuthoritativePlayerAnimationCatalog playerAnimations,
         AuthoritativePlayerLoadoutCatalog playerLoadouts,
-        uint defaultStartingLevelId)
+        uint defaultStartingLevelId,
+        AuthoritativeLevelGenerationCatalog? levelGeneration = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -22,6 +23,7 @@ public sealed record DiabloContentActivation
         PlayerLoadouts = playerLoadouts
             ?? throw new ArgumentNullException(nameof(playerLoadouts));
         DefaultStartingLevelId = defaultStartingLevelId;
+        LevelGeneration = levelGeneration;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -35,6 +37,9 @@ public sealed record DiabloContentActivation
     public AuthoritativePlayerLoadoutCatalog PlayerLoadouts { get; }
 
     public uint DefaultStartingLevelId { get; }
+
+    /** Native level-range rules reserved for server-owned map generation. */
+    public AuthoritativeLevelGenerationCatalog? LevelGeneration { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -198,6 +203,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelsTable.SourcePath,
                 levelsTable.ToCanonicalTsv())
             : null;
+        var levelGeneration = content.TryGetTable(
+            "level_generation.tsv",
+            out var levelGenerationTable)
+            ? AuthoritativeLevelGenerationCatalog.LoadTsv(
+                levelGenerationTable.SourcePath,
+                levelGenerationTable.ToCanonicalTsv())
+            : null;
         if (world is not null && content.TryGetTable("warps.tsv", out var warpsTable)) {
             foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
                          warpsTable.SourcePath,
@@ -274,6 +286,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerClasses,
             playerAnimations,
             playerLoadouts,
-            defaultStartingLevelId);
+            defaultStartingLevelId,
+            levelGeneration);
     }
 }

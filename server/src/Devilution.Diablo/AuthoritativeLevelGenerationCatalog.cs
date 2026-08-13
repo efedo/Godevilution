@@ -1,0 +1,76 @@
+using Devilution.Data;
+
+namespace Devilution.Diablo;
+
+/** Native-compatible dungeon-generation rules supplied by validated content. */
+public sealed record AuthoritativeLevelGenerationRule(
+    int MinimumLevel,
+    int MaximumLevel,
+    int MonsterDensityDivisor,
+    int MultiplayerMonsterMultiplierPercent,
+    int TrapPercent)
+{
+    public bool AppliesTo(uint levelId)
+        => levelId <= int.MaxValue
+            && levelId >= MinimumLevel
+            && levelId <= MaximumLevel;
+}
+
+/** Validated level-range metadata for future server-owned map generation. */
+public sealed class AuthoritativeLevelGenerationCatalog
+{
+    private readonly IReadOnlyList<AuthoritativeLevelGenerationRule> definitions;
+
+    public AuthoritativeLevelGenerationCatalog(
+        IEnumerable<AuthoritativeLevelGenerationRule> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        var ordered = definitions.OrderBy(definition => definition.MinimumLevel).ToArray();
+        if (ordered.Length == 0)
+            throw new InvalidDataException("The level-generation catalog cannot be empty.");
+        for (var index = 0; index < ordered.Length; index++) {
+            var definition = ordered[index];
+            if (definition.MinimumLevel < 0
+                || definition.MaximumLevel < definition.MinimumLevel
+                || definition.MonsterDensityDivisor <= 0
+                || definition.MultiplayerMonsterMultiplierPercent < 0
+                || definition.TrapPercent is < 0 or > 100
+                || (index > 0
+                    && definition.MinimumLevel <= ordered[index - 1].MaximumLevel)) {
+                throw new InvalidDataException(
+                    "Level-generation definitions contain invalid or overlapping ranges.");
+            }
+        }
+        this.definitions = ordered;
+    }
+
+    public IReadOnlyList<AuthoritativeLevelGenerationRule> Definitions => definitions;
+
+    public bool TryGet(uint levelId, out AuthoritativeLevelGenerationRule definition)
+    {
+        definition = definitions.FirstOrDefault(candidate => candidate.AppliesTo(levelId))!;
+        return definition is not null;
+    }
+
+    public AuthoritativeLevelGenerationRule GetRequired(uint levelId)
+    {
+        if (!TryGet(levelId, out var definition))
+            throw new InvalidDataException(
+                $"Level-generation metadata does not define level {levelId}.");
+        return definition;
+    }
+
+    public static AuthoritativeLevelGenerationCatalog LoadTsv(
+        string sourcePath,
+        string contents)
+    {
+        var table = TsvTable.Parse(sourcePath, contents);
+        return new AuthoritativeLevelGenerationCatalog(table.Rows.Select(row =>
+            new AuthoritativeLevelGenerationRule(
+                row.RequiredInt32("minimum_level"),
+                row.RequiredInt32("maximum_level"),
+                row.RequiredInt32("monster_density_divisor"),
+                row.RequiredInt32("multiplayer_monster_multiplier_percent"),
+                row.RequiredInt32("trap_percent"))));
+    }
+}
