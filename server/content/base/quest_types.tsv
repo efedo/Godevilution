@@ -1,17 +1,17 @@
 quest_id	native_quest_id	name	single_player_level	multiplayer_level	level_type	set_level	single_player_only
-3001	0	The Magic Rock	5	-1		-1	1
-3002	1	Black Mushroom	9	-1		-1	1
-3003	2	Gharbad The Weak	4	-1		-1	1
-3004	3	Zhar the Mad	8	-1		-1	1
-3005	4	Lachdanan	14	-1		-1	1
-3006	5	Diablo	15	-1		-1	0
-3007	6	The Butcher	2	2		-1	0
-3008	7	Ogden's Sign	4	-1		-1	1
-3009	8	Halls of the Blind	7	-1		-1	1
-3010	9	Valor	5	-1		-1	1
-3011	10	Anvil of Fury	10	-1		-1	1
-3012	11	Warlord of Blood	13	-1		-1	1
-3013	12	The Curse of King Leoric	3	3	DTYPE_CATHEDRAL	-1	0
-3014	13	Poisoned Water Supply	2	-1	DTYPE_CAVES	-1	1
-3015	14	The Chamber of Bone	6	-1	DTYPE_CATACOMBS	-1	1
-3016	15	Archbishop Lazarus	15	15	DTYPE_CATHEDRAL	-1	0
+3001	0	The Magic Rock	5	-1		0	1
+3002	1	Black Mushroom	9	-1		0	1
+3003	2	Gharbad The Weak	4	-1		0	1
+3004	3	Zhar the Mad	8	-1		0	1
+3005	4	Lachdanan	14	-1		0	1
+3006	5	Diablo	15	-1		0	0
+3007	6	The Butcher	2	2		0	0
+3008	7	Ogden's Sign	4	-1		0	1
+3009	8	Halls of the Blind	7	-1		0	1
+3010	9	Valor	5	-1		0	1
+3011	10	Anvil of Fury	10	-1		0	1
+3012	11	Warlord of Blood	13	-1		0	1
+3013	12	The Curse of King Leoric	3	3	DTYPE_CATHEDRAL	1	0
+3014	13	Poisoned Water Supply	2	-1	DTYPE_CAVES	4	1
+3015	14	The Chamber of Bone	6	-1	DTYPE_CATACOMBS	2	1
+3016	15	Archbishop Lazarus	15	15	DTYPE_CATHEDRAL	5	0

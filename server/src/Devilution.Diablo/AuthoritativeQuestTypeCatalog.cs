@@ -29,7 +29,7 @@ public sealed class AuthoritativeQuestTypeCatalog
                 || string.IsNullOrWhiteSpace(definition.Name)
                 || definition.SinglePlayerLevel < -1
                 || definition.MultiplayerLevel < -1
-                || definition.SetLevel < -1
+                || definition.SetLevel is < 0 or > 8
                 || !this.definitions.TryAdd(definition.QuestId, definition)) {
                 throw new InvalidDataException("Quest type definitions contain invalid or duplicate identities.");
             }
@@ -46,10 +46,11 @@ public sealed class AuthoritativeQuestTypeCatalog
 
     public static AuthoritativeQuestTypeCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        AuthoritativeSetLevelNameCatalog? setLevelNames = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        return new AuthoritativeQuestTypeCatalog(table.Rows.Select(row =>
+        var catalog = new AuthoritativeQuestTypeCatalog(table.Rows.Select(row =>
             new AuthoritativeQuestTypeDefinition(
                 row.RequiredUInt32("quest_id"),
                 row.RequiredUInt32("native_quest_id"),
@@ -57,8 +58,15 @@ public sealed class AuthoritativeQuestTypeCatalog
                 row.RequiredInt32("single_player_level"),
                 row.RequiredInt32("multiplayer_level"),
                 OptionalText(row, "level_type"),
-                row.OptionalInt32("set_level", -1),
+                row.OptionalInt32("set_level", 0),
                 ParseFlag(row, "single_player_only"))));
+        if (setLevelNames is not null
+            && catalog.Definitions.Any(definition =>
+                !setLevelNames.TryGet(definition.SetLevel, out _))) {
+            throw new InvalidDataException(
+                $"Quest type table '{sourcePath}' references an unknown set-level identity.");
+        }
+        return catalog;
     }
 
     private static bool ParseFlag(TsvRow row, string column)

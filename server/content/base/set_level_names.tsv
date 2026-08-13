@@ -1,0 +1,10 @@
+set_level_id	symbol	display_name
+0	SL_NONE	none
+1	SL_SKELKING	Skeleton King's Lair
+2	SL_BONECHAMB	Chamber of Bone
+3	SL_MAZE	Maze
+4	SL_POISONWATER	Poisoned Water Supply
+5	SL_VILEBETRAYER	Archbishop Lazarus' Lair
+6	SL_ARENA_CHURCH	Church Arena
+7	SL_ARENA_HELL	Hell Arena
+8	SL_ARENA_CIRCLE_OF_LIFE	Circle of Life Arena

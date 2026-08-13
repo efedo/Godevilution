@@ -12,7 +12,10 @@ public sealed record DiabloContentActivation
         AuthoritativePlayerAnimationCatalog playerAnimations,
         AuthoritativePlayerLoadoutCatalog playerLoadouts,
         uint defaultStartingLevelId,
-        AuthoritativeLevelGenerationCatalog? levelGeneration = null)
+        AuthoritativeLevelGenerationCatalog? levelGeneration = null,
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        AuthoritativeQuestPoolCatalog? questPools = null,
+        AuthoritativeSetLevelNameCatalog? setLevelNames = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -24,6 +27,9 @@ public sealed record DiabloContentActivation
             ?? throw new ArgumentNullException(nameof(playerLoadouts));
         DefaultStartingLevelId = defaultStartingLevelId;
         LevelGeneration = levelGeneration;
+        QuestTypes = questTypes;
+        QuestPools = questPools;
+        SetLevelNames = setLevelNames;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -40,6 +46,12 @@ public sealed record DiabloContentActivation
 
     /** Native level-range rules reserved for server-owned map generation. */
     public AuthoritativeLevelGenerationCatalog? LevelGeneration { get; }
+
+    public AuthoritativeQuestTypeCatalog? QuestTypes { get; }
+
+    public AuthoritativeQuestPoolCatalog? QuestPools { get; }
+
+    public AuthoritativeSetLevelNameCatalog? SetLevelNames { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -244,10 +256,24 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.SourcePath,
                 objectsTable.ToCanonicalTsv())
             : null;
+        var setLevelNames = content.TryGetTable(
+            "set_level_names.tsv",
+            out var setLevelNamesTable)
+            ? AuthoritativeSetLevelNameCatalog.LoadTsv(
+                setLevelNamesTable.SourcePath,
+                setLevelNamesTable.ToCanonicalTsv())
+            : null;
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,
-                questTypesTable.ToCanonicalTsv())
+                questTypesTable.ToCanonicalTsv(),
+                setLevelNames)
+            : null;
+        var questPools = content.TryGetTable("quest_pools.tsv", out var questPoolsTable)
+            ? AuthoritativeQuestPoolCatalog.LoadTsv(
+                questPoolsTable.SourcePath,
+                questPoolsTable.ToCanonicalTsv(),
+                questTypes)
             : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
             ? AuthoritativeQuestCatalog.LoadTsv(
@@ -287,6 +313,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerAnimations,
             playerLoadouts,
             defaultStartingLevelId,
-            levelGeneration);
+            levelGeneration,
+            questTypes,
+            questPools,
+            setLevelNames);
     }
 }
