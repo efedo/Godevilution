@@ -361,3 +361,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1088	Ring of Regha	113	1	4175	LIGHT	1	1
 1088	Ring of Regha	113	1	4175	STR_CURSE	3	3
 1088	Ring of Regha	113	1	4175	DEX_CURSE	3	3
+1089	The Bleeder	113	2	8500	MAGICRES	20	20
+1089	The Bleeder	113	2	8500	MANA	30	30
+1089	The Bleeder	113	2	8500	LIFE_CURSE	10	10
