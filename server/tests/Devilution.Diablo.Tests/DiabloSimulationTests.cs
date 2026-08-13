@@ -280,6 +280,49 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsGargoyleSpecialLock()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    40,
+                    maxHitPoints: 100,
+                    attackDamage: 1,
+                    aggroRange: 8,
+                    nativeAi: "Gargoyle",
+                    intelligence: 2,
+                    gargoyleSpecialActive: true)],
+            });
+        var player = CreatePlayer();
+        player.PositionX = 8;
+        player.PositionY = 0;
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        Assert.True(Assert.Single(snapshot.Monsters).GargoyleSpecialActive);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    40,
+                    maxHitPoints: 100,
+                    attackDamage: 1,
+                    aggroRange: 8,
+                    nativeAi: "Gargoyle",
+                    intelligence: 2)],
+            });
+        var restoredPlayer = CreatePlayer();
+        replacement.RestoreSnapshot(restoredPlayer, snapshot);
+
+        Assert.True(Assert.Single(replacement.WorldState.CombatTargets).Value.GargoyleSpecialActive);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

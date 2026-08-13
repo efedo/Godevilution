@@ -82,6 +82,7 @@ internal static class DiabloProtocolMapper
                 ToHitSpecial = monster.ToHitSpecial,
                 NativeAi = monster.NativeAi,
                 Intelligence = monster.Intelligence,
+                GargoyleSpecialActive = monster.GargoyleSpecialActive,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -363,6 +364,7 @@ internal static class DiabloProtocolMapper
                 ToHitSpecial = monster.ToHitSpecial,
                 NativeAi = monster.NativeAi,
                 Intelligence = monster.Intelligence,
+                GargoyleSpecialActive = monster.GargoyleSpecialActive,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),

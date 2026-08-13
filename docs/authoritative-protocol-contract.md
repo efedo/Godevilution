@@ -231,6 +231,12 @@ behavior from this metadata.
 value used by server-owned AI probability bands. Clients do not resolve AI rolls
 from this metadata.
 
+`MonsterSnapshot.gargoyle_special_active` field 45 carries the server-owned
+Gargoyle special lock. When a wounded Gargoyle heals beyond its native
+`intelligence + 2` safety boundary, the server applies the deterministic native
+self-heal and holds this lock until the player closes that boundary; clients
+only render the resulting Healing event and snapshot state.
+
 The server currently uses the `Fat` identity for the native special-melee band;
 the resulting damage event and snapshot remain authoritative. Other AI-specific
 special behavior is intentionally added incrementally.

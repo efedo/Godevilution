@@ -1277,6 +1277,87 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiHealsFromBeyondItsNativeSafetyBoundaryAndLocksItsSpecial()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            nativeAi: "Gargoyle",
+            intelligence: 2);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, so native maxHP / (16 * (15 % 5 + 4)) = 1.
+        var healing = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(41, monster.HitPoints);
+        Assert.True(monster.GargoyleSpecialActive);
+        var healingEvent = Assert.Single(healing).Event;
+        Assert.Equal(DiabloGameplayEventKind.Healing, healingEvent.Kind);
+        Assert.Equal((9U, 9U), (healingEvent.SourceEntityId, healingEvent.TargetEntityId));
+        Assert.Equal(1, healingEvent.Amount);
+        Assert.Equal(64, healingEvent.AmountQ6);
+
+        // Native MFLAG_ALLOW_SPECIAL suppresses further actions while the
+        // player remains outside intelligence + 2 tiles.
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+        Assert.Equal(41, monster.HitPoints);
+    }
+
+    [Fact]
+    public void GargoyleAiClearsItsSpecialLockWhenThePlayerClosesDistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            nativeAi: "Gargoyle",
+            intelligence: 2,
+            gargoyleSpecialActive: true);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.False(monster.GargoyleSpecialActive);
+        Assert.Equal(40, monster.HitPoints);
+    }
+
+    [Fact]
+    public void GargoyleSpecialLockRequiresTheGargoyleNativeIdentity()
+    {
+        Assert.Throws<ArgumentException>(() => new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            nativeAi: "Rhino",
+            gargoyleSpecialActive: true));
+    }
+
+    [Fact]
     public void RhinoAiFallsBackToWalkingWhenTheChargeLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

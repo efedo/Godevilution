@@ -458,6 +458,8 @@ message MonsterSnapshot {
 	string native_ai = 43;
 	// Native intelligence value used by server-owned AI probability bands.
 	int32 intelligence = 44;
+	// Native Gargoyle special lock held while it remains safely distant after healing.
+	bool gargoyle_special_active = 45;
 }
 
 message WorldItemSnapshot {

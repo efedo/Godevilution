@@ -145,6 +145,10 @@ Status date: 2026-08-13
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.
+- The native `Gargoyle` wounded self-heal boundary is now server-owned: the
+  deterministic native heal amount, Healing event, and distance-based special
+  lock persist through snapshots, saves, protocol field 45, and canonical
+  hashes. Gargoyle retreat movement and animation timing remain incremental.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

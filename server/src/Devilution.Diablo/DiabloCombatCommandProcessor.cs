@@ -717,6 +717,7 @@ public sealed class DiabloCombatCommandProcessor
             toHitSpecial: target.ToHitSpecial,
             nativeAi: target.NativeAi,
             intelligence: target.Intelligence,
+            gargoyleSpecialActive: target.GargoyleSpecialActive,
             demon: target.IsDemon,
             animal: target.IsAnimal,
             knockback: target.HasKnockback);
@@ -3715,6 +3716,8 @@ public sealed class DiabloCombatCommandProcessor
             var distance = Math.Max(
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
+            if (TryAdvanceGargoyleHealing(target, victim, tick, events, distance))
+                continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
@@ -3836,6 +3839,51 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native Gargoyle self-healing and its distance-based special lock. */
+    private bool TryAdvanceGargoyleHealing(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        int distance)
+    {
+        if (monster.NativeAi != "Gargoyle")
+            return false;
+
+        var safeDistance = monster.Intelligence + 2;
+        if (monster.GargoyleSpecialActive) {
+            if (distance < safeDistance)
+                monster.GargoyleSpecialActive = false;
+            return true;
+        }
+
+        if (monster.HitPointsQ6 >= monster.MaxHitPointsQ6 / 2
+            || distance < safeDistance)
+            return false;
+
+        var healSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var divisor = 16 * ((int)(healSeed % 5U) + 4);
+        var healingQ6 = DiabloFixedPointQ6.FromWhole(
+            monster.MaxHitPoints / divisor);
+        var appliedHealingQ6 = monster.ApplyHealingQ6(healingQ6);
+        if (appliedHealingQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                player,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Healing,
+                    monster.EntityId,
+                    monster.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(appliedHealingQ6)) {
+                    AmountQ6 = appliedHealingQ6,
+                }));
+        }
+
+        // Native MFLAG_ALLOW_SPECIAL remains set until the player closes the
+        // intelligence+2 boundary, unless this heal reached full life.
+        monster.GargoyleSpecialActive = monster.HitPointsQ6 < monster.MaxHitPointsQ6;
+        return true;
     }
 
     /** Native SkeletonBow AI: fire an arrow when its deterministic attack band and lane are clear. */

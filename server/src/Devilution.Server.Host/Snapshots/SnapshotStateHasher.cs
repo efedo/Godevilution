@@ -288,6 +288,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-intelligence-v1");
                     hasher.AppendInt32(monster.Intelligence);
                 }
+                if (monster.GargoyleSpecialActive) {
+                    hasher.AppendString("godevilution-monster-gargoyle-special-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 

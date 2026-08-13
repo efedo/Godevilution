@@ -50,7 +50,8 @@ public sealed class AuthoritativeCombatTarget
         int toHit = 0,
         int toHitSpecial = 0,
         string nativeAi = "",
-        int intelligence = 0)
+        int intelligence = 0,
+        bool gargoyleSpecialActive = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -73,6 +74,10 @@ public sealed class AuthoritativeCombatTarget
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
+        if (gargoyleSpecialActive && nativeAi != "Gargoyle")
+            throw new ArgumentException(
+                "The Gargoyle special lock requires the Gargoyle native AI identity.",
+                nameof(gargoyleSpecialActive));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -116,6 +121,7 @@ public sealed class AuthoritativeCombatTarget
         ToHitSpecial = toHitSpecial;
         NativeAi = nativeAi;
         Intelligence = intelligence;
+        GargoyleSpecialActive = gargoyleSpecialActive;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -211,6 +217,9 @@ public sealed class AuthoritativeCombatTarget
     /** Native intelligence value imported from validated content. */
     public int Intelligence { get; }
 
+    /** Native Gargoyle special lock held while it remains safely distant after healing. */
+    public bool GargoyleSpecialActive { get; set; }
+
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
@@ -256,6 +265,15 @@ public sealed class AuthoritativeCombatTarget
         var appliedDamageQ6 = Math.Min(hitPointsQ6, damageQ6);
         hitPointsQ6 -= appliedDamageQ6;
         return appliedDamageQ6;
+    }
+
+    internal int ApplyHealingQ6(int healingQ6)
+    {
+        if (healingQ6 < 0)
+            throw new ArgumentOutOfRangeException(nameof(healingQ6));
+        var appliedHealingQ6 = Math.Min(maxHitPointsQ6 - hitPointsQ6, healingQ6);
+        hitPointsQ6 += appliedHealingQ6;
+        return appliedHealingQ6;
     }
 
     internal void BeginDeathAnimation()

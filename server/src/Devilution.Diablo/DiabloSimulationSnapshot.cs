@@ -82,6 +82,9 @@ public sealed record DiabloMonsterState(
     /** Native intelligence value imported from content. */
     public int Intelligence { get; init; }
 
+    /** Native Gargoyle special lock held while it remains safely distant after healing. */
+    public bool GargoyleSpecialActive { get; init; }
+
     /** Remaining terminal death-animation ticks, when the monster is dead. */
     public int DeathTicksRemaining { get; init; }
 
@@ -337,6 +340,7 @@ public sealed partial class DiabloSimulation
                     ToHitSpecial = target.ToHitSpecial,
                     NativeAi = target.NativeAi,
                     Intelligence = target.Intelligence,
+                    GargoyleSpecialActive = target.GargoyleSpecialActive,
                     DeathTicksRemaining = target.DeathTicksRemaining,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -574,6 +578,7 @@ public sealed partial class DiabloSimulation
                 || monster.Intelligence is < 0 or > 255
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
+                || (monster.GargoyleSpecialActive && monster.NativeAi != "Gargoyle")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1272,6 +1277,7 @@ public sealed partial class DiabloSimulation
                 target.MinDamageSpecial = monster.MinDamageSpecial;
                 target.MaxDamageSpecial = monster.MaxDamageSpecial;
                 target.IsBerserked = monster.IsBerserked;
+                target.GargoyleSpecialActive = monster.GargoyleSpecialActive;
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1323,7 +1329,8 @@ public sealed partial class DiabloSimulation
                     toHit: monster.ToHit,
                     toHitSpecial: monster.ToHitSpecial,
                     nativeAi: monster.NativeAi,
-                    intelligence: monster.Intelligence);
+                    intelligence: monster.Intelligence,
+                    gargoyleSpecialActive: monster.GargoyleSpecialActive);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
 - Route the native `SkeletonRanged` clear-lane arrow boundary through the
   authoritative accuracy, damage, and directed-event path, retaining blocked
   lane fallback.
+- Route the native `Gargoyle` wounded self-heal through the authoritative
+  Healing event path, persisting its distance-based special lock in protocol
+  field 45, snapshots, saves, and canonical hashes.
 
 ## 2026-08-13
 

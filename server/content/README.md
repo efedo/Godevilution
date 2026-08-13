@@ -192,6 +192,10 @@ intelligence` boundary.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
+The `Gargoyle` identity now owns the native wounded self-heal boundary: once the
+monster is beyond `intelligence + 2` tiles, the server applies the deterministic
+`max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
+closes that boundary. Clients do not execute this behavior.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

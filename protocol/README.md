@@ -333,6 +333,9 @@ Windows toolchain command.
 - `MonsterSnapshot.intelligence` field 44 carries the validated native
   intelligence value used by server-owned AI probability bands. Clients do not
   resolve AI rolls from this metadata.
+- `MonsterSnapshot.gargoyle_special_active` field 45 carries the server-owned
+  Gargoyle distance-based special lock. Clients render the resulting Healing
+  event and snapshot state; they do not execute Gargoyle healing or unlock it.
 
 ## Identity Note
 
