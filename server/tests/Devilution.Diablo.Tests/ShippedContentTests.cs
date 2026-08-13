@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.63.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.64.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.63.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.64.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1423,6 +1423,20 @@ public sealed class ShippedContentTests
         Assert.Equal(255, thunderclap.MaxDurability);
         Assert.NotEqual(0U, thunderclap.Flags & 0x00000020U);
         Assert.NotEqual(0U, thunderclap.Flags & 0x00000010U);
+        var shirotachi = hellfireItems.GenerateUnique(1105, 0x12345678, 21);
+        Assert.Equal(1105, shirotachi.UniqueId);
+        Assert.Equal(36000, shirotachi.Value);
+        Assert.Equal(130, shirotachi.ItemIndex);
+        Assert.Equal(1, shirotachi.EquipLocation);
+        Assert.Equal(10, shirotachi.MinDamage);
+        Assert.Equal(20, shirotachi.MaxDamage);
+        Assert.Equal(6, shirotachi.LightningMinDamage);
+        Assert.Equal(6, shirotachi.LightningMaxDamage);
+        Assert.Equal(2, shirotachi.PlusEnemyArmorClass);
+        Assert.Equal(100, shirotachi.Durability);
+        Assert.Equal(100, shirotachi.MaxDurability);
+        Assert.NotEqual(0U, shirotachi.Flags & 0x00100000U);
+        Assert.NotEqual(0U, shirotachi.Flags & 0x00000020U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.64 adds the native-derived Hellfire Shirotachi unique definition
+(`unique_id=1105`), reusing the native Great Sword identity with one-handed,
+fastest-attack, target-armor, and lightning-damage powers.
+
 Schema 1.63 adds the native-derived Hellfire Thunderclap unique definition
 (`unique_id=1104`), reusing the native War Hammer identity with charged-bolt
 hit damage, strength, resistance, light, and indestructible powers.

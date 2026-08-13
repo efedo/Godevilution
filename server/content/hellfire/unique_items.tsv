@@ -408,3 +408,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1104	Thunderclap	146	13	30000	LIGHTRES	30	30
 1104	Thunderclap	146	13	30000	LIGHT	2	2
 1104	Thunderclap	146	13	30000	INDESTRUCTIBLE	0	0
+1105	Shirotachi	136	21	36000	ONEHAND	0	0
+1105	Shirotachi	136	21	36000	FASTATTACK	4	4
+1105	Shirotachi	136	21	36000	TARGAC	2	2
+1105	Shirotachi	136	21	36000	LIGHTDAM	6	6

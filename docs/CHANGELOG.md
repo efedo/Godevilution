@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Shirotachi (`unique_id=1105`) through schema 1.64,
+  reusing native Great Sword with one-handed, fastest-attack, target-armor,
+  and lightning-damage powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Thunderclap (`unique_id=1104`) through schema 1.63,
   reusing native War Hammer with charged-bolt hit damage, strength, resistance,
   light, and indestructible powers.
