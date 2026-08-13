@@ -2,19 +2,63 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Content-backed drop policy inherited by procedural encounters of one type. */
+public sealed record AuthoritativeMonsterDropDefinition(
+    uint MonsterId,
+    uint DropItemId,
+    uint DropUniqueItemId,
+    int ItemLevel,
+    bool OnlyGood,
+    bool MonsterUnique)
+{
+    public bool HasDrop => DropItemId != 0 || DropUniqueItemId != 0;
+}
+
 /** External encounter definitions for server-owned combat entities. */
 public sealed class AuthoritativeMonsterCatalog
 {
-    public AuthoritativeMonsterCatalog(IEnumerable<AuthoritativeCombatTarget> targets)
+    public AuthoritativeMonsterCatalog(
+        IEnumerable<AuthoritativeCombatTarget> targets,
+        IEnumerable<AuthoritativeMonsterDropDefinition>? dropDefinitions = null)
     {
         ArgumentNullException.ThrowIfNull(targets);
         var values = targets.ToArray();
         if (values.Select(target => target.EntityId).Distinct().Count() != values.Length)
             throw new InvalidDataException("Monster entity IDs must be unique.");
         Targets = values.OrderBy(target => target.EntityId).ToArray();
+        var drops = new Dictionary<uint, AuthoritativeMonsterDropDefinition>();
+        foreach (var definition in dropDefinitions ?? []) {
+            if (definition.MonsterId == 0
+                || (definition.DropItemId != 0 && definition.DropUniqueItemId != 0)
+                || definition.ItemLevel < 0
+                || (!definition.HasDrop && !definition.MonsterUnique)) {
+                throw new InvalidDataException(
+                    "Monster drop definitions contain invalid identities or bounds.");
+            }
+            if (drops.TryGetValue(definition.MonsterId, out var existing)
+                && existing != definition) {
+                throw new InvalidDataException(
+                    $"Monster {definition.MonsterId} has conflicting procedural drop definitions.");
+            }
+            drops[definition.MonsterId] = definition;
+        }
+        DropDefinitions = drops.Values
+            .OrderBy(definition => definition.MonsterId)
+            .ToArray();
     }
 
     public IReadOnlyList<AuthoritativeCombatTarget> Targets { get; }
+
+    public IReadOnlyList<AuthoritativeMonsterDropDefinition> DropDefinitions { get; }
+
+    public bool TryGetDropDefinition(
+        uint monsterId,
+        out AuthoritativeMonsterDropDefinition definition)
+    {
+        definition = DropDefinitions.SingleOrDefault(
+            candidate => candidate.MonsterId == monsterId)!;
+        return definition is not null;
+    }
 
     public static AuthoritativeMonsterCatalog LoadTsv(
         string sourcePath,
@@ -24,7 +68,7 @@ public sealed class AuthoritativeMonsterCatalog
         AuthoritativeMonsterTypeCatalog? monsterTypes = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        return new AuthoritativeMonsterCatalog(table.Rows.Select(row => {
+        var targets = table.Rows.Select(row => {
             var monsterId = row.RequiredUInt32("monster_id");
             AuthoritativeMonsterTypeDefinition? monsterType = null;
             if (monsterTypes is not null) {
@@ -135,7 +179,36 @@ public sealed class AuthoritativeMonsterCatalog
                 deathAnimationTicks: deathAnimationTicks,
                 animal: animal,
                 knockback: knockback);
-        }));
+        }).ToArray();
+        var dropDefinitions = table.Rows
+            .Select(ParseDropDefinition)
+            .OfType<AuthoritativeMonsterDropDefinition>();
+        return new AuthoritativeMonsterCatalog(targets, dropDefinitions);
+    }
+
+    private static AuthoritativeMonsterDropDefinition? ParseDropDefinition(TsvRow row)
+    {
+        var dropItemId = row.OptionalUInt32("drop_item_id");
+        var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
+        var monsterUnique = ReadFlag(row, "unique", false);
+        if (dropItemId == 0 && dropUniqueItemId == 0 && !monsterUnique)
+            return null;
+        if (dropItemId != 0 && dropUniqueItemId != 0)
+            throw new InvalidDataException(
+                $"Monster row {row.LineNumber} cannot reference both a base and unique drop.");
+        var itemLevel = row.OptionalInt32(
+            "drop_item_level",
+            dropUniqueItemId != 0 ? 1 : 0);
+        if (itemLevel < 0)
+            throw new InvalidDataException(
+                $"Monster row {row.LineNumber} has a negative drop item level.");
+        return new AuthoritativeMonsterDropDefinition(
+            row.RequiredUInt32("monster_id"),
+            dropItemId,
+            dropUniqueItemId,
+            itemLevel,
+            ReadFlag(row, "drop_only_good", false),
+            monsterUnique);
     }
 
     private static int ReadInt32(TsvRow row, string column, int defaultValue)

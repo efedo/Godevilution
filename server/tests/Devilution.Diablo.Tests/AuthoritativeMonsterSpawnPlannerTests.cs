@@ -137,6 +137,61 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(3, target.MaxDamage);
     }
 
+    [Fact]
+    public void CarriesValidatedStaticDropPolicyIntoGeneratedTargets()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 3),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                7,
+                1,
+                75,
+                75,
+                4,
+                8,
+                0,
+                20,
+                20,
+                1,
+                1,
+                true),
+        ]);
+        var monsters = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\n"
+                + "9\t2\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t7\t1\n",
+            items,
+            monsterTypes: types);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 4, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            generation,
+            items,
+            monsters);
+
+        var first = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+        var second = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+
+        Assert.NotNull(first.Drop);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId,
+            first.Drop!.EntityId);
+        Assert.NotEqual(0U, first.Drop.ItemSeed);
+        Assert.Equal(7, first.Drop.State.ItemIndex);
+        Assert.Equal(first.Drop.State, second.Drop!.State);
+        Assert.Equal(first.Drop.ItemSeed, second.Drop.ItemSeed);
+        Assert.Equal(first.Drop.State.Value, checked((int)first.Drop.Price));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

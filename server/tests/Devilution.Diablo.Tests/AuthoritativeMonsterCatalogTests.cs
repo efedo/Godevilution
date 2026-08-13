@@ -387,4 +387,26 @@ public sealed class AuthoritativeMonsterCatalogTests
 
         Assert.Equal(1001, Assert.Single(catalog.Targets).Drop!.State.UniqueId);
     }
+
+    [Fact]
+    public void ExposesValidatedProceduralDropPolicyByMonsterType()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\tdrop_only_good\tunique\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t75\t7\t3\t1\t1\n",
+            items);
+
+        var definition = Assert.Single(catalog.DropDefinitions);
+        Assert.Equal(1U, definition.MonsterId);
+        Assert.Equal(7U, definition.DropItemId);
+        Assert.Equal(3, definition.ItemLevel);
+        Assert.True(definition.OnlyGood);
+        Assert.True(definition.MonsterUnique);
+        Assert.True(catalog.TryGetDropDefinition(1, out var resolved));
+        Assert.Same(definition, resolved);
+    }
 }

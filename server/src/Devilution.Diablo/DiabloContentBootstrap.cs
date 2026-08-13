@@ -318,7 +318,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var monsterSpawnPlanner = world is not null
             && monsterTypes is not null
             && levelGeneration is not null
-            ? new AuthoritativeMonsterSpawnPlanner(world, monsterTypes, levelGeneration)
+            ? new AuthoritativeMonsterSpawnPlanner(
+                world,
+                monsterTypes,
+                levelGeneration,
+                itemCatalog,
+                monsters)
             : null;
         IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = monsters?.Targets;
         if (monsterSpawns is not null) {

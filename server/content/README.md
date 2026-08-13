@@ -137,9 +137,10 @@ planner to the server adapter without bypassing the validated content boundary.
 Passing `--procedural-monsters <n>` to the standalone server replaces static
 encounter rows with at most `n` generated targets on the default starting level;
 `--procedural-monster-level <id>` selects another validated level. The default
-still consumes static `monsters.tsv` rows, and generated targets intentionally
-do not synthesize drops or unique flags until those catalogs join spawn
-planning. Native map synthesis remains separate.
+still consumes static `monsters.tsv` rows. Procedural targets inherit a
+validated per-monster drop policy when the active item and unique catalogs are
+available; generated world-item IDs, seeds, values, and unique flags remain
+server-owned and seed-stable. Native map synthesis remains separate.
 When procedural mode is active, a successful server-authoritative level
 transition materializes the same seed-stable policy for the destination level
 once, using reserved entity IDs that coexist with dynamic combat entities.

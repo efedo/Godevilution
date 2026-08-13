@@ -19,20 +19,29 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     /** Reserved entity range shared with the authoritative combat processor. */
     public const uint FirstGeneratedMonsterEntityId = 0x10000000;
 
+    /** Reserved world-item range for drops attached to generated monsters. */
+    public const uint FirstGeneratedDropEntityId = 0x40000000;
+
     private readonly AuthoritativeWorld world;
     private readonly AuthoritativeMonsterTypeCatalog monsterTypes;
     private readonly AuthoritativeLevelGenerationCatalog levelGeneration;
+    private readonly AuthoritativeItemCatalog? itemCatalog;
+    private readonly AuthoritativeMonsterCatalog? monsterCatalog;
 
     public AuthoritativeMonsterSpawnPlanner(
         AuthoritativeWorld world,
         AuthoritativeMonsterTypeCatalog monsterTypes,
-        AuthoritativeLevelGenerationCatalog levelGeneration)
+        AuthoritativeLevelGenerationCatalog levelGeneration,
+        AuthoritativeItemCatalog? itemCatalog = null,
+        AuthoritativeMonsterCatalog? monsterCatalog = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.monsterTypes = monsterTypes
             ?? throw new ArgumentNullException(nameof(monsterTypes));
         this.levelGeneration = levelGeneration
             ?? throw new ArgumentNullException(nameof(levelGeneration));
+        this.itemCatalog = itemCatalog;
+        this.monsterCatalog = monsterCatalog;
     }
 
     /** Plans bounded deterministic placements while avoiding reserved cells. */
@@ -95,11 +104,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         return spawns;
     }
 
-    /**
-     * Converts planned placements into combat targets accepted by the
-     * authoritative simulation. Generated targets intentionally have no item
-     * drops or unique flags until those catalogs are part of spawn planning.
-     */
+    /** Converts planned placements into validated authoritative combat targets. */
     public IReadOnlyList<AuthoritativeCombatTarget> PlanCombatTargets(
         uint levelId,
         uint seed,
@@ -117,32 +122,90 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             maximumMonsters,
             reservedPositions);
         return spawns
-            .Select((spawn, index) => new AuthoritativeCombatTarget(
-                checked(firstEntityId + (uint)index),
-                spawn.PositionX,
-                spawn.PositionY,
-                spawn.HitPoints,
-                spawn.Definition.ArmorClass,
-                spawn.Definition.MaximumHitPoints,
-                spawn.LevelId,
-                spawn.Definition.MonsterId,
-                attackDamage: spawn.AttackDamage,
-                aggroRange: spawn.Definition.AggroRange,
-                monsterLevel: spawn.Definition.MonsterLevel,
-                fireResistance: spawn.Definition.FireResistance,
-                lightningResistance: spawn.Definition.LightningResistance,
-                magicResistance: spawn.Definition.MagicResistance,
-                acidResistance: spawn.Definition.AcidResistance,
-                stoneCurseImmune: spawn.Definition.StoneCurseImmune,
-                undead: spawn.Definition.Undead,
-                minDamage: spawn.Definition.MinimumDamage,
-                maxDamage: spawn.Definition.MaximumDamage,
-                minDamageSpecial: spawn.Definition.MinimumSpecialDamage,
-                maxDamageSpecial: spawn.Definition.MaximumSpecialDamage,
-                demon: spawn.Definition.Demon,
-                animal: spawn.Definition.Animal,
-                knockback: spawn.Definition.Knockback))
+            .Select((spawn, index) => CreateCombatTarget(
+                spawn,
+                index,
+                seed,
+                firstEntityId))
             .ToArray();
+    }
+
+    private AuthoritativeCombatTarget CreateCombatTarget(
+        AuthoritativeMonsterSpawn spawn,
+        int index,
+        uint seed,
+        uint firstEntityId)
+    {
+        var dropDefinition = monsterCatalog?.TryGetDropDefinition(
+            spawn.Definition.MonsterId,
+            out var resolvedDrop) == true
+            ? resolvedDrop
+            : null;
+        AuthoritativeItemState? dropState = null;
+        var dropSeed = 0U;
+        var dropEntityId = 0U;
+        var dropPrice = 0U;
+        if (dropDefinition?.HasDrop == true) {
+            if (itemCatalog is null)
+                throw new InvalidDataException(
+                    "Procedural monster drops require an authoritative item catalog.");
+            dropSeed = CreateDropSeed(seed, spawn.Definition.MonsterId, index);
+            dropState = dropDefinition.DropUniqueItemId != 0
+                ? itemCatalog.GenerateUnique(
+                    dropDefinition.DropUniqueItemId,
+                    dropSeed,
+                    dropDefinition.ItemLevel)
+                : itemCatalog.GenerateDrop(
+                    dropDefinition.DropItemId,
+                    dropSeed,
+                    dropDefinition.ItemLevel,
+                    dropDefinition.OnlyGood);
+            var monsterEntityId = checked(firstEntityId + (uint)index);
+            dropEntityId = monsterEntityId >= FirstGeneratedMonsterEntityId
+                ? checked(FirstGeneratedDropEntityId
+                    + (monsterEntityId - FirstGeneratedMonsterEntityId))
+                : checked(FirstGeneratedDropEntityId + (uint)index);
+            dropPrice = checked((uint)Math.Max(0, dropState.Value));
+        }
+
+        return new AuthoritativeCombatTarget(
+            checked(firstEntityId + (uint)index),
+            spawn.PositionX,
+            spawn.PositionY,
+            spawn.HitPoints,
+            spawn.Definition.ArmorClass,
+            spawn.Definition.MaximumHitPoints,
+            spawn.LevelId,
+            spawn.Definition.MonsterId,
+            dropEntityId,
+            dropSeed,
+            dropPrice,
+            dropState,
+            attackDamage: spawn.AttackDamage,
+            aggroRange: spawn.Definition.AggroRange,
+            monsterLevel: spawn.Definition.MonsterLevel,
+            fireResistance: spawn.Definition.FireResistance,
+            lightningResistance: spawn.Definition.LightningResistance,
+            magicResistance: spawn.Definition.MagicResistance,
+            acidResistance: spawn.Definition.AcidResistance,
+            stoneCurseImmune: spawn.Definition.StoneCurseImmune,
+            undead: spawn.Definition.Undead,
+            minDamage: spawn.Definition.MinimumDamage,
+            maxDamage: spawn.Definition.MaximumDamage,
+            minDamageSpecial: spawn.Definition.MinimumSpecialDamage,
+            maxDamageSpecial: spawn.Definition.MaximumSpecialDamage,
+            demon: spawn.Definition.Demon,
+            animal: spawn.Definition.Animal,
+            unique: dropDefinition?.MonsterUnique ?? false,
+            knockback: spawn.Definition.Knockback);
+    }
+
+    private static uint CreateDropSeed(uint seed, uint monsterId, int index)
+    {
+        var mixed = seed
+            ^ unchecked(monsterId * 0x9E3779B9U)
+            ^ unchecked((uint)(index + 1) * 0x85EBCA6BU);
+        return mixed == 0 ? 1U : mixed;
     }
 
     private static void Shuffle<T>(T[] values, AuthoritativeLegacyRandom random)

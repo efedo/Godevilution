@@ -31,6 +31,8 @@ All notable changes to this fork are documented below.
   default.
 - Add bounded deterministic monster pathing around blocked geometry while
   preserving the existing direct-step order and server-owned occupancy rules.
+- Carry validated monster drop policies into deterministic procedural targets,
+  including generated item identity, seed, price, and unique-monster metadata.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

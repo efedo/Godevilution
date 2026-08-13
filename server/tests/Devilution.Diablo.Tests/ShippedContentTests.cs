@@ -23,6 +23,25 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseProceduralActivationCarriesTheShippedMonsterDrop()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("base", "1", [pack])),
+            randomSeed: 0x1234,
+            monsterSpawns: new DiabloMonsterSpawnConfiguration(1));
+
+        var target = Assert.Single(activation.Simulation.WorldState.CombatTargets.Values);
+        Assert.NotNull(target.Drop);
+        Assert.Equal(
+            AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId,
+            target.Drop!.EntityId);
+        Assert.NotEqual(0U, target.Drop.ItemSeed);
+        Assert.Equal(1, target.Drop.State.ItemIndex);
+    }
+
+    [Fact]
     public void HellfireOverlaySelectsTheExternalNativeGameVariant()
     {
         var repositoryRoot = FindRepositoryRoot();
