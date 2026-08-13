@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
 - Make the Hellfire Sorcerer starting loadout use its native Firebolt staff
   through a validated keyed class-loadout overlay, with live Godot protocol
   coverage for charged-source validation, charge consumption, and target damage.
+- Extend live Godot protocol coverage through the Bard's server-owned Identify
+  ability, proving class-service source validation and equipment-state mutation.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
