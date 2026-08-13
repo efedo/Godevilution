@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Constricting Ring (`unique_id=1090`) through schema
+  1.49, reusing the corrected native Ring base item with all-resistance and
+  life-drain powers.
+
+## 2026-08-13
+
 - Externalize Hellfire The Bleeder (`unique_id=1089`) through schema 1.48,
   reusing the corrected native Ring base item with magic-resistance, mana,
   and life-curse powers.

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.48.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.49.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.48.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.49.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1277,6 +1277,15 @@ public sealed class ShippedContentTests
         Assert.Equal(20, theBleeder.PlusMagicResistance);
         Assert.Equal(30 << 6, theBleeder.PlusMana);
         Assert.Equal(-(10 << 6), theBleeder.PlusHitPoints);
+        var constrictingRing = hellfireItems.GenerateUnique(1090, 0x12345678, 5);
+        Assert.Equal(1090, constrictingRing.UniqueId);
+        Assert.Equal(62000, constrictingRing.Value);
+        Assert.Equal(157, constrictingRing.ItemIndex);
+        Assert.Equal(5, constrictingRing.EquipLocation);
+        Assert.Equal(75, constrictingRing.PlusFireResistance);
+        Assert.Equal(75, constrictingRing.PlusLightningResistance);
+        Assert.Equal(75, constrictingRing.PlusMagicResistance);
+        Assert.NotEqual(0U, constrictingRing.Flags & 0x00000040U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
