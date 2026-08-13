@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.79.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.80.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.79.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.80.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -238,7 +238,8 @@ public sealed class DiabloSimulationTests
             minDamageSpecial: 5,
             maxDamageSpecial: 32,
             toHitSpecial: 100,
-            nativeAi: "Rhino");
+            nativeAi: "Rhino",
+            intelligence: 3);
         var simulation = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
                 CombatTargets = [monster],
@@ -251,6 +252,7 @@ public sealed class DiabloSimulationTests
         var snapshot = simulation.CaptureSnapshot(player, 1);
         var savedMonster = Assert.Single(snapshot.Monsters);
         Assert.Equal((6, 0), (savedMonster.PositionX, savedMonster.PositionY));
+        Assert.Equal(3, savedMonster.Intelligence);
         Assert.Equal((8, 0), (snapshot.Player.PositionX, snapshot.Player.PositionY));
 
         var replacement = DiabloSimulationFactory.Instance.Create(
@@ -265,7 +267,8 @@ public sealed class DiabloSimulationTests
                     minDamageSpecial: 5,
                     maxDamageSpecial: 32,
                     toHitSpecial: 100,
-                    nativeAi: "Rhino")],
+                    nativeAi: "Rhino",
+                    intelligence: 3)],
             });
         var restoredPlayerState = CreatePlayer();
         replacement.RestoreSnapshot(restoredPlayerState, snapshot);

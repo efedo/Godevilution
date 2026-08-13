@@ -330,6 +330,9 @@ Windows toolchain command.
 - `MonsterSnapshot.native_ai` field 43 carries the validated native
   `MonsterAIID` dispatch identity. The server owns AI execution; clients treat
   this as state metadata and do not dispatch behavior from it.
+- `MonsterSnapshot.intelligence` field 44 carries the validated native
+  intelligence value used by server-owned AI probability bands. Clients do not
+  resolve AI rolls from this metadata.
 
 ## Identity Note
 

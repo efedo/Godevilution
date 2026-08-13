@@ -456,6 +456,8 @@ message MonsterSnapshot {
 	int32 to_hit_special = 42;
 	// Native MonsterAIID dispatch identity; clients do not execute AI behavior.
 	string native_ai = 43;
+	// Native intelligence value used by server-owned AI probability bands.
+	int32 intelligence = 44;
 }
 
 message WorldItemSnapshot {

@@ -49,7 +49,8 @@ public sealed class AuthoritativeCombatTarget
         uint experienceReward = 0,
         int toHit = 0,
         int toHitSpecial = 0,
-        string nativeAi = "")
+        string nativeAi = "",
+        int intelligence = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -67,6 +68,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(experienceReward));
         if (toHit is < 0 or > 255 || toHitSpecial is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(toHit));
+        if (intelligence is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(intelligence));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -112,6 +115,7 @@ public sealed class AuthoritativeCombatTarget
         ToHit = toHit;
         ToHitSpecial = toHitSpecial;
         NativeAi = nativeAi;
+        Intelligence = intelligence;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -203,6 +207,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native MonsterAIID dispatch identity imported from validated content. */
     public string NativeAi { get; }
+
+    /** Native intelligence value imported from validated content. */
+    public int Intelligence { get; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }

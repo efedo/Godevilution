@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.
+- Add schema 1.80 native monster intelligence, validated from the native
+  `monstdat.tsv` catalog and carried through authoritative state, snapshots,
+  protocol field 44, replay fixtures, and canonical hashes; Rhino charge
+  probability now follows the native intelligence boundary.
 
 ## 2026-08-13
 

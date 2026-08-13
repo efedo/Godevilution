@@ -111,6 +111,9 @@ public sealed class AuthoritativeMonsterCatalog
                 && !string.IsNullOrWhiteSpace(nativeAiValue)
                 ? nativeAiValue
                 : monsterType?.NativeAi ?? string.Empty;
+            var intelligence = row.TryGet("intelligence", out _)
+                ? row.OptionalInt32("intelligence")
+                : monsterType?.Intelligence ?? 0;
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
@@ -199,6 +202,7 @@ public sealed class AuthoritativeMonsterCatalog
                 toHit: toHit,
                 toHitSpecial: toHitSpecial,
                 nativeAi: nativeAi,
+                intelligence: intelligence,
                 animal: animal,
                 knockback: knockback);
         }).ToArray();

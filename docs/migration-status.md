@@ -138,6 +138,10 @@ Status date: 2026-08-13
   the authoritative monster moves to the nearest clear cell before the player,
   applies its externalized special damage, and preserves charge knockback and
   blocked-lane fallback through snapshots.
+- Native monster intelligence is now externalized in schema 1.80 from the
+  retained Hellfire `monstdat.tsv` rows and persists through authoritative
+  targets, snapshots, saves, protocol field 44, and canonical hashes. Rhino
+  charge probability now uses the native `43 + 2 * intelligence` boundary.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

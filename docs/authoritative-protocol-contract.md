@@ -227,11 +227,16 @@ resolve these rolls. Zero values retain the additive compatibility fallback.
 dispatch identity. The server owns AI execution; clients do not dispatch
 behavior from this metadata.
 
+`MonsterSnapshot.intelligence` field 44 carries the validated native intelligence
+value used by server-owned AI probability bands. Clients do not resolve AI rolls
+from this metadata.
+
 The server currently uses the `Fat` identity for the native special-melee band;
 the resulting damage event and snapshot remain authoritative. Other AI-specific
 special behavior is intentionally added incrementally.
 
-The `Rhino` identity likewise drives a server-owned clear-lane charge. Its
+The `Rhino` identity likewise drives a server-owned clear-lane charge using the
+native `43 + 2 * intelligence` probability boundary. Its
 resulting monster/player positions, damage event, and blocked-lane fallback are
 ordinary authoritative snapshot state; clients do not simulate the charge.
 

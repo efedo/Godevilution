@@ -1233,7 +1233,7 @@ public sealed class DiabloCombatCommandProcessorTests
             life: 100,
             lifeMaximum: 100);
 
-        // tick ^ monster entity ^ player entity = 15, inside Rhino's base charge band.
+        // tick ^ monster entity ^ player entity = 15, inside Rhino's 43% base band.
         var deliveries = processor.AdvanceTick(1, [player]);
 
         Assert.Equal((6, 0), (monster.PositionX, monster.PositionY));
@@ -1242,6 +1242,38 @@ public sealed class DiabloCombatCommandProcessorTests
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
         Assert.Equal(20, damage.Amount);
+    }
+
+    [Fact]
+    public void RhinoAiUsesNativeIntelligenceToExtendItsChargeBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38: above the 43% base band, below 43 + 2 * 3.
+        var deliveries = processor.AdvanceTick(40, [player]);
+
+        Assert.Equal((6, 0), (monster.PositionX, monster.PositionY));
+        Assert.Single(deliveries);
     }
 
     [Fact]

@@ -716,6 +716,7 @@ public sealed class DiabloCombatCommandProcessor
             toHit: target.ToHit,
             toHitSpecial: target.ToHitSpecial,
             nativeAi: target.NativeAi,
+            intelligence: target.Intelligence,
             demon: target.IsDemon,
             animal: target.IsAnimal,
             knockback: target.HasKnockback);
@@ -3851,9 +3852,9 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        // RhinoAi's base native charge band is 43%; higher-intelligence variants
-        // retain the same deterministic boundary until intelligence is externalized.
-        if (attackSeed % 100U >= 43U
+        // RhinoAi uses 2 * intelligence + 43 as its native charge boundary.
+        var chargeChance = Math.Min(100, 43 + (2 * monster.Intelligence));
+        if (attackSeed % 100U >= (uint)chargeChance
             || !world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,

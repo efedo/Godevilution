@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.79.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.80.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -61,7 +61,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.79.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.80.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -118,6 +118,7 @@ public sealed class ShippedContentTests
         Assert.Equal(10, hellfireMonster.ToHit);
         Assert.Equal(0, hellfireMonster.ToHitSpecial);
         Assert.Equal("Zombie", hellfireMonster.NativeAi);
+        Assert.Equal(0, hellfireMonster.Intelligence);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
         Assert.Equal(7, activation.Simulation.WorldState.CombatTargets.Count);
         Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
@@ -132,6 +133,7 @@ public sealed class ShippedContentTests
         Assert.Equal(54U, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ExperienceReward);
         Assert.Equal(10, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ToHit);
         Assert.Equal("Zombie", monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).NativeAi);
+        Assert.Equal(0, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).Intelligence);
         var toadDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 54);
         Assert.Equal(("Fat", 40, 8, 20), (
             toadDemon.NativeAi,
@@ -139,11 +141,18 @@ public sealed class ShippedContentTests
             toadDemon.MinimumSpecialDamage,
             toadDemon.MaximumSpecialDamage));
         var hornedDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 64);
-        Assert.Equal(("Rhino", 100, 5, 32), (
+        Assert.Equal(("Rhino", 0, 100, 5, 32), (
             hornedDemon.NativeAi,
+            hornedDemon.Intelligence,
             hornedDemon.ToHitSpecial,
             hornedDemon.MinimumSpecialDamage,
             hornedDemon.MaximumSpecialDamage));
+        Assert.Equal(
+            [0, 1, 2, 3],
+            monsterTypes.Definitions
+                .Where(definition => definition.NativeAi == "Rhino")
+                .OrderBy(definition => definition.NativeMonsterId)
+                .Select(definition => definition.Intelligence));
         Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
         Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
         Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);

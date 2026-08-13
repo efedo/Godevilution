@@ -204,6 +204,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             toHit: spawn.Definition.ToHit,
             toHitSpecial: spawn.Definition.ToHitSpecial,
             nativeAi: spawn.Definition.NativeAi,
+            intelligence: spawn.Definition.Intelligence,
             knockback: spawn.Definition.Knockback);
     }
 

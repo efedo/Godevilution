@@ -284,6 +284,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-native-ai-v1");
                     hasher.AppendString(monster.NativeAi);
                 }
+                if (monster.Intelligence != 0) {
+                    hasher.AppendString("godevilution-monster-intelligence-v1");
+                    hasher.AppendInt32(monster.Intelligence);
+                }
             }
         }
 

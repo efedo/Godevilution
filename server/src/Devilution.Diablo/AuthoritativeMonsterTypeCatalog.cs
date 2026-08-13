@@ -53,6 +53,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native MonsterAIID dispatch identity used by incremental authoritative AI ports. */
     public string NativeAi { get; init; } = "Zombie";
+
+    /** Native intelligence value used by AI-specific probability bands. */
+    public int Intelligence { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -99,6 +102,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.ExperienceReward > 1_000_000
                 || definition.ToHit is < 0 or > 255
                 || definition.ToHitSpecial is < 0 or > 255
+                || definition.Intelligence is < 0 or > 255
                 || !IsValidNativeAi(definition.NativeAi)
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
@@ -183,6 +187,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && !string.IsNullOrWhiteSpace(nativeAi)
                     ? nativeAi
                     : "Zombie",
+                Intelligence = row.OptionalInt32("intelligence"),
             }));
     }
 

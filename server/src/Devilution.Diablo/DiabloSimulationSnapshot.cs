@@ -79,6 +79,9 @@ public sealed record DiabloMonsterState(
     /** Native MonsterAIID dispatch identity imported from content. */
     public string NativeAi { get; init; } = string.Empty;
 
+    /** Native intelligence value imported from content. */
+    public int Intelligence { get; init; }
+
     /** Remaining terminal death-animation ticks, when the monster is dead. */
     public int DeathTicksRemaining { get; init; }
 
@@ -333,6 +336,7 @@ public sealed partial class DiabloSimulation
                     ToHit = target.ToHit,
                     ToHitSpecial = target.ToHitSpecial,
                     NativeAi = target.NativeAi,
+                    Intelligence = target.Intelligence,
                     DeathTicksRemaining = target.DeathTicksRemaining,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -567,6 +571,7 @@ public sealed partial class DiabloSimulation
                 || monster.ExperienceReward > 1_000_000
                 || monster.ToHit is < 0 or > 255
                 || monster.ToHitSpecial is < 0 or > 255
+                || monster.Intelligence is < 0 or > 255
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.DeathTicksRemaining is < 0
@@ -1233,6 +1238,10 @@ public sealed partial class DiabloSimulation
                     throw new InvalidDataException(
                         "The authoritative save contains incompatible monster AI data.");
                 }
+                if (target.Intelligence != monster.Intelligence) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains incompatible monster intelligence data.");
+                }
                 target.PositionX = monster.PositionX;
                 target.PositionY = monster.PositionY;
                 target.ArmorClass = monster.ArmorClass;
@@ -1313,7 +1322,8 @@ public sealed partial class DiabloSimulation
                     experienceReward: monster.ExperienceReward,
                     toHit: monster.ToHit,
                     toHitSpecial: monster.ToHitSpecial,
-                    nativeAi: monster.NativeAi);
+                    nativeAi: monster.NativeAi,
+                    intelligence: monster.Intelligence);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

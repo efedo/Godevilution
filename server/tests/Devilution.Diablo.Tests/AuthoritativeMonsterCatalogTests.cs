@@ -70,6 +70,14 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void RejectsOutOfRangeMonsterIntelligence()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { Intelligence = 256 },
+        ]));
+    }
+
+    [Fact]
     public void RejectsUnknownNativeAiIdentity()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -164,6 +172,23 @@ public sealed class AuthoritativeMonsterCatalogTests
             monsterTypes: types);
 
         Assert.Equal("SkeletonRanged", Assert.Single(catalog.Targets).NativeAi);
+    }
+
+    [Fact]
+    public void LoadsAndInheritsNativeIntelligence()
+    {
+        var types = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tintelligence\n"
+                + "2\t0\tIntelligent Beast\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\t3\n");
+
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t2\t1\t1\t0\t10\t10\t2\n",
+            monsterTypes: types);
+
+        Assert.Equal(3, Assert.Single(catalog.Targets).Intelligence);
     }
 
     [Fact]
