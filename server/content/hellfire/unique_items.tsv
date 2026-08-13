@@ -370,3 +370,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1091	Ring of Engagement	113	11	12476	THORNS	1	3
 1091	Ring of Engagement	113	11	12476	SETAC	5	5
 1091	Ring of Engagement	113	11	12476	TARGAC	2	2
+1092	Giant's Knuckle	113	8	8000	STR	60	60
+1092	Giant's Knuckle	113	8	8000	DEX_CURSE	30	30

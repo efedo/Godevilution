@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.50.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.51.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.50.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.51.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1295,6 +1295,13 @@ public sealed class ShippedContentTests
         Assert.InRange(ringOfEngagement.PlusGetHit, -2, -1);
         Assert.Equal(2, ringOfEngagement.PlusEnemyArmorClass);
         Assert.NotEqual(0U, ringOfEngagement.Flags & 0x04000000U);
+        var giantsKnuckle = hellfireItems.GenerateUnique(1092, 0x12345678, 8);
+        Assert.Equal(1092, giantsKnuckle.UniqueId);
+        Assert.Equal(8000, giantsKnuckle.Value);
+        Assert.Equal(157, giantsKnuckle.ItemIndex);
+        Assert.Equal(5, giantsKnuckle.EquipLocation);
+        Assert.Equal(60, giantsKnuckle.PlusStrength);
+        Assert.Equal(-30, giantsKnuckle.PlusDexterity);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Giant's Knuckle (`unique_id=1092`) through schema
+  1.51, reusing the corrected native Ring base item with strength and
+  dexterity-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Ring of Engagement (`unique_id=1091`) through schema
   1.50, reusing the corrected native Ring base item with get-hit, thorns,
   armor, and target-armor powers.
