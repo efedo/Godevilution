@@ -789,3 +789,6 @@ All notable changes to this fork are documented below.
 - Refactor players and monsters onto Actor
 - Introduce Bestiary class and related engine updates
 - Introduce Actor base struct for Player, Monster
+- Hellfire content now externalizes the native-derived dungeon level identities
+  used by the fixture set through validated composed `levels.tsv` metadata;
+  blocked-cell generation and remaining Hellfire catalogs remain explicit follow-ups.

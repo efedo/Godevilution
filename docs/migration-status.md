@@ -38,11 +38,13 @@ Status date: 2026-08-12
 - Etherealize status state is projected as a typed server-owned effect and
   surfaced by the Godot HUD without client-side immunity or timing logic.
 - The checked-in Hellfire pack selects the native game variant through a
-  validated `combat.tsv` overlay and carries a native-derived encounter set
-  plus the Undead Crown and Sorcerer Firebolt staff through Diablo activation
-  and the live Godot protocol path, including charged-source validation,
-  charge consumption, and target damage; remaining Hellfire world and catalog
-  tables stay explicit follow-up content migrations.
+  validated `combat.tsv` overlay, adds native-derived dungeon level identities
+  3, 4, 9, and 17 through 24 with normalized 40-by-40 bounds, and carries a
+  native-derived encounter set plus the Undead Crown and Sorcerer Firebolt
+  staff through Diablo activation and the live Godot protocol path, including
+  charged-source validation, charge consumption, and target damage; blocked
+  cell generation and remaining Hellfire world and catalog tables stay explicit
+  follow-up content migrations.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges
