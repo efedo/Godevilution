@@ -1,2 +1,2 @@
-entity_id	object_id	level_id	position_x	position_y	activated	quest_id	effect_kind	effect_amount	missile_passable	breakable	destroyed
-2001	1	1	4	4	0	0	None	0	0	0	0
+entity_id	object_id	level_id	position_x	position_y	activated	quest_id	effect_kind	effect_amount	missile_passable	breakable	destroyed	trap_armed
+2001	1	1	4	4	0	0	None	0	0	0	0	0
