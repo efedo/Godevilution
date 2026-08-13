@@ -92,6 +92,38 @@ public sealed class ProtocolHandshakeTests
     }
 
     [Fact]
+    public void ProtocolV2RequiresTheIndependentContentAndRulesetIdentities()
+    {
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            "content-hash",
+            20) {
+            RulesetIdentityHash = "ruleset-hash",
+        });
+
+        var matching = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            ContentManifestHash = "content-hash",
+            RulesetIdentityHash = "ruleset-hash",
+        });
+        var missingRuleset = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            ContentManifestHash = "content-hash",
+        });
+        var wrongRuleset = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            ContentManifestHash = "content-hash",
+            RulesetIdentityHash = "other-ruleset",
+        });
+
+        Assert.True(matching.Accepted);
+        Assert.False(missingRuleset.Accepted);
+        Assert.False(wrongRuleset.Accepted);
+        Assert.Equal(ProtocolErrorCode.ContentMismatch, wrongRuleset.Error!.Code);
+    }
+
+    [Fact]
     public void RulesetIdentityCanBeUpdatedAfterAHostMigration()
     {
         var handshake = CreateHandshake();

@@ -14,9 +14,12 @@ closes the connection.
 Protocol v1 uses a compatibility alias: the server's combined content-and-module
 ruleset SHA-256 is carried in both `content_manifest_hash` and
 `ruleset_identity_hash`. A client must send that combined value in
-`content_manifest_hash` and should repeat it in `ruleset_identity_hash`. The
-separately logged raw content-manifest hash is diagnostic until a later protocol
-version gives the fields independent meanings.
+`content_manifest_hash` and should repeat it in `ruleset_identity_hash`. Schema
+version `0.2.0` gives the fields independent meanings: `content_manifest_hash`
+is the validated ordered content-manifest SHA-256, while
+`ruleset_identity_hash` is the combined content-and-gameplay-module identity;
+both are required for a v2 handshake. The v1 alias remains available for
+native compatibility clients.
 
 A successful handshake returns a server-issued `session_token`. Presenting a
 known token on reconnect restores the authoritative entity identity and command

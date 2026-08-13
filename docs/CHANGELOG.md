@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Add protocol v0.2 independent content-manifest and gameplay-ruleset
+  handshake identities while preserving the v0.1 combined-hash alias.
 - Enforce the supplied ruleset identity during the Godot client handshake, so
   a client cannot accept a server with incompatible gameplay modules.
 - Align native replay canonical hashing with the C# snapshot contract for

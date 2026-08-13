@@ -79,6 +79,24 @@ public sealed class ContentAndGameplayModuleTests
     }
 
     [Fact]
+    public void ProtocolV2PublishesIndependentContentAndRulesetIdentities()
+    {
+        var content = new ContentManifest("base", "1", [new ContentPack("base", "1", [TsvTable.Parse("items.tsv", "id\n1\n")])]);
+        var module = DiabloGameplayModule.Instance;
+        var ruleset = new GameplayRulesetIdentity(content, [module.Identity]);
+
+        var identity = ProtocolServerIdentity.FromRuleset(
+            "server",
+            ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            20,
+            ruleset);
+
+        Assert.Equal(content.Sha256, identity.ContentManifestHash);
+        Assert.Equal(ruleset.CombinedSha256, identity.RulesetIdentityHash);
+        Assert.NotEqual(identity.ContentManifestHash, identity.RulesetIdentityHash);
+    }
+
+    [Fact]
     public void GameplayModulesLoadDependenciesInDeclaredOrder()
     {
         var content = new ContentManifest("base", "1", [new ContentPack("base", "1", [TsvTable.Parse("empty.tsv", "id\nvalue\n")])]);

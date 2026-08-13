@@ -525,9 +525,12 @@ private managed or native dependencies. Packages are trusted in-process code;
 the digest binds code identity but does not authenticate a publisher or provide
 sandboxing.
 
-The current v1 compatibility boundary places the combined ruleset hash in both
-the `content_manifest_hash` and `ruleset_identity_hash` handshake fields. A
-future breaking protocol version may give those fields distinct meanings.
+The v1 compatibility boundary places the combined ruleset hash in both the
+`content_manifest_hash` and `ruleset_identity_hash` handshake fields. Protocol
+v0.2 retains the same wire fields but gives them independent meanings: the
+content field carries the validated content-manifest hash and the ruleset field
+carries the combined content-and-module identity. Both are required by the v0.2
+handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 

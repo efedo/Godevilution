@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using Devilution.Client.Protocol;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
 using Xunit;
@@ -10,6 +11,20 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class AuthoritativeClientTransportTests
 {
+    [Fact]
+    public async Task RequiresRulesetIdentityForProtocolV2()
+    {
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            1,
+            "godot-test",
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            "content-hash"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => client.ConnectAsync(TestContext.Current.CancellationToken));
+    }
+
     [Fact]
     public async Task PerformsHandshakeFramesCommandsAndReceivesAcknowledgements()
     {

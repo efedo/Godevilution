@@ -25,6 +25,11 @@ Windows toolchain command.
 
 - Package `devilution.protocol.v1` and schema version `0.1.0` identify the
   current contract.
+- Schema version `0.2.0` retains the additive wire fields but gives
+  `content_manifest_hash` and `ruleset_identity_hash` independent meanings:
+  the former is the validated ordered content manifest SHA-256 and the latter
+  is the combined content-and-gameplay-module identity. Both hashes are
+  required in the `ClientHello` for this version.
 - Existing field numbers and meanings are immutable. Removed fields must be
   reserved, and breaking changes require a new package and schema version.
 - Additive fields and `oneof` alternatives must be safe for older peers to
@@ -319,12 +324,13 @@ Windows toolchain command.
 
 Protocol v1 predates a separate ruleset field. The current server therefore
 places the combined content-and-module ruleset SHA-256 in both
-`content_manifest_hash` and `ruleset_identity_hash`. Current clients must send
-that combined hash in `content_manifest_hash`; they should also send it in
-`ruleset_identity_hash`. A client that supplies `ruleset_identity_hash` rejects
-a server response with a different ruleset identity before accepting the
-initial snapshot. The server log prints both the raw content manifest hash and
-the combined ruleset identity, so launchers must use the latter.
+`content_manifest_hash` and `ruleset_identity_hash`. Current v1 clients must
+send that combined hash in `content_manifest_hash`; they should also send it in
+`ruleset_identity_hash`. In protocol v2, clients send the separately printed
+raw content manifest hash and combined ruleset identity in their corresponding
+fields. A client that supplies `ruleset_identity_hash` rejects a server
+response with a different ruleset identity before accepting the initial
+snapshot.
 
 ## Test Vectors
 

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Net.Sockets;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
 
@@ -70,6 +71,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             throw new InvalidOperationException("The authoritative client is already connected.");
         if (string.IsNullOrWhiteSpace(options.ContentManifestHash))
             throw new InvalidOperationException("DEVILUTION_CONTENT_HASH must match the server manifest before connecting.");
+        if (string.Equals(
+                options.ProtocolSchemaVersion,
+                ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+                StringComparison.Ordinal)
+            && string.IsNullOrWhiteSpace(options.RulesetIdentityHash))
+            throw new InvalidOperationException(
+                "DEVILUTION_RULESET_HASH is required by this protocol version.");
 
         tcpClient = new TcpClient();
         await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);

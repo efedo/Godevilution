@@ -1,4 +1,5 @@
 using Devilution.Engine;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Host;
 
@@ -10,6 +11,13 @@ public sealed record ProtocolServerIdentity(
     string ContentManifestHash,
     uint TickRateHz)
 {
+    /** Protocol v1 aliases content identity to the combined ruleset identity. */
+    public const string LegacyProtocolSchemaVersion = ProtocolSchemaVersions.Legacy;
+
+    /** Protocol v2 gives content and gameplay modules independent identities. */
+    public const string IndependentIdentityProtocolSchemaVersion =
+        ProtocolSchemaVersions.IndependentContentAndRulesetIdentity;
+
     /** Additive ruleset identity; legacy callers use the combined hash field. */
     public string RulesetIdentityHash { get; init; } = ContentManifestHash;
 
@@ -23,7 +31,13 @@ public sealed record ProtocolServerIdentity(
         AuthoritativeGameMode gameMode = AuthoritativeGameMode.SinglePlayer)
     {
         ArgumentNullException.ThrowIfNull(ruleset);
-        return new ProtocolServerIdentity(buildId, protocolSchemaVersion, ruleset.CombinedSha256, tickRateHz) {
+        var contentManifestHash = string.Equals(
+            protocolSchemaVersion,
+            IndependentIdentityProtocolSchemaVersion,
+            StringComparison.Ordinal)
+            ? ruleset.Content.Sha256
+            : ruleset.CombinedSha256;
+        return new ProtocolServerIdentity(buildId, protocolSchemaVersion, contentManifestHash, tickRateHz) {
             RulesetIdentityHash = ruleset.CombinedSha256,
             GameMode = gameMode,
         };
@@ -86,6 +100,15 @@ public sealed class ProtocolHandshake
         if (!string.Equals(clientHello.ContentManifestHash, currentIdentity.ContentManifestHash, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.ContentMismatch, "The client content manifest does not match the server."));
 
+        if (string.Equals(
+                currentIdentity.ProtocolSchemaVersion,
+                ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+                StringComparison.Ordinal)
+            && string.IsNullOrWhiteSpace(clientHello.RulesetIdentityHash))
+            return HandshakeResult.Failure(Error(
+                ProtocolErrorCode.ContentMismatch,
+                "The client gameplay ruleset identity is required by this protocol version."));
+
         if (!string.IsNullOrWhiteSpace(clientHello.RulesetIdentityHash)
             && !string.Equals(clientHello.RulesetIdentityHash, currentIdentity.RulesetIdentityHash, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.ContentMismatch, "The client gameplay ruleset does not match the server."));
@@ -115,6 +138,7 @@ public sealed class ProtocolHandshake
         if (string.IsNullOrWhiteSpace(identity.BuildId)
             || string.IsNullOrWhiteSpace(identity.ProtocolSchemaVersion)
             || string.IsNullOrWhiteSpace(identity.ContentManifestHash)
+            || string.IsNullOrWhiteSpace(identity.RulesetIdentityHash)
             || identity.TickRateHz == 0
             || !Enum.IsDefined(identity.GameMode))
             throw new ArgumentException(
