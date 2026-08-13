@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.29 adds the native-derived Hellfire Royal Circlet base item and
+unique definition (`unique_id=1070`) with its Crown identity, attribute, mana,
+armor, and light powers.
+
 Schema 1.28 adds the native-derived Hellfire Gotterdamerung base item and
 unique definition (`unique_id=1069`) with its Great Helm identity, attribute,
 armor, get-hit, resistance, and light-curse powers.

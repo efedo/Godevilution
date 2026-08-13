@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Royal Circlet (`unique_id=1070`) through schema 1.29,
+  adding its native Crown base item with attribute, mana, armor, and light
+  powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Gotterdamerung (`unique_id=1069`) through schema 1.28,
   adding its native Great Helm base item with attribute, armor, get-hit,
   resistance, and light-curse powers.

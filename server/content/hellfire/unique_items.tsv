@@ -275,3 +275,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1069	Gotterdamerung	154	21	54900	GETHIT	4	4
 1069	Gotterdamerung	154	21	54900	ALLRESZERO	0	0
 1069	Gotterdamerung	154	21	54900	LIGHT_CURSE	4	4
+1070	Royal Circlet	155	27	24875	ATTRIBS	10	10
+1070	Royal Circlet	155	27	24875	MANA	40	40
+1070	Royal Circlet	155	27	24875	SETAC	40	40
+1070	Royal Circlet	155	27	24875	LIGHT	1	1
