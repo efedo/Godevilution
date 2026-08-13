@@ -22,6 +22,9 @@ Both runners initialize their authoritative gameplay RNG from `rng_seed`.
 Canonical state includes the current nonzero RNG state, and behavior-specific
 projectile runtime fields are hashed in stable entity order, so an incorrect
 draw count or path state diverges at the first affected checkpoint.
+This includes deferred native attack damage draws. Object effect, trap, and
+quest-progress extensions, plus quest log/native metadata, use the same
+optional tagged fields in both projections.
 
 Gameplay initial state may declare `ability_spell_id` and a unique
 `memorized_spells` array of native-bounded spell IDs and nonzero levels. Both

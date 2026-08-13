@@ -426,11 +426,23 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		hasher.AppendInt32(state.objectPositionX);
 		hasher.AppendInt32(state.objectPositionY);
 		hasher.AppendBool(state.objectActivated);
+		if (state.objectEffectKind != 0 || state.objectEffectAmount != 0) {
+			hasher.AppendInt32(state.objectEffectKind);
+			hasher.AppendInt32(state.objectEffectAmount);
+		}
 		if (state.objectMissilePassable || state.objectBreakable || state.objectDestroyed) {
 			hasher.AppendString("godevilution-object-collision-v1");
 			hasher.AppendBool(state.objectMissilePassable);
 			hasher.AppendBool(state.objectBreakable);
 			hasher.AppendBool(state.objectDestroyed);
+		}
+		if (state.objectTrapArmed) {
+			hasher.AppendString("godevilution-object-trap-v1");
+			hasher.AppendBool(true);
+		}
+		if (state.objectQuestProgressAmount != 1) {
+			hasher.AppendString("godevilution-object-quest-progress-v1");
+			hasher.AppendUint32(state.objectQuestProgressAmount);
 		}
 	}
 
@@ -441,6 +453,25 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		hasher.AppendUint32(state.questProgress);
 		hasher.AppendUint32(state.questRequiredProgress);
 		hasher.AppendBool(state.questCompleted);
+		if (state.questUnavailable) {
+			hasher.AppendString("godevilution-quest-unavailable-v1");
+			hasher.AppendBool(true);
+		}
+		if (state.questInitial && !state.questCompleted && !state.questUnavailable) {
+			hasher.AppendString("godevilution-quest-initial-v1");
+			hasher.AppendBool(true);
+		}
+		if (state.questLogged) {
+			hasher.AppendString("godevilution-quest-logged-v1");
+			hasher.AppendBool(true);
+		}
+		if (state.questVariable1 != 0 || state.questVariable2 != 0 || state.questMessageId != 0 || state.questCompletionMonsterId != 0) {
+			hasher.AppendString("godevilution-quest-native-state-v1");
+			hasher.AppendInt32(state.questVariable1);
+			hasher.AppendInt32(state.questVariable2);
+			hasher.AppendInt32(state.questMessageId);
+			hasher.AppendUint32(state.questCompletionMonsterId);
+		}
 	}
 
 	if (!state.projectiles.empty()) {
@@ -476,7 +507,22 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			    || projectile.pathTicks != 0
 			    || projectile.speed != 0
 			    || projectile.impactLifetime > 1
-			    || projectile.resistantDamageDivisor > 1) {
+			    || projectile.resistantDamageDivisor > 1
+			    || projectile.wallLeftX != 0
+			    || projectile.wallLeftY != 0
+			    || projectile.wallRightX != 0
+			    || projectile.wallRightY != 0
+			    || projectile.wallLeftDirection != -1
+			    || projectile.wallRightDirection != -1
+			    || projectile.wallLeftStopped
+			    || projectile.wallRightStopped
+			    || projectile.wallHitDirection != -1
+			    || projectile.apocalypseScanX != 0
+			    || projectile.apocalypseScanY != 0
+			    || projectile.apocalypseHit
+			    || projectile.elementalOriginX != 0
+			    || projectile.elementalOriginY != 0
+			    || projectile.guardianState != 0) {
 				hasher.AppendString("godevilution-projectile-runtime-v1");
 				hasher.AppendInt32(projectile.behavior);
 				hasher.AppendInt32(projectile.phase);
@@ -492,6 +538,21 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 				hasher.AppendInt32(projectile.speed);
 				hasher.AppendInt32(projectile.impactLifetime);
 				hasher.AppendInt32(projectile.resistantDamageDivisor);
+				hasher.AppendInt32(projectile.wallLeftX);
+				hasher.AppendInt32(projectile.wallLeftY);
+				hasher.AppendInt32(projectile.wallRightX);
+				hasher.AppendInt32(projectile.wallRightY);
+				hasher.AppendInt32(projectile.wallLeftDirection);
+				hasher.AppendInt32(projectile.wallRightDirection);
+				hasher.AppendBool(projectile.wallLeftStopped);
+				hasher.AppendBool(projectile.wallRightStopped);
+				hasher.AppendInt32(projectile.wallHitDirection);
+				hasher.AppendInt32(projectile.apocalypseScanX);
+				hasher.AppendInt32(projectile.apocalypseScanY);
+				hasher.AppendBool(projectile.apocalypseHit);
+				hasher.AppendInt32(projectile.elementalOriginX);
+				hasher.AppendInt32(projectile.elementalOriginY);
+				hasher.AppendInt32(projectile.guardianState);
 			}
 			if (projectile.lastCollisionTargetEntityId != 0) {
 				hasher.AppendString("godevilution-projectile-collision-v1");
@@ -2364,15 +2425,17 @@ bool ApplyReplayAttack(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
     uint64_t,
-    bool ranged = false)
+    bool ranged = false,
+    bool consumeRandom = false)
 {
 	if (!IsReplayAttackTargetValid(state, targetEntityId, ranged))
 		return false;
-	// The compact ranged fixtures model an initialized player with no base
-	// weapon damage, so native damage uses the one-point unarmed fallback and
-	// still consumes the deterministic damage-range draw.
+	// Native attacks consume the deterministic damage-range draw even for the
+	// compact unarmed fallback used by replay fixtures.
+	if (consumeRandom)
+		static_cast<void>(GenerateRnd(state, 1));
 	const int32_t damage = ranged
-	    ? (static_cast<void>(GenerateRnd(state, 1)), 1)
+	    ? 1
 	    : std::max(1, 10 - state.combatTargetArmorClass);
 	const int32_t damageQ6 = damage * 64;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
@@ -3449,7 +3512,8 @@ void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick
 			    state,
 			    action.targetEntityId,
 			    action.startedAtTick,
-			    state.combatMode == 5);
+			    state.combatMode == 5,
+			    true);
 		} else if (action.kind == 3) {
 			ReplayFixtureCommand command;
 			command.spellId = action.spellId;
@@ -4998,6 +5062,7 @@ bool ExecuteReplayFixture(
 				    && state.levelId == state.questLevelId) {
 					state.questProgress = std::min(state.questProgress + 1U, state.questRequiredProgress);
 					state.questCompleted = state.questProgress >= state.questRequiredProgress;
+					state.questLogged = true;
 					accepted = true;
 				}
 			} else {

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Align native replay canonical hashing with the C# snapshot contract for
+  projectile controller runtime state, object/quest extensions, and deferred
+  attack RNG consumption; the native replay gate now passes all 65 tests.
 - Scope armed-trap visibility to the requesting player's native `TrapSense`
   class flag; authoritative saves and internal state retain the full trap state.
 - Apply validated class base modifiers to native physical to-hit: initialized

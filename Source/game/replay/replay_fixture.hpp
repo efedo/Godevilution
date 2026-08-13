@@ -323,6 +323,21 @@ struct ReplayFixtureProjectileState {
 	int32_t resistantDamageDivisor = 1;
 	int32_t effectiveSpellLevel = 0;
 	uint32_t lastCollisionTargetEntityId = 0;
+	int32_t wallLeftX = 0;
+	int32_t wallLeftY = 0;
+	int32_t wallRightX = 0;
+	int32_t wallRightY = 0;
+	int32_t wallLeftDirection = -1;
+	int32_t wallRightDirection = -1;
+	bool wallLeftStopped = false;
+	bool wallRightStopped = false;
+	int32_t wallHitDirection = -1;
+	int32_t apocalypseScanX = 0;
+	int32_t apocalypseScanY = 0;
+	bool apocalypseHit = false;
+	int32_t elementalOriginX = 0;
+	int32_t elementalOriginY = 0;
+	int32_t guardianState = 0;
 };
 
 struct ReplayFixturePlayerActionState {
@@ -443,11 +458,22 @@ struct ReplayFixtureExecutionState {
 	bool objectMissilePassable = false;
 	bool objectBreakable = false;
 	bool objectDestroyed = false;
+	int32_t objectEffectKind = 0;
+	int32_t objectEffectAmount = 0;
+	uint32_t objectQuestProgressAmount = 1;
+	bool objectTrapArmed = false;
 	uint32_t questId = 0;
 	uint32_t questLevelId = 0;
 	uint32_t questProgress = 0;
 	uint32_t questRequiredProgress = 0;
 	bool questCompleted = false;
+	bool questUnavailable = false;
+	bool questInitial = false;
+	bool questLogged = false;
+	int32_t questVariable1 = 0;
+	int32_t questVariable2 = 0;
+	int32_t questMessageId = 0;
+	uint32_t questCompletionMonsterId = 0;
 	uint32_t spellHealingAmount = 20;
 	uint32_t spellManaCost = 5;
 	int32_t spellProjectileBehavior = 0;
