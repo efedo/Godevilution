@@ -209,12 +209,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         playerLoadouts.ValidateCastSources(spells);
         if (world is not null)
             combatRules.ValidateWorld(world);
+        var monsterTypes = content.TryGetTable("monster_types.tsv", out var monsterTypesTable)
+            ? AuthoritativeMonsterTypeCatalog.LoadTsv(
+                monsterTypesTable.SourcePath,
+                monsterTypesTable.ToCanonicalTsv())
+            : null;
         var monsters = content.TryGetTable("monsters.tsv", out var monstersTable)
             ? AuthoritativeMonsterCatalog.LoadTsv(
                 monstersTable.SourcePath,
                 monstersTable.ToCanonicalTsv(),
                 itemCatalog,
-                uniqueItems)
+                uniqueItems,
+                monsterTypes)
             : null;
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
             ? AuthoritativePortalCatalog.LoadTsv(

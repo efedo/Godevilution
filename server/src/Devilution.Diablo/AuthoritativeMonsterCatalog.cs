@@ -20,7 +20,8 @@ public sealed class AuthoritativeMonsterCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemCatalog? itemCatalog = null,
-        AuthoritativeUniqueItemCatalog? uniqueItems = null)
+        AuthoritativeUniqueItemCatalog? uniqueItems = null,
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeMonsterCatalog(table.Rows.Select(row => {
@@ -72,6 +73,10 @@ public sealed class AuthoritativeMonsterCatalog
                         row.OptionalInt32("drop_item_level"),
                         row.OptionalInt32("drop_only_good") != 0);
             }
+            var monsterId = row.RequiredUInt32("monster_id");
+            if (monsterTypes is not null && !monsterTypes.TryGet(monsterId, out _))
+                throw new InvalidDataException(
+                    $"Monster row {row.LineNumber} references unknown monster type {monsterId}.");
             return new AuthoritativeCombatTarget(
                 row.RequiredUInt32("entity_id"),
                 row.RequiredInt32("position_x"),
@@ -80,7 +85,7 @@ public sealed class AuthoritativeMonsterCatalog
                 row.RequiredInt32("armor_class"),
                 row.RequiredInt32("max_hit_points"),
                 row.RequiredUInt32("level_id"),
-                row.RequiredUInt32("monster_id"),
+                monsterId,
                 row.OptionalUInt32("drop_item_entity_id"),
                 dropItemSeed,
                 row.OptionalUInt32("drop_item_price"),

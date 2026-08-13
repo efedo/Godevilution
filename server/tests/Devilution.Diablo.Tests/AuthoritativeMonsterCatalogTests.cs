@@ -6,6 +6,50 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeMonsterCatalogTests
 {
     [Fact]
+    public void LoadsNativeMonsterTypesInStableIdentityOrder()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\n"
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\n"
+                + "3\t1\tGhoul\t2\t3\t2\t7\t11\t10\t3\t10\t0\t0\t1\t1\t0\n");
+
+        Assert.Equal([2U, 3U], catalog.Definitions.Select(definition => definition.MonsterId));
+        var zombie = catalog.Definitions[0];
+        Assert.Equal(0U, zombie.NativeMonsterId);
+        Assert.Equal("Zombie", zombie.Name);
+        Assert.Equal((4, 7, 10, 2, 5), (
+            zombie.MinimumHitPoints,
+            zombie.MaximumHitPoints,
+            zombie.ArmorClass,
+            zombie.MinimumDamage,
+            zombie.MaximumDamage));
+        Assert.True(zombie.StoneCurseImmune);
+        Assert.True(zombie.Undead);
+    }
+
+    [Fact]
+    public void EncounterRowsCanRequireAnExternalMonsterType()
+    {
+        var types = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false),
+        ]);
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t2\t1\t1\t0\t10\t10\t2\n",
+            monsterTypes: types);
+
+        Assert.Equal(2U, Assert.Single(catalog.Targets).MonsterId);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.LoadTsv(
+                "monsters.tsv",
+                header + "9\t3\t1\t1\t0\t10\t10\t2\n",
+                monsterTypes: types));
+    }
+
+    [Fact]
     public void LoadsExternalEncounterDefinitionsInStableEntityOrder()
     {
         var catalog = AuthoritativeMonsterCatalog.LoadTsv(
