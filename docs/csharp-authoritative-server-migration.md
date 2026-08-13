@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.90 adds the native-derived Hellfire Shadowhawk base item and unique
+definition (`unique_id=1031`) with its Broad Sword identity, light-curse,
+life-steal, to-hit, and all-resistance powers.
+
 Schema 0.89 adds the native-derived Hellfire The Bonesaw base item and unique
 definition (`unique_id=1030`) with its Claymore identity, damage-modifier,
 strength, magic/dexterity-curse, life, and mana-curse powers.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Shadowhawk (`unique_id=1031`) through schema 0.90,
+  including its native Broad Sword base item with light-curse, life-steal,
+  to-hit, and all-resistance powers.
+
 - Externalize Hellfire The Bonesaw (`unique_id=1030`) through schema 0.89,
   including its native Claymore base item with damage-modifier, strength,
   magic/dexterity-curse, life, and mana-curse powers.
