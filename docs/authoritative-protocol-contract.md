@@ -460,10 +460,11 @@ Present dynamic state adds the tagged
 `godevilution-dynamic-item-presentation-v1` canonical-hash section, while an
 ordinary item with all three fields absent retains its previous hash.
 
-`ItemStateSnapshot.mana_to_life_percent` and `life_to_mana_percent` fields 62
-and 63 preserve native Hellfire's player-dependent resource conversions. They
-are percentages of the character's base Q6 resource, not fixed item bonuses;
-the authoritative server applies them when resolving equipment stats. Nonzero
+`ItemStateSnapshot.plus_mana` and `plus_hit_points` fields 33 and 34 carry
+native Q6 item resource bonuses. Fields 62 and 63 preserve native Hellfire's player-dependent
+resource conversions. The authoritative server applies both bonus values and
+each percentage against the character's base Q6 resource when resolving
+equipment stats; clients never infer a fixed bonus from the item name. Nonzero
 conversion state adds the tagged
 `godevilution-item-resource-conversion-v1` canonical-hash section; absent
 conversion fields preserve legacy snapshot and replay hashes.

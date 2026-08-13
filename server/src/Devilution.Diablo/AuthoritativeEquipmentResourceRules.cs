@@ -1,13 +1,13 @@
 namespace Devilution.Diablo;
 
-/** Native Hellfire resource conversions applied to a newly equipped player. */
+/** Native item life/mana bonuses and Hellfire conversions for equipped players. */
 public static class AuthoritativeEquipmentResourceRules
 {
     /**
-     * Applies each equipped item's conversion against the unmodified base
-     * resources. Native computes each item's portion independently in whole
-     * points before restoring Q6 precision, so the order and truncation are
-     * intentionally preserved here.
+     * Applies each equipped item's Q6 resource bonuses and conversion against
+     * the unmodified base resources. Native computes each conversion portion
+     * independently in whole points before restoring Q6 precision, so the
+     * order and truncation are intentionally preserved here.
      */
     public static (int LifeQ6, int ManaQ6) ApplyHellfireConversions(
         int baseLifeQ6,
@@ -25,6 +25,8 @@ public static class AuthoritativeEquipmentResourceRules
         foreach (var equippedItem in equipment) {
             ArgumentNullException.ThrowIfNull(equippedItem);
             var state = equippedItem.State;
+            lifeQ6 = checked(lifeQ6 + state.PlusHitPoints);
+            manaQ6 = checked(manaQ6 + state.PlusMana);
             if (state.ManaToLifePercent != 0) {
                 var portionQ6 = CalculatePortionQ6(baseManaQ6, state.ManaToLifePercent);
                 manaQ6 = checked(manaQ6 - portionQ6);

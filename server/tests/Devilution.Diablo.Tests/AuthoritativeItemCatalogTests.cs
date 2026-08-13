@@ -395,6 +395,27 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void EquippedLifeAndManaBonusesRemainQ6ExactAlongsideConversions()
+    {
+        var item = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                PlusHitPoints = 7 << 6,
+                PlusMana = 9 << 6,
+                ManaToLifePercent = 50,
+            });
+
+        var converted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+            80 << 6,
+            124 << 6,
+            [item]);
+
+        Assert.Equal((80 + 7 + 62) << 6, converted.LifeQ6);
+        Assert.Equal((124 + 9 - 62) << 6, converted.ManaQ6);
+    }
+
+    [Fact]
     public void HellfireResourceConversionsRejectOutOfRangePercentages()
     {
         var invalid = new EquippedStoreItem(

@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply externalized native item life/mana bonuses alongside Hellfire resource
+  conversions during player creation and live equipment transfers.
+
+## 2026-08-13
+
 - Make Hellfire mana-to-life and life-to-mana conversions server-owned across
   live equipment transfers, preserving native resource debt and persisting
   base/effective maxima through snapshots, saves, protocol fields 31-32, and

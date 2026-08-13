@@ -445,7 +445,11 @@ public sealed class DiabloStoreCommandProcessorTests
             42,
             0,
             0,
-            AuthoritativeItemState.Empty with { ManaToLifePercent = 50 });
+            AuthoritativeItemState.Empty with {
+                PlusHitPoints = 2 << 6,
+                PlusMana = 3 << 6,
+                ManaToLifePercent = 50,
+            });
         var player = CreatePlayer(
             mana: 640,
             manaMaximum: 640,
@@ -461,10 +465,10 @@ public sealed class DiabloStoreCommandProcessorTests
             1);
 
         Assert.True(equip.Succeeded);
-        Assert.Equal(960, player.LifeMaximum);
-        Assert.Equal(320, player.ManaMaximum);
-        Assert.Equal(960, player.Life);
-        Assert.Equal(320, player.Mana);
+        Assert.Equal(1088, player.LifeMaximum);
+        Assert.Equal(512, player.ManaMaximum);
+        Assert.Equal(1088, player.Life);
+        Assert.Equal(512, player.Mana);
 
         var unequip = processor.Execute(
             player,

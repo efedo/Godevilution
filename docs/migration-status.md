@@ -104,11 +104,12 @@ Status date: 2026-08-13
   projectile and protocol state.
 - Store stock, purchases, sales, services, equipment, belt, inventory placement,
   item generation, affixes, and unique items for the current shipped slice.
-- Native Hellfire mana-to-life and life-to-mana item effects apply their
-  independently truncated Q6 conversions to newly created authoritative player
-  templates and after every accepted equip/unequip transfer. The server
-  preserves native resource debt and persists base/effective maxima through
-  snapshots, saves, protocol projection, and conditional hashes.
+- Native item life/mana bonuses and Hellfire mana-to-life and life-to-mana
+  effects apply their Q6 values and independently truncated conversions to newly
+  created authoritative player templates and after every accepted equip/unequip
+  transfer. The server preserves native resource debt and persists
+  base/effective maxima through snapshots, saves, protocol projection, and
+  conditional hashes.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,
   combat metadata, wallets, equipment, belt and inventory placements, class

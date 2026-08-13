@@ -343,8 +343,8 @@ conversion represented as dynamic equipment metadata.
 Gladiator's Ring (`unique_id=1111`) reuses normalized Ring item `113`,
 preserving native item index `157`, with the native 40-percent life-to-mana
 conversion represented as dynamic equipment metadata.
-When a new authoritative player template is created, equipped conversion items
-apply their native base-resource portions independently in Q6 units. The same
+When a new authoritative player template is created, equipped items apply their
+native Q6 life/mana bonuses and conversion portions independently. The same
 resolver runs after every accepted equipment transfer, preserving native
 resource debt when an item is equipped or removed; base maxima and effective
 maxima persist through snapshots, saves, and protocol projection.
