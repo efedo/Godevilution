@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Immolator (`unique_id=1057`) through schema 1.16,
+  reusing the validated Long Staff base item with fire-resistance, fire-damage,
+  mana, and vitality-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Staff of Shadows (`unique_id=1056`) through schema 1.15,
   adding its native Long Staff base item with magic-curse, to-hit, damage,
   light-curse, and fast-attack powers.

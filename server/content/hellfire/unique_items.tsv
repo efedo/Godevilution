@@ -222,3 +222,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1056	Staff of Shadows	147	2	1250	DAMP	60	60
 1056	Staff of Shadows	147	2	1250	LIGHT_CURSE	2	2
 1056	Staff of Shadows	147	2	1250	FASTATTACK	1	1
+1057	Immolator	147	4	3900	FIRERES	20	20
+1057	Immolator	147	4	3900	FIREDAM	4	4
+1057	Immolator	147	4	3900	MANA	10	10
+1057	Immolator	147	4	3900	VIT_CURSE	5	5
