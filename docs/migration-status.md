@@ -45,7 +45,7 @@ Status date: 2026-08-13
   Griswold's Edge, Bovine Plate, The Rift Bow, The Butcher's Cleaver, and The
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
-  and Gryphon's Claw, Black Razor, Gibbous Moon, and Ice Shank
+  and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, and The Executioner's Blade
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -746,6 +746,9 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
+Content schema 0.88 adds the native-derived Hellfire The Executioner's Blade
+unique definition (`unique_id=1029`), reusing the validated Falchion base item
+with native damage, life-curse, light-curse, and durability powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

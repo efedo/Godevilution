@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Executioner's Blade (`unique_id=1029`) through
+  schema 0.88, reusing the native Falchion base item with damage, life-curse,
+  light-curse, and durability powers.
+
 - Externalize Hellfire Ice Shank (`unique_id=1028`) through schema 0.87,
   including its native Long Sword base item with fire-resistance, durability,
   and strength powers.

@@ -96,3 +96,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1028	Ice Shank	131	3	5250	FIRERES	40	40
 1028	Ice Shank	131	3	5250	SETDUR	15	15
 1028	Ice Shank	131	3	5250	STR	5	10
+1029	The Executioner's Blade	129	3	7080	DAMP	150	150
+1029	The Executioner's Blade	129	3	7080	LIFE_CURSE	10	10
+1029	The Executioner's Blade	129	3	7080	LIGHT_CURSE	1	1
+1029	The Executioner's Blade	129	3	7080	DUR	200	200
