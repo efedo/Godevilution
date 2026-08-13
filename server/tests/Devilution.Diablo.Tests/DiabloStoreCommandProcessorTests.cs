@@ -524,6 +524,57 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MovingAttributeItemInAndOutOfEquipmentRecalculatesAttributes()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusStrength = 4,
+                PlusMagic = 5,
+                PlusDexterity = 6,
+                PlusVitality = 7,
+            });
+        var baseAttributes = new PlayerAttributesState(
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(30, 30),
+            new PlayerAttributeState(40, 40));
+        var player = CreatePlayer(
+            inventory: [item],
+            attributes: baseAttributes);
+        player.InventoryGrid[0] = 0;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var equip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0)),
+            1);
+
+        Assert.True(equip.Succeeded);
+        Assert.Equal(14, player.Attributes.Strength.Current);
+        Assert.Equal(25, player.Attributes.Magic.Current);
+        Assert.Equal(36, player.Attributes.Dexterity.Current);
+        Assert.Equal(47, player.Attributes.Vitality.Current);
+
+        var unequip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            2);
+
+        Assert.True(unequip.Succeeded);
+        Assert.Equal(baseAttributes, player.Attributes);
+    }
+
+    [Fact]
     public void SwapsMultiCellInventoryItemsAtomically()
     {
         var large = AuthoritativeItemState.Empty with {
@@ -805,7 +856,8 @@ public sealed class DiabloStoreCommandProcessorTests
         IReadOnlyList<EquippedStoreItem>? equipment = null,
         IReadOnlyList<OwnedStoreItem>? inventory = null,
         IReadOnlyList<int>? inventoryGrid = null,
-        IReadOnlyList<BeltStoreItem>? belt = null)
+        IReadOnlyList<BeltStoreItem>? belt = null,
+        PlayerAttributesState? attributes = null)
     {
         return new AuthoritativePlayerState(
             gold,
@@ -813,7 +865,7 @@ public sealed class DiabloStoreCommandProcessorTests
             640,
             mana,
             manaMaximum,
-            PlayerAttributesState.Zero,
+            attributes ?? PlayerAttributesState.Zero,
             equipment ?? [],
             inventoryGrid ?? Enumerable.Repeat(-1, 40).ToArray(),
             belt ?? [],

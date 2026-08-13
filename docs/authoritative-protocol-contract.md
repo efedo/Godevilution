@@ -475,6 +475,10 @@ unidentified magical items do not contribute them.
 Equipped item `armor_class` and `plus_armor_class` are likewise folded into
 the server-owned effective player armor state with native dexterity and
 identification/requirement rules; clients do not derive defensive statistics.
+Equipped `plus_strength`, `plus_magic`, `plus_dexterity`, and `plus_vitality`
+are likewise applied by the server to current attributes under native
+usability and identification rules; base attributes remain the recalculation
+source.
 
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A

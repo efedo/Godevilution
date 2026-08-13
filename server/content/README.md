@@ -356,6 +356,9 @@ those bonuses.
 Equipped item `armor_class` and native percentage armor metadata likewise
 recompute effective player armor together with native dexterity armor during
 player creation, equipment transfers, and snapshot restoration.
+Usable, identified equipped items also apply their native `plus_strength`,
+`plus_magic`, `plus_dexterity`, and `plus_vitality` bonuses to authoritative
+current attributes; base attributes remain the persisted source for recalculation.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and

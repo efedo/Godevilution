@@ -345,6 +345,8 @@ public sealed class AuthoritativePlayerState(
 
     public PlayerAttributesState Attributes { get; set; } = attributes;
 
+    private AuthoritativeEquipmentAttributeBonuses AppliedEquipmentAttributeBonuses { get; set; }
+
     public List<EquippedStoreItem> Equipment { get; } = equipment.ToList();
 
     public List<BeltStoreItem> Belt { get; } = belt.ToList();
@@ -358,9 +360,10 @@ public sealed class AuthoritativePlayerState(
     /** Server-owned item currently carried by the presentation cursor. */
     public OwnedStoreItem? HeldItem { get; set; } = heldItem;
 
-    /** Recomputes native equipment resources and defensive statistics. */
+    /** Recomputes native equipment attributes, resources, and defense. */
     public void RecalculateEquipmentResources()
     {
+        RecalculateEquipmentAttributes();
         var lifeBase = checked(Life + BaseLifeMaximum - LifeMaximum);
         var manaBase = checked(Mana + BaseManaMaximum - ManaMaximum);
         var adjusted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
@@ -378,6 +381,22 @@ public sealed class AuthoritativePlayerState(
             0,
             ManaMaximum);
         RecalculateEquipmentArmor();
+    }
+
+    /** Recomputes effective primary attributes without changing resources. */
+    public void RecalculateEquipmentAttributes()
+    {
+        Attributes = AuthoritativeEquipmentAttributeRules.Apply(
+            Attributes,
+            Equipment,
+            AppliedEquipmentAttributeBonuses);
+        AppliedEquipmentAttributeBonuses = AuthoritativeEquipmentAttributeRules.ResolveBonuses(Equipment);
+    }
+
+    /** Aligns attribute bookkeeping with a serialized equipment/attribute pair. */
+    internal void AdoptEquipmentAttributeSnapshot()
+    {
+        AppliedEquipmentAttributeBonuses = AuthoritativeEquipmentAttributeRules.ResolveBonuses(Equipment);
     }
 
     /** Recomputes effective armor without changing current life or mana. */

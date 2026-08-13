@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
 - Recompute effective player armor from equipped item armor, percentage armor,
   native dexterity, and identification/requirement rules across authoritative
   creation, transfers, and snapshot restoration.
+- Apply native usable identified equipment strength, magic, dexterity, and
+  vitality bonuses to authoritative current attributes.
 
 ## 2026-08-13
 

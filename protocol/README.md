@@ -169,6 +169,9 @@ Windows toolchain command.
 - Equipped item `armor_class` and `plus_armor_class` are folded into the
   server-owned player armor state with native dexterity and identification
   rules; clients never recompute defensive statistics from item names.
+- Equipped `plus_strength`, `plus_magic`, `plus_dexterity`, and `plus_vitality`
+  are applied by the server to current attributes under native usability and
+  identification rules; clients consume the resulting authoritative state.
 - `Snapshot.random_state`, `MonsterSnapshot.monster_level`, exact Q6 monster
   health fields 16-17, `DamageEvent.amount_q6`, `HealingEvent.amount_q6`,
   projectile runtime fields 14-27,

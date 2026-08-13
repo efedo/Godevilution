@@ -212,6 +212,7 @@ public sealed class DiabloPlayerTemplate
             ReflectCharges,
             BaseLifeMaximum,
             BaseManaMaximum);
+        player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;
     }

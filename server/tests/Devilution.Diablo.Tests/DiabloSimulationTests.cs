@@ -153,17 +153,27 @@ public sealed class DiabloSimulationTests
     {
         var simulation = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        var attributes = new PlayerAttributesState(
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(30, 30),
+            new PlayerAttributeState(40, 40));
         var source = new AuthoritativePlayerState(
             0,
             0,
             80 << 6,
             124 << 6,
             124 << 6,
-            PlayerAttributesState.Zero,
+            attributes,
             [new EquippedStoreItem(
                 4,
                 42,
-                AuthoritativeItemState.Empty with { ManaToLifePercent = 50 })],
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusStrength = 4,
+                    PlusDexterity = 6,
+                    ManaToLifePercent = 50,
+                })],
             Enumerable.Repeat(-1, 40).ToArray(),
             [],
             0,
@@ -205,6 +215,8 @@ public sealed class DiabloSimulationTests
         Assert.Equal(source.Life, destination.Life);
         Assert.Equal(source.Mana, destination.Mana);
         Assert.Equal(source.Equipment, destination.Equipment);
+        Assert.Equal(14, destination.Attributes.Strength.Current);
+        Assert.Equal(36, destination.Attributes.Dexterity.Current);
     }
 
     [Fact]

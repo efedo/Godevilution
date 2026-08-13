@@ -1113,6 +1113,7 @@ public sealed partial class DiabloSimulation
         destination.Inventory.AddRange(source.Inventory);
         destination.Equipment.Clear();
         destination.Equipment.AddRange(source.Equipment);
+        destination.AdoptEquipmentAttributeSnapshot();
         destination.RecalculateEquipmentResources();
         destination.Life = source.Life;
         destination.Mana = source.Mana;

@@ -445,6 +445,46 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void EquippedAttributesUseRequirementsAndIdentificationRules()
+    {
+        var identifiedItem = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusStrength = 4,
+                PlusMagic = 5,
+                PlusDexterity = 6,
+                PlusVitality = 7,
+            });
+        var unidentifiedMagicalItem = new EquippedStoreItem(
+            5,
+            43,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Magical = 1,
+                PlusStrength = 100,
+                PlusMagic = 100,
+                PlusDexterity = 100,
+                PlusVitality = 100,
+            });
+        var baseAttributes = new PlayerAttributesState(
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(30, 30),
+            new PlayerAttributeState(40, 40));
+
+        var attributes = AuthoritativeEquipmentAttributeRules.Apply(
+            baseAttributes,
+            [identifiedItem, unidentifiedMagicalItem]);
+
+        Assert.Equal(14, attributes.Strength.Current);
+        Assert.Equal(25, attributes.Magic.Current);
+        Assert.Equal(36, attributes.Dexterity.Current);
+        Assert.Equal(47, attributes.Vitality.Current);
+    }
+
+    [Fact]
     public void HellfireResourceConversionsRejectOutOfRangePercentages()
     {
         var invalid = new EquippedStoreItem(
