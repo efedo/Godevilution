@@ -45,7 +45,7 @@ Status date: 2026-08-13
   Griswold's Edge, Bovine Plate, The Rift Bow, The Butcher's Cleaver, and The
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
-  and Gryphon's Claw, and Black Razor
+  and Gryphon's Claw, Black Razor, and Gibbous Moon
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -740,6 +740,9 @@ magic-curse, and dexterity-curse powers.
 Content schema 0.85 adds the native-derived Hellfire Black Razor unique
 definition (`unique_id=1026`), reusing the validated Dagger base item with
 native damage, vitality, and durability powers.
+Content schema 0.86 adds the native-derived Hellfire Gibbous Moon base item and
+unique definition (`unique_id=1027`) with its Broad Sword identity, attribute,
+damage, mana, and light-curse powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

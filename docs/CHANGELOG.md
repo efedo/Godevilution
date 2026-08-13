@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gibbous Moon (`unique_id=1027`) through schema 0.86,
+  including its native Broad Sword base item with attribute, damage, mana, and
+  light-curse powers.
+
 - Externalize Hellfire Black Razor (`unique_id=1026`) through schema 0.85,
   reusing the native Dagger base item with damage, vitality, and durability
   powers.

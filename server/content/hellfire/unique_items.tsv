@@ -89,3 +89,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1026	Black Razor	127	1	2000	DAMP	150	150
 1026	Black Razor	127	1	2000	VIT	2	2
 1026	Black Razor	127	1	2000	SETDUR	5	5
+1027	Gibbous Moon	130	2	6660	ATTRIBS	2	2
+1027	Gibbous Moon	130	2	6660	DAMP	25	25
+1027	Gibbous Moon	130	2	6660	MANA	15	15
+1027	Gibbous Moon	130	2	6660	LIGHT_CURSE	3	3

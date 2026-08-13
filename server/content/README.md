@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.85.0` schema in
+It declares its identity and `devilution.diablo@0.86.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -158,6 +158,8 @@ Gryphon's Claw (`unique_id=1025`) adds its native Falchion base item with
 damage, magic-curse, and dexterity-curse powers.
 Black Razor (`unique_id=1026`) reuses the validated Dagger base item with
 damage, vitality, and durability powers.
+Gibbous Moon (`unique_id=1027`) adds its native Broad Sword base item with
+attribute, damage, mana, and light-curse powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -745,7 +747,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.85.0"
+      "version": "0.86.0"
   },
   "dependencyConstraints": [
     {
@@ -777,7 +779,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.85.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.86.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.85.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.86.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.85.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.86.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -434,6 +434,20 @@ public sealed class ShippedContentTests
         Assert.Equal(2, blackRazor.PlusVitality);
         Assert.Equal(5, blackRazor.Durability);
         Assert.Equal(5, blackRazor.MaxDurability);
+        var gibbousMoon = hellfireItems.GenerateUnique(1027, 0x12345678, 2);
+        Assert.Equal(1027, gibbousMoon.UniqueId);
+        Assert.Equal(6660, gibbousMoon.Value);
+        Assert.Equal(127, gibbousMoon.ItemIndex);
+        Assert.Equal(4, gibbousMoon.MinDamage);
+        Assert.Equal(12, gibbousMoon.MaxDamage);
+        Assert.Equal(40, gibbousMoon.MinimumStrength);
+        Assert.Equal(2, gibbousMoon.PlusStrength);
+        Assert.Equal(2, gibbousMoon.PlusMagic);
+        Assert.Equal(2, gibbousMoon.PlusDexterity);
+        Assert.Equal(2, gibbousMoon.PlusVitality);
+        Assert.Equal(25, gibbousMoon.PlusDamage);
+        Assert.Equal(15 << 6, gibbousMoon.PlusMana);
+        Assert.Equal(-3, gibbousMoon.PlusLight);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
