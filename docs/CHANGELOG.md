@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.64 with a validated native-compatible
+  `quest_types.tsv` catalog for all base and Hellfire quest identities and
+  quest-state identity checks.
+
 - Advance the Diablo content schema to 0.63 with a validated native-compatible
   `monster_types.tsv` catalog and encounter identity checks for the base and
   first six Hellfire monster types.

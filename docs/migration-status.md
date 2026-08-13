@@ -50,6 +50,10 @@ Status date: 2026-08-12
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
   resolve a stable/native type identity before activation; remaining native
   monster behavior and the rest of the Hellfire catalog remain incremental.
+- Quest type identity is now externalized through validated `quest_types.tsv`
+  rows covering the base and Hellfire native quest IDs. Quest-state rows must
+  resolve a declared stable/native identity; quest behavior and remaining
+  quest-state data remain incremental.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges
@@ -651,7 +655,10 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
-Content schema 0.63 adds validated native-compatible `monster_types.tsv`
+Content schema 0.64 adds validated native-compatible `quest_types.tsv`
+definitions for all base and Hellfire native quest IDs; quest-state rows now
+reject unknown quest identities. Content schema 0.63 adds validated
+native-compatible `monster_types.tsv`
 definitions for the base encounter and the first six Hellfire monster types;
 encounter rows now reject unknown type identities. Content schema 0.61 adds
 native-derived Hellfire Optic Amulet and Ring of Truth

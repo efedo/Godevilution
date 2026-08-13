@@ -529,7 +529,12 @@ The current v1 compatibility boundary places the combined ruleset hash in both
 the `content_manifest_hash` and `ruleset_identity_hash` handshake fields. A
 future breaking protocol version may give those fields distinct meanings.
 
-Recent spell slices
+Recent content slices
+
+Schema 0.64 adds a validated native-compatible `quest_types.tsv` catalog for
+all base and Hellfire quest identities. Quest-state rows must resolve a
+declared stable quest identity while native quest IDs, routing levels, set-level
+sources, and single-player availability remain external data.
 
 Schema 0.63 adds a validated native-compatible `monster_types.tsv` catalog for
 the base encounter and the first six Hellfire monster types. Encounter rows

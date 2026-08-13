@@ -94,6 +94,10 @@ Authoritative monster encounters now resolve through a validated
 `monster_types.tsv` catalog with stable/native identities, so future
 `addMonsterDataFromTsv` migrations have a typed content-pack destination rather
 than a Lua-owned data path.
+Authoritative quest state now resolves through a validated `quest_types.tsv`
+catalog with stable/native identities, routing levels, and single-player
+availability, so future quest migrations have a typed content-pack destination
+rather than a Lua-owned data path.
 
 ## Bundled Scripts
 

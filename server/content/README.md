@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.63.0` schema in
+It declares its identity and `devilution.diablo@0.64.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -94,7 +94,8 @@ client state. It also adds native-derived level identities 3, 4, 9, and 17
 through 24 at the native 40-by-40 dungeon bounds, so level references can cross
 the same composed-world validation boundary. These rows intentionally provide
 only the current normalized geometry metadata; blocked-cell generation and the
-remaining Hellfire quest, monster, and item catalogs remain separate migrations.
+remaining Hellfire quest behavior/state, monster, and item catalogs remain
+separate migrations.
 The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire monster
@@ -117,6 +118,11 @@ Harlequin Crest (`unique_id=1007`), Veil of Steel (`unique_id=1008`), and
 Arkaine's Valor (`unique_id=1009`) extend that slice with native helm and armor
 identities and their authoritative armor, resistance, attribute, life, mana,
 and recovery powers.
+Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
+Hellfire native quest IDs. Quest-state rows must resolve a declared stable
+quest identity; native IDs, routing levels, set-level sources, and
+single-player availability remain external metadata.
+
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
 
@@ -151,7 +157,9 @@ are server-owned and unique within the loadout.
 content pack to expose stable rows such as Etherealize `53` while native
 compatibility fields continue to carry their separate `native_spell_id` values.
 
-Schema 0.63 adds the native-compatible `monster_types.tsv` catalog and makes
+Schema 0.64 adds the native-compatible `quest_types.tsv` catalog and makes
+external quest-state rows reject unknown quest identities. Schema 0.63 adds the
+native-compatible `monster_types.tsv` catalog and makes
 external encounter rows reject unknown monster type identities. Schema 0.62
 adds native-derived Hellfire Harlequin Crest, Veil of Steel, and
 Arkaine's Valor item and unique definitions. Schema 0.61 adds the Hellfire
@@ -645,6 +653,7 @@ the complete target header even when they upsert only one row.
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, and capability metadata. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements and initial completion state. |
+| `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, and damage rules. |
 | `items.tsv` | `item_id` | Normalized item identity, native compatibility metadata, placement, charges, and generation inputs. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
@@ -674,7 +683,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.63.0"
+      "version": "0.64.0"
   },
   "dependencyConstraints": [
     {
@@ -706,7 +715,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.63.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.64.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
