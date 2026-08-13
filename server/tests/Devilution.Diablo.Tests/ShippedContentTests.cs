@@ -23,6 +23,32 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void HellfireOverlaySelectsTheExternalNativeGameVariant()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var manifest = new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]);
+
+        var composed = ComposedContent.Compose(manifest);
+        var combat = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            composed.GetRequiredTable("combat.tsv").ToCanonicalTsv());
+
+        Assert.Equal("devilution.hellfire", hellfirePack.Id);
+        Assert.Equal(
+            new ContentSchemaIdentity("devilution.diablo", "0.57.0"),
+            hellfirePack.Schema);
+        Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
+        Assert.Equal(2, composed.Manifest.Packs.Count);
+    }
+
+    [Fact]
     public void BaseContentManifestAndAuthoritativeCatalogsLoadDeterministically()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "id": "devilution.hellfire",
+  "version": "0.1.0",
+  "dependencies": ["devilution.base"],
+  "schema": {
+    "id": "devilution.diablo",
+    "version": "0.57.0"
+  },
+  "dependencyConstraints": [
+    {
+      "id": "devilution.base",
+      "minimumVersion": "0.1.0",
+      "maximumVersion": "0.1.0"
+    }
+  ],
+  "overlays": [
+    {
+      "table": "combat.tsv",
+      "keys": ["base_attack_damage"],
+      "mode": "upsert"
+    }
+  ]
+}
