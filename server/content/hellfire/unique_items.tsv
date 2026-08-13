@@ -353,3 +353,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1086	Stormshield	170	24	49000	INDESTRUCTIBLE	0	0
 1086	Stormshield	170	24	49000	FASTBLOCK	1	1
 1086	Stormshield	170	24	49000	LIGHTRES	50	50
+1087	Bramble	113	1	1000	ATTRIBS_CURSE	2	2
+1087	Bramble	113	1	1000	DAMMOD	3	3
+1087	Bramble	113	1	1000	MANA	10	10

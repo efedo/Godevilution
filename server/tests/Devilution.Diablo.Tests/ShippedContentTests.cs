@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.45.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.46.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.45.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.46.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1247,6 +1247,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10, stormshield.PlusStrength);
         Assert.Equal(50, stormshield.PlusLightningResistance);
         Assert.NotEqual(0U, stormshield.Flags & 0x01000000U);
+        var bramble = hellfireItems.GenerateUnique(1087, 0x12345678, 1);
+        Assert.Equal(1087, bramble.UniqueId);
+        Assert.Equal(1000, bramble.Value);
+        Assert.Equal(157, bramble.ItemIndex);
+        Assert.Equal(0, bramble.ArmorClass);
+        Assert.Equal(5, bramble.EquipLocation);
+        Assert.Equal(-2, bramble.PlusStrength);
+        Assert.Equal(-2, bramble.PlusMagic);
+        Assert.Equal(-2, bramble.PlusDexterity);
+        Assert.Equal(-2, bramble.PlusVitality);
+        Assert.Equal(3, bramble.PlusDamageModifier);
+        Assert.Equal(10 << 6, bramble.PlusMana);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

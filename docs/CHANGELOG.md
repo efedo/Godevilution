@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Bramble (`unique_id=1087`) through schema 1.46,
+  reusing the native Ring base item with cursed attributes, damage modifier,
+  and mana powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Stormshield (`unique_id=1086`) through schema 1.45,
   adding its native Gothic Shield base item with armor, get-hit,
   strength, indestructible, fast-block, and lightning-resistance powers.
