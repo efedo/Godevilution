@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.76.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.77.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.76.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.77.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -346,6 +346,14 @@ public sealed class ShippedContentTests
         Assert.Equal(-2, bowOfTheDead.PlusLight);
         Assert.Equal(30, bowOfTheDead.Durability);
         Assert.Equal(30, bowOfTheDead.MaxDurability);
+        var blackoakBow = hellfireItems.GenerateUnique(1018, 0x12345678, 5);
+        Assert.Equal(1018, blackoakBow.UniqueId);
+        Assert.Equal(2500, blackoakBow.Value);
+        Assert.Equal(146, blackoakBow.ItemIndex);
+        Assert.Equal(10, blackoakBow.PlusDexterity);
+        Assert.Equal(-10, blackoakBow.PlusVitality);
+        Assert.Equal(50, blackoakBow.PlusDamage);
+        Assert.Equal(-1, blackoakBow.PlusLight);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

@@ -58,3 +58,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1017	Bow of the Dead	123	5	2500	VIT_CURSE	3	3
 1017	Bow of the Dead	123	5	2500	LIGHT_CURSE	2	2
 1017	Bow of the Dead	123	5	2500	SETDUR	30	30
+1018	The Blackoak Bow	122	5	2500	DEX	10	10
+1018	The Blackoak Bow	122	5	2500	VIT_CURSE	10	10
+1018	The Blackoak Bow	122	5	2500	DAMP	50	50
+1018	The Blackoak Bow	122	5	2500	LIGHT_CURSE	1	1

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Blackoak Bow (`unique_id=1018`) through schema 0.77,
+  reusing the validated Long Bow base item with native attribute, damage, and
+  light/vitality-curse powers.
+
 - Externalize Hellfire Bow of the Dead (`unique_id=1017`) through schema 0.76,
   reusing the validated Composite Bow base item with native hit, attribute,
   curse, and durability powers.
