@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gnat Sting (`unique_id=1100`) through schema 1.59,
+  reusing the native Hunter's Bow base with multi-arrow, damage, fast-attack,
+  and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Amulet of Warding (`unique_id=1099`) through schema
   1.58, adding the native AMULET base identity with all-resistance and
   life-curse powers.

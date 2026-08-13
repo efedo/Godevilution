@@ -389,3 +389,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1098	Ring of Thunder	113	8	8000	MAGICRES_CURSE	30	30
 1099	Amulet of Warding	171	12	30000	ALLRES	40	40
 1099	Amulet of Warding	171	12	30000	LIFE_CURSE	100	100
+1100	Gnat Sting	124	15	30000	MULT_ARROWS	3	3
+1100	Gnat Sting	124	15	30000	SETDAM	1	2
+1100	Gnat Sting	124	15	30000	FASTATTACK	1	1
+1100	Gnat Sting	124	15	30000	INDESTRUCTIBLE	0	0
