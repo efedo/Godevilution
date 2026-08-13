@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Blackoak Shield (`unique_id=1084`) through schema 1.43,
+  adding its native Small Shield base item with armor, dexterity,
+  vitality-curse, light-curse, and durability powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Dragon's Breach (`unique_id=1083`) through schema 1.42,
   adding its native Kite Shield base item with armor, fire-resistance,
   strength, magic-curse, and indestructible powers.

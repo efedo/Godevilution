@@ -337,3 +337,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1083	Dragon's Breach	167	2	19200	SETAC	20	20
 1083	Dragon's Breach	167	2	19200	MAG_CURSE	5	5
 1083	Dragon's Breach	167	2	19200	INDESTRUCTIBLE	0	0
+1084	Blackoak Shield	168	4	5725	DEX	10	10
+1084	Blackoak Shield	168	4	5725	VIT_CURSE	10	10
+1084	Blackoak Shield	168	4	5725	SETAC	18	18
+1084	Blackoak Shield	168	4	5725	LIGHT_CURSE	1	1
+1084	Blackoak Shield	168	4	5725	DUR	150	150

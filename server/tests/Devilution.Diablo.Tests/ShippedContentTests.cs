@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.42.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.43.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.42.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.43.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1210,6 +1210,18 @@ public sealed class ShippedContentTests
         Assert.Equal(25, dragonsBreach.PlusFireResistance);
         Assert.Equal(5, dragonsBreach.PlusStrength);
         Assert.Equal(-5, dragonsBreach.PlusMagic);
+        var blackoakShield = hellfireItems.GenerateUnique(1084, 0x12345678, 4);
+        Assert.Equal(1084, blackoakShield.UniqueId);
+        Assert.Equal(5725, blackoakShield.Value);
+        Assert.Equal(73, blackoakShield.ItemIndex);
+        Assert.Equal(18, blackoakShield.ArmorClass);
+        Assert.Equal(60, blackoakShield.Durability);
+        Assert.Equal(60, blackoakShield.MaxDurability);
+        Assert.Equal(25, blackoakShield.MinimumStrength);
+        Assert.Equal(4, blackoakShield.EquipLocation);
+        Assert.Equal(10, blackoakShield.PlusDexterity);
+        Assert.Equal(-10, blackoakShield.PlusVitality);
+        Assert.Equal(-1, blackoakShield.PlusLight);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
