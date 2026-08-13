@@ -40,7 +40,8 @@ Status date: 2026-08-12
 - The checked-in Hellfire pack selects the native game variant through a
   validated `combat.tsv` overlay and carries a native-derived encounter set
   plus the Undead Crown and Sorcerer Firebolt staff through Diablo activation
-  and the live Godot protocol snapshot; remaining Hellfire world and catalog
+  and the live Godot protocol path, including charged-source validation,
+  charge consumption, and target damage; remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
