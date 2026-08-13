@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Fool's Crest (`unique_id=1068`) through schema 1.27,
+  reusing the native Helm base item with cursed attributes, life, get-hit,
+  and thorns powers.
+
+## 2026-08-13
+
 - Externalize Hellfire OverLord's Helm (`unique_id=1067`) through schema 1.26,
   reusing the native Helm base item with attribute, magic-curse, and
   durability powers.

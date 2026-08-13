@@ -266,3 +266,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1067	OverLord's Helm	152	7	12500	VIT	5	5
 1067	OverLord's Helm	152	7	12500	MAG_CURSE	20	20
 1067	OverLord's Helm	152	7	12500	SETDUR	15	15
+1068	Fool's Crest	152	12	10150	ATTRIBS_CURSE	4	4
+1068	Fool's Crest	152	12	10150	LIFE	100	100
+1068	Fool's Crest	152	12	10150	GETHIT_CURSE	1	6
+1068	Fool's Crest	152	12	10150	THORNS	1	3
