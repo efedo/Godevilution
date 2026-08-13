@@ -157,9 +157,11 @@ Startup publishes composed content, the complete module registry, ruleset
 identity, and the selected validated game adapter through one coordinated
 Engine activation. Candidate module registration is all-or-nothing on this
 path, so a later module or Diablo content-validation failure cannot expose a
-partial ruleset. The runtime also provides a transactional replacement API,
-but the server does not yet expose live reload because connected sessions need
-an explicit migration and old-adapter retirement policy first.
+partial ruleset. The host also exposes a transactional replacement API that
+exports and imports every initialized session under an operation barrier,
+updates the handshake identity only after migration succeeds, and retires old
+adapters after in-flight leases drain. The standalone executable does not yet
+provide an operator-facing reload command; callers use the host API directly.
 
 ## Gameplay-module packages
 
