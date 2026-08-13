@@ -130,6 +130,10 @@ the authoritative target and on-hit resource boundaries.
 Hellfire `Peril` applies pre-modifier self-damage from the base attack and
 eligible `PlusGetHit` equipment, then doubles the final physical hit in Q6;
 the server owns Mana Shield conversion, death handling, and both damage events.
+Hellfire `Doppelganger` consumes its native 10% post-hit roll, excludes unique
+and Diablo targets, and creates a full-health non-unique copy on the last
+available adjacent cell; the spawned monster remains in authoritative world
+snapshots and hashes.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

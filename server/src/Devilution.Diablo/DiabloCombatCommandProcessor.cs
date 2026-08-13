@@ -21,6 +21,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private uint nextWorldItemEntityId = 0x40000000;
+    private uint nextMonsterEntityId = 0x10000000;
     private uint nextProjectileEntityId = 0x80000000;
 
     private const uint FastHitRecoveryFlag = 1U << 21;
@@ -356,7 +357,10 @@ public sealed class DiabloCombatCommandProcessor
             target,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
-            out var perilActive);
+            out var perilActive,
+            out var doppelgangerProc);
+        if (doppelgangerProc)
+            SpawnDoppelganger(target, players);
         var events = new List<DiabloGameplayEvent>();
         if (perilActive) {
             var damageResult = playerDamage.Apply(player, perilSelfDamageQ6);
@@ -455,7 +459,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         uint seed,
         out int perilSelfDamageQ6,
-        out bool perilActive)
+        out bool perilActive,
+        out bool doppelgangerProc)
     {
         var damagePercent = 0;
         var damageFlat = 0;
@@ -479,6 +484,7 @@ public sealed class DiabloCombatCommandProcessor
             && HasUsableHellfireDamageArmorFlag(
                 player,
                 AuthoritativeEquipmentIncomingDamageRules.PerilFlag);
+        doppelgangerProc = false;
         perilSelfDamageQ6 = 0;
         if (perilActive) {
             perilSelfDamageQ6 = checked(
@@ -508,6 +514,16 @@ public sealed class DiabloCombatCommandProcessor
             && random.RandomIntLessThan(100) < 5) {
             resolvedDamage = checked(resolvedDamage * 3);
         }
+        if (rules.GameVariant == DiabloGameVariant.Hellfire
+            && resolvedDamage > 0
+            && !target.IsDiablo
+            && !target.IsUnique
+            && HasUsableHellfireDamageArmorFlag(
+                player,
+                AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag)
+            && random.RandomIntLessThan(100) < 10) {
+            doppelgangerProc = true;
+        }
         var resolvedDamageQ6 = DiabloFixedPointQ6.FromWhole(resolvedDamage);
         if (rules.GameVariant == DiabloGameVariant.Hellfire
             && resolvedDamageQ6 > 0
@@ -522,6 +538,73 @@ public sealed class DiabloCombatCommandProcessor
         if (perilActive)
             resolvedDamageQ6 = checked(resolvedDamageQ6 * 2);
         return resolvedDamageQ6;
+    }
+
+    /** Spawns the native full-health, non-unique Doppelganger copy. */
+    private void SpawnDoppelganger(
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        (int X, int Y)? position = null;
+        foreach (var displacement in DirectionDisplacements) {
+            var candidateX = checked(target.PositionX + displacement.X);
+            var candidateY = checked(target.PositionY + displacement.Y);
+            if (world.IsWalkable(target.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    target.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    target.EntityId)) {
+                position = (candidateX, candidateY);
+            }
+        }
+        if (!position.HasValue)
+            return;
+
+        var entityId = AllocateMonsterEntityId(players);
+        var copy = new AuthoritativeCombatTarget(
+            entityId,
+            position.Value.X,
+            position.Value.Y,
+            DiabloFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
+            armorClass: target.ArmorClass,
+            maxHitPoints: DiabloFixedPointQ6.ToWholeCeiling(target.MaxHitPointsQ6),
+            levelId: target.LevelId,
+            monsterId: target.MonsterId,
+            attackDamage: target.AttackDamage,
+            aggroRange: target.AggroRange,
+            fireResistance: target.FireResistance,
+            lightningResistance: target.LightningResistance,
+            magicResistance: target.MagicResistance,
+            acidResistance: target.AcidResistance,
+            monsterLevel: target.MonsterLevel,
+            stoneCurseImmune: target.StoneCurseImmune,
+            undead: target.IsUndead,
+            minDamage: target.MinDamage,
+            maxDamage: target.MaxDamage,
+            minDamageSpecial: target.MinDamageSpecial,
+            maxDamageSpecial: target.MaxDamageSpecial,
+            berserkImmune: target.BerserkImmune,
+            deathAnimationTicks: target.DeathAnimationTicks,
+            demon: target.IsDemon);
+        copy.RestoreHitPointsQ6(target.MaxHitPointsQ6, target.MaxHitPointsQ6);
+        world.CombatTargets.Add(entityId, copy);
+    }
+
+    private uint AllocateMonsterEntityId(
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        while (nextMonsterEntityId == 0
+            || world.CombatTargets.ContainsKey(nextMonsterEntityId)
+            || world.WorldItems.ContainsKey(nextMonsterEntityId)
+            || world.Objects.ContainsKey(nextMonsterEntityId)
+            || world.Projectiles.ContainsKey(nextMonsterEntityId)
+            || world.Portals.ContainsKey(nextMonsterEntityId)
+            || players.Any(player => player.EntityId == nextMonsterEntityId)) {
+            nextMonsterEntityId = checked(nextMonsterEntityId + 1);
+        }
+        return nextMonsterEntityId++;
     }
 
     private bool TryGetAttackTarget(

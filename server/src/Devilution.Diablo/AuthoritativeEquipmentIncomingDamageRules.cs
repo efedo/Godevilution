@@ -12,6 +12,9 @@ public static class AuthoritativeEquipmentIncomingDamageRules
     /** Native Hellfire ItemSpecialEffectHf::Peril flag. */
     public const int PerilFlag = 1 << 2;
 
+    /** Native Hellfire ItemSpecialEffectHf::Doppelganger flag. */
+    public const int DoppelgangerFlag = 1 << 4;
+
     /** Native Hellfire ItemSpecialEffectHf::ACAgainstDemons flag. */
     public const int AgainstDemonsFlag = 1 << 5;
 

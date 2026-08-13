@@ -84,6 +84,9 @@ Status date: 2026-08-13
 - Hellfire `Peril` now applies its native pre-modifier self-damage, including
   usable equipment `PlusGetHit`, and doubles the final physical hit in Q6;
   Mana Shield, death handling, and emitted damage events remain server-owned.
+- Hellfire `Doppelganger` now consumes its native post-hit 10% roll, excludes
+  unique and Diablo targets, and spawns a full-health non-unique copy on the
+  deterministic last available adjacent cell; the copy is snapshot-owned.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

@@ -1164,6 +1164,107 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireDoppelgangerSpawnsAFullHealthCopyOnTheLastAvailableAdjacentCell()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            100,
+            maxHitPoints: 100,
+            monsterId: 42,
+            fireResistance: 20,
+            lightningResistance: 30,
+            magicResistance: 40,
+            acidResistance: 50,
+            monsterLevel: 3,
+            undead: true,
+            minDamage: 4,
+            maxDamage: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 10,
+            berserkImmune: true,
+            deathAnimationTicks: 4,
+            demon: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1U, random.State);
+        Assert.Equal(90, target.HitPoints);
+        var copy = Assert.Single(
+            world.CombatTargets.Values,
+            candidate => candidate.EntityId != target.EntityId);
+        Assert.Equal(0x10000000U, copy.EntityId);
+        Assert.Equal((2, 1), (copy.PositionX, copy.PositionY));
+        Assert.Equal(target.MonsterId, copy.MonsterId);
+        Assert.Equal(target.MaxHitPointsQ6, copy.HitPointsQ6);
+        Assert.Equal(target.MaxHitPointsQ6, copy.MaxHitPointsQ6);
+        Assert.True(copy.IsUndead);
+        Assert.True(copy.IsDemon);
+        Assert.False(copy.IsUnique);
+        Assert.False(copy.IsDiablo);
+        Assert.Equal(target.DeathAnimationTicks, copy.DeathAnimationTicks);
+    }
+
+    [Fact]
+    public void HellfireDoppelgangerDoesNotRollForUniqueOrDiabloTargets()
+    {
+        foreach (var target in new[] {
+            new AuthoritativeCombatTarget(9, 1, 0, 100, unique: true),
+            new AuthoritativeCombatTarget(10, 1, 0, 100, diablo: true),
+        }) {
+            var random = new DiabloRandom(0);
+            var processor = CreateProcessor(
+                new DiabloWorldState(combatTargets: [target]),
+                random: random,
+                rules: new AuthoritativeCombatRules(
+                    10,
+                    1,
+                    100,
+                    gameVariant: DiabloGameVariant.Hellfire));
+            var player = CreatePlayer(
+                entityId: 7,
+                equipment: [new EquippedStoreItem(
+                    4,
+                    42,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        HellfireDamageArmorFlags =
+                            AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                    })]);
+
+            var result = processor.Execute(
+                player,
+                new DiabloAttackIntent(target.EntityId),
+                1);
+
+            Assert.True(result.Succeeded);
+            Assert.Equal(0U, random.State);
+        }
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

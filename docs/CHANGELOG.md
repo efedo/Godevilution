@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
 - Apply native Hellfire `Peril`: self-damage uses pre-modifier attack damage
   plus `PlusGetHit`, while the final physical hit is doubled in Q6; Mana Shield
   and death handling remain authoritative.
+- Apply native Hellfire `Doppelganger` spawning after its authoritative 10%
+  post-hit roll, including unique/Diablo exclusions and deterministic adjacent
+  placement for a full-health non-unique copy.
 - Apply Hellfire `Devastation` as a native 5% post-hit triple-damage roll,
   preserving authoritative RNG ordering and equipment eligibility.
 - Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment
