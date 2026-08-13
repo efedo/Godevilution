@@ -74,9 +74,22 @@ public sealed class AuthoritativeMonsterCatalog
                         row.OptionalInt32("drop_only_good") != 0);
             }
             var monsterId = row.RequiredUInt32("monster_id");
-            if (monsterTypes is not null && !monsterTypes.TryGet(monsterId, out _))
-                throw new InvalidDataException(
-                    $"Monster row {row.LineNumber} references unknown monster type {monsterId}.");
+            AuthoritativeMonsterTypeDefinition? monsterType = null;
+            if (monsterTypes is not null) {
+                if (!monsterTypes.TryGet(monsterId, out var resolvedMonsterType))
+                    throw new InvalidDataException(
+                        $"Monster row {row.LineNumber} references unknown monster type {monsterId}.");
+                monsterType = resolvedMonsterType;
+            }
+            var fireResistance = row.TryGet("fire_resistance", out _)
+                ? row.OptionalInt32("fire_resistance")
+                : monsterType?.FireResistance ?? 0;
+            var lightningResistance = row.TryGet("lightning_resistance", out _)
+                ? row.OptionalInt32("lightning_resistance")
+                : monsterType?.LightningResistance ?? 0;
+            var magicResistance = row.TryGet("magic_resistance", out _)
+                ? row.OptionalInt32("magic_resistance")
+                : monsterType?.MagicResistance ?? 0;
             return new AuthoritativeCombatTarget(
                 row.RequiredUInt32("entity_id"),
                 row.RequiredInt32("position_x"),
@@ -92,9 +105,9 @@ public sealed class AuthoritativeMonsterCatalog
                 dropItemState,
                 attackDamage: row.OptionalInt32("attack_damage"),
                 aggroRange: row.OptionalInt32("aggro_range"),
-                fireResistance: row.OptionalInt32("fire_resistance"),
-                lightningResistance: row.OptionalInt32("lightning_resistance"),
-                magicResistance: row.OptionalInt32("magic_resistance"),
+                fireResistance: fireResistance,
+                lightningResistance: lightningResistance,
+                magicResistance: magicResistance,
                 monsterLevel: row.OptionalInt32("monster_level"),
                 stoneCurseImmune: stoneCurseImmune == 1,
                 undead: undead == 1,

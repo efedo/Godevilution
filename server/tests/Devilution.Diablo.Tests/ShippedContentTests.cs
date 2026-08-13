@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.66.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.67.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.66.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.67.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -63,6 +63,7 @@ public sealed class ShippedContentTests
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);
+        Assert.Equal(100, hellfireMonster.MagicResistance);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
         Assert.Equal(7, activation.Simulation.WorldState.CombatTargets.Count);
         Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
@@ -74,6 +75,7 @@ public sealed class ShippedContentTests
         Assert.Equal(13, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
+        Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
         Assert.Equal("Carver", monsterTypes.Definitions[6].Name);
         Assert.Equal("Horror", monsterTypes.Definitions[^1].Name);
         Assert.True(monsterTypes.Definitions[^1].Undead);

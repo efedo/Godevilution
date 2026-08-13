@@ -29,6 +29,68 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsNativeMonsterTypeResistances()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tfire_resistance\tlightning_resistance\tmagic_resistance\n"
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\t0\t0\t100\n");
+
+        var zombie = Assert.Single(catalog.Definitions);
+        Assert.Equal((0, 0, 100), (
+            zombie.FireResistance,
+            zombie.LightningResistance,
+            zombie.MagicResistance));
+    }
+
+    [Fact]
+    public void EncounterUsesTypeResistanceWhenNoInstanceOverrideExists()
+    {
+        var types = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false) {
+                MagicResistance = 100,
+            },
+        ]);
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t2\t1\t1\t0\t10\t10\t2\n",
+            monsterTypes: types);
+
+        Assert.Equal(100, Assert.Single(catalog.Targets).MagicResistance);
+    }
+
+    [Fact]
+    public void ExplicitEncounterResistanceOverridesTypeResistance()
+    {
+        var types = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false) {
+                MagicResistance = 100,
+            },
+        ]);
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tmagic_resistance\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t2\t1\t1\t0\t10\t10\t2\t25\n",
+            monsterTypes: types);
+
+        Assert.Equal(25, Assert.Single(catalog.Targets).MagicResistance);
+    }
+
+    [Fact]
+    public void RejectsMonsterTypeResistanceOutsideNativeRange()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false) {
+                MagicResistance = 101,
+            },
+        ]));
+    }
+
+    [Fact]
     public void EncounterRowsCanRequireAnExternalMonsterType()
     {
         var types = new AuthoritativeMonsterTypeCatalog([
