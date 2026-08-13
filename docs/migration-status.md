@@ -12,7 +12,7 @@ Status date: 2026-08-12
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
-| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm and Etherealize presentation, live Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
+| Godot client | Complete for protocol-boundary demonstrations, including typed Monk Search, Rogue Trap Disarm, and Etherealize presentation, live Monk Search, Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
@@ -327,7 +327,9 @@ character-level, and spell-level duration terms. The server preserves native
 additive recasts and the signed-int overflow guard, owns expiry and transition
 cleanup, and projects typed behavior 2 to Godot item outlines and the native
 automap flag. Compatible saves, conditional hashes, and a shared four-checkpoint
-C++/C# replay carry the same state.
+C++/C# replay carry the same state. The live Godot protocol suite now verifies
+the Monk class loadout, explicit ability source, and authoritative status
+projection with a positive duration.
 The Bard's Identify skill is now a server-owned item action. Schema 0.26 binds
 the loadout's spell-5 declaration to the stable `spell:identify` identity, and
 an additive protocol source distinguishes it from paid vendor identification.

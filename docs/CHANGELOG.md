@@ -34,6 +34,9 @@ All notable changes to this fork are documented below.
 - Extend live Godot protocol coverage through the Rogue's server-owned Trap
   Disarm ability, including an external armed-object overlay, adjacency
   validation, and server-owned trap-state mutation.
+- Extend live Godot protocol coverage through the Monk's server-owned Search
+  ability, including explicit class-ability source validation and typed status
+  projection with authoritative duration.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
