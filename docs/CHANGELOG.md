@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Bow of the Dead (`unique_id=1017`) through schema 0.76,
+  reusing the validated Composite Bow base item with native hit, attribute,
+  curse, and durability powers.
+
 - Externalize Hellfire Deadly Hunter (`unique_id=1016`) through schema 0.75,
   including its native composite-bow base item and triple-damage, hit, and
   magic-curse powers.

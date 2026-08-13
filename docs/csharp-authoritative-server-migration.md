@@ -587,6 +587,10 @@ Schema 0.75 adds the native-derived Hellfire Deadly Hunter base item and
 unique definition (`unique_id=1016`) with its composite-bow identity,
 triple-damage, hit, and magic-curse powers.
 
+Schema 0.76 adds the native-derived Hellfire Bow of the Dead unique definition
+(`unique_id=1017`), reusing the validated Composite Bow base item with native
+hit, attribute, curse, and durability powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

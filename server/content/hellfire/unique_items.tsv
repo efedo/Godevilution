@@ -53,3 +53,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1016	Deadly Hunter	123	3	8750	3XDAMVDEM	0	0
 1016	Deadly Hunter	123	3	8750	TOHIT	20	20
 1016	Deadly Hunter	123	3	8750	MAG_CURSE	5	5
+1017	Bow of the Dead	123	5	2500	TOHIT	10	10
+1017	Bow of the Dead	123	5	2500	DEX	4	4
+1017	Bow of the Dead	123	5	2500	VIT_CURSE	3	3
+1017	Bow of the Dead	123	5	2500	LIGHT_CURSE	2	2
+1017	Bow of the Dead	123	5	2500	SETDUR	30	30
