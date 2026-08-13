@@ -434,6 +434,9 @@ message MonsterSnapshot {
 	bool is_berserked = 32;
 	// Server-owned player entity that summoned this minion, when applicable.
 	uint32 owner_player_id = 33;
+	// Native monster death-animation duration and remaining terminal ticks.
+	int32 death_animation_ticks = 34;
+	int32 death_ticks_remaining = 35;
 }
 
 message WorldItemSnapshot {

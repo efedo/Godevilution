@@ -70,6 +70,8 @@ internal static class DiabloProtocolMapper
                 MinDamageSpecial = monster.MinDamageSpecial,
                 MaxDamageSpecial = monster.MaxDamageSpecial,
                 IsBerserked = monster.IsBerserked,
+                DeathAnimationTicks = monster.DeathAnimationTicks,
+                DeathTicksRemaining = monster.DeathTicksRemaining,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -328,6 +330,8 @@ internal static class DiabloProtocolMapper
                 MinDamageSpecial = monster.MinDamageSpecial,
                 MaxDamageSpecial = monster.MaxDamageSpecial,
                 IsBerserked = monster.IsBerserked,
+                DeathAnimationTicks = monster.DeathAnimationTicks,
+                DeathTicksRemaining = monster.DeathTicksRemaining,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),

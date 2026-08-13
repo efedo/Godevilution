@@ -1591,6 +1591,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(25, firstGolem.ArmorClass);
         Assert.Equal(12, firstGolem.MinDamage);
         Assert.Equal(20, firstGolem.MaxDamage);
+        Assert.Equal(12, firstGolem.DeathAnimationTicks);
         Assert.Equal(2 * (320 * 2 + (20000 * 64) / 3), firstGolem.MaxHitPointsQ6);
         Assert.Equal(20000 - 94 * 64, player.Mana);
 
@@ -1605,6 +1606,36 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(13, secondGolem.PositionX);
         Assert.Equal(10, secondGolem.PositionY);
         Assert.Equal(7U, secondGolem.OwnerPlayerId);
+    }
+
+    [Fact]
+    public void GolemDeathAnimationPersistsAndExpiresAtNativeDuration()
+    {
+        var golem = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            1,
+            playerMinion: true,
+            ownerPlayerId: 7,
+            deathAnimationTicks: 3);
+        var world = new DiabloWorldState(combatTargets: [golem]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(10), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(0, golem.HitPoints);
+        Assert.Equal(3, golem.DeathTicksRemaining);
+        Assert.Same(golem, Assert.Single(world.CombatTargets.Values));
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Equal(2, golem.DeathTicksRemaining);
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal(1, golem.DeathTicksRemaining);
+        processor.AdvanceTick(3, [player]);
+        Assert.Empty(world.CombatTargets);
     }
 
     [Fact]
@@ -2405,6 +2436,7 @@ public sealed class DiabloCombatCommandProcessorTests
             MinimumManaCost = 60,
             ManaCostScale = 64,
             StaffLevel = 9,
+            GolemDeathAnimationTicks = 12,
         };
     }
 

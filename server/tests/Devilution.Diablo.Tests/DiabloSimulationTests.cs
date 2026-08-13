@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.56.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.57.0"),
             DiabloContentSchema.Current);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@0.56.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@0.57.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -82,6 +82,46 @@ public sealed class DiabloSimulationTests
         Assert.Equal(0, target.HitPoints);
         Assert.Equal(100U, player.Experience);
         Assert.Same(target, simulation.WorldState.CombatTargets[9]);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsMonsterDeathAnimationState()
+    {
+        var sourceTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            deathAnimationTicks: 3);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                CombatTargets = [sourceTarget],
+            });
+        var sourcePlayer = CreatePlayer();
+        Assert.True(simulation.Execute(sourcePlayer, new DiabloAttackIntent(9), 1).Succeeded);
+        simulation.AdvanceTick(2, [sourcePlayer]);
+        var snapshot = simulation.CaptureSnapshot(sourcePlayer, 4);
+
+        var replacementTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            deathAnimationTicks: 3);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                CombatTargets = [replacementTarget],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal(3, restored.DeathAnimationTicks);
+        Assert.Equal(2, restored.DeathTicksRemaining);
+        Assert.Equal(0, restored.HitPoints);
     }
 
     [Fact]

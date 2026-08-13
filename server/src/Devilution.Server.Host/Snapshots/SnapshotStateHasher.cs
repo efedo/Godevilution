@@ -241,6 +241,11 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.MaxDamageSpecial);
                     hasher.AppendBool(monster.IsBerserked);
                 }
+                if (monster.DeathAnimationTicks != 0 || monster.DeathTicksRemaining != 0) {
+                    hasher.AppendString("godevilution-monster-death-animation-v1");
+                    hasher.AppendInt32(monster.DeathAnimationTicks);
+                    hasher.AppendInt32(monster.DeathTicksRemaining);
+                }
             }
         }
 

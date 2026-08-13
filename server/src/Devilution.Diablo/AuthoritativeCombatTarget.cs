@@ -40,7 +40,8 @@ public sealed class AuthoritativeCombatTarget
         int? maxDamageSpecial = null,
         bool unique = false,
         bool diablo = false,
-        bool berserkImmune = false)
+        bool berserkImmune = false,
+        int deathAnimationTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -52,6 +53,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(minDamage));
         if (monsterLevel < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterLevel));
+        if (deathAnimationTicks < 0)
+            throw new ArgumentOutOfRangeException(nameof(deathAnimationTicks));
         if (fireResistance is < -100 or > 100 || lightningResistance is < -100 or > 100 || magicResistance is < -100 or > 100)
             throw new ArgumentOutOfRangeException(nameof(fireResistance));
         var resolvedFuturePositionX = futurePositionX ?? positionX;
@@ -83,6 +86,7 @@ public sealed class AuthoritativeCombatTarget
         IsUnique = unique;
         IsDiablo = diablo;
         BerserkImmune = berserkImmune;
+        DeathAnimationTicks = deathAnimationTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -149,6 +153,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native MFLAG_BERSERK state. */
     public bool IsBerserked { get; set; }
+
+    /** Native death-animation duration imported from the active monster data. */
+    public int DeathAnimationTicks { get; }
+
+    /** Remaining server ticks in the terminal death animation, when active. */
+    public int DeathTicksRemaining { get; private set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
     public int HitPoints
     {
@@ -191,6 +201,28 @@ public sealed class AuthoritativeCombatTarget
         var appliedDamageQ6 = Math.Min(hitPointsQ6, damageQ6);
         hitPointsQ6 -= appliedDamageQ6;
         return appliedDamageQ6;
+    }
+
+    internal void BeginDeathAnimation()
+    {
+        if (hitPointsQ6 != 0)
+            throw new InvalidOperationException("A living monster cannot begin its death animation.");
+        DeathTicksRemaining = DeathAnimationTicks;
+    }
+
+    internal bool AdvanceDeathAnimation()
+    {
+        if (DeathTicksRemaining == 0)
+            return true;
+        DeathTicksRemaining--;
+        return DeathTicksRemaining == 0;
+    }
+
+    internal void RestoreDeathAnimation(int deathTicksRemaining)
+    {
+        if (deathTicksRemaining < 0 || deathTicksRemaining > DeathAnimationTicks)
+            throw new ArgumentOutOfRangeException(nameof(deathTicksRemaining));
+        DeathTicksRemaining = deathTicksRemaining;
     }
 
     internal void BeginMovement(int futurePositionX, int futurePositionY)

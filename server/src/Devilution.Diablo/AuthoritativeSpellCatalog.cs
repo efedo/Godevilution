@@ -327,6 +327,9 @@ public sealed record AuthoritativeSpellDefinition(
     public int BerserkDamagePercentRandomRange { get; init; }
 
     public int BerserkSpellLevelBonus { get; init; }
+
+    /** Native Golem death-animation duration in simulation ticks. */
+    public int GolemDeathAnimationTicks { get; init; }
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -840,7 +843,8 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileLifetime != 1
                     || definition.ProjectileCount != 1
                     || definition.ProjectileCountLevelDivisor != 0
-                    || definition.StaffLevel != 9)) {
+                    || definition.StaffLevel != 9
+                    || definition.GolemDeathAnimationTicks != 12)) {
                 throw new InvalidDataException(
                     "Golem behavior requires the native targeted summon tuning.");
             }
@@ -1528,6 +1532,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Phasing offset tuning requires Phasing projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Golem
+                && definition.GolemDeathAnimationTicks != 0) {
+                throw new InvalidDataException(
+                    "Golem death-animation tuning requires Golem projectile behavior.");
+            }
             if (definition.StatusEffectId != 0 && definition.StatusDuration == 0)
                 throw new InvalidDataException("Status-bearing spells require a positive status duration.");
             if (!spells.TryAdd(definition.SpellId, definition))
@@ -1701,6 +1710,7 @@ public sealed class AuthoritativeSpellCatalog
             BerserkDamagePercentBase = row.OptionalInt32("berserk_damage_percent_base"),
             BerserkDamagePercentRandomRange = row.OptionalInt32("berserk_damage_percent_random_range"),
             BerserkSpellLevelBonus = row.OptionalInt32("berserk_spell_level_bonus"),
+            GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

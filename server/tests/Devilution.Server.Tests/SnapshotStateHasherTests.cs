@@ -426,6 +426,33 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterDeathAnimationExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 0,
+                    MaxHitPoints = 10,
+                    Alive = false,
+                },
+            },
+        };
+        var duration = first.Clone();
+        duration.Monsters[0].DeathAnimationTicks = 12;
+        duration.Monsters[0].DeathTicksRemaining = 12;
+        var progressed = duration.Clone();
+        progressed.Monsters[0].DeathTicksRemaining = 11;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(duration));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(duration),
+            SnapshotStateHasher.Compute(progressed));
+    }
+
+    [Fact]
     public void WorldItemProjectionChangesTheStateHash()
     {
         var first = new Snapshot {

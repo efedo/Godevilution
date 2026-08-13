@@ -887,7 +887,8 @@ public sealed class DiabloCombatCommandProcessor
             SpawnGolem(
                 player,
                 golemSpawnPosition!.Value,
-                effectiveSpellLevel);
+                effectiveSpellLevel,
+                spell.GolemDeathAnimationTicks);
         } else if (isBerserk && target is not null) {
             ApplyBerserk(target, spell, effectiveSpellLevel);
         } else if (isJester) {
@@ -2971,7 +2972,8 @@ public sealed class DiabloCombatCommandProcessor
     private void SpawnGolem(
         AuthoritativePlayerState player,
         (int X, int Y) position,
-        int effectiveSpellLevel)
+        int effectiveSpellLevel,
+        int deathAnimationTicks)
     {
         foreach (var existing in world.CombatTargets.Values
                      .Where(target => target.IsPlayerMinion
@@ -3002,7 +3004,8 @@ public sealed class DiabloCombatCommandProcessor
             minDamage: minimumDamage,
             maxDamage: maximumDamage,
             minDamageSpecial: minimumDamage,
-            maxDamageSpecial: maximumDamage);
+            maxDamageSpecial: maximumDamage,
+            deathAnimationTicks: deathAnimationTicks);
         golem.RestoreHitPointsQ6(hitPointsQ6, hitPointsQ6);
         world.CombatTargets.Add(entityId, golem);
     }
@@ -3188,14 +3191,23 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
-        foreach (var target in world.CombatTargets.Values.OrderBy(target => target.EntityId)) {
+        foreach (var target in world.CombatTargets.Values
+                     .OrderBy(target => target.EntityId)
+                     .ToArray()) {
             if (target.IsMoving && !target.IsPetrified)
                 target.CompleteMovement();
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);
                 continue;
             }
-            if (target.HitPoints <= 0 || target.AggroRange <= 0)
+            if (target.HitPoints <= 0) {
+                if (target.DeathAnimationTicks != 0
+                    && target.AdvanceDeathAnimation()) {
+                    world.CombatTargets.Remove(target.EntityId);
+                }
+                continue;
+            }
+            if (target.AggroRange <= 0)
                 continue;
             if (target.IsPetrified)
                 continue;
@@ -3305,8 +3317,13 @@ public sealed class DiabloCombatCommandProcessor
             || owner.Life <= 0
             || owner.CombatMode is DiabloPlayerCombatMode.NewLevel or DiabloPlayerCombatMode.Quit
             || owner.LevelId != minion.LevelId
-            || minion.HitPoints <= 0) {
+            || (minion.HitPoints <= 0 && minion.DeathAnimationTicks == 0)) {
             world.CombatTargets.Remove(minion.EntityId);
+            return;
+        }
+        if (minion.HitPoints <= 0) {
+            if (minion.AdvanceDeathAnimation())
+                world.CombatTargets.Remove(minion.EntityId);
             return;
         }
         if (minion.IsPetrified)
@@ -7118,6 +7135,7 @@ public sealed class DiabloCombatCommandProcessor
             return;
 
         target.CancelMovement();
+        target.BeginDeathAnimation();
 
         DiabloPlayerProgression.GrantExperience(player, rules.DefeatExperience);
         events.Add(new DiabloGameplayEvent(

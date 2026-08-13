@@ -54,6 +54,12 @@ public sealed record DiabloMonsterState(
 
     public bool IsBerserked { get; init; }
 
+    /** Native death-animation duration imported from content. */
+    public int DeathAnimationTicks { get; init; }
+
+    /** Remaining terminal death-animation ticks, when the monster is dead. */
+    public int DeathTicksRemaining { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -285,6 +291,8 @@ public sealed partial class DiabloSimulation
                     MinDamageSpecial = target.MinDamageSpecial,
                     MaxDamageSpecial = target.MaxDamageSpecial,
                     IsBerserked = target.IsBerserked,
+                    DeathAnimationTicks = target.DeathAnimationTicks,
+                    DeathTicksRemaining = target.DeathTicksRemaining,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -506,6 +514,10 @@ public sealed partial class DiabloSimulation
                 || monster.MaxDamageSpecial < monster.MinDamageSpecial
                 || monster.AggroRange < 0
                 || monster.MonsterLevel < 0
+                || monster.DeathAnimationTicks is < 0 or > 1024
+                || monster.DeathTicksRemaining is < 0
+                || monster.DeathTicksRemaining > monster.DeathAnimationTicks
+                || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
                 || (monster.Moving
                     && (!WorldState.IsWalkable(
                             monster.LevelId,
@@ -1140,6 +1152,10 @@ public sealed partial class DiabloSimulation
         }
         foreach (var monster in monsters) {
             if (WorldState.CombatTargets.TryGetValue(monster.EntityId, out var target)) {
+                if (target.DeathAnimationTicks != monster.DeathAnimationTicks) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains incompatible monster death-animation data.");
+                }
                 target.PositionX = monster.PositionX;
                 target.PositionY = monster.PositionY;
                 target.ArmorClass = monster.ArmorClass;
@@ -1166,6 +1182,12 @@ public sealed partial class DiabloSimulation
                 target.MinDamageSpecial = monster.MinDamageSpecial;
                 target.MaxDamageSpecial = monster.MaxDamageSpecial;
                 target.IsBerserked = monster.IsBerserked;
+                if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
+                    && monster.DeathTicksRemaining != 0) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains an invalid monster death animation.");
+                }
+                target.RestoreDeathAnimation(monster.DeathTicksRemaining);
                 target.RestoreOccupancy(
                     monster.Moving,
                     monster.FuturePositionX,
@@ -1201,11 +1223,13 @@ public sealed partial class DiabloSimulation
                     maxDamageSpecial: monster.MaxDamageSpecial,
                     unique: monster.IsUnique,
                     diablo: monster.IsDiablo,
-                    berserkImmune: monster.BerserkImmune);
+                    berserkImmune: monster.BerserkImmune,
+                    deathAnimationTicks: monster.DeathAnimationTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);
                 restoredTarget.IsBerserked = monster.IsBerserked;
+                restoredTarget.RestoreDeathAnimation(monster.DeathTicksRemaining);
                 WorldState.CombatTargets.Add(monster.EntityId, restoredTarget);
             }
         }

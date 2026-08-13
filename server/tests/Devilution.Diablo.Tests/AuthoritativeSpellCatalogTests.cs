@@ -144,6 +144,7 @@ public sealed class AuthoritativeSpellCatalogTests
             golem.ManaAdjustment,
             golem.MinimumManaCost,
             golem.StaffLevel));
+        Assert.Equal(12, golem.GolemDeathAnimationTicks);
     }
 
     [Fact]

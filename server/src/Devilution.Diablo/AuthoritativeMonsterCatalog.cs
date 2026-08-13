@@ -46,6 +46,11 @@ public sealed class AuthoritativeMonsterCatalog
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid Berserk eligibility capability.");
             }
+            var deathAnimationTicks = row.OptionalInt32("death_animation_ticks");
+            if (deathAnimationTicks is < 0 or > 1024) {
+                throw new InvalidDataException(
+                    $"Monster row {row.LineNumber} has an invalid death-animation duration.");
+            }
             var dropItemId = row.OptionalUInt32("drop_item_id");
             var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
             var dropItemSeed = row.OptionalUInt32("drop_item_seed");
@@ -95,7 +100,8 @@ public sealed class AuthoritativeMonsterCatalog
                 maxDamageSpecial: row.OptionalInt32("max_damage_special", row.OptionalInt32("attack_damage")),
                 unique: unique == 1,
                 diablo: diablo == 1,
-                berserkImmune: berserkImmune == 1);
+                berserkImmune: berserkImmune == 1,
+                deathAnimationTicks: deathAnimationTicks);
         }));
     }
 }

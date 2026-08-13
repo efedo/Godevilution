@@ -182,7 +182,7 @@ public sealed class AuthoritativeSaveCodecTests
         return new DiabloSimulationSnapshot(
             9,
             player,
-            [new DiabloMonsterState(20, 3, 0, 1, 1, 5, 10, 2, 1, 4, 0, 0, 0) {
+            [new DiabloMonsterState(20, 3, 0, 1, 1, 0, 10, 2, 1, 4, 0, 0, 0) {
                 MonsterLevel = 7,
                 Moving = true,
                 FuturePositionX = 2,
@@ -190,7 +190,9 @@ public sealed class AuthoritativeSaveCodecTests
                 Petrified = true,
                 StoneCurseImmune = true,
                 IsUndead = true,
-                HitPointsQ6 = 304,
+                DeathAnimationTicks = 3,
+                DeathTicksRemaining = 2,
+                HitPointsQ6 = 0,
             }],
             [new DiabloWorldItemState(
                 21,
