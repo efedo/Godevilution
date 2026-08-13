@@ -400,3 +400,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1102	Armor of Gloom	165	25	200000	SETAC	225	225
 1102	Armor of Gloom	165	25	200000	ALLRESZERO	0	0
 1102	Armor of Gloom	165	25	200000	LIGHT_CURSE	2	2
+1103	Blitzen	123	13	30000	ADDACLIFE	10	15
+1103	Blitzen	123	13	30000	SETDAM	0	0
+1103	Blitzen	123	13	30000	INDESTRUCTIBLE	0	0

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.61.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.62.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.61.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.62.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1392,6 +1392,21 @@ public sealed class ShippedContentTests
         Assert.Equal(90, armorOfGloom.Durability);
         Assert.Equal(90, armorOfGloom.MaxDurability);
         Assert.NotEqual(0U, armorOfGloom.Flags & 0x80000000U);
+        var blitzen = hellfireItems.GenerateUnique(1103, 0x12345678, 13);
+        Assert.Equal(1103, blitzen.UniqueId);
+        Assert.Equal(30000, blitzen.Value);
+        Assert.Equal(147, blitzen.ItemIndex);
+        Assert.Equal(2, blitzen.EquipLocation);
+        Assert.Equal(0, blitzen.MinDamage);
+        Assert.Equal(0, blitzen.MaxDamage);
+        Assert.Equal(10, blitzen.FireMinDamage);
+        Assert.Equal(15, blitzen.FireMaxDamage);
+        Assert.Equal(1, blitzen.LightningMinDamage);
+        Assert.Equal(0, blitzen.LightningMaxDamage);
+        Assert.Equal(255, blitzen.Durability);
+        Assert.Equal(255, blitzen.MaxDurability);
+        Assert.NotEqual(0U, blitzen.Flags & 0x02000000U);
+        Assert.NotEqual(0U, blitzen.Flags & 0x00000008U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

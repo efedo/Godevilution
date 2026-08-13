@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Blitzen (`unique_id=1103`) through schema 1.62,
+  reusing native Composite Bow with lightning-arrow damage, zero base damage,
+  and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Armor of Gloom (`unique_id=1102`) through schema 1.61,
   reusing native Full Plate with zero strength requirement, fixed armor 225,
   all-resistance reset, and light curse.
