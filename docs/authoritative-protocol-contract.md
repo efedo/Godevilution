@@ -231,6 +231,10 @@ The server currently uses the `Fat` identity for the native special-melee band;
 the resulting damage event and snapshot remain authoritative. Other AI-specific
 special behavior is intentionally added incrementally.
 
+The `Rhino` identity likewise drives a server-owned clear-lane charge. Its
+resulting monster/player positions, damage event, and blocked-lane fallback are
+ordinary authoritative snapshot state; clients do not simulate the charge.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

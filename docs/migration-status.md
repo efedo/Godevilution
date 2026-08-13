@@ -134,6 +134,10 @@ Status date: 2026-08-13
   targets select the native five-percent special branch from stable tick/entity
   state and resolve the externalized special accuracy and damage range. Other
   AI-specific special behaviors remain incremental.
+- The native `Rhino` AI charge is now server-owned for clear long-range lanes:
+  the authoritative monster moves to the nearest clear cell before the player,
+  applies its externalized special damage, and preserves charge knockback and
+  blocked-lane fallback through snapshots.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

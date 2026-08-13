@@ -3714,6 +3714,8 @@ public sealed class DiabloCombatCommandProcessor
             var distance = Math.Max(
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
+            if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
+                continue;
             if (distance <= 1) {
                 if (IsPlayerProtectedByFlash(victim)
                     || IsPlayerEtherealized(victim))
@@ -3831,6 +3833,145 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native Rhino AI charge: clear long-range lanes end in a special melee hit. */
+    private bool TryAdvanceRhinoCharge(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        int distance)
+    {
+        if (monster.NativeAi != "Rhino"
+            || distance < 5
+            || monster.ToHitSpecial <= 0
+            || monster.MaxDamageSpecial <= 0)
+            return false;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        // RhinoAi's base native charge band is 43%; higher-intelligence variants
+        // retain the same deterministic boundary until intelligence is externalized.
+        if (attackSeed % 100U >= 43U
+            || !world.HasLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return false;
+
+        var destination = FindRhinoChargeDestination(monster, player, players);
+        if (!destination.HasValue)
+            return false;
+
+        monster.ApplyKnockback(destination.Value.X, destination.Value.Y);
+        var armorClass = player.ArmorClass;
+        if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+            armorClass = AuthoritativeEquipmentIncomingDamageRules
+                .ApplyHellfireMonsterClassArmor(
+                    armorClass,
+                    monster.IsDemon,
+                    monster.IsUndead,
+                    player.Equipment);
+        }
+        var specialDamage = SelectNativeSpecialDamage(monster, attackSeed);
+        var damage = rules.ResolveMonsterAttackDamage(
+            specialDamage,
+            monster.ToHitSpecial,
+            monster.MonsterLevel,
+            player.CharacterLevel,
+            monster.LevelId,
+            armorClass,
+            attackSeed);
+        damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+            damage,
+            rules.MinimumDamage,
+            player.Equipment);
+        var damageResult = playerDamage.Apply(player, damage);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                player,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    monster.EntityId,
+                    player.EntityId,
+                    damageResult.IncomingDamageQ6)));
+        }
+        if (player.Life == 0)
+            StartPlayerDeath(
+                player,
+                monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        else if (damage > 0)
+            ApplyRhinoChargeKnockback(monster, player, players);
+        return true;
+    }
+
+    private (int X, int Y)? FindRhinoChargeDestination(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var candidates = new List<(int X, int Y)>();
+        for (var offsetY = -1; offsetY <= 1; offsetY++) {
+            for (var offsetX = -1; offsetX <= 1; offsetX++) {
+                if (offsetX == 0 && offsetY == 0)
+                    continue;
+                candidates.Add((player.PositionX + offsetX, player.PositionY + offsetY));
+            }
+        }
+        return candidates
+            .Where(candidate => world.IsWalkable(monster.LevelId, candidate.X, candidate.Y)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidate.X,
+                    candidate.Y,
+                    players,
+                    monster.EntityId)
+                && world.HasLineOfSight(
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    candidate.X,
+                    candidate.Y))
+            .OrderBy(candidate => Math.Max(
+                Math.Abs(candidate.X - monster.PositionX),
+                Math.Abs(candidate.Y - monster.PositionY)))
+            .ThenBy(candidate => candidate.Y)
+            .ThenBy(candidate => candidate.X)
+            .Select(candidate => ((int X, int Y)?)candidate)
+            .FirstOrDefault();
+    }
+
+    private void ApplyRhinoChargeKnockback(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = DiabloPlayerDirections.Toward(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var destinationX = checked(player.PositionX + displacement.X);
+        var destinationY = checked(player.PositionY + displacement.Y);
+        if (!world.IsWalkable(monster.LevelId, destinationX, destinationY)
+            || world.IsOccupied(
+                monster.LevelId,
+                destinationX,
+                destinationY,
+                players,
+                player.EntityId)) {
+            return;
+        }
+        DiabloPlayerActionLifecycle.Cancel(player);
+        player.PositionX = destinationX;
+        player.PositionY = destinationY;
     }
 
     /** Native Overlord/Fat AI selects its special melee band five percent of the time. */

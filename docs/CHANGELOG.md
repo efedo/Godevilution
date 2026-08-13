@@ -56,6 +56,8 @@ All notable changes to this fork are documented below.
   authoritative state, protocol, saves, replay fixtures, and canonical hashes.
 - Route the native `Fat` AI special-melee band through the authoritative combat
   boundary using the externalized special accuracy and damage range.
+- Route the native `Rhino` AI clear-lane charge through authoritative movement,
+  special damage, knockback, and blocked-lane fallback state.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

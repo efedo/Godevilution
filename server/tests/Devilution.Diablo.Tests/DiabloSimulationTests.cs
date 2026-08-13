@@ -226,6 +226,57 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsRhinoChargePositionAndPlayerKnockback()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino");
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [monster],
+            });
+        var player = CreatePlayer();
+        player.PositionX = 7;
+        player.PositionY = 0;
+
+        simulation.AdvanceTick(1, [player]);
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((6, 0), (savedMonster.PositionX, savedMonster.PositionY));
+        Assert.Equal((8, 0), (snapshot.Player.PositionX, snapshot.Player.PositionY));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    20,
+                    attackDamage: 1,
+                    aggroRange: 8,
+                    minDamageSpecial: 5,
+                    maxDamageSpecial: 32,
+                    toHitSpecial: 100,
+                    nativeAi: "Rhino")],
+            });
+        var restoredPlayerState = CreatePlayer();
+        replacement.RestoreSnapshot(restoredPlayerState, snapshot);
+
+        var restoredMonster = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((6, 0), (restoredMonster.PositionX, restoredMonster.PositionY));
+        var restoredPlayer = replacement.CaptureSnapshot(restoredPlayerState, 1).Player;
+        Assert.Equal((8, 0), (restoredPlayer.PositionX, restoredPlayer.PositionY));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

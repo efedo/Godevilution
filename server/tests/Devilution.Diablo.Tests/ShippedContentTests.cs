@@ -138,6 +138,12 @@ public sealed class ShippedContentTests
             toadDemon.ToHitSpecial,
             toadDemon.MinimumSpecialDamage,
             toadDemon.MaximumSpecialDamage));
+        var hornedDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 64);
+        Assert.Equal(("Rhino", 100, 5, 32), (
+            hornedDemon.NativeAi,
+            hornedDemon.ToHitSpecial,
+            hornedDemon.MinimumSpecialDamage,
+            hornedDemon.MaximumSpecialDamage));
         Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
         Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
         Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);
