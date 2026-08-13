@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gladiator's Ring (`unique_id=1111`) through schema 1.70,
+  reusing native Ring with its player-dependent 40-percent life-to-mana
+  conversion preserved as authoritative item metadata.
+
+## 2026-08-13
+
 - Externalize Hellfire Acolyte's Amulet (`unique_id=1110`) through schema 1.69,
   reusing native Amulet with its player-dependent 50-percent mana-to-life
   conversion preserved as authoritative item metadata.
