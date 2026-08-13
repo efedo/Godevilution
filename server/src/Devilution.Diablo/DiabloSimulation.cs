@@ -269,7 +269,8 @@ public sealed partial class DiabloSimulation
                 proceduralMonsterSeed,
                 gameMode == DiabloGameMode.Multiplayer,
                 proceduralMonsterSpawns.MaximumMonsters,
-                firstEntityId);
+                firstEntityId,
+                GetReservedPositions(levelId, participants));
             if (targets.All(target => !IsEntityIdOccupied(target.EntityId, participants)))
                 break;
             firstEntityId = checked(firstEntityId + 1);
@@ -300,6 +301,47 @@ public sealed partial class DiabloSimulation
             || WorldState.Projectiles.ContainsKey(entityId)
             || WorldState.Portals.ContainsKey(entityId)
             || participants.Any(player => player.EntityId == entityId);
+    }
+
+    private IReadOnlySet<(int X, int Y)> GetReservedPositions(
+        uint levelId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        var reserved = new HashSet<(int X, int Y)>();
+        foreach (var target in WorldState.CombatTargets.Values.Where(target =>
+                     target.HitPoints > 0
+                     && (target.LevelId == 0 || target.LevelId == levelId))) {
+            reserved.Add((target.PositionX, target.PositionY));
+            if (target.IsMoving)
+                reserved.Add((target.FuturePositionX, target.FuturePositionY));
+        }
+        foreach (var item in WorldState.WorldItems.Values.Where(item => item.LevelId == levelId))
+            reserved.Add((item.PositionX, item.PositionY));
+        foreach (var @object in WorldState.Objects.Values.Where(@object =>
+                     !@object.Activated
+                     && !@object.Destroyed
+                     && @object.LevelId == levelId))
+            reserved.Add((@object.PositionX, @object.PositionY));
+        foreach (var portal in WorldState.Portals.Values) {
+            if (portal.SourceLevelId == levelId)
+                reserved.Add((portal.SourcePositionX, portal.SourcePositionY));
+            if (portal.DestinationLevelId == levelId)
+                reserved.Add((portal.DestinationPositionX, portal.DestinationPositionY));
+        }
+        if (WorldState.World is not null) {
+            foreach (var warp in WorldState.World.WarpTargets) {
+                if (warp.SourceLevelId == levelId)
+                    reserved.Add((warp.TriggerX, warp.TriggerY));
+                if (warp.TargetLevelId == levelId)
+                    reserved.Add((warp.TargetX, warp.TargetY));
+            }
+        }
+        foreach (var player in participants.Where(player => player.LevelId == levelId)) {
+            reserved.Add((player.PositionX, player.PositionY));
+            if (player.IsMoving)
+                reserved.Add((player.FuturePositionX, player.FuturePositionY));
+        }
+        return reserved;
     }
 
     /** Reconciles procedural-level tracking after a save or snapshot restore. */

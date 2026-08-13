@@ -35,12 +35,13 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             ?? throw new ArgumentNullException(nameof(levelGeneration));
     }
 
-    /** Plans bounded deterministic placements for one validated dungeon level. */
+    /** Plans bounded deterministic placements while avoiding reserved cells. */
     public IReadOnlyList<AuthoritativeMonsterSpawn> Plan(
         uint levelId,
         uint seed,
         bool multiplayer,
-        int maximumMonsters)
+        int maximumMonsters,
+        IEnumerable<(int X, int Y)>? reservedPositions = null)
     {
         if (maximumMonsters < 0)
             throw new ArgumentOutOfRangeException(nameof(maximumMonsters));
@@ -54,10 +55,12 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (maximumMonsters == 0 || candidates.Count == 0)
             return [];
 
+        var reserved = (reservedPositions ?? []).ToHashSet();
         var level = world.Levels.Single(candidate => candidate.LevelId == levelId);
         var positions = Enumerable.Range(0, checked(level.Width * level.Height))
             .Select(cell => (X: cell % level.Width, Y: cell / level.Width))
-            .Where(position => level.IsWalkable(position.X, position.Y))
+            .Where(position => level.IsWalkable(position.X, position.Y)
+                && !reserved.Contains(position))
             .ToArray();
         var baseCount = positions.Length / rule.MonsterDensityDivisor;
         var requestedCount = multiplayer
@@ -102,11 +105,17 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint seed,
         bool multiplayer,
         int maximumMonsters,
-        uint firstEntityId = FirstGeneratedMonsterEntityId)
+        uint firstEntityId = FirstGeneratedMonsterEntityId,
+        IEnumerable<(int X, int Y)>? reservedPositions = null)
     {
         if (firstEntityId == 0)
             throw new ArgumentOutOfRangeException(nameof(firstEntityId));
-        var spawns = Plan(levelId, seed, multiplayer, maximumMonsters);
+        var spawns = Plan(
+            levelId,
+            seed,
+            multiplayer,
+            maximumMonsters,
+            reservedPositions);
         return spawns
             .Select((spawn, index) => new AuthoritativeCombatTarget(
                 checked(firstEntityId + (uint)index),

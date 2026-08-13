@@ -78,6 +78,31 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void ExcludesReservedWalkableCellsFromDeterministicPlacements()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 3, 3));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 1, 1, 1, 1),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+        var reserved = new HashSet<(int X, int Y)> { (0, 0), (1, 1) };
+
+        var spawns = planner.Plan(
+            1,
+            seed: 7,
+            multiplayer: false,
+            maximumMonsters: 20,
+            reservedPositions: reserved);
+
+        Assert.Equal(7, spawns.Count);
+        Assert.DoesNotContain(spawns, spawn => reserved.Contains((spawn.PositionX, spawn.PositionY)));
+    }
+
+    [Fact]
     public void ConvertsPlacementsIntoAuthoritativeCombatTargets()
     {
         var world = new AuthoritativeWorld();

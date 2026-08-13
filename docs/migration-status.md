@@ -253,7 +253,7 @@ Status date: 2026-08-13
   monster options; static rows remain the compatibility default, and native
   map synthesis remains a separate migration. Successful authoritative level
   transitions materialize each destination encounter set once with collision-
-  safe reserved IDs.
+  safe reserved IDs and occupancy-aware placement.
 - Diablo content activation now exposes the planner directly to the server
   adapter, preserving the module/data boundary for future generated worlds.
 - Engine-neutral inventory-grid geometry, footprint validation, placement, and

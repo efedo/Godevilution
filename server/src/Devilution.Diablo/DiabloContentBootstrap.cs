@@ -329,7 +329,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monsterSpawns.LevelId ?? defaultStartingLevelId,
                 randomSeed,
                 gameMode == DiabloGameMode.Multiplayer,
-                monsterSpawns.MaximumMonsters);
+                monsterSpawns.MaximumMonsters,
+                reservedPositions: GetReservedPositions(
+                    monsterSpawns.LevelId ?? defaultStartingLevelId,
+                    world,
+                    portals,
+                    objects));
         }
 
         var rules = new DiabloStoreRules(pricing);
@@ -367,5 +372,36 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questPools,
             setLevelNames,
             monsterSpawnPlanner);
+    }
+
+    private static IReadOnlySet<(int X, int Y)> GetReservedPositions(
+        uint levelId,
+        AuthoritativeWorld? world,
+        IReadOnlyList<AuthoritativePortal>? portals,
+        IReadOnlyList<AuthoritativeWorldObject>? objects)
+    {
+        var reserved = new HashSet<(int X, int Y)>();
+        if (world is not null) {
+            foreach (var warp in world.WarpTargets) {
+                if (warp.SourceLevelId == levelId)
+                    reserved.Add((warp.TriggerX, warp.TriggerY));
+                if (warp.TargetLevelId == levelId)
+                    reserved.Add((warp.TargetX, warp.TargetY));
+            }
+        }
+        foreach (var portal in portals ?? []) {
+            if (portal.SourceLevelId == levelId)
+                reserved.Add((portal.SourcePositionX, portal.SourcePositionY));
+            if (portal.DestinationLevelId == levelId)
+                reserved.Add((portal.DestinationPositionX, portal.DestinationPositionY));
+        }
+        foreach (var @object in objects ?? []) {
+            if (!@object.Activated
+                && !@object.Destroyed
+                && @object.LevelId == levelId) {
+                reserved.Add((@object.PositionX, @object.PositionY));
+            }
+        }
+        return reserved;
     }
 }

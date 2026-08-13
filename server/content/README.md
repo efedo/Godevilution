@@ -143,6 +143,10 @@ planning. Native map synthesis remains separate.
 When procedural mode is active, a successful server-authoritative level
 transition materializes the same seed-stable policy for the destination level
 once, using reserved entity IDs that coexist with dynamic combat entities.
+Static route endpoints and inactive objects are reserved during activation;
+live players, items, objects, monsters, portals, and warp endpoints are also
+reserved during runtime transitions, so generated targets do not overlap an
+authoritative occupant.
 Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class

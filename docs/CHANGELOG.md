@@ -24,6 +24,8 @@ All notable changes to this fork are documented below.
   level override); static encounter rows remain the compatibility default.
 - Materialize the same deterministic encounter policy when players enter new
   levels, with one-time level tracking and collision-safe reserved entity IDs.
+- Filter generated placements against authoritative occupancy, including route
+  endpoints, objects, items, monsters, portals, and players.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.
