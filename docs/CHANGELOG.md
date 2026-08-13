@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - Add an eight-cycle live Godot-client reconnect soak against the v0.2
   authoritative server, verifying the resumed session and the still-connected
   participant's self-first snapshots.
+- Add an eight-generation host ruleset replacement soak that migrates two
+  sessions and verifies safe retirement of every prior adapter.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

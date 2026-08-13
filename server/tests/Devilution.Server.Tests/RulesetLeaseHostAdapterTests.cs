@@ -79,6 +79,39 @@ public sealed class RulesetLeaseHostAdapterTests
     }
 
     [Fact]
+    public void RepeatedReloadsPreserveSessionStateAndRetireEachPreviousGeneration()
+    {
+        const int replacementGenerations = 8;
+        var names = Enumerable.Range(0, replacementGenerations + 1)
+            .Select(index => index == 0 ? "initial" : $"replacement-{index}")
+            .ToArray();
+        var adapters = Enumerable.Range(0, replacementGenerations + 1)
+            .Select(index => new FakeAdapter(names[index]))
+            .ToArray();
+        var runtime = CreateRuntime(new Queue<FakeAdapter>(adapters));
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+
+        for (var generation = 1; generation <= replacementGenerations; generation++) {
+            var result = adapter.TryReload(
+                CreateManifest(generation.ToString(), names[generation]),
+                [new TestModule("rules", $"{generation + 1}.0.0")],
+                ["session-a", "session-b"]);
+
+            Assert.True(result.Succeeded);
+            Assert.Same(adapters[generation], runtime.Active.Target);
+            Assert.Equal("initial", adapter.ExportSessionState("session-a"));
+            Assert.Equal("initial", adapter.ExportSessionState("session-b"));
+            Assert.True(adapters[generation].SessionStateImported);
+            Assert.Equal(1, runtime.RetiredActivationCount);
+
+            Assert.Equal(1, adapter.DisposeRetiredAdapters());
+            Assert.True(adapters[generation - 1].Disposed);
+            Assert.False(adapters[generation].Disposed);
+            Assert.Empty(runtime.DrainRetired());
+        }
+    }
+
+    [Fact]
     public void FailedSessionMigrationLeavesThePreviousGenerationActive()
     {
         var initial = new FakeAdapter("initial");
