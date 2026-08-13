@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Ring of Magma (`unique_id=1096`) through schema
+  1.55, reusing the corrected native Ring base item with fire resistance and
+  lightning/magic-resistance curses.
+
+## 2026-08-13
+
 - Externalize Hellfire Karik's Ring (`unique_id=1095`) through schema
   1.54, reusing the corrected native Ring base item with vitality and
   magic-curse powers.

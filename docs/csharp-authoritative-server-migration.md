@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.55 adds the native-derived Hellfire Ring of Magma unique definition
+(`unique_id=1096`), reusing the corrected Ring identity with fire resistance
+and lightning/magic-resistance curses.
+
 Schema 1.54 adds the native-derived Hellfire Karik's Ring unique definition
 (`unique_id=1095`), reusing the corrected Ring identity with vitality and
 magic-curse powers.
