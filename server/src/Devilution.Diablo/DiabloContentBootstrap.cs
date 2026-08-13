@@ -232,10 +232,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.SourcePath,
                 objectsTable.ToCanonicalTsv())
             : null;
+        var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
+            ? AuthoritativeQuestTypeCatalog.LoadTsv(
+                questTypesTable.SourcePath,
+                questTypesTable.ToCanonicalTsv())
+            : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
             ? AuthoritativeQuestCatalog.LoadTsv(
                 questsTable.SourcePath,
-                questsTable.ToCanonicalTsv())
+                questsTable.ToCanonicalTsv(),
+                questTypes)
             : null;
 
         var rules = new DiabloStoreRules(pricing);

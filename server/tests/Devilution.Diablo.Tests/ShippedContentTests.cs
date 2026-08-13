@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.63.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.64.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.63.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.64.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -65,6 +65,13 @@ public sealed class ShippedContentTests
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal("Carver", monsterTypes.Definitions[6].Name);
+        var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
+        Assert.Equal(24, questTypes.Definitions.Count);
+        Assert.Equal("The Magic Rock", questTypes.Definitions[0].Name);
+        Assert.Equal("The Jersey's Jersey", questTypes.Definitions[^1].Name);
+        Assert.Equal(23U, questTypes.Definitions[^1].NativeQuestId);
         var hellfireItems = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
             composed.GetRequiredTable("items.tsv").ToCanonicalTsv());
