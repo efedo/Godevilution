@@ -131,3 +131,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1036	Doombringer	135	19	18250	ATTRIBS_CURSE	5	5
 1036	Doombringer	135	19	18250	LIFE_CURSE	25	25
 1036	Doombringer	135	19	18250	LIGHT_CURSE	2	2
+1037	The Grandfather	136	27	119800	ONEHAND	0	0
+1037	The Grandfather	136	27	119800	ATTRIBS	5	5
+1037	The Grandfather	136	27	119800	TOHIT	20	20
+1037	The Grandfather	136	27	119800	DAMP	70	70
+1037	The Grandfather	136	27	119800	LIFE	20	20
