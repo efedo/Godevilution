@@ -12,6 +12,8 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloRandom random;
     private readonly AuthoritativePlayerDamageResolver? playerDamage;
     private readonly uint trapDisarmAbilitySpellId;
+    private readonly AuthoritativeQuestTypeCatalog? questTypes;
+    private readonly DiabloGameMode gameMode;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -21,7 +23,9 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeCombatRules? combatRules = null,
         DiabloRandom? random = null,
         AuthoritativePlayerDamageResolver? playerDamage = null,
-        uint trapDisarmAbilitySpellId = 0)
+        uint trapDisarmAbilitySpellId = 0,
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -30,6 +34,8 @@ public sealed class DiabloWorldCommandProcessor
         this.random = random ?? new DiabloRandom(0);
         this.playerDamage = playerDamage;
         this.trapDisarmAbilitySpellId = trapDisarmAbilitySpellId;
+        this.questTypes = questTypes;
+        this.gameMode = gameMode;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -46,6 +52,8 @@ public sealed class DiabloWorldCommandProcessor
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(intent);
         ArgumentNullException.ThrowIfNull(players);
+
+        ActivateInitialQuestsForLevel(player.LevelId);
 
         if (intent is DiabloRestartTownIntent)
             return RestartTown(player, appliedTick);
@@ -275,6 +283,7 @@ public sealed class DiabloWorldCommandProcessor
         player.LevelId = warp.TargetLevelId;
         player.PositionX = destination.Value.X;
         player.PositionY = destination.Value.Y;
+        ActivateInitialQuestsForLevel(player.LevelId);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -339,6 +348,7 @@ public sealed class DiabloWorldCommandProcessor
         player.LevelId = combatRules.RestartLevelId;
         player.PositionX = combatRules.RestartPositionX;
         player.PositionY = combatRules.RestartPositionY;
+        ActivateInitialQuestsForLevel(player.LevelId);
         player.Life = Math.Min(
             player.LifeMaximum,
             checked(combatRules.RestartLife * combatRules.RestartLifeScale));
@@ -471,6 +481,7 @@ public sealed class DiabloWorldCommandProcessor
         player.LevelId = destinationLevelId;
         player.PositionX = destinationPositionX;
         player.PositionY = destinationPositionY;
+        ActivateInitialQuestsForLevel(player.LevelId);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -498,6 +509,26 @@ public sealed class DiabloWorldCommandProcessor
             effect.Behavior is AuthoritativeStatusEffectBehavior.Infravision
                 or AuthoritativeStatusEffectBehavior.Search
                 or AuthoritativeStatusEffectBehavior.Etherealize);
+    }
+
+    /** Activates external QUEST_INIT rows when the authoritative player enters their route level. */
+    private void ActivateInitialQuestsForLevel(uint levelId)
+    {
+        if (questTypes is null)
+            return;
+        foreach (var quest in world.Quests.Values) {
+            if (quest.Unavailable
+                || quest.Completed
+                || quest.Active
+                || !questTypes.TryGet(quest.QuestId, out var definition)) {
+                continue;
+            }
+            var routeLevel = gameMode == DiabloGameMode.Multiplayer
+                ? definition.MultiplayerLevel
+                : definition.SinglePlayerLevel;
+            if (routeLevel >= 0 && (uint)routeLevel == levelId)
+                quest.Active = true;
+        }
     }
 
     private DiabloWorldIntentResult PickupWorldItem(

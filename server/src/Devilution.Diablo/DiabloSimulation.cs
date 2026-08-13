@@ -40,6 +40,9 @@ public sealed class DiabloSimulationOptions
 
     public IReadOnlyList<AuthoritativeQuestState>? Quests { get; init; }
 
+    /** Optional native quest routing metadata used to activate initial quests. */
+    public AuthoritativeQuestTypeCatalog? QuestTypes { get; init; }
+
     public IReadOnlyList<AuthoritativeProjectile>? Projectiles { get; init; }
 
     public AuthoritativeSpellCatalog? Spells { get; init; }
@@ -120,7 +123,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             combatRules,
             random,
             playerDamage,
-            options.TrapDisarmAbilitySpellId);
+            options.TrapDisarmAbilitySpellId,
+            options.QuestTypes,
+            options.GameMode);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

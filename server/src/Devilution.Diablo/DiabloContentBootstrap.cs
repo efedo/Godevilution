@@ -297,6 +297,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             Portals = portals,
             Objects = objects,
             Quests = quests,
+            QuestTypes = questTypes,
             Spells = spells,
             CombatRules = combatRules,
             Items = itemCatalog,
