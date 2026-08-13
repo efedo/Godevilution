@@ -126,6 +126,29 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerRouteDoesNotActivateSinglePlayerOnlyQuest()
+    {
+        var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 3, 4);
+        var quest = new AuthoritativeQuestState(3001, 2, 1, active: false);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3001, 0, "The Magic Rock", 2, 2, string.Empty, 0, true),
+        ]);
+        var world = new DiabloWorldState(portals: [portal], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.Multiplayer);
+        var player = CreatePlayer(positionX: 0, positionY: 0, levelId: 1, entityId: 1);
+
+        var result = processor.Execute(player, new DiabloUsePortalIntent(5), 1, [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2U, player.LevelId);
+        Assert.False(quest.Active);
+    }
+
+    [Fact]
     public void WarpSelectsNearestTriggerAndCrawlsAroundOccupiedDestination()
     {
         var authoritativeWorld = new AuthoritativeWorld();

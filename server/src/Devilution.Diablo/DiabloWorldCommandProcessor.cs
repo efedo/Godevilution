@@ -523,6 +523,8 @@ public sealed class DiabloWorldCommandProcessor
                 || !questTypes.TryGet(quest.QuestId, out var definition)) {
                 continue;
             }
+            if (gameMode == DiabloGameMode.Multiplayer && definition.SinglePlayerOnly)
+                continue;
             var routeLevel = gameMode == DiabloGameMode.Multiplayer
                 ? definition.MultiplayerLevel
                 : definition.SinglePlayerLevel;
