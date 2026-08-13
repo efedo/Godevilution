@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.34.0` schema in
+It declares its identity and `devilution.diablo@1.35.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -259,6 +259,8 @@ Leather of Aut (`unique_id=1074`) adds its native Leather Armor base item with
 armor, strength, magic-curse, dexterity, and indestructible powers.
 Wisdom's Wrap (`unique_id=1075`) adds its native Robe base item with magic,
 mana, light-resistance, armor, and get-hit powers.
+Sparking Mail (`unique_id=1076`) adds its native Chain Mail base item with
+armor and lightning-damage powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -846,7 +848,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.34.0"
+      "version": "1.35.0"
   },
   "dependencyConstraints": [
     {
@@ -878,7 +880,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.34.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.35.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

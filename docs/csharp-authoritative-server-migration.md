@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.35 adds the native-derived Hellfire Sparking Mail base item and
+unique definition (`unique_id=1076`) with its Chain Mail identity, armor, and
+lightning-damage powers.
+
 Schema 1.34 adds the native-derived Hellfire Wisdom's Wrap base item and
 unique definition (`unique_id=1075`) with its Robe identity, magic, mana,
 light-resistance, armor, and get-hit powers.

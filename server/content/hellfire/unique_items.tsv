@@ -302,3 +302,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1075	Wisdom's Wrap	160	5	6200	LIGHTRES	25	25
 1075	Wisdom's Wrap	160	5	6200	SETAC	15	15
 1075	Wisdom's Wrap	160	5	6200	GETHIT	1	1
+1076	Sparking Mail	161	9	15750	SETAC	30	30
+1076	Sparking Mail	161	9	15750	LIGHTDAM	1	10

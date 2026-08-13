@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.34.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.35.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.34.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.35.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1105,6 +1105,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10 << 6, wisdomsWrap.PlusMana);
         Assert.Equal(25, wisdomsWrap.PlusLightningResistance);
         Assert.Equal(-1, wisdomsWrap.PlusGetHit);
+        var sparkingMail = hellfireItems.GenerateUnique(1076, 0x12345678, 9);
+        Assert.Equal(1076, sparkingMail.UniqueId);
+        Assert.Equal(15750, sparkingMail.Value);
+        Assert.Equal(63, sparkingMail.ItemIndex);
+        Assert.Equal(30, sparkingMail.ArmorClass);
+        Assert.Equal(55, sparkingMail.Durability);
+        Assert.Equal(55, sparkingMail.MaxDurability);
+        Assert.Equal(30, sparkingMail.MinimumStrength);
+        Assert.Equal(4, sparkingMail.EquipLocation);
+        Assert.Equal(1, sparkingMail.LightningMinDamage);
+        Assert.Equal(10, sparkingMail.LightningMaxDamage);
+        Assert.NotEqual(0U, sparkingMail.Flags & 0x00000020U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

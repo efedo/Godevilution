@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Sparking Mail (`unique_id=1076`) through schema 1.35,
+  adding its native Chain Mail base item with armor and lightning-damage
+  powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Wisdom's Wrap (`unique_id=1075`) through schema 1.34,
   adding its native Robe base item with magic, mana, light-resistance, armor,
   and get-hit powers.
