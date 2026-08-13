@@ -2055,6 +2055,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GreaterRuneOfLightningResolvesThroughTheStableNovaSource()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateNovaSpell() with { ConsumableMiscId = 49 },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            entityId: 7,
+            belt: [new BeltStoreItem(
+                2,
+                72,
+                AuthoritativeItemState.Empty with { MiscId = 49 })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                18,
+                0,
+                14,
+                10,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.Equal(AuthoritativeProjectileBehavior.NovaController,
+            Assert.Single(world.Projectiles.Values).Behavior);
+    }
+
+    [Fact]
     public void ApocalypseControllerScansRowMajorAndEmitsPhysicalBooms()
     {
         var world = new DiabloWorldState(

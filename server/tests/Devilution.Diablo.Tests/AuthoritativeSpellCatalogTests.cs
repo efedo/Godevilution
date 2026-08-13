@@ -186,7 +186,7 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
-    public void ShippedRuneMiscIdentityResolvesToStableStoneCurse()
+    public void ShippedRuneMiscIdentitiesResolveToStableSpellRows()
     {
         var path = Path.Combine(
             FindRepositoryRoot(),
@@ -196,9 +196,17 @@ public sealed class AuthoritativeSpellCatalogTests
             "spells.tsv");
         var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
 
-        Assert.True(catalog.TryGetByConsumableMiscId(51, out var stoneCurse));
-        Assert.Equal(8U, stoneCurse.SpellId);
-        Assert.Equal(AuthoritativeProjectileBehavior.StoneCurse, stoneCurse.ProjectileBehavior);
+        var expected = new Dictionary<int, (uint SpellId, AuthoritativeProjectileBehavior Behavior)> {
+            [48] = (50, AuthoritativeProjectileBehavior.LightningWallController),
+            [49] = (18, AuthoritativeProjectileBehavior.NovaController),
+            [50] = (45, AuthoritativeProjectileBehavior.ImmolationController),
+            [51] = (8, AuthoritativeProjectileBehavior.StoneCurse),
+        };
+        foreach (var (miscId, expectedSpell) in expected) {
+            Assert.True(catalog.TryGetByConsumableMiscId(miscId, out var definition));
+            Assert.Equal(expectedSpell.SpellId, definition.SpellId);
+            Assert.Equal(expectedSpell.Behavior, definition.ProjectileBehavior);
+        }
     }
 
     [Fact]
