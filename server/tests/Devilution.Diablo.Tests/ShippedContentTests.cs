@@ -550,10 +550,10 @@ public sealed class ShippedContentTests
         var doombringer = hellfireItems.GenerateUnique(1036, 0x12345678, 19);
         Assert.Equal(1036, doombringer.UniqueId);
         Assert.Equal(18250, doombringer.Value);
-        Assert.Equal(128, doombringer.ItemIndex);
-        Assert.Equal(6, doombringer.MinDamage);
-        Assert.Equal(15, doombringer.MaxDamage);
-        Assert.Equal(50, doombringer.MinimumStrength);
+        Assert.Equal(129, doombringer.ItemIndex);
+        Assert.Equal(8, doombringer.MinDamage);
+        Assert.Equal(16, doombringer.MaxDamage);
+        Assert.Equal(65, doombringer.MinimumStrength);
         Assert.Equal(25, doombringer.PlusToHit);
         Assert.Equal(250, doombringer.PlusDamage);
         Assert.Equal(-5, doombringer.PlusStrength);
