@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Amulet of Warding (`unique_id=1099`) through schema
+  1.58, adding the native AMULET base identity with all-resistance and
+  life-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Ring of Thunder (`unique_id=1098`) through schema
   1.57, reusing the corrected native Ring base item with lightning resistance
   and fire/magic-resistance curses.

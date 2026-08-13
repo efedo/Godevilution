@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.57.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.58.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.57.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.58.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1347,6 +1347,16 @@ public sealed class ShippedContentTests
         Assert.Equal(60, ringOfThunder.PlusLightningResistance);
         Assert.Equal(-30, ringOfThunder.PlusFireResistance);
         Assert.Equal(-30, ringOfThunder.PlusMagicResistance);
+        var amuletOfWarding = hellfireItems.GenerateUnique(1099, 0x12345678, 12);
+        Assert.Equal(1099, amuletOfWarding.UniqueId);
+        Assert.Equal(30000, amuletOfWarding.Value);
+        Assert.Equal(160, amuletOfWarding.ItemIndex);
+        Assert.Equal(6, amuletOfWarding.EquipLocation);
+        Assert.Equal(27, amuletOfWarding.MiscId);
+        Assert.Equal(40, amuletOfWarding.PlusFireResistance);
+        Assert.Equal(40, amuletOfWarding.PlusLightningResistance);
+        Assert.Equal(40, amuletOfWarding.PlusMagicResistance);
+        Assert.Equal(-6400, amuletOfWarding.PlusHitPoints);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

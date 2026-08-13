@@ -387,3 +387,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1098	Ring of Thunder	113	8	8000	LIGHTRES	60	60
 1098	Ring of Thunder	113	8	8000	FIRERES_CURSE	30	30
 1098	Ring of Thunder	113	8	8000	MAGICRES_CURSE	30	30
+1099	Amulet of Warding	171	12	30000	ALLRES	40	40
+1099	Amulet of Warding	171	12	30000	LIFE_CURSE	100	100
