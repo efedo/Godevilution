@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Karik's Ring (`unique_id=1095`) through schema
+  1.54, reusing the corrected native Ring base item with vitality and
+  magic-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Xorine's Ring (`unique_id=1094`) through schema
   1.53, reusing the corrected native Ring base item with magic and
   strength-curse powers.

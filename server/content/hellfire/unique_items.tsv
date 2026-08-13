@@ -376,3 +376,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1093	Mercurial Ring	113	8	8000	STR_CURSE	30	30
 1094	Xorine's Ring	113	8	8000	MAG	60	60
 1094	Xorine's Ring	113	8	8000	STR_CURSE	30	30
+1095	Karik's Ring	113	8	8000	VIT	60	60
+1095	Karik's Ring	113	8	8000	MAG_CURSE	30	30
