@@ -71,7 +71,7 @@ public sealed class DiabloPlayerActionLifecycleTests
         Assert.Equal(100, target.HitPoints);
         var delivery = Assert.Single(processor.AdvanceTick(18, [player]));
         Assert.Same(player, delivery.Recipient);
-        Assert.Equal(90, target.HitPoints);
+        Assert.Equal(80, target.HitPoints);
         Assert.Equal(
             DiabloRuleFailure.NotAllowed,
             processor.Execute(player, new DiabloAttackIntent(9), 18).Failure);

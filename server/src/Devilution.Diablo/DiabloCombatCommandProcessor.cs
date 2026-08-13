@@ -540,8 +540,15 @@ public sealed class DiabloCombatCommandProcessor
             0,
             100);
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
+        var criticalDamage = damage;
+        var playerClass = GetPlayerClass(player);
+        if (attackHit
+            && playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
+            && random.RandomIntLessThan(100) < player.CharacterLevel) {
+            criticalDamage = checked(criticalDamage * 2);
+        }
         var resolvedDamage = rules.ResolveAttackDamage(
-            damage,
+            criticalDamage,
             target.ArmorClass,
             effectiveHitChance,
             seed);

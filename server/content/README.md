@@ -138,6 +138,11 @@ Hellfire `Decay` reduces eligible hand weapons' damage bonus by five in native
 order after an authoritative attack and removes a weapon at the native -100
 threshold; the server preserves the separate hit roll even when post-armor
 damage is zero.
+The `CriticalStrike` class flag enables the native class rule for eligible
+player attacks: after a successful hit, the server consumes one level-based
+roll and doubles physical damage before armor and downstream class/item
+effects. Class flags therefore select the behavior while combat and RNG remain
+server-authoritative.
 Validated unique and affix rows can now express all native Hellfire
 damage/armor powers—`DEVASTATION`, `DECAY`, `PERIL`, `JESTERS`,
 `DOPPELGANGER`, `ACDEMON`, and `ACUNDEAD`—which resolve to the same

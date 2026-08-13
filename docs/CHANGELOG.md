@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply the native class `CriticalStrike` rule to eligible authoritative player
+  attacks: a level-based post-hit roll doubles physical damage before armor and
+  downstream class/item effects, with the native RNG draw order preserved.
 - Preserve Q6 physical attack damage through authoritative hit, knockback, and
   on-hit resource handling, and apply native Hellfire `Jesters` scaling.
 - Apply native Hellfire `Peril`: self-damage uses pre-modifier attack damage

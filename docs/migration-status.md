@@ -91,6 +91,10 @@ Status date: 2026-08-13
   weapons in native order, subtracting five damage-bonus points and removing a
   weapon at -100; hit resolution is kept separate from post-armor damage so
   zero-damage hits still preserve native decay behavior.
+- Native class `CriticalStrike` is now authoritative for eligible player
+  attacks: the level-based roll is consumed only after a successful hit and
+  doubles physical damage before armor and later class/item effects. The shared
+  action replay checkpoint was refreshed to this native result.
 - External unique and affix catalogs now project every native Hellfire
   damage/armor power identity into the authoritative effect flags,
   so these effects no longer depend on hard-coded content-side interpretation.

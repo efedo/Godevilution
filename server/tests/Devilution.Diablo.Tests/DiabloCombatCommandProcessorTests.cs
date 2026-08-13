@@ -357,6 +357,76 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WarriorCriticalStrikeDoublesPhysicalDamageBeforeArmorAndConsumesItsNativeRoll()
+    {
+        var criticalTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 4);
+        var criticalRandom = new DiabloRandom(0);
+        var criticalProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [criticalTarget]),
+            random: criticalRandom,
+            playerClasses: LoadShippedPlayerClasses());
+        var warrior = CreatePlayer(
+            entityId: 7,
+            characterClassId: 0,
+            characterLevel: 1);
+
+        var criticalResult = criticalProcessor.Execute(
+            warrior,
+            new DiabloAttackIntent(9),
+            1);
+
+        Assert.True(criticalResult.Succeeded);
+        Assert.Equal(84, criticalTarget.HitPoints);
+        Assert.NotEqual(0U, criticalRandom.State);
+
+        var nonCriticalTarget = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            100,
+            armorClass: 4);
+        var nonCriticalRandom = new DiabloRandom(1);
+        var nonCriticalProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [nonCriticalTarget]),
+            random: nonCriticalRandom,
+            playerClasses: LoadShippedPlayerClasses());
+
+        var nonCriticalResult = nonCriticalProcessor.Execute(
+            warrior,
+            new DiabloAttackIntent(10),
+            2);
+
+        Assert.True(nonCriticalResult.Succeeded);
+        Assert.Equal(94, nonCriticalTarget.HitPoints);
+        Assert.NotEqual(0U, nonCriticalRandom.State);
+
+        var rogueTarget = new AuthoritativeCombatTarget(11, 1, 0, 100);
+        var rogueRandom = new DiabloRandom(0);
+        var rogueProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [rogueTarget]),
+            random: rogueRandom,
+            playerClasses: LoadShippedPlayerClasses());
+        var rogue = CreatePlayer(
+            entityId: 8,
+            characterClassId: 1,
+            characterLevel: 1);
+
+        var rogueResult = rogueProcessor.Execute(
+            rogue,
+            new DiabloAttackIntent(11),
+            1);
+
+        Assert.True(rogueResult.Succeeded);
+        Assert.Equal(90, rogueTarget.HitPoints);
+        Assert.Equal(0U, rogueRandom.State);
+    }
+
+    [Fact]
     public void KnockbackEquipmentMovesOnlySuccessfulNonPetrifiedHits()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
