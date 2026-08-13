@@ -16,7 +16,8 @@ public sealed record DiabloMonsterState(
     int AggroRange,
     int FireResistance,
     int LightningResistance,
-    int MagicResistance)
+    int MagicResistance,
+    int AcidResistance = 0)
 {
     public int MonsterLevel { get; init; }
 
@@ -282,7 +283,8 @@ public sealed partial class DiabloSimulation
                     target.AggroRange,
                     target.FireResistance,
                     target.LightningResistance,
-                    target.MagicResistance) {
+                    target.MagicResistance,
+                    target.AcidResistance) {
                     MonsterLevel = target.MonsterLevel,
                     Moving = target.IsMoving,
                     FuturePositionX = target.FuturePositionX,
@@ -549,6 +551,7 @@ public sealed partial class DiabloSimulation
                 || monster.FireResistance is < -100 or > 100
                 || monster.LightningResistance is < -100 or > 100
                 || monster.MagicResistance is < -100 or > 100
+                || monster.AcidResistance is < -100 or > 100
                 || (!monster.IsPlayerMinion && monster.OwnerPlayerId != 0)) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid monster.");
@@ -1190,6 +1193,7 @@ public sealed partial class DiabloSimulation
                 target.FireResistance = monster.FireResistance;
                 target.LightningResistance = monster.LightningResistance;
                 target.MagicResistance = monster.MagicResistance;
+                target.AcidResistance = monster.AcidResistance;
                 target.MonsterLevel = monster.MonsterLevel;
                 target.StoneCurseImmune = monster.StoneCurseImmune;
                 target.IsUndead = monster.IsUndead;
@@ -1229,6 +1233,7 @@ public sealed partial class DiabloSimulation
                     fireResistance: monster.FireResistance,
                     lightningResistance: monster.LightningResistance,
                     magicResistance: monster.MagicResistance,
+                    acidResistance: monster.AcidResistance,
                     monsterLevel: monster.MonsterLevel,
                     moving: monster.Moving,
                     futurePositionX: monster.FuturePositionX,

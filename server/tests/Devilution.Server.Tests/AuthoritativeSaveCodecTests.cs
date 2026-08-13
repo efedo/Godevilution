@@ -182,7 +182,7 @@ public sealed class AuthoritativeSaveCodecTests
         return new DiabloSimulationSnapshot(
             9,
             player,
-            [new DiabloMonsterState(20, 3, 0, 1, 1, 0, 10, 2, 1, 4, 0, 0, 0) {
+            [new DiabloMonsterState(20, 3, 0, 1, 1, 0, 10, 2, 1, 4, 0, 0, 0, 100) {
                 MonsterLevel = 7,
                 Moving = true,
                 FuturePositionX = 2,

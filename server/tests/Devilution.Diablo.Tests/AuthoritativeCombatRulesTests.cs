@@ -106,10 +106,18 @@ public sealed class AuthoritativeCombatRulesTests
     public void ResolvesArmorAndElementalResistanceDeterministically()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);
-        var target = new AuthoritativeCombatTarget(9, 0, 0, 20, armorClass: 3, fireResistance: 50);
+        var target = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            armorClass: 3,
+            fireResistance: 50,
+            acidResistance: 75);
 
         Assert.Equal(7, rules.ResolveDamage(10, target.ArmorClass, AuthoritativeDamageType.Physical, target));
         Assert.Equal(5, rules.ResolveDamage(10, target.ArmorClass, AuthoritativeDamageType.Fire, target));
+        Assert.Equal(2, rules.ResolveDamage(10, target.ArmorClass, AuthoritativeDamageType.Acid, target));
     }
 
     [Fact]

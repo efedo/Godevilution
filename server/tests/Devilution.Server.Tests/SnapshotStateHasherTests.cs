@@ -426,6 +426,27 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterAcidResistanceExtendsTheStateHash()
+    {
+        var unresistant = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var resistant = unresistant.Clone();
+        resistant.Monsters[0].AcidResistance = 100;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(unresistant),
+            SnapshotStateHasher.Compute(resistant));
+    }
+
+    [Fact]
     public void MonsterDeathAnimationExtendsTheStateHash()
     {
         var first = new Snapshot {

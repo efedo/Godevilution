@@ -77,6 +77,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
+                    || initialTarget.CombatTargetAcidResistance != 0
                     || initialTarget.CombatTargetMonsterLevel != 0
                     || initialTarget.CombatTargetLevelId != 0
                     || initialTarget.CombatTargetMoving
@@ -90,6 +91,7 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetFireResistance is < -100 or > 100
             || initialTarget.CombatTargetLightningResistance is < -100 or > 100
             || initialTarget.CombatTargetMagicResistance is < -100 or > 100
+            || initialTarget.CombatTargetAcidResistance is < -100 or > 100
             || initialTarget.CombatTargetMonsterLevel < 0
             || (initialTarget.CombatTargetMoving
                 && Math.Max(
@@ -248,6 +250,9 @@ public static class ReplayFixtureLoader
             CombatTargetMagicResistance = GetOptionalInt(
                 value,
                 "combat_target_magic_resistance"),
+            CombatTargetAcidResistance = GetOptionalInt(
+                value,
+                "combat_target_acid_resistance"),
             CombatTargetMonsterLevel = GetOptionalInt(
                 value,
                 "combat_target_monster_level"),

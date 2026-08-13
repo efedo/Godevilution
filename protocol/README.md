@@ -254,8 +254,8 @@ Windows toolchain command.
   capability used by the server-owned Holy Bolt cast. True uses the tagged
   `godevilution-monster-undead-v1` hash extension; false remains the additive
   compatibility default.
-- `MonsterSnapshot` fields 25-32 persist Berserk eligibility metadata, all four
-  native damage channels, and active berserked state. Nondefault values use the
+- `MonsterSnapshot` fields 25-32 persist Berserk eligibility metadata, native
+  physical damage channels, and active berserked state. Nondefault values use the
   tagged `godevilution-monster-berserk-v1` canonical-hash extension; old
   readers may ignore these additive fields.
 - `MonsterSnapshot.owner_player_id` field 33 identifies the authoritative
@@ -266,6 +266,10 @@ Windows toolchain command.
   these fields; the server alone decrements and expires the dead minion. The
   nondefault values use the tagged
   `godevilution-monster-death-animation-v1` canonical-hash extension.
+- `MonsterSnapshot.acid_resistance` field 36 carries the validated native acid
+  resistance percentage. Nonzero values use the tagged
+  `godevilution-monster-acid-resistance-v1` canonical-hash extension; zero is
+  the additive compatibility default.
 
 ## Identity Note
 

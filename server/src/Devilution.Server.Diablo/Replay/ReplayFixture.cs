@@ -161,6 +161,8 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetMagicResistance { get; init; }
 
+    public int CombatTargetAcidResistance { get; init; }
+
     public int CombatTargetMonsterLevel { get; init; }
 
     public bool CombatTargetMoving { get; init; }

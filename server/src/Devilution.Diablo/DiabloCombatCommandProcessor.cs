@@ -6295,6 +6295,7 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeDamageType.Fire => target.FireResistance,
             AuthoritativeDamageType.Lightning => target.LightningResistance,
             AuthoritativeDamageType.Magic => target.MagicResistance,
+            AuthoritativeDamageType.Acid => target.AcidResistance,
             _ => 0,
         };
     }

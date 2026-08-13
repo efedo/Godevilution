@@ -174,6 +174,7 @@ public sealed class AuthoritativeCombatRules
             AuthoritativeDamageType.Fire => target.FireResistance,
             AuthoritativeDamageType.Lightning => target.LightningResistance,
             AuthoritativeDamageType.Magic => target.MagicResistance,
+            AuthoritativeDamageType.Acid => target.AcidResistance,
             _ => 0,
         };
         return Math.Max(0, postArmor * (100 - Math.Clamp(resistance, -100, 100)) / 100);

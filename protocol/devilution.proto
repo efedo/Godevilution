@@ -437,6 +437,7 @@ message MonsterSnapshot {
 	// Native monster death-animation duration and remaining terminal ticks.
 	int32 death_animation_ticks = 34;
 	int32 death_ticks_remaining = 35;
+	int32 acid_resistance = 36;
 }
 
 message WorldItemSnapshot {

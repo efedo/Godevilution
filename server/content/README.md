@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.67.0` schema in
+It declares its identity and `devilution.diablo@0.68.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -98,8 +98,8 @@ remaining Hellfire quest behavior/state, monster, and item catalogs remain
 separate migrations.
 The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
-same composition and activation boundary; the complete Hellfire monster
-catalog is still pending. Schema 0.63 adds the validated `monster_types.tsv`
+same composition and activation boundary; the complete Hellfire encounter
+population is still pending. Schema 0.63 adds the validated `monster_types.tsv`
 catalog for the base encounter and all one hundred thirty-eight native Hellfire types,
 including stable/native IDs, baseline health, damage, level, and immutable
 capability flags. Schema 0.67 adds native fire, lightning, and magic resistance
@@ -107,8 +107,9 @@ percentages; encounter rows inherit those values unless they provide an
 explicit per-instance override. Encounter rows now reject unknown type
 identities when the table is present. Baseline armor, damage channels, monster
 level, and immutable capability flags also inherit from the type when omitted
-from an encounter row. Native acid resistance remains a future schema field;
-the current catalog does not silently map it to another resistance channel.
+from an encounter row. Schema 0.68 adds native acid resistance as the
+`acid_resistance` percentage, preserving the native acid immunity of the four
+Hellfire acid creatures without silently mapping it to another channel.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.
@@ -713,7 +714,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.67.0"
+      "version": "0.68.0"
   },
   "dependencyConstraints": [
     {
@@ -745,7 +746,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.67.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.68.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

@@ -80,6 +80,9 @@ public sealed class AuthoritativeMonsterCatalog
             var magicResistance = row.TryGet("magic_resistance", out _)
                 ? row.OptionalInt32("magic_resistance")
                 : monsterType?.MagicResistance ?? 0;
+            var acidResistance = row.TryGet("acid_resistance", out _)
+                ? row.OptionalInt32("acid_resistance")
+                : monsterType?.AcidResistance ?? 0;
             return new AuthoritativeCombatTarget(
                 row.RequiredUInt32("entity_id"),
                 row.RequiredInt32("position_x"),
@@ -101,6 +104,7 @@ public sealed class AuthoritativeMonsterCatalog
                 fireResistance: fireResistance,
                 lightningResistance: lightningResistance,
                 magicResistance: magicResistance,
+                acidResistance: acidResistance,
                 monsterLevel: ReadInt32(row, "monster_level", monsterType?.MonsterLevel ?? 0),
                 stoneCurseImmune: stoneCurseImmune,
                 undead: undead,

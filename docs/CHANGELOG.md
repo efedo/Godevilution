@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize native Hellfire acid immunity through schema 0.68, add the
+  authoritative Acid damage channel, and carry acid resistance through
+  encounter inheritance, snapshots, saves, hashes, protocol field 36, and
+  replay validation.
+
 - Externalize native monster resistance percentages through validated monster
   type metadata; encounter rows inherit type resistances unless they provide
   an explicit instance override, with the content schema advanced to 0.67.
@@ -25,8 +30,9 @@ All notable changes to this fork are documented below.
   demon/undead resistance baselines.
 
 - Extend the Hellfire monster-type catalog through native ID 47 with twelve
-  more validated identities; unsupported native acid resistance remains an
-  explicit future schema extension rather than being silently discarded.
+  more validated identities; at that point the unsupported native acid
+  resistance remained an explicit future schema extension rather than being
+  silently discarded.
 
 - Extend the Hellfire monster-type catalog through native ID 59 with twelve
   more validated identities, preserving boss, demon, undead, resistance, and

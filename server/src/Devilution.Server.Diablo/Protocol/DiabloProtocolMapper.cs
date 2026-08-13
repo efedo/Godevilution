@@ -51,6 +51,7 @@ internal static class DiabloProtocolMapper
                 FireResistance = monster.FireResistance,
                 LightningResistance = monster.LightningResistance,
                 MagicResistance = monster.MagicResistance,
+                AcidResistance = monster.AcidResistance,
                 MonsterLevel = monster.MonsterLevel,
                 HitPointsQ6 = monster.HitPointsQ6,
                 MaxHitPointsQ6 = monster.MaxHitPointsQ6,
@@ -318,7 +319,8 @@ internal static class DiabloProtocolMapper
                 monster.AggroRange,
                 monster.FireResistance,
                 monster.LightningResistance,
-                monster.MagicResistance) {
+                monster.MagicResistance,
+                monster.AcidResistance) {
                 MonsterLevel = monster.MonsterLevel,
                 Moving = monster.Moving,
                 FuturePositionX = monster.Moving

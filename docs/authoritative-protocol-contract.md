@@ -203,6 +203,12 @@ native RNG order. Nondefault values add the tagged
 `godevilution-monster-berserk-v1` canonical-hash section; missing fields retain
 legacy defaults.
 
+`MonsterSnapshot.acid_resistance` field 36 carries the validated native acid
+resistance percentage through snapshots, saves, and protocol projection.
+Nonzero values add the tagged
+`godevilution-monster-acid-resistance-v1` canonical-hash section; missing or
+zero values retain the additive compatibility default.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

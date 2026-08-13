@@ -186,12 +186,17 @@ public static class SnapshotStateHasher
                 hasher.AppendInt32(monster.ArmorClass);
                 hasher.AppendBool(monster.Alive);
                 if (monster.AttackDamage != 0 || monster.AggroRange != 0 || monster.FireResistance != 0
-                    || monster.LightningResistance != 0 || monster.MagicResistance != 0) {
+                    || monster.LightningResistance != 0 || monster.MagicResistance != 0
+                    || monster.AcidResistance != 0) {
                     hasher.AppendInt32(monster.AttackDamage);
                     hasher.AppendInt32(monster.AggroRange);
                     hasher.AppendInt32(monster.FireResistance);
                     hasher.AppendInt32(monster.LightningResistance);
                     hasher.AppendInt32(monster.MagicResistance);
+                    if (monster.AcidResistance != 0) {
+                        hasher.AppendString("godevilution-monster-acid-resistance-v1");
+                        hasher.AppendInt32(monster.AcidResistance);
+                    }
                 }
                 if (monster.MonsterLevel != 0) {
                     hasher.AppendString("godevilution-monster-level-v1");

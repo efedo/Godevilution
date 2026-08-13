@@ -25,6 +25,7 @@ public sealed class AuthoritativeCombatTarget
         int fireResistance = 0,
         int lightningResistance = 0,
         int magicResistance = 0,
+        int acidResistance = 0,
         int monsterLevel = 0,
         bool moving = false,
         int? futurePositionX = null,
@@ -55,7 +56,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(monsterLevel));
         if (deathAnimationTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(deathAnimationTicks));
-        if (fireResistance is < -100 or > 100 || lightningResistance is < -100 or > 100 || magicResistance is < -100 or > 100)
+        if (fireResistance is < -100 or > 100
+            || lightningResistance is < -100 or > 100
+            || magicResistance is < -100 or > 100
+            || acidResistance is < -100 or > 100)
             throw new ArgumentOutOfRangeException(nameof(fireResistance));
         var resolvedFuturePositionX = futurePositionX ?? positionX;
         var resolvedFuturePositionY = futurePositionY ?? positionY;
@@ -102,6 +106,7 @@ public sealed class AuthoritativeCombatTarget
         FireResistance = fireResistance;
         LightningResistance = lightningResistance;
         MagicResistance = magicResistance;
+        AcidResistance = acidResistance;
         MonsterLevel = monsterLevel;
         if (dropItemEntityId != 0 || dropItemSeed != 0) {
             if (dropItemEntityId == 0 || dropItemSeed == 0)
@@ -191,6 +196,7 @@ public sealed class AuthoritativeCombatTarget
     public int FireResistance { get; set; }
     public int LightningResistance { get; set; }
     public int MagicResistance { get; set; }
+    public int AcidResistance { get; set; }
     public int MonsterLevel { get; set; }
     public AuthoritativeWorldItem? Drop { get; }
 

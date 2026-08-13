@@ -7,4 +7,5 @@ public enum AuthoritativeDamageType
     Fire,
     Lightning,
     Magic,
+    Acid,
 }

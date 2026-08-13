@@ -55,7 +55,9 @@ Status date: 2026-08-13
   unless they provide explicit instance overrides. Variant-local native IDs are
   tracked separately from stable IDs; reverse lookup rejects ambiguous IDs in
   composed overlays. Encounter behavior and the rest of the Hellfire catalog
-  remain incremental; native acid resistance still needs a schema extension.
+  remain incremental; native acid resistance is now externalized as a typed
+  acid damage channel and persisted through encounters, snapshots, saves,
+  hashes, and protocol field 36.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining
@@ -680,6 +682,9 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
+Content schema 0.68 adds native acid resistance to `monster_types.tsv` and the
+authoritative damage-channel, encounter, snapshot, save, hash, and protocol
+paths. The four Hellfire acid creatures retain native 100-percent immunity.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

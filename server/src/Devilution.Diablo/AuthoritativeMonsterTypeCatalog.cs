@@ -25,6 +25,7 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     public int FireResistance { get; init; }
     public int LightningResistance { get; init; }
     public int MagicResistance { get; init; }
+    public int AcidResistance { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -57,6 +58,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.FireResistance is < -100 or > 100
                 || definition.LightningResistance is < -100 or > 100
                 || definition.MagicResistance is < -100 or > 100
+                || definition.AcidResistance is < -100 or > 100
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -111,6 +113,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 FireResistance = row.OptionalInt32("fire_resistance"),
                 LightningResistance = row.OptionalInt32("lightning_resistance"),
                 MagicResistance = row.OptionalInt32("magic_resistance"),
+                AcidResistance = row.OptionalInt32("acid_resistance"),
             }));
     }
 

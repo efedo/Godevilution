@@ -59,6 +59,23 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsAndInheritsAcidResistance()
+    {
+        var types = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tacid_resistance\n"
+                + "2\t0\tAcid Beast\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\t100\n");
+
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t2\t1\t1\t0\t10\t10\t2\n",
+            monsterTypes: types);
+
+        Assert.Equal(100, Assert.Single(catalog.Targets).AcidResistance);
+    }
+
+    [Fact]
     public void EncounterUsesTypeResistanceWhenNoInstanceOverrideExists()
     {
         var types = new AuthoritativeMonsterTypeCatalog([
