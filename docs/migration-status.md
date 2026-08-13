@@ -42,9 +42,9 @@ Status date: 2026-08-13
   3, 4, 9, and 17 through 24 with normalized 40-by-40 bounds, and carries a
   native-derived encounter set plus the Undead Crown, Empyrean Band, Optic
   Amulet, Ring of Truth, Harlequin Crest, Veil of Steel, Arkaine's Valor, and
-  Griswold's Edge, Bovine Plate, The Rift Bow, and The Butcher's Cleaver unique
-  items, and Sorcerer Firebolt staff through Diablo activation and the live
-  Godot protocol
+  Griswold's Edge, Bovine Plate, The Rift Bow, The Butcher's Cleaver, and The
+  Needler unique items, and Sorcerer Firebolt staff through Diablo activation
+  and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
@@ -699,6 +699,9 @@ native arrow-velocity, damage, and dexterity-curse powers.
 Content schema 0.72 adds the native-derived Hellfire The Butcher's Cleaver base
 item and unique definition (`unique_id=1013`) with its two-handed axe identity,
 strength, fixed-damage, and durability powers.
+Content schema 0.73 adds the native-derived Hellfire The Needler unique
+definition (`unique_id=1014`), reusing the validated Short Bow base item with
+native hit, fixed-damage, and attack-speed powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

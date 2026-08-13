@@ -44,3 +44,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1013	The Butcher's Cleaver	121	1	3650	STR	10	10
 1013	The Butcher's Cleaver	121	1	3650	SETDAM	4	24
 1013	The Butcher's Cleaver	121	1	3650	SETDUR	10	10
+1014	The Needler	103	2	8900	TOHIT	50	50
+1014	The Needler	103	2	8900	SETDAM	1	3
+1014	The Needler	103	2	8900	FASTATTACK	2	2

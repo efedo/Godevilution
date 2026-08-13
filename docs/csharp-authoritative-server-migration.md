@@ -575,6 +575,10 @@ Schema 0.72 adds the native-derived Hellfire The Butcher's Cleaver base item
 and unique definition (`unique_id=1013`) with its two-handed axe identity,
 strength, fixed-damage, and durability powers.
 
+Schema 0.73 adds the native-derived Hellfire The Needler unique definition
+(`unique_id=1014`), reusing the validated Short Bow base item with native hit,
+fixed-damage, and attack-speed powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

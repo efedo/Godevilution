@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Needler (`unique_id=1014`) through schema 0.73,
+  reusing the validated Short Bow base item with native hit, fixed-damage, and
+  attack-speed powers.
+
 - Externalize Hellfire The Butcher's Cleaver (`unique_id=1013`) through schema
   0.72, including its native two-handed axe base item and strength,
   fixed-damage, and durability powers.
