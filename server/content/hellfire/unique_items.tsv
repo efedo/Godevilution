@@ -4,3 +4,10 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1004	Empyrean Band	113	1	8000	LIGHT	2	2
 1004	Empyrean Band	113	1	8000	FASTRECOVER	1	1
 1004	Empyrean Band	113	1	8000	ABSHALFTRAP	0	0
+1005	Optic Amulet	114	1	9750	LIGHT	2	2
+1005	Optic Amulet	114	1	9750	LIGHTRES	20	20
+1005	Optic Amulet	114	1	9750	GETHIT	1	1
+1005	Optic Amulet	114	1	9750	MAG	5	5
+1006	Ring of Truth	115	1	9100	LIFE	10	10
+1006	Ring of Truth	115	1	9100	GETHIT	1	1
+1006	Ring of Truth	115	1	9100	ALLRES	10	10
