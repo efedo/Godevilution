@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Eaglehorn (`unique_id=1022`) through schema 0.81,
+  including its native Battle Bow base item and dexterity, hit, damage, and
+  indestructibility powers.
+
 - Externalize Hellfire Windforce (`unique_id=1021`) through schema 0.80,
   including its native War Bow base item and strength, damage, and knockback
   powers.

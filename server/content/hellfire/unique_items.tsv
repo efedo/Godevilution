@@ -72,3 +72,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1021	Windforce	125	17	37750	STR	5	5
 1021	Windforce	125	17	37750	DAMP	200	200
 1021	Windforce	125	17	37750	KNOCKBACK	0	0
+1022	Eaglehorn	126	26	42500	DEX	20	20
+1022	Eaglehorn	126	26	42500	TOHIT	50	50
+1022	Eaglehorn	126	26	42500	DAMP	100	100
+1022	Eaglehorn	126	26	42500	INDESTRUCTIBLE	0	0
