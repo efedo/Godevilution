@@ -77,6 +77,7 @@ public sealed class ShippedContentTests
             hellfireSorcerer.Equipment,
             item => item.Slot == 4);
         Assert.Equal(1, startingStaff.State.SpellId);
+        Assert.Equal(23, startingStaff.State.MiscId);
         Assert.Equal(166, startingStaff.State.ItemIndex);
         Assert.True(startingStaff.State.StatFlag);
         Assert.Equal(2, composed.Manifest.Packs.Count);

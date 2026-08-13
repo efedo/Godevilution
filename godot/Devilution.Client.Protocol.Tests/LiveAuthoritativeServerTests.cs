@@ -82,7 +82,7 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
-    public async Task LiveServerProjectsTheHellfireSorcererFireboltStaff()
+    public async Task LiveServerConsumesTheHellfireSorcererFireboltStaff()
     {
         var hellfireRoot = Path.Combine(
             FindRepositoryRoot(),
@@ -99,13 +99,49 @@ public sealed class LiveAuthoritativeServerTests
         var initial = await WaitForMessageAsync(
             client,
             message => message.Snapshot is not null);
-        var player = Assert.Single(initial.Snapshot!.Players);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.EntityId == 9);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
 
         Assert.Equal(1, staff.State.SpellId);
         Assert.Equal(166, staff.State.ItemIndex);
         Assert.Equal(40, staff.State.Charges);
         Assert.Equal(40, staff.State.MaxCharges);
+
+        var sequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = (uint)staff.State.SpellId,
+                TargetEntityId = target.EntityId,
+                Source = CastSourceKind.ChargedItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Hellfire Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; staff item was {staff.State.ItemIndex} with {staff.State.Charges} charges and target was ({target.PositionX},{target.PositionY}).");
+
+        var consumed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(item => item.Slot == 4).State.Charges == 39);
+        var updatedPlayer = Assert.Single(consumed.Snapshot!.Players);
+        Assert.Equal(39, Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4).State.Charges);
+        var resolved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Monsters.Any(monster =>
+                monster.EntityId == target.EntityId
+                && (!monster.Alive || monster.HitPoints < target.HitPoints)) == true);
+        var resolvedTarget = Assert.Single(
+            resolved.Snapshot!.Monsters,
+            monster => monster.EntityId == target.EntityId);
+        Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < target.HitPoints);
     }
 
     [Fact]
