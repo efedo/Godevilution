@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Messerschmidt's Reaver (`unique_id=1046`) through schema
+  1.5, adding its native Great Axe base item with damage, damage-modifier,
+  attribute, life-curse, and fire-damage powers.
+
 - Externalize Hellfire Hellslayer (`unique_id=1045`) through schema 1.4,
   reusing the validated Battle Axe base item with strength, vitality, damage,
   life, and mana-curse powers.

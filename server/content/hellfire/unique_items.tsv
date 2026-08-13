@@ -168,3 +168,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1045	Hellslayer	139	15	26200	DAMP	100	100
 1045	Hellslayer	139	15	26200	LIFE	25	25
 1045	Hellslayer	139	15	26200	MANA_CURSE	25	25
+1046	Messerschmidt's Reaver	141	25	58000	DAMP	200	200
+1046	Messerschmidt's Reaver	141	25	58000	DAMMOD	15	15
+1046	Messerschmidt's Reaver	141	25	58000	ATTRIBS	5	5
+1046	Messerschmidt's Reaver	141	25	58000	LIFE_CURSE	50	50
+1046	Messerschmidt's Reaver	141	25	58000	FIREDAM	2	12

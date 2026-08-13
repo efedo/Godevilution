@@ -46,7 +46,7 @@ Status date: 2026-08-13
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
   and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, The Executioner's Blade,
-  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, and Hellslayer
+  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, Hellslayer, and Messerschmidt's Reaver
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -747,7 +747,10 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
-Content schema 1.4 adds the native-derived Hellfire Hellslayer unique definition
+Content schema 1.5 adds the native-derived Hellfire Messerschmidt's Reaver base
+item and unique definition (`unique_id=1046`) with its Great Axe identity,
+damage, damage-modifier, attribute, life-curse, and fire-damage powers. Content
+schema 1.4 adds the native-derived Hellfire Hellslayer unique definition
 (`unique_id=1045`), reusing the validated Battle Axe base item with strength,
 vitality, damage, life, and mana-curse powers. Content schema 1.3 adds the
 native-derived Hellfire Aguinara's Hatchet base item

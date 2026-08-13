@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.4.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.5.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.4.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.5.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -676,6 +676,23 @@ public sealed class ShippedContentTests
         Assert.Equal(100, hellslayer.PlusDamage);
         Assert.Equal(25 << 6, hellslayer.PlusHitPoints);
         Assert.Equal(-(25 << 6), hellslayer.PlusMana);
+        var messerschmidtsReaver = hellfireItems.GenerateUnique(1046, 0x12345678, 25);
+        Assert.Equal(1046, messerschmidtsReaver.UniqueId);
+        Assert.Equal(58000, messerschmidtsReaver.Value);
+        Assert.Equal(136, messerschmidtsReaver.ItemIndex);
+        Assert.Equal(12, messerschmidtsReaver.MinDamage);
+        Assert.Equal(30, messerschmidtsReaver.MaxDamage);
+        Assert.Equal(80, messerschmidtsReaver.MinimumStrength);
+        Assert.Equal(2, messerschmidtsReaver.EquipLocation);
+        Assert.Equal(200, messerschmidtsReaver.PlusDamage);
+        Assert.Equal(15, messerschmidtsReaver.PlusDamageModifier);
+        Assert.Equal(5, messerschmidtsReaver.PlusStrength);
+        Assert.Equal(5, messerschmidtsReaver.PlusMagic);
+        Assert.Equal(5, messerschmidtsReaver.PlusDexterity);
+        Assert.Equal(5, messerschmidtsReaver.PlusVitality);
+        Assert.Equal(-(50 << 6), messerschmidtsReaver.PlusHitPoints);
+        Assert.Equal(2, messerschmidtsReaver.FireMinDamage);
+        Assert.Equal(12, messerschmidtsReaver.FireMaxDamage);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
