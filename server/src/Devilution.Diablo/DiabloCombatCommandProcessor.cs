@@ -3778,6 +3778,7 @@ public sealed class DiabloCombatCommandProcessor
                 (X: target.PositionX + deltaX, Y: target.PositionY),
                 (X: target.PositionX, Y: target.PositionY + deltaY),
             };
+            var moved = false;
             foreach (var candidate in candidates.Where(
                          candidate => candidate.X != target.PositionX
                              || candidate.Y != target.PositionY)) {
@@ -3787,11 +3788,24 @@ public sealed class DiabloCombatCommandProcessor
                         candidate.X,
                         candidate.Y,
                         players,
-                        target.EntityId)) {
+                        target.EntityId)
+                    || Math.Max(
+                        Math.Abs(victim.PositionX - candidate.X),
+                        Math.Abs(victim.PositionY - candidate.Y)) >= distance) {
                     continue;
                 }
                 target.BeginMovement(candidate.X, candidate.Y);
+                moved = true;
                 break;
+            }
+            if (!moved) {
+                var fallback = AuthoritativeMonsterNavigation.FindStep(
+                    world,
+                    target,
+                    victim,
+                    players);
+                if (fallback.HasValue)
+                    target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
     }

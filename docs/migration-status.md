@@ -104,6 +104,9 @@ Status date: 2026-08-13
   two levels, and unique heavy armor adds one-half level.
 - Monster-type aggro radius is now validated in schema 1.75 and carried into
   procedural targets for autonomous server behavior.
+- Autonomous monsters retain their direct native-compatible step order and now
+  use a bounded deterministic path fallback when blocked geometry would
+  otherwise cause equal-distance backtracking or an unrecoverable stall.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base
