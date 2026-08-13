@@ -531,11 +531,12 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
-Schema 0.59 extends native rune-source identity mapping through the active
+Schema 0.60 completes native rune-source identity mapping through the active
 spell catalog. Rune of Lightning ID `48`, Greater Rune of Lightning ID `49`,
 Greater Rune of Fire ID `50`, and Rune of Stone ID `51` resolve to the existing
 stable Lightning Wall, Nova, Immolation, and Stone Curse behaviors. Rune of
-Fire ID `47` remains queued for its direct explosion behavior.
+Fire ID `47` now uses a direct BigExplosion-style authoritative splash with
+native level-zero damage and radius-nine placement crawl.
 
 Schema 0.57 externalizes Golem's native 12-frame death-animation timing on
 spell row `52`. The server carries remaining terminal ticks through

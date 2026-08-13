@@ -7,7 +7,11 @@ All notable changes to this fork are documented below.
 - Advance the Diablo content schema to 0.59 with external mappings for Rune of
   Lightning, Greater Rune of Lightning, Greater Rune of Fire, and Rune of Stone
   to existing authoritative Lightning Wall, Nova, Immolation, and Stone Curse
-  behaviors. Rune of Fire remains queued for direct explosion behavior.
+  behaviors.
+
+- Advance the Diablo content schema to 0.60 with the direct Rune of Fire
+  BigExplosion-style authoritative splash, native level-zero damage, and
+  radius-nine placement crawl.
 
 - Advance the Diablo content schema to 0.58 with external rune-source identity
   mapping. The base pack maps Rune of Stone miscellaneous ID `51` to stable
