@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.60 adds the native-derived Hellfire Flambeau unique definition
+(`unique_id=1101`), reusing the native Composite Bow identity with Fireball-bow
+damage, zero base damage, and indestructible powers.
+
 Schema 1.59 adds the native-derived Hellfire Gnat Sting unique definition
 (`unique_id=1100`), reusing the native Hunter's Bow identity with multi-arrow,
 damage, fast-attack, and indestructible powers.

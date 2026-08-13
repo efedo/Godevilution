@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Flambeau (`unique_id=1101`) through schema 1.60,
+  reusing the native Composite Bow base and adding Fireball-bow damage,
+  zero base damage, and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Gnat Sting (`unique_id=1100`) through schema 1.59,
   reusing the native Hunter's Bow base with multi-arrow, damage, fast-attack,
   and indestructible powers.

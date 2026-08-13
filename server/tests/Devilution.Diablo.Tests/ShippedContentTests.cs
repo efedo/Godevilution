@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.59.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.60.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.59.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.60.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1368,6 +1368,19 @@ public sealed class ShippedContentTests
         Assert.Equal(255, gnatSting.MaxDurability);
         Assert.NotEqual(0U, gnatSting.Flags & 0x00000200U);
         Assert.NotEqual(0U, gnatSting.Flags & 0x00020000U);
+        var flambeau = hellfireItems.GenerateUnique(1101, 0x12345678, 11);
+        Assert.Equal(1101, flambeau.UniqueId);
+        Assert.Equal(30000, flambeau.Value);
+        Assert.Equal(147, flambeau.ItemIndex);
+        Assert.Equal(2, flambeau.EquipLocation);
+        Assert.Equal(0, flambeau.MinDamage);
+        Assert.Equal(0, flambeau.MaxDamage);
+        Assert.Equal(15, flambeau.FireMinDamage);
+        Assert.Equal(20, flambeau.FireMaxDamage);
+        Assert.Equal(255, flambeau.Durability);
+        Assert.Equal(255, flambeau.MaxDurability);
+        Assert.NotEqual(0U, flambeau.Flags & 0x00000008U);
+        Assert.NotEqual(0U, flambeau.Flags & 0x02000000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

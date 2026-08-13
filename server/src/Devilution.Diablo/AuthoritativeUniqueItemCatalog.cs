@@ -288,6 +288,15 @@ public sealed class AuthoritativeUniqueItemCatalog
             "FIRERES_CURSE" => state with { PlusFireResistance = state.PlusFireResistance - value },
             "LIGHTRES_CURSE" => state with { PlusLightningResistance = state.PlusLightningResistance - value },
             "MAGICRES_CURSE" => state with { PlusMagicResistance = state.PlusMagicResistance - value },
+            // Native Hellfire IPL_FIREBALL marks both arrow channels so the bow
+            // command selects the persistent FireballBow projectile.
+            "FIREBALL" => state with {
+                Flags = state.Flags | 0x02000000U | 0x00000008U,
+                FireMinDamage = power.Value1,
+                FireMaxDamage = power.Value2,
+                LightningMinDamage = 0,
+                LightningMaxDamage = 0,
+            },
             "SPLLVLADD" => state with { SpellLevelAdd = value },
             "DUR" => state with {
                 Durability = state.MaxDurability + state.MaxDurability * value / 100,
