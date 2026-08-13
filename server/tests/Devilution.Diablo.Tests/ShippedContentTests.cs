@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(97, monsterTypes.Definitions.Count);
+        Assert.Equal(109, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -153,8 +153,22 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions[85].MagicResistance));
         Assert.Equal("Balrog", monsterTypes.Definitions[89].Name);
         Assert.Equal(88U, monsterTypes.Definitions[89].NativeMonsterId);
-        Assert.Equal("Steel Lord", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(95U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal("Steel Lord", monsterTypes.Definitions[96].Name);
+        Assert.Equal(95U, monsterTypes.Definitions[96].NativeMonsterId);
+        Assert.Equal("Blood Knight", monsterTypes.Definitions[97].Name);
+        Assert.Equal((75, 100, 100), (
+            monsterTypes.Definitions[97].FireResistance,
+            monsterTypes.Definitions[97].LightningResistance,
+            monsterTypes.Definitions[97].MagicResistance));
+        Assert.True(monsterTypes.Definitions[98].Undead);
+        Assert.Equal("Reality Weaver", monsterTypes.Definitions[101].Name);
+        Assert.True(monsterTypes.Definitions[101].Undead);
+        Assert.Equal((100, 100, 75), (
+            monsterTypes.Definitions[101].FireResistance,
+            monsterTypes.Definitions[101].LightningResistance,
+            monsterTypes.Definitions[101].MagicResistance));
+        Assert.Equal("Cabalist", monsterTypes.Definitions[^1].Name);
+        Assert.Equal(107U, monsterTypes.Definitions[^1].NativeMonsterId);
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
