@@ -18,8 +18,8 @@ All notable changes to this fork are documented below.
 - Add the checked-in Hellfire content pack, which selects the native game
   variant through a validated `combat.tsv` overlay while keeping remaining
   Hellfire world and catalog metadata separate for later migration slices.
-- Add the first native-derived Hellfire undead encounter row and validate its
-  monster identity, stats, and faction through composed Diablo activation.
+- Expand the native-derived Hellfire encounter set and validate monster
+  identity, stats, and faction through composed Diablo activation.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
