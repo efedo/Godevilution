@@ -76,3 +76,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1022	Eaglehorn	126	26	42500	TOHIT	50	50
 1022	Eaglehorn	126	26	42500	DAMP	100	100
 1022	Eaglehorn	126	26	42500	INDESTRUCTIBLE	0	0
+1023	Gonnagal's Dirk	127	1	7040	DEX_CURSE	5	5
+1023	Gonnagal's Dirk	127	1	7040	DAMMOD	4	4
+1023	Gonnagal's Dirk	127	1	7040	FASTATTACK	2	2
+1023	Gonnagal's Dirk	127	1	7040	FIRERES	25	25

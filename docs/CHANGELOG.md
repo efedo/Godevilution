@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gonnagal's Dirk (`unique_id=1023`) through schema 0.82,
+  including its native Dagger base item and dexterity-curse, damage-modifier,
+  attack-speed, and fire-resistance powers.
+
 - Externalize Hellfire Eaglehorn (`unique_id=1022`) through schema 0.81,
   including its native Battle Bow base item and dexterity, hit, damage, and
   indestructibility powers.
