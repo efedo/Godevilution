@@ -37,7 +37,9 @@ public sealed class DiabloPlayerTemplate
             1,
             levelId,
             0,
-            playerClass?.ClassId ?? 0);
+            playerClass?.ClassId ?? 0,
+            baseLifeMaximum: resolvedLife,
+            baseManaMaximum: resolvedMana);
     }
 
     public DiabloPlayerTemplate(
@@ -67,13 +69,18 @@ public sealed class DiabloPlayerTemplate
         DiabloPlayerDirection facingDirection = DiabloPlayerDirection.South,
         string characterName = "",
         bool manaShieldActive = false,
-        uint reflectCharges = 0)
+        uint reflectCharges = 0,
+        int baseLifeMaximum = -1,
+        int baseManaMaximum = -1)
     {
         Gold = gold;
         Experience = experience;
         Life = life;
         Mana = mana;
         ManaMaximum = Math.Max(mana, manaMaximum);
+        BaseManaMaximum = Math.Max(
+            baseManaMaximum >= 0 ? baseManaMaximum : manaMaximum,
+            0);
         Attributes = attributes ?? PlayerAttributesState.Zero;
         Equipment = equipment?.ToArray() ?? [];
         InventoryGrid = inventoryGrid?.ToArray() ?? [];
@@ -81,6 +88,9 @@ public sealed class DiabloPlayerTemplate
         PositionX = positionX;
         PositionY = positionY;
         LifeMaximum = Math.Max(life, lifeMaximum);
+        BaseLifeMaximum = Math.Max(
+            baseLifeMaximum >= 0 ? baseLifeMaximum : lifeMaximum,
+            0);
         CharacterLevel = Math.Clamp(characterLevel, 1U, 50U);
         LevelId = levelId;
         ArmorClass = Math.Max(0, armorClass);
@@ -109,6 +119,7 @@ public sealed class DiabloPlayerTemplate
     public int Life { get; }
     public int Mana { get; }
     public int ManaMaximum { get; }
+    public int BaseManaMaximum { get; }
     public PlayerAttributesState Attributes { get; }
     public IReadOnlyList<EquippedStoreItem> Equipment { get; }
     public IReadOnlyList<int> InventoryGrid { get; }
@@ -116,6 +127,7 @@ public sealed class DiabloPlayerTemplate
     public int PositionX { get; }
     public int PositionY { get; }
     public int LifeMaximum { get; }
+    public int BaseLifeMaximum { get; }
     public uint CharacterLevel { get; }
     public uint LevelId { get; }
     public int ArmorClass { get; }
@@ -162,7 +174,9 @@ public sealed class DiabloPlayerTemplate
             FacingDirection,
             characterName,
             ManaShieldActive,
-            ReflectCharges);
+            ReflectCharges,
+            BaseLifeMaximum,
+            BaseManaMaximum);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -195,7 +209,9 @@ public sealed class DiabloPlayerTemplate
             FacingDirection,
             CharacterName,
             ManaShieldActive,
-            ReflectCharges);
+            ReflectCharges,
+            BaseLifeMaximum,
+            BaseManaMaximum);
     }
 }
 

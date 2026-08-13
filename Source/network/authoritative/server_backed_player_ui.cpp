@@ -22,7 +22,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player level is outside the native range.");
 	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
-	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX))
+	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX))
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
 	if (snapshot.characterClassId > static_cast<uint32_t>(HeroClass::LAST))
 		return tl::make_unexpected("Server-backed player class is outside the native range.");
@@ -208,11 +208,15 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.attributes.vitality = { snapshot.vitality.base, snapshot.vitality.current };
 	if (snapshot.lifeMaximum > 0) {
 		player.life.maximum = snapshot.lifeMaximum;
-		player.life.maximumBase = snapshot.lifeMaximum;
+		player.life.maximumBase = snapshot.lifeMaximumBase > 0
+		    ? snapshot.lifeMaximumBase
+		    : snapshot.lifeMaximum;
 	}
 	if (snapshot.manaMaximum > 0) {
 		player.mana.maximum = snapshot.manaMaximum;
-		player.mana.maximumBase = snapshot.manaMaximum;
+		player.mana.maximumBase = snapshot.manaMaximumBase > 0
+		    ? snapshot.manaMaximumBase
+		    : snapshot.manaMaximum;
 	}
 	ApplyResource(player.life, snapshot.life);
 	ApplyResource(player.mana, snapshot.mana);

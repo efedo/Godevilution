@@ -149,6 +149,65 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        var source = new AuthoritativePlayerState(
+            0,
+            0,
+            80 << 6,
+            124 << 6,
+            124 << 6,
+            PlayerAttributesState.Zero,
+            [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with { ManaToLifePercent = 50 })],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            80 << 6,
+            1,
+            0,
+            0,
+            baseLifeMaximum: 80 << 6,
+            baseManaMaximum: 124 << 6);
+        source.RecalculateEquipmentResources();
+        var snapshot = simulation.CaptureSnapshot(source, 1);
+
+        var destination = new AuthoritativePlayerState(
+            0,
+            0,
+            80 << 6,
+            124 << 6,
+            124 << 6,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            80 << 6,
+            1,
+            0,
+            0,
+            baseLifeMaximum: 80 << 6,
+            baseManaMaximum: 124 << 6);
+
+        simulation.RestoreSnapshot(destination, snapshot);
+
+        Assert.Equal(80 << 6, destination.BaseLifeMaximum);
+        Assert.Equal(124 << 6, destination.BaseManaMaximum);
+        Assert.Equal(142 << 6, destination.LifeMaximum);
+        Assert.Equal(62 << 6, destination.ManaMaximum);
+        Assert.Equal(source.Life, destination.Life);
+        Assert.Equal(source.Mana, destination.Mana);
+        Assert.Equal(source.Equipment, destination.Equipment);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsQuestPoolAvailability()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

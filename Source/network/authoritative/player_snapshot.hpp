@@ -172,8 +172,10 @@ struct ProjectedPlayerSnapshot {
 	int32_t positionY = 0;
 	int32_t life = 0;
 	int32_t lifeMaximum = 0;
+	int32_t lifeMaximumBase = 0;
 	int32_t mana = 0;
 	int32_t manaMaximum = 0;
+	int32_t manaMaximumBase = 0;
 	uint32_t gold = 0;
 	uint32_t experience = 0;
 	uint32_t characterLevel = 1;

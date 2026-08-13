@@ -175,6 +175,10 @@ public sealed record StorePlayerSnapshot(
     public int PositionX { get; init; }
     public int PositionY { get; init; }
     public int LifeMaximum { get; init; }
+    /** Unmodified native life maximum used to derive equipment conversions. */
+    public int BaseLifeMaximum { get; init; }
+    /** Unmodified native mana maximum used to derive equipment conversions. */
+    public int BaseManaMaximum { get; init; }
     public uint CharacterLevel { get; init; } = 1;
     public uint LevelId { get; init; }
     public uint EntityId { get; init; }
@@ -246,7 +250,9 @@ public sealed class AuthoritativePlayerState(
     DiabloPlayerDirection facingDirection = DiabloPlayerDirection.South,
     string characterName = "",
     bool manaShieldActive = false,
-    uint reflectCharges = 0)
+    uint reflectCharges = 0,
+    int baseLifeMaximum = -1,
+    int baseManaMaximum = -1)
 {
     public uint Gold { get; set; } = gold;
 
@@ -254,7 +260,11 @@ public sealed class AuthoritativePlayerState(
 
     public int Life { get; set; } = Math.Clamp(life, 0, Math.Max(lifeMaximum, 0));
 
-    public int LifeMaximum { get; } = Math.Max(lifeMaximum, 0);
+    public int BaseLifeMaximum { get; } = Math.Max(
+        baseLifeMaximum >= 0 ? baseLifeMaximum : lifeMaximum,
+        0);
+
+    public int LifeMaximum { get; private set; } = Math.Max(lifeMaximum, 0);
 
     public uint CharacterLevel { get; set; } = characterLevel;
 
@@ -323,7 +333,11 @@ public sealed class AuthoritativePlayerState(
 
     public int Mana { get; set; } = mana;
 
-    public int ManaMaximum { get; } = Math.Max(manaMaximum, 0);
+    public int BaseManaMaximum { get; } = Math.Max(
+        baseManaMaximum >= 0 ? baseManaMaximum : manaMaximum,
+        0);
+
+    public int ManaMaximum { get; private set; } = Math.Max(manaMaximum, 0);
 
     public PlayerAttributesState Attributes { get; set; } = attributes;
 
@@ -339,4 +353,25 @@ public sealed class AuthoritativePlayerState(
 
     /** Server-owned item currently carried by the presentation cursor. */
     public OwnedStoreItem? HeldItem { get; set; } = heldItem;
+
+    /** Recomputes native equipment resource conversions while preserving damage debt. */
+    public void RecalculateEquipmentResources()
+    {
+        var lifeBase = checked(Life + BaseLifeMaximum - LifeMaximum);
+        var manaBase = checked(Mana + BaseManaMaximum - ManaMaximum);
+        var adjusted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+            BaseLifeMaximum,
+            BaseManaMaximum,
+            Equipment);
+        LifeMaximum = adjusted.LifeQ6;
+        ManaMaximum = adjusted.ManaQ6;
+        Life = Math.Clamp(
+            checked(adjusted.LifeQ6 - BaseLifeMaximum + lifeBase),
+            0,
+            LifeMaximum);
+        Mana = Math.Clamp(
+            checked(adjusted.ManaQ6 - BaseManaMaximum + manaBase),
+            0,
+            ManaMaximum);
+    }
 }

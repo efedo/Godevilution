@@ -468,6 +468,15 @@ conversion state adds the tagged
 `godevilution-item-resource-conversion-v1` canonical-hash section; absent
 conversion fields preserve legacy snapshot and replay hashes.
 
+`PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
+carry the unmodified native maxima used by Hellfire equipment conversions. A
+zero value falls back to the effective maximum for snapshots written before
+these fields existed. Accepted equipment transfers recompute effective maxima
+and current resources while preserving native resource debt. When base and
+effective maxima differ, canonical hashing adds the tagged
+`godevilution-player-resource-base-v1` section; equal values preserve earlier
+hashes.
+
 After the unconditional held-item drop, an ordinary monster-or-trap death
 applies Gold loss and then removes equipped items in native slot order from
 Head through Chest. Direction rotates left once for every slot, including an

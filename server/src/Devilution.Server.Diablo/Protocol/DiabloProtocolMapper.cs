@@ -214,6 +214,8 @@ internal static class DiabloProtocolMapper
             Mana = state.Mana,
             ManaMaximum = state.ManaMaximum,
             LifeMaximum = state.LifeMaximum,
+            BaseManaMaximum = state.BaseManaMaximum,
+            BaseLifeMaximum = state.BaseLifeMaximum,
             CharacterLevel = state.CharacterLevel,
             CharacterClassId = state.CharacterClassId,
             CharacterName = state.CharacterName,
@@ -535,6 +537,12 @@ internal static class DiabloProtocolMapper
             PositionX = source.PositionX,
             PositionY = source.PositionY,
             LifeMaximum = source.LifeMaximum,
+            BaseLifeMaximum = source.BaseLifeMaximum == 0
+                ? source.LifeMaximum
+                : source.BaseLifeMaximum,
+            BaseManaMaximum = source.BaseManaMaximum == 0
+                ? source.ManaMaximum
+                : source.BaseManaMaximum,
             CharacterLevel = source.CharacterLevel,
             CharacterClassId = source.CharacterClassId,
             CharacterName = source.CharacterName,

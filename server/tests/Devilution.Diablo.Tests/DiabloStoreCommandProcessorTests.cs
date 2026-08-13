@@ -437,6 +437,50 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MovingHellfireConversionItemInAndOutOfEquipmentRecalculatesResources()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            0,
+            0,
+            AuthoritativeItemState.Empty with { ManaToLifePercent = 50 });
+        var player = CreatePlayer(
+            mana: 640,
+            manaMaximum: 640,
+            inventory: [item]);
+        player.InventoryGrid[0] = 0;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var equip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0)),
+            1);
+
+        Assert.True(equip.Succeeded);
+        Assert.Equal(960, player.LifeMaximum);
+        Assert.Equal(320, player.ManaMaximum);
+        Assert.Equal(960, player.Life);
+        Assert.Equal(320, player.Mana);
+
+        var unequip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            2);
+
+        Assert.True(unequip.Succeeded);
+        Assert.Equal(640, player.LifeMaximum);
+        Assert.Equal(640, player.ManaMaximum);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
     public void SwapsMultiCellInventoryItemsAtomically()
     {
         var large = AuthoritativeItemState.Empty with {

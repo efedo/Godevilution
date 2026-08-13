@@ -137,6 +137,12 @@ Windows toolchain command.
   only for accepted movement, attack, and cast intents, persists it in saves,
   and uses it for directional death-drop placement. Non-South state uses the
   tagged `godevilution-player-facing-v1` hash extension.
+- `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31-32 carry
+  the unmodified native maxima used by Hellfire equipment conversions. Zero
+  falls back to the effective maximum for older snapshots. When a conversion
+  changes an effective maximum, the tagged
+  `godevilution-player-resource-base-v1` hash extension carries both values;
+  equal base/effective maxima preserve legacy hashes.
 - `QuestSnapshot` fields 9-12 carry optional native quest synchronization values:
   `_qvar1`, `_qvar2`, `_qmsg`, and a validated monster identity whose defeat
   advances the quest. Zero values are additive defaults and preserve legacy

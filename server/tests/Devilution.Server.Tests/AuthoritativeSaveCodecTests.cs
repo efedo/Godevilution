@@ -22,6 +22,8 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(source.Tick, restored.Tick);
         Assert.Equal(source.Player.Gold, restored.Player.Gold);
         Assert.Equal(source.Player.EntityId, restored.Player.EntityId);
+        Assert.Equal(source.Player.BaseLifeMaximum, restored.Player.BaseLifeMaximum);
+        Assert.Equal(source.Player.BaseManaMaximum, restored.Player.BaseManaMaximum);
         Assert.Equal(source.Player.CharacterClassId, restored.Player.CharacterClassId);
         Assert.Equal(source.Player.CharacterName, restored.Player.CharacterName);
         Assert.Equal(source.Player.ManaShieldActive, restored.Player.ManaShieldActive);
@@ -132,6 +134,8 @@ public sealed class AuthoritativeSaveCodecTests
             []) {
             EntityId = 7,
             LifeMaximum = 30,
+            BaseLifeMaximum = 30,
+            BaseManaMaximum = 8,
             CharacterLevel = 2,
             CharacterClassId = 3,
             CharacterName = "Dead-Monk",

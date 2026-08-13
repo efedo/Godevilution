@@ -334,6 +334,10 @@ message PlayerSnapshot {
 	bool mana_shield_active = 29;
 	// Native-compatible remaining Reflect charges. Zero preserves legacy snapshots.
 	uint32 reflect_charges = 30;
+	// Unmodified native maxima used to derive Hellfire equipment conversions.
+	// Zero falls back to the corresponding effective maximum for legacy snapshots.
+	int32 base_mana_maximum = 31;
+	int32 base_life_maximum = 32;
 }
 
 enum PlayerDirection {

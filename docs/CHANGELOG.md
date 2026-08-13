@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Make Hellfire mana-to-life and life-to-mana conversions server-owned across
+  live equipment transfers, preserving native resource debt and persisting
+  base/effective maxima through snapshots, saves, protocol fields 31-32, and
+  conditional canonical hashes.
+
+## 2026-08-13
+
 - Externalize Hellfire Gladiator's Ring (`unique_id=1111`) through schema 1.70,
   reusing native Ring with its player-dependent 40-percent life-to-mana
   conversion preserved as authoritative item metadata.

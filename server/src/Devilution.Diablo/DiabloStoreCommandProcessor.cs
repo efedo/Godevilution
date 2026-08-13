@@ -504,12 +504,20 @@ public sealed class DiabloStoreCommandProcessor
             } else {
                 AddTransfer(player, intent.Destination, source);
                 RemoveTransfer(player, intent.Item);
+                RecalculateEquipmentResourcesIfChanged(
+                    player,
+                    intent.Item,
+                    intent.Destination);
             }
             return DiabloIntentResult.Accepted;
         }
 
         RemoveTransfer(player, intent.Item);
         AddTransfer(player, intent.Destination, source);
+        RecalculateEquipmentResourcesIfChanged(
+            player,
+            intent.Item,
+            intent.Destination);
         return DiabloIntentResult.Accepted;
     }
 
@@ -521,6 +529,9 @@ public sealed class DiabloStoreCommandProcessor
         DiabloPlayerItemReference actualDestinationReference,
         TransferItem destination)
     {
+        var equipmentChanged = sourceReference.Location == DiabloPlayerItemLocation.Equipment
+            || destinationReference.Location == DiabloPlayerItemLocation.Equipment
+            || actualDestinationReference.Location == DiabloPlayerItemLocation.Equipment;
         if (sourceReference.Location == DiabloPlayerItemLocation.Inventory
             && actualDestinationReference.Location == DiabloPlayerItemLocation.Inventory) {
             var sourceIndex = (int)sourceReference.Slot;
@@ -559,6 +570,8 @@ public sealed class DiabloStoreCommandProcessor
                 destinationIndex,
                 source.State.InventoryWidth,
                 source.State.InventoryHeight);
+            if (equipmentChanged)
+                player.RecalculateEquipmentResources();
             return DiabloIntentResult.Accepted;
         }
 
@@ -581,6 +594,8 @@ public sealed class DiabloStoreCommandProcessor
                 source.State.InventoryWidth,
                 source.State.InventoryHeight);
             ReplaceTransfer(player, sourceReference, destination);
+            if (equipmentChanged)
+                player.RecalculateEquipmentResources();
             return DiabloIntentResult.Accepted;
         }
 
@@ -603,11 +618,15 @@ public sealed class DiabloStoreCommandProcessor
                 destination.State.InventoryWidth,
                 destination.State.InventoryHeight);
             ReplaceTransfer(player, destinationReference, source);
+            if (equipmentChanged)
+                player.RecalculateEquipmentResources();
             return DiabloIntentResult.Accepted;
         }
 
         ReplaceTransfer(player, sourceReference, destination);
         ReplaceTransfer(player, actualDestinationReference, source);
+        if (equipmentChanged)
+            player.RecalculateEquipmentResources();
         return DiabloIntentResult.Accepted;
     }
 
@@ -720,6 +739,17 @@ public sealed class DiabloStoreCommandProcessor
         DiabloPlayerItemReference destination)
     {
         return source.Location == destination.Location && source.Slot == destination.Slot;
+    }
+
+    private static void RecalculateEquipmentResourcesIfChanged(
+        AuthoritativePlayerState player,
+        DiabloPlayerItemReference source,
+        DiabloPlayerItemReference destination)
+    {
+        if (source.Location == DiabloPlayerItemLocation.Equipment
+            || destination.Location == DiabloPlayerItemLocation.Equipment) {
+            player.RecalculateEquipmentResources();
+        }
     }
 
     private static void RemoveTransfer(

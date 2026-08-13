@@ -21,6 +21,14 @@ public static class SnapshotStateHasher
             hasher.AppendInt32(player.Mana);
             hasher.AppendInt32(player.ManaMaximum);
             hasher.AppendInt32(player.LifeMaximum);
+            if ((player.BaseManaMaximum != 0
+                    && player.BaseManaMaximum != player.ManaMaximum)
+                || (player.BaseLifeMaximum != 0
+                    && player.BaseLifeMaximum != player.LifeMaximum)) {
+                hasher.AppendString("godevilution-player-resource-base-v1");
+                hasher.AppendInt32(player.BaseManaMaximum);
+                hasher.AppendInt32(player.BaseLifeMaximum);
+            }
             hasher.AppendUInt32(player.CharacterLevel);
             hasher.AppendUInt32(player.LevelId);
             if (player.CharacterClassId != 0) {

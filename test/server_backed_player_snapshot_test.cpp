@@ -22,8 +22,10 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_position_y(-4);
 	player->set_life(640);
 	player->set_life_maximum(800);
+	player->set_base_life_maximum(640);
 	player->set_mana(32);
 	player->set_mana_maximum(640);
+	player->set_base_mana_maximum(512);
 	player->set_gold(125);
 	player->set_experience(99);
 	player->set_character_level(3);
@@ -77,7 +79,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->positionX, 11);
 	EXPECT_EQ(projected->life, 640);
 	EXPECT_EQ(projected->lifeMaximum, 800);
+	EXPECT_EQ(projected->lifeMaximumBase, 640);
 	EXPECT_EQ(projected->manaMaximum, 640);
+	EXPECT_EQ(projected->manaMaximumBase, 512);
 	EXPECT_EQ(projected->gold, 125U);
 	EXPECT_EQ(projected->characterLevel, 3U);
 	EXPECT_EQ(projected->characterClassId, 3U);
@@ -588,8 +592,10 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	snapshot.positionY = 13;
 	snapshot.life = 800;
 	snapshot.lifeMaximum = 1000;
+	snapshot.lifeMaximumBase = 800;
 	snapshot.mana = 125;
 	snapshot.manaMaximum = 750;
+	snapshot.manaMaximumBase = 500;
 	snapshot.gold = 450;
 	snapshot.experience = 99;
 	snapshot.characterLevel = 4;
@@ -655,8 +661,10 @@ TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
 	EXPECT_EQ(player.attributes.strength.current, 12);
 	EXPECT_EQ(player.life.current, 800);
 	EXPECT_EQ(player.life.maximum, 1000);
+	EXPECT_EQ(player.life.maximumBase, 800);
 	EXPECT_EQ(player.mana.current, 125);
 	EXPECT_EQ(player.mana.maximum, 750);
+	EXPECT_EQ(player.mana.maximumBase, 500);
 	EXPECT_EQ(player.SpdList[2]._itype, ItemType::Misc);
 	EXPECT_EQ(player._pNumInv, 1);
 	EXPECT_EQ(player.InvList[0]._itype, ItemType::Sword);

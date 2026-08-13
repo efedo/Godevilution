@@ -173,6 +173,35 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ResourceBaseMaximaChangeHashOnlyWhenTheyDifferFromEffectiveMaxima()
+    {
+        var baseline = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    ManaMaximum = 640,
+                    LifeMaximum = 640,
+                },
+            },
+        };
+        var equivalent = baseline.Clone();
+        equivalent.Players[0].BaseManaMaximum = 640;
+        equivalent.Players[0].BaseLifeMaximum = 640;
+        var converted = equivalent.Clone();
+        converted.Players[0].ManaMaximum = 320;
+        converted.Players[0].LifeMaximum = 960;
+        converted.Players[0].BaseManaMaximum = 640;
+        converted.Players[0].BaseLifeMaximum = 640;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(equivalent));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(equivalent),
+            SnapshotStateHasher.Compute(converted));
+    }
+
+    [Fact]
     public void NonzeroPlayerClassIdentityChangesTheStateHash()
     {
         var legacyWarrior = new Snapshot {

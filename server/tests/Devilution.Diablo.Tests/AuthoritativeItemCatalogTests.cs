@@ -408,4 +408,46 @@ public sealed class AuthoritativeItemCatalogTests
                 124 << 6,
                 [invalid]));
     }
+
+    [Fact]
+    public void LiveEquipmentResourceRecalculationPreservesNativeResourceDebt()
+    {
+        var player = new AuthoritativePlayerState(
+            0,
+            0,
+            60 << 6,
+            100 << 6,
+            124 << 6,
+            PlayerAttributesState.Zero,
+            [],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            80 << 6,
+            1,
+            0,
+            0,
+            baseLifeMaximum: 80 << 6,
+            baseManaMaximum: 124 << 6);
+        player.Equipment.Add(new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with { ManaToLifePercent = 50 }));
+
+        player.RecalculateEquipmentResources();
+
+        Assert.Equal(142 << 6, player.LifeMaximum);
+        Assert.Equal(62 << 6, player.ManaMaximum);
+        Assert.Equal(122 << 6, player.Life);
+        Assert.Equal(38 << 6, player.Mana);
+
+        player.Equipment.Clear();
+        player.RecalculateEquipmentResources();
+
+        Assert.Equal(80 << 6, player.LifeMaximum);
+        Assert.Equal(124 << 6, player.ManaMaximum);
+        Assert.Equal(60 << 6, player.Life);
+        Assert.Equal(100 << 6, player.Mana);
+    }
 }

@@ -238,6 +238,8 @@ public sealed partial class DiabloSimulation
             PositionX = player.PositionX,
             PositionY = player.PositionY,
             LifeMaximum = player.LifeMaximum,
+            BaseLifeMaximum = player.BaseLifeMaximum,
+            BaseManaMaximum = player.BaseManaMaximum,
             CharacterLevel = player.CharacterLevel,
             LevelId = player.LevelId,
             EntityId = player.EntityId,
@@ -1087,8 +1089,6 @@ public sealed partial class DiabloSimulation
     {
         destination.Gold = source.Gold;
         destination.Experience = source.Experience;
-        destination.Life = source.Life;
-        destination.Mana = source.Mana;
         destination.Attributes = source.Attributes;
         destination.CharacterLevel = source.CharacterLevel;
         destination.CharacterClassId = source.CharacterClassId;
@@ -1113,6 +1113,9 @@ public sealed partial class DiabloSimulation
         destination.Inventory.AddRange(source.Inventory);
         destination.Equipment.Clear();
         destination.Equipment.AddRange(source.Equipment);
+        destination.RecalculateEquipmentResources();
+        destination.Life = source.Life;
+        destination.Mana = source.Mana;
         destination.Belt.Clear();
         destination.Belt.AddRange(source.Belt);
         destination.InventoryGrid.Clear();
@@ -1349,16 +1352,31 @@ public sealed partial class DiabloSimulation
         StorePlayerSnapshot source,
         AuthoritativePlayerState destination)
     {
+        var baseLifeMaximum = source.BaseLifeMaximum == 0
+            ? destination.BaseLifeMaximum
+            : source.BaseLifeMaximum;
+        var baseManaMaximum = source.BaseManaMaximum == 0
+            ? destination.BaseManaMaximum
+            : source.BaseManaMaximum;
+        var expectedResources = baseLifeMaximum >= 0 && baseManaMaximum >= 0
+            && source.Equipment is not null
+            ? AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+                baseLifeMaximum,
+                baseManaMaximum,
+                source.Equipment)
+            : (LifeQ6: -1, ManaQ6: -1);
         if (source.Life < 0
+            || source.BaseLifeMaximum < 0
+            || source.BaseManaMaximum < 0
             || source.Inventory is null
             || source.Equipment is null
             || source.Belt is null
             || source.InventoryGrid is null
             || source.MemorizedSpells is null
             || source.StatusEffects is null
-            || source.Life > destination.LifeMaximum
+            || source.Life > expectedResources.LifeQ6
             || source.Mana < 0
-            || source.Mana > destination.ManaMaximum
+            || source.Mana > expectedResources.ManaQ6
             || source.CharacterLevel is < 1 or > 50
             || (!string.IsNullOrEmpty(source.CharacterName)
                 && !DiabloPlayerName.IsValid(source.CharacterName))
@@ -1382,8 +1400,10 @@ public sealed partial class DiabloSimulation
                     or DiabloPlayerCombatMode.GotHit)
                 && source.CombatModeEndTick == 0)
             || !IsValidPlayerAction(source)
-            || source.LifeMaximum != destination.LifeMaximum
-            || source.ManaMaximum != destination.ManaMaximum
+            || baseLifeMaximum != destination.BaseLifeMaximum
+            || baseManaMaximum != destination.BaseManaMaximum
+            || source.LifeMaximum != expectedResources.LifeQ6
+            || source.ManaMaximum != expectedResources.ManaQ6
             || source.Attributes is null
             || source.Attributes.Strength is null
             || source.Attributes.Magic is null
