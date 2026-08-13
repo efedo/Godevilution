@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire OverLord's Helm (`unique_id=1067`) through schema 1.26,
+  reusing the native Helm base item with attribute, magic-curse, and
+  durability powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Thinking Cap (`unique_id=1066`) through schema 1.25,
   adding its native Skull Cap base item with mana, spell-level, resistance,
   and durability powers.

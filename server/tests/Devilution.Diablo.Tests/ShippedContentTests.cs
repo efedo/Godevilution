@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.25.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.26.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.25.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.26.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -978,6 +978,19 @@ public sealed class ShippedContentTests
         Assert.Equal(20, thinkingCap.PlusFireResistance);
         Assert.Equal(20, thinkingCap.PlusLightningResistance);
         Assert.Equal(20, thinkingCap.PlusMagicResistance);
+        var overlordsHelm = hellfireItems.GenerateUnique(1067, 0x12345678, 7);
+        Assert.Equal(1067, overlordsHelm.UniqueId);
+        Assert.Equal(12500, overlordsHelm.Value);
+        Assert.Equal(51, overlordsHelm.ItemIndex);
+        Assert.Equal(4, overlordsHelm.ArmorClass);
+        Assert.Equal(15, overlordsHelm.Durability);
+        Assert.Equal(15, overlordsHelm.MaxDurability);
+        Assert.Equal(25, overlordsHelm.MinimumStrength);
+        Assert.Equal(4, overlordsHelm.EquipLocation);
+        Assert.Equal(20, overlordsHelm.PlusStrength);
+        Assert.Equal(15, overlordsHelm.PlusDexterity);
+        Assert.Equal(5, overlordsHelm.PlusVitality);
+        Assert.Equal(-20, overlordsHelm.PlusMagic);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

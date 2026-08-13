@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.26 adds the native-derived Hellfire OverLord's Helm unique definition
+(`unique_id=1067`), reusing the validated Helm base item with attribute,
+magic-curse, and durability powers.
+
 Schema 1.25 adds the native-derived Hellfire Thinking Cap base item and unique
 definition (`unique_id=1066`) with its Skull Cap identity, mana, spell-level,
 resistance, and durability powers.
