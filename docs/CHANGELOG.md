@@ -19,6 +19,8 @@ All notable changes to this fork are documented below.
   field 45, snapshots, saves, and canonical hashes.
 - Route the native `GoatRanged` shared `AiRanged` boundary through the
   authoritative arrow damage, close-range avoidance, and movement paths.
+- Route the native `GoatMelee` adjacent attack-admission and wounded special
+  branch through the authoritative physical-hit path.
 
 ## 2026-08-13
 

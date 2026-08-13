@@ -200,6 +200,9 @@ The `GoatRanged` identity now uses the shared native `AiRanged` boundary: clear
 missile lanes produce authoritative arrow damage, while targets inside four
 tiles use the native `10 * (intelligence + 7)` avoidance band and deterministic
 retreat-cell selection.
+The `GoatMelee` identity now uses the native adjacent `23 + 2 * intelligence`
+attack admission boundary and wounded special branch, with special accuracy and
+damage resolved by the server.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

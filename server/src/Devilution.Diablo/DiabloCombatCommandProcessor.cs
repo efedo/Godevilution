@@ -3738,9 +3738,13 @@ public sealed class DiabloCombatCommandProcessor
                             victim.Equipment);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+                if (target.NativeAi == "GoatMelee"
+                    && attackSeed % 100U >= (uint)Math.Min(100, 23 + (2 * target.Intelligence)))
+                    continue;
                 var usesSpecialAttack = UsesNativeFatSpecialAttack(
                     target,
-                    attackSeed);
+                    attackSeed)
+                    || UsesNativeGoatSpecialAttack(target, attackSeed);
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
                     : target.AttackDamage;
@@ -4205,6 +4209,18 @@ public sealed class DiabloCombatCommandProcessor
             && target.ToHitSpecial > 0
             && target.MaxDamageSpecial > 0
             && attackSeed % 100U < 5U;
+    }
+
+    /** Native AiAvoidance selects a wounded GoatMelee special on its second 50% roll. */
+    private static bool UsesNativeGoatSpecialAttack(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        return target.NativeAi == "GoatMelee"
+            && target.HitPointsQ6 < target.MaxHitPointsQ6 / 2
+            && target.ToHitSpecial > 0
+            && target.MaxDamageSpecial > 0
+            && (attackSeed / 100U) % 2U == 0U;
     }
 
     /** Selects the native inclusive special damage range without adding a new RNG draw. */

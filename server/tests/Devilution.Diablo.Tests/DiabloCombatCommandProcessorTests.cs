@@ -1555,6 +1555,71 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesItsNativeAttackAdmissionAndWoundedSpecialBranch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 2,
+            aggroRange: 5,
+            minDamage: 3,
+            maxDamage: 3,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            toHit: 100,
+            toHitSpecial: 100,
+            nativeAi: "GoatMelee");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: inside 23 + 2 * intelligence and the native
+        // second 50% roll, so the wounded special range is selected.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(90, player.Life);
+    }
+
+    [Fact]
+    public void GoatMeleeAiCanDeclineAnAdjacentAttackOutsideItsNativeBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "GoatMelee");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38: outside the native 23% admission band.
+        var deliveries = processor.AdvanceTick(40, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

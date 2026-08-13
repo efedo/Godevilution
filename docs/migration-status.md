@@ -153,6 +153,9 @@ Status date: 2026-08-13
   clear-lane arrow damage, close-range avoidance probability, deterministic
   retreat selection, and blocked-lane fallback resolve through the authoritative
   movement and directed-event paths.
+- The native `GoatMelee` adjacent `AiAvoidance` boundary is now server-owned:
+  its `23 + 2 * intelligence` attack admission and wounded special branch use
+  the authoritative physical-hit path and externalized special damage range.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

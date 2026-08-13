@@ -255,6 +255,11 @@ clear missile lane it emits the server-resolved arrow damage event; inside four
 tiles it first applies the native `10 * (intelligence + 7)` avoidance band and
 selects a deterministic retreat cell when one is available.
 
+The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
+of `23 + 2 * intelligence`. When its wounded special branch is selected, the
+server uses the externalized special accuracy and damage range; clients receive
+only the resulting authoritative damage event and snapshot.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores
