@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.62.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.63.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.62.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.63.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1407,6 +1407,22 @@ public sealed class ShippedContentTests
         Assert.Equal(255, blitzen.MaxDurability);
         Assert.NotEqual(0U, blitzen.Flags & 0x02000000U);
         Assert.NotEqual(0U, blitzen.Flags & 0x00000008U);
+        var thunderclap = hellfireItems.GenerateUnique(1104, 0x12345678, 13);
+        Assert.Equal(1104, thunderclap.UniqueId);
+        Assert.Equal(30000, thunderclap.Value);
+        Assert.Equal(138, thunderclap.ItemIndex);
+        Assert.Equal(1, thunderclap.EquipLocation);
+        Assert.Equal(20, thunderclap.PlusStrength);
+        Assert.Equal(30, thunderclap.PlusLightningResistance);
+        Assert.Equal(2, thunderclap.PlusLight);
+        Assert.Equal(3, thunderclap.FireMinDamage);
+        Assert.Equal(6, thunderclap.FireMaxDamage);
+        Assert.Equal(2, thunderclap.LightningMinDamage);
+        Assert.Equal(0, thunderclap.LightningMaxDamage);
+        Assert.Equal(255, thunderclap.Durability);
+        Assert.Equal(255, thunderclap.MaxDurability);
+        Assert.NotEqual(0U, thunderclap.Flags & 0x00000020U);
+        Assert.NotEqual(0U, thunderclap.Flags & 0x00000010U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

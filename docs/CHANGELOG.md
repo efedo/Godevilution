@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Thunderclap (`unique_id=1104`) through schema 1.63,
+  reusing native War Hammer with charged-bolt hit damage, strength, resistance,
+  light, and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Blitzen (`unique_id=1103`) through schema 1.62,
   reusing native Composite Bow with lightning-arrow damage, zero base damage,
   and indestructible powers.

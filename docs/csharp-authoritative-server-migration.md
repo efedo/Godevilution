@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.63 adds the native-derived Hellfire Thunderclap unique definition
+(`unique_id=1104`), reusing the native War Hammer identity with charged-bolt
+hit damage, strength, resistance, light, and indestructible powers.
+
 Schema 1.62 adds the native-derived Hellfire Blitzen unique definition
 (`unique_id=1103`), reusing the native Composite Bow identity with
 lightning-arrow damage, zero base damage, and indestructible powers.
