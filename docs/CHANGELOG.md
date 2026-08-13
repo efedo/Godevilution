@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Thinking Cap (`unique_id=1066`) through schema 1.25,
+  adding its native Skull Cap base item with mana, spell-level, resistance,
+  and durability powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Helm of Spirits (`unique_id=1065`) through schema 1.24,
   adding its native Helm base item and life-steal power.
 

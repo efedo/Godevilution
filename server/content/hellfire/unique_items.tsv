@@ -257,3 +257,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1064	Rod of Onan	148	22	44167	DAMP	100	100
 1064	Rod of Onan	148	22	44167	ATTRIBS	5	5
 1065	Helm of Spirits	152	1	7525	STEALLIFE	5	5
+1066	Thinking Cap	153	6	2020	MANA	30	30
+1066	Thinking Cap	153	6	2020	SPLLVLADD	2	2
+1066	Thinking Cap	153	6	2020	ALLRES	20	20
+1066	Thinking Cap	153	6	2020	SETDUR	1	1

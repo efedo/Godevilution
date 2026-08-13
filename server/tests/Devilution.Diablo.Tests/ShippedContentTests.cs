@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.24.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.25.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.24.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.25.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -964,6 +964,20 @@ public sealed class ShippedContentTests
         Assert.Equal(25, helmOfSpirits.MinimumStrength);
         Assert.Equal(4, helmOfSpirits.EquipLocation);
         Assert.NotEqual(0U, helmOfSpirits.Flags & 0x00010000U);
+        var thinkingCap = hellfireItems.GenerateUnique(1066, 0x12345678, 6);
+        Assert.Equal(1066, thinkingCap.UniqueId);
+        Assert.Equal(2020, thinkingCap.Value);
+        Assert.Equal(50, thinkingCap.ItemIndex);
+        Assert.Equal(4, thinkingCap.ArmorClass);
+        Assert.Equal(1, thinkingCap.Durability);
+        Assert.Equal(1, thinkingCap.MaxDurability);
+        Assert.Equal(0, thinkingCap.MinimumStrength);
+        Assert.Equal(4, thinkingCap.EquipLocation);
+        Assert.Equal(30 << 6, thinkingCap.PlusMana);
+        Assert.Equal(2, thinkingCap.SpellLevelAdd);
+        Assert.Equal(20, thinkingCap.PlusFireResistance);
+        Assert.Equal(20, thinkingCap.PlusLightningResistance);
+        Assert.Equal(20, thinkingCap.PlusMagicResistance);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
