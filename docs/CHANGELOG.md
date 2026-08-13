@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
   coverage for charged-source validation, charge consumption, and target damage.
 - Extend live Godot protocol coverage through the Bard's server-owned Identify
   ability, proving class-service source validation and equipment-state mutation.
+- Extend live Godot protocol coverage through the Sorcerer's server-owned Staff
+  Recharge ability, including charged-cast consumption and native max-charge loss.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
