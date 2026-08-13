@@ -112,12 +112,12 @@ and maximum mana with the corresponding mana, level, and magic columns. The
 optional host `--starting-life` and `--starting-mana` values are explicit Q6
 development overrides. They are not content defaults.
 
-`class_loadouts.tsv` defines one complete starting wallet, native class-skill
+`class_loadouts.tsv` defines one complete starting wallet, stable class-skill
 ID, and optional learned spell/level for every active class. Its companion
 `class_loadout_items.tsv` gives each starting item a contiguous per-class order,
 stable `item_id`, exact `Inventory`, `Equipment`, or `Belt` location, and native
 slot or inventory-grid anchor. Activation rejects missing classes, unknown
-items, invalid native spell bounds, unusable equipment, duplicate slots,
+items, invalid stable spell bounds, unusable equipment, duplicate slots,
 two-handed/off-hand conflicts, belt-ineligible items, overlapping inventory
 footprints, more than five starting items, and any directly castable starting
 memorized, charged-item, scroll, or rune source whose spell is absent from the
@@ -126,6 +126,11 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+`ability_spell_id` and `starting_spell_id` use the stable authoritative
+`spells.tsv` identity, not the legacy native `SpellID` ceiling. This allows a
+content pack to expose stable rows such as Etherealize `53` while native
+compatibility fields continue to carry their separate `native_spell_id` values.
 
 Schema 0.57 adds Golem death-animation timing to stable spell row `52` (native
 `SpellID` `21`). The native 12-frame death sequence is externalized as

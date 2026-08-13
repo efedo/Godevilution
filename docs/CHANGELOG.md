@@ -40,6 +40,12 @@ All notable changes to this fork are documented below.
 - Extend live Godot protocol coverage through the Barbarian's server-owned Rage
   ability, including explicit class-ability source validation and active
   controller projection with server-owned life state.
+- Separate stable authoritative spell-ID bounds from the legacy native-ID
+  ceiling, allowing external loadouts, saves, and replay state to carry stable
+  Etherealize identity `53` (`native SpellID` `26`).
+- Extend live Godot protocol coverage through Etherealize selected by an
+  external memorized loadout, including source admission and typed status
+  projection.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
