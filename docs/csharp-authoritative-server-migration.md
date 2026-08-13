@@ -550,6 +550,8 @@ External quest-type route levels now also activate `QUEST_INIT` rows when the
 server enters the matching level, with explicit single-player/multiplayer mode
 selection rather than participant-count inference.
 Multiplayer activation leaves pool exclusions disabled.
+Linked quest objects may declare a validated progress amount; authoritative
+activation applies and clamps that amount instead of assuming one progress point.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

@@ -235,7 +235,8 @@ Windows toolchain command.
   status lifecycle and transition cleanup.
 - `ObjectSnapshot` fields 10-12 carry missile pass-through, breakability, and
   persistent destruction, while field 13 carries additive armed-trap state for
-  the Rogue Trap Disarm capability. Nondefault object collision state uses the tagged
+  the Rogue Trap Disarm capability. Field 14 carries an optional linked-quest
+  progress amount. Nondefault object collision state uses the tagged
   `godevilution-object-collision-v1` hash extension. Native projection removes
   activated or destroyed objects from interaction and presentation occupancy.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
