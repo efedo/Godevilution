@@ -323,3 +323,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1080	Demonspike Coat	165	25	251175	STR	10	10
 1080	Demonspike Coat	165	25	251175	INDESTRUCTIBLE	0	0
 1080	Demonspike Coat	165	25	251175	FIRERES	50	50
+1081	The Deflector	166	1	1500	SETAC	7	7
+1081	The Deflector	166	1	1500	ALLRES	10	10
+1081	The Deflector	166	1	1500	DAMP_CURSE	20	20
+1081	The Deflector	166	1	1500	TOHIT_CURSE	5	5

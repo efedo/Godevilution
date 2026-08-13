@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Deflector (`unique_id=1081`) through schema 1.40,
+  adding its native Buckler base item with armor, resistance, damage-curse,
+  and to-hit-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Demonspike Coat (`unique_id=1080`) through schema
   1.39, adding its native Full Plate Mail base item with armor, get-hit,
   strength, indestructible, and fire-resistance powers.
