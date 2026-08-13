@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Bone Chain Armor (`unique_id=1108`) through schema 1.67,
+  reusing native Chain Mail with fixed armor and extra armor against undead.
+
+## 2026-08-13
+
 - Externalize Hellfire Diamondedge (`unique_id=1107`) through schema 1.66,
   reusing native Long Sword with fixed durability, to-hit, damage, resistance,
   and fixed-armor powers.

@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.67 adds the native-derived Hellfire Bone Chain Armor unique definition
+(`unique_id=1108`), reusing the native Chain Mail identity with fixed armor and
+extra armor against undead.
+
 Schema 1.66 adds the native-derived Hellfire Diamondedge unique definition
 (`unique_id=1107`), reusing the native Long Sword identity with fixed
 durability, to-hit, damage, resistance, and fixed-armor powers.

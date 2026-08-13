@@ -422,3 +422,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1107	Diamondedge	131	17	42000	DAMP	100	100
 1107	Diamondedge	131	17	42000	LIGHTRES	50	50
 1107	Diamondedge	131	17	42000	SETAC	10	10
+1108	Bone Chain Armor	157	13	36000	SETAC	40	40
+1108	Bone Chain Armor	157	13	36000	ACUNDEAD	0	0

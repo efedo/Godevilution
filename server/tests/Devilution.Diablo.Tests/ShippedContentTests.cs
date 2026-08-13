@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.66.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.67.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.66.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.67.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1463,6 +1463,15 @@ public sealed class ShippedContentTests
         Assert.Equal(50, diamondedge.PlusLightningResistance);
         Assert.Equal(10, diamondedge.Durability);
         Assert.Equal(10, diamondedge.MaxDurability);
+        var boneChainArmor = hellfireItems.GenerateUnique(1108, 0x12345678, 13);
+        Assert.Equal(1108, boneChainArmor.UniqueId);
+        Assert.Equal(36000, boneChainArmor.Value);
+        Assert.Equal(62, boneChainArmor.ItemIndex);
+        Assert.Equal(4, boneChainArmor.EquipLocation);
+        Assert.Equal(40, boneChainArmor.ArmorClass);
+        Assert.Equal(45, boneChainArmor.Durability);
+        Assert.Equal(45, boneChainArmor.MaxDurability);
+        Assert.Equal(64, boneChainArmor.HellfireDamageArmorFlags);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
