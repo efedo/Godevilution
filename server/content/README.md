@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.65.0` schema in
+It declares its identity and `devilution.diablo@0.66.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -127,6 +127,11 @@ Schema 0.65 adds `level_generation.tsv`, which externalizes the native
 level-range monster-density divisor, multiplayer monster multiplier, and trap
 percentage. The catalog is validated and exposed by Diablo activation; actual
 procedural map generation remains a separate migration.
+
+Schema 0.66 adds `quest_pools.tsv` and `set_level_names.tsv`. Quest types now
+retain native set-level identities (`SL_*`) rather than an unresolved sentinel;
+pool entries are stable quest IDs and are validated against `quest_types.tsv`
+during activation.
 
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
@@ -660,6 +665,8 @@ the complete target header even when they upsert only one row.
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements and initial completion state. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
+| `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
+| `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, and damage rules. |
 | `items.tsv` | `item_id` | Normalized item identity, native compatibility metadata, placement, charges, and generation inputs. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
@@ -689,7 +696,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.65.0"
+      "version": "0.66.0"
   },
   "dependencyConstraints": [
     {
@@ -721,7 +728,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.65.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.66.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

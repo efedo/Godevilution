@@ -55,6 +55,9 @@ Status date: 2026-08-12
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining
   quest-state data remain incremental.
+- Quest randomization pools and native set-level names/identities are now
+  externalized through validated `quest_pools.tsv` and `set_level_names.tsv`
+  catalogs; activation rejects pool references outside the stable quest catalog.
 - Native level-range generation rules are now externalized through validated
   `level_generation.tsv` metadata and exposed by Diablo activation; procedural
   map generation still remains a separate migration.
@@ -659,7 +662,9 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
-Content schema 0.65 adds validated native level-range generation metadata in
+Content schema 0.66 adds validated quest pools and native set-level names and
+restores stable set-level identities in quest type rows. Content schema 0.65
+adds validated native level-range generation metadata in
 `level_generation.tsv`, including monster density, multiplayer scaling, and
 trap percentages. Content schema 0.64 adds validated native-compatible `quest_types.tsv`
 definitions for all base and Hellfire native quest IDs; quest-state rows now

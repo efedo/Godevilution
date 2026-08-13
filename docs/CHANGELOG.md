@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.66 with validated quest pools and
+  native set-level identities/names, including quest routing metadata for the
+  base and Hellfire quest catalogs.
+
 - Advance the Diablo content schema to 0.65 with validated native level-range
   generation metadata in `level_generation.tsv`.
 
