@@ -46,7 +46,7 @@ Status date: 2026-08-13
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
   and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, The Executioner's Blade,
-  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, and Sharp Beak
+  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, and BloodSlayer
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -747,7 +747,10 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
-Content schema 0.98 adds the native-derived Hellfire Sharp Beak unique
+Content schema 0.99 adds the native-derived Hellfire BloodSlayer base item and
+unique definition (`unique_id=1040`) with its Broad Axe identity, damage, demon
+damage, all-attribute-curse, and spell-level-curse powers. Content schema 0.98
+adds the native-derived Hellfire Sharp Beak unique
 definition (`unique_id=1039`), reusing the validated Large Axe base item with
 life, magic-curse, and mana-curse powers. Content schema 0.97 adds the
 native-derived Hellfire The Mangler base item and

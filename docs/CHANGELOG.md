@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire BloodSlayer (`unique_id=1040`) through schema 0.99,
+  including its native Broad Axe base item with damage, demon damage,
+  all-attribute-curse, and spell-level-curse powers.
+
 - Externalize Hellfire Sharp Beak (`unique_id=1039`) through schema 0.98,
   reusing the validated Large Axe base item with life, magic-curse, and
   mana-curse powers.

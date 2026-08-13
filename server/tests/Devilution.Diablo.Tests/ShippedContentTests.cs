@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.98.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.99.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.98.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.99.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -600,6 +600,21 @@ public sealed class ShippedContentTests
         Assert.Equal(20 << 6, sharpBeak.PlusHitPoints);
         Assert.Equal(-10, sharpBeak.PlusMagic);
         Assert.Equal(-(10 << 6), sharpBeak.PlusMana);
+        var bloodSlayer = hellfireItems.GenerateUnique(1040, 0x12345678, 3);
+        Assert.Equal(1040, bloodSlayer.UniqueId);
+        Assert.Equal(2500, bloodSlayer.Value);
+        Assert.Equal(134, bloodSlayer.ItemIndex);
+        Assert.Equal(8, bloodSlayer.MinDamage);
+        Assert.Equal(20, bloodSlayer.MaxDamage);
+        Assert.Equal(50, bloodSlayer.MinimumStrength);
+        Assert.Equal(2, bloodSlayer.EquipLocation);
+        Assert.Equal(100, bloodSlayer.PlusDamage);
+        Assert.NotEqual(0U, bloodSlayer.Flags & 0x40000000U);
+        Assert.Equal(-5, bloodSlayer.PlusStrength);
+        Assert.Equal(-5, bloodSlayer.PlusMagic);
+        Assert.Equal(-5, bloodSlayer.PlusDexterity);
+        Assert.Equal(-5, bloodSlayer.PlusVitality);
+        Assert.Equal(-1, bloodSlayer.SpellLevelAdd);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

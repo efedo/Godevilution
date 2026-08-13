@@ -143,3 +143,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1039	Sharp Beak	137	2	2850	LIFE	20	20
 1039	Sharp Beak	137	2	2850	MAG_CURSE	10	10
 1039	Sharp Beak	137	2	2850	MANA_CURSE	10	10
+1040	BloodSlayer	138	3	2500	DAMP	100	100
+1040	BloodSlayer	138	3	2500	3XDAMVDEM	0	0
+1040	BloodSlayer	138	3	2500	ATTRIBS_CURSE	5	5
+1040	BloodSlayer	138	3	2500	SPLLVLADD	-1	-1
