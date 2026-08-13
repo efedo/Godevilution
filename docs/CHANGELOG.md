@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Rainbow Cloak (`unique_id=1073`) through schema
+  1.32, adding its native Cloak base item with armor, attribute, resistance,
+  life, and durability powers.
+
+## 2026-08-13
+
 - Externalize Hellfire The Gladiator's Bane (`unique_id=1072`) through schema
   1.31, adding its native Studded Leather Armor base item with armor, get-hit,
   durability, and cursed-attribute powers.

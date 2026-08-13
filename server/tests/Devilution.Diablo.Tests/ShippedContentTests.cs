@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.31.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.32.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.31.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.32.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1063,6 +1063,23 @@ public sealed class ShippedContentTests
         Assert.Equal(-3, gladiatorsBane.PlusDexterity);
         Assert.Equal(-3, gladiatorsBane.PlusVitality);
         Assert.Equal(-2, gladiatorsBane.PlusGetHit);
+        var rainbowCloak = hellfireItems.GenerateUnique(1073, 0x12345678, 2);
+        Assert.Equal(1073, rainbowCloak.UniqueId);
+        Assert.Equal(4900, rainbowCloak.Value);
+        Assert.Equal(57, rainbowCloak.ItemIndex);
+        Assert.Equal(10, rainbowCloak.ArmorClass);
+        Assert.Equal(27, rainbowCloak.Durability);
+        Assert.Equal(27, rainbowCloak.MaxDurability);
+        Assert.Equal(0, rainbowCloak.MinimumStrength);
+        Assert.Equal(4, rainbowCloak.EquipLocation);
+        Assert.Equal(1, rainbowCloak.PlusStrength);
+        Assert.Equal(1, rainbowCloak.PlusMagic);
+        Assert.Equal(1, rainbowCloak.PlusDexterity);
+        Assert.Equal(1, rainbowCloak.PlusVitality);
+        Assert.Equal(10, rainbowCloak.PlusFireResistance);
+        Assert.Equal(10, rainbowCloak.PlusLightningResistance);
+        Assert.Equal(10, rainbowCloak.PlusMagicResistance);
+        Assert.Equal(5 << 6, rainbowCloak.PlusHitPoints);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

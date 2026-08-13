@@ -287,3 +287,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1072	The Gladiator's Bane	157	6	3450	GETHIT	2	2
 1072	The Gladiator's Bane	157	6	3450	DUR	200	200
 1072	The Gladiator's Bane	157	6	3450	ATTRIBS_CURSE	3	3
+1073	The Rainbow Cloak	158	2	4900	SETAC	10	10
+1073	The Rainbow Cloak	158	2	4900	ATTRIBS	1	1
+1073	The Rainbow Cloak	158	2	4900	ALLRES	10	10
+1073	The Rainbow Cloak	158	2	4900	LIFE	5	5
+1073	The Rainbow Cloak	158	2	4900	DUR	50	50
