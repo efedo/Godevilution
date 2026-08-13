@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Ring of Thunder (`unique_id=1098`) through schema
+  1.57, reusing the corrected native Ring base item with lightning resistance
+  and fire/magic-resistance curses.
+
+## 2026-08-13
+
 - Externalize Hellfire Ring of the Mystics (`unique_id=1097`) through schema
   1.56, reusing the corrected native Ring base item with magic resistance and
   fire/lightning-resistance curses.

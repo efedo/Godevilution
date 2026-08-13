@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.57 adds the native-derived Hellfire Ring of Thunder unique definition
+(`unique_id=1098`), reusing the corrected Ring identity with lightning
+resistance and fire/magic-resistance curses.
+
 Schema 1.56 adds the native-derived Hellfire Ring of the Mystics unique
 definition (`unique_id=1097`), reusing the corrected Ring identity with magic
 resistance and fire/lightning-resistance curses.

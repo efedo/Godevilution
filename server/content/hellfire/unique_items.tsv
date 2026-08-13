@@ -384,3 +384,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1097	Ring of the Mystics	113	8	8000	MAGICRES	60	60
 1097	Ring of the Mystics	113	8	8000	FIRERES_CURSE	30	30
 1097	Ring of the Mystics	113	8	8000	LIGHTRES_CURSE	30	30
+1098	Ring of Thunder	113	8	8000	LIGHTRES	60	60
+1098	Ring of Thunder	113	8	8000	FIRERES_CURSE	30	30
+1098	Ring of Thunder	113	8	8000	MAGICRES_CURSE	30	30
