@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using Devilution.Protocol;
 
 namespace Devilution.Server.Host;
 
@@ -38,7 +39,7 @@ public sealed record ServerHostOptions(
         "devilution.base",
         "0.1.0",
         "devilution-server",
-        "0.1.0",
+        ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
         20,
         null);
 

@@ -70,6 +70,9 @@ without manifest mode CMake cannot resolve the required Protobuf package on the
 verified Windows setup.
 
 The authoritative client expects the server's content and ruleset hashes.
+The production launcher selects protocol `0.2.0` and passes the printed hashes
+independently; pass `-ProtocolVersion 0.1.0` only when exercising the legacy
+combined-hash compatibility boundary.
 On Windows, `tools/run-authoritative-client.ps1` starts a local server on a
 free port, reads those hashes, persists a resume token, and launches the
 client with matching arguments. A handshake identity mismatch writes a

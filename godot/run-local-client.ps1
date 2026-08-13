@@ -41,7 +41,7 @@ if (-not (Test-Path -LiteralPath $serverExecutable)) {
     if ($LASTEXITCODE -ne 0)
         { throw "Could not build the authoritative server project at $serverProject." }
 }
-$serverArguments = "--port $Port --save-root `"$captureRoot/save`""
+$serverArguments = "--port $Port --protocol-version 0.2.0 --save-root `"$captureRoot/save`""
 $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
 
 try {
@@ -58,15 +58,14 @@ try {
         if ($output -match 'Content manifest: ([0-9a-fA-F]+)') { $contentHash = $Matches[1] }
         if ($output -match 'Ruleset identity: ([0-9a-fA-F]+)') { $rulesetHash = $Matches[1] }
     }
-    if ($null -eq $actualPort -or [string]::IsNullOrWhiteSpace($rulesetHash)) {
+    if (($null -eq $actualPort) -or [string]::IsNullOrWhiteSpace($contentHash) -or [string]::IsNullOrWhiteSpace($rulesetHash)) {
         throw "Timed out waiting for the authoritative server identity. See $stdoutPath and $stderrPath"
     }
 
     $env:DEVILUTION_SERVER_HOST = '127.0.0.1'
     $env:DEVILUTION_SERVER_PORT = $actualPort
-    # The frozen wire contract currently carries the combined ruleset identity
-    # in content_manifest_hash for compatibility with the native client.
-    $env:DEVILUTION_CONTENT_HASH = $rulesetHash
+    $env:DEVILUTION_PROTOCOL_VERSION = '0.2.0'
+    $env:DEVILUTION_CONTENT_HASH = $contentHash
     $env:DEVILUTION_RULESET_HASH = $rulesetHash
     if ($CharacterClassId -ge 0) {
         $env:DEVILUTION_CHARACTER_CLASS_ID = [string]$CharacterClassId

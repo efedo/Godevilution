@@ -23,8 +23,8 @@ Windows toolchain command.
 
 ## Compatibility Rules
 
-- Package `devilution.protocol.v1` and schema version `0.1.0` identify the
-  current contract.
+- Package `devilution.protocol.v1` and schema version `0.2.0` identify the
+  current production contract; `0.1.0` remains the native compatibility alias.
 - Schema version `0.2.0` retains the additive wire fields but gives
   `content_manifest_hash` and `ruleset_identity_hash` independent meanings:
   the former is the validated ordered content manifest SHA-256 and the latter

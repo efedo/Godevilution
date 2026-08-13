@@ -1057,6 +1057,7 @@ extern "C" void SdlLogToFile(void *userdata, int /*category*/, SDL_LogPriority p
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	PrintHelpOption("--game-mode <legacy|authoritative>", _(/* TRANSLATORS: Commandline Option */ "Select the local or authoritative game mode"));
 	PrintHelpOption("--authoritative-server <host:port>", _(/* TRANSLATORS: Commandline Option */ "Use the experimental authoritative server"));
+	PrintHelpOption("--authoritative-protocol-version <version>", _(/* TRANSLATORS: Commandline Option */ "Select the authoritative protocol schema version"));
 	PrintHelpOption("--authoritative-content-hash <sha256>", _(/* TRANSLATORS: Commandline Option */ "Content hash advertised by the experimental authoritative server"));
 	PrintHelpOption("--authoritative-ruleset-hash <sha256>", _(/* TRANSLATORS: Commandline Option */ "Gameplay ruleset hash advertised by the authoritative server"));
 	PrintHelpOption("--authoritative-resume-token <path>", _(/* TRANSLATORS: Commandline Option */ "Read and persist the authoritative session token"));
@@ -1230,15 +1231,23 @@ void DiabloParseFlags(int argc, char **argv)
 				diablo_quit(64);
 			}
 			auto &runtimeConfiguration = authoritative::GetServerBackedRuntimeConfiguration();
+			const std::string protocolSchemaVersion = std::move(runtimeConfiguration.protocolSchemaVersion);
 			const std::string contentManifestHash = std::move(runtimeConfiguration.contentManifestHash);
 			const std::string rulesetIdentityHash = std::move(runtimeConfiguration.rulesetIdentityHash);
 			const std::string resumeTokenPath = std::move(runtimeConfiguration.resumeTokenPath);
 			const std::string diagnosticsDirectory = std::move(runtimeConfiguration.diagnosticsDirectory);
 			runtimeConfiguration = std::move(*configuration);
+			runtimeConfiguration.protocolSchemaVersion = protocolSchemaVersion;
 			runtimeConfiguration.contentManifestHash = contentManifestHash;
 			runtimeConfiguration.rulesetIdentityHash = rulesetIdentityHash;
 			runtimeConfiguration.resumeTokenPath = resumeTokenPath;
 			runtimeConfiguration.diagnosticsDirectory = diagnosticsDirectory.empty() ? "authoritative-diagnostics" : diagnosticsDirectory;
+		} else if (arg == "--authoritative-protocol-version") {
+			if (i + 1 == argc) {
+				PrintFlagRequiresArgument("--authoritative-protocol-version");
+				diablo_quit(64);
+			}
+			authoritative::GetServerBackedRuntimeConfiguration().protocolSchemaVersion = argv[++i];
 		} else if (arg == "--authoritative-content-hash") {
 			if (i + 1 == argc) {
 				PrintFlagRequiresArgument("--authoritative-content-hash");

@@ -1,3 +1,5 @@
+using Devilution.Protocol;
+
 namespace Devilution.Client.Protocol;
 
 /** Connection identity and retry settings shared by Godot presentation code. */
@@ -29,7 +31,8 @@ public sealed record ClientConnectionOptions(
             Environment.GetEnvironmentVariable("DEVILUTION_SERVER_HOST") ?? "127.0.0.1",
             ParsePort(Environment.GetEnvironmentVariable("DEVILUTION_SERVER_PORT")),
             Environment.GetEnvironmentVariable("DEVILUTION_CLIENT_BUILD") ?? "godot-client-dev",
-            Environment.GetEnvironmentVariable("DEVILUTION_PROTOCOL_VERSION") ?? "0.1.0",
+            Environment.GetEnvironmentVariable("DEVILUTION_PROTOCOL_VERSION")
+                ?? ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             Environment.GetEnvironmentVariable("DEVILUTION_CONTENT_HASH") ?? string.Empty,
             Environment.GetEnvironmentVariable("DEVILUTION_RULESET_HASH") ?? string.Empty) {
             ResumeToken = Environment.GetEnvironmentVariable("DEVILUTION_RESUME_TOKEN") ?? string.Empty,

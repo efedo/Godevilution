@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Adopt protocol v0.2 as the production default for the C# server, Godot
+  launcher, and native authoritative launcher, while retaining explicit v0.1
+  compatibility selection.
 - Add protocol v0.2 independent content-manifest and gameplay-ruleset
   handshake identities while preserving the v0.1 combined-hash alias.
 - Enforce the supplied ruleset identity during the Godot client handshake, so

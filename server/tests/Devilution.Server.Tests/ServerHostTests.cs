@@ -1,4 +1,5 @@
 using System.Net;
+using Devilution.Protocol;
 using Devilution.Server.Host;
 using Devilution.Server.Simulation;
 using Xunit;
@@ -13,6 +14,9 @@ public sealed class ServerHostTests
         Assert.Equal(IPAddress.Loopback, ServerHostOptions.Defaults.BindAddress);
         Assert.Equal(6113, ServerHostOptions.Defaults.Port);
         Assert.Equal(20U, ServerHostOptions.Defaults.TickRateHz);
+        Assert.Equal(
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            ServerHostOptions.Defaults.ProtocolSchemaVersion);
         Assert.Null(ServerHostOptions.Defaults.StartingGold);
         Assert.Null(ServerHostOptions.Defaults.StartingLife);
         Assert.Null(ServerHostOptions.Defaults.StartingMana);

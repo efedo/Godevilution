@@ -4,6 +4,7 @@ param(
     [string]$ClientExecutable,
     [string]$ServerExecutable,
     [string]$ServerEndpoint,
+    [string]$ProtocolVersion = '0.2.0',
     [string]$ContentHash,
     [string]$RulesetHash,
     [string]$DiagnosticsDirectory,
@@ -37,7 +38,10 @@ try {
         if (-not (Test-Path -LiteralPath $ServerExecutable))
             { throw "The authoritative server executable was not found at $ServerExecutable. Build the server project first, or pass -ServerEndpoint for an already-running server." }
 
-        $serverArguments = @('--port', '0', '--save-root', (Join-Path $captureRoot 'save'))
+        $serverArguments = @(
+            '--port', '0',
+            '--protocol-version', $ProtocolVersion,
+            '--save-root', (Join-Path $captureRoot 'save'))
         $serverProcess = Start-Process -FilePath $ServerExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -RedirectStandardOutput $serverOutput -RedirectStandardError $serverError -PassThru
         $startedServer = $true
 
@@ -66,11 +70,12 @@ try {
 
         if ([string]::IsNullOrWhiteSpace($DiagnosticsDirectory))
             { $DiagnosticsDirectory = Join-Path $captureRoot 'diagnostics' }
+        $clientContentHash = if ($ProtocolVersion -eq '0.1.0') { $detectedRulesetHash } else { $detectedContentHash }
         $authoritativeArguments = @(
             '--game-mode', 'authoritative',
             '--authoritative-server', $ServerEndpoint,
-            # Protocol v1 aliases content_manifest_hash to the combined ruleset identity.
-            '--authoritative-content-hash', $detectedRulesetHash,
+            '--authoritative-protocol-version', $ProtocolVersion,
+            '--authoritative-content-hash', $clientContentHash,
             '--authoritative-ruleset-hash', $detectedRulesetHash,
             '--authoritative-resume-token', $resumeTokenPath,
             '--authoritative-diagnostics', $DiagnosticsDirectory
@@ -87,6 +92,7 @@ try {
     $authoritativeArguments = @(
         '--game-mode', 'authoritative',
         '--authoritative-server', $ServerEndpoint,
+        '--authoritative-protocol-version', $ProtocolVersion,
         '--authoritative-content-hash', $ContentHash,
         '--authoritative-ruleset-hash', $RulesetHash,
         '--authoritative-resume-token', $resumeTokenPath,

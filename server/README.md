@@ -146,12 +146,14 @@ manifest-declared overlay packs over the base content.
 Use the repeatable `--module-package <directory>` option to load explicitly
 installed gameplay-module packages before Engine compatibility preflight.
 
-At startup the server prints two hashes. Protocol v1 clients must use the
-printed **ruleset identity** as both their content and ruleset handshake values;
-the separately printed content manifest hash identifies only the loaded files.
-Startup also prints the ordered active packs and the compatibility diagnostic
-for every loaded gameplay module. Invalid pack composition or module
-compatibility fails before the server starts listening.
+At startup the server prints the content-manifest hash, combined ruleset
+identity, and protocol schema. Production protocol `0.2.0` clients send the
+content-manifest hash and ruleset identity in their corresponding handshake
+fields. Protocol `0.1.0` remains an explicit compatibility mode and uses the
+ruleset identity for both fields. Startup also prints the ordered active packs
+and the compatibility diagnostic for every loaded gameplay module. Invalid
+pack composition or module compatibility fails before the server starts
+listening.
 
 Startup publishes composed content, the complete module registry, ruleset
 identity, and the selected validated game adapter through one coordinated

@@ -19,7 +19,7 @@ TEST(ServerBackedConfiguration, IsDisabledByDefault)
 	EXPECT_EQ(configuration.host, "127.0.0.1");
 	EXPECT_EQ(configuration.port, 6113);
 	EXPECT_EQ(configuration.clientBuildId, "devilutionx-client");
-	EXPECT_EQ(configuration.protocolSchemaVersion, "0.1.0");
+	EXPECT_EQ(configuration.protocolSchemaVersion, "0.2.0");
 	EXPECT_TRUE(configuration.contentManifestHash.empty());
 	EXPECT_TRUE(configuration.rulesetIdentityHash.empty());
 	EXPECT_EQ(configuration.diagnosticsDirectory, "authoritative-diagnostics");
@@ -46,6 +46,20 @@ TEST(ServerBackedRuntime, MissingContentIdentityFailsBeforeConnecting)
 	auto result = runtime.Start(configuration, store);
 	ASSERT_FALSE(result.has_value());
 	EXPECT_NE(result.error().find("content identity"), std::string::npos);
+	EXPECT_FALSE(runtime.IsConnected());
+}
+
+TEST(ServerBackedRuntime, ProtocolV2RequiresRulesetIdentity)
+{
+	StoreManager store;
+	ServerBackedRuntime runtime;
+	ServerBackedRuntimeConfiguration configuration;
+	configuration.enabled = true;
+	configuration.contentManifestHash = "content";
+
+	auto result = runtime.Start(configuration, store);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_NE(result.error().find("ruleset identity"), std::string::npos);
 	EXPECT_FALSE(runtime.IsConnected());
 }
 

@@ -26,7 +26,8 @@ struct ServerBackedRuntimeConfiguration {
 	std::string host = "127.0.0.1";
 	uint16_t port = 6113;
 	std::string clientBuildId = "devilutionx-client";
-	std::string protocolSchemaVersion = "0.1.0";
+	/** Protocol v2 is the production identity contract; v1 remains explicit compatibility. */
+	std::string protocolSchemaVersion = "0.2.0";
 	std::string contentManifestHash;
 	std::string rulesetIdentityHash;
 	std::string resumeToken;

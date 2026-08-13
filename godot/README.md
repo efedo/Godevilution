@@ -146,10 +146,12 @@ authoritative radial controller and continuing Lightning balls; the server owns
 the native mirrored fan-out order, movement, target collision, damage, lifetime,
 and RNG.
 
-For a manual launch, start the server and set both `DEVILUTION_CONTENT_HASH`
-and `DEVILUTION_RULESET_HASH` to its printed **ruleset identity**, then open
-`godot/Devilution.Client/project.godot`. The raw content-manifest hash printed
-by the server is not the protocol v1 handshake value.
+For a manual production launch, use protocol `0.2.0`: set
+`DEVILUTION_PROTOCOL_VERSION` to `0.2.0`, set `DEVILUTION_CONTENT_HASH` to the
+server's printed **content manifest** hash, and set `DEVILUTION_RULESET_HASH`
+to its printed **ruleset identity**, then open
+`godot/Devilution.Client/project.godot`. Protocol `0.1.0` remains an explicit
+compatibility mode that uses the ruleset identity for both hash fields.
 
 The current prototype supports movement, casting, store and inventory actions,
 world and quest interactions, event feedback, diagnostics, and accessibility

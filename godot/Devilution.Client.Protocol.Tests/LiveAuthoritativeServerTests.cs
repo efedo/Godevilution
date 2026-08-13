@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Devilution.Client.Protocol;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Xunit;
 
@@ -15,8 +16,8 @@ public sealed class LiveAuthoritativeServerTests
             "127.0.0.1",
             server.Port,
             "godot-live-test",
-            "0.1.0",
-            server.CompatibilityContentHash,
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            server.ContentHash,
             server.RulesetHash) {
             RequestedCharacterClassId = 2,
             MinimumRetryTimeout = TimeSpan.FromMilliseconds(50),
@@ -644,8 +645,8 @@ public sealed class LiveAuthoritativeServerTests
             "127.0.0.1",
             server.Port,
             "godot-store-parity-test",
-            "0.1.0",
-            server.CompatibilityContentHash,
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            server.ContentHash,
             server.RulesetHash));
 
         await client.ConnectAsync(TestContext.Current.CancellationToken);
@@ -821,8 +822,8 @@ public sealed class LiveAuthoritativeServerTests
                 "127.0.0.1",
                 server.Port,
                 "godot-overlay-test",
-                "0.1.0",
-                server.CompatibilityContentHash,
+                ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+                server.ContentHash,
                 server.RulesetHash));
 
             await client.ConnectAsync(TestContext.Current.CancellationToken);
@@ -908,8 +909,8 @@ public sealed class LiveAuthoritativeServerTests
                 "127.0.0.1",
                 server.Port,
                 "godot-class-overlay-test",
-                "0.1.0",
-                server.CompatibilityContentHash,
+                ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+                server.ContentHash,
                 server.RulesetHash));
 
             await client.ConnectAsync(TestContext.Current.CancellationToken);
@@ -947,8 +948,8 @@ public sealed class LiveAuthoritativeServerTests
             "127.0.0.1",
             server.Port,
             clientBuildId,
-            "0.1.0",
-            server.CompatibilityContentHash,
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            server.ContentHash,
             server.RulesetHash) {
             RequestedCharacterClassId = requestedClassId,
         };
@@ -997,20 +998,18 @@ public sealed class LiveAuthoritativeServerTests
         private readonly Process process;
         private readonly string saveRoot;
 
-        private StartedServer(Process process, string saveRoot, int port, string rulesetHash)
+        private StartedServer(Process process, string saveRoot, int port, string contentHash, string rulesetHash)
         {
             this.process = process;
             this.saveRoot = saveRoot;
             Port = port;
-            // Protocol v1 aliases the compatibility content field to the
-            // combined gameplay ruleset identity.
-            CompatibilityContentHash = rulesetHash;
+            ContentHash = contentHash;
             RulesetHash = rulesetHash;
         }
 
         public int Port { get; }
 
-        public string CompatibilityContentHash { get; }
+        public string ContentHash { get; }
 
         public string RulesetHash { get; }
 
@@ -1044,6 +1043,8 @@ public sealed class LiveAuthoritativeServerTests
             startInfo.ArgumentList.Add("--");
             startInfo.ArgumentList.Add("--port");
             startInfo.ArgumentList.Add("0");
+            startInfo.ArgumentList.Add("--protocol-version");
+            startInfo.ArgumentList.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
             startInfo.ArgumentList.Add("--save-root");
             startInfo.ArgumentList.Add(saveRoot);
             if (startingGoldOverride.HasValue) {
@@ -1068,15 +1069,18 @@ public sealed class LiveAuthoritativeServerTests
             var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start the authoritative server.");
             var standardError = process.StandardError.ReadToEndAsync(cancellationToken);
             int? port = null;
+            string? contentHash = null;
             string? rulesetHash = null;
             while (await process.StandardOutput.ReadLineAsync(cancellationToken) is { } line) {
                 if (line.Contains("listening on", StringComparison.Ordinal)
                     && int.TryParse(line[(line.LastIndexOf(':') + 1)..], out var parsedPort))
                     port = parsedPort;
+                if (line.StartsWith("Content manifest: ", StringComparison.Ordinal))
+                    contentHash = line["Content manifest: ".Length..];
                 if (line.StartsWith("Ruleset identity: ", StringComparison.Ordinal))
                     rulesetHash = line["Ruleset identity: ".Length..];
-                if (port.HasValue && rulesetHash is not null)
-                    return new StartedServer(process, saveRoot, port.Value, rulesetHash);
+                if (port.HasValue && contentHash is not null && rulesetHash is not null)
+                    return new StartedServer(process, saveRoot, port.Value, contentHash, rulesetHash);
             }
             var error = await standardError;
             await process.WaitForExitAsync(cancellationToken);

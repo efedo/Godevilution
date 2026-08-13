@@ -109,6 +109,7 @@ internal static class Program
             Console.WriteLine($"Module {diagnostic.ModuleId}: {diagnostic.Message}");
         Console.WriteLine($"Content manifest: {contentManifest.Sha256}");
         Console.WriteLine($"Ruleset identity: {ruleset.CombinedSha256}");
+        Console.WriteLine($"Protocol schema: {options.ProtocolSchemaVersion}");
         Console.WriteLine($"Simulation RNG seed: {randomSeed}");
         Console.WriteLine($"Game mode: {options.GameMode}");
         Console.WriteLine("Press Ctrl+C to stop.");

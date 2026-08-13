@@ -7,9 +7,10 @@ generated bindings and engine-specific models must not redefine it.
 ## Handshake and Identity
 
 Every connection begins with `ClientHello`. The server accepts commands only
-after returning `ServerHello`. The client must match schema version `0.1.0` and
-the required identity hashes; otherwise the server sends `ProtocolError` and
-closes the connection.
+after returning `ServerHello`. Production clients use schema version `0.2.0`
+and must match both required identity hashes; the v0.1.0 compatibility alias
+remains available when explicitly selected. Otherwise the server sends
+`ProtocolError` and closes the connection.
 
 Protocol v1 uses a compatibility alias: the server's combined content-and-module
 ruleset SHA-256 is carried in both `content_manifest_hash` and

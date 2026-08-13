@@ -66,6 +66,8 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 		return { };
 	if (configuration.clientBuildId.empty() || configuration.protocolSchemaVersion.empty() || configuration.contentManifestHash.empty())
 		return tl::make_unexpected("Server-backed runtime requires client build, protocol, and content identity values.");
+	if (configuration.protocolSchemaVersion == "0.2.0" && configuration.rulesetIdentityHash.empty())
+		return tl::make_unexpected("Protocol v0.2 requires a gameplay ruleset identity value.");
 	authoritativeMode_ = true;
 	const std::string resumeToken = configuration.resumeToken.empty() ? LoadResumeToken(configuration.resumeTokenPath) : configuration.resumeToken;
 
