@@ -151,10 +151,22 @@ public sealed class AuthoritativeCombatRules
 
     public int ResolveAttackDamage(int baseDamage, int armorClass, uint seed)
     {
+        return ResolveAttackDamage(baseDamage, armorClass, HitChancePercent, seed);
+    }
+
+    /** Resolves a physical player attack with an equipment-adjusted hit chance. */
+    public int ResolveAttackDamage(
+        int baseDamage,
+        int armorClass,
+        int hitChancePercent,
+        uint seed)
+    {
         if (baseDamage <= 0)
             return 0;
+        if (hitChancePercent is < 0 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(hitChancePercent));
         var hitRoll = unchecked(seed * 1664525U + 1013904223U) % 100U;
-        if (hitRoll >= HitChancePercent)
+        if (hitRoll >= hitChancePercent)
             return 0;
         var damage = baseDamage;
         var criticalRoll = unchecked(seed * 1103515245U + 12345U) % 100U;

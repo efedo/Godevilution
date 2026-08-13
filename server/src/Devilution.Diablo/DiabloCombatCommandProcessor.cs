@@ -343,8 +343,8 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         UpdateFacingToward(player, target.PositionX, target.PositionY);
-        var damage = rules.ResolveAttackDamage(
-            rules.BaseAttackDamage,
+        var damage = ResolvePlayerAttackDamage(
+            player,
             target,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId));
         var events = new List<DiabloGameplayEvent>();
@@ -352,6 +352,31 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Applies native usable equipment damage, hit, and target-armor bonuses. */
+    private int ResolvePlayerAttackDamage(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        uint seed)
+    {
+        var damageBonus = 0;
+        var hitBonus = 0;
+        var targetArmorBonus = 0;
+        foreach (var equippedItem in player.Equipment) {
+            var state = equippedItem.State;
+            if (!IsUsable(state) || (state.Magical != 0 && !state.Identified))
+                continue;
+            damageBonus = checked(damageBonus + state.PlusDamage);
+            hitBonus = checked(hitBonus + state.PlusToHit);
+            targetArmorBonus = checked(targetArmorBonus + state.PlusEnemyArmorClass);
+        }
+
+        return rules.ResolveAttackDamage(
+            checked(rules.BaseAttackDamage + damageBonus),
+            Math.Max(0, target.ArmorClass - targetArmorBonus),
+            Math.Clamp(checked(rules.HitChancePercent + hitBonus), 0, 100),
+            seed);
     }
 
     private bool TryGetAttackTarget(

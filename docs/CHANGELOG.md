@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply usable identified equipment damage, hit, and target-armor metadata to
+  authoritative player attacks.
+
+## 2026-08-13
+
 - Apply externalized native item life/mana bonuses alongside Hellfire resource
   conversions during player creation and live equipment transfers.
 

@@ -277,6 +277,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AttackAppliesUsableIdentifiedEquipmentCombatBonuses()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            armorClass: 10);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, hitChancePercent: 0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [
+                new EquippedStoreItem(
+                    4,
+                    42,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        PlusDamage = 5,
+                        PlusToHit = 100,
+                        PlusEnemyArmorClass = 2,
+                    }),
+                new EquippedStoreItem(
+                    5,
+                    43,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Magical = 1,
+                        PlusDamage = 100,
+                        PlusToHit = 100,
+                        PlusEnemyArmorClass = 100,
+                    }),
+            ]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(13, target.HitPoints);
+    }
+
+    [Fact]
     public void RejectedAttackDoesNotMutateCombatState()
     {
         var target = new AuthoritativeCombatTarget(9, 4, 4, 10);
