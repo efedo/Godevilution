@@ -33,17 +33,30 @@ public sealed class AuthoritativeQuestCatalogTests
             new AuthoritativeQuestTypeDefinition(
                 3001, 0, "The Magic Rock", 5, -1, string.Empty, 0, true),
         ]);
-        const string header = "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\n";
+        const string header = "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tunavailable\n";
         var quests = AuthoritativeQuestCatalog.LoadTsv(
             "quests.tsv",
-            header + "3001\t1\t3\t1\t0\n",
+            header + "3001\t1\t3\t1\t0\t0\n",
             types);
 
         Assert.Equal(3001U, Assert.Single(quests).QuestId);
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeQuestCatalog.LoadTsv(
                 "quests.tsv",
-                header + "3002\t1\t3\t1\t0\n",
+                header + "3002\t1\t3\t1\t0\t0\n",
                 types));
+    }
+
+    [Fact]
+    public void QuestStateCanLoadAnUnavailablePoolExclusion()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tunavailable\n"
+                + "3001\t1\t3\t0\t0\t1\n");
+
+        var quest = Assert.Single(quests);
+        Assert.True(quest.Unavailable);
+        Assert.False(quest.Completed);
     }
 }

@@ -281,6 +281,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questsTable.ToCanonicalTsv(),
                 questTypes)
             : null;
+        if (gameMode == DiabloGameMode.SinglePlayer
+            && quests is not null
+            && questPools is not null) {
+            AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection(
+                quests,
+                questPools,
+                randomSeed);
+        }
 
         var rules = new DiabloStoreRules(pricing);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {

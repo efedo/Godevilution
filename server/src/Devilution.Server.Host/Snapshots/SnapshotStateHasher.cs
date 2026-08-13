@@ -299,6 +299,10 @@ public static class SnapshotStateHasher
                 hasher.AppendUInt32(quest.Progress);
                 hasher.AppendUInt32(quest.RequiredProgress);
                 hasher.AppendBool(quest.Completed);
+                if (quest.Unavailable) {
+                    hasher.AppendString("godevilution-quest-unavailable-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 

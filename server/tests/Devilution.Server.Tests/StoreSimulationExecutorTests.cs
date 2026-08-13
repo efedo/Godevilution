@@ -1749,7 +1749,10 @@ public sealed class StoreSimulationExecutorTests
             startingCombatTargets: [new AuthoritativeCombatTarget(9, 1, 1, 12, armorClass: 2, maxHitPoints: 20, monsterId: 4, attackDamage: 4, aggroRange: 6, fireResistance: 25)],
             startingWorldItems: [new AuthoritativeWorldItem(20, 0, 2, 2, 42, 75, worldItemState)],
             startingObjects: [new AuthoritativeWorldObject(30, 4, 0, 0, 1, activated: true, questId: 40)],
-            startingQuests: [new AuthoritativeQuestState(40, 0, 2, progress: 1)]);
+            startingQuests: [
+                new AuthoritativeQuestState(40, 0, 2, progress: 1),
+                new AuthoritativeQuestState(41, 0, 2, unavailable: true),
+            ]);
         var state = executor.GetPlayerState("player-a");
         var save = executor.ExportPlayerSave("player-a");
 
@@ -1781,7 +1784,8 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(75U, restoredWorldItem.Price);
         Assert.True(Assert.Single(restoredSnapshot.Objects).Activated);
         Assert.Equal(40U, Assert.Single(restoredSnapshot.Objects).QuestId);
-        Assert.Equal(1U, Assert.Single(restoredSnapshot.Quests).Progress);
+        Assert.Equal(1U, restoredSnapshot.Quests.Single(quest => quest.QuestId == 40).Progress);
+        Assert.True(restoredSnapshot.Quests.Single(quest => quest.QuestId == 41).Unavailable);
         Assert.Throws<InvalidDataException>(() => replacement.ImportPlayerSave("player-a", "{\"FormatVersion\":99}"));
     }
 

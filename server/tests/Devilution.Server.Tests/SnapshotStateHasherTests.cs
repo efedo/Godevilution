@@ -677,6 +677,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void QuestPoolAvailabilityChangesTheHash()
+    {
+        var available = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3001, RequiredProgress = 1 },
+            },
+        };
+        var unavailable = available.Clone();
+        unavailable.Quests[0].Unavailable = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(available),
+            SnapshotStateHasher.Compute(unavailable));
+    }
+
+    [Fact]
     public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
     {
         var baseline = new Snapshot();

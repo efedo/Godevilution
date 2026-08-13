@@ -54,6 +54,10 @@ public sealed class ShippedContentTests
         Assert.Equal(25, activation.LevelGeneration.GetRequired(24).TrapPercent);
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
+        var baseQuest = Assert.Single(activation.Simulation.WorldState.Quests.Values);
+        Assert.Equal(
+            activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),
+            baseQuest.Unavailable);
         Assert.Equal(1, activation.QuestTypes.Definitions[12].SetLevel);
         Assert.Equal("Archbishop Lazarus' Lair", activation.SetLevelNames!.GetDisplayName(5));
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];

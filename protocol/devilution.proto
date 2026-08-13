@@ -473,6 +473,8 @@ message QuestSnapshot {
 	uint32 progress = 3;
 	uint32 required_progress = 4;
 	bool completed = 5;
+	// Native single-player quest-pool exclusion state.
+	bool unavailable = 6;
 }
 
 message ProjectileSnapshot {

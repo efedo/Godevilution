@@ -102,7 +102,8 @@ public sealed record DiabloQuestState(
     uint LevelId,
     uint Progress,
     uint RequiredProgress,
-    bool Completed);
+    bool Completed,
+    bool Unavailable = false);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -333,7 +334,8 @@ public sealed partial class DiabloSimulation
                     quest.LevelId,
                     quest.Progress,
                     quest.RequiredProgress,
-                    quest.Completed))
+                    quest.Completed,
+                    quest.Unavailable))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -955,7 +957,8 @@ public sealed partial class DiabloSimulation
         var restoredQuests = snapshot.Quests.Select(quest => {
             if (quest.QuestId == 0
                 || quest.RequiredProgress == 0
-                || quest.Progress > quest.RequiredProgress) {
+                || quest.Progress > quest.RequiredProgress
+                || (quest.Unavailable && (quest.Completed || quest.Progress != 0))) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -1290,13 +1293,15 @@ public sealed partial class DiabloSimulation
                 target.Progress = quest.Progress;
                 target.RequiredProgress = quest.RequiredProgress;
                 target.Completed = quest.Completed;
+                target.Unavailable = quest.Unavailable;
             } else {
                 WorldState.Quests.Add(quest.QuestId, new AuthoritativeQuestState(
                     quest.QuestId,
                     quest.LevelId,
                     quest.RequiredProgress,
                     quest.Progress,
-                    quest.Completed));
+                    quest.Completed,
+                    quest.Unavailable));
             }
         }
     }

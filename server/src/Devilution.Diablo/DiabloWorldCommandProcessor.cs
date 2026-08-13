@@ -671,11 +671,17 @@ public sealed class DiabloWorldCommandProcessor
                 Math.Abs(@object.PositionY - player.PositionY)) > 1)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (@object.QuestId != 0
+            && world.Quests.TryGetValue(@object.QuestId, out var linkedQuest)
+            && linkedQuest.Unavailable) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
         @object.Activated = true;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
+            && !quest.Unavailable
             && !quest.Completed && quest.LevelId == player.LevelId) {
             quest.Progress++;
             if (quest.Progress >= quest.RequiredProgress)
@@ -761,6 +767,7 @@ public sealed class DiabloWorldCommandProcessor
         uint questId)
     {
         if (!world.Quests.TryGetValue(questId, out var quest)
+            || quest.Unavailable
             || quest.Completed
             || quest.LevelId != player.LevelId) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);

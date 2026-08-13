@@ -66,4 +66,30 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
         Assert.Equal(2, pools.SelectUnavailableQuestIds(42).Count);
         Assert.Single(pools.SelectUnavailableQuestIds(988045466), questId => questId is 3003 or 3004);
     }
+
+    [Fact]
+    public void AppliesNativePoolExclusionsToServerOwnedQuestState()
+    {
+        var pools = new AuthoritativeQuestPoolCatalog([
+            new AuthoritativeQuestPoolEntry(1, 3001),
+            new AuthoritativeQuestPoolEntry(1, 3002),
+            new AuthoritativeQuestPoolEntry(2, 3003),
+            new AuthoritativeQuestPoolEntry(2, 3004),
+        ]);
+        var quests = new[] {
+            new AuthoritativeQuestState(3001, 1, 1),
+            new AuthoritativeQuestState(3002, 1, 1),
+            new AuthoritativeQuestState(3003, 1, 1),
+            new AuthoritativeQuestState(3004, 1, 1),
+            new AuthoritativeQuestState(3999, 1, 1),
+        };
+
+        AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection(quests, pools, 42);
+
+        Assert.Equal(2, quests.Count(quest => quest.Unavailable));
+        Assert.False(quests.Single(quest => quest.QuestId == 3999).Unavailable);
+        Assert.Equal(
+            pools.SelectUnavailableQuestIds(42).OrderBy(id => id),
+            quests.Where(quest => quest.Unavailable).Select(quest => quest.QuestId).OrderBy(id => id));
+    }
 }

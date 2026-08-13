@@ -125,6 +125,22 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsQuestPoolAvailability()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                Quests = [new AuthoritativeQuestState(40, 0, 2, unavailable: true)],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.True(Assert.Single(replacement.WorldState.Quests.Values).Unavailable);
+    }
+
+    [Fact]
     public void SnapshotCaptureAndRestoreOwnPlayerWorldAndActiveStoreState()
     {
         var catalog = new StoreCatalog();

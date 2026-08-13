@@ -667,6 +667,31 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void UnavailableQuestRejectsAdvancementAndLinkedObjectProgress()
+    {
+        var quest = new AuthoritativeQuestState(30, 0, 2, unavailable: true);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            questId: 30);
+        var world = new DiabloWorldState(objects: [@object], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 1);
+
+        AssertRejected(
+            processor.Execute(player, new DiabloAdvanceQuestIntent(30), 1, [player]),
+            DiabloRuleFailure.InvalidTarget);
+        AssertRejected(
+            processor.Execute(player, new DiabloOperateObjectIntent(20), 2, [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(0U, quest.Progress);
+        Assert.False(@object.Activated);
+    }
+
+    [Fact]
     public void InitialWorldValidationRejectsOverlappingLiveEntities()
     {
         var monster = new AuthoritativeCombatTarget(10, 1, 0, 5);
