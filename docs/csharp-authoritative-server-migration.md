@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.66 adds the native-derived Hellfire Diamondedge unique definition
+(`unique_id=1107`), reusing the native Long Sword identity with fixed
+durability, to-hit, damage, resistance, and fixed-armor powers.
+
 Schema 1.65 adds the native-derived Hellfire Eater of Souls unique definition
 (`unique_id=1106`), reusing the native Two-Handed Sword identity with
 indestructibility, life, life-steal, mana-steal, and drain-life powers.

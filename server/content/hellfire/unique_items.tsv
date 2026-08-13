@@ -417,3 +417,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1106	Eater of Souls	135	23	42000	STEALLIFE	5	5
 1106	Eater of Souls	135	23	42000	STEALMANA	5	5
 1106	Eater of Souls	135	23	42000	DRAINLIFE	0	0
+1107	Diamondedge	131	17	42000	SETDUR	10	10
+1107	Diamondedge	131	17	42000	TOHIT	50	50
+1107	Diamondedge	131	17	42000	DAMP	100	100
+1107	Diamondedge	131	17	42000	LIGHTRES	50	50
+1107	Diamondedge	131	17	42000	SETAC	10	10

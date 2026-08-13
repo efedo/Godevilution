@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.65.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.66.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.65.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.66.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1450,6 +1450,19 @@ public sealed class ShippedContentTests
         Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00010000U);
         Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00004000U);
         Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00000040U);
+        var diamondedge = hellfireItems.GenerateUnique(1107, 0x12345678, 17);
+        Assert.Equal(1107, diamondedge.UniqueId);
+        Assert.Equal(42000, diamondedge.Value);
+        Assert.Equal(126, diamondedge.ItemIndex);
+        Assert.Equal(1, diamondedge.EquipLocation);
+        Assert.Equal(2, diamondedge.MinDamage);
+        Assert.Equal(10, diamondedge.MaxDamage);
+        Assert.Equal(10, diamondedge.ArmorClass);
+        Assert.Equal(50, diamondedge.PlusToHit);
+        Assert.Equal(100, diamondedge.PlusDamage);
+        Assert.Equal(50, diamondedge.PlusLightningResistance);
+        Assert.Equal(10, diamondedge.Durability);
+        Assert.Equal(10, diamondedge.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

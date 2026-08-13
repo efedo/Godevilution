@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.65.0` schema in
+It declares its identity and `devilution.diablo@1.66.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -328,6 +328,9 @@ target-armor, and lightning-damage powers.
 Eater of Souls (`unique_id=1106`) reuses normalized Two-Handed Sword item `135`,
 preserving native item index `129`, with indestructibility, life, life-steal,
 mana-steal, and drain-life powers.
+Diamondedge (`unique_id=1107`) reuses normalized Long Sword item `131`,
+preserving native item index `126`, with fixed durability, to-hit, damage,
+lightning resistance, and fixed-armor powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -915,7 +918,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.65.0"
+      "version": "1.66.0"
   },
   "dependencyConstraints": [
     {
@@ -947,7 +950,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.65.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.66.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
