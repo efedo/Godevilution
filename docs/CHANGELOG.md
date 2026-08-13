@@ -4,8 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
-- Apply usable identified equipment damage, hit, and target-armor metadata to
-  authoritative player attacks.
+- Apply usable identified equipment damage-percent, flat-damage, to-hit, and
+  armor-piercing metadata to authoritative player attacks.
 
 ## 2026-08-13
 

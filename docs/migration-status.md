@@ -110,9 +110,9 @@ Status date: 2026-08-13
   transfer. The server preserves native resource debt and persists
   base/effective maxima through snapshots, saves, protocol projection, and
   conditional hashes.
-- Native usable, identified equipment `PlusDamage`, `PlusToHit`, and
-  `PlusEnemyArmorClass` metadata now affects authoritative player attacks with
-  the native hit/armor boundary; unequipped, unusable, and unidentified magical
+- Native usable, identified equipment damage-percent, flat-damage, to-hit, and
+  armor-piercing metadata now affects authoritative player attacks with the
+  native hit/armor boundary; unequipped, unusable, and unidentified magical
   items remain excluded.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,

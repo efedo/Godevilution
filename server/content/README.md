@@ -348,10 +348,11 @@ native Q6 life/mana bonuses and conversion portions independently. The same
 resolver runs after every accepted equipment transfer, preserving native
 resource debt when an item is equipped or removed; base maxima and effective
 maxima persist through snapshots, saves, and protocol projection.
-Usable, identified equipped items also contribute their native `plus_damage`,
-`plus_to_hit`, and `plus_enemy_armor_class` values to authoritative player
-attacks; the server excludes unequipped, unusable, and unidentified magical
-items from those bonuses.
+Usable, identified equipped items also contribute their native `plus_damage`
+percent, `plus_damage_modifier` flat damage, `plus_to_hit`, and
+`plus_enemy_armor_class` armor-piercing values to authoritative player attacks;
+the server excludes unequipped, unusable, and unidentified magical items from
+those bonuses.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and

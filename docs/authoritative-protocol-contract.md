@@ -468,9 +468,10 @@ equipment stats; clients never infer a fixed bonus from the item name. Nonzero
 conversion state adds the tagged
 `godevilution-item-resource-conversion-v1` canonical-hash section; absent
 conversion fields preserve legacy snapshot and replay hashes.
-The `plus_damage`, `plus_to_hit`, and `plus_enemy_armor_class` item fields are
-also authoritative when usable equipment is resolved for player attacks;
-unusable and unidentified magical items do not contribute them.
+The `plus_damage` (percent), `plus_damage_modifier` (flat), `plus_to_hit`, and
+`plus_enemy_armor_class` (armor-piercing) item fields are also authoritative
+when usable equipment is resolved for player attacks; unusable and
+unidentified magical items do not contribute them.
 
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A

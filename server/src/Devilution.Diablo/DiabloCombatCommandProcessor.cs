@@ -360,22 +360,28 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         uint seed)
     {
-        var damageBonus = 0;
+        var damagePercent = 0;
+        var damageFlat = 0;
         var hitBonus = 0;
-        var targetArmorBonus = 0;
+        var armorPiercingBonus = 0;
         foreach (var equippedItem in player.Equipment) {
             var state = equippedItem.State;
             if (!IsUsable(state) || (state.Magical != 0 && !state.Identified))
                 continue;
-            damageBonus = checked(damageBonus + state.PlusDamage);
+            damagePercent = checked(damagePercent + state.PlusDamage);
+            damageFlat = checked(damageFlat + state.PlusDamageModifier);
             hitBonus = checked(hitBonus + state.PlusToHit);
-            targetArmorBonus = checked(targetArmorBonus + state.PlusEnemyArmorClass);
+            armorPiercingBonus = checked(armorPiercingBonus + state.PlusEnemyArmorClass);
         }
 
+        var damage = checked(
+            rules.BaseAttackDamage
+            + rules.BaseAttackDamage * damagePercent / 100
+            + damageFlat);
         return rules.ResolveAttackDamage(
-            checked(rules.BaseAttackDamage + damageBonus),
-            Math.Max(0, target.ArmorClass - targetArmorBonus),
-            Math.Clamp(checked(rules.HitChancePercent + hitBonus), 0, 100),
+            damage,
+            target.ArmorClass,
+            Math.Clamp(checked(rules.HitChancePercent + hitBonus + armorPiercingBonus), 0, 100),
             seed);
     }
 

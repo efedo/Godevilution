@@ -283,12 +283,12 @@ public sealed class DiabloCombatCommandProcessorTests
             9,
             1,
             0,
-            20,
+            40,
             armorClass: 10);
         var world = new DiabloWorldState(combatTargets: [target]);
         var processor = CreateProcessor(
             world,
-            rules: new AuthoritativeCombatRules(10, 1, 100, hitChancePercent: 0));
+            rules: new AuthoritativeCombatRules(20, 1, 100, hitChancePercent: 0));
         var player = CreatePlayer(
             entityId: 7,
             equipment: [
@@ -297,9 +297,9 @@ public sealed class DiabloCombatCommandProcessorTests
                     42,
                     AuthoritativeItemState.Empty with {
                         StatFlag = true,
-                        PlusDamage = 5,
-                        PlusToHit = 100,
-                        PlusEnemyArmorClass = 2,
+                        PlusDamage = 25,
+                        PlusDamageModifier = 3,
+                        PlusEnemyArmorClass = 100,
                     }),
                 new EquippedStoreItem(
                     5,
@@ -316,7 +316,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
         Assert.True(result.Succeeded);
-        Assert.Equal(13, target.HitPoints);
+        Assert.Equal(22, target.HitPoints);
     }
 
     [Fact]
