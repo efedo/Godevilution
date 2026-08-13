@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.39 adds the native-derived Hellfire Demonspike Coat base item and
+unique definition (`unique_id=1080`) with its Full Plate Mail identity, armor,
+get-hit, strength, indestructible, and fire-resistance powers.
+
 Schema 1.38 adds the native-derived Hellfire Naj's Light Plate base item and
 unique definition (`unique_id=1079`) with its Plate Mail identity, no-strength,
 magic, mana, all-resistance, and spell-level powers.

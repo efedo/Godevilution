@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Demonspike Coat (`unique_id=1080`) through schema
+  1.39, adding its native Full Plate Mail base item with armor, get-hit,
+  strength, indestructible, and fire-resistance powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Naj's Light Plate (`unique_id=1079`) through schema
   1.38, adding its native Plate Mail base item with no-strength, magic, mana,
   all-resistance, and spell-level powers.
