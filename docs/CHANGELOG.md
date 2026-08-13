@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Cranium Basher (`unique_id=1053`) through schema
+  1.12, reusing the validated Maul base item with damage-modifier, strength,
+  indestructibility, mana-curse, and all-resistance powers; correct the native
+  Maul index on Hammer of Jholm's normalized base row.
+
 - Externalize Hellfire Gnarled Root (`unique_id=1052`) through schema 1.11,
   reusing the validated Spiked Club base item with to-hit, damage, dexterity,
   magic, all-resistance, and armor-curse powers.

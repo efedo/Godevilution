@@ -201,3 +201,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1052	Gnarled Root	110	9	9820	MAG	5	5
 1052	Gnarled Root	110	9	9820	ALLRES	10	10
 1052	Gnarled Root	110	9	9820	AC_CURSE	10	10
+1053	The Cranium Basher	143	12	36500	DAMMOD	20	20
+1053	The Cranium Basher	143	12	36500	STR	15	15
+1053	The Cranium Basher	143	12	36500	INDESTRUCTIBLE	0	0
+1053	The Cranium Basher	143	12	36500	MANA_CURSE	150	150
+1053	The Cranium Basher	143	12	36500	ALLRES	5	5

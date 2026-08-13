@@ -635,6 +635,11 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.12 adds the native-derived Hellfire The Cranium Basher unique
+definition (`unique_id=1053`), reusing the validated Maul base item with
+damage-modifier, strength, indestructibility, mana-curse, and all-resistance
+powers. It also corrects Hammer of Jholm's normalized native Maul index.
+
 Schema 1.11 adds the native-derived Hellfire Gnarled Root unique definition
 (`unique_id=1052`), reusing the validated Spiked Club base item with to-hit,
 damage, dexterity, magic, all-resistance, and armor-curse powers.

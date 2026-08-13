@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.11.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.12.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.11.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.12.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -715,7 +715,7 @@ public sealed class ShippedContentTests
         var hammerOfJholm = hellfireItems.GenerateUnique(1048, 0x12345678, 1);
         Assert.Equal(1048, hammerOfJholm.UniqueId);
         Assert.Equal(8700, hammerOfJholm.Value);
-        Assert.Equal(143, hammerOfJholm.ItemIndex);
+        Assert.Equal(142, hammerOfJholm.ItemIndex);
         Assert.Equal(4, hammerOfJholm.MinDamage);
         Assert.Equal(10, hammerOfJholm.MaxDamage);
         Assert.Equal(55, hammerOfJholm.MinimumStrength);
@@ -777,6 +777,22 @@ public sealed class ShippedContentTests
         Assert.Equal(10, gnarledRoot.PlusLightningResistance);
         Assert.Equal(10, gnarledRoot.PlusMagicResistance);
         Assert.Equal(-10, gnarledRoot.PlusArmorClass);
+        var craniumBasher = hellfireItems.GenerateUnique(1053, 0x12345678, 12);
+        Assert.Equal(1053, craniumBasher.UniqueId);
+        Assert.Equal(36500, craniumBasher.Value);
+        Assert.Equal(142, craniumBasher.ItemIndex);
+        Assert.Equal(6, craniumBasher.MinDamage);
+        Assert.Equal(20, craniumBasher.MaxDamage);
+        Assert.Equal(55, craniumBasher.MinimumStrength);
+        Assert.Equal(2, craniumBasher.EquipLocation);
+        Assert.Equal(20, craniumBasher.PlusDamageModifier);
+        Assert.Equal(15, craniumBasher.PlusStrength);
+        Assert.Equal(255, craniumBasher.Durability);
+        Assert.Equal(255, craniumBasher.MaxDurability);
+        Assert.Equal(-(150 << 6), craniumBasher.PlusMana);
+        Assert.Equal(5, craniumBasher.PlusFireResistance);
+        Assert.Equal(5, craniumBasher.PlusLightningResistance);
+        Assert.Equal(5, craniumBasher.PlusMagicResistance);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
