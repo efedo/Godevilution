@@ -95,7 +95,9 @@ public sealed class AuthoritativeMonsterCatalog
                 row,
                 "berserk_immune",
                 monsterType?.BerserkImmune ?? false);
-            var deathAnimationTicks = row.OptionalInt32("death_animation_ticks");
+            var deathAnimationTicks = row.TryGet("death_animation_ticks", out _)
+                ? row.OptionalInt32("death_animation_ticks")
+                : monsterType?.DeathAnimationTicks ?? 0;
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");

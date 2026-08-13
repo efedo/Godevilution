@@ -36,6 +36,9 @@ All notable changes to this fork are documented below.
   metadata.
 - Preserve validated monster Berserk immunity when converting procedural
   placements into authoritative combat targets.
+- Externalize native monster death-animation durations through schema 1.76,
+  derive the checked-in Hellfire values from native frame/rate metadata, and
+  carry them into static and procedural authoritative targets.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

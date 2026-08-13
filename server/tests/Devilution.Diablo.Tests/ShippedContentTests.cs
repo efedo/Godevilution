@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.75.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.76.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -61,7 +61,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.75.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.76.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -114,6 +114,7 @@ public sealed class ShippedContentTests
         Assert.True(activation.Simulation.WorldState.CombatTargets[14].IsAnimal);
         Assert.False(hellfireMonster.IsDemon);
         Assert.Equal(100, hellfireMonster.MagicResistance);
+        Assert.Equal(16, hellfireMonster.DeathAnimationTicks);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
         Assert.Equal(7, activation.Simulation.WorldState.CombatTargets.Count);
         Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
@@ -124,6 +125,10 @@ public sealed class ShippedContentTests
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
         Assert.Equal(139, monsterTypes.Definitions.Count);
         Assert.Equal(6, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).AggroRange);
+        Assert.Equal(16, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).DeathAnimationTicks);
+        Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
+        Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
+        Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);
         Assert.Equal(7, monsterTypes.Definitions.Single(definition => definition.MonsterId == 5).AggroRange);
         Assert.Equal(73, monsterTypes.Definitions.Count(definition => definition.Demon));
         Assert.Equal(4, monsterTypes.Definitions.Count(definition => definition.Knockback));

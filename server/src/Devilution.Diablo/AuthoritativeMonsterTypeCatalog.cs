@@ -38,6 +38,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native aggro radius used by autonomous monster behavior. */
     public int AggroRange { get; init; } = 6;
+
+    /** Native death-animation duration in authoritative game ticks. */
+    public int DeathAnimationTicks { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -72,6 +75,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.MagicResistance is < -100 or > 100
                 || definition.AcidResistance is < -100 or > 100
                 || definition.AggroRange is < 0 or > 64
+                || definition.DeathAnimationTicks is < 0 or > 1024
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -144,6 +148,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 MagicResistance = row.OptionalInt32("magic_resistance"),
                 AcidResistance = row.OptionalInt32("acid_resistance"),
                 AggroRange = row.OptionalInt32("aggro_range", 6),
+                DeathAnimationTicks = row.OptionalInt32("death_animation_ticks"),
             }));
     }
 

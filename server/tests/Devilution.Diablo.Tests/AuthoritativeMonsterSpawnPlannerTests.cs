@@ -114,6 +114,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
                 BerserkImmune = true,
                 FireResistance = 25,
                 Knockback = true,
+                DeathAnimationTicks = 9,
             },
         ]);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -135,6 +136,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.True(target.IsUndead);
         Assert.True(target.BerserkImmune);
         Assert.True(target.HasKnockback);
+        Assert.Equal(9, target.DeathAnimationTicks);
         Assert.Equal(2, target.MinDamage);
         Assert.Equal(3, target.MaxDamage);
     }
