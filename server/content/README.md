@@ -208,6 +208,9 @@ attack admission boundary; clients never perform the monster attack roll.
 The `Zombie` identity now uses its native `10 + 2 * intelligence` action band
 and long-range `2 * intelligence + 4` movement boundary; movement remains
 server-owned and falls back to the shared authoritative navigation when needed.
+Native monster regeneration is also server-owned: each live monster recovers
+one life at level 1 or `level / 2` at higher levels per simulation tick, capped
+at maximum life and preserved in exact Q6 state.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

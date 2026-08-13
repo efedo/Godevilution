@@ -346,6 +346,8 @@ Windows toolchain command.
   render only the resulting monster snapshot and gameplay events.
 - Fat normal and special melee bands are server-owned; clients receive only the
   resulting authoritative Damage event or unchanged state.
+- Native monster regeneration is applied by the server before AI execution and
+  appears through the authoritative monster health snapshot.
 
 ## Identity Note
 

@@ -270,6 +270,11 @@ successful long-range action uses an authoritative movement step once the
 distance reaches `2 * intelligence + 4`; outside-band ticks do not make the
 client simulate a move or attack.
 
+Every live monster also receives the native `ProcessMonsters` regeneration before
+AI execution: level 1 monsters recover one life per tick, and higher levels
+recover `level / 2`, capped at the externalized maximum. The server applies this
+in exact Q6 state; clients render the resulting snapshot.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

@@ -3692,6 +3692,7 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 continue;
             }
+            ApplyNativeMonsterRegeneration(target);
             if (target.AggroRange <= 0)
                 continue;
             if (target.IsPetrified)
@@ -3853,6 +3854,19 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native ProcessMonsters health regeneration, applied before each AI tick. */
+    private static void ApplyNativeMonsterRegeneration(
+        AuthoritativeCombatTarget monster)
+    {
+        if (monster.MonsterLevel <= 0 || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
+            return;
+
+        var healing = monster.MonsterLevel > 1
+            ? monster.MonsterLevel / 2
+            : monster.MonsterLevel;
+        monster.ApplyHealingQ6(DiabloFixedPointQ6.FromWhole(healing));
     }
 
     /** Native ZombieAi action band and long-range walk boundary. */

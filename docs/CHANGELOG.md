@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
   authoritative server simulation.
 - Align the native `Fat` normal and special melee bands with Overlord's
   `15 + 4 * intelligence` and `20 + 4 * intelligence` boundaries.
+- Route native live-monster regeneration through externalized level metadata and
+  authoritative Q6 health state before AI execution.
 
 ## 2026-08-13
 

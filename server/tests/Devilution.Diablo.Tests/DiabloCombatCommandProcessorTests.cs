@@ -1765,6 +1765,27 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeMonsterRegenerationUsesTheExternalizedMonsterLevel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            maxHitPoints: 20,
+            monsterLevel: 4,
+            aggroRange: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(life: 100, lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(12, monster.HitPoints);
+        Assert.Equal(12 * DiabloFixedPointQ6.Scale, monster.HitPointsQ6);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -4784,8 +4805,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(2, processor.AdvanceTick(1, [player]).Count);
         Assert.Equal(2, processor.AdvanceTick(2, [player]).Count);
 
-        Assert.Equal(1154, bottomTarget.HitPointsQ6);
-        Assert.Equal(1134, topTarget.HitPointsQ6);
+        Assert.Equal(1217, bottomTarget.HitPointsQ6);
+        Assert.Equal(1198, topTarget.HitPointsQ6);
         Assert.All(world.Projectiles.Values, layer => Assert.Equal(17U, layer.RemainingTicks));
         Assert.Equal(0x079606CEU, random.State);
     }
