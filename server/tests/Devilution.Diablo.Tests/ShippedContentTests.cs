@@ -66,6 +66,19 @@ public sealed class ShippedContentTests
         Assert.Equal(16650, crown.Value);
         Assert.Equal(15, crown.ArmorClass);
         Assert.Equal(0x00000002U, crown.Flags);
+        var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
+            "hellfire-sorcerer",
+            2,
+            null,
+            null,
+            null,
+            activation.DefaultStartingLevelId);
+        var startingStaff = Assert.Single(
+            hellfireSorcerer.Equipment,
+            item => item.Slot == 4);
+        Assert.Equal(1, startingStaff.State.SpellId);
+        Assert.Equal(166, startingStaff.State.ItemIndex);
+        Assert.True(startingStaff.State.StatFlag);
         Assert.Equal(2, composed.Manifest.Packs.Count);
     }
 
