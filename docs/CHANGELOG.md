@@ -14,6 +14,9 @@ All notable changes to this fork are documented below.
   sessions and verifies safe retirement of every prior adapter.
 - Add a validated Diablo monster-candidate query by dungeon-level range, keeping
   procedural map layout and spawn placement outside the current data contract.
+- Add a bounded server-owned monster spawn planner using validated density
+  metadata and seed-stable walkable placements; native map synthesis remains
+  separate.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.
