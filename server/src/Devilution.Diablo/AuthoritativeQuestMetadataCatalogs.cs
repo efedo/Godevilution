@@ -101,6 +101,24 @@ public sealed class AuthoritativeQuestPoolCatalog
     public IReadOnlyList<AuthoritativeQuestPoolEntry> GetPool(int poolId)
         => definitions.Where(entry => entry.PoolId == poolId).ToArray();
 
+    /** Selects the native single-player quest exclusions for one level-15 seed. */
+    public IReadOnlyList<uint> SelectUnavailableQuestIds(uint seed)
+    {
+        var random = new DiabloRandom(seed);
+        var unavailable = new List<uint>();
+        foreach (var pool in definitions.GroupBy(entry => entry.PoolId).OrderBy(group => group.Key)) {
+            // Vanilla compatibility: QuestGroup1[-2] skips pool 1 after one
+            // discarded RNG draw for this historical seed.
+            if (seed == 988045466U && pool.Key == 1) {
+                random.Discard(1);
+                continue;
+            }
+            var entries = pool.ToArray();
+            unavailable.Add(entries[random.RandomIntLessThan(entries.Length)].QuestId);
+        }
+        return unavailable;
+    }
+
     public static AuthoritativeQuestPoolCatalog LoadTsv(
         string sourcePath,
         string contents,

@@ -49,4 +49,21 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
             "pool_id\tquest_id\n1\t3002\n",
             questTypes));
     }
+
+    [Fact]
+    public void SelectsNativeQuestPoolExclusionsDeterministically()
+    {
+        var pools = new AuthoritativeQuestPoolCatalog([
+            new AuthoritativeQuestPoolEntry(1, 3001),
+            new AuthoritativeQuestPoolEntry(1, 3002),
+            new AuthoritativeQuestPoolEntry(2, 3003),
+            new AuthoritativeQuestPoolEntry(2, 3004),
+        ]);
+
+        Assert.Equal(
+            pools.SelectUnavailableQuestIds(42),
+            pools.SelectUnavailableQuestIds(42));
+        Assert.Equal(2, pools.SelectUnavailableQuestIds(42).Count);
+        Assert.Single(pools.SelectUnavailableQuestIds(988045466), questId => questId is 3003 or 3004);
+    }
 }
