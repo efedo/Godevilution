@@ -50,6 +50,10 @@ public sealed class ShippedContentTests
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
+        Assert.Equal(7, activation.Simulation.WorldState.CombatTargets.Count);
+        Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
+        Assert.True(activation.Simulation.WorldState.CombatTargets[12].IsUndead);
+        Assert.Equal(5, activation.Simulation.WorldState.CombatTargets[15].MaxDamageSpecial);
         Assert.Equal(2, composed.Manifest.Packs.Count);
     }
 
