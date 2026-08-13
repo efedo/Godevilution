@@ -283,3 +283,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1071	Torn Flesh of Souls	156	2	4825	VIT	10	10
 1071	Torn Flesh of Souls	156	2	4825	GETHIT	1	1
 1071	Torn Flesh of Souls	156	2	4825	INDESTRUCTIBLE	0	0
+1072	The Gladiator's Bane	157	6	3450	SETAC	25	25
+1072	The Gladiator's Bane	157	6	3450	GETHIT	2	2
+1072	The Gladiator's Bane	157	6	3450	DUR	200	200
+1072	The Gladiator's Bane	157	6	3450	ATTRIBS_CURSE	3	3

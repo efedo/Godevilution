@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.31 adds the native-derived Hellfire The Gladiator's Bane base item
+and unique definition (`unique_id=1072`) with its Studded Leather Armor
+identity, armor, get-hit, durability, and cursed-attribute powers.
+
 Schema 1.30 adds the native-derived Hellfire Torn Flesh of Souls base item and
 unique definition (`unique_id=1071`) with its Rags identity, armor, vitality,
 get-hit, and indestructible powers.

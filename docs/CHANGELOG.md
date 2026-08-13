@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Gladiator's Bane (`unique_id=1072`) through schema
+  1.31, adding its native Studded Leather Armor base item with armor, get-hit,
+  durability, and cursed-attribute powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Torn Flesh of Souls (`unique_id=1071`) through schema
   1.30, adding its native Rags base item with armor, vitality, get-hit, and
   indestructible powers.
