@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
   more validated identities, including special damage channels and native
   demon/undead resistance baselines.
 
+- Extend the Hellfire monster-type catalog through native ID 47 with twelve
+  more validated identities; unsupported native acid resistance remains an
+  explicit future schema extension rather than being silently discarded.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,

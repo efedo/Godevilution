@@ -100,14 +100,15 @@ The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire monster
 catalog is still pending. Schema 0.63 adds the validated `monster_types.tsv`
-catalog for the base encounter and the first thirty-six native Hellfire types,
+catalog for the base encounter and the first forty-eight native Hellfire types,
 including stable/native IDs, baseline health, damage, level, and immutable
 capability flags. Schema 0.67 adds native fire, lightning, and magic resistance
 percentages; encounter rows inherit those values unless they provide an
 explicit per-instance override. Encounter rows now reject unknown type
 identities when the table is present. Baseline armor, damage channels, monster
 level, and immutable capability flags also inherit from the type when omitted
-from an encounter row.
+from an encounter row. Native acid resistance remains a future schema field;
+the current catalog does not silently map it to another resistance channel.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

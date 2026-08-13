@@ -49,13 +49,13 @@ Status date: 2026-08-13
 - Monster type identity is now externalized through validated
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
   resolve a stable/native type identity before activation. The first
-  thirty-six variant-local native Hellfire type identities, through native ID
-  35, are now externalized; encounter rows inherit
+  forty-eight variant-local native Hellfire type identities, through native ID
+  47, are now externalized; encounter rows inherit
   validated type resistance, baseline combat, and immutable capability metadata
   unless they provide explicit instance overrides. Variant-local native IDs are
   tracked separately from stable IDs; reverse lookup rejects ambiguous IDs in
   composed overlays. Encounter behavior and the rest of the Hellfire catalog
-  remain incremental.
+  remain incremental; native acid resistance still needs a schema extension.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

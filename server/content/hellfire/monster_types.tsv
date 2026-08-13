@@ -35,3 +35,15 @@ monster_id	native_monster_id	name	minimum_dungeon_level	maximum_dungeon_level	mo
 35	33	Satyr Lord	21	22	28	160	200	40	20	30	0	0	0	0	0	100	100	75
 36	34	Flesh Clan	4	6	8	30	45	15	4	10	0	0	0	0	0	0	0	0
 37	35	Stone Clan	5	7	10	40	55	20	6	12	0	0	0	0	0	0	0	100
+38	36	Fire Clan	6	8	12	50	65	45	8	16	0	0	0	0	0	100	0	0
+39	37	Night Clan	7	9	14	55	70	50	10	20	30	30	0	0	0	0	0	100
+40	38	Fiend	2	3	3	3	6	0	1	6	0	0	0	0	0	0	0	0
+41	39	Blink	3	5	7	12	28	15	1	8	0	0	0	0	0	0	0	0
+42	40	Gloom	4	6	9	28	36	35	4	12	0	0	0	0	0	0	0	75
+43	41	Familiar	6	8	13	20	35	35	4	16	0	0	0	0	0	0	100	75
+44	42	Flesh Clan	4	6	8	20	35	35	1	7	0	0	0	0	0	0	0	0
+45	43	Stone Clan	5	7	10	30	40	35	2	9	0	0	0	0	0	0	0	100
+46	44	Fire Clan	6	8	12	40	50	35	3	11	0	0	0	0	0	100	0	0
+47	45	Night Clan	7	9	14	50	65	40	4	13	0	0	0	0	0	0	0	100
+48	46	Acid Beast	6	8	11	40	66	30	4	12	0	0	0	0	0	0	0	100
+49	47	Poison Spitter	8	10	15	60	85	30	4	16	0	0	0	0	0	0	0	100

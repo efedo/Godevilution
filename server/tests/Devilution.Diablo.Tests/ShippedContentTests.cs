@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(37, monsterTypes.Definitions.Count);
+        Assert.Equal(49, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -91,8 +91,19 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions[29].FireResistance,
             monsterTypes.Definitions[29].LightningResistance,
             monsterTypes.Definitions[29].MagicResistance));
-        Assert.Equal("Stone Clan", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(35U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal("Stone Clan", monsterTypes.Definitions[36].Name);
+        Assert.Equal(35U, monsterTypes.Definitions[36].NativeMonsterId);
+        Assert.Equal(100, monsterTypes.Definitions[36].MagicResistance);
+        Assert.Equal("Night Clan", monsterTypes.Definitions[38].Name);
+        Assert.Equal((30, 30), (
+            monsterTypes.Definitions[38].MinimumSpecialDamage,
+            monsterTypes.Definitions[38].MaximumSpecialDamage));
+        Assert.Equal(100, monsterTypes.Definitions[38].MagicResistance);
+        Assert.Equal((100, 75), (
+            monsterTypes.Definitions[42].LightningResistance,
+            monsterTypes.Definitions[42].MagicResistance));
+        Assert.Equal("Poison Spitter", monsterTypes.Definitions[^1].Name);
+        Assert.Equal(47U, monsterTypes.Definitions[^1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[^1].MagicResistance);
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
