@@ -98,6 +98,8 @@ catalog is still pending.
 It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
 is a separate normalized row.
+The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
+native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
 
 `class_loadouts.tsv` starting Gold is materialized as canonical inventory state:
 the first pile uses native cell 30, values above the configured maximum split

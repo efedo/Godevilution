@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   identity, stats, and faction through composed Diablo activation.
 - Add the Hellfire Undead Crown as normalized base/unique content with
   deterministic catalog-generation coverage.
+- Make the Hellfire Sorcerer starting loadout use its native Firebolt staff
+  through a validated keyed class-loadout overlay.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,

@@ -39,7 +39,7 @@ Status date: 2026-08-12
   surfaced by the Godot HUD without client-side immunity or timing logic.
 - The checked-in Hellfire pack selects the native game variant through a
   validated `combat.tsv` overlay and carries a native-derived encounter set
-  plus the Undead Crown normalized unique item through Diablo activation;
+  plus the Undead Crown and Sorcerer Firebolt staff through Diablo activation;
   remaining Hellfire world and catalog tables stay explicit follow-up content
   migrations.
 - Reflect is now a content-selected immediate self effect. The server owns native
