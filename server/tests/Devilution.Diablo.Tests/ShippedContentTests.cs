@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.37.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.38.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.37.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.38.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1145,6 +1145,21 @@ public sealed class ShippedContentTests
         Assert.Equal(20, nightscape.PlusMagicResistance);
         Assert.Equal(-4, nightscape.PlusLight);
         Assert.NotEqual(0U, nightscape.Flags & 0x00400000U);
+        var najsLightPlate = hellfireItems.GenerateUnique(1079, 0x12345678, 19);
+        Assert.Equal(1079, najsLightPlate.UniqueId);
+        Assert.Equal(78700, najsLightPlate.Value);
+        Assert.Equal(68, najsLightPlate.ItemIndex);
+        Assert.Equal(42, najsLightPlate.ArmorClass);
+        Assert.Equal(75, najsLightPlate.Durability);
+        Assert.Equal(75, najsLightPlate.MaxDurability);
+        Assert.Equal(0, najsLightPlate.MinimumStrength);
+        Assert.Equal(4, najsLightPlate.EquipLocation);
+        Assert.Equal(5, najsLightPlate.PlusMagic);
+        Assert.Equal(20 << 6, najsLightPlate.PlusMana);
+        Assert.Equal(20, najsLightPlate.PlusFireResistance);
+        Assert.Equal(20, najsLightPlate.PlusLightningResistance);
+        Assert.Equal(20, najsLightPlate.PlusMagicResistance);
+        Assert.Equal(1, najsLightPlate.SpellLevelAdd);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

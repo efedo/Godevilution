@@ -313,3 +313,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1078	Nightscape	163	16	11600	SETAC	15	15
 1078	Nightscape	163	16	11600	DEX	3	3
 1078	Nightscape	163	16	11600	ALLRES	20	20
+1079	Naj's Light Plate	164	19	78700	NOMINSTR	0	0
+1079	Naj's Light Plate	164	19	78700	MAG	5	5
+1079	Naj's Light Plate	164	19	78700	MANA	20	20
+1079	Naj's Light Plate	164	19	78700	ALLRES	20	20
+1079	Naj's Light Plate	164	19	78700	SPLLVLADD	1	1

@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Naj's Light Plate (`unique_id=1079`) through schema
+  1.38, adding its native Plate Mail base item with no-strength, magic, mana,
+  all-resistance, and spell-level powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Nightscape (`unique_id=1078`) through schema 1.37,
   adding its native Cape base item with fast-recovery, light-curse, armor,
   dexterity, and all-resistance powers.
