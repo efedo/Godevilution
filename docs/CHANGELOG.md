@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Honor usable identified equipment with the native `NoMana` flag when
+  admitting memorized spell casts; free class abilities and charged or
+  consumable sources remain unaffected, while Mana Shield keeps its existing
+  native bypass behavior.
 - Apply native `ZeroResistance` item flags to authoritative elemental
   resistance after natural class resistance and before the native 0..75 clamp.
 - Apply usable identified equipment damage-percent, flat-damage, to-hit, and

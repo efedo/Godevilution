@@ -789,7 +789,8 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (!skipSourceValidation
             && source.Kind == DiabloCastSourceKind.MemorizedSpell
-            && player.Mana < manaCost) {
+            && (AuthoritativeEquipmentManaRules.HasNoManaItem(player.Equipment)
+                || player.Mana < manaCost)) {
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
         }
         if (!applyEffects)

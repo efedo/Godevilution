@@ -129,6 +129,10 @@ Status date: 2026-08-13
   authoritative fire, lightning, and magic resistance after natural class
   resistance and before the native 0..75 clamp; clients consume the resulting
   server-owned damage outcomes.
+- Native usable, identified equipment `NoMana` flags now reject ordinary
+  memorized spell casts before source consumption while preserving free class
+  abilities and charged or consumable sources; the shared damage resolver also
+  retains the native Mana Shield bypass.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,
   combat metadata, wallets, equipment, belt and inventory placements, class

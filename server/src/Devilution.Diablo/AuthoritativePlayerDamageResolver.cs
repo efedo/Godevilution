@@ -10,7 +10,6 @@ public sealed record AuthoritativePlayerDamageResult(
 /** Content-driven native Mana Shield conversion shared by every player-damage source. */
 public sealed class AuthoritativePlayerDamageResolver
 {
-    private const uint NoManaItemFlag = 0x08000000U;
     private readonly AuthoritativeSpellDefinition? manaShield;
 
     public AuthoritativePlayerDamageResolver(AuthoritativeSpellCatalog spells)
@@ -36,7 +35,8 @@ public sealed class AuthoritativePlayerDamageResolver
             return new AuthoritativePlayerDamageResult(0, 0, 0, false);
         }
 
-        if (!player.ManaShieldActive || HasNoManaItem(player)) {
+        if (!player.ManaShieldActive
+            || AuthoritativeEquipmentManaRules.HasNoManaItem(player.Equipment)) {
             var unshieldedLifeDamageQ6 = Math.Min(
                 player.Life - minimumLifeQ6,
                 incomingDamageQ6);
@@ -93,13 +93,5 @@ public sealed class AuthoritativePlayerDamageResolver
             lifeDamageQ6,
             consumedManaQ6,
             true);
-    }
-
-    private static bool HasNoManaItem(AuthoritativePlayerState player)
-    {
-        return player.Equipment.Any(item =>
-            item.State.StatFlag
-            && (item.State.Magical == 0 || item.State.Identified)
-            && (item.State.Flags & NoManaItemFlag) != 0);
     }
 }

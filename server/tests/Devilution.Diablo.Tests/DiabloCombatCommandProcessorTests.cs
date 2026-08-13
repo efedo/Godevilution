@@ -767,6 +767,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NoManaEquipmentRejectsMemorizedCastsButNotFreeAbilities()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(26, 5, 20, 0, 0, 0),
+        ]);
+        var processor = CreateProcessor(new DiabloWorldState(), spells);
+        IReadOnlyList<EquippedStoreItem> noManaEquipment = [new EquippedStoreItem(
+            4,
+            77,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Flags = AuthoritativeEquipmentManaRules.NoManaFlag,
+            })];
+        var memorizedPlayer = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 1000,
+            manaMaximum: 1000,
+            equipment: noManaEquipment,
+            memorizedSpells: [new MemorizedSpellState(26, 1)]);
+
+        var rejected = processor.Execute(
+            memorizedPlayer,
+            new DiabloCastIntent(26, 0, 0, 0, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        AssertRejected(rejected, DiabloRuleFailure.InsufficientResources);
+        Assert.Equal(1000, memorizedPlayer.Mana);
+        Assert.Equal(10, memorizedPlayer.Life);
+
+        var abilityPlayer = CreatePlayer(
+            life: 10,
+            lifeMaximum: 20,
+            mana: 1000,
+            manaMaximum: 1000,
+            equipment: noManaEquipment,
+            abilitySpellId: 26);
+        var accepted = processor.Execute(
+            abilityPlayer,
+            new DiabloCastIntent(26, 0, 0, 0, DiabloCastSourceKind.Ability),
+            2);
+
+        Assert.True(accepted.Succeeded);
+        Assert.Equal(20, abilityPlayer.Life);
+        Assert.Equal(1000, abilityPlayer.Mana);
+    }
+
+    [Fact]
     public void ChargedItemCastConsumesOneLeftHandStaffChargeAndNoMana()
     {
         var staffState = AuthoritativeItemState.Empty with {

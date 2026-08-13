@@ -85,7 +85,7 @@ public sealed class AuthoritativePlayerDamageResolverTests
     {
         var resolver = CreateResolver();
         var noManaItem = AuthoritativeItemState.Empty with {
-            Flags = 0x08000000U,
+            Flags = AuthoritativeEquipmentManaRules.NoManaFlag,
             StatFlag = true,
         };
         var player = CreatePlayer(

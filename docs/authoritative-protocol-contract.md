@@ -486,6 +486,10 @@ Usable identified equipment resistance bonuses are also resolved by the server;
 an active native `ZeroResistance` flag resets fire, lightning, and magic
 resistance after natural class resistance and before the native 0..75 clamp.
 Clients never derive elemental resistance from item presentation.
+The native `NoMana` flag is likewise server-owned: it rejects memorized spell
+admission before mana or source mutation, but does not reject free class
+abilities or charged/consumable sources; it also disables Mana Shield
+absorption through the shared damage resolver.
 
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A

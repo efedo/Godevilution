@@ -220,6 +220,40 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsNoManaFlagAndPreservesCastAdmission()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        var source = CreatePlayer();
+        source.Life = 10;
+        source.MemorizedSpells.Add(new MemorizedSpellState(1, 1));
+        source.Equipment.Add(new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Flags = AuthoritativeEquipmentManaRules.NoManaFlag,
+            }));
+        var snapshot = simulation.CaptureSnapshot(source, 1);
+        var destination = CreatePlayer();
+
+        simulation.RestoreSnapshot(destination, snapshot);
+
+        Assert.Equal(
+            AuthoritativeEquipmentManaRules.NoManaFlag,
+            Assert.Single(destination.Equipment).State.Flags);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(destination.MemorizedSpells));
+        var result = simulation.Execute(
+            destination,
+            new DiabloCastIntent(1, 0, 0, 0, DiabloCastSourceKind.MemorizedSpell),
+            2);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InsufficientResources, result.Failure);
+        Assert.Equal(0, destination.Mana);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsQuestPoolAvailability()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

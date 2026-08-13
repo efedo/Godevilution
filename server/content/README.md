@@ -813,7 +813,9 @@ the native divisor by `mana_shield_damage_reduction_level_step`. Mana absorbs
 the adjusted damage first. If mana is insufficient, the server reverses the
 reduction on the remainder with native integer truncation, clears the shield,
 and applies the result to life. Exact mana depletion also clears the shield.
-Usable identified equipment with the native NoMana flag bypasses absorption.
+Usable identified equipment with the native `NoMana` flag bypasses absorption
+and rejects ordinary memorized spell casts before mana is consumed. Free class
+abilities and charged or consumable sources remain valid.
 The active flag crosses snapshots, saves, protocol field 29, conditional hashes,
 native/Godot presentation, and the shared native/C# replay.
 
@@ -867,11 +869,10 @@ with the native `ZeroResistance` flag resets fire, lightning, and magic
 resistance after natural class resistance and before that cap. Positive
 resistance overrides blocking. Only authoritative `Stand` and melee `Attack`
 modes admit a block. A successful block immediately enters the class-duration
-`Block` mode;
-an unresisted threshold hit enters class-duration `GotHit`, and item recovery
-flags shorten those durations exactly as in native code. Hellfire additionally
-consumes the blocked-missile rotation-selection draw before Charged Bolt enters
-its common impact phase.
+`Block` mode; an unresisted threshold hit enters class-duration `GotHit`, and
+item recovery flags shorten those durations exactly as in native code.
+Hellfire additionally consumes the blocked-missile rotation-selection draw
+before Charged Bolt enters its common impact phase.
 
 `levels.tsv` keeps movement geometry in `blocked_cells` and native missile
 geometry in `missile_blocked_cells`. The latter defaults to `blocked_cells` when
