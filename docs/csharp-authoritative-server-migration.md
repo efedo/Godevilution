@@ -567,6 +567,10 @@ Schema 0.70 adds the native-derived Hellfire Bovine Plate base item and unique
 definition (`unique_id=1011`) with its heavy-armor identity, armor,
 indestructibility, light, resistance, mana-curse, and spell-level powers.
 
+Schema 0.71 adds the native-derived Hellfire The Rift Bow unique definition
+(`unique_id=1012`), reusing the validated Short Bow base item with native
+arrow-velocity, damage, and dexterity-curse powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

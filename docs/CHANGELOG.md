@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Rift Bow (`unique_id=1012`) through schema 0.71,
+  reusing the validated Short Bow base item with native arrow-velocity,
+  damage, and dexterity-curse powers.
+
 - Externalize Hellfire Bovine Plate (`unique_id=1011`) through schema 0.70,
   including its native heavy-armor base item and armor, indestructibility,
   light, resistance, mana-curse, and spell-level powers.

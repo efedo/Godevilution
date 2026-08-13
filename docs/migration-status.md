@@ -42,8 +42,8 @@ Status date: 2026-08-13
   3, 4, 9, and 17 through 24 with normalized 40-by-40 bounds, and carries a
   native-derived encounter set plus the Undead Crown, Empyrean Band, Optic
   Amulet, Ring of Truth, Harlequin Crest, Veil of Steel, Arkaine's Valor, and
-  Griswold's Edge and Bovine Plate unique items, and Sorcerer Firebolt staff
-  through Diablo activation and the live Godot protocol
+  Griswold's Edge, Bovine Plate, and The Rift Bow unique items, and Sorcerer
+  Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
@@ -692,6 +692,9 @@ fire-damage, hit, attack-speed, knockback, mana, and life-curse powers.
 Content schema 0.70 adds the native-derived Hellfire Bovine Plate base item and
 unique definition (`unique_id=1011`) with its heavy-armor identity, armor,
 indestructibility, light, resistance, mana-curse, and spell-level powers.
+Content schema 0.71 adds the native-derived Hellfire The Rift Bow unique
+definition (`unique_id=1012`), reusing the validated Short Bow base item with
+native arrow-velocity, damage, and dexterity-curse powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds
