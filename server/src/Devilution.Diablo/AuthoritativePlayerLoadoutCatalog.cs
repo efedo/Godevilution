@@ -202,6 +202,13 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             }
         }
 
+        var adjustedResources = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+            life,
+            mana,
+            equipment);
+        life = adjustedResources.LifeQ6;
+        mana = adjustedResources.ManaQ6;
+
         var startingGold = goldOverride ?? loadout.StartingGold;
         AddStartingGold(
             sessionId,

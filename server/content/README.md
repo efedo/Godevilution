@@ -343,6 +343,9 @@ conversion represented as dynamic equipment metadata.
 Gladiator's Ring (`unique_id=1111`) reuses normalized Ring item `113`,
 preserving native item index `157`, with the native 40-percent life-to-mana
 conversion represented as dynamic equipment metadata.
+When a new authoritative player template is created, equipped conversion items
+apply their native base-resource portions independently in Q6 units; later
+equipment changes will use the same resolver as that lifecycle is migrated.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
