@@ -23,6 +23,8 @@ All notable changes to this fork are documented below.
   branch through the authoritative physical-hit path.
 - Route the native `SkeletonMelee` adjacent attack admission through the
   authoritative physical-hit path.
+- Route the native `Zombie` action band and long-range movement boundary through
+  authoritative server simulation.
 
 ## 2026-08-13
 

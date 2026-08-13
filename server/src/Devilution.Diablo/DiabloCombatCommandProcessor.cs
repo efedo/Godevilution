@@ -3716,6 +3716,8 @@ public sealed class DiabloCombatCommandProcessor
             var distance = Math.Max(
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
+            if (TryAdvanceZombieAi(target, victim, tick, players, distance))
+                continue;
             if (TryAdvanceGargoyleHealing(target, victim, tick, events, distance))
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
@@ -3848,6 +3850,68 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native ZombieAi action band and long-range walk boundary. */
+    private bool TryAdvanceZombieAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance)
+    {
+        if (monster.NativeAi != "Zombie")
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var actionChance = Math.Min(100, 10 + (2 * monster.Intelligence));
+        if (actionSeed % 100U >= (uint)actionChance)
+            return true;
+        if (distance < Math.Max(2, 2 * monster.Intelligence + 4))
+            return false;
+
+        var step = FindZombieStep(monster, player, players, actionSeed);
+        if (step.HasValue) {
+            monster.BeginMovement(step.Value.X, step.Value.Y);
+            return true;
+        }
+        return false;
+    }
+
+    private (int X, int Y)? FindZombieStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var deltaX = Math.Sign(player.PositionX - monster.PositionX);
+        var deltaY = Math.Sign(player.PositionY - monster.PositionY);
+        var directions = new[] {
+            (X: deltaX, Y: deltaY),
+            (X: deltaX, Y: 0),
+            (X: 0, Y: deltaY),
+        };
+        if (seed % 100U < (uint)Math.Min(100, 20 + (2 * monster.Intelligence))) {
+            var randomDirection = (int)((seed / 100U) % 8U);
+            directions = new[] {
+                (X: randomDirection switch { 0 or 1 or 7 => 1, 2 or 6 => 0, _ => -1 },
+                    Y: randomDirection switch { 1 or 2 or 3 => 1, 5 or 6 or 7 => -1, _ => 0 }),
+            }.Concat(directions).ToArray();
+        }
+        foreach (var direction in directions) {
+            if (direction.X == 0 && direction.Y == 0)
+                continue;
+            var candidate = (X: monster.PositionX + direction.X, Y: monster.PositionY + direction.Y);
+            if (world.IsWalkable(monster.LevelId, candidate.X, candidate.Y)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidate.X,
+                    candidate.Y,
+                    players,
+                    monster.EntityId))
+                return candidate;
+        }
+        return null;
     }
 
     /** Native Gargoyle self-healing and its distance-based special lock. */

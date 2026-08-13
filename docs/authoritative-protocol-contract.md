@@ -264,6 +264,11 @@ The `SkeletonMelee` identity drives the native adjacent attack band of
 `20 + 2 * intelligence`; an outside-band tick consumes no client-side action and
 the next authoritative tick reevaluates the server-owned boundary.
 
+The `Zombie` identity drives its native `10 + 2 * intelligence` action band. A
+successful long-range action uses an authoritative movement step once the
+distance reaches `2 * intelligence + 4`; outside-band ticks do not make the
+client simulate a move or attack.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

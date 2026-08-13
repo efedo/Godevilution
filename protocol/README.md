@@ -342,6 +342,8 @@ Windows toolchain command.
   arrive as ordinary authoritative Damage events.
 - SkeletonMelee attack admission is server-owned and produces either an
   authoritative Damage event or no event for an outside-band tick.
+- Zombie action admission and long-range movement are server-owned; clients
+  render only the resulting monster snapshot and gameplay events.
 
 ## Identity Note
 

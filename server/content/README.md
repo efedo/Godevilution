@@ -205,6 +205,9 @@ attack admission boundary and wounded special branch, with special accuracy and
 damage resolved by the server.
 The `SkeletonMelee` identity now uses its native adjacent `20 + 2 * intelligence`
 attack admission boundary; clients never perform the monster attack roll.
+The `Zombie` identity now uses its native `10 + 2 * intelligence` action band
+and long-range `2 * intelligence + 4` movement boundary; movement remains
+server-owned and falls back to the shared authoritative navigation when needed.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

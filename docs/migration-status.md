@@ -159,6 +159,9 @@ Status date: 2026-08-13
 - The native `SkeletonMelee` adjacent attack boundary is now server-owned:
   its `20 + 2 * intelligence` admission is resolved from stable tick/entity
   state before the existing authoritative physical-hit path.
+- The native `Zombie` action boundary is now server-owned: its
+  `10 + 2 * intelligence` admission and long-range movement threshold are
+  resolved before authoritative navigation and adjacent combat.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

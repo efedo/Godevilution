@@ -1678,6 +1678,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ZombieAiUsesItsNativeActionBandBeforeLongRangeMovement()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38, outside Zombie's ten-percent base action band.
+        var deliveries = processor.AdvanceTick(40, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.False(monster.IsMoving);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void ZombieAiWalksWhenItsNativeLongRangeActionSucceeds()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 6 ^ 9 ^ 7 = 8, inside the native ten-percent action band.
+        var deliveries = processor.AdvanceTick(6, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(
