@@ -483,6 +483,8 @@ message QuestSnapshot {
 	int32 variable_1 = 9;
 	int32 variable_2 = 10;
 	int32 message_id = 11;
+	// Optional native monster identity whose defeat advances this quest.
+	uint32 completion_monster_id = 12;
 }
 
 message ProjectileSnapshot {

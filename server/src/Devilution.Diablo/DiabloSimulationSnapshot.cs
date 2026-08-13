@@ -108,7 +108,8 @@ public sealed record DiabloQuestState(
     bool Logged = false,
     int Variable1 = 0,
     int Variable2 = 0,
-    int MessageId = 0);
+    int MessageId = 0,
+    uint CompletionMonsterId = 0);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -345,7 +346,8 @@ public sealed partial class DiabloSimulation
                     quest.Logged,
                     quest.Variable1,
                     quest.Variable2,
-                    quest.MessageId))
+                    quest.MessageId,
+                    quest.CompletionMonsterId))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1312,6 +1314,7 @@ public sealed partial class DiabloSimulation
                 target.Variable1 = quest.Variable1;
                 target.Variable2 = quest.Variable2;
                 target.MessageId = quest.MessageId;
+                target.CompletionMonsterId = quest.CompletionMonsterId;
             } else {
                 WorldState.Quests.Add(quest.QuestId, new AuthoritativeQuestState(
                     quest.QuestId,
@@ -1324,7 +1327,8 @@ public sealed partial class DiabloSimulation
                     quest.Logged,
                     quest.Variable1,
                     quest.Variable2,
-                    quest.MessageId));
+                    quest.MessageId,
+                    quest.CompletionMonsterId));
             }
         }
     }

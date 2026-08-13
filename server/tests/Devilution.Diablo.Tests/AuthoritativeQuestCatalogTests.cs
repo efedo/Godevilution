@@ -84,4 +84,15 @@ public sealed class AuthoritativeQuestCatalogTests
         var quest = Assert.Single(quests);
         Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
     }
+
+    [Fact]
+    public void QuestStateCanLoadAnOptionalMonsterCompletionTrigger()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tcompletion_monster_id\n"
+                + "3001\t1\t1\t0\t0\t12\n");
+
+        Assert.Equal(12U, Assert.Single(quests).CompletionMonsterId);
+    }
 }

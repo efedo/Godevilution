@@ -727,6 +727,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void QuestMonsterCompletionTriggerChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3001, RequiredProgress = 1 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Quests[0].CompletionMonsterId = 12;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
     {
         var baseline = new Snapshot();

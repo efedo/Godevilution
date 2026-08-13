@@ -16,7 +16,8 @@ public sealed class AuthoritativeQuestState
         bool logged = false,
         int variable1 = 0,
         int variable2 = 0,
-        int messageId = 0)
+        int messageId = 0,
+        uint completionMonsterId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -39,6 +40,7 @@ public sealed class AuthoritativeQuestState
         Variable1 = variable1;
         Variable2 = variable2;
         MessageId = messageId;
+        CompletionMonsterId = completionMonsterId;
     }
 
     public uint QuestId { get; }
@@ -58,6 +60,8 @@ public sealed class AuthoritativeQuestState
     public int Variable2 { get; set; }
     /** Native _qmsg speech identity selected by quest synchronization. */
     public int MessageId { get; set; }
+    /** Optional native monster identity whose defeat advances this quest. */
+    public uint CompletionMonsterId { get; set; }
 }
 
 /** External quest definitions and initial progress. */
@@ -85,7 +89,8 @@ public static class AuthoritativeQuestCatalog
                 logged: row.OptionalInt32("logged") != 0,
                 variable1: row.OptionalInt32("variable1"),
                 variable2: row.OptionalInt32("variable2"),
-                messageId: row.OptionalInt32("message_id"));
+                messageId: row.OptionalInt32("message_id"),
+                completionMonsterId: row.OptionalUInt32("completion_monster_id"));
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");

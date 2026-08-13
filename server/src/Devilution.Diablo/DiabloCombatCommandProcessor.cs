@@ -7235,6 +7235,8 @@ public sealed class DiabloCombatCommandProcessor
         target.CancelMovement();
         target.BeginDeathAnimation();
 
+        AdvanceQuestForMonsterDefeat(target);
+
         DiabloPlayerProgression.GrantExperience(player, rules.DefeatExperience);
         events.Add(new DiabloGameplayEvent(
             DiabloGameplayEventKind.Experience,
@@ -7243,6 +7245,28 @@ public sealed class DiabloCombatCommandProcessor
             checked((int)rules.DefeatExperience)));
         if (target.Drop is not null)
             world.WorldItems[target.Drop.EntityId] = target.Drop;
+    }
+
+    /** Applies an optional external quest kill trigger at the authoritative death boundary. */
+    private void AdvanceQuestForMonsterDefeat(AuthoritativeCombatTarget target)
+    {
+        if (target.MonsterId == 0)
+            return;
+        foreach (var quest in world.Quests.Values
+                     .Where(quest => quest.Active
+                         && !quest.Unavailable
+                         && !quest.Completed
+                         && quest.CompletionMonsterId == target.MonsterId
+                         && (quest.LevelId == 0 || quest.LevelId == target.LevelId))) {
+            quest.Progress = Math.Min(
+                quest.RequiredProgress,
+                checked(quest.Progress + 1));
+            quest.Logged = true;
+            if (quest.Progress == quest.RequiredProgress) {
+                quest.Completed = true;
+                quest.Active = false;
+            }
+        }
     }
 
     private uint AllocateProjectileEntityId()

@@ -115,6 +115,7 @@ internal static class DiabloProtocolMapper
                 Variable1 = quest.Variable1,
                 Variable2 = quest.Variable2,
                 MessageId = quest.MessageId,
+                CompletionMonsterId = quest.CompletionMonsterId,
             });
         }
         foreach (var projectile in source.Projectiles) {
@@ -375,7 +376,8 @@ internal static class DiabloProtocolMapper
                 quest.Logged,
                 quest.Variable1,
                 quest.Variable2,
-                quest.MessageId)).ToArray(),
+                quest.MessageId,
+                quest.CompletionMonsterId)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

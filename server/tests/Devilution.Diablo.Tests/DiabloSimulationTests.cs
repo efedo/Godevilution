@@ -85,6 +85,30 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void DefeatingConfiguredMonsterAdvancesAndCompletesQuest()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 5, monsterId: 12);
+        var quest = new AuthoritativeQuestState(
+            3001,
+            0,
+            1,
+            completionMonsterId: 12);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                Quests = [quest],
+            });
+        var player = CreatePlayer();
+
+        Assert.True(simulation.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+
+        Assert.Equal(1U, quest.Progress);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.True(quest.Logged);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsMonsterDeathAnimationState()
     {
         var sourceTarget = new AuthoritativeCombatTarget(
@@ -174,7 +198,8 @@ public sealed class DiabloSimulationTests
                     2,
                     variable1: 2,
                     variable2: 7,
-                    messageId: 123)],
+                    messageId: 123,
+                    completionMonsterId: 12)],
             });
         var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
 
@@ -184,6 +209,7 @@ public sealed class DiabloSimulationTests
 
         var quest = Assert.Single(replacement.WorldState.Quests.Values);
         Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
+        Assert.Equal(12U, quest.CompletionMonsterId);
     }
 
     [Fact]
