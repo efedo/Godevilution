@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.72.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.73.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.72.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.73.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -76,6 +76,8 @@ public sealed class ShippedContentTests
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
         Assert.Equal(139, monsterTypes.Definitions.Count);
         Assert.Equal(73, monsterTypes.Definitions.Count(definition => definition.Demon));
+        Assert.Equal(4, monsterTypes.Definitions.Count(definition => definition.Knockback));
+        Assert.True(monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 110).Knockback);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);

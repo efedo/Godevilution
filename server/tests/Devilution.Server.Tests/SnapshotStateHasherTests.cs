@@ -472,6 +472,8 @@ public sealed class SnapshotStateHasherTests
         demon.Monsters[0].IsDemon = true;
         var animal = demon.Clone();
         animal.Monsters[0].IsAnimal = true;
+        var knockback = animal.Clone();
+        knockback.Monsters[0].HasKnockback = true;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(stationary),
@@ -491,6 +493,9 @@ public sealed class SnapshotStateHasherTests
         Assert.NotEqual(
             SnapshotStateHasher.Compute(demon),
             SnapshotStateHasher.Compute(animal));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(animal),
+            SnapshotStateHasher.Compute(knockback));
     }
 
     [Fact]

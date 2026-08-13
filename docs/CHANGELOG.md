@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Apply native sword and mace damage modifiers against externally classified
   animal targets at the authoritative physical damage boundary, carrying the
   validated class capability through protocol, saves, snapshots, and hashes.
+- Externalize native monster `MFLAG_KNOCKBACK` through the content schema and
+  apply its server-owned one-tile player displacement after successful monster
+  hits, preserving blocked-destination behavior through snapshots and hashes.
 - Apply the native class `CriticalStrike` rule to eligible authoritative player
   attacks: a level-based post-hit roll doubles physical damage before armor and
   downstream class/item effects, with the native RNG draw order preserved.

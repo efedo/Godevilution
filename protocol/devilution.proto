@@ -446,6 +446,8 @@ message MonsterSnapshot {
 	bool is_demon = 37;
 	// Immutable native monster class capability used by sword/mace modifiers.
 	bool is_animal = 38;
+	// Immutable native monster ability that displaces a player after a hit.
+	bool has_knockback = 39;
 }
 
 message WorldItemSnapshot {

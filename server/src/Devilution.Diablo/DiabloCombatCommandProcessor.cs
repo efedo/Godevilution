@@ -429,6 +429,38 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    /** Applies native monster MFLAG_KNOCKBACK after a successful player hit. */
+    private void ApplyMonsterKnockback(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (!monster.HasKnockback || player.Life <= 0)
+            return;
+
+        var direction = DiabloPlayerDirections.Toward(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var destinationX = checked(player.PositionX + displacement.X);
+        var destinationY = checked(player.PositionY + displacement.Y);
+        if (!world.IsWalkable(monster.LevelId, destinationX, destinationY)
+            || world.IsOccupied(
+                monster.LevelId,
+                destinationX,
+                destinationY,
+                players,
+                player.EntityId)) {
+            return;
+        }
+
+        DiabloPlayerActionLifecycle.Cancel(player);
+        player.PositionX = destinationX;
+        player.PositionY = destinationY;
+    }
+
     /** Applies native usable equipment resource gains after a successful hit. */
     private void ApplyEquipmentAttackEffects(
         AuthoritativePlayerState player,
@@ -681,7 +713,8 @@ public sealed class DiabloCombatCommandProcessor
             berserkImmune: target.BerserkImmune,
             deathAnimationTicks: target.DeathAnimationTicks,
             demon: target.IsDemon,
-            animal: target.IsAnimal);
+            animal: target.IsAnimal,
+            knockback: target.HasKnockback);
         copy.RestoreHitPointsQ6(target.MaxHitPointsQ6, target.MaxHitPointsQ6);
         world.CombatTargets.Add(entityId, copy);
     }
@@ -3733,6 +3766,8 @@ public sealed class DiabloCombatCommandProcessor
                         tick,
                         players,
                         PlayerDeathReason.MonsterOrTrap);
+                else if (damage > 0)
+                    ApplyMonsterKnockback(target, victim, players);
                 continue;
             }
 

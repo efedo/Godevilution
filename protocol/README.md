@@ -311,6 +311,9 @@ Windows toolchain command.
   class from monster names. True uses the tagged
   `godevilution-monster-animal-v1` canonical-hash extension; false remains the
   additive compatibility default.
+- `MonsterSnapshot.has_knockback` field 39 carries the validated native monster
+  ability that displaces a player after a successful autonomous hit. True uses
+  the tagged `godevilution-monster-knockback-v1` canonical-hash extension.
 
 ## Identity Note
 

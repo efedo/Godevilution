@@ -44,7 +44,8 @@ public sealed class AuthoritativeCombatTarget
         bool berserkImmune = false,
         int deathAnimationTicks = 0,
         bool demon = false,
-        bool animal = false)
+        bool animal = false,
+        bool knockback = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -89,6 +90,7 @@ public sealed class AuthoritativeCombatTarget
         IsUndead = undead;
         IsDemon = demon;
         IsAnimal = animal;
+        HasKnockback = knockback;
         IsPlayerMinion = playerMinion;
         OwnerPlayerId = ownerPlayerId;
         IsUnique = unique;
@@ -143,6 +145,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** External monster class capability used by sword/mace damage modifiers. */
     public bool IsAnimal { get; set; }
+
+    /** Native monster ability that displaces a player after a successful hit. */
+    public bool HasKnockback { get; set; }
 
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; set; }

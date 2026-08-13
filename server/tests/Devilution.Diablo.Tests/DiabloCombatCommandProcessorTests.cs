@@ -1111,6 +1111,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 10,
+            aggroRange: 5,
+            knockback: true);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        Assert.Single(processor.AdvanceTick(1, [player]));
+        Assert.Equal(90, player.Life);
+        Assert.Equal((3, 0), (player.PositionX, player.PositionY));
+
+        var blockedMonster = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            20,
+            attackDamage: 10,
+            aggroRange: 5,
+            knockback: true);
+        var blockedWorld = new DiabloWorldState(
+            fallbackBlockedCells: [3],
+            combatTargets: [blockedMonster]);
+        var blockedProcessor = CreateProcessor(blockedWorld);
+        var blockedPlayer = CreatePlayer(
+            entityId: 8,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        Assert.Single(blockedProcessor.AdvanceTick(1, [blockedPlayer]));
+        Assert.Equal((2, 0), (blockedPlayer.PositionX, blockedPlayer.PositionY));
+    }
+
+    [Fact]
     public void HellfireMonsterClassArmorFlagsReduceAutonomousMonsterDamage()
     {
         var monster = new AuthoritativeCombatTarget(

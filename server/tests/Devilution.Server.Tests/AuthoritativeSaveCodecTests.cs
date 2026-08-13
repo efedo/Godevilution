@@ -198,6 +198,7 @@ public sealed class AuthoritativeSaveCodecTests
                 IsUndead = true,
                 IsDemon = true,
                 IsAnimal = true,
+                HasKnockback = true,
                 DeathAnimationTicks = 3,
                 DeathTicksRemaining = 2,
                 HitPointsQ6 = 0,

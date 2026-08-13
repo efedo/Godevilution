@@ -39,6 +39,9 @@ public sealed record DiabloMonsterState(
     /** Native monster class capability used by sword/mace damage modifiers. */
     public bool IsAnimal { get; init; }
 
+    /** Native monster ability that displaces a player after a successful hit. */
+    public bool HasKnockback { get; init; }
+
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; init; }
 
@@ -302,6 +305,7 @@ public sealed partial class DiabloSimulation
                     IsUndead = target.IsUndead,
                     IsDemon = target.IsDemon,
                     IsAnimal = target.IsAnimal,
+                    HasKnockback = target.HasKnockback,
                     IsPlayerMinion = target.IsPlayerMinion,
                     OwnerPlayerId = target.OwnerPlayerId,
                     IsUnique = target.IsUnique,
@@ -1213,6 +1217,7 @@ public sealed partial class DiabloSimulation
                 target.IsUndead = monster.IsUndead;
                 target.IsDemon = monster.IsDemon;
                 target.IsAnimal = monster.IsAnimal;
+                target.HasKnockback = monster.HasKnockback;
                 target.IsPlayerMinion = monster.IsPlayerMinion;
                 target.OwnerPlayerId = monster.OwnerPlayerId;
                 target.IsUnique = monster.IsUnique;
@@ -1259,6 +1264,7 @@ public sealed partial class DiabloSimulation
                     undead: monster.IsUndead,
                     demon: monster.IsDemon,
                     animal: monster.IsAnimal,
+                    knockback: monster.HasKnockback,
                     playerMinion: monster.IsPlayerMinion,
                     ownerPlayerId: monster.OwnerPlayerId,
                     minDamage: monster.MinDamage,

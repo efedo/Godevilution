@@ -55,8 +55,8 @@ Status date: 2026-08-13
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
   resolve a stable/native type identity before activation. The first
   all one hundred thirty-eight variant-local native Hellfire type identities,
-  through native ID 137, are now externalized with native demon and undead
-  class capabilities; encounter rows inherit
+  through native ID 137, are now externalized with native demon, undead, and
+  animal class capabilities plus the native knockback ability flag; encounter rows inherit
   validated type resistance, baseline combat, and immutable capability metadata
   unless they provide explicit instance overrides. Variant-local native IDs are
   tracked separately from stable IDs; reverse lookup rejects ambiguous IDs in
@@ -122,6 +122,10 @@ Status date: 2026-08-13
   externalizes the capability, which is inherited from validated
   `monster_types.tsv` rows and persists through the
   shared protocol, saves, snapshots, and canonical hashes.
+- Native monster `MFLAG_KNOCKBACK` is now externalized through content schema
+  1.73 and applied by the authoritative autonomous attack path; a successful
+  hit moves the player one valid tile in the monster's facing direction and
+  blocked destinations preserve the native position.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each
