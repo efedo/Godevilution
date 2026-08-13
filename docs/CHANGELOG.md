@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   authoritative physical-hit path.
 - Route the native `Zombie` action band and long-range movement boundary through
   authoritative server simulation.
+- Align the native `Fat` normal and special melee bands with Overlord's
+  `15 + 4 * intelligence` and `20 + 4 * intelligence` boundaries.
 
 ## 2026-08-13
 

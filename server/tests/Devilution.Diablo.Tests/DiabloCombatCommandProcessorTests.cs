@@ -1200,13 +1200,44 @@ public sealed class DiabloCombatCommandProcessorTests
             life: 100,
             lifeMaximum: 100);
 
-        // tick ^ monster entity ^ player entity = 4, inside the native five-percent band.
-        var deliveries = processor.AdvanceTick(10, [player]);
+        // 30 ^ 9 ^ 7 = 16, inside the native 15..20 special band.
+        var deliveries = processor.AdvanceTick(30, [player]);
 
-        Assert.Equal(88, player.Life);
+        Assert.Equal(89, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(12, damage.Amount);
+        Assert.Equal(11, damage.Amount);
+    }
+
+    [Fact]
+    public void FatAiUsesItsNativeNormalBandAndDeclinesOutsideItsAttackBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 3,
+            aggroRange: 5,
+            toHit: 255,
+            nativeAi: "Fat");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 0 ^ 9 ^ 7 = 14, inside Fat's normal-admission boundary.
+        Assert.Single(processor.AdvanceTick(0, [player]));
+        Assert.Equal(97, player.Life);
+
+        player.Life = 100;
+        // 40 ^ 9 ^ 7 = 38, outside Fat's total attack boundary.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.Equal(100, player.Life);
     }
 
     [Fact]

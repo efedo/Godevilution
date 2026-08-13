@@ -130,10 +130,9 @@ Status date: 2026-08-13
   authoritative targets, snapshots, saves, protocol field 43, and canonical
   hashes. AI-specific special behaviors remain incremental and are not inferred
   by clients.
-- The native `Fat` AI special-melee band is now server-owned: Toad Demon-family
-  targets select the native five-percent special branch from stable tick/entity
-  state and resolve the externalized special accuracy and damage range. Other
-  AI-specific special behaviors remain incremental.
+- The native `Fat` AI normal and special melee bands are now server-owned:
+  Toad Demon-family targets use the native `15 + 4 * intelligence` normal and
+  `20 + 4 * intelligence` total boundaries with externalized accuracy and damage.
 - The native `Rhino` AI charge is now server-owned for clear long-range lanes:
   the authoritative monster moves to the nearest clear cell before the player,
   applies its externalized special damage, and preserves charge knockback and

@@ -179,9 +179,9 @@ formula, while older rows retain the global-hit compatibility fallback.
 Schema 1.79 adds the optional `native_ai` monster-type column. The checked-in
 Hellfire rows copy the native `MonsterAIID` identity from `monstdat.tsv`; the
 server validates and persists the identity while clients do not dispatch AI.
-The first behavior using that identity is the native `Fat` special-melee band,
-which consumes the validated `to_hit_special` and special damage columns for
-the Toad Demon family. The `Rhino` identity now drives the server-owned
+The first behavior using that identity is the native `Fat` Overlord normal and
+special melee bands, which consume the validated normal/special accuracy and
+damage columns for the Toad Demon family. The `Rhino` identity now drives the server-owned
 clear-lane charge using the same special columns; remaining AI-specific behavior
 is still incremental.
 Schema 1.80 adds the optional `intelligence` monster-type column. The checked-in

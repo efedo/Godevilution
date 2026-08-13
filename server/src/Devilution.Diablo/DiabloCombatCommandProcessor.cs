@@ -3746,6 +3746,9 @@ public sealed class DiabloCombatCommandProcessor
                 if (target.NativeAi == "GoatMelee"
                     && attackSeed % 100U >= (uint)Math.Min(100, 23 + (2 * target.Intelligence)))
                     continue;
+                if (target.NativeAi == "Fat"
+                    && !NativeFatAttackBandAllowsAttack(target, attackSeed))
+                    continue;
                 var usesSpecialAttack = UsesNativeFatSpecialAttack(
                     target,
                     attackSeed)
@@ -4275,7 +4278,15 @@ public sealed class DiabloCombatCommandProcessor
         return target.NativeAi == "Fat"
             && target.ToHitSpecial > 0
             && target.MaxDamageSpecial > 0
-            && attackSeed % 100U < 5U;
+            && attackSeed % 100U >= (uint)Math.Min(100, 15 + (4 * target.Intelligence))
+            && attackSeed % 100U < (uint)Math.Min(100, 20 + (4 * target.Intelligence));
+    }
+
+    private static bool NativeFatAttackBandAllowsAttack(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        return attackSeed % 100U < (uint)Math.Min(100, 20 + (4 * target.Intelligence));
     }
 
     /** Native AiAvoidance selects a wounded GoatMelee special on its second 50% roll. */

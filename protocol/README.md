@@ -344,6 +344,8 @@ Windows toolchain command.
   authoritative Damage event or no event for an outside-band tick.
 - Zombie action admission and long-range movement are server-owned; clients
   render only the resulting monster snapshot and gameplay events.
+- Fat normal and special melee bands are server-owned; clients receive only the
+  resulting authoritative Damage event or unchanged state.
 
 ## Identity Note
 

@@ -237,7 +237,8 @@ Gargoyle special lock. When a wounded Gargoyle heals beyond its native
 self-heal and holds this lock until the player closes that boundary; clients
 only render the resulting Healing event and snapshot state.
 
-The server currently uses the `Fat` identity for the native special-melee band;
+The server currently uses the `Fat` identity for the native Overlord normal
+(`15 + 4 * intelligence`) and special (`20 + 4 * intelligence`) melee bands;
 the resulting damage event and snapshot remain authoritative. Other AI-specific
 special behavior is intentionally added incrementally.
 
