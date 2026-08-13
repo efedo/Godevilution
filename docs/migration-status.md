@@ -17,7 +17,7 @@ Status date: 2026-08-12
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
 | Diablo module | Independent .NET 8 assembly with content activation, transport-neutral simulation, and state capture/restore, depending only on Domain, Data, and Engine | Expand exact legacy gameplay/content coverage and register future capabilities through Engine |
-| External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Lightning Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, Jester, Berserk, Warp, Golem, and Etherealize spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, level, quest, and item metadata; and extend the table reference as new schemas land |
+| External content | Explicitly manifested base and Hellfire variant packs plus schema-aware, dependency-versioned composite-key overlays, including all six native-compatible classes, their complete native animation timings, complete initial loadouts, authoritative definitions for every directly castable starting source, the Rogue Trap Disarm capability identity, native level-range generation metadata, and the Hellfire Blood Star, Bone Spirit, Fire Wall, Lightning Wall, Flame Wave, Inferno, Chain Lightning, Nova, Apocalypse, Rage, Elemental, Guardian, Town Portal, Reflect, Magi, Mana, Ring of Fire, Immolation, Jester, Berserk, Warp, Golem, and Etherealize spell behaviors | Externalize remaining cursor-driven class capabilities and native spells, Hellfire monster, quest behavior/state, procedural level generation, and item metadata; and extend the table reference as new schemas land |
 | Gameplay modules | Typed dependency-ordered capabilities, inclusive semantic dependency-version and Engine API ranges, atomic activation, preflight diagnostics, a first-party Diablo factory, and explicit hash-verified Server packages | Broaden replacement-retirement fixtures and add further first-party capabilities |
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
@@ -54,6 +54,9 @@ Status date: 2026-08-12
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining
   quest-state data remain incremental.
+- Native level-range generation rules are now externalized through validated
+  `level_generation.tsv` metadata and exposed by Diablo activation; procedural
+  map generation still remains a separate migration.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges
@@ -655,7 +658,9 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
-Content schema 0.64 adds validated native-compatible `quest_types.tsv`
+Content schema 0.65 adds validated native level-range generation metadata in
+`level_generation.tsv`, including monster density, multiplayer scaling, and
+trap percentages. Content schema 0.64 adds validated native-compatible `quest_types.tsv`
 definitions for all base and Hellfire native quest IDs; quest-state rows now
 reject unknown quest identities. Content schema 0.63 adds validated
 native-compatible `monster_types.tsv`
@@ -768,7 +773,8 @@ resistance, lifetime, collision, and deterministic projectile state.
    Infravision, Search, Phasing, Mana Shield, Magi, Mana, Ring of Fire, Teleport, Telekinesis, Town Portal, Resurrection, Jester, Berserk, Warp, Lightning Wall, and Golem,
    including remaining class modifiers, scaling, and targeting rules.
 2. Expand external content coverage, including remaining Hellfire monster,
-   level, quest, and item metadata and authoritative gameplay definitions.
+   quest behavior/state, procedural level generation, and item metadata and
+   authoritative gameplay definitions.
 3. Grow the Godot client from a protocol demonstration into a complete playable
    presentation client using production assets.
 4. Add the missing replay, reconnect, multiplayer, and long-running soak cases.
