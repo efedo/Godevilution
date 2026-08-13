@@ -862,9 +862,12 @@ whether the cast source is mana, a staff charge, or a consumable.
 Player collisions preserve the native Charged Bolt roll sequence: hit first,
 an eligible block roll second, and damage last even when blocked. Spell damage
 uses exact Q6 units, lightning resistance is derived from usable identified
-equipment plus class rules and capped at 75 percent, and positive resistance
-overrides blocking. Only authoritative `Stand` and melee `Attack` modes admit a
-block. A successful block immediately enters the class-duration `Block` mode;
+equipment plus class rules and capped at 75 percent. A usable identified item
+with the native `ZeroResistance` flag resets fire, lightning, and magic
+resistance after natural class resistance and before that cap. Positive
+resistance overrides blocking. Only authoritative `Stand` and melee `Attack`
+modes admit a block. A successful block immediately enters the class-duration
+`Block` mode;
 an unresisted threshold hit enters class-duration `GotHit`, and item recovery
 flags shorten those durations exactly as in native code. Hellfire additionally
 consumes the blocked-missile rotation-selection draw before Charged Bolt enters

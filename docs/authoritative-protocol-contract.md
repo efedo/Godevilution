@@ -482,6 +482,10 @@ source.
 The active class's Q6 item-vitality and item-magic factors, flat item resource
 bonuses, and Hellfire conversions are likewise applied by the server to life
 and mana maxima; clients consume those authoritative values.
+Usable identified equipment resistance bonuses are also resolved by the server;
+an active native `ZeroResistance` flag resets fire, lightning, and magic
+resistance after natural class resistance and before the native 0..75 clamp.
+Clients never derive elemental resistance from item presentation.
 
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A

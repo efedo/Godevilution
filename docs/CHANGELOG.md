@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply native `ZeroResistance` item flags to authoritative elemental
+  resistance after natural class resistance and before the native 0..75 clamp.
 - Apply usable identified equipment damage-percent, flat-damage, to-hit, and
   armor-piercing metadata to authoritative player attacks.
 - Recompute effective player armor from equipped item armor, percentage armor,

@@ -125,6 +125,10 @@ Status date: 2026-08-13
   to authoritative life and mana maxima through each external class's Q6 item
   factors; flat resource bonuses and Hellfire conversions use the same native
   eligibility boundary.
+- Native usable, identified equipment `ZeroResistance` flags now reset
+  authoritative fire, lightning, and magic resistance after natural class
+  resistance and before the native 0..75 clamp; clients consume the resulting
+  server-owned damage outcomes.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,
   combat metadata, wallets, equipment, belt and inventory placements, class

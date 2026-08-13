@@ -4473,6 +4473,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ZeroResistanceEquipmentResetsLightningResistanceBeforeDamage()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var zeroResistanceShield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+            PlusLightningResistance = 75,
+            Flags = AuthoritativeEquipmentResistanceRules.ZeroResistanceFlag,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            equipment: [new EquippedStoreItem(5, 99, zeroResistanceShield)]);
+
+        var damage = Assert.Single(processor.AdvanceTick(1, [owner, victim])).Event;
+
+        Assert.Equal(576, victim.Life);
+        Assert.Equal(1, damage.Amount);
+        Assert.Equal(64, damage.AmountQ6);
+    }
+
+    [Fact]
     public void ExhaustedOrNonLeftHandChargedItemIsRejectedWithoutMutation()
     {
         var staffState = AuthoritativeItemState.Empty with {

@@ -7004,18 +7004,14 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerClassDefinition? playerClass,
         AuthoritativeDamageType damageType)
     {
-        var resistance = player.Equipment
-            .Where(item => IsUsable(item.State)
-                && (item.State.Magical == 0 || item.State.Identified))
-            .Sum(item => damageType switch {
-                AuthoritativeDamageType.Fire => item.State.PlusFireResistance,
-                AuthoritativeDamageType.Lightning => item.State.PlusLightningResistance,
-                AuthoritativeDamageType.Magic => item.State.PlusMagicResistance,
-                _ => 0,
-            });
-        if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.NaturalResistance) == true)
-            resistance += checked((int)player.CharacterLevel);
-        return Math.Clamp(resistance, 0, 75);
+        var naturalResistanceBonus = playerClass?.Flags.HasFlag(
+            DiabloPlayerClassFlags.NaturalResistance) == true
+            ? checked((int)player.CharacterLevel)
+            : 0;
+        return AuthoritativeEquipmentResistanceRules.Calculate(
+            player.Equipment,
+            damageType,
+            naturalResistanceBonus);
     }
 
     private bool CanBlock(AuthoritativePlayerState player)
