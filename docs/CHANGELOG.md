@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gryphon's Claw (`unique_id=1025`) through schema 0.84,
+  including its native Falchion base item with damage, magic-curse, and
+  dexterity-curse powers.
+
 - Externalize Hellfire The Defender (`unique_id=1024`) through schema 0.83,
   including its native Sabre base item and armor, vitality, and hit-curse
   powers.

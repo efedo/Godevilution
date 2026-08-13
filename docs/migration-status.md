@@ -44,7 +44,8 @@ Status date: 2026-08-13
   Amulet, Ring of Truth, Harlequin Crest, Veil of Steel, Arkaine's Valor, and
   Griswold's Edge, Bovine Plate, The Rift Bow, The Butcher's Cleaver, and The
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
-  and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, and The Defender
+  and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
+  and Gryphon's Claw
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -733,6 +734,9 @@ dexterity-curse, damage-modifier, attack-speed, and fire-resistance powers.
 Content schema 0.83 adds the native-derived Hellfire The Defender base item and
 unique definition (`unique_id=1024`) with its Sabre identity, armor, vitality,
 and hit-curse powers.
+Content schema 0.84 adds the native-derived Hellfire Gryphon's Claw base item
+and unique definition (`unique_id=1025`) with its Falchion identity, damage,
+magic-curse, and dexterity-curse powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

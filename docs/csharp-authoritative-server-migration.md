@@ -619,6 +619,10 @@ Schema 0.83 adds the native-derived Hellfire The Defender base item and unique
 definition (`unique_id=1024`) with its Sabre identity, armor, vitality, and
 hit-curse powers.
 
+Schema 0.84 adds the native-derived Hellfire Gryphon's Claw base item and
+unique definition (`unique_id=1025`) with its Falchion identity, damage,
+magic-curse, and dexterity-curse powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

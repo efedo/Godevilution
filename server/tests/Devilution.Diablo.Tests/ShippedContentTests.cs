@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.83.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.84.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.83.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.84.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -414,6 +414,16 @@ public sealed class ShippedContentTests
         Assert.Equal(17, defender.MinimumStrength);
         Assert.Equal(5, defender.PlusVitality);
         Assert.Equal(-5, defender.PlusToHit);
+        var gryphonsClaw = hellfireItems.GenerateUnique(1025, 0x12345678, 1);
+        Assert.Equal(1025, gryphonsClaw.UniqueId);
+        Assert.Equal(1000, gryphonsClaw.Value);
+        Assert.Equal(121, gryphonsClaw.ItemIndex);
+        Assert.Equal(4, gryphonsClaw.MinDamage);
+        Assert.Equal(8, gryphonsClaw.MaxDamage);
+        Assert.Equal(30, gryphonsClaw.MinimumStrength);
+        Assert.Equal(100, gryphonsClaw.PlusDamage);
+        Assert.Equal(-2, gryphonsClaw.PlusMagic);
+        Assert.Equal(-5, gryphonsClaw.PlusDexterity);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
