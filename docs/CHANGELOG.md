@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Externalize native monster demon-class capability through schema 1.71 and
   apply usable identified `TripleDemonDamage` equipment at the authoritative
   physical attack boundary.
+- Apply native usable identified `Knockback` equipment after successful
+  non-lethal physical hits, preserving petrified and blocked-destination rules.
 - Apply native usable identified life/mana-on-hit equipment effects after
   successful authoritative physical attacks, including deterministic random
   life steal and `NoMana` suppression for mana steal.

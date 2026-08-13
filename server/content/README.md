@@ -114,6 +114,10 @@ Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class
 from display names.
+Usable identified equipment with native `Knockback` now applies the same
+authoritative physical-hit boundary: surviving non-petrified targets move one
+valid unoccupied cell away from the attacker, while blocked destinations and
+misses leave positions unchanged.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

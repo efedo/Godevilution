@@ -166,7 +166,11 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         return intent switch {
-            DiabloAttackIntent attack => Attack(player, attack.TargetEntityId, appliedTick),
+            DiabloAttackIntent attack => Attack(
+                player,
+                attack.TargetEntityId,
+                appliedTick,
+                players),
             DiabloCastIntent cast => Cast(player, cast, appliedTick, players),
             _ => DiabloCombatIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
@@ -251,7 +255,8 @@ public sealed class DiabloCombatCommandProcessor
                         player,
                         action.TargetEntityId,
                         action.StartedAtTick,
-                        player.CombatMode == DiabloPlayerCombatMode.RangedAttack),
+                        player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
+                        players),
                     events);
                 break;
             case DiabloPlayerActionKind.Cast:
@@ -296,10 +301,11 @@ public sealed class DiabloCombatCommandProcessor
     private DiabloCombatIntentResult Attack(
         AuthoritativePlayerState player,
         uint targetEntityId,
-        ulong appliedTick)
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players)
     {
         if (!useNativePlayerActionTiming)
-            return ResolveAttack(player, targetEntityId, appliedTick);
+            return ResolveAttack(player, targetEntityId, appliedTick, players: players);
         if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
@@ -337,8 +343,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         uint targetEntityId,
         ulong appliedTick,
-        bool ranged = false)
+        bool ranged = false,
+        IReadOnlyList<AuthoritativePlayerState>? players = null)
     {
+        players ??= [player];
         if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
@@ -349,11 +357,44 @@ public sealed class DiabloCombatCommandProcessor
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId));
         var events = new List<DiabloGameplayEvent>();
         ApplyResolvedDamage(player, target, damage, events);
+        ApplyEquipmentKnockback(player, target, damage, players);
         if (damage > 0)
             ApplyEquipmentAttackEffects(player, damage, events);
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Applies native knockback after a successful non-lethal physical hit. */
+    private void ApplyEquipmentKnockback(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        int damage,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (damage <= 0
+            || target.HitPoints <= 0
+            || target.IsPetrified
+            || (GetUsableEquipmentFlags(player)
+                & AuthoritativeEquipmentAttackEffectRules.KnockbackFlag) == 0) {
+            return;
+        }
+
+        var directionX = Math.Sign(target.PositionX - player.PositionX);
+        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        if (directionX == 0 && directionY == 0)
+            return;
+        var destinationX = target.PositionX + directionX;
+        var destinationY = target.PositionY + directionY;
+        if (world.IsWalkable(target.LevelId, destinationX, destinationY)
+            && !world.IsOccupied(
+                target.LevelId,
+                destinationX,
+                destinationY,
+                players,
+                target.EntityId)) {
+            target.ApplyKnockback(destinationX, destinationY);
+        }
     }
 
     /** Applies native usable equipment resource gains after a successful hit. */

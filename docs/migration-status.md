@@ -68,6 +68,10 @@ Status date: 2026-08-13
   authoritative physical damage only against externally classified demons;
   the demon capability persists through snapshots, saves, hashes, and protocol
   field 37.
+- Usable, identified equipment with native `Knockback` now moves a surviving,
+  non-petrified physical target one valid unoccupied cell away from the
+  attacker; the existing authoritative position snapshot/hash boundary owns
+  the resulting movement.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

@@ -357,6 +357,80 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void KnockbackEquipmentMovesOnlySuccessfulNonPetrifiedHits()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.KnockbackFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(90, target.HitPoints);
+        Assert.Equal((2, 0), (target.PositionX, target.PositionY));
+
+        var petrified = new AuthoritativeCombatTarget(10, 1, 0, 100, petrified: true);
+        var petrifiedWorld = new DiabloWorldState(combatTargets: [petrified]);
+        var petrifiedProcessor = CreateProcessor(petrifiedWorld);
+        var petrifiedResult = petrifiedProcessor.Execute(
+            player,
+            new DiabloAttackIntent(10),
+            2);
+
+        Assert.True(petrifiedResult.Succeeded);
+        Assert.Equal(90, petrified.HitPoints);
+        Assert.Equal((1, 0), (petrified.PositionX, petrified.PositionY));
+    }
+
+    [Fact]
+    public void KnockbackEquipmentDoesNotMoveAHitWhenDestinationIsBlockedOrAttackMisses()
+    {
+        var blocked = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var blockedWorld = new DiabloWorldState(
+            fallbackBlockedCells: [2],
+            combatTargets: [blocked]);
+        var processor = CreateProcessor(blockedWorld);
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.KnockbackFlag,
+                })]);
+
+        var blockedResult = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(blockedResult.Succeeded);
+        Assert.Equal((1, 0), (blocked.PositionX, blocked.PositionY));
+
+        var missed = new AuthoritativeCombatTarget(10, 1, 0, 100);
+        var missedWorld = new DiabloWorldState(combatTargets: [missed]);
+        var missProcessor = CreateProcessor(
+            missedWorld,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hitChancePercent: 0));
+        var missResult = missProcessor.Execute(player, new DiabloAttackIntent(10), 2);
+
+        Assert.True(missResult.Succeeded);
+        Assert.Equal(100, missed.HitPoints);
+        Assert.Equal((1, 0), (missed.PositionX, missed.PositionY));
+    }
+
+    [Fact]
     public void AttackAppliesUsableIdentifiedEquipmentResourceGains()
     {
         var target = new AuthoritativeCombatTarget(
