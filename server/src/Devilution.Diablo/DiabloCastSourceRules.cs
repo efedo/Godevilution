@@ -21,13 +21,19 @@ internal static class DiabloCastSourceRules
             : 0;
     }
 
-    public static uint GetConsumableSpellId(int miscId, int spellId)
+    public static uint GetConsumableSpellId(
+        int miscId,
+        int spellId,
+        AuthoritativeSpellCatalog? spells)
     {
         if (miscId is ScrollMiscId or TargetedScrollMiscId)
             return spellId > 0 ? checked((uint)spellId) : 0;
-        return miscId is >= FirstRuneMiscId and <= LastRuneMiscId
-            ? checked((uint)miscId)
-            : 0;
+        if (miscId is < FirstRuneMiscId or > LastRuneMiscId
+            || spells is null
+            || !spells.TryGetByConsumableMiscId(miscId, out var definition)) {
+            return 0;
+        }
+        return definition.SpellId;
     }
 
     public static bool IsMatchingChargedItem(
@@ -40,8 +46,9 @@ internal static class DiabloCastSourceRules
 
     public static bool IsMatchingConsumableItem(
         AuthoritativeItemState state,
-        uint spellId)
+        uint spellId,
+        AuthoritativeSpellCatalog? spells)
     {
-        return GetConsumableSpellId(state.MiscId, state.SpellId) == spellId;
+        return GetConsumableSpellId(state.MiscId, state.SpellId, spells) == spellId;
     }
 }

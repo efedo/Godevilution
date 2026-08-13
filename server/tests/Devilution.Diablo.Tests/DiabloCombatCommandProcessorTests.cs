@@ -4558,6 +4558,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RuneOfStoneUsesStableSpellIdentityFromExternalConsumableMapping()
+    {
+        var target = new AuthoritativeCombatTarget(9, 2, 0, 20);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var spell = CreateStoneCurseSpell() with { ConsumableMiscId = 51 };
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]));
+        var rune = AuthoritativeItemState.Empty with { MiscId = 51 };
+        var player = CreatePlayer(
+            mana: 10000,
+            manaMaximum: 10000,
+            belt: [new BeltStoreItem(2, 72, rune)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                8,
+                9,
+                2,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.True(target.IsPetrified);
+    }
+
+    [Fact]
     public void StoneCurseFizzlePreservesSourceButActiveRecastConsumesIt()
     {
         var spell = CreateStoneCurseSpell();

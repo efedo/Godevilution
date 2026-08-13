@@ -123,7 +123,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 if (spellId == 0) {
                     spellId = DiabloCastSourceRules.GetConsumableSpellId(
                         item.MiscId,
-                        item.SpellId);
+                        item.SpellId,
+                        spells);
                     source = "consumable";
                 }
                 if (spellId != 0) {

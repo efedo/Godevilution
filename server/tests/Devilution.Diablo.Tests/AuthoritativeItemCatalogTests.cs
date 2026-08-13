@@ -254,6 +254,22 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LegacyRuneMiscellaneousIdsPreserveNativeSourceIdentity()
+    {
+        const string header = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n";
+        var itemData = header
+            + "IDI_RUNE_FIRE\t1\tMisc\tUnequippable\tRUNE_OF_FIRE\tMisc\tNONE\tRune of Fire\tRune\t1\t0\t0\t0\t0\t0\t0\t0\t0\t\tRUNEF\tNull\ttrue\t100\n"
+            + "IDI_RUNE_LIGHT\t1\tMisc\tUnequippable\tRUNE_OF_LIGHTNING\tMisc\tNONE\tRune of Lightning\tRune\t3\t0\t0\t0\t0\t0\t0\t13\t0\t\tRUNEL\tNull\ttrue\t200\n"
+            + "IDI_GREATER_RUNE_FIRE\t1\tMisc\tUnequippable\tGREATER_RUNE_OF_FIRE\tMisc\tNONE\tGreater Rune of Fire\tRune\t7\t0\t0\t0\t0\t0\t0\t42\t0\t\tGR_RUNEF\tNull\ttrue\t400\n"
+            + "IDI_GREATER_RUNE_LIGHT\t1\tMisc\tUnequippable\tGREATER_RUNE_OF_LIGHTNING\tMisc\tNONE\tGreater Rune of Lightning\tRune\t7\t0\t0\t0\t0\t0\t0\t42\t0\t\tGR_RUNEL\tNull\ttrue\t500\n"
+            + "IDI_RUNE_STONE\t1\tMisc\tUnequippable\tRUNE_OF_STONE\tMisc\tNONE\tRune of Stone\tRune\t7\t0\t0\t0\t0\t0\t0\t25\t0\t\tRUNES\tNull\ttrue\t300\n";
+
+        var items = AuthoritativeItemCatalog.LoadLegacyTsv("itemdat.tsv", itemData);
+
+        Assert.Equal([47, 48, 50, 49, 51], items.Definitions.Select(item => item.MiscId));
+    }
+
+    [Fact]
     public void UnmappedLegacySpellSourcesAreRejectedWhenAStableCatalogIsActive()
     {
         const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"

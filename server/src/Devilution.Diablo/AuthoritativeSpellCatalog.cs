@@ -69,6 +69,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native `SpellID` identity retained separately from the stable content ID. */
     public uint NativeSpellId { get; init; }
 
+    /** Native rune miscellaneous ID that resolves to this stable spell row. */
+    public int ConsumableMiscId { get; init; }
+
     public int DamageAmount { get; init; }
 
     /** Per-level reduction applied after the first effective spell level. */
@@ -335,20 +338,31 @@ public sealed record AuthoritativeSpellDefinition(
 public sealed class AuthoritativeSpellCatalog
 {
     private const uint MaximumNativeSpellId = 51;
+    private const int FirstRuneMiscId = 47;
+    private const int LastRuneMiscId = 51;
     private readonly Dictionary<uint, AuthoritativeSpellDefinition> spells;
     private readonly Dictionary<uint, AuthoritativeSpellDefinition> nativeSpells;
+    private readonly Dictionary<int, AuthoritativeSpellDefinition> consumableSpells;
 
     public AuthoritativeSpellCatalog(IEnumerable<AuthoritativeSpellDefinition> definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         spells = new Dictionary<uint, AuthoritativeSpellDefinition>();
         nativeSpells = new Dictionary<uint, AuthoritativeSpellDefinition>();
+        consumableSpells = new Dictionary<int, AuthoritativeSpellDefinition>();
         foreach (var definition in definitions) {
             if (definition.SpellId == 0 || definition.ManaCost <= 0 || definition.HealingAmount < 0 || definition.DamageAmount < 0)
                 throw new InvalidDataException("Spell definitions require a non-zero ID, positive mana cost, and non-negative effects.");
             if (definition.NativeSpellId > MaximumNativeSpellId)
                 throw new InvalidDataException(
                     $"Spell {definition.SpellId} has an invalid native spell ID {definition.NativeSpellId}.");
+            if (definition.ConsumableMiscId != 0
+                && (definition.ConsumableMiscId < FirstRuneMiscId
+                    || definition.ConsumableMiscId > LastRuneMiscId)) {
+                throw new InvalidDataException(
+                    $"Spell {definition.SpellId} has an invalid consumable miscellaneous ID {definition.ConsumableMiscId}. "
+                    + $"Only rune IDs {FirstRuneMiscId} through {LastRuneMiscId} are supported.");
+            }
             if (definition.ManaAdjustment < 0
                 || definition.ManaAdjustmentDivisor <= 0
                 || definition.CharacterLevelManaCost < 0
@@ -1546,6 +1560,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     $"Native spell ID {definition.NativeSpellId} is defined more than once.");
             }
+            if (definition.ConsumableMiscId != 0
+                && !consumableSpells.TryAdd(definition.ConsumableMiscId, definition)) {
+                throw new InvalidDataException(
+                    $"Consumable miscellaneous ID {definition.ConsumableMiscId} is defined more than once.");
+            }
         }
         if (spells.Count == 0)
             throw new InvalidDataException("The spell catalog cannot be empty.");
@@ -1594,6 +1613,10 @@ public sealed class AuthoritativeSpellCatalog
     public bool TryGetByNativeId(uint nativeSpellId, out AuthoritativeSpellDefinition definition)
         => nativeSpells.TryGetValue(nativeSpellId, out definition!);
 
+    /** Resolves a native rune miscellaneous ID to its stable authoritative spell row. */
+    public bool TryGetByConsumableMiscId(int miscId, out AuthoritativeSpellDefinition definition)
+        => consumableSpells.TryGetValue(miscId, out definition!);
+
     public static AuthoritativeSpellCatalog LoadTsv(string sourcePath, string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
@@ -1605,6 +1628,7 @@ public sealed class AuthoritativeSpellCatalog
             row.OptionalUInt32("status_duration"),
             row.OptionalInt32("status_magnitude")) {
             NativeSpellId = row.OptionalUInt32("native_spell_id"),
+            ConsumableMiscId = row.OptionalInt32("consumable_misc_id"),
             DamageAmount = row.OptionalInt32("damage_amount"),
             ManaAdjustment = row.OptionalInt32("mana_adjustment"),
             ManaAdjustmentDivisor = row.OptionalInt32("mana_adjustment_divisor", 1),

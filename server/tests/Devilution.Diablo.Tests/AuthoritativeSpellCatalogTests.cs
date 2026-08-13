@@ -186,6 +186,46 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedRuneMiscIdentityResolvesToStableStoneCurse()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGetByConsumableMiscId(51, out var stoneCurse));
+        Assert.Equal(8U, stoneCurse.SpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.StoneCurse, stoneCurse.ProjectileBehavior);
+    }
+
+    [Fact]
+    public void DuplicateConsumableMiscIdsAreRejected()
+    {
+        var definitions = new[] {
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0) { ConsumableMiscId = 51 },
+            new AuthoritativeSpellDefinition(2, 1, 0, 0, 0, 0) { ConsumableMiscId = 51 },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => new AuthoritativeSpellCatalog(definitions));
+
+        Assert.Contains("Consumable miscellaneous ID 51", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidConsumableMiscIdsAreRejected()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0) { ConsumableMiscId = 46 },
+        ]));
+
+        Assert.Contains("invalid consumable miscellaneous ID 46", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DuplicateNativeSpellIdsAreRejected()
     {
         var definitions = new[] {

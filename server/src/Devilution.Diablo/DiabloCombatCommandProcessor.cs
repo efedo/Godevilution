@@ -1239,7 +1239,7 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
-    private static bool TryResolveCastSource(
+    private bool TryResolveCastSource(
         AuthoritativePlayerState player,
         DiabloCastIntent intent,
         out ResolvedCastSource source,
@@ -1320,7 +1320,7 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
-    private static bool TryInferCastSource(
+    private bool TryInferCastSource(
         AuthoritativePlayerState player,
         uint spellId,
         out ResolvedCastSource source)
@@ -1409,7 +1409,7 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    private static bool TryResolveConsumableItem(
+    private bool TryResolveConsumableItem(
         AuthoritativePlayerState player,
         uint spellId,
         DiabloPlayerItemReference reference,
@@ -2660,9 +2660,9 @@ public sealed class DiabloCombatCommandProcessor
         return DiabloCastSourceRules.IsMatchingChargedItem(state, spellId);
     }
 
-    private static bool IsMatchingConsumableItem(AuthoritativeItemState state, uint spellId)
+    private bool IsMatchingConsumableItem(AuthoritativeItemState state, uint spellId)
     {
-        return DiabloCastSourceRules.IsMatchingConsumableItem(state, spellId);
+        return DiabloCastSourceRules.IsMatchingConsumableItem(state, spellId, spells);
     }
 
     private static void ConsumeCastSource(
