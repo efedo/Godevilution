@@ -256,6 +256,11 @@ Windows toolchain command.
 - `MonsterSnapshot.owner_player_id` field 33 identifies the authoritative
   player that owns a summoned minion. It is zero for ordinary monsters and is
   retained through snapshot restore and canonical state identity.
+- `MonsterSnapshot` fields 34-35 carry the externalized native death-animation
+  duration and remaining terminal ticks. Golem's 12-frame death sequence uses
+  these fields; the server alone decrements and expires the dead minion. The
+  nondefault values use the tagged
+  `godevilution-monster-death-animation-v1` canonical-hash extension.
 
 ## Identity Note
 

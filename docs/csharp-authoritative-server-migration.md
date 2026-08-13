@@ -531,6 +531,11 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.57 externalizes Golem's native 12-frame death-animation timing on
+spell row `52`. The server carries remaining terminal ticks through
+snapshots, version-1 saves, canonical hashes, and protocol fields 34-35, then
+removes the expired minion.
+
 Schema 0.56 adds Etherealize (stable spell ID `53`, native `SpellID` `26`).
 The server owns its level-scoped status identity, transition cleanup,
 protocol/snapshot/hash persistence, and monster-damage immunity.
@@ -541,9 +546,9 @@ minion, and persists owner identity plus native life, armor, and damage state
 through snapshots, saves, hashes, and protocol field 33. Golems use
 server-owned deterministic nearest-monster targeting, movement, melee damage,
 experience attribution, owner/level lifecycle cleanup, deterministic
-breadth-first path planning around blocked cells, and owner-facing native
-random-walk ordering when idle. Native death-animation parity remains follow-up
-work.
+breadth-first path planning around blocked cells, owner-facing native
+random-walk ordering when idle, and externalized native death-animation timing
+through terminal cleanup.
 
 Schema 0.54 adds Nova (stable spell ID `18`, native `SpellID` `18`). The
 existing authoritative radial controller and persistent lightning-ball

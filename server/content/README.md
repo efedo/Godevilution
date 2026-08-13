@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.56.0` schema in
+It declares its identity and `devilution.diablo@0.57.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 
@@ -108,6 +108,12 @@ spell definitions because several select cursor-driven item or object
 interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
+
+Schema 0.57 adds Golem death-animation timing to stable spell row `52` (native
+`SpellID` `21`). The native 12-frame death sequence is externalized as
+`golem_death_animation_ticks`; the server carries its remaining terminal ticks
+through snapshots, saves, hashes, and protocol fields 34-35, then removes the
+expired minion after the animation.
 
 Schema 0.55 adds stable Golem spell row `52` (native `SpellID` `21`). The
 server validates the native targeted summon, replaces only the caster's prior

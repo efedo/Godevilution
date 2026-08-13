@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.57 with externalized Golem
+  death-animation timing. The native 12-frame sequence is server-owned and
+  persists remaining terminal ticks through snapshots, saves, hashes, and
+  protocol fields 34-35 before the expired minion is removed.
+
 - Advance the Diablo content schema to 0.56 with server-authoritative
   Etherealize (stable spell ID 53, native `SpellID` 26), including its
   level-scoped status, transition cleanup, protocol/snapshot/hash persistence,
@@ -17,7 +22,7 @@ All notable changes to this fork are documented below.
 - Add deterministic Golem nearest-monster targeting, movement, melee damage,
   experience attribution, and owner/level lifecycle cleanup; native path
   planning now uses deterministic breadth-first routing around blocked cells and
-  owner-facing idle wandering; death-animation parity remains follow-up.
+  owner-facing idle wandering.
 - Refresh the 22 base-content replay fixtures to the resulting manifest
   identity while preserving all existing replay checkpoints.
 - Advance the Diablo content schema to 0.50 with server-authoritative Jester
