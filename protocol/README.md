@@ -321,8 +321,10 @@ Protocol v1 predates a separate ruleset field. The current server therefore
 places the combined content-and-module ruleset SHA-256 in both
 `content_manifest_hash` and `ruleset_identity_hash`. Current clients must send
 that combined hash in `content_manifest_hash`; they should also send it in
-`ruleset_identity_hash`. The server log prints both the raw content manifest
-hash and the combined ruleset identity, so launchers must use the latter.
+`ruleset_identity_hash`. A client that supplies `ruleset_identity_hash` rejects
+a server response with a different ruleset identity before accepting the
+initial snapshot. The server log prints both the raw content manifest hash and
+the combined ruleset identity, so launchers must use the latter.
 
 ## Test Vectors
 

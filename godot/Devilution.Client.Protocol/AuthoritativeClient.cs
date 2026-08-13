@@ -96,8 +96,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (hello.PayloadCase != Envelope.PayloadOneofCase.ServerHello)
             throw new InvalidDataException("The first server response must be ServerHello.");
         if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
-            || hello.ServerHello.ContentManifestHash != options.ContentManifestHash)
-            throw new InvalidDataException("The server returned an incompatible protocol or content identity.");
+            || hello.ServerHello.ContentManifestHash != options.ContentManifestHash
+            || (!string.IsNullOrWhiteSpace(options.RulesetIdentityHash)
+                && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash))
+            throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
 
         SessionToken = hello.ServerHello.SessionToken;
         ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;

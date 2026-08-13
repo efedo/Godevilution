@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Enforce the supplied ruleset identity during the Godot client handshake, so
+  a client cannot accept a server with incompatible gameplay modules.
 - Align native replay canonical hashing with the C# snapshot contract for
   projectile controller runtime state, object/quest extensions, and deferred
   attack RNG consumption; the native replay gate now passes all 65 tests.

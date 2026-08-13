@@ -44,6 +44,25 @@ public sealed class AuthoritativeClientTransportTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task RejectsAHandshakeWithAnIncompatibleRulesetIdentity()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunMismatchedRulesetServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash",
+            "client-ruleset-hash"));
+
+        await Assert.ThrowsAsync<InvalidDataException>(
+            () => client.ConnectAsync(TestContext.Current.CancellationToken));
+        await serverTask;
+    }
+
     private static async Task RunServerAsync(TcpListener listener)
     {
         using var tcpClient = await listener.AcceptTcpClientAsync();
@@ -77,6 +96,25 @@ public sealed class AuthoritativeClientTransportTests
         await WriteEnvelopeAsync(stream, new Envelope {
             CommandAck = new CommandAck {
                 Results = { new CommandResult { ClientSequence = 1, Status = CommandStatus.Accepted } },
+            },
+        });
+        listener.Stop();
+    }
+
+    private static async Task RunMismatchedRulesetServerAsync(TcpListener listener)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        var hello = await ReadEnvelopeAsync(stream);
+        Assert.Equal("content-hash", hello.ClientHello.ContentManifestHash);
+        Assert.Equal("client-ruleset-hash", hello.ClientHello.RulesetIdentityHash);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                RulesetIdentityHash = "server-ruleset-hash",
+                TickRateHz = 20,
             },
         });
         listener.Stop();
