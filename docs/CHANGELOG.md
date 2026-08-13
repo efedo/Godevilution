@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Mercurial Ring (`unique_id=1093`) through schema
+  1.52, reusing the corrected native Ring base item with dexterity and
+  strength-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Giant's Knuckle (`unique_id=1092`) through schema
   1.51, reusing the corrected native Ring base item with strength and
   dexterity-curse powers.
