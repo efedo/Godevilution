@@ -52,6 +52,18 @@ public sealed class ShippedContentTests
         Assert.True(activation.Simulation.WorldState.World!.IsWalkable(24, 39, 39));
         Assert.Equal(5, activation.LevelGeneration!.Definitions.Count);
         Assert.Equal(25, activation.LevelGeneration.GetRequired(24).TrapPercent);
+        Assert.NotNull(activation.MonsterSpawnPlanner);
+        var plannedSpawns = activation.MonsterSpawnPlanner.Plan(
+            24,
+            seed: 0x1234,
+            multiplayer: false,
+            maximumMonsters: 3);
+        Assert.Equal(3, plannedSpawns.Count);
+        Assert.All(plannedSpawns, spawn => {
+            Assert.Equal(24U, spawn.LevelId);
+            Assert.True(spawn.Definition.MinimumDungeonLevel <= 24);
+            Assert.True(spawn.Definition.MaximumDungeonLevel >= 24);
+        });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
         var baseQuest = Assert.Single(activation.Simulation.WorldState.Quests.Values);

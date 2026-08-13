@@ -15,7 +15,8 @@ public sealed record DiabloContentActivation
         AuthoritativeLevelGenerationCatalog? levelGeneration = null,
         AuthoritativeQuestTypeCatalog? questTypes = null,
         AuthoritativeQuestPoolCatalog? questPools = null,
-        AuthoritativeSetLevelNameCatalog? setLevelNames = null)
+        AuthoritativeSetLevelNameCatalog? setLevelNames = null,
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -30,6 +31,7 @@ public sealed record DiabloContentActivation
         QuestTypes = questTypes;
         QuestPools = questPools;
         SetLevelNames = setLevelNames;
+        MonsterSpawnPlanner = monsterSpawnPlanner;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -52,6 +54,9 @@ public sealed record DiabloContentActivation
     public AuthoritativeQuestPoolCatalog? QuestPools { get; }
 
     public AuthoritativeSetLevelNameCatalog? SetLevelNames { get; }
+
+    /** Server-owned level spawn planning from the activated content contract. */
+    public AuthoritativeMonsterSpawnPlanner? MonsterSpawnPlanner { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -315,6 +320,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ?? world?.Levels.FirstOrDefault()?.LevelId
             ?? stableIds?.Resolve("level", "town")
             ?? 0;
+        var monsterSpawnPlanner = world is not null
+            && monsterTypes is not null
+            && levelGeneration is not null
+            ? new AuthoritativeMonsterSpawnPlanner(world, monsterTypes, levelGeneration)
+            : null;
         return new DiabloContentActivation(
             simulation,
             rules,
@@ -325,6 +335,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             levelGeneration,
             questTypes,
             questPools,
-            setLevelNames);
+            setLevelNames,
+            monsterSpawnPlanner);
     }
 }
