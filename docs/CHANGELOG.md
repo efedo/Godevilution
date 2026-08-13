@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Bovine Plate (`unique_id=1011`) through schema 0.70,
+  including its native heavy-armor base item and armor, indestructibility,
+  light, resistance, mana-curse, and spell-level powers.
+
 - Externalize Hellfire Griswold's Edge (`unique_id=1010`) through schema 0.69,
   including its native one-handed base item and fire-damage, hit, attack-speed,
   knockback, mana, and life-curse powers.

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.69.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.70.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.69.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.70.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -281,6 +281,19 @@ public sealed class ShippedContentTests
         Assert.NotEqual(0U, griswoldsEdge.Flags & 0x00000800U);
         Assert.Equal(20 << 6, griswoldsEdge.PlusMana);
         Assert.Equal(-(20 << 6), griswoldsEdge.PlusHitPoints);
+        var bovinePlate = hellfireItems.GenerateUnique(1011, 0x12345678, 1);
+        Assert.Equal(1011, bovinePlate.UniqueId);
+        Assert.Equal(400, bovinePlate.Value);
+        Assert.Equal(150, bovinePlate.ArmorClass);
+        Assert.Equal(255, bovinePlate.Durability);
+        Assert.Equal(255, bovinePlate.MaxDurability);
+        Assert.Equal(50, bovinePlate.MinimumStrength);
+        Assert.Equal(30, bovinePlate.PlusFireResistance);
+        Assert.Equal(30, bovinePlate.PlusLightningResistance);
+        Assert.Equal(30, bovinePlate.PlusMagicResistance);
+        Assert.Equal(5, bovinePlate.PlusLight);
+        Assert.Equal(-(50 << 6), bovinePlate.PlusMana);
+        Assert.Equal(-2, bovinePlate.SpellLevelAdd);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

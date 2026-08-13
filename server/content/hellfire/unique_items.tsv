@@ -32,3 +32,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1010	Griswold's Edge	119	1	42000	KNOCKBACK	0	0
 1010	Griswold's Edge	119	1	42000	MANA	20	20
 1010	Griswold's Edge	119	1	42000	LIFE_CURSE	20	20
+1011	Bovine Plate	120	1	400	SETAC	150	150
+1011	Bovine Plate	120	1	400	INDESTRUCTIBLE	0	0
+1011	Bovine Plate	120	1	400	LIGHT	5	5
+1011	Bovine Plate	120	1	400	ALLRES	30	30
+1011	Bovine Plate	120	1	400	MANA_CURSE	50	50
+1011	Bovine Plate	120	1	400	SPLLVLADD	-2	-2
