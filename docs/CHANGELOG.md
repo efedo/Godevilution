@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Celestial Axe (`unique_id=1041`) through schema 1.0,
+  including its native Battle Axe base item with no-strength requirement,
+  to-hit, life, and strength-curse powers.
+
 - Externalize Hellfire BloodSlayer (`unique_id=1040`) through schema 0.99,
   including its native Broad Axe base item with damage, demon damage,
   all-attribute-curse, and spell-level-curse powers.

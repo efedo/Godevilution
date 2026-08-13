@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.0 adds the native-derived Hellfire The Celestial Axe base item and
+unique definition (`unique_id=1041`) with its Battle Axe identity, no-strength
+requirement, to-hit, life, and strength-curse powers.
+
 Schema 0.99 adds the native-derived Hellfire BloodSlayer base item and unique
 definition (`unique_id=1040`) with its Broad Axe identity, damage, demon damage,
 all-attribute-curse, and spell-level-curse powers.

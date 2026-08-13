@@ -147,3 +147,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1040	BloodSlayer	138	3	2500	3XDAMVDEM	0	0
 1040	BloodSlayer	138	3	2500	ATTRIBS_CURSE	5	5
 1040	BloodSlayer	138	3	2500	SPLLVLADD	-1	-1
+1041	The Celestial Axe	139	4	14100	NOMINSTR	0	0
+1041	The Celestial Axe	139	4	14100	TOHIT	15	15
+1041	The Celestial Axe	139	4	14100	LIFE	15	15
+1041	The Celestial Axe	139	4	14100	STR_CURSE	15	15

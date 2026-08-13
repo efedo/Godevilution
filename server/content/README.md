@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.99.0` schema in
+It declares its identity and `devilution.diablo@1.0.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -186,6 +186,8 @@ Sharp Beak (`unique_id=1039`) reuses the validated Large Axe base item with
 life, magic-curse, and mana-curse powers.
 BloodSlayer (`unique_id=1040`) adds its native Broad Axe base item with damage,
 demon damage, all-attribute-curse, and spell-level-curse powers.
+The Celestial Axe (`unique_id=1041`) adds its native Battle Axe base item with
+no-strength requirement, to-hit, life, and strength-curse powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -773,7 +775,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.99.0"
+      "version": "1.0.0"
   },
   "dependencyConstraints": [
     {
@@ -805,7 +807,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.99.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.0.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
