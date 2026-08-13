@@ -3,9 +3,9 @@
   "fixture_id": "gameplay/player-action-ranged-hellfire",
   "protocol_schema_version": "0.1.0",
   "content_manifest": {
-    "id": "devilution.base",
-    "version": "0.1.0",
-    "sha256": "dbf486940b3ae10a5d78f8f12cbf982f3091b2e7ca200ab5f10e7e510dac8432"
+    "id": "hellfire",
+    "version": "1",
+    "sha256": "d75743ac95ca6756babe96640b2823f054c16b856f14031dc26b2a470340f776"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,

@@ -87,6 +87,8 @@ set(devilutionx_fixtures
   replay/stores/base-content-purchase.json
   replay/stores/transaction-parity.json
   replay/gameplay-movement-combat.json
+  replay/gameplay-player-action-ranged-diablo.json
+  replay/gameplay-player-action-ranged-hellfire.json
   replay/gameplay-spell-cast.json
   replay/gameplay-portal-transition.json
   replay/gameplay-world-item-pickup.json

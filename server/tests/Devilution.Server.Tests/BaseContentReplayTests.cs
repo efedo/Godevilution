@@ -144,18 +144,31 @@ public sealed class BaseContentReplayTests
         Assert.Equal(expectedVariant, fixture.GameVariant);
         var timing = Assert.IsType<ReplayPlayerActionTiming>(
             fixture.PlayerActionTiming);
-        var contentRoot = Path.Combine(
-            FindRepositoryRoot(),
-            "server",
-            "content",
-            "base");
-        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = fixture.GameVariant == DiabloGameVariant.Hellfire
+            ? ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(repositoryRoot, "server", "content", "base"))
+            : ContentPackLoader.LoadDirectory(
+                "devilution.base",
+                "0.1.0",
+                Path.Combine(repositoryRoot, "server", "content", "base"));
+        var packs = new List<ContentPack> { basePack };
+        if (fixture.GameVariant == DiabloGameVariant.Hellfire) {
+            packs.Add(ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(repositoryRoot, "server", "content", "hellfire")));
+        }
+        var contentManifest = new ContentManifest(
+            fixture.GameVariant == DiabloGameVariant.Hellfire ? "hellfire" : "devilution.base",
+            fixture.GameVariant == DiabloGameVariant.Hellfire ? "1" : "0.1.0",
+            packs);
+        AssertUsesContentManifest(fixture, contentManifest);
+        var composed = ComposedContent.Compose(contentManifest);
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
-            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+            composed.GetRequiredTable("classes.tsv").ToCanonicalTsv());
         var animations = AuthoritativePlayerAnimationCatalog.LoadTsv(
             "class_animations.tsv",
-            File.ReadAllText(Path.Combine(contentRoot, "class_animations.tsv")),
+            composed.GetRequiredTable("class_animations.tsv").ToCanonicalTsv(),
             classes);
         var animation = animations.GetRequired(
             checked((uint)fixture.InitialState.CharacterClass));
@@ -198,11 +211,9 @@ public sealed class BaseContentReplayTests
                     fixture.InitialState.CombatTargetPositionY,
                     fixture.InitialState.CombatTargetHitPoints,
                     maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints)],
-                startingCombatRules: new AuthoritativeCombatRules(
-                    10,
-                    1,
-                    100,
-                    gameVariant: fixture.GameVariant),
+                startingCombatRules: AuthoritativeCombatRules.LoadTsv(
+                    "combat.tsv",
+                    composed.GetRequiredTable("combat.tsv").ToCanonicalTsv()),
                 startingCharacterClassId: checked((uint)fixture.InitialState.CharacterClass),
                 startingRandomSeed: checked((uint)fixture.RngSeed),
                 startingPlayerClasses: classes,
@@ -1721,6 +1732,18 @@ public sealed class BaseContentReplayTests
         Assert.True(
             string.Equals(manifest.Sha256, identity.Sha256, StringComparison.Ordinal),
             $"Expected base content manifest {manifest.Sha256}, fixture contains {identity.Sha256}.");
+    }
+
+    private static void AssertUsesContentManifest(
+        ReplayFixture fixture,
+        ContentManifest manifest)
+    {
+        var identity = Assert.IsType<ReplayContentManifest>(fixture.ContentManifest);
+        Assert.Equal(manifest.Id, identity.Id);
+        Assert.Equal(manifest.Version, identity.Version);
+        Assert.True(
+            string.Equals(manifest.Sha256, identity.Sha256, StringComparison.Ordinal),
+            $"Expected content manifest {manifest.Sha256}, fixture contains {identity.Sha256}.");
     }
 
     private static string FindRepositoryRoot()
