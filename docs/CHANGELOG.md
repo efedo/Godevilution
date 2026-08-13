@@ -792,3 +792,6 @@ All notable changes to this fork are documented below.
 - Hellfire content now externalizes the native-derived dungeon level identities
   used by the fixture set through validated composed `levels.tsv` metadata;
   blocked-cell generation and remaining Hellfire catalogs remain explicit follow-ups.
+- Hellfire content now also externalizes the Empyrean Band and its native
+  attribute, light, recovery, and trap-resistance powers through keyed item and
+  unique-item overlays.
