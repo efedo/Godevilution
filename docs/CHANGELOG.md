@@ -29,6 +29,8 @@ All notable changes to this fork are documented below.
   ability, proving class-service source validation and equipment-state mutation.
 - Extend live Godot protocol coverage through the Sorcerer's server-owned Staff
   Recharge ability, including charged-cast consumption and native max-charge loss.
+- Extend live Godot protocol coverage through the Warrior's server-owned Repair
+  ability, including class authorization and fully-repaired equipment handling.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,

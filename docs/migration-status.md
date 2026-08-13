@@ -12,7 +12,7 @@ Status date: 2026-08-12
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode | Continue removing compatibility-pool assumptions as Godot presentation matures |
-| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm and Etherealize presentation, live Bard Identify and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
+| Godot client | Complete for protocol-boundary demonstrations, including typed Rogue Trap Disarm and Etherealize presentation, live Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector, and same-instance reconnect with bounded automatic retry | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
 | Engine composition | Independent .NET 8 assembly with generic deterministic lifecycle, module compatibility preflight, transactional candidate preparation, atomic candidate registration, coordinated ruleset publication, and generation leases with explicit retired-target draining, depending only on Domain and Data | Keep filesystem/reflection outside Engine and broaden replacement fixtures |
@@ -341,6 +341,8 @@ and the exact equipment or inventory item, then preserves native level-scaled
 random repair, iterative maximum-durability loss, full-item no-op behavior, item
 exhaustion, and RNG state. Source zero remains paid full vendor repair, while
 native and Godot clients only select an item and render the returned snapshot.
+The live Godot protocol suite now verifies the class-ability equipment path and
+the fully-repaired native no-op outcome.
 The Sorcerer's Staff Recharge skill is now server-owned under schema 0.28.
 Stable `spell:recharge` identity `27` binds the live loadout to the item-service
 policy, while `spells.tsv` externalizes native staff levels. The server validates
