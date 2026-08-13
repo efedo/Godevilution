@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.44 adds the native-derived Hellfire Holy Defender base item and unique
+definition (`unique_id=1085`) with its Large Shield identity, armor, get-hit,
+fire-resistance, durability, and fast-block powers.
+
 Schema 1.43 adds the native-derived Hellfire Blackoak Shield base item and
 unique definition (`unique_id=1084`) with its Small Shield identity, armor,
 dexterity, vitality-curse, light-curse, and durability powers.

@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Holy Defender (`unique_id=1085`) through schema 1.44,
+  adding its native Large Shield base item with armor, get-hit,
+  fire-resistance, durability, and fast-block powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Blackoak Shield (`unique_id=1084`) through schema 1.43,
   adding its native Small Shield base item with armor, dexterity,
   vitality-curse, light-curse, and durability powers.

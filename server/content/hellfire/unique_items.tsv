@@ -342,3 +342,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1084	Blackoak Shield	168	4	5725	SETAC	18	18
 1084	Blackoak Shield	168	4	5725	LIGHT_CURSE	1	1
 1084	Blackoak Shield	168	4	5725	DUR	150	150
+1085	Holy Defender	169	10	13800	SETAC	15	15
+1085	Holy Defender	169	10	13800	GETHIT	2	2
+1085	Holy Defender	169	10	13800	FIRERES	20	20
+1085	Holy Defender	169	10	13800	DUR	200	200
+1085	Holy Defender	169	10	13800	FASTBLOCK	1	1
