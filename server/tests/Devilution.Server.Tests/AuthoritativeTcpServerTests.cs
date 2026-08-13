@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using Devilution.Protocol.V1;
@@ -426,6 +427,72 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task ReconnectSoakPreservesCompleteParticipantSnapshotAndSelfFirstOrder()
+    {
+        var executor = new ParticipantSnapshotExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string resumeToken;
+        uint firstEntityId;
+        using var secondClient = new TcpClient();
+        await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var secondStream = secondClient.GetStream();
+        await SendHelloAsync(secondStream, cancellationToken);
+        Assert.Equal(
+            Envelope.PayloadOneofCase.ServerHello,
+            (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.PayloadCase);
+        var secondInitialSnapshot = (await EnvelopeCodec.ReadAsync(
+            secondStream,
+            cancellationToken))!.Snapshot;
+        var secondEntityId = Assert.Single(secondInitialSnapshot.Players).EntityId;
+
+        using (var firstClient = new TcpClient()) {
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await SendHelloAsync(firstStream, cancellationToken);
+            var firstHello = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.ServerHello;
+            resumeToken = firstHello.SessionToken;
+            firstEntityId = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.Snapshot.Players[0].EntityId;
+            Assert.NotEqual(firstEntityId, secondEntityId);
+        }
+
+        for (var attempt = 0; attempt < 3; attempt++) {
+            using var resumedClient = new TcpClient();
+            await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var resumedStream = resumedClient.GetStream();
+            await SendHelloAsync(resumedStream, cancellationToken, resumeToken);
+            var resumedHello = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                cancellationToken))!.ServerHello;
+            Assert.Equal(resumeToken, resumedHello.SessionToken);
+            var resumedSnapshot = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                cancellationToken))!.Snapshot;
+            Assert.Equal(
+                [firstEntityId, secondEntityId],
+                resumedSnapshot.Players.Select(player => player.EntityId));
+            Assert.Equal(
+                SnapshotStateHasher.Compute(resumedSnapshot),
+                resumedSnapshot.StateSha256);
+        }
+    }
+
+    [Fact]
     public async Task ResumeTokenRestoresPurchasedStoreStateAndDuplicatePurchaseDoesNotMutateIt()
     {
         var catalog = new StoreCatalog();
@@ -625,6 +692,31 @@ public sealed class AuthoritativeTcpServerTests
                 Tick = tick,
                 Players = { new PlayerSnapshot { EntityId = entityId } },
             };
+        }
+    }
+
+    private sealed class ParticipantSnapshotExecutor
+        : IAuthoritativeCommandExecutor, IAuthoritativeSnapshotProvider
+    {
+        private readonly ConcurrentDictionary<uint, byte> participants = new();
+
+        public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
+        {
+            return CommandExecutionResult.Accepted;
+        }
+
+        public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
+        {
+            participants.TryAdd(entityId, 0);
+            var snapshot = new Snapshot { Tick = tick };
+            snapshot.Players.Add(new PlayerSnapshot { EntityId = entityId });
+            foreach (var participant in participants.Keys
+                         .Where(participant => participant != entityId)
+                         .OrderBy(participant => participant)) {
+                snapshot.Players.Add(new PlayerSnapshot { EntityId = participant });
+            }
+            snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
+            return snapshot;
         }
     }
 
