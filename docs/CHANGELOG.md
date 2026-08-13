@@ -26,6 +26,9 @@ All notable changes to this fork are documented below.
   levels, with one-time level tracking and collision-safe reserved entity IDs.
 - Filter generated placements against authoritative occupancy, including route
   endpoints, objects, items, monsters, portals, and players.
+- Add validated monster-type `aggro_range` metadata in schema 1.75 and carry it
+  into generated targets so autonomous server behavior is not passive by
+  default.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

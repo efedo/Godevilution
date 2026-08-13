@@ -127,6 +127,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 spawn.LevelId,
                 spawn.Definition.MonsterId,
                 attackDamage: spawn.AttackDamage,
+                aggroRange: spawn.Definition.AggroRange,
                 monsterLevel: spawn.Definition.MonsterLevel,
                 fireResistance: spawn.Definition.FireResistance,
                 lightningResistance: spawn.Definition.LightningResistance,

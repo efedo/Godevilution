@@ -102,6 +102,8 @@ Status date: 2026-08-13
   applied after dexterity and usable equipment armor: light armor adds two
   levels, ordinary medium armor adds one-half level, unique medium armor adds
   two levels, and unique heavy armor adds one-half level.
+- Monster-type aggro radius is now validated in schema 1.75 and carried into
+  procedural targets for autonomous server behavior.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

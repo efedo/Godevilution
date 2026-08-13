@@ -34,6 +34,14 @@ public sealed class AuthoritativeMonsterCatalogTests
             () => catalog.GetAvailableForDungeonLevel(-1));
     }
 
+    [Fact]
+    public void RejectsOutOfRangeAggroRadius()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { AggroRange = 65 },
+        ]));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,
@@ -77,6 +85,7 @@ public sealed class AuthoritativeMonsterCatalogTests
             zombie.ArmorClass,
             zombie.MinimumDamage,
             zombie.MaximumDamage));
+        Assert.Equal(6, zombie.AggroRange);
         Assert.True(zombie.StoneCurseImmune);
         Assert.True(zombie.Undead);
         Assert.False(zombie.Demon);

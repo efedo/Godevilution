@@ -130,6 +130,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(4, target.MaxHitPoints);
         Assert.Equal(7, target.ArmorClass);
         Assert.Equal(25, target.FireResistance);
+        Assert.Equal(6, target.AggroRange);
         Assert.True(target.IsUndead);
         Assert.True(target.HasKnockback);
         Assert.Equal(2, target.MinDamage);
