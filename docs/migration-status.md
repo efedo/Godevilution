@@ -113,6 +113,9 @@ Status date: 2026-08-13
   Native unarmed, shield, Monk, Rogue, Bard, and Barbarian branches are
   represented in the server-owned profile; legacy uninitialized templates keep
   the global combat-damage fallback.
+- Native undead weapon modifiers now apply at the authoritative damage
+  boundary: swords deal half damage and maces deal one-and-a-half damage when
+  the external monster capability marks the target undead.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each

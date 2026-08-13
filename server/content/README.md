@@ -410,6 +410,8 @@ equipped item damage, then apply the native class strength/dexterity modifier.
 When no usable item damage is present, the server uses native unarmed, shield,
 and Monk level-scaled fallbacks; compatibility templates retain global base
 damage.
+Against externally classified undead targets, the server applies the native
+50% sword penalty or 50% mace bonus after the critical-damage boundary.
 Equipped item `armor_class` and native percentage armor metadata likewise
 recompute effective player armor together with native dexterity armor during
 player creation, equipment transfers, and snapshot restoration.

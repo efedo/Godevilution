@@ -379,6 +379,40 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void InitializedSwordAttackUsesNativeUndeadWeaponModifier()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            undead: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(world, playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 1,
+            attributes: classes.GetRequired(2).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 2);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(95, target.HitPoints);
+    }
+
+    [Fact]
     public void TripleDemonDamageMultipliesOnlyDemonHitsFromUsableEquipment()
     {
         var demon = new AuthoritativeCombatTarget(

@@ -584,6 +584,10 @@ public sealed class DiabloCombatCommandProcessor
             && random.RandomIntLessThan(100) < player.CharacterLevel) {
             criticalDamage = checked(criticalDamage * 2);
         }
+        criticalDamage = AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
+            criticalDamage,
+            target.IsUndead,
+            player.Equipment);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
             target.ArmorClass,
