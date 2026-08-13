@@ -87,6 +87,10 @@ Status date: 2026-08-13
 - Hellfire `Doppelganger` now consumes its native post-hit 10% roll, excludes
   unique and Diablo targets, and spawns a full-health non-unique copy on the
   deterministic last available adjacent cell; the copy is snapshot-owned.
+- Hellfire `Decay` now applies after an authoritative attack to eligible hand
+  weapons in native order, subtracting five damage-bonus points and removing a
+  weapon at -100; hit resolution is kept separate from post-armor damage so
+  zero-damage hits still preserve native decay behavior.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

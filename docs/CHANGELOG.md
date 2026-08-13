@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
 - Apply native Hellfire `Doppelganger` spawning after its authoritative 10%
   post-hit roll, including unique/Diablo exclusions and deterministic adjacent
   placement for a full-health non-unique copy.
+- Apply native Hellfire `Decay` at the authoritative attack boundary, reducing
+  eligible hand weapons' damage bonus by five in native order and removing
+  each at the native -100 threshold.
 - Apply Hellfire `Devastation` as a native 5% post-hit triple-damage roll,
   preserving authoritative RNG ordering and equipment eligibility.
 - Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment

@@ -1265,6 +1265,96 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireDecayReducesOnlyTheFirstEligibleWeaponAfterAnAttack()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var decay = AuthoritativeItemState.Empty with {
+            ItemClass = 1,
+            StatFlag = true,
+            HellfireDamageArmorFlags =
+                AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [
+                new EquippedStoreItem(4, 42, decay),
+                new EquippedStoreItem(5, 43, decay),
+            ]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(90, target.HitPoints);
+        Assert.Equal(-5, player.Equipment.Single(item => item.Slot == 4).State.PlusDamage);
+        Assert.Equal(-5, player.Equipment.Single(item => item.Slot == 5).State.PlusDamage);
+    }
+
+    [Fact]
+    public void HellfireDecayRemovesAWeaponAtTheNativeThresholdAndIgnoresNonWeapons()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemClass = 1,
+                    StatFlag = true,
+                    PlusDamage = -95,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Equipment);
+
+        var nonWeaponTarget = new AuthoritativeCombatTarget(10, 1, 0, 100);
+        var nonWeaponProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [nonWeaponTarget]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var nonWeaponPlayer = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemClass = 2,
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                })]);
+
+        var nonWeaponResult = nonWeaponProcessor.Execute(
+            nonWeaponPlayer,
+            new DiabloAttackIntent(10),
+            1);
+
+        Assert.True(nonWeaponResult.Succeeded);
+        Assert.Equal(0, nonWeaponPlayer.Equipment.Single().State.PlusDamage);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

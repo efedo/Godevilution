@@ -358,7 +358,8 @@ public sealed class DiabloCombatCommandProcessor
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
-            out var doppelgangerProc);
+            out var doppelgangerProc,
+            out var attackHit);
         if (doppelgangerProc)
             SpawnDoppelganger(target, players);
         var events = new List<DiabloGameplayEvent>();
@@ -387,6 +388,8 @@ public sealed class DiabloCombatCommandProcessor
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
+        if (ranged || attackHit)
+            ApplyHellfireWeaponDecay(player);
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
@@ -453,6 +456,41 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    /** Applies native Hellfire Decay to eligible hand weapons in native order. */
+    private void ApplyHellfireWeaponDecay(AuthoritativePlayerState player)
+    {
+        if (rules.GameVariant != DiabloGameVariant.Hellfire)
+            return;
+
+        foreach (var slot in new uint[] { 4, 5 }) {
+            var equipmentIndex = player.Equipment.FindIndex(item => item.Slot == slot);
+            if (equipmentIndex < 0)
+                continue;
+            var equippedItem = player.Equipment[equipmentIndex];
+            var state = equippedItem.State;
+            if (!IsUsable(state)
+                || (state.Magical != 0 && !state.Identified)
+                || state.ItemClass != 1
+                || (state.HellfireDamageArmorFlags
+                    & AuthoritativeEquipmentIncomingDamageRules.DecayFlag) == 0) {
+                continue;
+            }
+
+            var decayedState = state with {
+                PlusDamage = checked(state.PlusDamage - 5),
+            };
+            if (decayedState.PlusDamage <= -100)
+                player.Equipment.RemoveAt(equipmentIndex);
+            else
+                player.Equipment[equipmentIndex] = equippedItem with {
+                    State = decayedState,
+                };
+            player.RecalculateEquipmentResources();
+            if (decayedState.PlusDamage <= -100)
+                return;
+        }
+    }
+
     /** Applies native usable equipment damage and hit bonuses, returning Q6 damage. */
     private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
@@ -460,7 +498,8 @@ public sealed class DiabloCombatCommandProcessor
         uint seed,
         out int perilSelfDamageQ6,
         out bool perilActive,
-        out bool doppelgangerProc)
+        out bool doppelgangerProc,
+        out bool attackHit)
     {
         var damagePercent = 0;
         var damageFlat = 0;
@@ -496,10 +535,15 @@ public sealed class DiabloCombatCommandProcessor
                         player.Equipment)));
             perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
         }
+        var effectiveHitChance = Math.Clamp(
+            checked(rules.HitChancePercent + hitBonus + armorPiercingBonus),
+            0,
+            100);
+        attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
         var resolvedDamage = rules.ResolveAttackDamage(
             damage,
             target.ArmorClass,
-            Math.Clamp(checked(rules.HitChancePercent + hitBonus + armorPiercingBonus), 0, 100),
+            effectiveHitChance,
             seed);
         if (target.IsDemon
             && (GetUsableEquipmentFlags(player)

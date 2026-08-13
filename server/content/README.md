@@ -134,6 +134,10 @@ Hellfire `Doppelganger` consumes its native 10% post-hit roll, excludes unique
 and Diablo targets, and creates a full-health non-unique copy on the last
 available adjacent cell; the spawned monster remains in authoritative world
 snapshots and hashes.
+Hellfire `Decay` reduces eligible hand weapons' damage bonus by five in native
+order after an authoritative attack and removes a weapon at the native -100
+threshold; the server preserves the separate hit roll even when post-armor
+damage is zero.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

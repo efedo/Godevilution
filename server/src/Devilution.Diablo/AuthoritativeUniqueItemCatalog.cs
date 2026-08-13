@@ -290,6 +290,11 @@ public sealed class AuthoritativeUniqueItemCatalog
             "FIRERES_CURSE" => state with { PlusFireResistance = state.PlusFireResistance - value },
             "LIGHTRES_CURSE" => state with { PlusLightningResistance = state.PlusLightningResistance - value },
             "MAGICRES_CURSE" => state with { PlusMagicResistance = state.PlusMagicResistance - value },
+            "DECAY" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                PlusDamage = state.PlusDamage + value,
+            },
             // Native Hellfire IPL_FIREBALL marks both arrow channels so the bow
             // command selects the persistent FireballBow projectile.
             "FIREBALL" => state with {

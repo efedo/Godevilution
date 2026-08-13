@@ -165,14 +165,22 @@ public sealed class AuthoritativeCombatRules
             return 0;
         if (hitChancePercent is < 0 or > 100)
             throw new ArgumentOutOfRangeException(nameof(hitChancePercent));
-        var hitRoll = unchecked(seed * 1664525U + 1013904223U) % 100U;
-        if (hitRoll >= hitChancePercent)
+        if (!ResolveAttackHit(hitChancePercent, seed))
             return 0;
         var damage = baseDamage;
         var criticalRoll = unchecked(seed * 1103515245U + 12345U) % 100U;
         if (criticalRoll < CriticalChancePercent)
             damage = checked(damage * CriticalMultiplier);
         return Math.Max(0, Math.Max(MinimumDamage, damage - Math.Max(0, armorClass)));
+    }
+
+    /** Resolves the native hit roll independently from post-armor damage. */
+    public bool ResolveAttackHit(int hitChancePercent, uint seed)
+    {
+        if (hitChancePercent is < 0 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(hitChancePercent));
+        var hitRoll = unchecked(seed * 1664525U + 1013904223U) % 100U;
+        return hitRoll < hitChancePercent;
     }
 
     public int ResolveDamage(int baseDamage, int armorClass, AuthoritativeDamageType damageType, AuthoritativeCombatTarget target)

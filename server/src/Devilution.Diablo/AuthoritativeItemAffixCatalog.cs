@@ -439,6 +439,11 @@ public sealed class AuthoritativeItemAffixCatalog
                 FireMaxDamage = 0,
                 Flags = (state.Flags | 0x00000020U) & ~0x00000010U,
             },
+            "DECAY" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                PlusDamage = state.PlusDamage + value,
+            },
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
             "FIRE_ARROWS" => state with {
                 Flags = (state.Flags | 0x00000008U | 0x00000010U) & ~0x02000000U,

@@ -6,6 +6,9 @@ public static class AuthoritativeEquipmentIncomingDamageRules
     /** Native Hellfire ItemSpecialEffectHf::Devastation flag. */
     public const int DevastationFlag = 1 << 0;
 
+    /** Native Hellfire ItemSpecialEffectHf::Decay flag. */
+    public const int DecayFlag = 1 << 1;
+
     /** Native Hellfire ItemSpecialEffectHf::Jesters flag. */
     public const int JestersFlag = 1 << 3;
 
