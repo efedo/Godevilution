@@ -179,6 +179,9 @@ formula, while older rows retain the global-hit compatibility fallback.
 Schema 1.79 adds the optional `native_ai` monster-type column. The checked-in
 Hellfire rows copy the native `MonsterAIID` identity from `monstdat.tsv`; the
 server validates and persists the identity while clients do not dispatch AI.
+The first behavior using that identity is the native `Fat` special-melee band,
+which consumes the validated `to_hit_special` and special damage columns for
+the Toad Demon family; remaining AI-specific behavior is still incremental.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

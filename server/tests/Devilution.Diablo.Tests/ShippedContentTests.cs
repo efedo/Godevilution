@@ -132,6 +132,12 @@ public sealed class ShippedContentTests
         Assert.Equal(54U, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ExperienceReward);
         Assert.Equal(10, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ToHit);
         Assert.Equal("Zombie", monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).NativeAi);
+        var toadDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 54);
+        Assert.Equal(("Fat", 40, 8, 20), (
+            toadDemon.NativeAi,
+            toadDemon.ToHitSpecial,
+            toadDemon.MinimumSpecialDamage,
+            toadDemon.MaximumSpecialDamage));
         Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
         Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
         Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);

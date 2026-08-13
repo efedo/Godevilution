@@ -1177,6 +1177,39 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FatAiUsesItsNativeSpecialMeleeRangeOnTheSpecialAttackBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 1,
+            aggroRange: 5,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            toHitSpecial: 255,
+            nativeAi: "Fat");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // tick ^ monster entity ^ player entity = 4, inside the native five-percent band.
+        var deliveries = processor.AdvanceTick(10, [player]);
+
+        Assert.Equal(88, player.Life);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(12, damage.Amount);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

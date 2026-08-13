@@ -54,6 +54,8 @@ All notable changes to this fork are documented below.
 - Externalize native monster `MonsterAIID` dispatch identities through schema
   1.79, validating them from native Hellfire data and carrying them through
   authoritative state, protocol, saves, replay fixtures, and canonical hashes.
+- Route the native `Fat` AI special-melee band through the authoritative combat
+  boundary using the externalized special accuracy and damage range.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

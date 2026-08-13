@@ -227,6 +227,10 @@ resolve these rolls. Zero values retain the additive compatibility fallback.
 dispatch identity. The server owns AI execution; clients do not dispatch
 behavior from this metadata.
 
+The server currently uses the `Fat` identity for the native special-melee band;
+the resulting damage event and snapshot remain authoritative. Other AI-specific
+special behavior is intentionally added incrementally.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

@@ -130,6 +130,10 @@ Status date: 2026-08-13
   authoritative targets, snapshots, saves, protocol field 43, and canonical
   hashes. AI-specific special behaviors remain incremental and are not inferred
   by clients.
+- The native `Fat` AI special-melee band is now server-owned: Toad Demon-family
+  targets select the native five-percent special branch from stable tick/entity
+  state and resolve the externalized special accuracy and damage range. Other
+  AI-specific special behaviors remain incremental.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

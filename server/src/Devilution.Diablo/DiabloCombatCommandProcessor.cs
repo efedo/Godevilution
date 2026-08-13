@@ -3728,14 +3728,23 @@ public sealed class DiabloCombatCommandProcessor
                             victim.Equipment);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
-                var damage = target.ToHit == 0
+                var usesSpecialAttack = UsesNativeFatSpecialAttack(
+                    target,
+                    attackSeed);
+                var attackDamage = usesSpecialAttack
+                    ? SelectNativeSpecialDamage(target, attackSeed)
+                    : target.AttackDamage;
+                var attackToHit = usesSpecialAttack
+                    ? target.ToHitSpecial
+                    : target.ToHit;
+                var damage = attackToHit == 0
                     ? rules.ResolveAttackDamage(
-                        target.AttackDamage,
+                        attackDamage,
                         armorClass,
                         attackSeed)
                     : rules.ResolveMonsterAttackDamage(
-                        target.AttackDamage,
-                        target.ToHit,
+                        attackDamage,
+                        attackToHit,
                         target.MonsterLevel,
                         victim.CharacterLevel,
                         target.LevelId,
@@ -3822,6 +3831,26 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native Overlord/Fat AI selects its special melee band five percent of the time. */
+    private static bool UsesNativeFatSpecialAttack(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        return target.NativeAi == "Fat"
+            && target.ToHitSpecial > 0
+            && target.MaxDamageSpecial > 0
+            && attackSeed % 100U < 5U;
+    }
+
+    /** Selects the native inclusive special damage range without adding a new RNG draw. */
+    private static int SelectNativeSpecialDamage(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        var range = checked(target.MaxDamageSpecial - target.MinDamageSpecial + 1);
+        return checked(target.MinDamageSpecial + (int)(attackSeed % (uint)range));
     }
 
     private void AdvancePlayerMinion(
