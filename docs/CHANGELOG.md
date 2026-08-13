@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Black Razor (`unique_id=1026`) through schema 0.85,
+  reusing the native Dagger base item with damage, vitality, and durability
+  powers.
+
 - Externalize Hellfire Gryphon's Claw (`unique_id=1025`) through schema 0.84,
   including its native Falchion base item with damage, magic-curse, and
   dexterity-curse powers.

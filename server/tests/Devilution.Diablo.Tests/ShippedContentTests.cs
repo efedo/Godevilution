@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.84.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.85.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.84.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.85.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -424,6 +424,16 @@ public sealed class ShippedContentTests
         Assert.Equal(100, gryphonsClaw.PlusDamage);
         Assert.Equal(-2, gryphonsClaw.PlusMagic);
         Assert.Equal(-5, gryphonsClaw.PlusDexterity);
+        var blackRazor = hellfireItems.GenerateUnique(1026, 0x12345678, 1);
+        Assert.Equal(1026, blackRazor.UniqueId);
+        Assert.Equal(2000, blackRazor.Value);
+        Assert.Equal(119, blackRazor.ItemIndex);
+        Assert.Equal(1, blackRazor.MinDamage);
+        Assert.Equal(4, blackRazor.MaxDamage);
+        Assert.Equal(150, blackRazor.PlusDamage);
+        Assert.Equal(2, blackRazor.PlusVitality);
+        Assert.Equal(5, blackRazor.Durability);
+        Assert.Equal(5, blackRazor.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

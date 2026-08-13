@@ -623,6 +623,10 @@ Schema 0.84 adds the native-derived Hellfire Gryphon's Claw base item and
 unique definition (`unique_id=1025`) with its Falchion identity, damage,
 magic-curse, and dexterity-curse powers.
 
+Schema 0.85 adds the native-derived Hellfire Black Razor unique definition
+(`unique_id=1026`), reusing the validated Dagger base item with native damage,
+vitality, and durability powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

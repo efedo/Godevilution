@@ -86,3 +86,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1025	Gryphon's Claw	129	1	1000	DAMP	100	100
 1025	Gryphon's Claw	129	1	1000	MAG_CURSE	2	2
 1025	Gryphon's Claw	129	1	1000	DEX_CURSE	5	5
+1026	Black Razor	127	1	2000	DAMP	150	150
+1026	Black Razor	127	1	2000	VIT	2	2
+1026	Black Razor	127	1	2000	SETDUR	5	5
