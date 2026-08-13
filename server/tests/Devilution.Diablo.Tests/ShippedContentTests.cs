@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.68.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.69.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.68.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.69.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1481,6 +1481,16 @@ public sealed class ShippedContentTests
         Assert.Equal(90, demonPlateArmor.Durability);
         Assert.Equal(90, demonPlateArmor.MaxDurability);
         Assert.Equal(32, demonPlateArmor.HellfireDamageArmorFlags);
+        var acolytesAmulet = hellfireItems.GenerateUnique(1110, 0x12345678, 10);
+        Assert.Equal(1110, acolytesAmulet.UniqueId);
+        Assert.Equal(10000, acolytesAmulet.Value);
+        Assert.Equal(160, acolytesAmulet.ItemIndex);
+        Assert.Equal(6, acolytesAmulet.EquipLocation);
+        Assert.Equal(3, acolytesAmulet.ItemClass);
+        Assert.Equal(50, acolytesAmulet.ManaToLifePercent);
+        Assert.Equal(0, acolytesAmulet.LifeToManaPercent);
+        Assert.Equal(0, acolytesAmulet.PlusMana);
+        Assert.Equal(0, acolytesAmulet.PlusHitPoints);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

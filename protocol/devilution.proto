@@ -632,6 +632,10 @@ message ItemStateSnapshot {
 	string base_name = 59;
 	string identified_name = 60;
 	optional int32 native_cursor_graphic = 61;
+	// Native Hellfire percentage of base mana converted into life on equip.
+	int32 mana_to_life_percent = 62;
+	// Native Hellfire percentage of base life converted into mana on equip.
+	int32 life_to_mana_percent = 63;
 }
 
 message PlayerAttributesSnapshot {

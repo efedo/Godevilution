@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Acolyte's Amulet (`unique_id=1110`) through schema 1.69,
+  reusing native Amulet with its player-dependent 50-percent mana-to-life
+  conversion preserved as authoritative item metadata.
+
+## 2026-08-13
+
 - Externalize Hellfire Demon Plate Armor (`unique_id=1109`) through schema 1.68,
   reusing native Full Plate with fixed armor and extra armor against demons.
 

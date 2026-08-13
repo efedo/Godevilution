@@ -177,6 +177,8 @@ public sealed class AuthoritativeSaveCodecTests
                     Value = 15,
                     IdentifiedValue = 15,
                     StatFlag = true,
+                    ManaToLifePercent = 50,
+                    LifeToManaPercent = 40,
                 }),
         };
         return new DiabloSimulationSnapshot(

@@ -556,5 +556,10 @@ public static class SnapshotStateHasher
             if (state.HasNativeCursorGraphic)
                 hasher.AppendInt32(state.NativeCursorGraphic);
         }
+        if (state.ManaToLifePercent != 0 || state.LifeToManaPercent != 0) {
+            hasher.AppendString("godevilution-item-resource-conversion-v1");
+            hasher.AppendInt32(state.ManaToLifePercent);
+            hasher.AppendInt32(state.LifeToManaPercent);
+        }
     }
 }

@@ -144,6 +144,35 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ResourceConversionChangesHashOnlyWhenPresent()
+    {
+        var withoutConversion = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                    HeldItem = new ItemSnapshot {
+                        ItemSeed = 42,
+                        State = new ItemStateSnapshot { ItemType = 13 },
+                    },
+                },
+            },
+        };
+        var withConversion = withoutConversion.Clone();
+        withConversion.Players[0].HeldItem!.State = new ItemStateSnapshot {
+            ItemType = 13,
+            ManaToLifePercent = 50,
+        };
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(withoutConversion),
+            SnapshotStateHasher.Compute(withoutConversion.Clone()));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(withoutConversion),
+            SnapshotStateHasher.Compute(withConversion));
+    }
+
+    [Fact]
     public void NonzeroPlayerClassIdentityChangesTheStateHash()
     {
         var legacyWarrior = new Snapshot {

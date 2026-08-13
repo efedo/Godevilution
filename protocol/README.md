@@ -149,6 +149,12 @@ Windows toolchain command.
   fields retain existing item hashes. Lethal player damage supplies these
   fields from authoritative victim and content state, and clients project them
   without generating the ear locally.
+- `ItemStateSnapshot.mana_to_life_percent` and `life_to_mana_percent` fields
+  62-63 preserve native Hellfire's player-dependent resource conversions as
+  item metadata. The server applies the percentage to the character's base
+  Q6 resource when equipment stats are resolved; clients never infer a fixed
+  bonus from the item name. Nonzero conversion state uses the tagged
+  `godevilution-item-resource-conversion-v1` canonical-hash extension.
 - `Snapshot.random_state`, `MonsterSnapshot.monster_level`, exact Q6 monster
   health fields 16-17, `DamageEvent.amount_q6`, `HealingEvent.amount_q6`,
   projectile runtime fields 14-27,

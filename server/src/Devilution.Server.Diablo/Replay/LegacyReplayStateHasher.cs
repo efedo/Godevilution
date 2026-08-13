@@ -148,6 +148,11 @@ public static class LegacyReplayStateHasher
         hasher.AppendBool(state.StatFlag);
         hasher.AppendInt32(state.HellfireDamageArmorFlags);
         hasher.AppendUInt32(state.Buff);
+        if (state.ManaToLifePercent != 0 || state.LifeToManaPercent != 0) {
+            hasher.AppendString("godevilution-item-resource-conversion-v1");
+            hasher.AppendInt32(state.ManaToLifePercent);
+            hasher.AppendInt32(state.LifeToManaPercent);
+        }
     }
 
     private sealed record LegacyReplayItemState(uint Seed, AuthoritativeItemState State)

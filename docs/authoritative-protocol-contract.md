@@ -460,6 +460,14 @@ Present dynamic state adds the tagged
 `godevilution-dynamic-item-presentation-v1` canonical-hash section, while an
 ordinary item with all three fields absent retains its previous hash.
 
+`ItemStateSnapshot.mana_to_life_percent` and `life_to_mana_percent` fields 62
+and 63 preserve native Hellfire's player-dependent resource conversions. They
+are percentages of the character's base Q6 resource, not fixed item bonuses;
+the authoritative server applies them when resolving equipment stats. Nonzero
+conversion state adds the tagged
+`godevilution-item-resource-conversion-v1` canonical-hash section; absent
+conversion fields preserve legacy snapshot and replay hashes.
+
 After the unconditional held-item drop, an ordinary monster-or-trap death
 applies Gold loss and then removes equipped items in native slot order from
 Head through Chest. Direction rotates left once for every slot, including an

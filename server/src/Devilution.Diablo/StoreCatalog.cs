@@ -51,6 +51,12 @@ public sealed record AuthoritativeItemState(
 
     public int PlusHitPoints { get; init; }
 
+    /** Native Hellfire conversion of a percentage of base mana into life. */
+    public int ManaToLifePercent { get; init; }
+
+    /** Native Hellfire conversion of a percentage of base life into mana. */
+    public int LifeToManaPercent { get; init; }
+
     public int PlusDamageModifier { get; init; }
 
     public int PlusGetHit { get; init; }
@@ -269,6 +275,8 @@ public sealed class StoreCatalog
             PlusMagicResistance = row.OptionalInt32("plus_magic_resistance"),
             PlusMana = row.OptionalInt32("plus_mana"),
             PlusHitPoints = row.OptionalInt32("plus_hit_points"),
+            ManaToLifePercent = row.OptionalInt32("mana_to_life_percent"),
+            LifeToManaPercent = row.OptionalInt32("life_to_mana_percent"),
             PlusDamageModifier = row.OptionalInt32("plus_damage_modifier"),
             PlusGetHit = row.OptionalInt32("plus_get_hit"),
             PlusLight = row.OptionalInt32("plus_light"),

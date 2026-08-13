@@ -426,3 +426,4 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1108	Bone Chain Armor	157	13	36000	ACUNDEAD	0	0
 1109	Demon Plate Armor	165	25	80000	SETAC	80	80
 1109	Demon Plate Armor	165	25	80000	ACDEMON	0	0
+1110	Acolyte's Amulet	171	10	10000	MANATOLIFE	50	50

@@ -244,6 +244,8 @@ public sealed class AuthoritativeUniqueItemCatalog
             "LIFE_CURSE" => state with { PlusHitPoints = state.PlusHitPoints - (value << 6) },
             "MANA" => state with { PlusMana = state.PlusMana + (value << 6) },
             "MANA_CURSE" => state with { PlusMana = state.PlusMana - (value << 6) },
+            "MANATOLIFE" => state with { ManaToLifePercent = state.ManaToLifePercent + value },
+            "LIFETOMANA" => state with { LifeToManaPercent = state.LifeToManaPercent + value },
             "GETHIT" => state with { PlusGetHit = state.PlusGetHit - value },
             "GETHIT_CURSE" => state with { PlusGetHit = state.PlusGetHit + value },
             "FIRERES" => state with { PlusFireResistance = state.PlusFireResistance + value },
