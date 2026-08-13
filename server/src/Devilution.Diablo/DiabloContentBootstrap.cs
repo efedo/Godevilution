@@ -352,6 +352,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             UseNativePlayerActionTiming = true,
             RandomSeed = randomSeed,
             GameMode = gameMode,
+            MonsterSpawnPlanner = monsterSpawnPlanner,
+            ProceduralMonsterSpawns = monsterSpawns,
         });
         return new DiabloContentActivation(
             simulation,

@@ -75,6 +75,12 @@ public sealed class DiabloSimulationOptions
 
     /** Explicit session mode; it must not be inferred from connected participants. */
     public DiabloGameMode GameMode { get; init; } = DiabloGameMode.SinglePlayer;
+
+    /** Optional server-owned encounter policy used for initial and entered levels. */
+    public DiabloMonsterSpawnConfiguration? ProceduralMonsterSpawns { get; init; }
+
+    /** Planner supplied by the validated content activation boundary. */
+    public AuthoritativeMonsterSpawnPlanner? MonsterSpawnPlanner { get; init; }
 }
 
 /** Engine capability that constructs a configured first-party Diablo simulation. */
@@ -154,7 +160,11 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             random,
             combatRules,
             options.PlayerClasses,
-            options.PlayerAnimations);
+            options.PlayerAnimations,
+            options.MonsterSpawnPlanner,
+            options.ProceduralMonsterSpawns,
+            options.RandomSeed,
+            options.GameMode);
     }
 }
 
@@ -169,6 +179,12 @@ public sealed partial class DiabloSimulation
     private readonly DiabloWorldCommandProcessor worldCommands;
     private readonly DiabloCombatCommandProcessor combatCommands;
     private readonly DiabloRandom random;
+    private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
+    private readonly DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns;
+    private readonly uint proceduralMonsterSeed;
+    private readonly DiabloGameMode gameMode;
+    private readonly HashSet<uint> materializedProceduralLevels = [];
+    private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
     internal DiabloSimulation(
         StoreCatalog storeCatalog,
@@ -179,7 +195,11 @@ public sealed partial class DiabloSimulation
         DiabloRandom random,
         AuthoritativeCombatRules combatRules,
         AuthoritativePlayerClassCatalog? playerClasses,
-        AuthoritativePlayerAnimationCatalog? playerAnimations)
+        AuthoritativePlayerAnimationCatalog? playerAnimations,
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns = null,
+        uint proceduralMonsterSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -190,6 +210,11 @@ public sealed partial class DiabloSimulation
         CombatRules = combatRules ?? throw new ArgumentNullException(nameof(combatRules));
         PlayerClasses = playerClasses;
         PlayerAnimations = playerAnimations;
+        this.monsterSpawnPlanner = monsterSpawnPlanner;
+        this.proceduralMonsterSpawns = proceduralMonsterSpawns?.Validate();
+        this.proceduralMonsterSeed = proceduralMonsterSeed;
+        this.gameMode = gameMode;
+        ReconcileProceduralSpawnState();
     }
 
     public DiabloWorldState WorldState { get; }
@@ -217,7 +242,76 @@ public sealed partial class DiabloSimulation
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players)
     {
-        return worldCommands.Execute(player, intent, appliedTick, players);
+        var participants = players as IReadOnlyList<AuthoritativePlayerState>
+            ?? players.ToArray();
+        var result = worldCommands.Execute(player, intent, appliedTick, participants);
+        if (result.Succeeded)
+            EnsureProceduralMonsterSpawns(player.LevelId, participants);
+        return result;
+    }
+
+    /** Materializes one deterministic encounter set when a player enters a level. */
+    private void EnsureProceduralMonsterSpawns(
+        uint levelId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        if (monsterSpawnPlanner is null
+            || proceduralMonsterSpawns is null
+            || !materializedProceduralLevels.Add(levelId)) {
+            return;
+        }
+
+        var firstEntityId = FindNextMonsterEntityId(participants);
+        IReadOnlyList<AuthoritativeCombatTarget> targets;
+        do {
+            targets = monsterSpawnPlanner.PlanCombatTargets(
+                levelId,
+                proceduralMonsterSeed,
+                gameMode == DiabloGameMode.Multiplayer,
+                proceduralMonsterSpawns.MaximumMonsters,
+                firstEntityId);
+            if (targets.All(target => !IsEntityIdOccupied(target.EntityId, participants)))
+                break;
+            firstEntityId = checked(firstEntityId + 1);
+        } while (true);
+        foreach (var target in targets)
+            WorldState.CombatTargets.Add(target.EntityId, target);
+        if (targets.Count != 0)
+            nextGeneratedMonsterEntityId = checked(targets[^1].EntityId + 1);
+    }
+
+    private uint FindNextMonsterEntityId(
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        var candidate = nextGeneratedMonsterEntityId;
+        while (candidate == 0 || IsEntityIdOccupied(candidate, participants)) {
+            candidate = checked(candidate + 1);
+        }
+        return candidate;
+    }
+
+    private bool IsEntityIdOccupied(
+        uint entityId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
+    {
+        return WorldState.CombatTargets.ContainsKey(entityId)
+            || WorldState.WorldItems.ContainsKey(entityId)
+            || WorldState.Objects.ContainsKey(entityId)
+            || WorldState.Projectiles.ContainsKey(entityId)
+            || WorldState.Portals.ContainsKey(entityId)
+            || participants.Any(player => player.EntityId == entityId);
+    }
+
+    /** Reconciles procedural-level tracking after a save or snapshot restore. */
+    internal void ReconcileProceduralSpawnState()
+    {
+        foreach (var target in WorldState.CombatTargets.Values
+                     .Where(target => target.EntityId >= AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId)) {
+            materializedProceduralLevels.Add(target.LevelId);
+            nextGeneratedMonsterEntityId = Math.Max(
+                nextGeneratedMonsterEntityId,
+                checked(target.EntityId + 1));
+        }
     }
 
     public DiabloCombatIntentResult Execute(

@@ -251,7 +251,9 @@ Status date: 2026-08-13
   stable seed replay. Activation can optionally replace static encounter rows
   with generated combat targets through the standalone server's procedural
   monster options; static rows remain the compatibility default, and native
-  map synthesis remains a separate migration.
+  map synthesis remains a separate migration. Successful authoritative level
+  transitions materialize each destination encounter set once with collision-
+  safe reserved IDs.
 - Diablo content activation now exposes the planner directly to the server
   adapter, preserving the module/data boundary for future generated worlds.
 - Engine-neutral inventory-grid geometry, footprint validation, placement, and

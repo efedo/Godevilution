@@ -140,6 +140,9 @@ encounter rows with at most `n` generated targets on the default starting level;
 still consumes static `monsters.tsv` rows, and generated targets intentionally
 do not synthesize drops or unique flags until those catalogs join spawn
 planning. Native map synthesis remains separate.
+When procedural mode is active, a successful server-authoritative level
+transition materializes the same seed-stable policy for the destination level
+once, using reserved entity IDs that coexist with dynamic combat entities.
 Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class

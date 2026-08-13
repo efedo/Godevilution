@@ -85,6 +85,72 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void ProceduralEncounterPolicyMaterializesASeedStableSetWhenEnteringANewLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        world.AddLevel(new AuthoritativeLevel(
+            2,
+            4,
+            4,
+            blockedCells: Enumerable.Range(3, 13)));
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            new AuthoritativeMonsterTypeCatalog([
+                new AuthoritativeMonsterTypeDefinition(
+                    2,
+                    2,
+                    "Generated Monster",
+                    1,
+                    2,
+                    1,
+                    10,
+                    10,
+                    0,
+                    1,
+                    2,
+                    0,
+                    0,
+                    false,
+                    false,
+                    false),
+            ]),
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(1, 2, 2, 100, 0),
+            ]));
+        var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 0, 0);
+        var initialTargets = planner.PlanCombatTargets(1, 0x1234, false, 1);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Portals = [portal],
+                CombatTargets = initialTargets,
+                MonsterSpawnPlanner = planner,
+                ProceduralMonsterSpawns = new DiabloMonsterSpawnConfiguration(1),
+                RandomSeed = 0x1234,
+            });
+        var player = CreatePlayer();
+        player.LevelId = 1;
+        player.PositionX = 0;
+        player.PositionY = 0;
+
+        var result = simulation.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2U, player.LevelId);
+        Assert.Equal(2, simulation.WorldState.CombatTargets.Count);
+        var generated = Assert.Single(
+            simulation.WorldState.CombatTargets.Values,
+            target => target.LevelId == 2);
+        Assert.True(world.IsWalkable(2, generated.PositionX, generated.PositionY));
+        Assert.NotEqual(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, generated.EntityId);
+    }
+
+    [Fact]
     public void DefeatingConfiguredMonsterAdvancesAndCompletesQuest()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 5, monsterId: 12);

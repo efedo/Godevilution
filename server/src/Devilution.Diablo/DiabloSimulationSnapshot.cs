@@ -1028,6 +1028,7 @@ public sealed partial class DiabloSimulation
 
         RestorePlayer(source, destination);
         RestoreMonsters(restoredMonsters);
+        ReconcileProceduralSpawnState();
         WorldState.WorldItems.Clear();
         foreach (var item in restoredWorldItems)
             WorldState.WorldItems.Add(item.EntityId, item);

@@ -101,12 +101,15 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint levelId,
         uint seed,
         bool multiplayer,
-        int maximumMonsters)
+        int maximumMonsters,
+        uint firstEntityId = FirstGeneratedMonsterEntityId)
     {
+        if (firstEntityId == 0)
+            throw new ArgumentOutOfRangeException(nameof(firstEntityId));
         var spawns = Plan(levelId, seed, multiplayer, maximumMonsters);
         return spawns
             .Select((spawn, index) => new AuthoritativeCombatTarget(
-                checked(FirstGeneratedMonsterEntityId + (uint)index),
+                checked(firstEntityId + (uint)index),
                 spawn.PositionX,
                 spawn.PositionY,
                 spawn.HitPoints,

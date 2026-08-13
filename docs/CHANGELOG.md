@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
 - Convert planned placements into authoritative combat targets and add an
   opt-in standalone-server path (`--procedural-monsters`, plus an optional
   level override); static encounter rows remain the compatibility default.
+- Materialize the same deterministic encounter policy when players enter new
+  levels, with one-time level tracking and collision-safe reserved entity IDs.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.
