@@ -366,3 +366,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1089	The Bleeder	113	2	8500	LIFE_CURSE	10	10
 1090	Constricting Ring	113	5	62000	ALLRES	75	75
 1090	Constricting Ring	113	5	62000	DRAINLIFE	0	0
+1091	Ring of Engagement	113	11	12476	GETHIT	1	2
+1091	Ring of Engagement	113	11	12476	THORNS	1	3
+1091	Ring of Engagement	113	11	12476	SETAC	5	5
+1091	Ring of Engagement	113	11	12476	TARGAC	2	2

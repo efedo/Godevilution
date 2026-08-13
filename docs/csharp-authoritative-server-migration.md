@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.50 adds the native-derived Hellfire Ring of Engagement unique
+definition (`unique_id=1091`), reusing the corrected Ring identity with
+get-hit, thorns, armor, and target-armor powers.
+
 Schema 1.49 adds the native-derived Hellfire Constricting Ring unique
 definition (`unique_id=1090`), reusing the corrected Ring identity with
 all-resistance and life-drain powers.

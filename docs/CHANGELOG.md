@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Ring of Engagement (`unique_id=1091`) through schema
+  1.50, reusing the corrected native Ring base item with get-hit, thorns,
+  armor, and target-armor powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Constricting Ring (`unique_id=1090`) through schema
   1.49, reusing the corrected native Ring base item with all-resistance and
   life-drain powers.
