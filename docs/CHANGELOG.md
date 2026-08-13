@@ -32,6 +32,10 @@ All notable changes to this fork are documented below.
   more validated identities, preserving boss, demon, undead, resistance, and
   special-damage baselines supported by the current schema.
 
+- Extend the Hellfire monster-type catalog through native ID 71 with twelve
+  more validated elemental, boss, and demon identities, including their
+  supported special-damage and resistance baselines.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,

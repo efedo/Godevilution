@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(61, monsterTypes.Definitions.Count);
+        Assert.Equal(73, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -118,8 +118,21 @@ public sealed class ShippedContentTests
         Assert.Equal((8, 20), (
             monsterTypes.Definitions[55].MinimumSpecialDamage,
             monsterTypes.Definitions[55].MaximumSpecialDamage));
-        Assert.Equal("Devourer", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(59U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal("Devourer", monsterTypes.Definitions[60].Name);
+        Assert.Equal(59U, monsterTypes.Definitions[60].NativeMonsterId);
+        Assert.Equal((100, 100), (
+            monsterTypes.Definitions[61].FireResistance,
+            monsterTypes.Definitions[61].MagicResistance));
+        Assert.Equal((5, 32), (
+            monsterTypes.Definitions[65].MinimumSpecialDamage,
+            monsterTypes.Definitions[65].MaximumSpecialDamage));
+        Assert.Equal("Undead Balrog", monsterTypes.Definitions[72].Name);
+        Assert.Equal(71U, monsterTypes.Definitions[72].NativeMonsterId);
+        Assert.False(monsterTypes.Definitions[72].Undead);
+        Assert.Equal((75, 75, 100), (
+            monsterTypes.Definitions[72].FireResistance,
+            monsterTypes.Definitions[72].LightningResistance,
+            monsterTypes.Definitions[72].MagicResistance));
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
