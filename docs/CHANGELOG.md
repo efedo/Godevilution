@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Civerb's Cudgel (`unique_id=1049`) through schema 1.8,
+  reusing the validated Mace base item with demon damage, dexterity-curse,
+  and magic-curse powers.
+
 - Externalize Hellfire Hammer of Jholm (`unique_id=1048`) through schema 1.7,
   adding its native Maul base item with fixed damage, indestructibility,
   strength, and to-hit powers.

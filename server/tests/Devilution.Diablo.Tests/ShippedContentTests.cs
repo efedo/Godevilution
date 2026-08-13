@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.7.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.8.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.7.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.8.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -724,6 +724,17 @@ public sealed class ShippedContentTests
         Assert.Equal(15, hammerOfJholm.PlusToHit);
         Assert.Equal(255, hammerOfJholm.Durability);
         Assert.Equal(255, hammerOfJholm.MaxDurability);
+        var civerbsCudgel = hellfireItems.GenerateUnique(1049, 0x12345678, 1);
+        Assert.Equal(1049, civerbsCudgel.UniqueId);
+        Assert.Equal(2000, civerbsCudgel.Value);
+        Assert.Equal(137, civerbsCudgel.ItemIndex);
+        Assert.Equal(1, civerbsCudgel.MinDamage);
+        Assert.Equal(8, civerbsCudgel.MaxDamage);
+        Assert.Equal(16, civerbsCudgel.MinimumStrength);
+        Assert.Equal(1, civerbsCudgel.EquipLocation);
+        Assert.NotEqual(0U, civerbsCudgel.Flags & 0x40000000U);
+        Assert.Equal(-5, civerbsCudgel.PlusDexterity);
+        Assert.Equal(-2, civerbsCudgel.PlusMagic);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

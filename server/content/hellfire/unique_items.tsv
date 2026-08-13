@@ -182,3 +182,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1048	Hammer of Jholm	143	1	8700	INDESTRUCTIBLE	0	0
 1048	Hammer of Jholm	143	1	8700	STR	3	3
 1048	Hammer of Jholm	143	1	8700	TOHIT	15	15
+1049	Civerb's Cudgel	142	1	2000	3XDAMVDEM	0	0
+1049	Civerb's Cudgel	142	1	2000	DEX_CURSE	5	5
+1049	Civerb's Cudgel	142	1	2000	MAG_CURSE	2	2
