@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Windforce (`unique_id=1021`) through schema 0.80,
+  including its native War Bow base item and strength, damage, and knockback
+  powers.
+
 - Externalize Hellfire Fleshstinger (`unique_id=1020`) through schema 0.79,
   reusing the validated Long Bow base item with native dexterity, hit, damage,
   and durability powers.

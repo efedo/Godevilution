@@ -69,3 +69,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1020	Fleshstinger	122	13	16500	TOHIT	40	40
 1020	Fleshstinger	122	13	16500	DAMP	80	80
 1020	Fleshstinger	122	13	16500	DUR	6	6
+1021	Windforce	125	17	37750	STR	5	5
+1021	Windforce	125	17	37750	DAMP	200	200
+1021	Windforce	125	17	37750	KNOCKBACK	0	0

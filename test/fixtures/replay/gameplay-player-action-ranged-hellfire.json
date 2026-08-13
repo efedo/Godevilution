@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "hellfire",
     "version": "1",
-    "sha256": "33141c85939b7ff1c2eaa177f74c1b5588efc6a83b85ce36371aa6c0441b506a"
+    "sha256": "1ca17fa9d30534448ccc25cbce542c9ed10a0825b0f8e96f628a402b8f9c114a"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,

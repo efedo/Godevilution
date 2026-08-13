@@ -603,6 +603,10 @@ Schema 0.79 adds the native-derived Hellfire Fleshstinger unique definition
 (`unique_id=1020`), reusing the validated Long Bow base item with native
 dexterity, hit, damage, and durability powers.
 
+Schema 0.80 adds the native-derived Hellfire Windforce base item and unique
+definition (`unique_id=1021`) with its War Bow identity, strength, damage, and
+knockback powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

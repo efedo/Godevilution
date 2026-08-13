@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.79.0` schema in
+It declares its identity and `devilution.diablo@0.80.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -146,7 +146,8 @@ attribute, damage, and light/vitality-curse powers. Flamedart
 (`unique_id=1019`) adds its native Hunter's Bow base item with fire-arrow, hit,
 and fire-resistance powers. Fleshstinger (`unique_id=1020`) reuses the
 validated Long Bow base item with native dexterity, hit, damage, and durability
-powers.
+powers. Windforce (`unique_id=1021`) adds its native War Bow base item with
+strength, damage, and knockback powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -734,7 +735,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.79.0"
+      "version": "0.80.0"
   },
   "dependencyConstraints": [
     {
@@ -766,7 +767,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.79.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.80.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
