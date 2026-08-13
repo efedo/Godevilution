@@ -31,12 +31,16 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 public sealed class AuthoritativeMonsterTypeCatalog
 {
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitions;
+    private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitionsByNativeId;
+    private readonly HashSet<uint> ambiguousNativeIds;
 
     public AuthoritativeMonsterTypeCatalog(
         IEnumerable<AuthoritativeMonsterTypeDefinition> definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         this.definitions = new Dictionary<uint, AuthoritativeMonsterTypeDefinition>();
+        definitionsByNativeId = new Dictionary<uint, AuthoritativeMonsterTypeDefinition>();
+        ambiguousNativeIds = new HashSet<uint>();
         foreach (var definition in definitions) {
             if (definition.MonsterId == 0
                 || string.IsNullOrWhiteSpace(definition.Name)
@@ -56,6 +60,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
+            if (!definitionsByNativeId.TryAdd(definition.NativeMonsterId, definition)) {
+                definitionsByNativeId.Remove(definition.NativeMonsterId);
+                ambiguousNativeIds.Add(definition.NativeMonsterId);
+            }
         }
         if (this.definitions.Count == 0)
             throw new InvalidDataException("The monster type catalog cannot be empty.");
@@ -66,6 +74,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
 
     public bool TryGet(uint monsterId, out AuthoritativeMonsterTypeDefinition definition)
         => definitions.TryGetValue(monsterId, out definition!);
+
+    /** Resolves an unambiguous native monster-table identity without exposing TSV parsing to the engine. */
+    public bool TryGetNative(uint nativeMonsterId, out AuthoritativeMonsterTypeDefinition definition)
+    {
+        if (ambiguousNativeIds.Contains(nativeMonsterId)) {
+            definition = null!;
+            return false;
+        }
+        return definitionsByNativeId.TryGetValue(nativeMonsterId, out definition!);
+    }
 
     public static AuthoritativeMonsterTypeCatalog LoadTsv(
         string sourcePath,

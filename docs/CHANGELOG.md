@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   metadata when encounter rows omit per-instance values, while preserving
   explicit encounter overrides.
 
+- Track native monster IDs separately from stable type IDs and expose reverse
+  lookup only for unambiguous identities, preserving composed base/Hellfire
+  overlays whose variant-local IDs may overlap.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,

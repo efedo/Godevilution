@@ -559,6 +559,10 @@ Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.
 The same type metadata now supplies baseline armor, damage channels, monster
 level, and immutable capability flags when an encounter row omits them.
+Native monster IDs remain variant-local compatibility metadata. The catalog
+exposes reverse lookup only when an ID is unambiguous, preserving composed
+base/Hellfire overlays whose variant-local IDs may overlap without moving TSV
+parsing into the engine.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

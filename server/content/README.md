@@ -108,6 +108,9 @@ explicit per-instance override. Encounter rows now reject unknown type
 identities when the table is present. Baseline armor, damage channels, monster
 level, and immutable capability flags also inherit from the type when omitted
 from an encounter row.
+Native monster IDs are variant-local compatibility metadata; reverse lookup is
+available only for unambiguous IDs in a composed catalog, without making the
+engine parse TSV.
 It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
 is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its

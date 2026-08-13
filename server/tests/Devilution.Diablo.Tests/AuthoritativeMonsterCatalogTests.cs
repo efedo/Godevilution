@@ -26,6 +26,21 @@ public sealed class AuthoritativeMonsterCatalogTests
             zombie.MaximumDamage));
         Assert.True(zombie.StoneCurseImmune);
         Assert.True(zombie.Undead);
+        Assert.True(catalog.TryGetNative(0, out var nativeZombie));
+        Assert.Same(zombie, nativeZombie);
+    }
+
+    [Fact]
+    public void DoesNotReverseResolveAmbiguousNativeMonsterIdentities()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 1, 4, 7, 10, 2, 5, 0, 0, true, true, false),
+            new AuthoritativeMonsterTypeDefinition(
+                3, 0, "Ghoul", 2, 3, 2, 7, 11, 10, 3, 10, 0, 0, true, true, false),
+        ]);
+
+        Assert.False(catalog.TryGetNative(0, out _));
     }
 
     [Fact]
