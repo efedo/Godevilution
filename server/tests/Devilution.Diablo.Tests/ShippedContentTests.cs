@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.40.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.41.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.40.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.41.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1186,6 +1186,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10, theDeflector.PlusFireResistance);
         Assert.Equal(10, theDeflector.PlusLightningResistance);
         Assert.Equal(10, theDeflector.PlusMagicResistance);
+        var splitSkullShield = hellfireItems.GenerateUnique(1082, 0x12345678, 1);
+        Assert.Equal(1082, splitSkullShield.UniqueId);
+        Assert.Equal(2025, splitSkullShield.Value);
+        Assert.Equal(72, splitSkullShield.ItemIndex);
+        Assert.Equal(10, splitSkullShield.ArmorClass);
+        Assert.Equal(15, splitSkullShield.Durability);
+        Assert.Equal(15, splitSkullShield.MaxDurability);
+        Assert.Equal(0, splitSkullShield.MinimumStrength);
+        Assert.Equal(4, splitSkullShield.EquipLocation);
+        Assert.Equal(10 << 6, splitSkullShield.PlusHitPoints);
+        Assert.Equal(2, splitSkullShield.PlusStrength);
+        Assert.Equal(-1, splitSkullShield.PlusLight);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

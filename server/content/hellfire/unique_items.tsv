@@ -327,3 +327,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1081	The Deflector	166	1	1500	ALLRES	10	10
 1081	The Deflector	166	1	1500	DAMP_CURSE	20	20
 1081	The Deflector	166	1	1500	TOHIT_CURSE	5	5
+1082	Split Skull Shield	166	1	2025	SETAC	10	10
+1082	Split Skull Shield	166	1	2025	LIFE	10	10
+1082	Split Skull Shield	166	1	2025	STR	2	2
+1082	Split Skull Shield	166	1	2025	LIGHT_CURSE	1	1
+1082	Split Skull Shield	166	1	2025	SETDUR	15	15

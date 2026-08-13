@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.41 adds the native-derived Hellfire Split Skull Shield unique
+definition (`unique_id=1082`), reusing its Buckler identity with armor, life,
+strength, light-curse, and durability powers.
+
 Schema 1.40 adds the native-derived Hellfire The Deflector base item and
 unique definition (`unique_id=1081`) with its Buckler identity, armor,
 resistance, damage-curse, and to-hit-curse powers.
