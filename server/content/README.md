@@ -121,6 +121,9 @@ misses leave positions unchanged.
 Hellfire `ACAgainstDemons` and `ACAgainstUndead` item powers add 40 and 20
 armor respectively before autonomous monster hit resolution when the target
 monster carries the corresponding validated demon or undead capability.
+Hellfire `Devastation` consumes one native RNG draw after a successful
+physical hit and triples damage when the result is below 5; the server keeps
+that roll authoritative and excludes unusable or unidentified magical items.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

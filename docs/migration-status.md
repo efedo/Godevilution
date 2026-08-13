@@ -75,6 +75,9 @@ Status date: 2026-08-13
 - Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment flags now add the
   native 40/20 armor bonuses before authoritative autonomous monster damage;
   unusable and unidentified magical equipment remains excluded.
+- Hellfire `Devastation` now performs the native 5% post-hit triple-damage
+  roll on authoritative physical player attacks, consuming its RNG draw only
+  after a successful hit and excluding unusable or unidentified magical items.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

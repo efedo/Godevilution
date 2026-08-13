@@ -460,6 +460,14 @@ public sealed class DiabloCombatCommandProcessor
                 & AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag) != 0) {
             resolvedDamage = checked(resolvedDamage * 3);
         }
+        if (rules.GameVariant == DiabloGameVariant.Hellfire
+            && resolvedDamage > 0
+            && HasUsableHellfireDamageArmorFlag(
+                player,
+                AuthoritativeEquipmentIncomingDamageRules.DevastationFlag)
+            && random.RandomIntLessThan(100) < 5) {
+            resolvedDamage = checked(resolvedDamage * 3);
+        }
         return resolvedDamage;
     }
 
@@ -7133,6 +7141,18 @@ public sealed class DiabloCombatCommandProcessor
     private static bool HasUsableEquipmentFlag(AuthoritativePlayerState player, uint flag)
     {
         return (GetUsableEquipmentFlags(player) & flag) != 0;
+    }
+
+    private static bool HasUsableHellfireDamageArmorFlag(
+        AuthoritativePlayerState player,
+        int flag)
+    {
+        return player.Equipment.Any(item => {
+            var state = item.State;
+            return IsUsable(state)
+                && (state.Magical == 0 || state.Identified)
+                && (state.HellfireDamageArmorFlags & flag) != 0;
+        });
     }
 
     private static uint GetUsableEquipmentFlags(AuthoritativePlayerState player)

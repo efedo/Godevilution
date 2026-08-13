@@ -948,6 +948,86 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireDevastationTriplesOnlySuccessfulEligibleHitsOnItsNativeRoll()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(70, target.HitPoints);
+        Assert.Equal(1U, random.State);
+
+        var noProcTarget = new AuthoritativeCombatTarget(10, 1, 0, 100);
+        var noProcWorld = new DiabloWorldState(combatTargets: [noProcTarget]);
+        var noProcProcessor = CreateProcessor(
+            noProcWorld,
+            random: new DiabloRandom(1),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var noProcResult = noProcProcessor.Execute(
+            player,
+            new DiabloAttackIntent(10),
+            2);
+
+        Assert.True(noProcResult.Succeeded);
+        Assert.Equal(90, noProcTarget.HitPoints);
+
+        var ineligibleTarget = new AuthoritativeCombatTarget(11, 1, 0, 100);
+        var ineligibleRandom = new DiabloRandom(0);
+        var ineligibleProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [ineligibleTarget]),
+            random: ineligibleRandom,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var ineligiblePlayer = CreatePlayer(
+            entityId: 12,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = false,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                })]);
+
+        var ineligibleResult = ineligibleProcessor.Execute(
+            ineligiblePlayer,
+            new DiabloAttackIntent(11),
+            3);
+
+        Assert.True(ineligibleResult.Succeeded);
+        Assert.Equal(90, ineligibleTarget.HitPoints);
+        Assert.Equal(0U, ineligibleRandom.State);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();
