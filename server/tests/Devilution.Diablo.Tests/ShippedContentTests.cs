@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.92.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.93.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.92.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.93.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -522,6 +522,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10, lightsabre.LightningMaxDamage);
         Assert.Equal(20, lightsabre.PlusToHit);
         Assert.Equal(50, lightsabre.PlusLightningResistance);
+        var falconsTalon = hellfireItems.GenerateUnique(1034, 0x12345678, 15);
+        Assert.Equal(1034, falconsTalon.UniqueId);
+        Assert.Equal(7867, falconsTalon.Value);
+        Assert.Equal(122, falconsTalon.ItemIndex);
+        Assert.Equal(3, falconsTalon.MinDamage);
+        Assert.Equal(7, falconsTalon.MaxDamage);
+        Assert.Equal(23, falconsTalon.MinimumStrength);
+        Assert.Equal(23, falconsTalon.MinimumDexterity);
+        Assert.Equal(20, falconsTalon.PlusToHit);
+        Assert.Equal(-33, falconsTalon.PlusDamage);
+        Assert.Equal(10, falconsTalon.PlusDexterity);
+        Assert.NotEqual(0U, falconsTalon.Flags & 0x00100000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

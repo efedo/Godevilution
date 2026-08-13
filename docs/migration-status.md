@@ -46,7 +46,7 @@ Status date: 2026-08-13
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
   and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, The Executioner's Blade,
-  The Bonesaw, Shadowhawk, Wizardspike, and Lightsabre
+  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, and The Falcon's Talon
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -747,7 +747,10 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
-Content schema 0.92 adds the native-derived Hellfire Lightsabre unique
+Content schema 0.93 adds the native-derived Hellfire The Falcon's Talon base
+item and unique definition (`unique_id=1034`) with its Scimitar identity,
+fast-attack, to-hit, damage-curse, and dexterity powers. Content schema 0.92
+adds the native-derived Hellfire Lightsabre unique
 definition (`unique_id=1033`), reusing the validated Sabre base item with
 light, lightning-damage, to-hit, and lightning-resistance powers. Content schema
 0.91 adds the native-derived Hellfire Wizardspike unique

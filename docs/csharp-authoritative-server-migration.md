@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.93 adds the native-derived Hellfire The Falcon's Talon base item and
+unique definition (`unique_id=1034`) with its Scimitar identity, fast-attack,
+to-hit, damage-curse, and dexterity powers.
+
 Schema 0.92 adds the native-derived Hellfire Lightsabre unique definition
 (`unique_id=1033`), reusing the validated Sabre base item with light,
 lightning-damage, to-hit, and lightning-resistance powers.
