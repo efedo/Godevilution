@@ -182,7 +182,7 @@ public sealed class DiabloPlayerTemplate
     /** Creates fresh mutable module state from this immutable template. */
     public AuthoritativePlayerState CreatePlayer()
     {
-        return new AuthoritativePlayerState(
+        var player = new AuthoritativePlayerState(
             Gold,
             Experience,
             Life,
@@ -212,6 +212,8 @@ public sealed class DiabloPlayerTemplate
             ReflectCharges,
             BaseLifeMaximum,
             BaseManaMaximum);
+        player.RecalculateEquipmentArmor();
+        return player;
     }
 }
 

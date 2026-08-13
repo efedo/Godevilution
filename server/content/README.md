@@ -353,6 +353,9 @@ percent, `plus_damage_modifier` flat damage, `plus_to_hit`, and
 `plus_enemy_armor_class` armor-piercing values to authoritative player attacks;
 the server excludes unequipped, unusable, and unidentified magical items from
 those bonuses.
+Equipped item `armor_class` and native percentage armor metadata likewise
+recompute effective player armor together with native dexterity armor during
+player creation, equipment transfers, and snapshot restoration.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and

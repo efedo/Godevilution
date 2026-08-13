@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
 
 - Apply usable identified equipment damage-percent, flat-damage, to-hit, and
   armor-piercing metadata to authoritative player attacks.
+- Recompute effective player armor from equipped item armor, percentage armor,
+  native dexterity, and identification/requirement rules across authoritative
+  creation, transfers, and snapshot restoration.
 
 ## 2026-08-13
 

@@ -416,6 +416,35 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void EquippedArmorUsesRequirementsAndNativePercentageTruncation()
+    {
+        var identifiedArmor = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                ArmorClass = 20,
+                PlusArmorClass = 50,
+            });
+        var unidentifiedMagicalArmor = new EquippedStoreItem(
+            5,
+            43,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Magical = 1,
+                ArmorClass = 7,
+                PlusArmorClass = 100,
+            });
+
+        var armor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [identifiedArmor, unidentifiedMagicalArmor]);
+
+        Assert.Equal(5 + (23 / 5) + 20 + 10 + 7, armor);
+    }
+
+    [Fact]
     public void HellfireResourceConversionsRejectOutOfRangePercentages()
     {
         var invalid = new EquippedStoreItem(

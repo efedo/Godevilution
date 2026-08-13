@@ -274,7 +274,11 @@ public sealed class AuthoritativePlayerState(
 
     public uint LevelId { get; set; } = levelId;
 
-    public int ArmorClass { get; } = Math.Max(0, armorClass);
+    /** Unmodified native player armor before equipment and dexterity. */
+    public int BaseArmorClass { get; } = Math.Max(0, armorClass);
+
+    /** Effective native player armor after equipment and dexterity. */
+    public int ArmorClass { get; private set; } = Math.Max(0, armorClass);
 
     public uint CharacterClassId { get; set; } = characterClassId;
 
@@ -354,7 +358,7 @@ public sealed class AuthoritativePlayerState(
     /** Server-owned item currently carried by the presentation cursor. */
     public OwnedStoreItem? HeldItem { get; set; } = heldItem;
 
-    /** Recomputes native equipment resource conversions while preserving damage debt. */
+    /** Recomputes native equipment resources and defensive statistics. */
     public void RecalculateEquipmentResources()
     {
         var lifeBase = checked(Life + BaseLifeMaximum - LifeMaximum);
@@ -373,5 +377,15 @@ public sealed class AuthoritativePlayerState(
             checked(adjusted.ManaQ6 - BaseManaMaximum + manaBase),
             0,
             ManaMaximum);
+        RecalculateEquipmentArmor();
+    }
+
+    /** Recomputes effective armor without changing current life or mana. */
+    public void RecalculateEquipmentArmor()
+    {
+        ArmorClass = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            BaseArmorClass,
+            Attributes.Dexterity.Current,
+            Equipment);
     }
 }

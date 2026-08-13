@@ -166,6 +166,9 @@ Windows toolchain command.
   `plus_to_hit`, and `plus_enemy_armor_class` (armor piercing) are consumed by
   the authoritative player attack resolver only when the item is usable and
   identified when magical; clients never apply these combat bonuses locally.
+- Equipped item `armor_class` and `plus_armor_class` are folded into the
+  server-owned player armor state with native dexterity and identification
+  rules; clients never recompute defensive statistics from item names.
 - `Snapshot.random_state`, `MonsterSnapshot.monster_level`, exact Q6 monster
   health fields 16-17, `DamageEvent.amount_q6`, `HealingEvent.amount_q6`,
   projectile runtime fields 14-27,

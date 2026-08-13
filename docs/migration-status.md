@@ -114,6 +114,10 @@ Status date: 2026-08-13
   armor-piercing metadata now affects authoritative player attacks with the
   native hit/armor boundary; unequipped, unusable, and unidentified magical
   items remain excluded.
+- Native equipped item armor and percentage armor bonuses now recompute the
+  authoritative player's effective armor, including native dexterity armor and
+  identification/requirement rules, across player creation, transfers, and
+  snapshot restoration.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,
   combat metadata, wallets, equipment, belt and inventory placements, class
