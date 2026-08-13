@@ -444,6 +444,8 @@ message MonsterSnapshot {
 	int32 acid_resistance = 36;
 	// Immutable native monster class capability used by demon-specific equipment.
 	bool is_demon = 37;
+	// Immutable native monster class capability used by sword/mace modifiers.
+	bool is_animal = 38;
 }
 
 message WorldItemSnapshot {

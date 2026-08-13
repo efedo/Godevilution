@@ -197,6 +197,7 @@ public sealed class AuthoritativeSaveCodecTests
                 StoneCurseImmune = true,
                 IsUndead = true,
                 IsDemon = true,
+                IsAnimal = true,
                 DeathAnimationTicks = 3,
                 DeathTicksRemaining = 2,
                 HitPointsQ6 = 0,

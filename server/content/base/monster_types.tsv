@@ -1,2 +1,2 @@
-monster_id	native_monster_id	name	minimum_dungeon_level	maximum_dungeon_level	monster_level	minimum_hit_points	maximum_hit_points	armor_class	minimum_damage	maximum_damage	minimum_special_damage	maximum_special_damage	stone_curse_immune	undead	berserk_immune	fire_resistance	lightning_resistance	magic_resistance	acid_resistance	demon
-1	0	Base Monster	1	16	1	11	11	2	3	3	3	3	0	0	0	0	0	0	0	0
+monster_id	native_monster_id	name	minimum_dungeon_level	maximum_dungeon_level	monster_level	minimum_hit_points	maximum_hit_points	armor_class	minimum_damage	maximum_damage	minimum_special_damage	maximum_special_damage	stone_curse_immune	undead	berserk_immune	fire_resistance	lightning_resistance	magic_resistance	acid_resistance	demon	animal
+1	0	Base Monster	1	16	1	11	11	2	3	3	3	3	0	0	0	0	0	0	0	0	0

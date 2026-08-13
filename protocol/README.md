@@ -306,6 +306,11 @@ Windows toolchain command.
 - `MonsterSnapshot.is_demon` field 37 carries the validated native monster-class
   capability used by demon-specific equipment; clients do not infer faction
   from monster names.
+- `MonsterSnapshot.is_animal` field 38 carries the validated native monster-class
+  capability used by animal-specific weapon modifiers; clients do not infer
+  class from monster names. True uses the tagged
+  `godevilution-monster-animal-v1` canonical-hash extension; false remains the
+  additive compatibility default.
 
 ## Identity Note
 

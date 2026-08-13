@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.71.0` schema in
+It declares its identity and `devilution.diablo@1.72.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -129,6 +129,9 @@ Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class
 from display names.
+Schema 1.72 adds the native `animal` monster-class capability. The server
+validates it from external type rows and applies the native inverse sword/mace
+modifiers at the authoritative physical attack boundary.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
@@ -699,7 +702,7 @@ exact item. The shipped Sorcerer staff therefore uses native miscellaneous type
 Diablo module rather than trusted from a client.
 
 `monsters.tsv` keeps encounter state and immutable gameplay capabilities outside
-the engine. Its optional `stone_curse_immune`, `undead`, `player_minion`,
+the engine. Its optional `stone_curse_immune`, `undead`, `animal`, `player_minion`,
 `unique`, `diablo`, and `berserk_immune` columns accept `0` or `1`; immune
 monsters are skipped by Stone Curse's native crawl, while undead
 monsters are the only monster targets accepted by Holy Bolt. These flags persist
@@ -984,7 +987,7 @@ the complete target header even when they upsert only one row.
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
-| `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
+| `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead` and `animal`. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, resistance, and capability metadata. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
@@ -1020,7 +1023,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.71.0"
+      "version": "1.72.0"
   },
   "dependencyConstraints": [
     {
@@ -1052,7 +1055,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.71.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.72.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

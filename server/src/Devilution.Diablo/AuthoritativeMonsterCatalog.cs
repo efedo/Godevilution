@@ -39,6 +39,7 @@ public sealed class AuthoritativeMonsterCatalog
                 monsterType?.StoneCurseImmune ?? false);
             var undead = ReadFlag(row, "undead", monsterType?.Undead ?? false);
             var demon = ReadFlag(row, "demon", monsterType?.Demon ?? false);
+            var animal = ReadFlag(row, "animal", monsterType?.Animal ?? false);
             var playerMinion = ReadFlag(row, "player_minion", false);
             var unique = ReadFlag(row, "unique", false);
             var diablo = ReadFlag(row, "diablo", false);
@@ -130,7 +131,8 @@ public sealed class AuthoritativeMonsterCatalog
                 unique: unique,
                 diablo: diablo,
                 berserkImmune: berserkImmune,
-                deathAnimationTicks: deathAnimationTicks);
+                deathAnimationTicks: deathAnimationTicks,
+                animal: animal);
         }));
     }
 

@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   unarmed and shield fallbacks; legacy templates retain global base damage.
 - Apply native sword and mace damage modifiers against externally classified
   undead targets at the authoritative physical damage boundary.
+- Apply native sword and mace damage modifiers against externally classified
+  animal targets at the authoritative physical damage boundary, carrying the
+  validated class capability through protocol, saves, snapshots, and hashes.
 - Apply the native class `CriticalStrike` rule to eligible authoritative player
   attacks: a level-based post-hit roll doubles physical damage before armor and
   downstream class/item effects, with the native RNG draw order preserved.

@@ -43,7 +43,8 @@ public sealed class AuthoritativeCombatTarget
         bool diablo = false,
         bool berserkImmune = false,
         int deathAnimationTicks = 0,
-        bool demon = false)
+        bool demon = false,
+        bool animal = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -87,6 +88,7 @@ public sealed class AuthoritativeCombatTarget
         StoneCurseImmune = stoneCurseImmune;
         IsUndead = undead;
         IsDemon = demon;
+        IsAnimal = animal;
         IsPlayerMinion = playerMinion;
         OwnerPlayerId = ownerPlayerId;
         IsUnique = unique;
@@ -138,6 +140,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** External monster class capability used by demon-specific equipment. */
     public bool IsDemon { get; set; }
+
+    /** External monster class capability used by sword/mace damage modifiers. */
+    public bool IsAnimal { get; set; }
 
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; set; }

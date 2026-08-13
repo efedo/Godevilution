@@ -116,6 +116,12 @@ Status date: 2026-08-13
 - Native undead weapon modifiers now apply at the authoritative damage
   boundary: swords deal half damage and maces deal one-and-a-half damage when
   the external monster capability marks the target undead.
+- Native animal weapon modifiers now apply at the authoritative damage
+  boundary: swords deal one-and-a-half damage and maces deal half damage when
+  the external monster capability marks the target animal. Content schema 1.72
+  externalizes the capability, which is inherited from validated
+  `monster_types.tsv` rows and persists through the
+  shared protocol, saves, snapshots, and canonical hashes.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each

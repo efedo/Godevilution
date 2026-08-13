@@ -27,6 +27,25 @@ public sealed class AuthoritativeMonsterDamageRulesTests
     }
 
     [Fact]
+    public void AnimalModifiersReverseTheSwordAndMaceResults()
+    {
+        Assert.Equal(
+            16,
+            AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
+                11,
+                undead: false,
+                [CreateWeapon(1)],
+                animal: true));
+        Assert.Equal(
+            6,
+            AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
+                11,
+                undead: false,
+                [CreateWeapon(4)],
+                animal: true));
+    }
+
+    [Fact]
     public void WeaponClassModifierIgnoresNonUndeadAndNonHandItems()
     {
         var equipment = new[] {

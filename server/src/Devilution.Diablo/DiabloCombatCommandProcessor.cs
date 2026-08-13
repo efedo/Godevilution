@@ -587,7 +587,8 @@ public sealed class DiabloCombatCommandProcessor
         criticalDamage = AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
             criticalDamage,
             target.IsUndead,
-            player.Equipment);
+            player.Equipment,
+            target.IsAnimal);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
             target.ArmorClass,
@@ -679,7 +680,8 @@ public sealed class DiabloCombatCommandProcessor
             maxDamageSpecial: target.MaxDamageSpecial,
             berserkImmune: target.BerserkImmune,
             deathAnimationTicks: target.DeathAnimationTicks,
-            demon: target.IsDemon);
+            demon: target.IsDemon,
+            animal: target.IsAnimal);
         copy.RestoreHitPointsQ6(target.MaxHitPointsQ6, target.MaxHitPointsQ6);
         world.CombatTargets.Add(entityId, copy);
     }
