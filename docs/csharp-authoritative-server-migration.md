@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.68 adds the native-derived Hellfire Demon Plate Armor unique
+definition (`unique_id=1109`), reusing the native Full Plate identity with fixed
+armor and extra armor against demons.
+
 Schema 1.67 adds the native-derived Hellfire Bone Chain Armor unique definition
 (`unique_id=1108`), reusing the native Chain Mail identity with fixed armor and
 extra armor against undead.

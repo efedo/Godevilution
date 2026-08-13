@@ -334,6 +334,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             "3XDAMVDEM" => state with { Flags = state.Flags | 0x40000000U },
             "ABSHALFTRAP" => state with { Flags = state.Flags | 0x10000000U },
             "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },
+            "ACDEMON" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 5) },
             "ACUNDEAD" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 6) },
             "NOMINSTR" => state with { MinimumStrength = 0 },
             "ONEHAND" => state with { EquipLocation = 1 },

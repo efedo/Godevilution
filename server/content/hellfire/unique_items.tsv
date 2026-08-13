@@ -424,3 +424,5 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1107	Diamondedge	131	17	42000	SETAC	10	10
 1108	Bone Chain Armor	157	13	36000	SETAC	40	40
 1108	Bone Chain Armor	157	13	36000	ACUNDEAD	0	0
+1109	Demon Plate Armor	165	25	80000	SETAC	80	80
+1109	Demon Plate Armor	165	25	80000	ACDEMON	0	0

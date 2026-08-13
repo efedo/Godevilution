@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Demon Plate Armor (`unique_id=1109`) through schema 1.68,
+  reusing native Full Plate with fixed armor and extra armor against demons.
+
+## 2026-08-13
+
 - Externalize Hellfire Bone Chain Armor (`unique_id=1108`) through schema 1.67,
   reusing native Chain Mail with fixed armor and extra armor against undead.
 
