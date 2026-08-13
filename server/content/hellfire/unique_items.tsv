@@ -256,3 +256,4 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1064	Rod of Onan	148	22	44167	SPELL	21	50
 1064	Rod of Onan	148	22	44167	DAMP	100	100
 1064	Rod of Onan	148	22	44167	ATTRIBS	5	5
+1065	Helm of Spirits	152	1	7525	STEALLIFE	5	5

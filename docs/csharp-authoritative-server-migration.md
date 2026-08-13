@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.24 adds the native-derived Hellfire Helm of Spirits base item and
+unique definition (`unique_id=1065`) with its Helm identity and life-steal
+power.
+
 Schema 1.23 adds the native-derived Hellfire Rod of Onan unique definition
 (`unique_id=1064`), reusing the validated War Staff base item with
 charged-spell, damage, and attribute powers.

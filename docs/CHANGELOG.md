@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Helm of Spirits (`unique_id=1065`) through schema 1.24,
+  adding its native Helm base item and life-steal power.
+
+## 2026-08-13
+
 - Externalize Hellfire Rod of Onan (`unique_id=1064`) through schema 1.23,
   reusing the validated War Staff base item with charged-spell, damage, and
   attribute powers.
