@@ -713,6 +713,8 @@ public sealed class DiabloCombatCommandProcessor
             berserkImmune: target.BerserkImmune,
             deathAnimationTicks: target.DeathAnimationTicks,
             experienceReward: target.ExperienceReward,
+            toHit: target.ToHit,
+            toHitSpecial: target.ToHitSpecial,
             demon: target.IsDemon,
             animal: target.IsAnimal,
             knockback: target.HasKnockback);
@@ -3724,10 +3726,20 @@ public sealed class DiabloCombatCommandProcessor
                             target.IsUndead,
                             victim.Equipment);
                 }
-                var damage = rules.ResolveAttackDamage(
-                    target.AttackDamage,
-                    armorClass,
-                    unchecked((uint)tick ^ target.EntityId ^ victim.EntityId));
+                var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+                var damage = target.ToHit == 0
+                    ? rules.ResolveAttackDamage(
+                        target.AttackDamage,
+                        armorClass,
+                        attackSeed)
+                    : rules.ResolveMonsterAttackDamage(
+                        target.AttackDamage,
+                        target.ToHit,
+                        target.MonsterLevel,
+                        victim.CharacterLevel,
+                        target.LevelId,
+                        armorClass,
+                        attackSeed);
                 damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
                     damage,
                     rules.MinimumDamage,

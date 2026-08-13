@@ -218,6 +218,11 @@ experience reward used by the server-owned monster death boundary. Clients do
 not calculate rewards from this field; they receive the resulting experience
 event and authoritative player snapshot.
 
+`MonsterSnapshot.to_hit` and `to_hit_special` fields 41-42 carry validated
+native normal and special attack accuracy. Normal autonomous attacks apply the
+native level-delta, armor, and minimum-hit formula on the server; clients never
+resolve these rolls. Zero values retain the additive compatibility fallback.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

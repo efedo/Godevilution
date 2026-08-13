@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.77.0` schema in
+It declares its identity and `devilution.diablo@1.78.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -172,6 +172,10 @@ cleanup default of zero.
 Schema 1.77 adds the optional `experience_reward` monster-type column. The
 checked-in Hellfire rows carry native `monstdat` experience values, while the
 base compatibility row retains the existing ruleset reward when omitted.
+Schema 1.78 adds optional `to_hit` and `to_hit_special` monster-type columns.
+The checked-in Hellfire rows carry native normal and special attack accuracy;
+authoritative normal attacks apply the native level, armor, and minimum-hit
+formula, while older rows retain the global-hit compatibility fallback.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
@@ -1028,7 +1032,7 @@ the complete target header even when they upsert only one row.
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
-| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, resistance, capability, aggro, death-animation, and experience metadata. |
+| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, resistance, capability, aggro, death-animation, and experience metadata. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
@@ -1063,7 +1067,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.77.0"
+      "version": "1.78.0"
   },
   "dependencyConstraints": [
     {
@@ -1095,7 +1099,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.77.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.78.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

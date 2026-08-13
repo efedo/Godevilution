@@ -547,6 +547,32 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterAccuracyExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var normal = first.Clone();
+        normal.Monsters[0].ToHit = 61;
+        var special = normal.Clone();
+        special.Monsters[0].ToHitSpecial = 43;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(normal));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(normal),
+            SnapshotStateHasher.Compute(special));
+    }
+
+    [Fact]
     public void WorldItemProjectionChangesTheStateHash()
     {
         var first = new Snapshot {

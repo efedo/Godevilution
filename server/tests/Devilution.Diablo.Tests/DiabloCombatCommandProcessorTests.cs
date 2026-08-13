@@ -1523,7 +1523,9 @@ public sealed class DiabloCombatCommandProcessorTests
             maxDamageSpecial: 10,
             berserkImmune: true,
             deathAnimationTicks: 4,
-            demon: true);
+            demon: true,
+            toHit: 61,
+            toHitSpecial: 43);
         var world = new DiabloWorldState(combatTargets: [target]);
         var random = new DiabloRandom(0);
         var processor = CreateProcessor(
@@ -1563,6 +1565,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.False(copy.IsUnique);
         Assert.False(copy.IsDiablo);
         Assert.Equal(target.DeathAnimationTicks, copy.DeathAnimationTicks);
+        Assert.Equal((target.ToHit, target.ToHitSpecial), (copy.ToHit, copy.ToHitSpecial));
     }
 
     [Fact]

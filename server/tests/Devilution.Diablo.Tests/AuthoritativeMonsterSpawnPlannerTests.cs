@@ -116,6 +116,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
                 Knockback = true,
                 DeathAnimationTicks = 9,
                 ExperienceReward = 77,
+                ToHit = 61,
+                ToHitSpecial = 43,
             },
         ]);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -139,6 +141,7 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.True(target.HasKnockback);
         Assert.Equal(9, target.DeathAnimationTicks);
         Assert.Equal(77U, target.ExperienceReward);
+        Assert.Equal((61, 43), (target.ToHit, target.ToHitSpecial));
         Assert.Equal(2, target.MinDamage);
         Assert.Equal(3, target.MaxDamage);
     }

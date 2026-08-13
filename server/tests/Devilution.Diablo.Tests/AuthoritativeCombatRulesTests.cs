@@ -140,6 +140,33 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void ResolvesNativeMonsterAccuracyWithoutSubtractingPlayerArmorFromDamage()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+
+        Assert.Equal(
+            10,
+            rules.ResolveMonsterAttackDamage(
+                baseDamage: 10,
+                monsterToHit: 100,
+                monsterLevel: 1,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                targetArmorClass: 50,
+                seed: 0));
+        Assert.Equal(
+            0,
+            rules.ResolveMonsterAttackDamage(
+                baseDamage: 10,
+                monsterToHit: 1,
+                monsterLevel: 1,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                targetArmorClass: 100,
+                seed: 0));
+    }
+
+    [Fact]
     public void PhysicalHitChanceSubtractsArmorAndClampsToNativeBounds()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);

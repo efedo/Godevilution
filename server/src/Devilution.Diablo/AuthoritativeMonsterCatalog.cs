@@ -101,6 +101,12 @@ public sealed class AuthoritativeMonsterCatalog
             var experienceReward = row.TryGet("experience_reward", out _)
                 ? row.OptionalUInt32("experience_reward")
                 : monsterType?.ExperienceReward ?? 0;
+            var toHit = row.TryGet("to_hit", out _)
+                ? row.OptionalInt32("to_hit")
+                : monsterType?.ToHit ?? 0;
+            var toHitSpecial = row.TryGet("to_hit_special", out _)
+                ? row.OptionalInt32("to_hit_special")
+                : monsterType?.ToHitSpecial ?? 0;
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
@@ -186,6 +192,8 @@ public sealed class AuthoritativeMonsterCatalog
                 berserkImmune: berserkImmune,
                 deathAnimationTicks: deathAnimationTicks,
                 experienceReward: experienceReward,
+                toHit: toHit,
+                toHitSpecial: toHitSpecial,
                 animal: animal,
                 knockback: knockback);
         }).ToArray();

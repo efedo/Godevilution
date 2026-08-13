@@ -70,6 +70,12 @@ public sealed record DiabloMonsterState(
     /** Native experience reward imported from content. */
     public uint ExperienceReward { get; init; }
 
+    /** Native normal-attack chance to hit imported from content. */
+    public int ToHit { get; init; }
+
+    /** Native special-attack chance to hit imported from content. */
+    public int ToHitSpecial { get; init; }
+
     /** Remaining terminal death-animation ticks, when the monster is dead. */
     public int DeathTicksRemaining { get; init; }
 
@@ -321,6 +327,8 @@ public sealed partial class DiabloSimulation
                     IsBerserked = target.IsBerserked,
                     DeathAnimationTicks = target.DeathAnimationTicks,
                     ExperienceReward = target.ExperienceReward,
+                    ToHit = target.ToHit,
+                    ToHitSpecial = target.ToHitSpecial,
                     DeathTicksRemaining = target.DeathTicksRemaining,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -553,6 +561,8 @@ public sealed partial class DiabloSimulation
                 || monster.MonsterLevel < 0
                 || monster.DeathAnimationTicks is < 0 or > 1024
                 || monster.ExperienceReward > 1_000_000
+                || monster.ToHit is < 0 or > 255
+                || monster.ToHitSpecial is < 0 or > 255
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1208,6 +1218,11 @@ public sealed partial class DiabloSimulation
                     throw new InvalidDataException(
                         "The authoritative save contains incompatible monster experience data.");
                 }
+                if (target.ToHit != monster.ToHit
+                    || target.ToHitSpecial != monster.ToHitSpecial) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains incompatible monster accuracy data.");
+                }
                 target.PositionX = monster.PositionX;
                 target.PositionY = monster.PositionY;
                 target.ArmorClass = monster.ArmorClass;
@@ -1285,7 +1300,9 @@ public sealed partial class DiabloSimulation
                     diablo: monster.IsDiablo,
                     berserkImmune: monster.BerserkImmune,
                     deathAnimationTicks: monster.DeathAnimationTicks,
-                    experienceReward: monster.ExperienceReward);
+                    experienceReward: monster.ExperienceReward,
+                    toHit: monster.ToHit,
+                    toHitSpecial: monster.ToHitSpecial);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

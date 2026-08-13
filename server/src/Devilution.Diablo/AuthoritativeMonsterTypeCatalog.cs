@@ -44,6 +44,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native experience awarded when this monster is defeated. */
     public uint ExperienceReward { get; init; }
+
+    /** Native normal-attack chance to hit before level, difficulty, and armor adjustments. */
+    public int ToHit { get; init; }
+
+    /** Native special-attack chance to hit before level, difficulty, and armor adjustments. */
+    public int ToHitSpecial { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -80,6 +86,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.AggroRange is < 0 or > 64
                 || definition.DeathAnimationTicks is < 0 or > 1024
                 || definition.ExperienceReward > 1_000_000
+                || definition.ToHit is < 0 or > 255
+                || definition.ToHitSpecial is < 0 or > 255
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -154,6 +162,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 AggroRange = row.OptionalInt32("aggro_range", 6),
                 DeathAnimationTicks = row.OptionalInt32("death_animation_ticks"),
                 ExperienceReward = row.OptionalUInt32("experience_reward"),
+                ToHit = row.OptionalInt32("to_hit"),
+                ToHitSpecial = row.OptionalInt32("to_hit_special"),
             }));
     }
 

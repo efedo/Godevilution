@@ -41,6 +41,10 @@ All notable changes to this fork are documented below.
   carry them into static and procedural authoritative targets.
 - Externalize native per-monster experience rewards through schema 1.77 and
   award the validated value at the server-owned death boundary.
+- Externalize native monster normal and special attack accuracy through schema
+  1.78 and apply the native normal-attack level, armor, and minimum-hit formula
+  at the authoritative autonomous attack boundary, retaining the legacy global
+  fallback for hand-built targets.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

@@ -58,6 +58,17 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]));
     }
 
+    [Fact]
+    public void RejectsOutOfRangeMonsterAccuracy()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { ToHit = 256 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with { ToHitSpecial = 256 },
+        ]));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,
@@ -87,9 +98,9 @@ public sealed class AuthoritativeMonsterCatalogTests
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
-            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tdeath_animation_ticks\texperience_reward\n"
-                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\t16\t54\n"
-                + "3\t1\tGhoul\t2\t3\t2\t7\t11\t10\t3\t10\t0\t0\t1\t1\t0\t16\t58\n");
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tdeath_animation_ticks\texperience_reward\tto_hit\tto_hit_special\n"
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\t16\t54\t10\t0\n"
+                + "3\t1\tGhoul\t2\t3\t2\t7\t11\t10\t3\t10\t0\t0\t1\t1\t0\t16\t58\t10\t0\n");
 
         Assert.Equal([2U, 3U], catalog.Definitions.Select(definition => definition.MonsterId));
         var zombie = catalog.Definitions[0];
@@ -104,6 +115,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Equal(6, zombie.AggroRange);
         Assert.Equal(16, zombie.DeathAnimationTicks);
         Assert.Equal(54U, zombie.ExperienceReward);
+        Assert.Equal((10, 0), (zombie.ToHit, zombie.ToHitSpecial));
         Assert.True(zombie.StoneCurseImmune);
         Assert.True(zombie.Undead);
         Assert.False(zombie.Demon);

@@ -275,6 +275,11 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-experience-v1");
                     hasher.AppendUInt32(monster.ExperienceReward);
                 }
+                if (monster.ToHit != 0 || monster.ToHitSpecial != 0) {
+                    hasher.AppendString("godevilution-monster-accuracy-v1");
+                    hasher.AppendInt32(monster.ToHit);
+                    hasher.AppendInt32(monster.ToHitSpecial);
+                }
             }
         }
 

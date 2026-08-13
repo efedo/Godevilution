@@ -46,7 +46,9 @@ public sealed class AuthoritativeCombatTarget
         bool demon = false,
         bool animal = false,
         bool knockback = false,
-        uint experienceReward = 0)
+        uint experienceReward = 0,
+        int toHit = 0,
+        int toHitSpecial = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -62,6 +64,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(deathAnimationTicks));
         if (experienceReward > 1_000_000)
             throw new ArgumentOutOfRangeException(nameof(experienceReward));
+        if (toHit is < 0 or > 255 || toHitSpecial is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(toHit));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -101,6 +105,8 @@ public sealed class AuthoritativeCombatTarget
         BerserkImmune = berserkImmune;
         DeathAnimationTicks = deathAnimationTicks;
         ExperienceReward = experienceReward;
+        ToHit = toHit;
+        ToHitSpecial = toHitSpecial;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -183,6 +189,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native experience reward imported from the active monster data. */
     public uint ExperienceReward { get; }
+
+    /** Native normal-attack chance to hit imported from active monster data. */
+    public int ToHit { get; }
+
+    /** Native special-attack chance to hit imported from active monster data. */
+    public int ToHitSpecial { get; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }

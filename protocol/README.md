@@ -322,6 +322,11 @@ Windows toolchain command.
 - `MonsterSnapshot.experience_reward` field 40 carries the validated native
   reward used by the server-owned monster death boundary; older peers may
   ignore it while still receiving the ordinary experience event.
+- `MonsterSnapshot.to_hit` and `to_hit_special` fields 41-42 carry validated
+  native normal and special monster attack accuracy. The server applies normal
+  accuracy at the autonomous attack boundary; clients never resolve monster
+  hit rolls. Zero values preserve the additive compatibility fallback for
+  older hand-built targets and peers.
 
 ## Identity Note
 
