@@ -34,6 +34,10 @@ double and Rogue/Bard half-again self-Healing modifiers.
 `heal_other_spell_percent` separately externalizes Heal Other's class modifier;
 the Monk uses 300 percent for another player while retaining 200 percent for
 self-Healing.
+The `IronSkin` class flag adds the native character-level-divided-by-four armor
+bonus after dexterity and usable equipment armor are calculated. The
+`CriticalStrike` flag likewise selects its native combat rule; both behaviors
+remain server-owned after content activation.
 `pvp_ear_cursor_graphic` supplies the native inventory graphic used when that
 class dies to another player. Activation bounds it to the native byte-sized
 cursor range.

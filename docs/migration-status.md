@@ -95,6 +95,9 @@ Status date: 2026-08-13
   attacks: the level-based roll is consumed only after a successful hit and
   doubles physical damage before armor and later class/item effects. The shared
   action replay checkpoint was refreshed to this native result.
+- Native class `IronSkin` is now authoritative in effective armor: the
+  validated class flag adds character level divided by four after dexterity and
+  usable equipment armor are applied, across creation, transfers, and restore.
 - External unique and affix catalogs now project every native Hellfire
   damage/armor power identity into the authoritative effect flags,
   so these effects no longer depend on hard-coded content-side interpretation.
@@ -567,7 +570,7 @@ victim level supplies value, the activated class supplies cursor graphic, and
 schema-0.18 combat/item content supplies stable item identity. Runtime names
 and cursor cross protocol, saves, both clients, and conditional hashes; a shared
 C++/C# replay proves death, exact ear state, placement, and unchanged ear-drop
-RNG. Remaining spell scaling and class modifiers, targeting edge cases,
+RNG. Remaining spell scaling and other class modifiers, targeting edge cases,
 cursor-driven class capabilities, and a complete Godot spell-selection UI
 remain migration work.
 

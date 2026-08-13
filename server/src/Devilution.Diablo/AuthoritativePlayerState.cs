@@ -410,6 +410,8 @@ public sealed class AuthoritativePlayerState(
         ArmorClass = AuthoritativeEquipmentStatRules.CalculateArmorClass(
             BaseArmorClass,
             Attributes.Dexterity.Current,
-            Equipment);
+            Equipment,
+            PlayerClass,
+            CharacterLevel);
     }
 }

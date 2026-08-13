@@ -562,6 +562,57 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void IronSkinAddsNativeLevelScaledArmorAfterEquipment()
+    {
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "classes.tsv")));
+        var barbarian = classes.Resolve("barbarian");
+        var rogue = classes.Resolve("rogue");
+        var armor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [],
+            barbarian,
+            9);
+        var nonIronSkinArmor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [],
+            rogue,
+            9);
+        var player = new AuthoritativePlayerState(
+            gold: 0,
+            experience: 0,
+            life: 0,
+            mana: 0,
+            manaMaximum: 0,
+            attributes: barbarian.CreateStartingAttributes(),
+            equipment: [],
+            inventoryGrid: [],
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 0,
+            characterLevel: 9,
+            levelId: 0,
+            armorClass: 5,
+            characterClassId: barbarian.ClassId,
+            playerClass: barbarian);
+
+        player.RecalculateEquipmentArmor();
+
+        Assert.Equal(5 + (23 / 5) + (9 / 4), armor);
+        Assert.Equal(5 + (23 / 5), nonIronSkinArmor);
+        Assert.Equal(5 + (barbarian.BaseDexterity / 5) + (9 / 4), player.ArmorClass);
+    }
+
+    [Fact]
     public void EquippedAttributesUseRequirementsAndIdentificationRules()
     {
         var identifiedItem = new EquippedStoreItem(
@@ -662,5 +713,28 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(124 << 6, player.ManaMaximum);
         Assert.Equal(60 << 6, player.Life);
         Assert.Equal(100 << 6, player.Mana);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] {
+                configuredRoot!,
+                Directory.GetCurrentDirectory(),
+                AppContext.BaseDirectory,
+            };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
     }
 }
