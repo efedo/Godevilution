@@ -360,6 +360,54 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesBarbarianRageAbilityController()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-barbarian-rage", requestedClassId: 5));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(5U, player.CharacterClassId);
+        Assert.Equal(22U, player.AbilitySpellId);
+        var initialLife = player.Life;
+
+        var sequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = 22,
+                Source = CastSourceKind.Ability,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Barbarian Rage was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; class was {player.CharacterClassId}, ability was {player.AbilitySpellId}.");
+
+        var active = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Projectiles.Any(projectile =>
+                projectile.SourceEntityId == player.EntityId
+                && projectile.SpellId == 22
+                && projectile.Behavior == 34
+                && projectile.RemainingTicks > 0) == true);
+        var activePlayer = Assert.Single(active.Snapshot!.Players);
+        Assert.InRange(activePlayer.Life, 1, initialLife);
+        var rage = Assert.Single(
+            active.Snapshot.Projectiles,
+            projectile => projectile.SourceEntityId == player.EntityId
+                && projectile.SpellId == 22
+                && projectile.Behavior == 34);
+        Assert.True(rage.RemainingTicks > 0);
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
