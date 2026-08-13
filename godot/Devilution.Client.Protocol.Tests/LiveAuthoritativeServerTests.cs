@@ -190,6 +190,53 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesWarriorRepairAbilityOnFullyRepairedEquipment()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-warrior-repair", requestedClassId: 0));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(0U, player.CharacterClassId);
+        Assert.Equal(26U, player.AbilitySpellId);
+        var equipment = Assert.Single(player.Equipment, item => item.Slot == 4);
+        Assert.Equal(1, equipment.State.ItemIndex);
+        Assert.Equal(24, equipment.State.Durability);
+        Assert.Equal(24, equipment.State.MaxDurability);
+
+        var sequence = client.Queue(new Command {
+            RepairItemRequested = new RepairItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Warrior Repair was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; equipment was {equipment.State.Durability}/{equipment.State.MaxDurability}.");
+
+        var repaired = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(item => item.Slot == 4).State is { Durability: 24, MaxDurability: 24 });
+        var repairedEquipment = Assert.Single(repaired.Snapshot!.Players).Equipment
+            .Single(item => item.Slot == 4).State;
+        Assert.Equal(24, repairedEquipment.Durability);
+        Assert.Equal(24, repairedEquipment.MaxDurability);
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
