@@ -132,6 +132,8 @@ Schema 0.66 adds `quest_pools.tsv` and `set_level_names.tsv`. Quest types now
 retain native set-level identities (`SL_*`) rather than an unresolved sentinel;
 pool entries are stable quest IDs and are validated against `quest_types.tsv`
 during activation.
+The module's quest-pool selector preserves native seed ordering and the known
+bad-seed compatibility discard; quest-state activation remains server-owned.
 
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.

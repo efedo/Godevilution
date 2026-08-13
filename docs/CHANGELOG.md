@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   native set-level identities/names, including quest routing metadata for the
   base and Hellfire quest catalogs.
 
+- Add the module-owned deterministic quest-pool selector, including the native
+  bad-seed compatibility discard, without reintroducing quest constants or Lua
+  state into the server.
+
 - Advance the Diablo content schema to 0.65 with validated native level-range
   generation metadata in `level_generation.tsv`.
 

@@ -535,6 +535,8 @@ Schema 0.66 adds validated `quest_pools.tsv` and `set_level_names.tsv` catalogs.
 Quest type rows now retain native `SL_*` identities, and activation validates
 pool references against the stable quest catalog before exposing the metadata
 to the server-owned module.
+The module also provides the native deterministic pool-exclusion selector and
+preserves the historical bad-seed discard behavior.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

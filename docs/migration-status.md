@@ -57,7 +57,9 @@ Status date: 2026-08-12
   quest-state data remain incremental.
 - Quest randomization pools and native set-level names/identities are now
   externalized through validated `quest_pools.tsv` and `set_level_names.tsv`
-  catalogs; activation rejects pool references outside the stable quest catalog.
+  catalogs; activation rejects pool references outside the stable quest catalog,
+  and the module exposes native deterministic pool-exclusion selection with the
+  historical bad-seed compatibility discard.
 - Native level-range generation rules are now externalized through validated
   `level_generation.tsv` metadata and exposed by Diablo activation; procedural
   map generation still remains a separate migration.
