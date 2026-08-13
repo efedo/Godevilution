@@ -381,3 +381,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1096	Ring of Magma	113	8	8000	FIRERES	60	60
 1096	Ring of Magma	113	8	8000	LIGHTRES_CURSE	30	30
 1096	Ring of Magma	113	8	8000	MAGICRES_CURSE	30	30
+1097	Ring of the Mystics	113	8	8000	MAGICRES	60	60
+1097	Ring of the Mystics	113	8	8000	FIRERES_CURSE	30	30
+1097	Ring of the Mystics	113	8	8000	LIGHTRES_CURSE	30	30
