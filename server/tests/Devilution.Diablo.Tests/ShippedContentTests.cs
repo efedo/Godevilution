@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(49, monsterTypes.Definitions.Count);
+        Assert.Equal(61, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -102,9 +102,24 @@ public sealed class ShippedContentTests
         Assert.Equal((100, 75), (
             monsterTypes.Definitions[42].LightningResistance,
             monsterTypes.Definitions[42].MagicResistance));
-        Assert.Equal("Poison Spitter", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(47U, monsterTypes.Definitions[^1].NativeMonsterId);
-        Assert.Equal(100, monsterTypes.Definitions[^1].MagicResistance);
+        Assert.Equal("Poison Spitter", monsterTypes.Definitions[48].Name);
+        Assert.Equal(47U, monsterTypes.Definitions[48].NativeMonsterId);
+        Assert.Equal(100, monsterTypes.Definitions[48].MagicResistance);
+        Assert.Equal("Pit Beast", monsterTypes.Definitions[49].Name);
+        Assert.Equal((75, 100), (
+            monsterTypes.Definitions[49].LightningResistance,
+            monsterTypes.Definitions[49].MagicResistance));
+        Assert.Equal("Skeleton King", monsterTypes.Definitions[51].Name);
+        Assert.True(monsterTypes.Definitions[51].Undead);
+        Assert.Equal((100, 100, 100), (
+            monsterTypes.Definitions[51].FireResistance,
+            monsterTypes.Definitions[51].LightningResistance,
+            monsterTypes.Definitions[51].MagicResistance));
+        Assert.Equal((8, 20), (
+            monsterTypes.Definitions[55].MinimumSpecialDamage,
+            monsterTypes.Definitions[55].MaximumSpecialDamage));
+        Assert.Equal("Devourer", monsterTypes.Definitions[^1].Name);
+        Assert.Equal(59U, monsterTypes.Definitions[^1].NativeMonsterId);
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
