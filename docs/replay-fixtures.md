@@ -107,8 +107,11 @@ effect ticks, delayed mana/healing, and final cleanup.
 attack a nonadjacent target. The Diablo timeline skips one native logic frame,
 applying damage at tick 15 and admitting its chained move at tick 16; Hellfire
 applies at tick 16 and admits the move at tick 17. Five checkpoints per fixture
-prove the variant divergence and common final state. Focused module tests retain
-additional faster/fastest melee-speed coverage.
+prove the variant divergence and common final state. Their initialized Rogue
+attributes use the native equipment-damage profile; because the compact replay
+equipment shape omits base damage, the native unarmed one-damage fallback is
+used against a one-hit-point target. Focused module tests retain additional
+faster/fastest melee-speed coverage.
 
 `gameplay-player-death-lifecycle.json` starts a Warrior movement action while
 an autonomous monster approaches, attacks on tick 2, and cancels that action.

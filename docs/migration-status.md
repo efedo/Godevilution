@@ -108,6 +108,11 @@ Status date: 2026-08-13
   Hellfire applies its native armor shift/quarter rule, including the
   Barbarian melee reduction. Legacy uninitialized templates remain on the
   compatibility path.
+- Initialized physical damage now derives its native min/max range from usable
+  equipped items and applies class-specific strength/dexterity modifiers.
+  Native unarmed, shield, Monk, Rogue, Bard, and Barbarian branches are
+  represented in the server-owned profile; legacy uninitialized templates keep
+  the global combat-damage fallback.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each

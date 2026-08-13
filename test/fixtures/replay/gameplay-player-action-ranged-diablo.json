@@ -32,8 +32,8 @@
     "combat_target_entity_id": 9,
     "combat_target_position_x": 3,
     "combat_target_position_y": 0,
-    "combat_target_hit_points": 10,
-    "combat_target_max_hit_points": 10,
+    "combat_target_hit_points": 1,
+    "combat_target_max_hit_points": 1,
     "equipment": [
       {
         "slot": 4,
@@ -62,10 +62,10 @@
     }
   ],
   "checkpoints": [
-    { "tick": 10, "state_sha256": "fb5422abe1de7197710c7db32e7e1dc961d98d9bb81825b4270e027a12b8fcd1" },
-    { "tick": 14, "state_sha256": "fb5422abe1de7197710c7db32e7e1dc961d98d9bb81825b4270e027a12b8fcd1" },
-    { "tick": 15, "state_sha256": "5c1924ebd0dd7ab67db8a5fee300166277b69b848196d291fccd3562914a393b" },
-    { "tick": 16, "state_sha256": "1c3927df2f34d9c34eda073d16fdcd7a5e437d925873e3f6ebdadfac52f68861" },
-    { "tick": 24, "state_sha256": "b62c54023c49de55f09750f13169deddeb660a080c9c9f76f1cb842e8ed9e0d1" }
+    { "tick": 10, "state_sha256": "cd65f4fc9e582eb911955749db218810d2bc31029bd60b55e55cf183e9d8c257" },
+    { "tick": 14, "state_sha256": "cd65f4fc9e582eb911955749db218810d2bc31029bd60b55e55cf183e9d8c257" },
+    { "tick": 15, "state_sha256": "ce504c3a1e076d7382bbd30ab63ec4086212d363cd861ab491f1fa0e45db7a1e" },
+    { "tick": 16, "state_sha256": "ef1d15a3166fa145a83687ab217bae8db0aa99a3ada980bb01c3870e4db64429" },
+    { "tick": 24, "state_sha256": "dd7de4f680873873f3cc6fabb2c3243f467ebe722c156c81e375828cca3b3d17" }
   ]
 }

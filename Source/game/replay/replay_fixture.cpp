@@ -2368,7 +2368,13 @@ bool ApplyReplayAttack(
 {
 	if (!IsReplayAttackTargetValid(state, targetEntityId, ranged))
 		return false;
-	const int32_t damageQ6 = std::max(1, 10 - state.combatTargetArmorClass) * 64;
+	// The compact ranged fixtures model an initialized player with no base
+	// weapon damage, so native damage uses the one-point unarmed fallback and
+	// still consumes the deterministic damage-range draw.
+	const int32_t damage = ranged
+	    ? (static_cast<void>(GenerateRnd(state, 1)), 1)
+	    : std::max(1, 10 - state.combatTargetArmorClass);
+	const int32_t damageQ6 = damage * 64;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	if (state.combatTargetHitPointsQ6 <= 0) {

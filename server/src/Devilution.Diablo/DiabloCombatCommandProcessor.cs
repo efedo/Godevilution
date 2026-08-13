@@ -518,10 +518,30 @@ public sealed class DiabloCombatCommandProcessor
             armorPiercingBonus = checked(armorPiercingBonus + state.PlusEnemyArmorClass);
         }
 
-        var damage = checked(
-            rules.BaseAttackDamage
-            + rules.BaseAttackDamage * damagePercent / 100
-            + damageFlat);
+        var playerClass = GetPlayerClass(player);
+        // Legacy hand-built fixtures may omit class-derived attributes; retain
+        // the global damage fallback for those compatibility templates.
+        var usesNativeClassProfile = playerClass is not null
+            && player.Attributes.Dexterity.Current != 0;
+        var damageProfile = usesNativeClassProfile
+            ? AuthoritativeEquipmentDamageRules.Calculate(
+                player.CharacterLevel,
+                player.Attributes,
+                player.Equipment,
+                playerClass!)
+            : new AuthoritativePhysicalDamageProfile(
+                rules.BaseAttackDamage,
+                rules.BaseAttackDamage,
+                0);
+        var rolledBaseDamage = usesNativeClassProfile
+            ? random.RandomIntBetween(
+                damageProfile.MinimumDamage,
+                damageProfile.MaximumDamage)
+            : rules.BaseAttackDamage;
+        var damageBeforeFlat = checked(
+            rolledBaseDamage
+            + rolledBaseDamage * damagePercent / 100);
+        var damage = checked(damageBeforeFlat + damageFlat + damageProfile.DamageModifier);
         perilActive = rules.GameVariant == DiabloGameVariant.Hellfire
             && HasUsableHellfireDamageArmorFlag(
                 player,
@@ -531,14 +551,12 @@ public sealed class DiabloCombatCommandProcessor
         if (perilActive) {
             perilSelfDamageQ6 = checked(
                 DiabloFixedPointQ6.FromWhole(
-                    rules.BaseAttackDamage
-                    + rules.BaseAttackDamage * damagePercent / 100)
+                    damageBeforeFlat)
                 + DiabloFixedPointQ6.FromWhole(
                     AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(
                         player.Equipment)));
             perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
         }
-        var playerClass = GetPlayerClass(player);
         // Legacy hand-built fixtures may omit class-derived attributes; retain
         // the historical global hit fallback for those compatibility templates.
         var usesNativeClassToHit = playerClass is not null

@@ -592,6 +592,11 @@ void VerifyNativeTimedRangedPlayerAction(
 		state.positionY = fixture.initialState.positionY;
 		state.levelId = fixture.initialState.levelId;
 		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		// Match the C# ranged fixture setup, which activates the Rogue class
+		// definition and its native starting attributes.
+		if (state.characterClassId == 1) {
+			state.attributes = { 20, 20, 15, 15, 30, 30, 20, 20 };
+		}
 		return state;
 	};
 

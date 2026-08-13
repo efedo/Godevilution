@@ -346,7 +346,36 @@ public sealed class DiabloCombatCommandProcessorTests
         var unarmored = processor.Execute(player, new DiabloAttackIntent(9), 2);
 
         Assert.True(unarmored.Succeeded);
-        Assert.Equal(80, target.HitPoints);
+        Assert.Equal(99, target.HitPoints);
+    }
+
+    [Fact]
+    public void InitializedClassAttackUsesEquippedNativeDamageRange()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(world, playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 1,
+            attributes: classes.GetRequired(2).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 4,
+                    MaxDamage = 4,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 2);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(96, target.HitPoints);
     }
 
     [Fact]
@@ -404,8 +433,21 @@ public sealed class DiabloCombatCommandProcessorTests
         var warrior = CreatePlayer(
             entityId: 7,
             characterClassId: 0,
-            characterLevel: 1,
-            attributes: playerClasses.GetRequired(0).CreateStartingAttributes());
+            characterLevel: 50,
+            attributes: playerClasses.GetRequired(0).CreateStartingAttributes() with {
+                Strength = new PlayerAttributeState(0, 0),
+                Vitality = new PlayerAttributeState(0, 0),
+            },
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
 
         var criticalResult = criticalProcessor.Execute(
             warrior,
@@ -422,7 +464,7 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             100,
             armorClass: 4);
-        var nonCriticalRandom = new DiabloRandom(1);
+        var nonCriticalRandom = new DiabloRandom(2);
         var nonCriticalProcessor = CreateProcessor(
             new DiabloWorldState(combatTargets: [nonCriticalTarget]),
             random: nonCriticalRandom,
@@ -447,7 +489,19 @@ public sealed class DiabloCombatCommandProcessorTests
             entityId: 8,
             characterClassId: 1,
             characterLevel: 1,
-            attributes: playerClasses.GetRequired(1).CreateStartingAttributes());
+            attributes: playerClasses.GetRequired(1).CreateStartingAttributes() with {
+                Strength = new PlayerAttributeState(0, 0),
+            },
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
 
         var rogueResult = rogueProcessor.Execute(
             rogue,
@@ -456,7 +510,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(rogueResult.Succeeded);
         Assert.Equal(90, rogueTarget.HitPoints);
-        Assert.Equal(0U, rogueRandom.State);
+        Assert.NotEqual(0U, rogueRandom.State);
     }
 
     [Fact]

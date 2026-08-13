@@ -405,6 +405,11 @@ percent, `plus_damage_modifier` flat damage, `plus_to_hit`, and
 `plus_enemy_armor_class` armor-piercing values to authoritative player attacks;
 the server excludes unequipped, unusable, and unidentified magical items from
 those bonuses.
+Initialized players also derive the physical min/max range from usable
+equipped item damage, then apply the native class strength/dexterity modifier.
+When no usable item damage is present, the server uses native unarmed, shield,
+and Monk level-scaled fallbacks; compatibility templates retain global base
+damage.
 Equipped item `armor_class` and native percentage armor metadata likewise
 recompute effective player armor together with native dexterity armor during
 player creation, equipment transfers, and snapshot restoration.
