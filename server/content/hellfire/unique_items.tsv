@@ -185,3 +185,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1049	Civerb's Cudgel	142	1	2000	3XDAMVDEM	0	0
 1049	Civerb's Cudgel	142	1	2000	DEX_CURSE	5	5
 1049	Civerb's Cudgel	142	1	2000	MAG_CURSE	2	2
+1050	The Celestial Star	144	2	7810	NOMINSTR	0	0
+1050	The Celestial Star	144	2	7810	LIGHT	2	2
+1050	The Celestial Star	144	2	7810	DAMMOD	10	10
+1050	The Celestial Star	144	2	7810	AC_CURSE	8	8

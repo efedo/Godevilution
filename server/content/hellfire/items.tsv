@@ -32,3 +32,4 @@ item_id	item_type	value	identified_value	min_damage	max_damage	armor_class	durab
 141	1	58000	58000	12	30	0	75	75	1	1	1	Weapon	2	1	0	0	0	80	0	0	136	0	0
 142	1	11375	11375	1	8	0	32	32	1	1	1	Weapon	1	1	0	0	0	16	0	0	137	0	0
 143	1	8700	8700	6	20	0	50	50	1	1	1	Weapon	2	1	0	0	0	55	0	0	143	0	0
+144	1	7810	7810	2	12	0	36	36	1	1	1	Weapon	1	1	0	0	0	30	0	0	142	0	0

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Celestial Star (`unique_id=1050`) through schema
+  1.9, adding its native Flail base item with no-strength, light,
+  damage-modifier, and armor-curse powers.
+
 - Externalize Hellfire Civerb's Cudgel (`unique_id=1049`) through schema 1.8,
   reusing the validated Mace base item with demon damage, dexterity-curse,
   and magic-curse powers.

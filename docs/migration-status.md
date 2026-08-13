@@ -46,7 +46,7 @@ Status date: 2026-08-13
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
   and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, The Executioner's Blade,
-  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, Hellslayer, Messerschmidt's Reaver, Crackrust, Hammer of Jholm, and Civerb's Cudgel
+  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, Hellslayer, Messerschmidt's Reaver, Crackrust, Hammer of Jholm, Civerb's Cudgel, and The Celestial Star
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -747,7 +747,10 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
-Content schema 1.8 adds the native-derived Hellfire Civerb's Cudgel unique
+Content schema 1.9 adds the native-derived Hellfire The Celestial Star base
+item and unique definition (`unique_id=1050`) with its Flail identity,
+no-strength, light, damage-modifier, and armor-curse powers. Content schema 1.8
+adds the native-derived Hellfire Civerb's Cudgel unique
 definition (`unique_id=1049`), reusing the validated Mace base item with demon
 damage, dexterity-curse, and magic-curse powers. Content schema 1.7 adds the
 native-derived Hellfire Hammer of Jholm base item
