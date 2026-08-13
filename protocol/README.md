@@ -169,6 +169,10 @@ Windows toolchain command.
 - Equipped `plus_get_hit` is consumed by the authoritative autonomous monster
   physical-hit resolver under the same usability and identification boundary;
   clients never adjust incoming damage from item presentation.
+- Native life/mana-on-hit equipment flags are resolved by the server after a
+  successful physical attack, including deterministic random life steal and
+  `NoMana` suppression; clients consume the resulting resource state and
+  healing events rather than reimplementing item effects.
 - Equipped item `armor_class` and `plus_armor_class` are folded into the
   server-owned player armor state with native dexterity and identification
   rules; clients never recompute defensive statistics from item names.

@@ -366,6 +366,10 @@ native requirement and identification rules.
 Usable, identified equipped `plus_get_hit` is likewise server-owned for
 autonomous monster physical hits; it is applied after the current hit/armor
 resolution and cannot reduce a successful hit below the configured minimum.
+Native life/mana-on-hit flags are also server-owned at the same equipment
+eligibility boundary. Successful physical attacks apply random life steal and
+the native 3/5-percent life/mana rates in Q6 units; `NoMana` suppresses mana
+steal, and the server emits the existing healing event for applied life gain.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and

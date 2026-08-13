@@ -320,6 +320,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AttackAppliesUsableIdentifiedEquipmentResourceGains()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 0);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random);
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 3000,
+            lifeMaximum: 6400,
+            mana: 1000,
+            manaMaximum: 6400,
+            equipment: [
+                new EquippedStoreItem(
+                    4,
+                    42,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Flags = AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag
+                            | AuthoritativeEquipmentAttackEffectRules.StealLife3Flag
+                            | AuthoritativeEquipmentAttackEffectRules.StealMana5Flag,
+                    }),
+                new EquippedStoreItem(
+                    5,
+                    43,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = false,
+                        Flags = AuthoritativeEquipmentAttackEffectRules.StealLife5Flag,
+                    }),
+                new EquippedStoreItem(
+                    6,
+                    44,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Magical = 1,
+                        Identified = false,
+                        Flags = AuthoritativeEquipmentAttackEffectRules.StealMana3Flag,
+                    }),
+            ]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(90, target.HitPoints);
+        Assert.Equal(3019, player.Life);
+        Assert.Equal(1032, player.Mana);
+        Assert.Equal(1U, random.State);
+        var healing = Assert.Single(result.Events, gameplayEvent =>
+            gameplayEvent.Kind == DiabloGameplayEventKind.Healing);
+        Assert.Equal(0, healing.Amount);
+        Assert.Equal(19, healing.AmountQ6);
+    }
+
+    [Fact]
     public void RejectedAttackDoesNotMutateCombatState()
     {
         var target = new AuthoritativeCombatTarget(9, 4, 4, 10);

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply native usable identified life/mana-on-hit equipment effects after
+  successful authoritative physical attacks, including deterministic random
+  life steal and `NoMana` suppression for mana steal.
 - Apply usable identified equipment `PlusGetHit` metadata to authoritative
   autonomous monster physical hits, preserving the configured minimum damage.
 - Honor usable identified equipment with the native `NoMana` flag when

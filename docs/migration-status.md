@@ -117,6 +117,10 @@ Status date: 2026-08-13
 - Native usable, identified equipment `PlusGetHit` metadata now adjusts
   authoritative autonomous monster physical hits after hit/armor resolution,
   preserving the configured minimum damage; snapshot state remains server-owned.
+- Native usable, identified equipment life/mana-on-hit flags now apply after
+  successful authoritative physical attacks, preserving native random life
+  steal, 3/5-percent precedence, Q6 resource units, and `NoMana` suppression;
+  life gains use the existing authoritative healing event.
 - Native equipped item armor and percentage armor bonuses now recompute the
   authoritative player's effective armor, including native dexterity armor and
   identification/requirement rules, across player creation, transfers, and

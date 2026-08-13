@@ -349,9 +349,40 @@ public sealed class DiabloCombatCommandProcessor
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId));
         var events = new List<DiabloGameplayEvent>();
         ApplyResolvedDamage(player, target, damage, events);
+        if (damage > 0)
+            ApplyEquipmentAttackEffects(player, damage, events);
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Applies native usable equipment resource gains after a successful hit. */
+    private void ApplyEquipmentAttackEffects(
+        AuthoritativePlayerState player,
+        int damage,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        var gain = AuthoritativeEquipmentAttackEffectRules.Resolve(
+            DiabloFixedPointQ6.FromWhole(damage),
+            GetUsableEquipmentFlags(player),
+            random.GenerateRnd);
+        var lifeGain = Math.Min(
+            Math.Max(0, player.LifeMaximum - player.Life),
+            gain.LifeQ6);
+        player.Life = checked(player.Life + lifeGain);
+        var manaGain = Math.Min(
+            Math.Max(0, player.ManaMaximum - player.Mana),
+            gain.ManaQ6);
+        player.Mana = checked(player.Mana + manaGain);
+        if (lifeGain > 0) {
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Healing,
+                player.EntityId,
+                player.EntityId,
+                DiabloFixedPointQ6.ToWholeTruncated(lifeGain)) {
+                AmountQ6 = lifeGain,
+            });
+        }
     }
 
     /** Applies native usable equipment damage, hit, and target-armor bonuses. */
