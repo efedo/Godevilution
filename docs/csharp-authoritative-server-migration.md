@@ -595,6 +595,10 @@ Schema 0.77 adds the native-derived Hellfire The Blackoak Bow unique definition
 (`unique_id=1018`), reusing the validated Long Bow base item with native
 attribute, damage, and light/vitality-curse powers.
 
+Schema 0.78 adds the native-derived Hellfire Flamedart base item and unique
+definition (`unique_id=1019`) with its Hunter's Bow identity, fire-arrow, hit,
+and fire-resistance powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

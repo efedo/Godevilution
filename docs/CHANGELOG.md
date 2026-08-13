@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Flamedart (`unique_id=1019`) through schema 0.78,
+  including its native Hunter's Bow base item and fire-arrow, hit, and
+  fire-resistance powers.
+
 - Externalize Hellfire The Blackoak Bow (`unique_id=1018`) through schema 0.77,
   reusing the validated Long Bow base item with native attribute, damage, and
   light/vitality-curse powers.
