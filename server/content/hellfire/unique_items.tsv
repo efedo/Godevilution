@@ -100,3 +100,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1029	The Executioner's Blade	129	3	7080	LIFE_CURSE	10	10
 1029	The Executioner's Blade	129	3	7080	LIGHT_CURSE	1	1
 1029	The Executioner's Blade	129	3	7080	DUR	200	200
+1030	The Bonesaw	132	6	4400	DAMMOD	10	10
+1030	The Bonesaw	132	6	4400	STR	10	10
+1030	The Bonesaw	132	6	4400	MAG_CURSE	5	5
+1030	The Bonesaw	132	6	4400	DEX_CURSE	5	5
+1030	The Bonesaw	132	6	4400	LIFE	10	10
+1030	The Bonesaw	132	6	4400	MANA_CURSE	10	10

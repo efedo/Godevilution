@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Bonesaw (`unique_id=1030`) through schema 0.89,
+  including its native Claymore base item with damage-modifier, strength,
+  magic/dexterity-curse, life, and mana-curse powers.
+
 - Externalize Hellfire The Executioner's Blade (`unique_id=1029`) through
   schema 0.88, reusing the native Falchion base item with damage, life-curse,
   light-curse, and durability powers.

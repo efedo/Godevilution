@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.88.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.89.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.88.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.89.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -472,6 +472,19 @@ public sealed class ShippedContentTests
         Assert.Equal(-1, executionersBlade.PlusLight);
         Assert.Equal(60, executionersBlade.Durability);
         Assert.Equal(60, executionersBlade.MaxDurability);
+        var bonesaw = hellfireItems.GenerateUnique(1030, 0x12345678, 6);
+        Assert.Equal(1030, bonesaw.UniqueId);
+        Assert.Equal(4400, bonesaw.Value);
+        Assert.Equal(123, bonesaw.ItemIndex);
+        Assert.Equal(1, bonesaw.MinDamage);
+        Assert.Equal(12, bonesaw.MaxDamage);
+        Assert.Equal(35, bonesaw.MinimumStrength);
+        Assert.Equal(10, bonesaw.PlusDamageModifier);
+        Assert.Equal(10, bonesaw.PlusStrength);
+        Assert.Equal(-5, bonesaw.PlusMagic);
+        Assert.Equal(-5, bonesaw.PlusDexterity);
+        Assert.Equal(10 << 6, bonesaw.PlusHitPoints);
+        Assert.Equal(-(10 << 6), bonesaw.PlusMana);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
