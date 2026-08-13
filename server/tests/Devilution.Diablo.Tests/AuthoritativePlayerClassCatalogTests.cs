@@ -33,6 +33,11 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(25, monk.HellfireSpellManaReductionPercent);
         Assert.Equal(200, monk.SelfHealingSpellPercent);
         Assert.Equal(300, monk.HealOtherSpellPercent);
+        Assert.Equal(2, monk.MonkLightArmorLevelMultiplier);
+        Assert.Equal(1, monk.MonkMediumArmorLevelMultiplier);
+        Assert.Equal(2, monk.MonkUniqueMediumArmorLevelMultiplier);
+        Assert.Equal(1, monk.MonkUniqueHeavyArmorLevelMultiplier);
+        Assert.Equal(2, monk.MonkArmorLevelDivisor);
 
         var sorcerer = catalog.Resolve("sorcerer");
         Assert.Equal(0, sorcerer.SpellManaReductionPercent);
@@ -244,6 +249,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\t0\t0\t200\t200\t20",
             "\t0\t0\t200\t200\t256",
             StringComparison.Ordinal);
+        var invalidMonkArmorTuning = source.Replace(
+            "\t2\t1\t2\t1\t2",
+            "\t-1\t1\t2\t1\t2",
+            StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -259,6 +268,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidHealOtherPercentage));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidEarCursor));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMonkArmorTuning));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()

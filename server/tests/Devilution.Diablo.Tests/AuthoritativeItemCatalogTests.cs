@@ -613,6 +613,69 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void MonkChestArmorUsesNativeLightMediumAndUniqueArmorBonuses()
+    {
+        var monk = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "classes.tsv"))).Resolve("monk");
+
+        var lightArmor = new EquippedStoreItem(
+            3,
+            44,
+            AuthoritativeItemState.Empty with { StatFlag = true, ItemType = 6 });
+        var mediumArmor = lightArmor with {
+            ItemSeed = 45,
+            State = lightArmor.State with { ItemType = 8 },
+        };
+        var uniqueMediumArmor = mediumArmor with {
+            ItemSeed = 46,
+            State = mediumArmor.State with { Magical = 2 },
+        };
+        var uniqueHeavyArmor = lightArmor with {
+            ItemSeed = 47,
+            State = lightArmor.State with { ItemType = 9, Magical = 2 },
+        };
+
+        Assert.Equal(
+            5 + (23 / 5) + 10,
+            AuthoritativeEquipmentStatRules.CalculateArmorClass(
+                5,
+                23,
+                [lightArmor],
+                monk,
+                10));
+        Assert.Equal(
+            5 + (23 / 5) + 5,
+            AuthoritativeEquipmentStatRules.CalculateArmorClass(
+                5,
+                23,
+                [mediumArmor],
+                monk,
+                10));
+        Assert.Equal(
+            5 + (23 / 5) + 10,
+            AuthoritativeEquipmentStatRules.CalculateArmorClass(
+                5,
+                23,
+                [uniqueMediumArmor],
+                monk,
+                10));
+        Assert.Equal(
+            5 + (23 / 5) + 5,
+            AuthoritativeEquipmentStatRules.CalculateArmorClass(
+                5,
+                23,
+                [uniqueHeavyArmor],
+                monk,
+                10));
+    }
+
+    [Fact]
     public void EquippedAttributesUseRequirementsAndIdentificationRules()
     {
         var identifiedItem = new EquippedStoreItem(

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.73.0` schema in
+It declares its identity and `devilution.diablo@1.74.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -41,6 +41,9 @@ double and Rogue/Bard half-again self-Healing modifiers.
 `heal_other_spell_percent` separately externalizes Heal Other's class modifier;
 the Monk uses 300 percent for another player while retaining 200 percent for
 self-Healing.
+The five `monk_*_armor_*` columns externalize the native Monk chest-armor
+bonuses: light armor, ordinary medium armor, unique medium armor, and unique
+heavy armor use their declared level multipliers over the shared divisor.
 The `IronSkin` class flag adds the native character-level-divided-by-four armor
 bonus after dexterity and usable equipment armor are calculated. The
 `CriticalStrike` flag likewise selects its native combat rule; both behaviors
@@ -135,6 +138,9 @@ modifiers at the authoritative physical attack boundary.
 Schema 1.73 adds the native monster `knockback` ability flag. The server
 validates it from external type rows and displaces a player one valid tile
 after a successful autonomous monster hit.
+Schema 1.74 adds the native Monk chest-armor tuning columns. The server
+applies the declared level-scaled light, medium, unique-medium, and
+unique-heavy bonuses after dexterity and usable equipment armor.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
@@ -980,7 +986,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, and Q6 resource formulas. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, and Monk chest-armor tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1026,7 +1032,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.73.0"
+      "version": "1.74.0"
   },
   "dependencyConstraints": [
     {
@@ -1058,7 +1064,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.73.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.74.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

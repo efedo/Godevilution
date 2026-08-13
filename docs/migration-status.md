@@ -98,6 +98,10 @@ Status date: 2026-08-13
 - Native class `IronSkin` is now authoritative in effective armor: the
   validated class flag adds character level divided by four after dexterity and
   usable equipment armor are applied, across creation, transfers, and restore.
+- Native Monk chest-armor bonuses are now content-owned in schema 1.74 and
+  applied after dexterity and usable equipment armor: light armor adds two
+  levels, ordinary medium armor adds one-half level, unique medium armor adds
+  two levels, and unique heavy armor adds one-half level.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

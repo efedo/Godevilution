@@ -30,6 +30,9 @@ All notable changes to this fork are documented below.
   downstream class/item effects, with the native RNG draw order preserved.
 - Apply the native class `IronSkin` armor bonus from validated class flags,
   adding character level divided by four after equipment-derived armor.
+- Externalize the native Monk chest-armor bonuses in schema 1.74: light,
+  ordinary medium, unique medium, and unique heavy armor now contribute their
+  native level-scaled effective armor through the authoritative stat boundary.
 - Preserve Q6 physical attack damage through authoritative hit, knockback, and
   on-hit resource handling, and apply native Hellfire `Jesters` scaling.
 - Apply native Hellfire `Peril`: self-damage uses pre-modifier attack damage

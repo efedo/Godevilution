@@ -65,6 +65,21 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
+    /** Native Monk armor bonus numerator for light armor per character level. */
+    public int MonkLightArmorLevelMultiplier { get; init; }
+
+    /** Native Monk armor bonus numerator for ordinary medium armor per level. */
+    public int MonkMediumArmorLevelMultiplier { get; init; }
+
+    /** Native Monk armor bonus numerator for unique medium armor per level. */
+    public int MonkUniqueMediumArmorLevelMultiplier { get; init; }
+
+    /** Native Monk armor bonus numerator for unique heavy armor per level. */
+    public int MonkUniqueHeavyArmorLevelMultiplier { get; init; }
+
+    /** Native Monk armor bonus denominator shared by the armor formulas. */
+    public int MonkArmorLevelDivisor { get; init; }
+
     public PlayerAttributesState CreateStartingAttributes()
     {
         return new PlayerAttributesState(
@@ -167,6 +182,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "self_healing_spell_percent",
         "heal_other_spell_percent",
         "pvp_ear_cursor_graphic",
+        "monk_light_armor_level_multiplier",
+        "monk_medium_armor_level_multiplier",
+        "monk_unique_medium_armor_level_multiplier",
+        "monk_unique_heavy_armor_level_multiplier",
+        "monk_armor_level_divisor",
     ];
 
     private const DiabloPlayerClassFlags KnownFlags
@@ -288,6 +308,16 @@ public sealed class AuthoritativePlayerClassCatalog
                     "heal_other_spell_percent"),
                 PvpEarCursorGraphic = row.RequiredInt32(
                     "pvp_ear_cursor_graphic"),
+                MonkLightArmorLevelMultiplier = row.RequiredInt32(
+                    "monk_light_armor_level_multiplier"),
+                MonkMediumArmorLevelMultiplier = row.RequiredInt32(
+                    "monk_medium_armor_level_multiplier"),
+                MonkUniqueMediumArmorLevelMultiplier = row.RequiredInt32(
+                    "monk_unique_medium_armor_level_multiplier"),
+                MonkUniqueHeavyArmorLevelMultiplier = row.RequiredInt32(
+                    "monk_unique_heavy_armor_level_multiplier"),
+                MonkArmorLevelDivisor = row.RequiredInt32(
+                    "monk_armor_level_divisor"),
             }));
     }
 
@@ -335,6 +365,18 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
                 $"Player class {definition.ClassId} has an invalid percentage.");
+        }
+        var monkArmorValues = new[] {
+            definition.MonkLightArmorLevelMultiplier,
+            definition.MonkMediumArmorLevelMultiplier,
+            definition.MonkUniqueMediumArmorLevelMultiplier,
+            definition.MonkUniqueHeavyArmorLevelMultiplier,
+        };
+        if (monkArmorValues.Any(value => value < 0)
+            || definition.MonkArmorLevelDivisor <= 0
+            || monkArmorValues.Any(value => value > 10 * definition.MonkArmorLevelDivisor)) {
+            throw new InvalidDataException(
+                $"Player class {definition.ClassId} has invalid Monk armor tuning.");
         }
         var q6Values = new[] {
             definition.LifeAdjustmentQ6,
