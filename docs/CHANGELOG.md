@@ -46,6 +46,10 @@ All notable changes to this fork are documented below.
 - Extend live Godot protocol coverage through Etherealize selected by an
   external memorized loadout, including source admission and typed status
   projection.
+- Promote the shared ranged Hellfire replay fixture to the composed
+  `devilution.base` plus `devilution.hellfire` manifest, so native and C# replay
+  execution validate the effective Hellfire overlay rather than only a variant
+  label.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,

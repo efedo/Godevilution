@@ -7,7 +7,7 @@ Status date: 2026-08-12
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, and resume precedence | Broaden reconnect/soak compatibility tests and eventually separate content/ruleset identity in a new protocol version |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays | Add an end-to-end Hellfire replay, broader quest selection, and longer soak fixtures |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Add broader quest selection and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
@@ -223,7 +223,10 @@ mana, seeded magic/spell-level damage, 16.16 speed-26 movement, swept collision,
 magic hit chance, quarter resistance damage, and impact expiry from schema 0.9
 content. Protocol-neutral snapshots, version-1 saves, canonical hashes, parser
 validation, and a shared three-checkpoint C++/C# replay preserve its exact
-fractional-health and RNG boundary.
+fractional-health and RNG boundary. The shared ranged Hellfire replay now binds
+to the composed base-plus-Hellfire manifest and loads its effective overlaid
+combat and class tables in the C# executor; the native replay runner passes the
+same fixture and checkpoints.
 Lightning now uses a content-selected invisible controller and persistent
 stationary segments. Schema 0.10 externalizes its speed, controller lifetime,
 per-update randomized Q6 damage, positive-resistance divisor, and segment
