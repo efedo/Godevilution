@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.27.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.28.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.27.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.28.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1007,6 +1007,22 @@ public sealed class ShippedContentTests
         Assert.Equal(100 << 6, foolsCrest.PlusHitPoints);
         Assert.InRange(foolsCrest.PlusGetHit, 1, 6);
         Assert.NotEqual(0U, foolsCrest.Flags & 0x04000000U);
+        var gotterdamerung = hellfireItems.GenerateUnique(1069, 0x12345678, 21);
+        Assert.Equal(1069, gotterdamerung.UniqueId);
+        Assert.Equal(54900, gotterdamerung.Value);
+        Assert.Equal(54, gotterdamerung.ItemIndex);
+        Assert.Equal(60, gotterdamerung.ArmorClass);
+        Assert.Equal(60, gotterdamerung.Durability);
+        Assert.Equal(60, gotterdamerung.MaxDurability);
+        Assert.Equal(50, gotterdamerung.MinimumStrength);
+        Assert.Equal(4, gotterdamerung.EquipLocation);
+        Assert.Equal(20, gotterdamerung.PlusStrength);
+        Assert.Equal(20, gotterdamerung.PlusMagic);
+        Assert.Equal(20, gotterdamerung.PlusDexterity);
+        Assert.Equal(20, gotterdamerung.PlusVitality);
+        Assert.Equal(-4, gotterdamerung.PlusGetHit);
+        Assert.Equal(-4, gotterdamerung.PlusLight);
+        Assert.NotEqual(0U, gotterdamerung.Flags & 0x80000000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

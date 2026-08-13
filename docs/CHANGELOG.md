@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gotterdamerung (`unique_id=1069`) through schema 1.28,
+  adding its native Great Helm base item with attribute, armor, get-hit,
+  resistance, and light-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Fool's Crest (`unique_id=1068`) through schema 1.27,
   reusing the native Helm base item with cursed attributes, life, get-hit,
   and thorns powers.
