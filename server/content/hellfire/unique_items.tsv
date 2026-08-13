@@ -156,3 +156,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1042	Wicked Axe	137	5	31150	VIT_CURSE	10	10
 1042	Wicked Axe	137	5	31150	GETHIT	1	6
 1042	Wicked Axe	137	5	31150	INDESTRUCTIBLE	0	0
+1043	Stonecleaver	138	7	23900	LIFE	30	30
+1043	Stonecleaver	138	7	23900	TOHIT	20	20
+1043	Stonecleaver	138	7	23900	DAMP	50	50
+1043	Stonecleaver	138	7	23900	LIGHTRES	40	40

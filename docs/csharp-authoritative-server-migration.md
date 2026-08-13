@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.2 adds the native-derived Hellfire Stonecleaver unique definition
+(`unique_id=1043`), reusing the validated Broad Axe base item with life,
+to-hit, damage, and lightning-resistance powers.
+
 Schema 1.1 adds the native-derived Hellfire Wicked Axe unique definition
 (`unique_id=1042`), reusing the validated Large Axe base item with to-hit,
 dexterity, vitality-curse, hit-curse, and indestructibility powers.

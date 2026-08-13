@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Stonecleaver (`unique_id=1043`) through schema 1.2,
+  reusing the validated Broad Axe base item with life, to-hit, damage,
+  and lightning-resistance powers.
+
 - Externalize Hellfire Wicked Axe (`unique_id=1042`) through schema 1.1,
   reusing the validated Large Axe base item with to-hit, dexterity,
   vitality-curse, hit-curse, and indestructibility powers.

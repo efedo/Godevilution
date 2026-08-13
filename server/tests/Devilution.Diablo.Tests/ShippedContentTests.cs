@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.1.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.2.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.1.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.2.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -640,6 +640,18 @@ public sealed class ShippedContentTests
         Assert.Equal(-2, wickedAxe.PlusGetHit);
         Assert.Equal(255, wickedAxe.Durability);
         Assert.Equal(255, wickedAxe.MaxDurability);
+        var stonecleaver = hellfireItems.GenerateUnique(1043, 0x12345678, 7);
+        Assert.Equal(1043, stonecleaver.UniqueId);
+        Assert.Equal(23900, stonecleaver.Value);
+        Assert.Equal(134, stonecleaver.ItemIndex);
+        Assert.Equal(8, stonecleaver.MinDamage);
+        Assert.Equal(20, stonecleaver.MaxDamage);
+        Assert.Equal(50, stonecleaver.MinimumStrength);
+        Assert.Equal(2, stonecleaver.EquipLocation);
+        Assert.Equal(30 << 6, stonecleaver.PlusHitPoints);
+        Assert.Equal(20, stonecleaver.PlusToHit);
+        Assert.Equal(50, stonecleaver.PlusDamage);
+        Assert.Equal(40, stonecleaver.PlusLightningResistance);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
