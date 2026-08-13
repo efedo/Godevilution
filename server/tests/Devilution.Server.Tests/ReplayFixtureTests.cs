@@ -983,6 +983,26 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void StableSpellIdsAboveTheNativeRangeLoadInReplayState()
+    {
+        var fixture = ReplayFixtureLoader.Load(
+            CreateStructuredFixture(
+                """
+                [
+                  { "tick": 1, "state_sha256": "legacy-open" },
+                  { "tick": 2, "state_sha256": "legacy-buy" }
+                ]
+                """).Replace(
+                    "\"life\": 640",
+                    "\"life\": 640,\n            \"memorized_spells\": [{ \"spell_id\": 53, \"level\": 1 }]",
+                    StringComparison.Ordinal));
+
+        var spell = Assert.Single(fixture.InitialState.MemorizedSpells);
+        Assert.Equal(53U, spell.SpellId);
+        Assert.Equal(1U, spell.Level);
+    }
+
+    [Fact]
     public void StructuredFixtureWithoutACheckpointForEachCommandTickIsRejected()
     {
         var exception = Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(CreateStructuredFixture(

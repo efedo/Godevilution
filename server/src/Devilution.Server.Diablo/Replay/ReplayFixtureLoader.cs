@@ -389,7 +389,8 @@ public static class ReplayFixtureLoader
                 RequiredUInt(spell, "spell_id"),
                 RequiredUInt(spell, "level")))
             .ToArray();
-        if (result.Any(spell => spell.SpellId is 0 or > 51 || spell.Level is 0 or > 15)
+        if (result.Any(spell => spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
+                || spell.Level is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
             || result.Select(spell => spell.SpellId).Distinct().Count() != result.Length) {
             throw new InvalidDataException(
                 "Replay fixture memorized_spells contains invalid or duplicate spell state.");
@@ -453,7 +454,7 @@ public static class ReplayFixtureLoader
                 || item.ItemType is < 0 or > byte.MaxValue
                 || item.ItemIndex is < -1 or > byte.MaxValue
                 || item.MiscId is not (21 or 22)
-                || item.SpellId is < 1 or > 51)
+                || item.SpellId is < 1 or > (int)AuthoritativePlayerLoadoutCatalog.MaximumSpellId)
             || result.Select(item => item.Slot).Distinct().Count() != result.Length) {
             throw new InvalidDataException(
                 "Replay fixture belt contains invalid or duplicate consumable state.");

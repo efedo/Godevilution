@@ -1326,9 +1326,9 @@ public sealed partial class DiabloSimulation
             || source.Equipment.Count > 7
             || source.Belt.Count > 8
             || source.InventoryGrid.Count > 400
-            || source.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellId
+            || source.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
             || source.ReflectCharges > ushort.MaxValue
-            || source.MemorizedSpells.Count > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellId
+            || source.MemorizedSpells.Count > AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount
             || source.StatusEffects.Count > 128
             || !Enum.IsDefined(source.FacingDirection)
             || !Enum.IsDefined(source.CombatMode)
@@ -1351,7 +1351,7 @@ public sealed partial class DiabloSimulation
 
         if (source.MemorizedSpells.Any(spell =>
                 spell is null
-                || spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellId
+                || spell.SpellId is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
                 || spell.Level is 0 or > AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel)
             || source.MemorizedSpells.Select(spell => spell.SpellId).Distinct().Count()
                 != source.MemorizedSpells.Count) {

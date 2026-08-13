@@ -32,8 +32,12 @@ public sealed record AuthoritativePlayerLoadoutDefinition(
 /** Validated external starting loadouts keyed by stable player-class ID. */
 public sealed class AuthoritativePlayerLoadoutCatalog
 {
+    /** Maximum native spell identity retained by legacy item/animation fields. */
     public const uint MaximumNativeSpellId = 51;
+    /** Maximum stable spell identity accepted in authoritative player state. */
+    public const uint MaximumSpellId = byte.MaxValue;
     public const uint MaximumNativeSpellLevel = 15;
+    public const int MaximumMemorizedSpellCount = 51;
     public const uint MaximumStartingGold = 5000;
     private const int InventoryCellCount = 40;
     private const int MaximumLoadoutItemCount = 5;
@@ -359,8 +363,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 $"Player loadout references unknown class ID {definition.ClassId}.");
         }
         if (definition.StartingGold > MaximumStartingGold
-            || definition.AbilitySpellId > MaximumNativeSpellId
-            || definition.StartingSpellId > MaximumNativeSpellId
+            || definition.AbilitySpellId > MaximumSpellId
+            || definition.StartingSpellId > MaximumSpellId
             || definition.StartingSpellLevel > MaximumNativeSpellLevel
             || (definition.StartingSpellId == 0)
                 != (definition.StartingSpellLevel == 0)) {
