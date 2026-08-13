@@ -249,3 +249,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1062	Naj's Puzzler	147	18	34000	ALLRES	20	20
 1062	Naj's Puzzler	147	18	34000	SPELL	23	57
 1062	Naj's Puzzler	147	18	34000	LIFE_CURSE	25	25
+1063	Mindcry	151	20	41500	MAG	15	15
+1063	Mindcry	151	20	41500	SPELL	13	69
+1063	Mindcry	151	20	41500	ALLRES	15	15
+1063	Mindcry	151	20	41500	SPLLVLADD	1	1

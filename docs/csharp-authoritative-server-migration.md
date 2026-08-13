@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.22 adds the native-derived Hellfire Mindcry base item and unique
+definition (`unique_id=1063`) with its Quarter Staff identity, magic,
+charged-spell, all-resistance, and spell-level powers.
+
 Schema 1.21 adds the native-derived Hellfire Naj's Puzzler unique definition
 (`unique_id=1062`), reusing the validated Long Staff base item with magic,
 dexterity, all-resistance, charged-spell, and life-curse powers.

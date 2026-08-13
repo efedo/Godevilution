@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Mindcry (`unique_id=1063`) through schema 1.22,
+  adding its native Quarter Staff base item with magic, charged-spell,
+  all-resistance, and spell-level powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Naj's Puzzler (`unique_id=1062`) through schema 1.21,
   reusing the validated Long Staff base item with magic, dexterity,
   all-resistance, charged-spell, and life-curse powers.

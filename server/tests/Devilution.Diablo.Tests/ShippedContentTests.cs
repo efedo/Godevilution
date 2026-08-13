@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.21.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.22.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.21.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.22.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -925,6 +925,22 @@ public sealed class ShippedContentTests
         Assert.Equal(57, najsPuzzler.Charges);
         Assert.Equal(57, najsPuzzler.MaxCharges);
         Assert.Equal(-(25 << 6), najsPuzzler.PlusHitPoints);
+        var mindcry = hellfireItems.GenerateUnique(1063, 0x12345678, 20);
+        Assert.Equal(1063, mindcry.UniqueId);
+        Assert.Equal(41500, mindcry.Value);
+        Assert.Equal(155, mindcry.ItemIndex);
+        Assert.Equal(6, mindcry.MinDamage);
+        Assert.Equal(12, mindcry.MaxDamage);
+        Assert.Equal(20, mindcry.MinimumStrength);
+        Assert.Equal(2, mindcry.EquipLocation);
+        Assert.Equal(15, mindcry.PlusMagic);
+        Assert.Equal(13, mindcry.SpellId);
+        Assert.Equal(69, mindcry.Charges);
+        Assert.Equal(69, mindcry.MaxCharges);
+        Assert.Equal(15, mindcry.PlusFireResistance);
+        Assert.Equal(15, mindcry.PlusLightningResistance);
+        Assert.Equal(15, mindcry.PlusMagicResistance);
+        Assert.Equal(1, mindcry.SpellLevelAdd);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
