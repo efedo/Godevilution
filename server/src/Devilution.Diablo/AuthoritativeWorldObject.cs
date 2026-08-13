@@ -15,6 +15,7 @@ public sealed class AuthoritativeWorldObject
         uint questId = 0,
         AuthoritativeObjectEffectKind effectKind = AuthoritativeObjectEffectKind.None,
         int effectAmount = 0,
+        uint questProgressAmount = 1,
         bool missilePassable = false,
         bool breakable = false,
         bool destroyed = false,
@@ -29,6 +30,9 @@ public sealed class AuthoritativeWorldObject
         PositionY = positionY;
         Activated = activated;
         QuestId = questId;
+        if (questProgressAmount == 0)
+            throw new ArgumentOutOfRangeException(nameof(questProgressAmount));
+        QuestProgressAmount = questProgressAmount;
         if (effectAmount < 0)
             throw new ArgumentOutOfRangeException(nameof(effectAmount));
         if (breakable && missilePassable)
@@ -50,6 +54,8 @@ public sealed class AuthoritativeWorldObject
     public int PositionY { get; set; }
     public bool Activated { get; set; }
     public uint QuestId { get; set; }
+    /** External progress applied when this linked quest object is activated. */
+    public uint QuestProgressAmount { get; set; }
     public AuthoritativeObjectEffectKind EffectKind { get; set; }
     public int EffectAmount { get; set; }
     public bool MissilePassable { get; set; }
@@ -76,6 +82,7 @@ public static class AuthoritativeWorldObjectCatalog
             row.OptionalUInt32("quest_id"),
             ParseEffectKind(row),
             row.OptionalInt32("effect_amount"),
+            row.OptionalUInt32("quest_progress", 1),
             row.OptionalInt32("missile_passable") != 0,
             row.OptionalInt32("breakable") != 0,
             row.OptionalInt32("destroyed") != 0,

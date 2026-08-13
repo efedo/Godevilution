@@ -96,6 +96,9 @@ internal static class DiabloProtocolMapper
                 QuestId = @object.QuestId,
                 EffectKind = (int)@object.EffectKind,
                 EffectAmount = @object.EffectAmount,
+                QuestProgressAmount = @object.QuestProgressAmount == 0
+                    ? 1
+                    : @object.QuestProgressAmount,
                 MissilePassable = @object.MissilePassable,
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
@@ -360,6 +363,9 @@ internal static class DiabloProtocolMapper
                 @object.QuestId,
                 (AuthoritativeObjectEffectKind)@object.EffectKind,
                 @object.EffectAmount) {
+                QuestProgressAmount = @object.QuestProgressAmount == 0
+                    ? 1
+                    : @object.QuestProgressAmount,
                 MissilePassable = @object.MissilePassable,
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,

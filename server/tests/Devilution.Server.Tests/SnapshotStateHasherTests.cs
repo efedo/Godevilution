@@ -743,6 +743,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectQuestProgressAmountChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, ObjectId = 4 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Objects[0].QuestProgressAmount = 3;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
     {
         var baseline = new Snapshot();

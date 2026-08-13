@@ -287,6 +287,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-object-trap-v1");
                     hasher.AppendBool(true);
                 }
+                if (@object.QuestProgressAmount != 1) {
+                    hasher.AppendString("godevilution-object-quest-progress-v1");
+                    hasher.AppendUInt32(@object.QuestProgressAmount);
+                }
             }
         }
 

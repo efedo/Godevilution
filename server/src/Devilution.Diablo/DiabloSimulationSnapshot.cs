@@ -87,6 +87,8 @@ public sealed record DiabloObjectState(
     AuthoritativeObjectEffectKind EffectKind,
     int EffectAmount)
 {
+    public uint QuestProgressAmount { get; init; } = 1;
+
     public bool MissilePassable { get; init; }
 
     public bool Breakable { get; init; }
@@ -327,6 +329,7 @@ public sealed partial class DiabloSimulation
                     @object.QuestId,
                     @object.EffectKind,
                     @object.EffectAmount) {
+                    QuestProgressAmount = @object.QuestProgressAmount,
                     MissilePassable = @object.MissilePassable,
                     Breakable = @object.Breakable,
                     Destroyed = @object.Destroyed,
@@ -1271,6 +1274,9 @@ public sealed partial class DiabloSimulation
                 target.QuestId = @object.QuestId;
                 target.EffectKind = @object.EffectKind;
                 target.EffectAmount = @object.EffectAmount;
+                target.QuestProgressAmount = @object.QuestProgressAmount == 0
+                    ? 1
+                    : @object.QuestProgressAmount;
                 target.MissilePassable = @object.MissilePassable;
                 target.Breakable = @object.Breakable;
                 target.Destroyed = @object.Destroyed;
@@ -1286,6 +1292,7 @@ public sealed partial class DiabloSimulation
                     @object.QuestId,
                     @object.EffectKind,
                     @object.EffectAmount,
+                    @object.QuestProgressAmount == 0 ? 1 : @object.QuestProgressAmount,
                     @object.MissilePassable,
                     @object.Breakable,
                     @object.Destroyed,

@@ -560,6 +560,32 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void LinkedObjectAppliesConfiguredQuestProgressAndClampsAtRequiredAmount()
+    {
+        var quest = new AuthoritativeQuestState(30, 0, 5, progress: 4);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            questId: 30,
+            questProgressAmount: 3);
+        var world = new DiabloWorldState(objects: [@object], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            5,
+            [player]).Succeeded);
+
+        Assert.Equal(5U, quest.Progress);
+        Assert.True(quest.Completed);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(

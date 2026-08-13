@@ -465,6 +465,8 @@ message ObjectSnapshot {
 	bool destroyed = 12;
 	// Native-compatible cursor-driven Trap Disarm state.
 	bool trap_armed = 13;
+	// Progress applied when this linked quest object is activated.
+	uint32 quest_progress_amount = 14;
 }
 
 message QuestSnapshot {

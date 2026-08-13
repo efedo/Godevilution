@@ -716,7 +716,9 @@ public sealed class DiabloWorldCommandProcessor
             && !quest.Completed && quest.LevelId == player.LevelId) {
             quest.Active = true;
             quest.Logged = true;
-            quest.Progress++;
+            quest.Progress = Math.Min(
+                quest.RequiredProgress,
+                checked(quest.Progress + @object.QuestProgressAmount));
             if (quest.Progress >= quest.RequiredProgress) {
                 quest.Completed = true;
                 quest.Active = false;
@@ -810,7 +812,7 @@ public sealed class DiabloWorldCommandProcessor
 
         quest.Active = true;
         quest.Logged = true;
-        quest.Progress++;
+        quest.Progress = Math.Min(quest.RequiredProgress, checked(quest.Progress + 1));
         if (quest.Progress >= quest.RequiredProgress) {
             quest.Completed = true;
             quest.Active = false;

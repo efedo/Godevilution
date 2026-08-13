@@ -245,6 +245,7 @@ public sealed class DiabloSimulationTests
                 3,
                 0,
                 questId: 40,
+                questProgressAmount: 2,
                 breakable: true,
                 destroyed: true)],
             Quests = [new AuthoritativeQuestState(40, 0, 2, progress: 1)],
@@ -454,6 +455,7 @@ public sealed class DiabloSimulationTests
         Assert.Equal(99U, Assert.Single(replacement.WorldState.WorldItems).Value.ItemSeed);
         var restoredObject = Assert.Single(replacement.WorldState.Objects).Value;
         Assert.Equal(40U, restoredObject.QuestId);
+        Assert.Equal(2U, restoredObject.QuestProgressAmount);
         Assert.True(restoredObject.Breakable);
         Assert.True(restoredObject.Destroyed);
         Assert.Equal(1U, Assert.Single(replacement.WorldState.Quests).Value.Progress);
