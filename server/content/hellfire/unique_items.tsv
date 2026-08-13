@@ -279,3 +279,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1070	Royal Circlet	155	27	24875	MANA	40	40
 1070	Royal Circlet	155	27	24875	SETAC	40	40
 1070	Royal Circlet	155	27	24875	LIGHT	1	1
+1071	Torn Flesh of Souls	156	2	4825	SETAC	8	8
+1071	Torn Flesh of Souls	156	2	4825	VIT	10	10
+1071	Torn Flesh of Souls	156	2	4825	GETHIT	1	1
+1071	Torn Flesh of Souls	156	2	4825	INDESTRUCTIBLE	0	0

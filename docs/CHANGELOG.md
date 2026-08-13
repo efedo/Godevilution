@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Torn Flesh of Souls (`unique_id=1071`) through schema
+  1.30, adding its native Rags base item with armor, vitality, get-hit, and
+  indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Royal Circlet (`unique_id=1070`) through schema 1.29,
   adding its native Crown base item with attribute, mana, armor, and light
   powers.

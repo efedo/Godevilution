@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.29.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.30.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.29.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.30.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1038,6 +1038,17 @@ public sealed class ShippedContentTests
         Assert.Equal(10, royalCirclet.PlusVitality);
         Assert.Equal(40 << 6, royalCirclet.PlusMana);
         Assert.Equal(1, royalCirclet.PlusLight);
+        var tornFlesh = hellfireItems.GenerateUnique(1071, 0x12345678, 2);
+        Assert.Equal(1071, tornFlesh.UniqueId);
+        Assert.Equal(4825, tornFlesh.Value);
+        Assert.Equal(56, tornFlesh.ItemIndex);
+        Assert.Equal(8, tornFlesh.ArmorClass);
+        Assert.Equal(255, tornFlesh.Durability);
+        Assert.Equal(255, tornFlesh.MaxDurability);
+        Assert.Equal(0, tornFlesh.MinimumStrength);
+        Assert.Equal(4, tornFlesh.EquipLocation);
+        Assert.Equal(10, tornFlesh.PlusVitality);
+        Assert.Equal(-1, tornFlesh.PlusGetHit);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
