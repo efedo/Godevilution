@@ -197,6 +197,7 @@ public sealed class AuthoritativeSpellCatalogTests
         var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
 
         var expected = new Dictionary<int, (uint SpellId, AuthoritativeProjectileBehavior Behavior)> {
+            [47] = (12, AuthoritativeProjectileBehavior.Fireball),
             [48] = (50, AuthoritativeProjectileBehavior.LightningWallController),
             [49] = (18, AuthoritativeProjectileBehavior.NovaController),
             [50] = (45, AuthoritativeProjectileBehavior.ImmolationController),

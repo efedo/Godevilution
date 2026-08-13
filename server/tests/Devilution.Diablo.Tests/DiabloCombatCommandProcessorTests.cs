@@ -2797,6 +2797,51 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(world.Projectiles);
     }
 
+    [Fact]
+    public void RuneOfFireResolvesAnImmediateBigExplosionAndConsumesTheRune()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            4,
+            0,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateFireballSpell() with { ConsumableMiscId = 47 },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            belt: [new BeltStoreItem(
+                2,
+                72,
+                AuthoritativeItemState.Empty with { MiscId = 47 })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                12,
+                0,
+                4,
+                0,
+                DiabloCastSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2)),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.Empty(world.Projectiles);
+        Assert.True(target.HitPointsQ6 < DiabloFixedPointQ6.FromWhole(200));
+        Assert.Contains(result.Events, gameplayEvent =>
+            gameplayEvent.Kind == DiabloGameplayEventKind.Damage
+            && gameplayEvent.TargetEntityId == target.EntityId);
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 488)]
     [InlineData(DiabloGameVariant.Hellfire, 616)]

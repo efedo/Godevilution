@@ -432,6 +432,8 @@ public sealed class DiabloCombatCommandProcessor
         if (!skipSourceValidation
             && !TryResolveCastSource(player, intent, out source, out var sourceFailure))
             return DiabloCombatIntentResult.Rejected(sourceFailure);
+        var isRuneFire = source.Kind == DiabloCastSourceKind.ConsumableItem
+            && source.Item?.State.MiscId == 47;
         var hasDamage = spell.DamageAmount > 0
             || spell.RandomMagicDamageDivisor > 0
             || spell.RandomDamageRange > 0
@@ -528,6 +530,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
+        (int X, int Y)? runeFirePosition = null;
         var centerX = isSelfCenteredFlash || isPhasing || isApocalypse || isReflect || isMagi || isMana || isRingOfFire
             ? player.PositionX
             : intent.TargetX;
@@ -589,6 +592,13 @@ public sealed class DiabloCombatCommandProcessor
             }
             centerX = target?.PositionX ?? intent.TargetX;
             centerY = target?.PositionY ?? intent.TargetY;
+            if (isRuneFire) {
+                runeFirePosition = FindRuneFirePosition(player, centerX, centerY);
+                if (!runeFirePosition.HasValue)
+                    return DiabloCombatIntentResult.Accepted;
+                centerX = runeFirePosition.Value.X;
+                centerY = runeFirePosition.Value.Y;
+            }
             if ((intent.TargetEntityId != 0 && target is null)
                 || (isBerserk && target is null)
                 || (target is not null
@@ -639,7 +649,9 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
-        var effectiveSpellLevel = GetEffectiveSpellLevel(player, spell.SpellId);
+        var effectiveSpellLevel = isRuneFire
+            ? 0
+            : GetEffectiveSpellLevel(player, spell.SpellId);
         var manaCost = ResolveManaCost(player, spell, effectiveSpellLevel);
         var statusDuration = isInfravision
             ? ResolveInfravisionDuration(spell, effectiveSpellLevel)
@@ -952,7 +964,20 @@ public sealed class DiabloCombatCommandProcessor
             });
         }
 
-        if (createStoneCurseController) {
+        if (isRuneFire) {
+            var explosion = CreateRuneFireExplosion(
+                player,
+                spell,
+                centerX,
+                centerY);
+            var directedEvents = new List<DiabloDirectedGameplayEvent>();
+            EnterFireballImpact(
+                appliedTick,
+                explosion,
+                players,
+                directedEvents);
+            events.AddRange(directedEvents.Select(directed => directed.Event));
+        } else if (createStoneCurseController) {
             var projectileEntityId = AllocateProjectileEntityId();
             world.Projectiles.Add(
                 projectileEntityId,
@@ -2093,6 +2118,52 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    /** Resolves native Rune of Fire as an immediate BigExplosion-style splash. */
+    private AuthoritativeProjectile CreateRuneFireExplosion(
+        AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
+        int targetX,
+        int targetY)
+    {
+        var damage = 0;
+        for (var iteration = 0;
+             iteration < spell.RandomDamageIterationsBonus;
+             iteration++) {
+            damage = checked(damage + random.GenerateRnd(spell.RandomDamageRange));
+        }
+        damage = checked(
+            (damage
+                + checked((int)player.CharacterLevel)
+                    / spell.CharacterLevelDamageDivisor)
+            * spell.DamageScale
+            + spell.DamageBonus);
+
+        return new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            player.EntityId == 0 ? 1U : player.EntityId,
+            0,
+            spell.SpellId,
+            player.LevelId,
+            targetX,
+            targetY,
+            targetX,
+            targetY,
+            damage,
+            spell.DamageType,
+            spell.AreaRadius,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.Fireball,
+            OriginalDirection = GetDirection(
+                player.PositionX,
+                player.PositionY,
+                targetX,
+                targetY),
+            Speed = 1,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = spell.ResistantDamageDivisor,
+        };
+    }
+
     private AuthoritativeProjectile CreateLightningController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -2910,6 +2981,33 @@ public sealed class DiabloCombatCommandProcessor
                     player.PositionY,
                     candidateX,
                     candidateY));
+    }
+
+    private (int X, int Y)? FindRuneFirePosition(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY)
+    {
+        return DiabloCrawl.FindClosestValidPosition(
+            targetX,
+            targetY,
+            0,
+            9,
+            (candidateX, candidateY) =>
+                world.ContainsPosition(player.LevelId, candidateX, candidateY)
+                && !world.IsMissileGeometryBlocked(
+                    player.LevelId,
+                    candidateX,
+                    candidateY)
+                && !world.TryGetMissileBlockingObject(
+                    player.LevelId,
+                    candidateX,
+                    candidateY,
+                    out _)
+                && !world.Projectiles.Values.Any(projectile =>
+                    projectile.LevelId == player.LevelId
+                    && projectile.PositionX == candidateX
+                    && projectile.PositionY == candidateY));
     }
 
     private (int X, int Y)? FindGuardianSpawnPosition(
