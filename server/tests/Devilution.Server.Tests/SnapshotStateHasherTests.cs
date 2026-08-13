@@ -468,6 +468,8 @@ public sealed class SnapshotStateHasherTests
         immune.Monsters[0].StoneCurseImmune = true;
         var undead = immune.Clone();
         undead.Monsters[0].IsUndead = true;
+        var demon = undead.Clone();
+        demon.Monsters[0].IsDemon = true;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(stationary),
@@ -481,6 +483,9 @@ public sealed class SnapshotStateHasherTests
         Assert.NotEqual(
             SnapshotStateHasher.Compute(immune),
             SnapshotStateHasher.Compute(undead));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(undead),
+            SnapshotStateHasher.Compute(demon));
     }
 
     [Fact]

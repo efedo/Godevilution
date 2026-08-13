@@ -303,6 +303,9 @@ Windows toolchain command.
   resistance percentage. Nonzero values use the tagged
   `godevilution-monster-acid-resistance-v1` canonical-hash extension; zero is
   the additive compatibility default.
+- `MonsterSnapshot.is_demon` field 37 carries the validated native monster-class
+  capability used by demon-specific equipment; clients do not infer faction
+  from monster names.
 
 ## Identity Note
 

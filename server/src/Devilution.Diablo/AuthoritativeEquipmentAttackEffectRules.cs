@@ -21,6 +21,9 @@ public static class AuthoritativeEquipmentAttackEffectRules
     /** Native ItemSpecialEffect::NoMana flag; it suppresses mana-on-hit. */
     public const uint NoManaFlag = AuthoritativeEquipmentManaRules.NoManaFlag;
 
+    /** Native ItemSpecialEffect::TripleDemonDamage flag. */
+    public const uint TripleDemonDamageFlag = 1U << 30;
+
     /** Resource gains in the simulation's native Q6 unit. */
     public readonly record struct ResourceGain(int LifeQ6, int ManaQ6);
 

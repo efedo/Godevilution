@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.70.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.71.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.70.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.71.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -63,6 +63,7 @@ public sealed class ShippedContentTests
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);
+        Assert.False(hellfireMonster.IsDemon);
         Assert.Equal(100, hellfireMonster.MagicResistance);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
         Assert.Equal(7, activation.Simulation.WorldState.CombatTargets.Count);
@@ -73,6 +74,7 @@ public sealed class ShippedContentTests
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
         Assert.Equal(139, monsterTypes.Definitions.Count);
+        Assert.Equal(73, monsterTypes.Definitions.Count(definition => definition.Demon));
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -87,6 +89,7 @@ public sealed class ShippedContentTests
         Assert.Equal(23U, monsterTypes.Definitions[24].NativeMonsterId);
         Assert.Equal("Invisible Lord", monsterTypes.Definitions[29].Name);
         Assert.Equal(28U, monsterTypes.Definitions[29].NativeMonsterId);
+        Assert.True(monsterTypes.Definitions[29].Demon);
         Assert.Equal((75, 75, 75), (
             monsterTypes.Definitions[29].FireResistance,
             monsterTypes.Definitions[29].LightningResistance,

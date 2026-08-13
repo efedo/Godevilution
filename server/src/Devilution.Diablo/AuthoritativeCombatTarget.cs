@@ -42,7 +42,8 @@ public sealed class AuthoritativeCombatTarget
         bool unique = false,
         bool diablo = false,
         bool berserkImmune = false,
-        int deathAnimationTicks = 0)
+        int deathAnimationTicks = 0,
+        bool demon = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -85,6 +86,7 @@ public sealed class AuthoritativeCombatTarget
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
         IsUndead = undead;
+        IsDemon = demon;
         IsPlayerMinion = playerMinion;
         OwnerPlayerId = ownerPlayerId;
         IsUnique = unique;
@@ -133,6 +135,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** External monster capability used by Holy Bolt targeting. */
     public bool IsUndead { get; set; }
+
+    /** External monster class capability used by demon-specific equipment. */
+    public bool IsDemon { get; set; }
 
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; set; }

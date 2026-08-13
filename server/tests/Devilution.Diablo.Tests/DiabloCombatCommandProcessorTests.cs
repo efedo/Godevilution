@@ -320,6 +320,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TripleDemonDamageMultipliesOnlyDemonHitsFromUsableEquipment()
+    {
+        var demon = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 0,
+            demon: true);
+        var animal = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            100,
+            armorClass: 0);
+        var world = new DiabloWorldState(combatTargets: [demon, animal]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag,
+                })]);
+
+        var demonAttack = processor.Execute(player, new DiabloAttackIntent(9), 1);
+        var animalAttack = processor.Execute(player, new DiabloAttackIntent(10), 2);
+
+        Assert.True(demonAttack.Succeeded);
+        Assert.True(animalAttack.Succeeded);
+        Assert.Equal(70, demon.HitPoints);
+        Assert.Equal(90, animal.HitPoints);
+    }
+
+    [Fact]
     public void AttackAppliesUsableIdentifiedEquipmentResourceGains()
     {
         var target = new AuthoritativeCombatTarget(

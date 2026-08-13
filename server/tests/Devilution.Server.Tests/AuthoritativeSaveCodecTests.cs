@@ -196,6 +196,7 @@ public sealed class AuthoritativeSaveCodecTests
                 Petrified = true,
                 StoneCurseImmune = true,
                 IsUndead = true,
+                IsDemon = true,
                 DeathAnimationTicks = 3,
                 DeathTicksRemaining = 2,
                 HitPointsQ6 = 0,

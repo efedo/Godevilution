@@ -55,7 +55,8 @@ Status date: 2026-08-13
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
   resolve a stable/native type identity before activation. The first
   all one hundred thirty-eight variant-local native Hellfire type identities,
-  through native ID 137, are now externalized; encounter rows inherit
+  through native ID 137, are now externalized with native demon and undead
+  class capabilities; encounter rows inherit
   validated type resistance, baseline combat, and immutable capability metadata
   unless they provide explicit instance overrides. Variant-local native IDs are
   tracked separately from stable IDs; reverse lookup rejects ambiguous IDs in
@@ -63,6 +64,10 @@ Status date: 2026-08-13
   remain incremental; native acid resistance is now externalized as a typed
   acid damage channel and persisted through encounters, snapshots, saves,
   hashes, and protocol field 36.
+- Usable, identified equipment with native `TripleDemonDamage` now triples
+  authoritative physical damage only against externally classified demons;
+  the demon capability persists through snapshots, saves, hashes, and protocol
+  field 37.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

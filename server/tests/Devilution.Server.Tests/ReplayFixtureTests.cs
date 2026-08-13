@@ -281,7 +281,8 @@ public sealed class ReplayFixtureTests
             futurePositionX: fixture.InitialState.CombatTargetFuturePositionX,
             futurePositionY: fixture.InitialState.CombatTargetFuturePositionY,
             petrified: fixture.InitialState.CombatTargetPetrified,
-            stoneCurseImmune: fixture.InitialState.CombatTargetStoneCurseImmune);
+            stoneCurseImmune: fixture.InitialState.CombatTargetStoneCurseImmune,
+            demon: fixture.InitialState.CombatTargetDemon);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             fixture.InitialState.Gold,
@@ -475,7 +476,8 @@ public sealed class ReplayFixtureTests
             futurePositionX: initial.CombatTargetFuturePositionX,
             futurePositionY: initial.CombatTargetFuturePositionY,
             petrified: initial.CombatTargetPetrified,
-            stoneCurseImmune: initial.CombatTargetStoneCurseImmune);
+            stoneCurseImmune: initial.CombatTargetStoneCurseImmune,
+            demon: initial.CombatTargetDemon);
         var spells = new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) {
                 Range = 4,

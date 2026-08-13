@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize native monster demon-class capability through schema 1.71 and
+  apply usable identified `TripleDemonDamage` equipment at the authoritative
+  physical attack boundary.
 - Apply native usable identified life/mana-on-hit equipment effects after
   successful authoritative physical attacks, including deterministic random
   life steal and `NoMana` suppression for mana steal.

@@ -409,11 +409,17 @@ public sealed class DiabloCombatCommandProcessor
             rules.BaseAttackDamage
             + rules.BaseAttackDamage * damagePercent / 100
             + damageFlat);
-        return rules.ResolveAttackDamage(
+        var resolvedDamage = rules.ResolveAttackDamage(
             damage,
             target.ArmorClass,
             Math.Clamp(checked(rules.HitChancePercent + hitBonus + armorPiercingBonus), 0, 100),
             seed);
+        if (target.IsDemon
+            && (GetUsableEquipmentFlags(player)
+                & AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag) != 0) {
+            resolvedDamage = checked(resolvedDamage * 3);
+        }
+        return resolvedDamage;
     }
 
     private bool TryGetAttackTarget(

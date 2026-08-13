@@ -175,6 +175,8 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public bool CombatTargetStoneCurseImmune { get; init; }
 
+    public bool CombatTargetDemon { get; init; }
+
     public uint QuestId { get; init; }
 
     public uint QuestRequiredProgress { get; init; }

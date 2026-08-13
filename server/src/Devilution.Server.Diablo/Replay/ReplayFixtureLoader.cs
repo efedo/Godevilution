@@ -273,6 +273,9 @@ public static class ReplayFixtureLoader
             CombatTargetStoneCurseImmune = GetOptionalBool(
                 value,
                 "combat_target_stone_curse_immune"),
+            CombatTargetDemon = GetOptionalBool(
+                value,
+                "combat_target_demon"),
             QuestId = value.TryGetProperty("quest_id", out var questId) ? questId.GetUInt32() : 0,
             QuestRequiredProgress = value.TryGetProperty("quest_required_progress", out var questRequiredProgress) ? questRequiredProgress.GetUInt32() : 0,
             StatusEffectId = value.TryGetProperty("status_effect_id", out var statusEffectId) ? statusEffectId.GetUInt32() : 0,

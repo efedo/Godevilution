@@ -33,6 +33,9 @@ public sealed record DiabloMonsterState(
 
     public bool IsUndead { get; init; }
 
+    /** Native monster class capability used by demon-specific equipment. */
+    public bool IsDemon { get; init; }
+
     /** Native monster faction marker used by Apocalypse's minion exclusion. */
     public bool IsPlayerMinion { get; init; }
 
@@ -294,6 +297,7 @@ public sealed partial class DiabloSimulation
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
+                    IsDemon = target.IsDemon,
                     IsPlayerMinion = target.IsPlayerMinion,
                     OwnerPlayerId = target.OwnerPlayerId,
                     IsUnique = target.IsUnique,
@@ -1203,6 +1207,7 @@ public sealed partial class DiabloSimulation
                 target.MonsterLevel = monster.MonsterLevel;
                 target.StoneCurseImmune = monster.StoneCurseImmune;
                 target.IsUndead = monster.IsUndead;
+                target.IsDemon = monster.IsDemon;
                 target.IsPlayerMinion = monster.IsPlayerMinion;
                 target.OwnerPlayerId = monster.OwnerPlayerId;
                 target.IsUnique = monster.IsUnique;
@@ -1247,6 +1252,7 @@ public sealed partial class DiabloSimulation
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,
+                    demon: monster.IsDemon,
                     playerMinion: monster.IsPlayerMinion,
                     ownerPlayerId: monster.OwnerPlayerId,
                     minDamage: monster.MinDamage,

@@ -38,6 +38,7 @@ public sealed class AuthoritativeMonsterCatalog
                 "stone_curse_immune",
                 monsterType?.StoneCurseImmune ?? false);
             var undead = ReadFlag(row, "undead", monsterType?.Undead ?? false);
+            var demon = ReadFlag(row, "demon", monsterType?.Demon ?? false);
             var playerMinion = ReadFlag(row, "player_minion", false);
             var unique = ReadFlag(row, "unique", false);
             var diablo = ReadFlag(row, "diablo", false);
@@ -108,6 +109,7 @@ public sealed class AuthoritativeMonsterCatalog
                 monsterLevel: ReadInt32(row, "monster_level", monsterType?.MonsterLevel ?? 0),
                 stoneCurseImmune: stoneCurseImmune,
                 undead: undead,
+                demon: demon,
                 playerMinion: playerMinion,
                 minDamage: ReadInt32(
                     row,

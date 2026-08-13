@@ -233,6 +233,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-undead-v1");
                     hasher.AppendBool(true);
                 }
+                if (monster.IsDemon) {
+                    hasher.AppendString("godevilution-monster-demon-v1");
+                    hasher.AppendBool(true);
+                }
                 if (monster.IsPlayerMinion) {
                     hasher.AppendString("godevilution-monster-player-minion-v1");
                     hasher.AppendBool(true);
