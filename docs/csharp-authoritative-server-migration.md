@@ -579,6 +579,10 @@ Schema 0.73 adds the native-derived Hellfire The Needler unique definition
 (`unique_id=1014`), reusing the validated Short Bow base item with native hit,
 fixed-damage, and attack-speed powers.
 
+Schema 0.74 adds the native-derived Hellfire The Celestial Bow base item and
+unique definition (`unique_id=1015`) with its long-bow identity,
+minimum-strength, damage, and armor powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

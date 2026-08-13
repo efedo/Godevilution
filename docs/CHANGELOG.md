@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Celestial Bow (`unique_id=1015`) through schema
+  0.74, including its native long-bow base item and minimum-strength,
+  damage, and armor powers.
+
 - Externalize Hellfire The Needler (`unique_id=1014`) through schema 0.73,
   reusing the validated Short Bow base item with native hit, fixed-damage, and
   attack-speed powers.
