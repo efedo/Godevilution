@@ -207,7 +207,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         var adjustedResources = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
             life,
             mana,
-            equipment);
+            equipment,
+            playerClass);
         life = adjustedResources.LifeQ6;
         mana = adjustedResources.ManaQ6;
 
@@ -246,7 +247,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             loadout.AbilitySpellId,
             memorizedSpells,
             baseLifeMaximum: baseLife,
-            baseManaMaximum: baseMana);
+            baseManaMaximum: baseMana,
+            playerClass: playerClass);
     }
 
     public static AuthoritativePlayerLoadoutCatalog LoadTsv(

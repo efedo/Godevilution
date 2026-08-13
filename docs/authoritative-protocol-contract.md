@@ -479,6 +479,9 @@ Equipped `plus_strength`, `plus_magic`, `plus_dexterity`, and `plus_vitality`
 are likewise applied by the server to current attributes under native
 usability and identification rules; base attributes remain the recalculation
 source.
+The active class's Q6 item-vitality and item-magic factors, flat item resource
+bonuses, and Hellfire conversions are likewise applied by the server to life
+and mana maxima; clients consume those authoritative values.
 
 `PlayerSnapshot.base_mana_maximum` and `base_life_maximum` fields 31 and 32
 carry the unmodified native maxima used by Hellfire equipment conversions. A

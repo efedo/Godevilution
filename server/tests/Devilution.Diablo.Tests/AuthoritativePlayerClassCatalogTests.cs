@@ -111,6 +111,38 @@ public sealed class AuthoritativePlayerClassCatalogTests
     }
 
     [Fact]
+    public void ClassScaledEquipmentAttributesAffectNativeResourceMaxima()
+    {
+        var playerClass = LoadShippedCatalog().Resolve("bard");
+        var item = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusMagic = 5,
+                PlusVitality = 7,
+            });
+        var unidentified = new EquippedStoreItem(
+            5,
+            43,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Magical = 1,
+                PlusMagic = 100,
+                PlusVitality = 100,
+            });
+
+        var resources = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+            64 << 6,
+            64 << 6,
+            [item, unidentified],
+            playerClass);
+
+        Assert.Equal((64 + ((7 * playerClass.ItemLifePerVitalityQ6 >> 6))) << 6, resources.LifeQ6);
+        Assert.Equal((64 + ((5 * playerClass.ItemManaPerMagicQ6 >> 6))) << 6, resources.ManaQ6);
+    }
+
+    [Fact]
     public void CatalogRejectsUnstableIdentityAndUnknownMetadata()
     {
         var source = ReadShippedTable();

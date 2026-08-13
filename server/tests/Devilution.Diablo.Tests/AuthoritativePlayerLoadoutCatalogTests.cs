@@ -58,6 +58,26 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         var barbarian = catalog.CreateTemplate("barbarian-session", 5, null, null, null, 1)
             .CreatePlayer();
         Assert.Equal([139, 2], barbarian.Equipment.Select(item => item.State.ItemIndex));
+
+        foreach (var definition in catalog.Definitions) {
+            var player = catalog.CreateTemplate(
+                    $"resource-{definition.ClassId}",
+                    definition.ClassId,
+                    null,
+                    null,
+                    null,
+                    1)
+                .CreatePlayer();
+            var expected = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
+                player.BaseLifeMaximum,
+                player.BaseManaMaximum,
+                player.Equipment,
+                player.PlayerClass);
+
+            Assert.NotNull(player.PlayerClass);
+            Assert.Equal(expected.LifeQ6, player.LifeMaximum);
+            Assert.Equal(expected.ManaQ6, player.ManaMaximum);
+        }
     }
 
     [Fact]
@@ -97,6 +117,79 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         var gold = Assert.Single(player.Inventory);
         Assert.Equal(900U, gold.Price);
         Assert.Equal(0, player.InventoryGrid[30]);
+    }
+
+    [Fact]
+    public void SnapshotRestoreRebindsClassScaledEquipmentResources()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var catalog = LoadShippedCatalog();
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                PlayerClasses = classes,
+            });
+        var source = catalog.CreateTemplate("source", 4, null, null, null, 1).CreatePlayer();
+        var destination = catalog.CreateTemplate("destination", 4, null, null, null, 1).CreatePlayer();
+        var snapshot = simulation.CaptureSnapshot(source, 1);
+
+        simulation.RestoreSnapshot(destination, snapshot);
+
+        Assert.Equal(4U, destination.CharacterClassId);
+        Assert.Equal(4U, destination.PlayerClass?.ClassId);
+        Assert.Equal(source.Attributes, destination.Attributes);
+        Assert.Equal(source.LifeMaximum, destination.LifeMaximum);
+        Assert.Equal(source.ManaMaximum, destination.ManaMaximum);
+        Assert.Equal(source.Life, destination.Life);
+        Assert.Equal(source.Mana, destination.Mana);
+    }
+
+    [Fact]
+    public void ClassScaledEquipmentResourcesRecalculateAcrossTransfers()
+    {
+        var catalog = LoadShippedCatalog();
+        var player = catalog.CreateTemplate("transfer", 4, null, null, null, 1).CreatePlayer();
+        var baselineLife = player.LifeMaximum;
+        var baselineMana = player.ManaMaximum;
+        player.Inventory.Add(new OwnedStoreItem(
+            0,
+            0,
+            900,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusMagic = 5,
+                PlusVitality = 7,
+            }));
+        player.InventoryGrid[0] = player.Inventory.Count - 1;
+
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        var equip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, checked((uint)(player.Inventory.Count - 1))),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0)),
+            1);
+
+        Assert.True(equip.Succeeded);
+        Assert.Equal(
+            baselineLife + ((7 * player.PlayerClass!.ItemLifePerVitalityQ6 >> 6) << 6),
+            player.LifeMaximum);
+        Assert.Equal(
+            baselineMana + ((5 * player.PlayerClass.ItemManaPerMagicQ6 >> 6) << 6),
+            player.ManaMaximum);
+
+        var unequip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            2);
+
+        Assert.True(unequip.Succeeded);
+        Assert.Equal(baselineLife, player.LifeMaximum);
+        Assert.Equal(baselineMana, player.ManaMaximum);
     }
 
     [Fact]

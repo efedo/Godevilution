@@ -379,11 +379,17 @@ public sealed class AuthoritativeItemCatalogTests
         var manaToLife = new EquippedStoreItem(
             4,
             42,
-            AuthoritativeItemState.Empty with { ManaToLifePercent = 50 });
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                ManaToLifePercent = 50,
+            });
         var lifeToMana = new EquippedStoreItem(
             5,
             43,
-            AuthoritativeItemState.Empty with { LifeToManaPercent = 40 });
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                LifeToManaPercent = 40,
+            });
 
         var converted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
             80 << 6,
@@ -401,6 +407,7 @@ public sealed class AuthoritativeItemCatalogTests
             4,
             42,
             AuthoritativeItemState.Empty with {
+                StatFlag = true,
                 PlusHitPoints = 7 << 6,
                 PlusMana = 9 << 6,
                 ManaToLifePercent = 50,
@@ -490,7 +497,10 @@ public sealed class AuthoritativeItemCatalogTests
         var invalid = new EquippedStoreItem(
             4,
             42,
-            AuthoritativeItemState.Empty with { ManaToLifePercent = 101 });
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                ManaToLifePercent = 101,
+            });
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
@@ -523,7 +533,10 @@ public sealed class AuthoritativeItemCatalogTests
         player.Equipment.Add(new EquippedStoreItem(
             4,
             42,
-            AuthoritativeItemState.Empty with { ManaToLifePercent = 50 }));
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                ManaToLifePercent = 50,
+            }));
 
         player.RecalculateEquipmentResources();
 

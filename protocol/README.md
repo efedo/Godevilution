@@ -172,6 +172,9 @@ Windows toolchain command.
 - Equipped `plus_strength`, `plus_magic`, `plus_dexterity`, and `plus_vitality`
   are applied by the server to current attributes under native usability and
   identification rules; clients consume the resulting authoritative state.
+- The server applies each active class's Q6 item-vitality and item-magic factors,
+  flat item resources, and Hellfire conversions to authoritative life and mana
+  maxima; clients do not derive resource maxima from item metadata.
 - `Snapshot.random_state`, `MonsterSnapshot.monster_level`, exact Q6 monster
   health fields 16-17, `DamageEvent.amount_q6`, `HealingEvent.amount_q6`,
   projectile runtime fields 14-27,

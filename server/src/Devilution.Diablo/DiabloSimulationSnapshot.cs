@@ -1083,7 +1083,7 @@ public sealed partial class DiabloSimulation
         return new DiabloStoreState(store.StoreId, store.Items.ToArray());
     }
 
-    private static void RestorePlayer(
+    private void RestorePlayer(
         StorePlayerSnapshot source,
         AuthoritativePlayerState destination)
     {
@@ -1092,6 +1092,8 @@ public sealed partial class DiabloSimulation
         destination.Attributes = source.Attributes;
         destination.CharacterLevel = source.CharacterLevel;
         destination.CharacterClassId = source.CharacterClassId;
+        if (PlayerClasses is not null)
+            destination.PlayerClass = PlayerClasses.GetRequired(source.CharacterClassId);
         if (!string.IsNullOrEmpty(source.CharacterName))
             destination.CharacterName = source.CharacterName;
         destination.AbilitySpellId = source.AbilitySpellId;
@@ -1359,12 +1361,17 @@ public sealed partial class DiabloSimulation
         var baseManaMaximum = source.BaseManaMaximum == 0
             ? destination.BaseManaMaximum
             : source.BaseManaMaximum;
+        AuthoritativePlayerClassDefinition? playerClass = null;
+        var hasValidClass = PlayerClasses is null
+            ? source.CharacterClassId == 0
+            : PlayerClasses.TryGet(source.CharacterClassId, out playerClass);
         var expectedResources = baseLifeMaximum >= 0 && baseManaMaximum >= 0
             && source.Equipment is not null
             ? AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
                 baseLifeMaximum,
                 baseManaMaximum,
-                source.Equipment)
+                source.Equipment,
+                playerClass)
             : (LifeQ6: -1, ManaQ6: -1);
         if (source.Life < 0
             || source.BaseLifeMaximum < 0
@@ -1381,9 +1388,7 @@ public sealed partial class DiabloSimulation
             || source.CharacterLevel is < 1 or > 50
             || (!string.IsNullOrEmpty(source.CharacterName)
                 && !DiabloPlayerName.IsValid(source.CharacterName))
-            || (PlayerClasses is null
-                ? source.CharacterClassId != 0
-                : !PlayerClasses.TryGet(source.CharacterClassId, out _))
+            || !hasValidClass
             || !WorldState.IsWalkable(source.LevelId, source.PositionX, source.PositionY)
             || source.Inventory.Count > 40
             || source.Equipment.Count > 7

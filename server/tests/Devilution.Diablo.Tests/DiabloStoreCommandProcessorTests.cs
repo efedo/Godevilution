@@ -446,6 +446,7 @@ public sealed class DiabloStoreCommandProcessorTests
             0,
             0,
             AuthoritativeItemState.Empty with {
+                StatFlag = true,
                 PlusHitPoints = 2 << 6,
                 PlusMana = 3 << 6,
                 ManaToLifePercent = 50,

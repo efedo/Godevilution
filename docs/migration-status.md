@@ -121,6 +121,10 @@ Status date: 2026-08-13
 - Native usable, identified equipment strength, magic, dexterity, and vitality
   bonuses now recompute authoritative current attributes across player creation,
   transfers, and snapshot restoration.
+- Native usable, identified equipment vitality and magic bonuses now contribute
+  to authoritative life and mana maxima through each external class's Q6 item
+  factors; flat resource bonuses and Hellfire conversions use the same native
+  eligibility boundary.
 - The external class and loadout catalogs define all six native-compatible
   Diablo and Hellfire classes, a content-selected default, starting attributes,
   combat metadata, wallets, equipment, belt and inventory placements, class

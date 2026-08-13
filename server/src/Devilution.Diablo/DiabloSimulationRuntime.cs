@@ -39,7 +39,8 @@ public sealed class DiabloPlayerTemplate
             0,
             playerClass?.ClassId ?? 0,
             baseLifeMaximum: resolvedLife,
-            baseManaMaximum: resolvedMana);
+            baseManaMaximum: resolvedMana,
+            playerClass: playerClass);
     }
 
     public DiabloPlayerTemplate(
@@ -71,7 +72,8 @@ public sealed class DiabloPlayerTemplate
         bool manaShieldActive = false,
         uint reflectCharges = 0,
         int baseLifeMaximum = -1,
-        int baseManaMaximum = -1)
+        int baseManaMaximum = -1,
+        AuthoritativePlayerClassDefinition? playerClass = null)
     {
         Gold = gold;
         Experience = experience;
@@ -95,6 +97,7 @@ public sealed class DiabloPlayerTemplate
         LevelId = levelId;
         ArmorClass = Math.Max(0, armorClass);
         CharacterClassId = characterClassId;
+        PlayerClass = playerClass;
         Inventory = inventory?.ToArray() ?? [];
         AbilitySpellId = abilitySpellId;
         MemorizedSpells = memorizedSpells?.ToArray() ?? [];
@@ -132,6 +135,7 @@ public sealed class DiabloPlayerTemplate
     public uint LevelId { get; }
     public int ArmorClass { get; }
     public uint CharacterClassId { get; }
+    public AuthoritativePlayerClassDefinition? PlayerClass { get; }
     public IReadOnlyList<OwnedStoreItem> Inventory { get; }
     public uint AbilitySpellId { get; }
     public IReadOnlyList<MemorizedSpellState> MemorizedSpells { get; }
@@ -176,7 +180,8 @@ public sealed class DiabloPlayerTemplate
             ManaShieldActive,
             ReflectCharges,
             BaseLifeMaximum,
-            BaseManaMaximum);
+            BaseManaMaximum,
+            PlayerClass);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -211,7 +216,8 @@ public sealed class DiabloPlayerTemplate
             ManaShieldActive,
             ReflectCharges,
             BaseLifeMaximum,
-            BaseManaMaximum);
+            BaseManaMaximum,
+            PlayerClass);
         player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;

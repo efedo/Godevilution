@@ -252,7 +252,8 @@ public sealed class AuthoritativePlayerState(
     bool manaShieldActive = false,
     uint reflectCharges = 0,
     int baseLifeMaximum = -1,
-    int baseManaMaximum = -1)
+    int baseManaMaximum = -1,
+    AuthoritativePlayerClassDefinition? playerClass = null)
 {
     public uint Gold { get; set; } = gold;
 
@@ -281,6 +282,9 @@ public sealed class AuthoritativePlayerState(
     public int ArmorClass { get; private set; } = Math.Max(0, armorClass);
 
     public uint CharacterClassId { get; set; } = characterClassId;
+
+    /** Content-owned native class metadata used for equipment resource scaling. */
+    public AuthoritativePlayerClassDefinition? PlayerClass { get; internal set; } = playerClass;
 
     /** Native-compatible character identity used for multiplayer presentation and ears. */
     public string CharacterName { get; set; } = string.IsNullOrEmpty(characterName)
@@ -369,7 +373,8 @@ public sealed class AuthoritativePlayerState(
         var adjusted = AuthoritativeEquipmentResourceRules.ApplyHellfireConversions(
             BaseLifeMaximum,
             BaseManaMaximum,
-            Equipment);
+            Equipment,
+            PlayerClass);
         LifeMaximum = adjusted.LifeQ6;
         ManaMaximum = adjusted.ManaQ6;
         Life = Math.Clamp(
