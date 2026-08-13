@@ -230,3 +230,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1058	Storm Spire	148	8	22500	LIGHTDAM	2	8
 1058	Storm Spire	148	8	22500	STR	10	10
 1058	Storm Spire	148	8	22500	MAG_CURSE	10	10
+1059	Gleamsong	149	8	6520	MANA	25	25
+1059	Gleamsong	149	8	6520	STR_CURSE	3	3
+1059	Gleamsong	149	8	6520	VIT_CURSE	3	3
+1059	Gleamsong	149	8	6520	SPELL	10	76

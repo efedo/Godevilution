@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Gleamsong (`unique_id=1059`) through schema 1.18,
+  adding its native Short Staff base item with mana, strength-curse,
+  vitality-curse, and charged-spell powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Storm Spire (`unique_id=1058`) through schema 1.17,
   adding its native War Staff base item with lightning-resistance,
   lightning-damage, strength, and magic-curse powers.
