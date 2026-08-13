@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Doombringer (`unique_id=1036`) through schema 0.95,
+  including its native Bastard Sword base item with to-hit, damage,
+  all-attribute-curse, life-curse, and light-curse powers.
+
 - Externalize Hellfire Inferno (`unique_id=1035`) through schema 0.94,
   reusing the validated Long Sword base item with fire damage, light, mana,
   and fire-resistance powers.

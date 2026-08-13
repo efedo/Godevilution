@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.95 adds the native-derived Hellfire Doombringer base item and unique
+definition (`unique_id=1036`) with its Bastard Sword identity, to-hit, damage,
+all-attribute-curse, life-curse, and light-curse powers.
+
 Schema 0.94 adds the native-derived Hellfire Inferno unique definition
 (`unique_id=1035`), reusing the validated Long Sword base item with fire damage,
 light, mana, and fire-resistance powers.
