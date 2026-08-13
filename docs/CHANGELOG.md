@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
   Recharge ability, including charged-cast consumption and native max-charge loss.
 - Extend live Godot protocol coverage through the Warrior's server-owned Repair
   ability, including class authorization and fully-repaired equipment handling.
+- Extend live Godot protocol coverage through the Rogue's server-owned Trap
+  Disarm ability, including an external armed-object overlay, adjacency
+  validation, and server-owned trap-state mutation.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
