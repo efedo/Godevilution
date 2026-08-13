@@ -114,3 +114,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1032	Wizardspike	127	11	12920	MANA	35	35
 1032	Wizardspike	127	11	12920	TOHIT	25	25
 1032	Wizardspike	127	11	12920	ALLRES	15	15
+1033	Lightsabre	128	13	19150	LIGHT	2	2
+1033	Lightsabre	128	13	19150	LIGHTDAM	1	10
+1033	Lightsabre	128	13	19150	TOHIT	20	20
+1033	Lightsabre	128	13	19150	LIGHTRES	50	50

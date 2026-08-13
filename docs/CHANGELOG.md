@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Lightsabre (`unique_id=1033`) through schema 0.92,
+  reusing the validated Sabre base item with light, lightning-damage, to-hit,
+  and lightning-resistance powers.
+
 - Externalize Hellfire Wizardspike (`unique_id=1032`) through schema 0.91,
   reusing the validated Dagger base item with magic, mana, to-hit, and
   all-resistance powers.

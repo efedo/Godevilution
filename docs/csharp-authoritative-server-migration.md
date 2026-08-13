@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.92 adds the native-derived Hellfire Lightsabre unique definition
+(`unique_id=1033`), reusing the validated Sabre base item with light,
+lightning-damage, to-hit, and lightning-resistance powers.
+
 Schema 0.91 adds the native-derived Hellfire Wizardspike unique definition
 (`unique_id=1032`), reusing the validated Dagger base item with magic, mana,
 to-hit, and all-resistance powers.
