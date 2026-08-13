@@ -110,3 +110,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1031	Shadowhawk	133	8	13750	STEALLIFE	5	5
 1031	Shadowhawk	133	8	13750	TOHIT	15	15
 1031	Shadowhawk	133	8	13750	ALLRES	5	5
+1032	Wizardspike	127	11	12920	MAG	15	15
+1032	Wizardspike	127	11	12920	MANA	35	35
+1032	Wizardspike	127	11	12920	TOHIT	25	25
+1032	Wizardspike	127	11	12920	ALLRES	15	15

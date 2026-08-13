@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Wizardspike (`unique_id=1032`) through schema 0.91,
+  reusing the validated Dagger base item with magic, mana, to-hit, and
+  all-resistance powers.
+
 - Externalize Hellfire Shadowhawk (`unique_id=1031`) through schema 0.90,
   including its native Broad Sword base item with light-curse, life-steal,
   to-hit, and all-resistance powers.

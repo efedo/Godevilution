@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.91 adds the native-derived Hellfire Wizardspike unique definition
+(`unique_id=1032`), reusing the validated Dagger base item with magic, mana,
+to-hit, and all-resistance powers.
+
 Schema 0.90 adds the native-derived Hellfire Shadowhawk base item and unique
 definition (`unique_id=1031`) with its Broad Sword identity, light-curse,
 life-steal, to-hit, and all-resistance powers.

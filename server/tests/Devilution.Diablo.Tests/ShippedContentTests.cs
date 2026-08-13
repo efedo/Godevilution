@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.90.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.91.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.90.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.91.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -498,6 +498,18 @@ public sealed class ShippedContentTests
         Assert.Equal(5, shadowhawk.PlusLightningResistance);
         Assert.Equal(5, shadowhawk.PlusMagicResistance);
         Assert.NotEqual(0U, shadowhawk.Flags & 0x00010000U);
+        var wizardspike = hellfireItems.GenerateUnique(1032, 0x12345678, 11);
+        Assert.Equal(1032, wizardspike.UniqueId);
+        Assert.Equal(12920, wizardspike.Value);
+        Assert.Equal(119, wizardspike.ItemIndex);
+        Assert.Equal(1, wizardspike.MinDamage);
+        Assert.Equal(4, wizardspike.MaxDamage);
+        Assert.Equal(15, wizardspike.PlusMagic);
+        Assert.Equal(35 << 6, wizardspike.PlusMana);
+        Assert.Equal(25, wizardspike.PlusToHit);
+        Assert.Equal(15, wizardspike.PlusFireResistance);
+        Assert.Equal(15, wizardspike.PlusLightningResistance);
+        Assert.Equal(15, wizardspike.PlusMagicResistance);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
