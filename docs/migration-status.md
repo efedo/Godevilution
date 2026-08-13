@@ -7,7 +7,7 @@ Status date: 2026-08-12
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, and resume precedence | Broaden reconnect/soak compatibility tests and eventually separate content/ruleset identity in a new protocol version |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire overlay | Add an end-to-end Hellfire replay, broader quest selection, and longer soak fixtures |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays | Add an end-to-end Hellfire replay, broader quest selection, and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
@@ -39,9 +39,9 @@ Status date: 2026-08-12
   surfaced by the Godot HUD without client-side immunity or timing logic.
 - The checked-in Hellfire pack selects the native game variant through a
   validated `combat.tsv` overlay and carries a native-derived encounter set
-  plus the Undead Crown and Sorcerer Firebolt staff through Diablo activation;
-  remaining Hellfire world and catalog tables stay explicit follow-up content
-  migrations.
+  plus the Undead Crown and Sorcerer Firebolt staff through Diablo activation
+  and the live Godot protocol snapshot; remaining Hellfire world and catalog
+  tables stay explicit follow-up content migrations.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges

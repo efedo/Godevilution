@@ -351,5 +351,6 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 
 Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: seeded quest pools, mod/content reload
-ordering, an end-to-end Hellfire replay beyond the live overlay activation
-smoke test, cursor-held pickup overflow, and broader combat/event ordering.
+ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
+activation smoke tests, cursor-held pickup overflow, and broader combat/event
+ordering.
