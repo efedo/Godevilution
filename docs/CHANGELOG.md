@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.62 with native-derived Hellfire
+  Harlequin Crest, Veil of Steel, and Arkaine's Valor item and unique
+  definitions.
+
 - Advance the Diablo content schema to 0.61 with native-derived Hellfire
   Optic Amulet and Ring of Truth item and unique definitions, including their
   base-item identities and authoritative unique powers.

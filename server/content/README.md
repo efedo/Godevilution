@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.61.0` schema in
+It declares its identity and `devilution.diablo@0.62.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -109,6 +109,10 @@ The Optic Amulet (`unique_id=1005`) and Ring of Truth (`unique_id=1006`) now
 cross the same boundary with their native base-item identities and unique
 light, resistance, get-hit, attribute, and life powers. Their normalized
 native item indexes remain `11` and `12` respectively.
+Harlequin Crest (`unique_id=1007`), Veil of Steel (`unique_id=1008`), and
+Arkaine's Valor (`unique_id=1009`) extend that slice with native helm and armor
+identities and their authoritative armor, resistance, attribute, life, mana,
+and recovery powers.
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
 
@@ -143,8 +147,10 @@ are server-owned and unique within the loadout.
 content pack to expose stable rows such as Etherealize `53` while native
 compatibility fields continue to carry their separate `native_spell_id` values.
 
-Schema 0.61 adds the Hellfire Optic Amulet and Ring of Truth item and unique
-definitions. Schema 0.60 extends the optional `consumable_misc_id` spell column. The base
+Schema 0.62 adds native-derived Hellfire Harlequin Crest, Veil of Steel, and
+Arkaine's Valor item and unique definitions. Schema 0.61 adds the Hellfire
+Optic Amulet and Ring of Truth item and unique definitions. Schema 0.60 extends
+the optional `consumable_misc_id` spell column. The base
 pack maps Rune of Lightning (`48`) to Lightning Wall (`50`), Greater Rune of
 Lightning (`49`) to Nova (`18`), Greater Rune of Fire (`50`) to Immolation
 (`45`), and Rune of Stone (`51`) to Stone Curse (`8`) without reusing native
@@ -661,7 +667,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.61.0"
+      "version": "0.62.0"
   },
   "dependencyConstraints": [
     {
@@ -693,7 +699,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.61.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.62.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
