@@ -12,6 +12,8 @@ All notable changes to this fork are documented below.
   participant's self-first snapshots.
 - Add an eight-generation host ruleset replacement soak that migrates two
   sessions and verifies safe retirement of every prior adapter.
+- Add a validated Diablo monster-candidate query by dungeon-level range, keeping
+  procedural map layout and spawn placement outside the current data contract.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

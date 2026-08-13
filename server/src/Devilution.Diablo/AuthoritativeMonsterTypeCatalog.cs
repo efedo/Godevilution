@@ -86,6 +86,19 @@ public sealed class AuthoritativeMonsterTypeCatalog
     public bool TryGet(uint monsterId, out AuthoritativeMonsterTypeDefinition definition)
         => definitions.TryGetValue(monsterId, out definition!);
 
+    /** Returns validated monster types whose native dungeon-level range includes the level. */
+    public IReadOnlyList<AuthoritativeMonsterTypeDefinition> GetAvailableForDungeonLevel(
+        int dungeonLevel)
+    {
+        if (dungeonLevel < 0)
+            throw new ArgumentOutOfRangeException(nameof(dungeonLevel));
+
+        return Definitions
+            .Where(definition => definition.MinimumDungeonLevel <= dungeonLevel
+                && definition.MaximumDungeonLevel >= dungeonLevel)
+            .ToArray();
+    }
+
     /** Resolves an unambiguous native monster-table identity without exposing TSV parsing to the engine. */
     public bool TryGetNative(uint nativeMonsterId, out AuthoritativeMonsterTypeDefinition definition)
     {

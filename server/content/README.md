@@ -128,6 +128,9 @@ level, and immutable capability flags also inherit from the type when omitted
 from an encounter row. Schema 0.68 adds native acid resistance as the
 `acid_resistance` percentage, preserving the native acid immunity of the four
 Hellfire acid creatures without silently mapping it to another channel.
+The Diablo module now exposes a stable-ID query for validated monster types
+available at a requested dungeon level; procedural map layout and spawn
+placement remain separate migrations.
 Schema 1.71 adds the native `demon` monster-class capability. The server
 validates it from external type rows and applies `TripleDemonDamage` only at
 the authoritative physical attack boundary; clients never infer the class

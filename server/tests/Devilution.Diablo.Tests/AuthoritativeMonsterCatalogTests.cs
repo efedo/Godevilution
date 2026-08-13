@@ -6,6 +6,59 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeMonsterCatalogTests
 {
     [Fact]
+    public void ReturnsTypesAvailableAtTheRequestedDungeonLevelInStableIdOrder()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([
+            CreateType(20, minimumLevel: 3, maximumLevel: 8),
+            CreateType(10, minimumLevel: 1, maximumLevel: 4),
+            CreateType(30, minimumLevel: 8, maximumLevel: 16),
+        ]);
+
+        Assert.Equal(
+            [10U, 20U],
+            catalog.GetAvailableForDungeonLevel(3)
+                .Select(definition => definition.MonsterId));
+        Assert.Equal(
+            [20U, 30U],
+            catalog.GetAvailableForDungeonLevel(8)
+                .Select(definition => definition.MonsterId));
+        Assert.Empty(catalog.GetAvailableForDungeonLevel(17));
+    }
+
+    [Fact]
+    public void RejectsNegativeDungeonLevels()
+    {
+        var catalog = new AuthoritativeMonsterTypeCatalog([CreateType(1, 1, 1)]);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => catalog.GetAvailableForDungeonLevel(-1));
+    }
+
+    private static AuthoritativeMonsterTypeDefinition CreateType(
+        uint monsterId,
+        int minimumLevel,
+        int maximumLevel)
+    {
+        return new AuthoritativeMonsterTypeDefinition(
+            monsterId,
+            monsterId,
+            $"Monster {monsterId}",
+            minimumLevel,
+            maximumLevel,
+            1,
+            1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            false,
+            false,
+            false);
+    }
+
+    [Fact]
     public void LoadsNativeMonsterTypesInStableIdentityOrder()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
