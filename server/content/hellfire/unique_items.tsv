@@ -217,3 +217,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1055	Dreamflange	142	26	26450	MAGICRES	50	50
 1055	Dreamflange	142	26	26450	LIGHT	2	2
 1055	Dreamflange	142	26	26450	SPLLVLADD	1	1
+1056	Staff of Shadows	147	2	1250	MAG_CURSE	10	10
+1056	Staff of Shadows	147	2	1250	TOHIT	10	10
+1056	Staff of Shadows	147	2	1250	DAMP	60	60
+1056	Staff of Shadows	147	2	1250	LIGHT_CURSE	2	2
+1056	Staff of Shadows	147	2	1250	FASTATTACK	1	1

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.14.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.15.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.14.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.15.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -821,6 +821,19 @@ public sealed class ShippedContentTests
         Assert.Equal(50, dreamflange.PlusMagicResistance);
         Assert.Equal(2, dreamflange.PlusLight);
         Assert.Equal(1, dreamflange.SpellLevelAdd);
+        var staffOfShadows = hellfireItems.GenerateUnique(1056, 0x12345678, 2);
+        Assert.Equal(1056, staffOfShadows.UniqueId);
+        Assert.Equal(1250, staffOfShadows.Value);
+        Assert.Equal(153, staffOfShadows.ItemIndex);
+        Assert.Equal(4, staffOfShadows.MinDamage);
+        Assert.Equal(8, staffOfShadows.MaxDamage);
+        Assert.Equal(0, staffOfShadows.MinimumStrength);
+        Assert.Equal(2, staffOfShadows.EquipLocation);
+        Assert.Equal(-10, staffOfShadows.PlusMagic);
+        Assert.Equal(10, staffOfShadows.PlusToHit);
+        Assert.Equal(60, staffOfShadows.PlusDamage);
+        Assert.Equal(-2, staffOfShadows.PlusLight);
+        Assert.NotEqual(0U, staffOfShadows.Flags & 0x00020000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

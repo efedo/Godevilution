@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Staff of Shadows (`unique_id=1056`) through schema 1.15,
+  adding its native Long Staff base item with magic-curse, to-hit, damage,
+  light-curse, and fast-attack powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Dreamflange (`unique_id=1055`) through schema 1.14,
   reusing the validated Mace base item with magic, mana, magic-resistance,
   light, and spell-level powers.
