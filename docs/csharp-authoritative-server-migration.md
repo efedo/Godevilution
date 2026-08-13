@@ -559,6 +559,10 @@ authoritative Acid damage channel. The four Hellfire acid creatures preserve
 their native 100-percent immunity through encounter inheritance, snapshots,
 saves, hashes, and protocol field 36.
 
+Schema 0.69 adds the native-derived Hellfire Griswold's Edge base item and
+unique definition (`unique_id=1010`) with its one-handed sword identity,
+fire-damage, hit, attack-speed, knockback, mana, and life-curse powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

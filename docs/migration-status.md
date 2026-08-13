@@ -42,7 +42,8 @@ Status date: 2026-08-13
   3, 4, 9, and 17 through 24 with normalized 40-by-40 bounds, and carries a
   native-derived encounter set plus the Undead Crown, Empyrean Band, Optic
   Amulet, Ring of Truth, Harlequin Crest, Veil of Steel, Arkaine's Valor, and
-  Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
+  Griswold's Edge unique items, and Sorcerer Firebolt staff through Diablo
+  activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
@@ -685,6 +686,9 @@ memorized-source admission, and typed status projection.
 Content schema 0.68 adds native acid resistance to `monster_types.tsv` and the
 authoritative damage-channel, encounter, snapshot, save, hash, and protocol
 paths. The four Hellfire acid creatures retain native 100-percent immunity.
+Content schema 0.69 adds the native-derived Hellfire Griswold's Edge base item
+and unique definition (`unique_id=1010`) with its one-handed sword identity,
+fire-damage, hit, attack-speed, knockback, mana, and life-curse powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds

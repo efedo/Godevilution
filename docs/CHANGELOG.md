@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Griswold's Edge (`unique_id=1010`) through schema 0.69,
+  including its native one-handed base item and fire-damage, hit, attack-speed,
+  knockback, mana, and life-curse powers.
+
 - Externalize native Hellfire acid immunity through schema 0.68, add the
   authoritative Acid damage channel, and carry acid resistance through
   encounter inheritance, snapshots, saves, hashes, protocol field 36, and

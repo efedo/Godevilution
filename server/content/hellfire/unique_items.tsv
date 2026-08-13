@@ -26,3 +26,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1009	Arkaine's Valor	118	1	42000	VIT	10	10
 1009	Arkaine's Valor	118	1	42000	GETHIT	3	3
 1009	Arkaine's Valor	118	1	42000	FASTRECOVER	3	3
+1010	Griswold's Edge	119	1	42000	FIREDAM	1	10
+1010	Griswold's Edge	119	1	42000	TOHIT	25	25
+1010	Griswold's Edge	119	1	42000	FASTATTACK	2	2
+1010	Griswold's Edge	119	1	42000	KNOCKBACK	0	0
+1010	Griswold's Edge	119	1	42000	MANA	20	20
+1010	Griswold's Edge	119	1	42000	LIFE_CURSE	20	20

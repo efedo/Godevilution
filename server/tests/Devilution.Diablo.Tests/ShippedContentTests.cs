@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.68.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.69.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.68.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.69.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -269,6 +269,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10, arkainesValor.PlusVitality);
         Assert.Equal(-3, arkainesValor.PlusGetHit);
         Assert.NotEqual(0U, arkainesValor.Flags & 0x00800000U);
+        var griswoldsEdge = hellfireItems.GenerateUnique(1010, 0x12345678, 1);
+        Assert.Equal(1010, griswoldsEdge.UniqueId);
+        Assert.Equal(42000, griswoldsEdge.Value);
+        Assert.Equal(4, griswoldsEdge.MinDamage);
+        Assert.Equal(12, griswoldsEdge.MaxDamage);
+        Assert.Equal(1, griswoldsEdge.FireMinDamage);
+        Assert.Equal(10, griswoldsEdge.FireMaxDamage);
+        Assert.Equal(25, griswoldsEdge.PlusToHit);
+        Assert.NotEqual(0U, griswoldsEdge.Flags & 0x00040000U);
+        Assert.NotEqual(0U, griswoldsEdge.Flags & 0x00000800U);
+        Assert.Equal(20 << 6, griswoldsEdge.PlusMana);
+        Assert.Equal(-(20 << 6), griswoldsEdge.PlusHitPoints);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
