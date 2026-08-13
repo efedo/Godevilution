@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.22.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.23.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.22.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.23.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -941,6 +941,19 @@ public sealed class ShippedContentTests
         Assert.Equal(15, mindcry.PlusLightningResistance);
         Assert.Equal(15, mindcry.PlusMagicResistance);
         Assert.Equal(1, mindcry.SpellLevelAdd);
+        var rodOfOnan = hellfireItems.GenerateUnique(1064, 0x12345678, 22);
+        Assert.Equal(1064, rodOfOnan.UniqueId);
+        Assert.Equal(44167, rodOfOnan.Value);
+        Assert.Equal(156, rodOfOnan.ItemIndex);
+        Assert.Equal(8, rodOfOnan.MinDamage);
+        Assert.Equal(16, rodOfOnan.MaxDamage);
+        Assert.Equal(30, rodOfOnan.MinimumStrength);
+        Assert.Equal(2, rodOfOnan.EquipLocation);
+        Assert.Equal(21, rodOfOnan.SpellId);
+        Assert.Equal(50, rodOfOnan.Charges);
+        Assert.Equal(50, rodOfOnan.MaxCharges);
+        Assert.Equal(100, rodOfOnan.PlusDamage);
+        Assert.Equal(5, rodOfOnan.PlusStrength);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

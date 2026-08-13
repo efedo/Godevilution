@@ -253,3 +253,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1063	Mindcry	151	20	41500	SPELL	13	69
 1063	Mindcry	151	20	41500	ALLRES	15	15
 1063	Mindcry	151	20	41500	SPLLVLADD	1	1
+1064	Rod of Onan	148	22	44167	SPELL	21	50
+1064	Rod of Onan	148	22	44167	DAMP	100	100
+1064	Rod of Onan	148	22	44167	ATTRIBS	5	5
