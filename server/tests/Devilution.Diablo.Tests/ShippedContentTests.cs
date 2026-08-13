@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.61.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.62.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.61.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.62.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -92,6 +92,31 @@ public sealed class ShippedContentTests
         Assert.Equal(10 << 6, ringOfTruth.PlusHitPoints);
         Assert.Equal(-1, ringOfTruth.PlusGetHit);
         Assert.Equal(10, ringOfTruth.PlusMagicResistance);
+        var harlequinCrest = hellfireItems.GenerateUnique(1007, 0x12345678, 1);
+        Assert.Equal(1007, harlequinCrest.UniqueId);
+        Assert.Equal(4000, harlequinCrest.Value);
+        Assert.Equal(-3, harlequinCrest.PlusArmorClass);
+        Assert.Equal(-1, harlequinCrest.PlusGetHit);
+        Assert.Equal(2, harlequinCrest.PlusStrength);
+        Assert.Equal(448, harlequinCrest.PlusHitPoints);
+        Assert.Equal(448, harlequinCrest.PlusMana);
+        var veilOfSteel = hellfireItems.GenerateUnique(1008, 0x12345678, 1);
+        Assert.Equal(1008, veilOfSteel.UniqueId);
+        Assert.Equal(63800, veilOfSteel.Value);
+        Assert.Equal(50, veilOfSteel.PlusFireResistance);
+        Assert.Equal(50, veilOfSteel.PlusLightningResistance);
+        Assert.Equal(50, veilOfSteel.PlusMagicResistance);
+        Assert.Equal(60, veilOfSteel.PlusArmorClass);
+        Assert.Equal(-(30 << 6), veilOfSteel.PlusMana);
+        Assert.Equal(15, veilOfSteel.PlusStrength);
+        Assert.Equal(15, veilOfSteel.PlusVitality);
+        var arkainesValor = hellfireItems.GenerateUnique(1009, 0x12345678, 1);
+        Assert.Equal(1009, arkainesValor.UniqueId);
+        Assert.Equal(42000, arkainesValor.Value);
+        Assert.Equal(25, arkainesValor.ArmorClass);
+        Assert.Equal(10, arkainesValor.PlusVitality);
+        Assert.Equal(-3, arkainesValor.PlusGetHit);
+        Assert.NotEqual(0U, arkainesValor.Flags & 0x00800000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

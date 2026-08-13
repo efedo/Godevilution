@@ -11,3 +11,18 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1006	Ring of Truth	115	1	9100	LIFE	10	10
 1006	Ring of Truth	115	1	9100	GETHIT	1	1
 1006	Ring of Truth	115	1	9100	ALLRES	10	10
+1007	Harlequin Crest	116	1	4000	AC_CURSE	3	3
+1007	Harlequin Crest	116	1	4000	GETHIT	1	1
+1007	Harlequin Crest	116	1	4000	ATTRIBS	2	2
+1007	Harlequin Crest	116	1	4000	LIFE	7	7
+1007	Harlequin Crest	116	1	4000	MANA	7	7
+1008	Veil of Steel	117	1	63800	ALLRES	50	50
+1008	Veil of Steel	117	1	63800	LIGHT_CURSE	2	2
+1008	Veil of Steel	117	1	63800	ACP	60	60
+1008	Veil of Steel	117	1	63800	MANA_CURSE	30	30
+1008	Veil of Steel	117	1	63800	STR	15	15
+1008	Veil of Steel	117	1	63800	VIT	15	15
+1009	Arkaine's Valor	118	1	42000	SETAC	25	25
+1009	Arkaine's Valor	118	1	42000	VIT	10	10
+1009	Arkaine's Valor	118	1	42000	GETHIT	3	3
+1009	Arkaine's Valor	118	1	42000	FASTRECOVER	3	3
