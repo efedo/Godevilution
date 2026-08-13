@@ -173,3 +173,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1046	Messerschmidt's Reaver	141	25	58000	ATTRIBS	5	5
 1046	Messerschmidt's Reaver	141	25	58000	LIFE_CURSE	50	50
 1046	Messerschmidt's Reaver	141	25	58000	FIREDAM	2	12
+1047	Crackrust	142	1	11375	ATTRIBS	2	2
+1047	Crackrust	142	1	11375	INDESTRUCTIBLE	0	0
+1047	Crackrust	142	1	11375	ALLRES	15	15
+1047	Crackrust	142	1	11375	DAMP	50	50
+1047	Crackrust	142	1	11375	SPLLVLADD	-1	-1

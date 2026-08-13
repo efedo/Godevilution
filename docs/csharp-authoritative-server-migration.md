@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.6 adds the native-derived Hellfire Crackrust base item and unique
+definition (`unique_id=1047`) with its Mace identity, attributes,
+indestructibility, all-resistance, damage, and spell-level powers.
+
 Schema 1.5 adds the native-derived Hellfire Messerschmidt's Reaver base item
 and unique definition (`unique_id=1046`) with its Great Axe identity, damage,
 damage-modifier, attribute, life-curse, and fire-damage powers.

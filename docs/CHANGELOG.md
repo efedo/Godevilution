@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Crackrust (`unique_id=1047`) through schema 1.6,
+  adding its native Mace base item with attributes, indestructibility,
+  all-resistance, damage, and spell-level powers.
+
 - Externalize Hellfire Messerschmidt's Reaver (`unique_id=1046`) through schema
   1.5, adding its native Great Axe base item with damage, damage-modifier,
   attribute, life-curse, and fire-damage powers.
