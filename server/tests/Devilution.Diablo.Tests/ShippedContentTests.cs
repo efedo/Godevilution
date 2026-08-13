@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(73, monsterTypes.Definitions.Count);
+        Assert.Equal(85, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -133,6 +133,19 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions[72].FireResistance,
             monsterTypes.Definitions[72].LightningResistance,
             monsterTypes.Definitions[72].MagicResistance));
+        Assert.Equal((4, 16), (
+            monsterTypes.Definitions[77].MinimumSpecialDamage,
+            monsterTypes.Definitions[77].MaximumSpecialDamage));
+        Assert.Equal((75, 75, 75), (
+            monsterTypes.Definitions[81].FireResistance,
+            monsterTypes.Definitions[81].LightningResistance,
+            monsterTypes.Definitions[81].MagicResistance));
+        Assert.Equal("Blood Claw", monsterTypes.Definitions[^1].Name);
+        Assert.Equal(83U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal((100, 75, 100), (
+            monsterTypes.Definitions[^1].FireResistance,
+            monsterTypes.Definitions[^1].LightningResistance,
+            monsterTypes.Definitions[^1].MagicResistance));
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());
