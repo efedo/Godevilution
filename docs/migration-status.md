@@ -6,7 +6,7 @@ Status date: 2026-08-12
 
 | Area | State | Remaining work |
 | --- | --- | --- |
-| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, and resume precedence | Broaden reconnect/soak compatibility tests and eventually separate content/ruleset identity in a new protocol version |
+| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, and a three-cycle reconnect gate while another participant remains connected | Add longer-duration soak coverage and eventually separate content/ruleset identity in a new protocol version |
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Add broader quest selection and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
@@ -82,6 +82,9 @@ Status date: 2026-08-12
   entity persistence.
 - Versioned server-owned saves with validation and atomic replacement.
 - Native and Godot protocol clients plus shared replay and live-server tests.
+- A loopback reconnect soak now keeps a second participant connected while the
+  first participant resumes three times, preserving the resume token, entity
+  identity, complete participant set, self-first ordering, and snapshot hash.
 - Engine-neutral inventory-grid geometry, footprint validation, placement, and
   index compaction extracted into the dependency-free `Devilution.Domain`
   assembly with an independent test project.

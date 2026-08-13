@@ -795,3 +795,5 @@ All notable changes to this fork are documented below.
 - Hellfire content now also externalizes the Empyrean Band and its native
   attribute, light, recovery, and trap-resistance powers through keyed item and
   unique-item overlays.
+- Add a three-cycle server reconnect soak that preserves a resumed participant's
+  identity and complete self-first multiplayer snapshot while another session remains connected.
