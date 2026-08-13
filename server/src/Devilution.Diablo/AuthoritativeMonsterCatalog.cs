@@ -2,14 +2,15 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
-/** Content-backed drop policy inherited by procedural encounters of one type. */
+/** Content-backed drop and encounter policy inherited by procedural encounters of one type. */
 public sealed record AuthoritativeMonsterDropDefinition(
     uint MonsterId,
     uint DropItemId,
     uint DropUniqueItemId,
     int ItemLevel,
     bool OnlyGood,
-    bool MonsterUnique)
+    bool MonsterUnique,
+    bool MonsterDiablo)
 {
     public bool HasDrop => DropItemId != 0 || DropUniqueItemId != 0;
 }
@@ -31,7 +32,9 @@ public sealed class AuthoritativeMonsterCatalog
             if (definition.MonsterId == 0
                 || (definition.DropItemId != 0 && definition.DropUniqueItemId != 0)
                 || definition.ItemLevel < 0
-                || (!definition.HasDrop && !definition.MonsterUnique)) {
+                || (!definition.HasDrop
+                    && !definition.MonsterUnique
+                    && !definition.MonsterDiablo)) {
                 throw new InvalidDataException(
                     "Monster drop definitions contain invalid identities or bounds.");
             }
@@ -191,7 +194,11 @@ public sealed class AuthoritativeMonsterCatalog
         var dropItemId = row.OptionalUInt32("drop_item_id");
         var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
         var monsterUnique = ReadFlag(row, "unique", false);
-        if (dropItemId == 0 && dropUniqueItemId == 0 && !monsterUnique)
+        var monsterDiablo = ReadFlag(row, "diablo", false);
+        if (dropItemId == 0
+            && dropUniqueItemId == 0
+            && !monsterUnique
+            && !monsterDiablo)
             return null;
         if (dropItemId != 0 && dropUniqueItemId != 0)
             throw new InvalidDataException(
@@ -208,7 +215,8 @@ public sealed class AuthoritativeMonsterCatalog
             dropUniqueItemId,
             itemLevel,
             ReadFlag(row, "drop_only_good", false),
-            monsterUnique);
+            monsterUnique,
+            monsterDiablo);
     }
 
     private static int ReadInt32(TsvRow row, string column, int defaultValue)

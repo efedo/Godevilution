@@ -164,8 +164,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         ]);
         var monsters = AuthoritativeMonsterCatalog.LoadTsv(
             "monsters.tsv",
-            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\n"
-                + "9\t2\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t7\t1\n",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\tdiablo\n"
+                + "9\t2\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t7\t1\t1\n",
             items,
             monsterTypes: types);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -192,6 +192,8 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.Equal(first.Drop.State, second.Drop!.State);
         Assert.Equal(first.Drop.ItemSeed, second.Drop.ItemSeed);
         Assert.Equal(first.Drop.State.Value, checked((int)first.Drop.Price));
+        Assert.True(first.IsDiablo);
+        Assert.True(second.IsDiablo);
     }
 
     private static AuthoritativeMonsterTypeDefinition CreateType(

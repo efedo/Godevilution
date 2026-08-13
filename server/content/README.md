@@ -140,7 +140,8 @@ encounter rows with at most `n` generated targets on the default starting level;
 still consumes static `monsters.tsv` rows. Procedural targets inherit a
 validated per-monster drop policy when the active item and unique catalogs are
 available; generated world-item IDs, seeds, values, and unique flags remain
-server-owned and seed-stable. Native map synthesis remains separate.
+server-owned and seed-stable, and procedural targets retain validated `unique`
+and `diablo` encounter flags. Native map synthesis remains separate.
 When procedural mode is active, a successful server-authoritative level
 transition materializes the same seed-stable policy for the destination level
 once, using reserved entity IDs that coexist with dynamic combat entities.

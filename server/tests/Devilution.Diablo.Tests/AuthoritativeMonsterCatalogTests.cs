@@ -396,8 +396,8 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]);
         var catalog = AuthoritativeMonsterCatalog.LoadTsv(
             "monsters.tsv",
-            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\tdrop_only_good\tunique\n"
-                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t75\t7\t3\t1\t1\n",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\tdrop_only_good\tunique\tdiablo\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t75\t7\t3\t1\t1\t1\n",
             items);
 
         var definition = Assert.Single(catalog.DropDefinitions);
@@ -406,7 +406,21 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Equal(3, definition.ItemLevel);
         Assert.True(definition.OnlyGood);
         Assert.True(definition.MonsterUnique);
+        Assert.True(definition.MonsterDiablo);
         Assert.True(catalog.TryGetDropDefinition(1, out var resolved));
         Assert.Same(definition, resolved);
+    }
+
+    [Fact]
+    public void ExposesDiabloOnlyProceduralEncounterPolicyWithoutAnItemCatalog()
+    {
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdiablo\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1\n");
+
+        var definition = Assert.Single(catalog.DropDefinitions);
+        Assert.False(definition.HasDrop);
+        Assert.True(definition.MonsterDiablo);
     }
 }

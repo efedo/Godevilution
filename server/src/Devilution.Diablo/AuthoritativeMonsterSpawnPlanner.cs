@@ -198,6 +198,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             demon: spawn.Definition.Demon,
             animal: spawn.Definition.Animal,
             unique: dropDefinition?.MonsterUnique ?? false,
+            diablo: dropDefinition?.MonsterDiablo ?? false,
             knockback: spawn.Definition.Knockback);
     }
 
