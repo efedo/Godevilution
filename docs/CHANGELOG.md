@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Hellslayer (`unique_id=1045`) through schema 1.4,
+  reusing the validated Battle Axe base item with strength, vitality, damage,
+  life, and mana-curse powers.
+
 - Externalize Hellfire Aguinara's Hatchet (`unique_id=1044`) through schema 1.3,
   adding its native Small Axe base item with spell-level, magic, and
   magic-resistance powers.

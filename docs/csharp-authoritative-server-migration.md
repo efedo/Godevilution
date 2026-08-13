@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.4 adds the native-derived Hellfire Hellslayer unique definition
+(`unique_id=1045`), reusing the validated Battle Axe base item with strength,
+vitality, damage, life, and mana-curse powers.
+
 Schema 1.3 adds the native-derived Hellfire Aguinara's Hatchet base item and
 unique definition (`unique_id=1044`) with its Small Axe identity, spell-level,
 magic, and magic-resistance powers.

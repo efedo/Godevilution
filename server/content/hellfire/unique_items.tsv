@@ -163,3 +163,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1044	Aguinara's Hatchet	140	12	24800	SPLLVLADD	1	1
 1044	Aguinara's Hatchet	140	12	24800	MAG	10	10
 1044	Aguinara's Hatchet	140	12	24800	MAGICRES	80	80
+1045	Hellslayer	139	15	26200	STR	8	8
+1045	Hellslayer	139	15	26200	VIT	8	8
+1045	Hellslayer	139	15	26200	DAMP	100	100
+1045	Hellslayer	139	15	26200	LIFE	25	25
+1045	Hellslayer	139	15	26200	MANA_CURSE	25	25
