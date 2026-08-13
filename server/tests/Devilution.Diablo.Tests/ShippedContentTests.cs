@@ -45,6 +45,11 @@ public sealed class ShippedContentTests
             new ContentSchemaIdentity("devilution.diablo", "0.57.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
+        var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
+        Assert.Equal(2U, hellfireMonster.MonsterId);
+        Assert.True(hellfireMonster.IsUndead);
+        Assert.Equal(11, hellfireMonster.MaxHitPoints);
         Assert.Equal(2, composed.Manifest.Packs.Count);
     }
 

@@ -19,6 +19,11 @@
       "table": "combat.tsv",
       "keys": ["base_attack_damage"],
       "mode": "upsert"
+    },
+    {
+      "table": "monsters.tsv",
+      "keys": ["entity_id"],
+      "mode": "upsert"
     }
   ]
 }
