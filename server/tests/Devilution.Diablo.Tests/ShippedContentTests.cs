@@ -72,7 +72,7 @@ public sealed class ShippedContentTests
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());
-        Assert.Equal(133, monsterTypes.Definitions.Count);
+        Assert.Equal(139, monsterTypes.Definitions.Count);
         Assert.Equal("Zombie", monsterTypes.Definitions[1].Name);
         Assert.Equal(0U, monsterTypes.Definitions[1].NativeMonsterId);
         Assert.Equal(100, monsterTypes.Definitions[1].MagicResistance);
@@ -189,8 +189,19 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions[125].MinimumSpecialDamage,
             monsterTypes.Definitions[125].MaximumSpecialDamage));
         Assert.True(monsterTypes.Definitions[129].Undead);
-        Assert.Equal("Hellbat", monsterTypes.Definitions[^1].Name);
-        Assert.Equal(131U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal("Hellbat", monsterTypes.Definitions[132].Name);
+        Assert.Equal(131U, monsterTypes.Definitions[132].NativeMonsterId);
+        Assert.Equal("Bone Demon", monsterTypes.Definitions[133].Name);
+        Assert.True(monsterTypes.Definitions[133].Undead);
+        Assert.Equal((50, 50), (
+            monsterTypes.Definitions[133].MinimumSpecialDamage,
+            monsterTypes.Definitions[133].MaximumSpecialDamage));
+        Assert.Equal("Na-Krul", monsterTypes.Definitions[^1].Name);
+        Assert.Equal(137U, monsterTypes.Definitions[^1].NativeMonsterId);
+        Assert.Equal(125, monsterTypes.Definitions[^1].ArmorClass);
+        Assert.Equal((40, 50), (
+            monsterTypes.Definitions[^1].MinimumSpecialDamage,
+            monsterTypes.Definitions[^1].MaximumSpecialDamage));
         var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
             "quest_types.tsv",
             composed.GetRequiredTable("quest_types.tsv").ToCanonicalTsv());

@@ -55,6 +55,10 @@ All notable changes to this fork are documented below.
   more validated spider, demon, and undead identities, including supported
   special-damage baselines.
 
+- Complete the Hellfire native monster-type identity catalog through native ID
+  137, including the final Bone Demon, Arch Lich, Biclops, Flesh Thing, Reaper,
+  and Na-Krul rows with supported special-damage metadata.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,
