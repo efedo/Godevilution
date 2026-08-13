@@ -1083,6 +1083,87 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfirePerilDoublesFinalDamageAndHurtsAttackerFromPreModifierDamage()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusGetHit = -2,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(5888, player.Life);
+        Assert.Equal(5120, target.HitPointsQ6);
+        Assert.Equal(2, result.Events.Count);
+        Assert.Equal(512, result.Events[0].AmountQ6);
+        Assert.Equal(player.EntityId, result.Events[0].SourceEntityId);
+        Assert.Equal(player.EntityId, result.Events[0].TargetEntityId);
+        Assert.Equal(1280, result.Events[1].AmountQ6);
+        Assert.Equal(target.EntityId, result.Events[1].TargetEntityId);
+    }
+
+    [Fact]
+    public void HellfirePerilUsesManaShieldForItsSelfDamage()
+    {
+        var manaShield = new AuthoritativeSpellDefinition(13, 13, 0, 0, 0, 0) {
+            ProjectileBehavior = AuthoritativeProjectileBehavior.ManaShield,
+            ManaShieldBaseDamageReductionDivisor = 24,
+            ManaShieldDamageReductionLevelStep = 3,
+            ManaShieldDamageReductionMaximumLevel = 7,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            new AuthoritativeSpellCatalog([manaShield]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            mana: 1000,
+            manaMaximum: 1000,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                })]);
+        player.ManaShieldActive = true;
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(360, player.Mana);
+        Assert.Equal(5120, target.HitPointsQ6);
+        Assert.Equal(640, result.Events[0].AmountQ6);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

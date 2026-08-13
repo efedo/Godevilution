@@ -81,6 +81,9 @@ Status date: 2026-08-13
 - Hellfire `Jesters` now applies native 0..200 damage scaling after the
   Devastation boundary in exact Q6 arithmetic; fractional damage remains
   authoritative through target damage and life/mana-on-hit effects.
+- Hellfire `Peril` now applies its native pre-modifier self-damage, including
+  usable equipment `PlusGetHit`, and doubles the final physical hit in Q6;
+  Mana Shield, death handling, and emitted damage events remain server-owned.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

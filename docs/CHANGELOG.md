@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
 
 - Preserve Q6 physical attack damage through authoritative hit, knockback, and
   on-hit resource handling, and apply native Hellfire `Jesters` scaling.
+- Apply native Hellfire `Peril`: self-damage uses pre-modifier attack damage
+  plus `PlusGetHit`, while the final physical hit is doubled in Q6; Mana Shield
+  and death handling remain authoritative.
 - Apply Hellfire `Devastation` as a native 5% post-hit triple-damage roll,
   preserving authoritative RNG ordering and equipment eligibility.
 - Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment

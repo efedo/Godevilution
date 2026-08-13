@@ -354,8 +354,31 @@ public sealed class DiabloCombatCommandProcessor
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
-            unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId));
+            unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            out var perilSelfDamageQ6,
+            out var perilActive);
         var events = new List<DiabloGameplayEvent>();
+        if (perilActive) {
+            var damageResult = playerDamage.Apply(player, perilSelfDamageQ6);
+            if (damageResult.IncomingDamageQ6 > 0) {
+                events.Add(new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    player.EntityId,
+                    player.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                });
+            }
+            if (player.Life == 0) {
+                StartPlayerDeath(
+                    player,
+                    player.EntityId,
+                    appliedTick,
+                    players,
+                    PlayerDeathReason.MonsterOrTrap);
+            }
+        }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
@@ -430,7 +453,9 @@ public sealed class DiabloCombatCommandProcessor
     private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
-        uint seed)
+        uint seed,
+        out int perilSelfDamageQ6,
+        out bool perilActive)
     {
         var damagePercent = 0;
         var damageFlat = 0;
@@ -450,6 +475,21 @@ public sealed class DiabloCombatCommandProcessor
             rules.BaseAttackDamage
             + rules.BaseAttackDamage * damagePercent / 100
             + damageFlat);
+        perilActive = rules.GameVariant == DiabloGameVariant.Hellfire
+            && HasUsableHellfireDamageArmorFlag(
+                player,
+                AuthoritativeEquipmentIncomingDamageRules.PerilFlag);
+        perilSelfDamageQ6 = 0;
+        if (perilActive) {
+            perilSelfDamageQ6 = checked(
+                DiabloFixedPointQ6.FromWhole(
+                    rules.BaseAttackDamage
+                    + rules.BaseAttackDamage * damagePercent / 100)
+                + DiabloFixedPointQ6.FromWhole(
+                    AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(
+                        player.Equipment)));
+            perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
+        }
         var resolvedDamage = rules.ResolveAttackDamage(
             damage,
             target.ArmorClass,
@@ -479,6 +519,8 @@ public sealed class DiabloCombatCommandProcessor
                 roll = checked(100 + (roll - 100) * 5);
             resolvedDamageQ6 = checked(resolvedDamageQ6 * roll / 100);
         }
+        if (perilActive)
+            resolvedDamageQ6 = checked(resolvedDamageQ6 * 2);
         return resolvedDamageQ6;
     }
 

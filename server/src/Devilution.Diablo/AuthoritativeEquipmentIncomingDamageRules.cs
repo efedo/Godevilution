@@ -9,6 +9,9 @@ public static class AuthoritativeEquipmentIncomingDamageRules
     /** Native Hellfire ItemSpecialEffectHf::Jesters flag. */
     public const int JestersFlag = 1 << 3;
 
+    /** Native Hellfire ItemSpecialEffectHf::Peril flag. */
+    public const int PerilFlag = 1 << 2;
+
     /** Native Hellfire ItemSpecialEffectHf::ACAgainstDemons flag. */
     public const int AgainstDemonsFlag = 1 << 5;
 
@@ -39,6 +42,15 @@ public static class AuthoritativeEquipmentIncomingDamageRules
         if (incomingDamage == 0)
             return 0;
 
+        return Math.Max(
+            minimumDamage,
+            checked(incomingDamage + ResolveGetHitBonus(equipment)));
+    }
+
+    /** Resolves the native `_pIGetHit` total from eligible equipped items. */
+    public static int ResolveGetHitBonus(IEnumerable<EquippedStoreItem> equipment)
+    {
+        ArgumentNullException.ThrowIfNull(equipment);
         var getHit = 0;
         foreach (var equippedItem in equipment) {
             ArgumentNullException.ThrowIfNull(equippedItem);
@@ -47,7 +59,7 @@ public static class AuthoritativeEquipmentIncomingDamageRules
                 continue;
             getHit = checked(getHit + state.PlusGetHit);
         }
-        return Math.Max(minimumDamage, checked(incomingDamage + getHit));
+        return getHit;
     }
 
     /** Applies native Hellfire armor bonuses against the target monster class. */

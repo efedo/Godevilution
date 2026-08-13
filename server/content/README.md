@@ -127,6 +127,9 @@ that roll authoritative and excludes unusable or unidentified magical items.
 Hellfire `Jesters` then consumes its native 0..200 roll and applies the
 100..200 fivefold expansion in Q6 units, preserving fractional damage through
 the authoritative target and on-hit resource boundaries.
+Hellfire `Peril` applies pre-modifier self-damage from the base attack and
+eligible `PlusGetHit` equipment, then doubles the final physical hit in Q6;
+the server owns Mana Shield conversion, death handling, and both damage events.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.
