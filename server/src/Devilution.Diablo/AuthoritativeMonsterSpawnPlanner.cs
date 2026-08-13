@@ -200,6 +200,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             unique: dropDefinition?.MonsterUnique ?? false,
             diablo: dropDefinition?.MonsterDiablo ?? false,
             deathAnimationTicks: spawn.Definition.DeathAnimationTicks,
+            experienceReward: spawn.Definition.ExperienceReward,
             knockback: spawn.Definition.Knockback);
     }
 

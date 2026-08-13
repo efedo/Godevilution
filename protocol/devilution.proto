@@ -448,6 +448,8 @@ message MonsterSnapshot {
 	bool is_animal = 38;
 	// Immutable native monster ability that displaces a player after a hit.
 	bool has_knockback = 39;
+	// Immutable native experience reward used at the authoritative death boundary.
+	uint32 experience_reward = 40;
 }
 
 message WorldItemSnapshot {

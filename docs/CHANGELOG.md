@@ -39,6 +39,8 @@ All notable changes to this fork are documented below.
 - Externalize native monster death-animation durations through schema 1.76,
   derive the checked-in Hellfire values from native frame/rate metadata, and
   carry them into static and procedural authoritative targets.
+- Externalize native per-monster experience rewards through schema 1.77 and
+  award the validated value at the server-owned death boundary.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.

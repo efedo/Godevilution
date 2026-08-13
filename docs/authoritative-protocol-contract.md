@@ -213,6 +213,11 @@ Nonzero values add the tagged
 `godevilution-monster-acid-resistance-v1` canonical-hash section; missing or
 zero values retain the additive compatibility default.
 
+`MonsterSnapshot.experience_reward` field 40 carries the validated native
+experience reward used by the server-owned monster death boundary. Clients do
+not calculate rewards from this field; they receive the resulting experience
+event and authoritative player snapshot.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

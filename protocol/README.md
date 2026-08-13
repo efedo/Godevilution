@@ -319,6 +319,9 @@ Windows toolchain command.
 - `MonsterSnapshot.has_knockback` field 39 carries the validated native monster
   ability that displaces a player after a successful autonomous hit. True uses
   the tagged `godevilution-monster-knockback-v1` canonical-hash extension.
+- `MonsterSnapshot.experience_reward` field 40 carries the validated native
+  reward used by the server-owned monster death boundary; older peers may
+  ignore it while still receiving the ordinary experience event.
 
 ## Identity Note
 

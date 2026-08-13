@@ -712,6 +712,7 @@ public sealed class DiabloCombatCommandProcessor
             maxDamageSpecial: target.MaxDamageSpecial,
             berserkImmune: target.BerserkImmune,
             deathAnimationTicks: target.DeathAnimationTicks,
+            experienceReward: target.ExperienceReward,
             demon: target.IsDemon,
             animal: target.IsAnimal,
             knockback: target.HasKnockback);
@@ -7656,12 +7657,15 @@ public sealed class DiabloCombatCommandProcessor
 
         AdvanceQuestForMonsterDefeat(target);
 
-        DiabloPlayerProgression.GrantExperience(player, rules.DefeatExperience);
+        var experienceReward = target.ExperienceReward == 0
+            ? rules.DefeatExperience
+            : target.ExperienceReward;
+        DiabloPlayerProgression.GrantExperience(player, experienceReward);
         events.Add(new DiabloGameplayEvent(
             DiabloGameplayEventKind.Experience,
             player.EntityId,
             player.EntityId,
-            checked((int)rules.DefeatExperience)));
+            checked((int)experienceReward)));
         if (target.Drop is not null)
             world.WorldItems[target.Drop.EntityId] = target.Drop;
     }

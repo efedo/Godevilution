@@ -271,6 +271,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.DeathAnimationTicks);
                     hasher.AppendInt32(monster.DeathTicksRemaining);
                 }
+                if (monster.ExperienceReward != 0) {
+                    hasher.AppendString("godevilution-monster-experience-v1");
+                    hasher.AppendUInt32(monster.ExperienceReward);
+                }
             }
         }
 

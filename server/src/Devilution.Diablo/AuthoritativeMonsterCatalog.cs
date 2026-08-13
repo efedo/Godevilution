@@ -98,6 +98,9 @@ public sealed class AuthoritativeMonsterCatalog
             var deathAnimationTicks = row.TryGet("death_animation_ticks", out _)
                 ? row.OptionalInt32("death_animation_ticks")
                 : monsterType?.DeathAnimationTicks ?? 0;
+            var experienceReward = row.TryGet("experience_reward", out _)
+                ? row.OptionalUInt32("experience_reward")
+                : monsterType?.ExperienceReward ?? 0;
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
@@ -182,6 +185,7 @@ public sealed class AuthoritativeMonsterCatalog
                 diablo: diablo,
                 berserkImmune: berserkImmune,
                 deathAnimationTicks: deathAnimationTicks,
+                experienceReward: experienceReward,
                 animal: animal,
                 knockback: knockback);
         }).ToArray();

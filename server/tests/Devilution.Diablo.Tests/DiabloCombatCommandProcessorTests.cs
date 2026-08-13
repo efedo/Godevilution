@@ -277,6 +277,35 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AttackUsesValidatedMonsterExperienceReward()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            8,
+            armorClass: 2,
+            experienceReward: 37);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(37U, player.Experience);
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent == new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Experience,
+                7,
+                7,
+                37));
+    }
+
+    [Fact]
     public void AttackAppliesUsableIdentifiedEquipmentCombatBonuses()
     {
         var target = new AuthoritativeCombatTarget(
