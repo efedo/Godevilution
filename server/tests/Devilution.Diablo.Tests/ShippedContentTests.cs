@@ -54,6 +54,18 @@ public sealed class ShippedContentTests
         Assert.Equal(25, activation.Simulation.WorldState.CombatTargets[11].MaxHitPoints);
         Assert.True(activation.Simulation.WorldState.CombatTargets[12].IsUndead);
         Assert.Equal(5, activation.Simulation.WorldState.CombatTargets[15].MaxDamageSpecial);
+        var hellfireItems = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            composed.GetRequiredTable("items.tsv").ToCanonicalTsv());
+        var hellfireUniques = AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            composed.GetRequiredTable("unique_items.tsv").ToCanonicalTsv());
+        hellfireItems.AttachUniqueCatalog(hellfireUniques);
+        var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
+        Assert.Equal(7, crown.ItemIndex);
+        Assert.Equal(16650, crown.Value);
+        Assert.Equal(15, crown.ArmorClass);
+        Assert.Equal(0x00000002U, crown.Flags);
         Assert.Equal(2, composed.Manifest.Packs.Count);
     }
 

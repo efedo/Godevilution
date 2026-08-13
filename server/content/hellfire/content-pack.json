@@ -24,6 +24,16 @@
       "table": "monsters.tsv",
       "keys": ["entity_id"],
       "mode": "upsert"
+    },
+    {
+      "table": "items.tsv",
+      "keys": ["item_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "unique_items.tsv",
+      "keys": ["unique_id", "power"],
+      "mode": "upsert"
     }
   ]
 }
