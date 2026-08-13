@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.16.0` schema in
+It declares its identity and `devilution.diablo@1.17.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -223,6 +223,8 @@ Staff of Shadows (`unique_id=1056`) adds its native Long Staff base item with
 magic-curse, to-hit, damage, light-curse, and fast-attack powers.
 Immolator (`unique_id=1057`) reuses the validated Long Staff base item with
 fire-resistance, fire-damage, mana, and vitality-curse powers.
+Storm Spire (`unique_id=1058`) adds its native War Staff base item with
+lightning-resistance, lightning-damage, strength, and magic-curse powers.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
@@ -810,7 +812,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.16.0"
+      "version": "1.17.0"
   },
   "dependencyConstraints": [
     {
@@ -842,7 +844,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.16.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.17.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

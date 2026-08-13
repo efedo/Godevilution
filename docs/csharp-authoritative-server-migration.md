@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.17 adds the native-derived Hellfire Storm Spire base item and unique
+definition (`unique_id=1058`) with its War Staff identity,
+lightning-resistance, lightning-damage, strength, and magic-curse powers.
+
 Schema 1.16 adds the native-derived Hellfire Immolator unique definition
 (`unique_id=1057`), reusing the validated Long Staff base item with
 fire-resistance, fire-damage, mana, and vitality-curse powers.

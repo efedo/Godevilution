@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Storm Spire (`unique_id=1058`) through schema 1.17,
+  adding its native War Staff base item with lightning-resistance,
+  lightning-damage, strength, and magic-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Immolator (`unique_id=1057`) through schema 1.16,
   reusing the validated Long Staff base item with fire-resistance, fire-damage,
   mana, and vitality-curse powers.

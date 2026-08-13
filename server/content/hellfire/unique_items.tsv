@@ -226,3 +226,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1057	Immolator	147	4	3900	FIREDAM	4	4
 1057	Immolator	147	4	3900	MANA	10	10
 1057	Immolator	147	4	3900	VIT_CURSE	5	5
+1058	Storm Spire	148	8	22500	LIGHTRES	50	50
+1058	Storm Spire	148	8	22500	LIGHTDAM	2	8
+1058	Storm Spire	148	8	22500	STR	10	10
+1058	Storm Spire	148	8	22500	MAG_CURSE	10	10
