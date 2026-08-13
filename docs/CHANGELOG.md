@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
   monster defeats now advance the server-owned quest, update quest-log state,
   and complete the quest at its validated progress limit.
 
+- Activate initial quest rows from external native route levels when an
+  authoritative player enters the configured level, using explicit session
+  mode to select single-player or multiplayer routing.
+
 ## 2026-08-12
 
 - Advance the Diablo content schema to 0.66 with validated quest pools and

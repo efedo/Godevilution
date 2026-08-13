@@ -546,6 +546,9 @@ compatibility-aware state hashes.
 Quest rows may also declare a `completion_monster_id`; the server applies that
 trigger at the authoritative monster-death boundary and persists the resulting
 progress and completion state.
+External quest-type route levels now also activate `QUEST_INIT` rows when the
+server enters the matching level, with explicit single-player/multiplayer mode
+selection rather than participant-count inference.
 Multiplayer activation leaves pool exclusions disabled.
 
 Schema 0.65 adds validated native level-range generation metadata through
