@@ -631,6 +631,10 @@ Schema 0.86 adds the native-derived Hellfire Gibbous Moon base item and unique
 definition (`unique_id=1027`) with its Broad Sword identity, attribute, damage,
 mana, and light-curse powers.
 
+Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
+definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
+durability, and strength powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

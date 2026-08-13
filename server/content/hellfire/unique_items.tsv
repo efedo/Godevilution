@@ -93,3 +93,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1027	Gibbous Moon	130	2	6660	DAMP	25	25
 1027	Gibbous Moon	130	2	6660	MANA	15	15
 1027	Gibbous Moon	130	2	6660	LIGHT_CURSE	3	3
+1028	Ice Shank	131	3	5250	FIRERES	40	40
+1028	Ice Shank	131	3	5250	SETDUR	15	15
+1028	Ice Shank	131	3	5250	STR	5	10

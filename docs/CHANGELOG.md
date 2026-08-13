@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Ice Shank (`unique_id=1028`) through schema 0.87,
+  including its native Long Sword base item with fire-resistance, durability,
+  and strength powers.
+
 - Externalize Hellfire Gibbous Moon (`unique_id=1027`) through schema 0.86,
   including its native Broad Sword base item with attribute, damage, mana, and
   light-curse powers.

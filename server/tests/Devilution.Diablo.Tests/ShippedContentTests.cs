@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.86.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.87.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.86.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.87.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -448,6 +448,18 @@ public sealed class ShippedContentTests
         Assert.Equal(25, gibbousMoon.PlusDamage);
         Assert.Equal(15 << 6, gibbousMoon.PlusMana);
         Assert.Equal(-3, gibbousMoon.PlusLight);
+        var iceShank = hellfireItems.GenerateUnique(1028, 0x12345678, 3);
+        Assert.Equal(1028, iceShank.UniqueId);
+        Assert.Equal(5250, iceShank.Value);
+        Assert.Equal(126, iceShank.ItemIndex);
+        Assert.Equal(2, iceShank.MinDamage);
+        Assert.Equal(10, iceShank.MaxDamage);
+        Assert.Equal(30, iceShank.MinimumStrength);
+        Assert.Equal(30, iceShank.MinimumDexterity);
+        Assert.Equal(40, iceShank.PlusFireResistance);
+        Assert.Equal(15, iceShank.Durability);
+        Assert.Equal(15, iceShank.MaxDurability);
+        Assert.InRange(iceShank.PlusStrength, 5, 10);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
