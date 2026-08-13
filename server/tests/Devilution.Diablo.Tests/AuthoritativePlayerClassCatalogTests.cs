@@ -111,6 +111,21 @@ public sealed class AuthoritativePlayerClassCatalogTests
     }
 
     [Fact]
+    public void ShippedClassesCalculateNativeMeleeAndRangedToHit()
+    {
+        var catalog = LoadShippedCatalog();
+        var warrior = catalog.Resolve("warrior");
+        var sorcerer = catalog.Resolve("sorcerer");
+
+        Assert.Equal(81, warrior.CalculatePhysicalToHit(1, 20, ranged: false));
+        Assert.Equal(81, warrior.CalculatePhysicalToHit(1, 20, ranged: true));
+        Assert.Equal(61, sorcerer.CalculatePhysicalToHit(1, 20, ranged: false));
+        Assert.Equal(71, sorcerer.CalculatePhysicalToHit(1, 20, ranged: true));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            warrior.CalculatePhysicalToHit(0, 20, ranged: false));
+    }
+
+    [Fact]
     public void ClassScaledEquipmentAttributesAffectNativeResourceMaxima()
     {
         var playerClass = LoadShippedCatalog().Resolve("bard");

@@ -355,6 +355,7 @@ public sealed class DiabloCombatCommandProcessor
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
+            ranged,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
@@ -495,6 +496,7 @@ public sealed class DiabloCombatCommandProcessor
     private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
+        bool ranged,
         uint seed,
         out int perilSelfDamageQ6,
         out bool perilActive,
@@ -535,13 +537,22 @@ public sealed class DiabloCombatCommandProcessor
                         player.Equipment)));
             perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
         }
+        var playerClass = GetPlayerClass(player);
+        // Legacy hand-built fixtures may omit class-derived attributes; retain
+        // the historical global hit fallback for those compatibility templates.
+        var classHitChance = playerClass is null
+            || player.Attributes.Dexterity.Current == 0
+            ? rules.HitChancePercent
+            : playerClass.CalculatePhysicalToHit(
+                player.CharacterLevel,
+                player.Attributes.Dexterity.Current,
+                ranged);
         var effectiveHitChance = Math.Clamp(
-            checked(rules.HitChancePercent + hitBonus + armorPiercingBonus),
+            checked(classHitChance + hitBonus + armorPiercingBonus),
             0,
             100);
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
         var criticalDamage = damage;
-        var playerClass = GetPlayerClass(player);
         if (attackHit
             && playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
             && random.RandomIntLessThan(100) < player.CharacterLevel) {

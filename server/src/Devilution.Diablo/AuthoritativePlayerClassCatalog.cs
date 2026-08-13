@@ -74,6 +74,23 @@ public sealed record AuthoritativePlayerClassDefinition(
             new PlayerAttributeState(BaseVitality, BaseVitality));
     }
 
+    /** Mirrors native melee/ranged physical to-hit from class and attributes. */
+    public int CalculatePhysicalToHit(
+        uint characterLevel,
+        int dexterity,
+        bool ranged)
+    {
+        if (characterLevel == 0)
+            throw new ArgumentOutOfRangeException(nameof(characterLevel));
+        if (dexterity < 0)
+            throw new ArgumentOutOfRangeException(nameof(dexterity));
+
+        return checked(
+            (int)characterLevel
+            + (ranged ? dexterity : dexterity / 2)
+            + (ranged ? BaseRangedToHit : BaseMeleeToHit));
+    }
+
     /** Mirrors native `Player::calculateBaseLife` in fixed-point Q6 units. */
     public int CalculateBaseLifeQ6(uint characterLevel, int baseVitality)
     {

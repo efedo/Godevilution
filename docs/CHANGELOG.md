@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
 
 - Scope armed-trap visibility to the requesting player's native `TrapSense`
   class flag; authoritative saves and internal state retain the full trap state.
+- Apply validated class base modifiers to native physical to-hit: initialized
+  content players use `level + dexterity / 2` for melee or `level + dexterity`
+  for ranged attacks, with the class's external base modifier and a preserved
+  global-hit fallback for legacy templates without class attributes.
 - Apply the native class `CriticalStrike` rule to eligible authoritative player
   attacks: a level-based post-hit roll doubles physical damage before armor and
   downstream class/item effects, with the native RNG draw order preserved.

@@ -98,6 +98,11 @@ Status date: 2026-08-13
 - Native class `IronSkin` is now authoritative in effective armor: the
   validated class flag adds character level divided by four after dexterity and
   usable equipment armor are applied, across creation, transfers, and restore.
+- Native class melee and ranged to-hit is now authoritative for initialized
+  content players: the validated class catalog applies `level + dexterity / 2`
+  or `level + dexterity`, respectively, plus each class's external base
+  modifier. Legacy hand-built templates with uninitialized dexterity retain the
+  global-hit compatibility fallback.
 - Native `TrapSense` visibility is now recipient-scoped: only a TrapSense
   player receives `TrapArmed` in the network projection, while saves, hashes,
   and internal authoritative snapshots retain the complete armed state; each

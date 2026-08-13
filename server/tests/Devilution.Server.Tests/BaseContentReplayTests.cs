@@ -200,6 +200,9 @@ public sealed class BaseContentReplayTests
                 startingEquipment: fixture.InitialState.Equipment
                     .Select(item => item.ToEquippedStoreItem())
                     .ToArray(),
+                startingAttributes: classes
+                    .GetRequired(checked((uint)fixture.InitialState.CharacterClass))
+                    .CreateStartingAttributes(),
                 startingManaMaximum: fixture.InitialState.ManaMaximum,
                 startingPositionX: fixture.InitialState.PositionX,
                 startingPositionY: fixture.InitialState.PositionY,

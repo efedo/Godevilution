@@ -29,6 +29,10 @@ base-game or Hellfire availability, exactly one active default, class flags,
 base and maximum attributes, combat modifiers, and life/mana fixed-point
 scalars. `spell_mana_reduction_percent` and its Hellfire counterpart externalize
 the native class adjustment applied before each spell's minimum mana cost.
+`base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
+metadata: initialized player attacks add the class base modifier to level and
+dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
+equipment bonuses and deterministic hit resolution.
 `self_healing_spell_percent` externalizes the native Warrior/Monk/Barbarian
 double and Rogue/Bard half-again self-Healing modifiers.
 `heal_other_spell_percent` separately externalizes Heal Other's class modifier;

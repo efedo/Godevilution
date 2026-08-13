@@ -366,19 +366,21 @@ public sealed class DiabloCombatCommandProcessorTests
             100,
             armorClass: 4);
         var criticalRandom = new DiabloRandom(0);
+        var playerClasses = LoadShippedPlayerClasses();
         var criticalProcessor = CreateProcessor(
             new DiabloWorldState(combatTargets: [criticalTarget]),
             random: criticalRandom,
-            playerClasses: LoadShippedPlayerClasses());
+            playerClasses: playerClasses);
         var warrior = CreatePlayer(
             entityId: 7,
             characterClassId: 0,
-            characterLevel: 1);
+            characterLevel: 1,
+            attributes: playerClasses.GetRequired(0).CreateStartingAttributes());
 
         var criticalResult = criticalProcessor.Execute(
             warrior,
             new DiabloAttackIntent(9),
-            1);
+            2);
 
         Assert.True(criticalResult.Succeeded);
         Assert.Equal(84, criticalTarget.HitPoints);
@@ -394,12 +396,12 @@ public sealed class DiabloCombatCommandProcessorTests
         var nonCriticalProcessor = CreateProcessor(
             new DiabloWorldState(combatTargets: [nonCriticalTarget]),
             random: nonCriticalRandom,
-            playerClasses: LoadShippedPlayerClasses());
+            playerClasses: playerClasses);
 
         var nonCriticalResult = nonCriticalProcessor.Execute(
             warrior,
             new DiabloAttackIntent(10),
-            2);
+            3);
 
         Assert.True(nonCriticalResult.Succeeded);
         Assert.Equal(94, nonCriticalTarget.HitPoints);
@@ -410,16 +412,17 @@ public sealed class DiabloCombatCommandProcessorTests
         var rogueProcessor = CreateProcessor(
             new DiabloWorldState(combatTargets: [rogueTarget]),
             random: rogueRandom,
-            playerClasses: LoadShippedPlayerClasses());
+            playerClasses: playerClasses);
         var rogue = CreatePlayer(
             entityId: 8,
             characterClassId: 1,
-            characterLevel: 1);
+            characterLevel: 1,
+            attributes: playerClasses.GetRequired(1).CreateStartingAttributes());
 
         var rogueResult = rogueProcessor.Execute(
             rogue,
             new DiabloAttackIntent(11),
-            1);
+            3);
 
         Assert.True(rogueResult.Succeeded);
         Assert.Equal(90, rogueTarget.HitPoints);
