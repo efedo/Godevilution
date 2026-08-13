@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.34 adds the native-derived Hellfire Wisdom's Wrap base item and
+unique definition (`unique_id=1075`) with its Robe identity, magic, mana,
+light-resistance, armor, and get-hit powers.
+
 Schema 1.33 adds the native-derived Hellfire Leather of Aut base item and
 unique definition (`unique_id=1074`) with its Leather Armor identity, armor,
 strength, magic-curse, dexterity, and indestructible powers.

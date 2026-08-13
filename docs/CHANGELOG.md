@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Wisdom's Wrap (`unique_id=1075`) through schema 1.34,
+  adding its native Robe base item with magic, mana, light-resistance, armor,
+  and get-hit powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Leather of Aut (`unique_id=1074`) through schema 1.33,
   adding its native Leather Armor base item with armor, strength,
   magic-curse, dexterity, and indestructible powers.

@@ -297,3 +297,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1074	Leather of Aut	159	4	10550	MAG_CURSE	5	5
 1074	Leather of Aut	159	4	10550	DEX	5	5
 1074	Leather of Aut	159	4	10550	INDESTRUCTIBLE	0	0
+1075	Wisdom's Wrap	160	5	6200	MAG	5	5
+1075	Wisdom's Wrap	160	5	6200	MANA	10	10
+1075	Wisdom's Wrap	160	5	6200	LIGHTRES	25	25
+1075	Wisdom's Wrap	160	5	6200	SETAC	15	15
+1075	Wisdom's Wrap	160	5	6200	GETHIT	1	1

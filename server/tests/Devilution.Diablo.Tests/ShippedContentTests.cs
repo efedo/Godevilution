@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.33.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.34.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.33.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.34.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1092,6 +1092,19 @@ public sealed class ShippedContentTests
         Assert.Equal(5, leatherOfAut.PlusStrength);
         Assert.Equal(-5, leatherOfAut.PlusMagic);
         Assert.Equal(5, leatherOfAut.PlusDexterity);
+        var wisdomsWrap = hellfireItems.GenerateUnique(1075, 0x12345678, 5);
+        Assert.Equal(1075, wisdomsWrap.UniqueId);
+        Assert.Equal(6200, wisdomsWrap.Value);
+        Assert.Equal(58, wisdomsWrap.ItemIndex);
+        Assert.Equal(15, wisdomsWrap.ArmorClass);
+        Assert.Equal(24, wisdomsWrap.Durability);
+        Assert.Equal(24, wisdomsWrap.MaxDurability);
+        Assert.Equal(0, wisdomsWrap.MinimumStrength);
+        Assert.Equal(4, wisdomsWrap.EquipLocation);
+        Assert.Equal(5, wisdomsWrap.PlusMagic);
+        Assert.Equal(10 << 6, wisdomsWrap.PlusMana);
+        Assert.Equal(25, wisdomsWrap.PlusLightningResistance);
+        Assert.Equal(-1, wisdomsWrap.PlusGetHit);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
