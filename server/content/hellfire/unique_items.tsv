@@ -206,3 +206,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1053	The Cranium Basher	143	12	36500	INDESTRUCTIBLE	0	0
 1053	The Cranium Basher	143	12	36500	MANA_CURSE	150	150
 1053	The Cranium Basher	143	12	36500	ALLRES	5	5
+1054	Schaefer's Hammer	146	16	56125	DAMP_CURSE	100	100
+1054	Schaefer's Hammer	146	16	56125	LIGHTDAM	1	50
+1054	Schaefer's Hammer	146	16	56125	LIFE	50	50
+1054	Schaefer's Hammer	146	16	56125	TOHIT	30	30
+1054	Schaefer's Hammer	146	16	56125	LIGHTRES	80	80
+1054	Schaefer's Hammer	146	16	56125	LIGHT	1	1

@@ -46,7 +46,7 @@ Status date: 2026-08-13
   Needler, The Celestial Bow, Deadly Hunter, Bow of the Dead, The Blackoak Bow,
   and Flamedart, Fleshstinger, Windforce, Eaglehorn, Gonnagal's Dirk, The Defender,
   and Gryphon's Claw, Black Razor, Gibbous Moon, Ice Shank, The Executioner's Blade,
-  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, Hellslayer, Messerschmidt's Reaver, Crackrust, Hammer of Jholm, Civerb's Cudgel, The Celestial Star, Baranar's Star, Gnarled Root, and The Cranium Basher
+  The Bonesaw, Shadowhawk, Wizardspike, Lightsabre, The Falcon's Talon, Inferno, Doombringer, The Grandfather, The Mangler, Sharp Beak, BloodSlayer, The Celestial Axe, Wicked Axe, Stonecleaver, Aguinara's Hatchet, Hellslayer, Messerschmidt's Reaver, Crackrust, Hammer of Jholm, Civerb's Cudgel, The Celestial Star, Baranar's Star, Gnarled Root, The Cranium Basher, and Schaefer's Hammer
   unique items, and Sorcerer Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
@@ -747,6 +747,10 @@ damage, mana, and light-curse powers.
 Content schema 0.87 adds the native-derived Hellfire Ice Shank base item and
 unique definition (`unique_id=1028`) with its Long Sword identity, fire
 resistance, durability, and strength powers.
+Content schema 1.13 adds the native-derived Hellfire Schaefer's Hammer base
+item and unique definition (`unique_id=1054`) with its War Hammer identity,
+damage-curse, lightning-damage, life, to-hit, lightning-resistance, and light
+powers.
 Content schema 1.12 adds the native-derived Hellfire The Cranium Basher unique
 definition (`unique_id=1053`), reusing the validated Maul base item with
 damage-modifier, strength, indestructibility, mana-curse, and all-resistance

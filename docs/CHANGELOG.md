@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Schaefer's Hammer (`unique_id=1054`) through schema
+  1.13, adding its native War Hammer base item with damage-curse, lightning
+  damage, life, to-hit, lightning-resistance, and light powers.
+
+## 2026-08-13
+
 - Externalize Hellfire The Cranium Basher (`unique_id=1053`) through schema
   1.12, reusing the validated Maul base item with damage-modifier, strength,
   indestructibility, mana-curse, and all-resistance powers; correct the native

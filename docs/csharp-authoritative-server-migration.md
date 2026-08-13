@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.13 adds the native-derived Hellfire Schaefer's Hammer base item and
+unique definition (`unique_id=1054`) with its War Hammer identity, damage-curse,
+lightning-damage, life, to-hit, lightning-resistance, and light powers.
+
 Schema 1.12 adds the native-derived Hellfire The Cranium Basher unique
 definition (`unique_id=1053`), reusing the validated Maul base item with
 damage-modifier, strength, indestructibility, mana-curse, and all-resistance
