@@ -356,3 +356,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1087	Bramble	113	1	1000	ATTRIBS_CURSE	2	2
 1087	Bramble	113	1	1000	DAMMOD	3	3
 1087	Bramble	113	1	1000	MANA	10	10
+1088	Ring of Regha	113	1	4175	MAG	10	10
+1088	Ring of Regha	113	1	4175	MAGICRES	10	10
+1088	Ring of Regha	113	1	4175	LIGHT	1	1
+1088	Ring of Regha	113	1	4175	STR_CURSE	3	3
+1088	Ring of Regha	113	1	4175	DEX_CURSE	3	3

@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.47 adds the native-derived Hellfire Ring of Regha unique definition
+(`unique_id=1088`), reusing the corrected Ring identity with magic,
+magic-resistance, light, strength-curse, and dexterity-curse powers.
+
 Schema 1.46 adds the native-derived Hellfire Bramble unique definition
 (`unique_id=1087`), reusing its Ring identity with cursed attributes, damage
 modifier, and mana powers.

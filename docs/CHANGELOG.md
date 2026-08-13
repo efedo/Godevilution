@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Ring of Regha (`unique_id=1088`) through schema 1.47,
+  reusing the corrected native Ring base item with magic, magic-resistance,
+  light, strength-curse, and dexterity-curse powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Bramble (`unique_id=1087`) through schema 1.46,
   reusing the native Ring base item with cursed attributes, damage modifier,
   and mana powers.

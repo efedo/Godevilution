@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.46.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.47.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.46.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.47.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1259,6 +1259,16 @@ public sealed class ShippedContentTests
         Assert.Equal(-2, bramble.PlusVitality);
         Assert.Equal(3, bramble.PlusDamageModifier);
         Assert.Equal(10 << 6, bramble.PlusMana);
+        var ringOfRegha = hellfireItems.GenerateUnique(1088, 0x12345678, 1);
+        Assert.Equal(1088, ringOfRegha.UniqueId);
+        Assert.Equal(4175, ringOfRegha.Value);
+        Assert.Equal(157, ringOfRegha.ItemIndex);
+        Assert.Equal(5, ringOfRegha.EquipLocation);
+        Assert.Equal(10, ringOfRegha.PlusMagic);
+        Assert.Equal(10, ringOfRegha.PlusMagicResistance);
+        Assert.Equal(1, ringOfRegha.PlusLight);
+        Assert.Equal(-3, ringOfRegha.PlusStrength);
+        Assert.Equal(-3, ringOfRegha.PlusDexterity);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
