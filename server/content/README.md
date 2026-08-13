@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@0.62.0` schema in
+It declares its identity and `devilution.diablo@0.63.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -98,7 +98,11 @@ remaining Hellfire quest, monster, and item catalogs remain separate migrations.
 The initial overlay also adds a native-derived Hellfire encounter set
 (`monster_id` values `2` through `7`) to prove that encounter rows cross the
 same composition and activation boundary; the complete Hellfire monster
-catalog is still pending.
+catalog is still pending. Schema 0.63 adds the validated `monster_types.tsv`
+catalog for the base encounter and the first six native Hellfire types,
+including stable/native IDs, baseline health, damage, level, and immutable
+capability flags. Encounter rows now reject unknown type identities when the
+table is present.
 It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
 is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its
@@ -147,7 +151,9 @@ are server-owned and unique within the loadout.
 content pack to expose stable rows such as Etherealize `53` while native
 compatibility fields continue to carry their separate `native_spell_id` values.
 
-Schema 0.62 adds native-derived Hellfire Harlequin Crest, Veil of Steel, and
+Schema 0.63 adds the native-compatible `monster_types.tsv` catalog and makes
+external encounter rows reject unknown monster type identities. Schema 0.62
+adds native-derived Hellfire Harlequin Crest, Veil of Steel, and
 Arkaine's Valor item and unique definitions. Schema 0.61 adds the Hellfire
 Optic Amulet and Ring of Truth item and unique definitions. Schema 0.60 extends
 the optional `consumable_misc_id` spell column. The base
@@ -636,6 +642,7 @@ the complete target header even when they upsert only one row.
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`. |
+| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, and capability metadata. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements and initial completion state. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, and damage rules. |
@@ -667,7 +674,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "0.62.0"
+      "version": "0.63.0"
   },
   "dependencyConstraints": [
     {
@@ -699,7 +706,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@0.62.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@0.63.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

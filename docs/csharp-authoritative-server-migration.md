@@ -531,6 +531,11 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.63 adds a validated native-compatible `monster_types.tsv` catalog for
+the base encounter and the first six Hellfire monster types. Encounter rows
+must reference a declared stable monster type, while native IDs and baseline
+health, damage, level, and immutable capabilities remain external data.
+
 Schema 0.62 adds native-derived Hellfire Harlequin Crest, Veil of Steel, and
 Arkaine's Valor item and unique definitions to the validated content overlay.
 Their base-item identities and authoritative armor, resistance, attribute,

@@ -46,6 +46,10 @@ Status date: 2026-08-12
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
+- Monster type identity is now externalized through validated
+  `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
+  resolve a stable/native type identity before activation; remaining native
+  monster behavior and the rest of the Hellfire catalog remain incremental.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges
@@ -647,7 +651,10 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
-Content schema 0.61 adds native-derived Hellfire Optic Amulet and Ring of Truth
+Content schema 0.63 adds validated native-compatible `monster_types.tsv`
+definitions for the base encounter and the first six Hellfire monster types;
+encounter rows now reject unknown type identities. Content schema 0.61 adds
+native-derived Hellfire Optic Amulet and Ring of Truth
 base-item and unique definitions. Their item identities, values, native indexes,
 and unique powers cross the same validated overlay and activation boundary as
 the earlier Hellfire item slice.

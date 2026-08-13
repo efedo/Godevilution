@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.63 with a validated native-compatible
+  `monster_types.tsv` catalog and encounter identity checks for the base and
+  first six Hellfire monster types.
+
 - Advance the Diablo content schema to 0.62 with native-derived Hellfire
   Harlequin Crest, Veil of Steel, and Arkaine's Valor item and unique
   definitions.

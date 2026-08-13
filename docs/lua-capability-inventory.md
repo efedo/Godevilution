@@ -90,6 +90,10 @@ and count behavior behind the compatibility aliases.
 The `dev.towners.talk` and `dev.towners.visit` helpers now delegate to native
 `debug.towners.talk` and `debug.towners.visit` commands; town-only checks,
 legacy aliases, teleportation, and talk-window dispatch remain native-owned.
+Authoritative monster encounters now resolve through a validated
+`monster_types.tsv` catalog with stable/native identities, so future
+`addMonsterDataFromTsv` migrations have a typed content-pack destination rather
+than a Lua-owned data path.
 
 ## Bundled Scripts
 
