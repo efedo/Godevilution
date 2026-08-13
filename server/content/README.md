@@ -138,6 +138,10 @@ Hellfire `Decay` reduces eligible hand weapons' damage bonus by five in native
 order after an authoritative attack and removes a weapon at the native -100
 threshold; the server preserves the separate hit roll even when post-armor
 damage is zero.
+Validated unique and affix rows can now express all native Hellfire
+damage/armor powers—`DEVASTATION`, `DECAY`, `PERIL`, `JESTERS`,
+`DOPPELGANGER`, `ACDEMON`, and `ACUNDEAD`—which resolve to the same
+authoritative effect flags used by combat.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

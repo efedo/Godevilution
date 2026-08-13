@@ -290,6 +290,22 @@ public sealed class AuthoritativeUniqueItemCatalog
             "FIRERES_CURSE" => state with { PlusFireResistance = state.PlusFireResistance - value },
             "LIGHTRES_CURSE" => state with { PlusLightningResistance = state.PlusLightningResistance - value },
             "MAGICRES_CURSE" => state with { PlusMagicResistance = state.PlusMagicResistance - value },
+            "DEVASTATION" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+            },
+            "PERIL" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+            },
+            "JESTERS" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+            },
+            "DOPPELGANGER" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+            },
             "DECAY" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
                     | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,

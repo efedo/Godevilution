@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
 - Apply native Hellfire `Decay` at the authoritative attack boundary, reducing
   eligible hand weapons' damage bonus by five in native order and removing
   each at the native -100 threshold.
+- Complete validated external item-power mappings for all native Hellfire
+  damage/armor effects: `Devastation`, `Decay`, `Peril`, `Jesters`,
+  `Doppelganger`, `ACAgainstDemons`, and `ACAgainstUndead`.
 - Apply Hellfire `Devastation` as a native 5% post-hit triple-damage roll,
   preserving authoritative RNG ordering and equipment eligibility.
 - Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment

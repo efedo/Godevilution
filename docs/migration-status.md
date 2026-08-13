@@ -91,6 +91,9 @@ Status date: 2026-08-13
   weapons in native order, subtracting five damage-bonus points and removing a
   weapon at -100; hit resolution is kept separate from post-armor damage so
   zero-damage hits still preserve native decay behavior.
+- External unique and affix catalogs now project every native Hellfire
+  damage/armor power identity into the authoritative effect flags,
+  so these effects no longer depend on hard-coded content-side interpretation.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

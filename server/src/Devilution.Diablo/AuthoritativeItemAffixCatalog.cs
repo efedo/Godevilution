@@ -439,6 +439,22 @@ public sealed class AuthoritativeItemAffixCatalog
                 FireMaxDamage = 0,
                 Flags = (state.Flags | 0x00000020U) & ~0x00000010U,
             },
+            "DEVASTATION" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+            },
+            "PERIL" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+            },
+            "JESTERS" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+            },
+            "DOPPELGANGER" => state with {
+                HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
+                    | AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+            },
             "DECAY" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
                     | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,

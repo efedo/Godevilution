@@ -207,6 +207,116 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ExternalHellfireItemPowersMapAllNativeDamageArmorFlags()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                7,
+                1,
+                75,
+                75,
+                4,
+                8,
+                0,
+                20,
+                20,
+                1,
+                1,
+                true) {
+                ItemClass = 1,
+            },
+        ]);
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(
+                1001,
+                "Hellfire Effects",
+                7,
+                1,
+                3650,
+                [
+                    new AuthoritativeUniqueItemPower("DEVASTATION", 0, 0),
+                    new AuthoritativeUniqueItemPower("DECAY", 5, 5),
+                    new AuthoritativeUniqueItemPower("PERIL", 0, 0),
+                    new AuthoritativeUniqueItemPower("JESTERS", 0, 0),
+                    new AuthoritativeUniqueItemPower("DOPPELGANGER", 0, 0),
+                    new AuthoritativeUniqueItemPower("ACDEMON", 0, 0),
+                ]),
+            new AuthoritativeUniqueItemDefinition(
+                1002,
+                "Undead Effects",
+                7,
+                1,
+                3650,
+                [new AuthoritativeUniqueItemPower("ACUNDEAD", 0, 0)]),
+        ]);
+        items.AttachUniqueCatalog(uniques);
+
+        var item = items.GenerateUnique(1001, 42, 1);
+
+        Assert.Equal(
+            AuthoritativeEquipmentIncomingDamageRules.DevastationFlag
+                | AuthoritativeEquipmentIncomingDamageRules.DecayFlag
+                | AuthoritativeEquipmentIncomingDamageRules.PerilFlag
+                | AuthoritativeEquipmentIncomingDamageRules.JestersFlag
+                | AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag
+                | AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag,
+            item.HellfireDamageArmorFlags);
+        Assert.Equal(5, item.PlusDamage);
+        Assert.Equal(
+            AuthoritativeEquipmentIncomingDamageRules.AgainstUndeadFlag,
+            items.GenerateUnique(1002, 43, 1).HellfireDamageArmorFlags);
+    }
+
+    [Fact]
+    public void ExternalHellfireAffixPowersMapThroughValidatedAffixApplication()
+    {
+        var affixes = new AuthoritativeItemAffixCatalog(
+            [new AuthoritativeItemAffix(
+                "Devastating",
+                "DEVASTATION",
+                0,
+                0,
+                1,
+                new HashSet<string>(),
+                1,
+                true)],
+            [new AuthoritativeItemAffix(
+                "Decaying",
+                "DECAY",
+                5,
+                5,
+                1,
+                new HashSet<string>(),
+                1,
+                true)],
+            new AuthoritativeItemGenerationRules(0, 0, 0, 0, 0, 100, 100, 100, 0, 0));
+        var item = new AuthoritativeItemDefinition(
+            7,
+            1,
+            75,
+            75,
+            4,
+            8,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true);
+        var state = affixes.Apply(
+            item.Generate(42),
+            42,
+            1,
+            new HashSet<string>());
+
+        Assert.Equal(
+            AuthoritativeEquipmentIncomingDamageRules.DevastationFlag
+                | AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+            state.HellfireDamageArmorFlags);
+        Assert.Equal(5, state.PlusDamage);
+    }
+
+    [Fact]
     public void LoadsLegacyItemAndUniqueTableShapesWithStableAliases()
     {
         const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
