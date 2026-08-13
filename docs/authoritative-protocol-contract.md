@@ -250,6 +250,11 @@ The `SkeletonRanged` identity drives a server-owned clear-lane arrow boundary
 using the native `3 + 2 * intelligence` attack band. Its resolved damage is an
 ordinary directed gameplay event; clients do not perform the hit roll.
 
+The `GoatRanged` identity drives the shared native `AiRanged` boundary. On a
+clear missile lane it emits the server-resolved arrow damage event; inside four
+tiles it first applies the native `10 * (intelligence + 7)` avoidance band and
+selects a deterministic retreat cell when one is available.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

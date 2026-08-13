@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
 - Route the native `Gargoyle` wounded self-heal through the authoritative
   Healing event path, persisting its distance-based special lock in protocol
   field 45, snapshots, saves, and canonical hashes.
+- Route the native `GoatRanged` shared `AiRanged` boundary through the
+  authoritative arrow damage, close-range avoidance, and movement paths.
 
 ## 2026-08-13
 

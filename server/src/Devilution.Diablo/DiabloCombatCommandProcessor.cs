@@ -3720,6 +3720,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
+                continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
                 continue;
             if (distance <= 1) {
@@ -3886,8 +3888,8 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native SkeletonBow AI: fire an arrow when its deterministic attack band and lane are clear. */
-    private bool TryAdvanceSkeletonRangedAttack(
+    /** Native AiRanged behavior used by GoatRanged monsters. */
+    private bool TryAdvanceGoatRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         ulong tick,
@@ -3895,7 +3897,7 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
-        if (monster.NativeAi != "SkeletonRanged"
+        if (monster.NativeAi != "GoatRanged"
             || distance < 2
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0
@@ -3904,9 +3906,16 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var attackChance = Math.Min(100, 3 + (2 * monster.Intelligence));
-        if (attackSeed % 100U >= (uint)attackChance
-            || !world.HasLineOfSight(
+        if (distance < 4
+            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
+            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
+            if (retreat.HasValue) {
+                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                return true;
+            }
+        }
+
+        if (!world.HasMissileLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
                 monster.PositionY,
@@ -3914,6 +3923,60 @@ public sealed class DiabloCombatCommandProcessor
                 player.PositionY))
             return false;
 
+        return ApplyNativeRangedAttack(
+            monster,
+            player,
+            tick,
+            players,
+            events,
+            distance,
+            attackSeed);
+    }
+
+    private (int X, int Y)? FindGoatRangedRetreatDestination(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int currentDistance)
+    {
+        var candidates = Enumerable.Range(-1, 3)
+            .SelectMany(offsetY => Enumerable.Range(-1, 3)
+                .Select(offsetX => (
+                    X: monster.PositionX + offsetX,
+                    Y: monster.PositionY + offsetY)))
+            .Where(candidate => candidate.X != monster.PositionX
+                || candidate.Y != monster.PositionY)
+            .Where(candidate => world.IsWalkable(
+                monster.LevelId,
+                candidate.X,
+                candidate.Y))
+            .Where(candidate => !world.IsOccupied(
+                monster.LevelId,
+                candidate.X,
+                candidate.Y,
+                players,
+                monster.EntityId))
+            .Where(candidate => Math.Max(
+                Math.Abs(player.PositionX - candidate.X),
+                Math.Abs(player.PositionY - candidate.Y)) >= currentDistance)
+            .OrderByDescending(candidate => Math.Max(
+                Math.Abs(player.PositionX - candidate.X),
+                Math.Abs(player.PositionY - candidate.Y)))
+            .ThenBy(candidate => candidate.Y)
+            .ThenBy(candidate => candidate.X)
+            .ToArray();
+        return candidates.Length == 0 ? null : candidates[0];
+    }
+
+    private bool ApplyNativeRangedAttack(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        int distance,
+        uint attackSeed)
+    {
         var armorClass = player.ArmorClass;
         if (rules.GameVariant == DiabloGameVariant.Hellfire) {
             armorClass = AuthoritativeEquipmentIncomingDamageRules
@@ -3923,12 +3986,8 @@ public sealed class DiabloCombatCommandProcessor
                     monster.IsUndead,
                     player.Equipment);
         }
-        var attackDamage = SelectNativeDamage(
-            monster.MinDamage,
-            monster.MaxDamage,
-            attackSeed);
         var damage = rules.ResolveMonsterRangedAttackDamage(
-            attackDamage,
+            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
             monster.ToHit,
             monster.MonsterLevel,
             player.CharacterLevel,
@@ -3958,6 +4017,44 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 PlayerDeathReason.MonsterOrTrap);
         return true;
+    }
+
+    /** Native SkeletonBow AI: fire an arrow when its deterministic attack band and lane are clear. */
+    private bool TryAdvanceSkeletonRangedAttack(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        int distance)
+    {
+        if (monster.NativeAi != "SkeletonRanged"
+            || distance < 2
+            || monster.ToHit <= 0
+            || monster.MaxDamage <= 0
+            || IsPlayerProtectedByFlash(player)
+            || IsPlayerEtherealized(player))
+            return false;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var attackChance = Math.Min(100, 3 + (2 * monster.Intelligence));
+        if (attackSeed % 100U >= (uint)attackChance
+            || !world.HasLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return false;
+
+        return ApplyNativeRangedAttack(
+            monster,
+            player,
+            tick,
+            players,
+            events,
+            distance,
+            attackSeed);
     }
 
     /** Native Rhino AI charge: clear long-range lanes end in a special melee hit. */

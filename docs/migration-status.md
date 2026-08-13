@@ -149,6 +149,10 @@ Status date: 2026-08-13
   deterministic native heal amount, Healing event, and distance-based special
   lock persist through snapshots, saves, protocol field 45, and canonical
   hashes. Gargoyle retreat movement and animation timing remain incremental.
+- The native `GoatRanged` shared `AiRanged` boundary is now server-owned:
+  clear-lane arrow damage, close-range avoidance probability, deterministic
+  retreat selection, and blocked-lane fallback resolve through the authoritative
+  movement and directed-event paths.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

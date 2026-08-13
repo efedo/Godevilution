@@ -336,6 +336,8 @@ Windows toolchain command.
 - `MonsterSnapshot.gargoyle_special_active` field 45 carries the server-owned
   Gargoyle distance-based special lock. Clients render the resulting Healing
   event and snapshot state; they do not execute Gargoyle healing or unlock it.
+- GoatRanged attack and avoidance outcomes use ordinary authoritative monster
+  snapshots and directed Damage events; no client-side AI or hit roll is needed.
 
 ## Identity Note
 

@@ -1460,6 +1460,101 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.NotEqual(100, player.Life);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+    }
+
+    [Fact]
+    public void GoatRangedAiAvoidsAPlayerInsideItsNativeFourTileBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            4,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, inside the native 10 * (intelligence + 7) band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.True(monster.IsMoving);
+        Assert.True(monster.FuturePositionX < monster.PositionX);
+    }
+
+    [Fact]
+    public void GoatRangedAiFallsBackToMovementWhenItsMissileLaneIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(
+            fallbackMissileBlockedCells: [4],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

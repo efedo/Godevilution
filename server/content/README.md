@@ -196,6 +196,10 @@ The `Gargoyle` identity now owns the native wounded self-heal boundary: once the
 monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 `max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
 closes that boundary. Clients do not execute this behavior.
+The `GoatRanged` identity now uses the shared native `AiRanged` boundary: clear
+missile lanes produce authoritative arrow damage, while targets inside four
+tiles use the native `10 * (intelligence + 7)` avoidance band and deterministic
+retreat-cell selection.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
