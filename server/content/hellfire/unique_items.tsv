@@ -347,3 +347,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1085	Holy Defender	169	10	13800	FIRERES	20	20
 1085	Holy Defender	169	10	13800	DUR	200	200
 1085	Holy Defender	169	10	13800	FASTBLOCK	1	1
+1086	Stormshield	170	24	49000	SETAC	40	40
+1086	Stormshield	170	24	49000	GETHIT_CURSE	4	4
+1086	Stormshield	170	24	49000	STR	10	10
+1086	Stormshield	170	24	49000	INDESTRUCTIBLE	0	0
+1086	Stormshield	170	24	49000	FASTBLOCK	1	1
+1086	Stormshield	170	24	49000	LIGHTRES	50	50

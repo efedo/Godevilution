@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Stormshield (`unique_id=1086`) through schema 1.45,
+  adding its native Gothic Shield base item with armor, get-hit,
+  strength, indestructible, fast-block, and lightning-resistance powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Holy Defender (`unique_id=1085`) through schema 1.44,
   adding its native Large Shield base item with armor, get-hit,
   fire-resistance, durability, and fast-block powers.

@@ -58,3 +58,4 @@ item_id	item_type	value	identified_value	min_damage	max_damage	armor_class	durab
 167	7	400	400	0	0	8	40	40	1	1	1	Armor	4	2	0	0	0	50	0	0	75	0	0
 168	7	90	90	0	0	3	24	24	1	1	1	Armor	4	2	0	0	0	25	0	0	73	0	0
 169	7	200	200	0	0	5	32	32	1	1	1	Armor	4	2	0	0	0	40	0	0	74	0	0
+170	7	2300	2300	0	0	14	60	60	1	1	1	Armor	4	2	0	0	0	80	0	0	77	0	0
