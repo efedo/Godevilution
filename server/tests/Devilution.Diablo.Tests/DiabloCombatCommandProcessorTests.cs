@@ -1028,6 +1028,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireJestersPreservesNativeQ6DamageScaling()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var random = new DiabloRandom(1);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+                })]);
+        var expectedRandom = new DiabloRandom(1);
+        var expectedRoll = expectedRandom.RandomIntBetween(0, 200);
+        expectedRoll = expectedRoll >= 100
+            ? 100 + (expectedRoll - 100) * 5
+            : expectedRoll;
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6400 - 640 * expectedRoll / 100, target.HitPointsQ6);
+        Assert.Equal(expectedRandom.State, random.State);
+
+        var zeroTarget = new AuthoritativeCombatTarget(10, 1, 0, 100);
+        var zeroRandom = new DiabloRandom(0);
+        var zeroProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [zeroTarget]),
+            random: zeroRandom,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var zeroResult = zeroProcessor.Execute(
+            player,
+            new DiabloAttackIntent(10),
+            2);
+
+        Assert.True(zeroResult.Succeeded);
+        Assert.Equal(6400, zeroTarget.HitPointsQ6);
+        Assert.Equal(1U, zeroRandom.State);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

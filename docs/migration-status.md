@@ -78,6 +78,9 @@ Status date: 2026-08-13
 - Hellfire `Devastation` now performs the native 5% post-hit triple-damage
   roll on authoritative physical player attacks, consuming its RNG draw only
   after a successful hit and excluding unusable or unidentified magical items.
+- Hellfire `Jesters` now applies native 0..200 damage scaling after the
+  Devastation boundary in exact Q6 arithmetic; fractional damage remains
+  authoritative through target damage and life/mana-on-hit effects.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

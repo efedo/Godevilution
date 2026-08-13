@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Preserve Q6 physical attack damage through authoritative hit, knockback, and
+  on-hit resource handling, and apply native Hellfire `Jesters` scaling.
 - Apply Hellfire `Devastation` as a native 5% post-hit triple-damage roll,
   preserving authoritative RNG ordering and equipment eligibility.
 - Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment

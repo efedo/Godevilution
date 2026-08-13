@@ -351,15 +351,15 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         UpdateFacingToward(player, target.PositionX, target.PositionY);
-        var damage = ResolvePlayerAttackDamage(
+        var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId));
         var events = new List<DiabloGameplayEvent>();
-        ApplyResolvedDamage(player, target, damage, events);
-        ApplyEquipmentKnockback(player, target, damage, players);
-        if (damage > 0)
-            ApplyEquipmentAttackEffects(player, damage, events);
+        ApplyResolvedDamageQ6(player, target, damageQ6, events);
+        ApplyEquipmentKnockback(player, target, damageQ6, players);
+        if (damageQ6 > 0)
+            ApplyEquipmentAttackEffects(player, damageQ6, events);
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
@@ -369,10 +369,10 @@ public sealed class DiabloCombatCommandProcessor
     private void ApplyEquipmentKnockback(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
-        int damage,
+        int damageQ6,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        if (damage <= 0
+        if (damageQ6 <= 0
             || target.HitPoints <= 0
             || target.IsPetrified
             || (GetUsableEquipmentFlags(player)
@@ -400,11 +400,11 @@ public sealed class DiabloCombatCommandProcessor
     /** Applies native usable equipment resource gains after a successful hit. */
     private void ApplyEquipmentAttackEffects(
         AuthoritativePlayerState player,
-        int damage,
+        int damageQ6,
         ICollection<DiabloGameplayEvent> events)
     {
         var gain = AuthoritativeEquipmentAttackEffectRules.Resolve(
-            DiabloFixedPointQ6.FromWhole(damage),
+            damageQ6,
             GetUsableEquipmentFlags(player),
             random.GenerateRnd);
         var lifeGain = Math.Min(
@@ -426,8 +426,8 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
-    /** Applies native usable equipment damage, hit, and target-armor bonuses. */
-    private int ResolvePlayerAttackDamage(
+    /** Applies native usable equipment damage and hit bonuses, returning Q6 damage. */
+    private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
         uint seed)
@@ -468,7 +468,18 @@ public sealed class DiabloCombatCommandProcessor
             && random.RandomIntLessThan(100) < 5) {
             resolvedDamage = checked(resolvedDamage * 3);
         }
-        return resolvedDamage;
+        var resolvedDamageQ6 = DiabloFixedPointQ6.FromWhole(resolvedDamage);
+        if (rules.GameVariant == DiabloGameVariant.Hellfire
+            && resolvedDamageQ6 > 0
+            && HasUsableHellfireDamageArmorFlag(
+                player,
+                AuthoritativeEquipmentIncomingDamageRules.JestersFlag)) {
+            var roll = random.RandomIntBetween(0, 200);
+            if (roll >= 100)
+                roll = checked(100 + (roll - 100) * 5);
+            resolvedDamageQ6 = checked(resolvedDamageQ6 * roll / 100);
+        }
+        return resolvedDamageQ6;
     }
 
     private bool TryGetAttackTarget(

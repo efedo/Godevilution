@@ -124,6 +124,9 @@ monster carries the corresponding validated demon or undead capability.
 Hellfire `Devastation` consumes one native RNG draw after a successful
 physical hit and triples damage when the result is below 5; the server keeps
 that roll authoritative and excludes unusable or unidentified magical items.
+Hellfire `Jesters` then consumes its native 0..200 roll and applies the
+100..200 fivefold expansion in Q6 units, preserving fractional damage through
+the authoritative target and on-hit resource boundaries.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.
