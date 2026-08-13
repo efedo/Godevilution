@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Leather of Aut (`unique_id=1074`) through schema 1.33,
+  adding its native Leather Armor base item with armor, strength,
+  magic-curse, dexterity, and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire The Rainbow Cloak (`unique_id=1073`) through schema
   1.32, adding its native Cloak base item with armor, attribute, resistance,
   life, and durability powers.

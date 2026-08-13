@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.32.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.33.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.32.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.33.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1080,6 +1080,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10, rainbowCloak.PlusLightningResistance);
         Assert.Equal(10, rainbowCloak.PlusMagicResistance);
         Assert.Equal(5 << 6, rainbowCloak.PlusHitPoints);
+        var leatherOfAut = hellfireItems.GenerateUnique(1074, 0x12345678, 4);
+        Assert.Equal(1074, leatherOfAut.UniqueId);
+        Assert.Equal(10550, leatherOfAut.Value);
+        Assert.Equal(60, leatherOfAut.ItemIndex);
+        Assert.Equal(15, leatherOfAut.ArmorClass);
+        Assert.Equal(255, leatherOfAut.Durability);
+        Assert.Equal(255, leatherOfAut.MaxDurability);
+        Assert.Equal(0, leatherOfAut.MinimumStrength);
+        Assert.Equal(4, leatherOfAut.EquipLocation);
+        Assert.Equal(5, leatherOfAut.PlusStrength);
+        Assert.Equal(-5, leatherOfAut.PlusMagic);
+        Assert.Equal(5, leatherOfAut.PlusDexterity);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

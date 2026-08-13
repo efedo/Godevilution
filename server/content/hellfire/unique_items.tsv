@@ -292,3 +292,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1073	The Rainbow Cloak	158	2	4900	ALLRES	10	10
 1073	The Rainbow Cloak	158	2	4900	LIFE	5	5
 1073	The Rainbow Cloak	158	2	4900	DUR	50	50
+1074	Leather of Aut	159	4	10550	SETAC	15	15
+1074	Leather of Aut	159	4	10550	STR	5	5
+1074	Leather of Aut	159	4	10550	MAG_CURSE	5	5
+1074	Leather of Aut	159	4	10550	DEX	5	5
+1074	Leather of Aut	159	4	10550	INDESTRUCTIBLE	0	0
