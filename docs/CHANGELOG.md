@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Defender (`unique_id=1024`) through schema 0.83,
+  including its native Sabre base item and armor, vitality, and hit-curse
+  powers.
+
 - Externalize Hellfire Gonnagal's Dirk (`unique_id=1023`) through schema 0.82,
   including its native Dagger base item and dexterity-curse, damage-modifier,
   attack-speed, and fire-resistance powers.

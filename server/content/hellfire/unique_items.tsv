@@ -80,3 +80,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1023	Gonnagal's Dirk	127	1	7040	DAMMOD	4	4
 1023	Gonnagal's Dirk	127	1	7040	FASTATTACK	2	2
 1023	Gonnagal's Dirk	127	1	7040	FIRERES	25	25
+1024	The Defender	128	1	2000	SETAC	5	5
+1024	The Defender	128	1	2000	VIT	5	5
+1024	The Defender	128	1	2000	TOHIT_CURSE	5	5
