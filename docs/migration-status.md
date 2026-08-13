@@ -48,8 +48,9 @@ Status date: 2026-08-13
   tables stay explicit follow-up content migrations.
 - Monster type identity is now externalized through validated
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
-  resolve a stable/native type identity before activation. The first twelve
-  native Hellfire type identities are now externalized; encounter rows inherit
+  resolve a stable/native type identity before activation. The first
+  twenty-four variant-local native Hellfire type identities, through native ID
+  23, are now externalized; encounter rows inherit
   validated type resistance, baseline combat, and immutable capability metadata
   unless they provide explicit instance overrides. Variant-local native IDs are
   tracked separately from stable IDs; reverse lookup rejects ambiguous IDs in

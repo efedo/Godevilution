@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   lookup only for unambiguous identities, preserving composed base/Hellfire
   overlays whose variant-local IDs may overlap.
 
+- Extend the Hellfire monster-type catalog with the next twelve native type
+  identities (native IDs 12–23), including validated baseline combat,
+  resistance, and undead capability metadata.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,
