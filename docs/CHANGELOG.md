@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply usable identified equipment `PlusGetHit` metadata to authoritative
+  autonomous monster physical hits, preserving the configured minimum damage.
 - Honor usable identified equipment with the native `NoMana` flag when
   admitting memorized spell casts; free class abilities and charged or
   consumable sources remain unaffected, while Mana Shield keeps its existing

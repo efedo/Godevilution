@@ -525,6 +525,54 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MovingGetHitEquipmentInAndOutChangesIncomingDamageRule()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusGetHit = -5,
+            });
+        var player = CreatePlayer(inventory: [item]);
+        player.InventoryGrid[0] = 0;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var equip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0)),
+            1);
+
+        Assert.True(equip.Succeeded);
+        Assert.Equal(
+            15,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+                20,
+                1,
+                player.Equipment));
+
+        var unequip = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            2);
+
+        Assert.True(unequip.Succeeded);
+        Assert.Equal(
+            20,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+                20,
+                1,
+                player.Equipment));
+    }
+
+    [Fact]
     public void MovingAttributeItemInAndOutOfEquipmentRecalculatesAttributes()
     {
         var item = new OwnedStoreItem(

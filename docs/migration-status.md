@@ -114,6 +114,9 @@ Status date: 2026-08-13
   armor-piercing metadata now affects authoritative player attacks with the
   native hit/armor boundary; unequipped, unusable, and unidentified magical
   items remain excluded.
+- Native usable, identified equipment `PlusGetHit` metadata now adjusts
+  authoritative autonomous monster physical hits after hit/armor resolution,
+  preserving the configured minimum damage; snapshot state remains server-owned.
 - Native equipped item armor and percentage armor bonuses now recompute the
   authoritative player's effective armor, including native dexterity armor and
   identification/requirement rules, across player creation, transfers, and

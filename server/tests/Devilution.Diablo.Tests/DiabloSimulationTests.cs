@@ -254,6 +254,41 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsGetHitAndPreservesMonsterDamageAdjustment()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            attackDamage: 20,
+            aggroRange: 5);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+            });
+        var source = CreatePlayer();
+        source.Equipment.Add(new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusGetHit = -5,
+            }));
+        var snapshot = simulation.CaptureSnapshot(source, 1);
+        var destination = CreatePlayer();
+
+        simulation.RestoreSnapshot(destination, snapshot);
+        var deliveries = simulation.AdvanceTick(2, [destination]);
+
+        Assert.Equal(-5, Assert.Single(destination.Equipment).State.PlusGetHit);
+        Assert.Equal(35, destination.Life);
+        Assert.Equal(15, Assert.Single(deliveries).Event.Amount);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsQuestPoolAvailability()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

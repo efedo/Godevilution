@@ -472,6 +472,9 @@ The `plus_damage` (percent), `plus_damage_modifier` (flat), `plus_to_hit`, and
 `plus_enemy_armor_class` (armor-piercing) item fields are also authoritative
 when usable equipment is resolved for player attacks; unusable and
 unidentified magical items do not contribute them.
+The `plus_get_hit` item field is likewise resolved by the server for
+autonomous monster physical hits after hit/armor resolution, with the configured
+minimum damage preserved; clients never apply the incoming adjustment locally.
 Equipped item `armor_class` and `plus_armor_class` are likewise folded into
 the server-owned effective player armor state with native dexterity and
 identification/requirement rules; clients do not derive defensive statistics.

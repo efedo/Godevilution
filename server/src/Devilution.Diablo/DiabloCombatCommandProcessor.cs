@@ -3369,6 +3369,10 @@ public sealed class DiabloCombatCommandProcessor
                     target.AttackDamage,
                     victim.ArmorClass,
                     unchecked((uint)tick ^ target.EntityId ^ victim.EntityId));
+                damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+                    damage,
+                    rules.MinimumDamage,
+                    victim.Equipment);
                 var reflectedDamage = 0;
                 if (damage > 0 && victim.ReflectCharges > 0) {
                     victim.ReflectCharges--;

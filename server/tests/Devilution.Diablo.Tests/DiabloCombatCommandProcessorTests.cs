@@ -469,6 +469,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterAttackAppliesUsableGetHitEquipmentAdjustment()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 20,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusGetHit = -5,
+                })]);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(35, player.Life);
+        Assert.Equal(15, Assert.Single(deliveries).Event.Amount);
+    }
+
+    [Fact]
     public void LethalMonsterAttackDropsAndClearsTheAuthoritativeHeldItem()
     {
         var monster = new AuthoritativeCombatTarget(

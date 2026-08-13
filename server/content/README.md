@@ -363,6 +363,9 @@ The class table's Q6 `item_life_per_vitality` and `item_mana_per_magic` factors
 then convert usable, identified equipped vitality and magic into authoritative
 life and mana maxima. Flat item resources and Hellfire conversions use the same
 native requirement and identification rules.
+Usable, identified equipped `plus_get_hit` is likewise server-owned for
+autonomous monster physical hits; it is applied after the current hit/armor
+resolution and cannot reduce a successful hit below the configured minimum.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
 Hellfire native quest IDs. Quest-state rows must resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
