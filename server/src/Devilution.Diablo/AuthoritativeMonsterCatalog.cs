@@ -25,28 +25,26 @@ public sealed class AuthoritativeMonsterCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeMonsterCatalog(table.Rows.Select(row => {
-            var stoneCurseImmune = row.OptionalInt32("stone_curse_immune");
-            if (stoneCurseImmune is not (0 or 1)) {
-                throw new InvalidDataException(
-                    $"Monster row {row.LineNumber} has invalid stone_curse_immune value {stoneCurseImmune}.");
+            var monsterId = row.RequiredUInt32("monster_id");
+            AuthoritativeMonsterTypeDefinition? monsterType = null;
+            if (monsterTypes is not null) {
+                if (!monsterTypes.TryGet(monsterId, out var resolvedMonsterType))
+                    throw new InvalidDataException(
+                        $"Monster row {row.LineNumber} references unknown monster type {monsterId}.");
+                monsterType = resolvedMonsterType;
             }
-            var undead = row.OptionalInt32("undead");
-            if (undead is not (0 or 1)) {
-                throw new InvalidDataException(
-                    $"Monster row {row.LineNumber} has invalid undead value {undead}.");
-            }
-            var playerMinion = row.OptionalInt32("player_minion");
-            if (playerMinion is not (0 or 1)) {
-                throw new InvalidDataException(
-                    $"Monster row {row.LineNumber} has invalid player_minion value {playerMinion}.");
-            }
-            var unique = row.OptionalInt32("unique");
-            var diablo = row.OptionalInt32("diablo");
-            var berserkImmune = row.OptionalInt32("berserk_immune");
-            if (unique is not (0 or 1) || diablo is not (0 or 1) || berserkImmune is not (0 or 1)) {
-                throw new InvalidDataException(
-                    $"Monster row {row.LineNumber} has an invalid Berserk eligibility capability.");
-            }
+            var stoneCurseImmune = ReadFlag(
+                row,
+                "stone_curse_immune",
+                monsterType?.StoneCurseImmune ?? false);
+            var undead = ReadFlag(row, "undead", monsterType?.Undead ?? false);
+            var playerMinion = ReadFlag(row, "player_minion", false);
+            var unique = ReadFlag(row, "unique", false);
+            var diablo = ReadFlag(row, "diablo", false);
+            var berserkImmune = ReadFlag(
+                row,
+                "berserk_immune",
+                monsterType?.BerserkImmune ?? false);
             var deathAnimationTicks = row.OptionalInt32("death_animation_ticks");
             if (deathAnimationTicks is < 0 or > 1024) {
                 throw new InvalidDataException(
@@ -73,14 +71,6 @@ public sealed class AuthoritativeMonsterCatalog
                         row.OptionalInt32("drop_item_level"),
                         row.OptionalInt32("drop_only_good") != 0);
             }
-            var monsterId = row.RequiredUInt32("monster_id");
-            AuthoritativeMonsterTypeDefinition? monsterType = null;
-            if (monsterTypes is not null) {
-                if (!monsterTypes.TryGet(monsterId, out var resolvedMonsterType))
-                    throw new InvalidDataException(
-                        $"Monster row {row.LineNumber} references unknown monster type {monsterId}.");
-                monsterType = resolvedMonsterType;
-            }
             var fireResistance = row.TryGet("fire_resistance", out _)
                 ? row.OptionalInt32("fire_resistance")
                 : monsterType?.FireResistance ?? 0;
@@ -95,7 +85,7 @@ public sealed class AuthoritativeMonsterCatalog
                 row.RequiredInt32("position_x"),
                 row.RequiredInt32("position_y"),
                 row.RequiredInt32("hit_points"),
-                row.RequiredInt32("armor_class"),
+                ReadInt32(row, "armor_class", monsterType?.ArmorClass ?? 0),
                 row.RequiredInt32("max_hit_points"),
                 row.RequiredUInt32("level_id"),
                 monsterId,
@@ -103,23 +93,50 @@ public sealed class AuthoritativeMonsterCatalog
                 dropItemSeed,
                 row.OptionalUInt32("drop_item_price"),
                 dropItemState,
-                attackDamage: row.OptionalInt32("attack_damage"),
+                attackDamage: ReadInt32(
+                    row,
+                    "attack_damage",
+                    monsterType?.MinimumDamage ?? 0),
                 aggroRange: row.OptionalInt32("aggro_range"),
                 fireResistance: fireResistance,
                 lightningResistance: lightningResistance,
                 magicResistance: magicResistance,
-                monsterLevel: row.OptionalInt32("monster_level"),
-                stoneCurseImmune: stoneCurseImmune == 1,
-                undead: undead == 1,
-                playerMinion: playerMinion == 1,
-                minDamage: row.OptionalInt32("min_damage", row.OptionalInt32("attack_damage")),
-                maxDamage: row.OptionalInt32("max_damage", row.OptionalInt32("attack_damage")),
-                minDamageSpecial: row.OptionalInt32("min_damage_special", row.OptionalInt32("attack_damage")),
-                maxDamageSpecial: row.OptionalInt32("max_damage_special", row.OptionalInt32("attack_damage")),
-                unique: unique == 1,
-                diablo: diablo == 1,
-                berserkImmune: berserkImmune == 1,
+                monsterLevel: ReadInt32(row, "monster_level", monsterType?.MonsterLevel ?? 0),
+                stoneCurseImmune: stoneCurseImmune,
+                undead: undead,
+                playerMinion: playerMinion,
+                minDamage: ReadInt32(
+                    row,
+                    "min_damage",
+                    monsterType?.MinimumDamage ?? ReadInt32(row, "attack_damage", 0)),
+                maxDamage: ReadInt32(
+                    row,
+                    "max_damage",
+                    monsterType?.MaximumDamage ?? ReadInt32(row, "attack_damage", 0)),
+                minDamageSpecial: ReadInt32(
+                    row,
+                    "min_damage_special",
+                    monsterType?.MinimumSpecialDamage ?? ReadInt32(row, "attack_damage", 0)),
+                maxDamageSpecial: ReadInt32(
+                    row,
+                    "max_damage_special",
+                    monsterType?.MaximumSpecialDamage ?? ReadInt32(row, "attack_damage", 0)),
+                unique: unique,
+                diablo: diablo,
+                berserkImmune: berserkImmune,
                 deathAnimationTicks: deathAnimationTicks);
         }));
+    }
+
+    private static int ReadInt32(TsvRow row, string column, int defaultValue)
+        => row.OptionalInt32(column, defaultValue);
+
+    private static bool ReadFlag(TsvRow row, string column, bool defaultValue)
+    {
+        var value = row.OptionalInt32(column, defaultValue ? 1 : 0);
+        if (value is not (0 or 1))
+            throw new InvalidDataException(
+                $"Monster row {row.LineNumber} has invalid {column} value {value}.");
+        return value == 1;
     }
 }

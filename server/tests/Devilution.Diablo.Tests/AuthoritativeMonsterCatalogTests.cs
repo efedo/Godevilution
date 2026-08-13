@@ -91,6 +91,32 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void EncounterUsesTypeCombatAndCapabilityDefaultsWhenInstanceFieldsAreOmitted()
+    {
+        var types = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2, 0, "Zombie", 1, 2, 3, 4, 7, 10, 2, 5, 6, 9, true, true, true),
+        ]);
+        const string header = "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\n";
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            header + "9\t2\t1\t1\t0\t10\t10\n",
+            monsterTypes: types);
+
+        var target = Assert.Single(catalog.Targets);
+        Assert.Equal(10, target.ArmorClass);
+        Assert.Equal(3, target.MonsterLevel);
+        Assert.Equal((2, 5, 6, 9), (
+            target.MinDamage,
+            target.MaxDamage,
+            target.MinDamageSpecial,
+            target.MaxDamageSpecial));
+        Assert.True(target.StoneCurseImmune);
+        Assert.True(target.IsUndead);
+        Assert.True(target.BerserkImmune);
+    }
+
+    [Fact]
     public void EncounterRowsCanRequireAnExternalMonsterType()
     {
         var types = new AuthoritativeMonsterTypeCatalog([
