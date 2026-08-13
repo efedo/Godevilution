@@ -646,13 +646,16 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
-Content schema 0.58 adds a validated `consumable_misc_id` spell mapping for
-native rune sources. The base pack maps Rune of Stone miscellaneous ID `51` to
-stable Stone Curse spell ID `8`; legacy item parsing now preserves all five
-rune IDs, and both loadout validation and combat resolution use the active
-spell catalog instead of treating native misc IDs as stable spell identities.
-The remaining Rune of Fire, Light, Nova, and Immolation behaviors remain
-follow-up migration work.
+Content schema 0.59 extends validated `consumable_misc_id` spell mappings for
+native rune sources. The base pack maps Rune of Lightning ID `48` to stable
+Lightning Wall `50`, Greater Rune of Lightning ID `49` to Nova `18`, Greater
+Rune of Fire ID `50` to Immolation `45`, and Rune of Stone ID `51` to Stone
+Curse `8`. Loadout validation and combat resolution use the active spell
+catalog instead of treating native misc IDs as stable spell identities. Rune
+of Fire ID `47` remains queued for its direct explosion behavior.
+
+Content schema 0.58 added the validated `consumable_misc_id` spell mapping and
+legacy preservation of all five native rune IDs.
 
 Content schema 0.57 externalizes Golem's native 12-frame death-animation
 timing on spell row `52`. Remaining terminal ticks cross snapshots, saves,

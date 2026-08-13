@@ -4,12 +4,15 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-12
 
+- Advance the Diablo content schema to 0.59 with external mappings for Rune of
+  Lightning, Greater Rune of Lightning, Greater Rune of Fire, and Rune of Stone
+  to existing authoritative Lightning Wall, Nova, Immolation, and Stone Curse
+  behaviors. Rune of Fire remains queued for direct explosion behavior.
+
 - Advance the Diablo content schema to 0.58 with external rune-source identity
   mapping. The base pack maps Rune of Stone miscellaneous ID `51` to stable
   Stone Curse spell ID `8`; legacy rune IDs are preserved and authoritative
   loadout/combat source resolution now consults the active spell catalog.
-  Rune of Fire, Light, Nova, and Immolation behaviors remain queued for later
-  migration.
 
 - Advance the Diablo content schema to 0.57 with externalized Golem
   death-animation timing. The native 12-frame sequence is server-owned and
