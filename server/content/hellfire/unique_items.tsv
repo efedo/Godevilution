@@ -189,3 +189,9 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1050	The Celestial Star	144	2	7810	LIGHT	2	2
 1050	The Celestial Star	144	2	7810	DAMMOD	10	10
 1050	The Celestial Star	144	2	7810	AC_CURSE	8	8
+1051	Baranar's Star	145	5	6850	TOHIT	12	12
+1051	Baranar's Star	145	5	6850	DAMP	80	80
+1051	Baranar's Star	145	5	6850	FASTATTACK	1	1
+1051	Baranar's Star	145	5	6850	VIT	4	4
+1051	Baranar's Star	145	5	6850	DEX_CURSE	4	4
+1051	Baranar's Star	145	5	6850	SETDUR	60	60

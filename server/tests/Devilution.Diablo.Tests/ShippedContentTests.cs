@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.9.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.10.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.9.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.10.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -746,6 +746,21 @@ public sealed class ShippedContentTests
         Assert.Equal(2, celestialStar.PlusLight);
         Assert.Equal(10, celestialStar.PlusDamageModifier);
         Assert.Equal(-8, celestialStar.PlusArmorClass);
+        var baranarsStar = hellfireItems.GenerateUnique(1051, 0x12345678, 5);
+        Assert.Equal(1051, baranarsStar.UniqueId);
+        Assert.Equal(6850, baranarsStar.Value);
+        Assert.Equal(138, baranarsStar.ItemIndex);
+        Assert.Equal(1, baranarsStar.MinDamage);
+        Assert.Equal(10, baranarsStar.MaxDamage);
+        Assert.Equal(26, baranarsStar.MinimumStrength);
+        Assert.Equal(1, baranarsStar.EquipLocation);
+        Assert.Equal(12, baranarsStar.PlusToHit);
+        Assert.Equal(80, baranarsStar.PlusDamage);
+        Assert.NotEqual(0U, baranarsStar.Flags & 0x00020000U);
+        Assert.Equal(4, baranarsStar.PlusVitality);
+        Assert.Equal(-4, baranarsStar.PlusDexterity);
+        Assert.Equal(60, baranarsStar.Durability);
+        Assert.Equal(60, baranarsStar.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

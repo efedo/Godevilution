@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Baranar's Star (`unique_id=1051`) through schema 1.10,
+  adding its native Morning Star base item with to-hit, damage, attack-speed,
+  vitality, dexterity-curse, and durability powers.
+
 - Externalize Hellfire The Celestial Star (`unique_id=1050`) through schema
   1.9, adding its native Flail base item with no-strength, light,
   damage-modifier, and armor-curse powers.

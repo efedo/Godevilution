@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.10 adds the native-derived Hellfire Baranar's Star base item and
+unique definition (`unique_id=1051`) with its Morning Star identity, to-hit,
+damage, attack-speed, vitality, dexterity-curse, and durability powers.
+
 Schema 1.9 adds the native-derived Hellfire The Celestial Star base item and
 unique definition (`unique_id=1050`) with its Flail identity, no-strength,
 light, damage-modifier, and armor-curse powers.
