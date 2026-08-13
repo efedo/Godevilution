@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.96.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.97.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.96.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.97.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -577,6 +577,18 @@ public sealed class ShippedContentTests
         Assert.Equal(20, grandfather.PlusToHit);
         Assert.Equal(70, grandfather.PlusDamage);
         Assert.Equal(20 << 6, grandfather.PlusHitPoints);
+        var mangler = hellfireItems.GenerateUnique(1038, 0x12345678, 2);
+        Assert.Equal(1038, mangler.UniqueId);
+        Assert.Equal(2850, mangler.Value);
+        Assert.Equal(133, mangler.ItemIndex);
+        Assert.Equal(6, mangler.MinDamage);
+        Assert.Equal(16, mangler.MaxDamage);
+        Assert.Equal(30, mangler.MinimumStrength);
+        Assert.Equal(2, mangler.EquipLocation);
+        Assert.Equal(200, mangler.PlusDamage);
+        Assert.Equal(-5, mangler.PlusDexterity);
+        Assert.Equal(-5, mangler.PlusMagic);
+        Assert.Equal(-(10 << 6), mangler.PlusMana);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

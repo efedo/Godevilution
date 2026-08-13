@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Mangler (`unique_id=1038`) through schema 0.97,
+  including its native Large Axe base item with damage, dexterity-curse,
+  magic-curse, and mana-curse powers.
+
 - Externalize Hellfire The Grandfather (`unique_id=1037`) through schema 0.96,
   including its native Great Sword base item with one-handed, attribute,
   to-hit, damage, and life powers.

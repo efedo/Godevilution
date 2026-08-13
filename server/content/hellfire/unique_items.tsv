@@ -136,3 +136,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1037	The Grandfather	136	27	119800	TOHIT	20	20
 1037	The Grandfather	136	27	119800	DAMP	70	70
 1037	The Grandfather	136	27	119800	LIFE	20	20
+1038	The Mangler	137	2	2850	DAMP	200	200
+1038	The Mangler	137	2	2850	DEX_CURSE	5	5
+1038	The Mangler	137	2	2850	MAG_CURSE	5	5
+1038	The Mangler	137	2	2850	MANA_CURSE	10	10

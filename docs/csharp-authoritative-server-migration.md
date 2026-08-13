@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 0.97 adds the native-derived Hellfire The Mangler base item and unique
+definition (`unique_id=1038`) with its Large Axe identity, damage,
+dexterity-curse, magic-curse, and mana-curse powers.
+
 Schema 0.96 adds the native-derived Hellfire The Grandfather base item and
 unique definition (`unique_id=1037`) with its Great Sword identity, one-handed,
 attribute, to-hit, damage, and life powers.
