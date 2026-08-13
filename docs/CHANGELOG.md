@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Advance the Diablo content schema to 0.65 with validated native level-range
   generation metadata in `level_generation.tsv`.
 
+- Extend the validated Hellfire `monster_types.tsv` catalog with native IDs 6
+  through 11, covering Devil Kin, Dark One, Skeleton, Corpse Axe, Burning Dead,
+  and Horror.
+
 - Advance the Diablo content schema to 0.64 with a validated native-compatible
   `quest_types.tsv` catalog for all base and Hellfire quest identities and
   quest-state identity checks.

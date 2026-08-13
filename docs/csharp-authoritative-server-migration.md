@@ -536,6 +536,9 @@ Schema 0.65 adds validated native level-range generation metadata through
 density, multiplayer multiplier, and trap-percentage rules to the server-owned
 module without embedding them in the host or presentation client.
 
+The Hellfire monster catalog now also carries native IDs 6 through 11 with
+validated baseline level, health, damage, and undead/capability metadata.
+
 Schema 0.64 adds a validated native-compatible `quest_types.tsv` catalog for
 all base and Hellfire quest identities. Quest-state rows must resolve a
 declared stable quest identity while native quest IDs, routing levels, set-level

@@ -48,8 +48,9 @@ Status date: 2026-08-12
   tables stay explicit follow-up content migrations.
 - Monster type identity is now externalized through validated
   `monster_types.tsv` rows. Base and first-wave Hellfire encounter rows must
-  resolve a stable/native type identity before activation; remaining native
-  monster behavior and the rest of the Hellfire catalog remain incremental.
+  resolve a stable/native type identity before activation. The first twelve
+  native Hellfire type identities are now externalized; encounter behavior and
+  the rest of the Hellfire catalog remain incremental.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining
