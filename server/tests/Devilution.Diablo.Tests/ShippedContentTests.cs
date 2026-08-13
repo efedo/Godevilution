@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.60.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.61.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.60.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.61.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1381,6 +1381,17 @@ public sealed class ShippedContentTests
         Assert.Equal(255, flambeau.MaxDurability);
         Assert.NotEqual(0U, flambeau.Flags & 0x00000008U);
         Assert.NotEqual(0U, flambeau.Flags & 0x02000000U);
+        var armorOfGloom = hellfireItems.GenerateUnique(1102, 0x12345678, 25);
+        Assert.Equal(1102, armorOfGloom.UniqueId);
+        Assert.Equal(200000, armorOfGloom.Value);
+        Assert.Equal(71, armorOfGloom.ItemIndex);
+        Assert.Equal(4, armorOfGloom.EquipLocation);
+        Assert.Equal(225, armorOfGloom.ArmorClass);
+        Assert.Equal(0, armorOfGloom.MinimumStrength);
+        Assert.Equal(-2, armorOfGloom.PlusLight);
+        Assert.Equal(90, armorOfGloom.Durability);
+        Assert.Equal(90, armorOfGloom.MaxDurability);
+        Assert.NotEqual(0U, armorOfGloom.Flags & 0x80000000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

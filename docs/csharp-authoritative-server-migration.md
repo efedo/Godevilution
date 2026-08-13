@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.61 adds the native-derived Hellfire Armor of Gloom unique definition
+(`unique_id=1102`), reusing the native Full Plate identity with zero strength
+requirement, fixed armor 225, all-resistance reset, and light curse.
+
 Schema 1.60 adds the native-derived Hellfire Flambeau unique definition
 (`unique_id=1101`), reusing the native Composite Bow identity with Fireball-bow
 damage, zero base damage, and indestructible powers.

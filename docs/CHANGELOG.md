@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Armor of Gloom (`unique_id=1102`) through schema 1.61,
+  reusing native Full Plate with zero strength requirement, fixed armor 225,
+  all-resistance reset, and light curse.
+
+## 2026-08-13
+
 - Externalize Hellfire Flambeau (`unique_id=1101`) through schema 1.60,
   reusing the native Composite Bow base and adding Fireball-bow damage,
   zero base damage, and indestructible powers.
