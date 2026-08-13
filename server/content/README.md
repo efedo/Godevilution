@@ -91,6 +91,9 @@ The checked-in Hellfire overlay replaces the base combat row by its stable
 `base_attack_damage` key and selects `game_variant=Hellfire`. Variant selection
 therefore remains external validated content rather than executable startup or
 client state; monster, level, quest, and item overlays remain separate steps.
+The initial overlay also adds one native-derived Hellfire undead encounter
+(`monster_id=2`) to prove that encounter rows cross the same composition and
+activation boundary; the complete Hellfire monster catalog is still pending.
 
 `class_loadouts.tsv` starting Gold is materialized as canonical inventory state:
 the first pile uses native cell 30, values above the configured maximum split

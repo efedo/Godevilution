@@ -38,8 +38,9 @@ Status date: 2026-08-12
 - Etherealize status state is projected as a typed server-owned effect and
   surfaced by the Godot HUD without client-side immunity or timing logic.
 - The checked-in Hellfire pack selects the native game variant through a
-  validated `combat.tsv` overlay; remaining Hellfire world and catalog tables
-  stay explicit follow-up content migrations.
+  validated `combat.tsv` overlay and carries one native-derived undead
+  encounter row through Diablo activation; remaining Hellfire world and
+  catalog tables stay explicit follow-up content migrations.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges
