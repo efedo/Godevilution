@@ -315,6 +315,51 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesMonkSearchAbilityAsAuthoritativeStatus()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-monk-search", requestedClassId: 3));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(3U, player.CharacterClassId);
+        Assert.Equal(46U, player.AbilitySpellId);
+        Assert.DoesNotContain(
+            player.StatusEffects,
+            effect => effect.Behavior == StatusEffectBehavior.Search);
+
+        var sequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = 46,
+                Source = CastSourceKind.Ability,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Monk Search was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; class was {player.CharacterClassId}, ability was {player.AbilitySpellId}.");
+
+        var searched = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().StatusEffects
+                .Any(effect => effect.Behavior == StatusEffectBehavior.Search
+                    && effect.RemainingTicks > 0) == true);
+        var search = Assert.Single(
+            Assert.Single(searched.Snapshot!.Players).StatusEffects,
+            effect => effect.Behavior == StatusEffectBehavior.Search);
+        Assert.True(search.RemainingTicks > 0);
+        Assert.Equal(0, search.Magnitude);
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
