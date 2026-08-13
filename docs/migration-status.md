@@ -58,8 +58,11 @@ Status date: 2026-08-12
 - Quest randomization pools and native set-level names/identities are now
   externalized through validated `quest_pools.tsv` and `set_level_names.tsv`
   catalogs; activation rejects pool references outside the stable quest catalog,
-  and the module exposes native deterministic pool-exclusion selection with the
-  historical bad-seed compatibility discard.
+  and the module applies native deterministic pool exclusions to single-player
+  quest state with the historical bad-seed compatibility discard. Excluded
+  quests reject progression and linked object interaction and persist through
+  snapshots, saves, protocol field 6, and canonical hashes; multiplayer
+  activation leaves exclusions disabled.
 - Native level-range generation rules are now externalized through validated
   `level_generation.tsv` metadata and exposed by Diablo activation; procedural
   map generation still remains a separate migration.
@@ -665,7 +668,9 @@ protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
 Content schema 0.66 adds validated quest pools and native set-level names and
-restores stable set-level identities in quest type rows. Content schema 0.65
+restores stable set-level identities in quest type rows. Single-player
+activation now applies the deterministic pool exclusions to server-owned quest
+state, while multiplayer activation preserves the full pool. Content schema 0.65
 adds validated native level-range generation metadata in
 `level_generation.tsv`, including monster density, multiplayer scaling, and
 trap percentages. Content schema 0.64 adds validated native-compatible `quest_types.tsv`

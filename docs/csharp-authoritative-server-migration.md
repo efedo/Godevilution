@@ -534,9 +534,11 @@ Recent content slices
 Schema 0.66 adds validated `quest_pools.tsv` and `set_level_names.tsv` catalogs.
 Quest type rows now retain native `SL_*` identities, and activation validates
 pool references against the stable quest catalog before exposing the metadata
-to the server-owned module.
-The module also provides the native deterministic pool-exclusion selector and
-preserves the historical bad-seed discard behavior.
+to the server-owned module. Single-player activation now applies the native
+deterministic pool exclusions to mutable quest state, preserves the historical
+bad-seed discard behavior, rejects excluded quest progression and linked object
+use, and carries the state through snapshots, saves, protocol field 6, and
+canonical hashes. Multiplayer activation leaves pool exclusions disabled.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

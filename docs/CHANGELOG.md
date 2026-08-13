@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+## 2026-08-13
+
+- Apply native single-player quest-pool exclusions to server-owned quest state
+  during content activation. Unavailable quests reject progression and linked
+  object interaction, and their state persists through snapshots, saves,
+  protocol field 6, and canonical hashes.
+
 ## 2026-08-12
 
 - Advance the Diablo content schema to 0.66 with validated quest pools and
