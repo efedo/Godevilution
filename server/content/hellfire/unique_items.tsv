@@ -140,3 +140,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1038	The Mangler	137	2	2850	DEX_CURSE	5	5
 1038	The Mangler	137	2	2850	MAG_CURSE	5	5
 1038	The Mangler	137	2	2850	MANA_CURSE	10	10
+1039	Sharp Beak	137	2	2850	LIFE	20	20
+1039	Sharp Beak	137	2	2850	MAG_CURSE	10	10
+1039	Sharp Beak	137	2	2850	MANA_CURSE	10	10

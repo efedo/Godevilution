@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Sharp Beak (`unique_id=1039`) through schema 0.98,
+  reusing the validated Large Axe base item with life, magic-curse, and
+  mana-curse powers.
+
 - Externalize Hellfire The Mangler (`unique_id=1038`) through schema 0.97,
   including its native Large Axe base item with damage, dexterity-curse,
   magic-curse, and mana-curse powers.
