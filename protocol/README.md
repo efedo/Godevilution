@@ -340,6 +340,8 @@ Windows toolchain command.
   snapshots and directed Damage events; no client-side AI or hit roll is needed.
 - GoatMelee admission and special attacks likewise resolve on the server and
   arrive as ordinary authoritative Damage events.
+- SkeletonMelee attack admission is server-owned and produces either an
+  authoritative Damage event or no event for an outside-band tick.
 
 ## Identity Note
 

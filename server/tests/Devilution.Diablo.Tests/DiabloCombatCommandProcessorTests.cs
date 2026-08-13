@@ -1620,6 +1620,64 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonMeleeAiUsesItsNativeAdjacentAttackBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "SkeletonMelee",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, inside the native 20 + 2 * intelligence band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
+    public void SkeletonMeleeAiCanDelayAnAdjacentAttackOutsideItsNativeBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "SkeletonMelee",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38, outside the native 20 + 2 * intelligence band.
+        var deliveries = processor.AdvanceTick(40, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

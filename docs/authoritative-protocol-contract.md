@@ -260,6 +260,10 @@ of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive
 only the resulting authoritative damage event and snapshot.
 
+The `SkeletonMelee` identity drives the native adjacent attack band of
+`20 + 2 * intelligence`; an outside-band tick consumes no client-side action and
+the next authoritative tick reevaluates the server-owned boundary.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

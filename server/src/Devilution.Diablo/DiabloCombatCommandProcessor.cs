@@ -3738,6 +3738,9 @@ public sealed class DiabloCombatCommandProcessor
                             victim.Equipment);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+                if (target.NativeAi == "SkeletonMelee"
+                    && attackSeed % 100U >= (uint)Math.Min(100, 20 + (2 * target.Intelligence)))
+                    continue;
                 if (target.NativeAi == "GoatMelee"
                     && attackSeed % 100U >= (uint)Math.Min(100, 23 + (2 * target.Intelligence)))
                     continue;

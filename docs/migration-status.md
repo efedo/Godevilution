@@ -156,6 +156,9 @@ Status date: 2026-08-13
 - The native `GoatMelee` adjacent `AiAvoidance` boundary is now server-owned:
   its `23 + 2 * intelligence` attack admission and wounded special branch use
   the authoritative physical-hit path and externalized special damage range.
+- The native `SkeletonMelee` adjacent attack boundary is now server-owned:
+  its `20 + 2 * intelligence` admission is resolved from stable tick/entity
+  state before the existing authoritative physical-hit path.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base

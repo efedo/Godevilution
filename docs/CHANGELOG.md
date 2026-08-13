@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
   authoritative arrow damage, close-range avoidance, and movement paths.
 - Route the native `GoatMelee` adjacent attack-admission and wounded special
   branch through the authoritative physical-hit path.
+- Route the native `SkeletonMelee` adjacent attack admission through the
+  authoritative physical-hit path.
 
 ## 2026-08-13
 
