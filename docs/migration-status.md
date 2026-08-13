@@ -6,7 +6,7 @@ Status date: 2026-08-13
 
 | Area | State | Remaining work |
 | --- | --- | --- |
-| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, a three-cycle reconnect gate while another participant remains connected, and protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias | Add longer-duration soak coverage and broader reconnect/multiplayer fixtures |
+| Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, a twelve-cycle reconnect soak while another participant remains connected, and protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias | Add broader reconnect/multiplayer fixtures and client-side long-running coverage |
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Add broader quest selection and longer soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
@@ -234,8 +234,9 @@ Status date: 2026-08-13
 - Versioned server-owned saves with validation and atomic replacement.
 - Native and Godot protocol clients plus shared replay and live-server tests.
 - A loopback reconnect soak now keeps a second participant connected while the
-  first participant resumes three times, preserving the resume token, entity
-  identity, complete participant set, self-first ordering, and snapshot hash.
+  first participant resumes through twelve consecutive cycles, preserving the
+  resume token, entity identity, complete participant set, self-first ordering,
+  and snapshot hash on every cycle.
 - Engine-neutral inventory-grid geometry, footprint validation, placement, and
   index compaction extracted into the dependency-free `Devilution.Domain`
   assembly with an independent test project.

@@ -471,7 +471,8 @@ public sealed class AuthoritativeTcpServerTests
             Assert.NotEqual(firstEntityId, secondEntityId);
         }
 
-        for (var attempt = 0; attempt < 3; attempt++) {
+        const int reconnectCycles = 12;
+        for (var attempt = 0; attempt < reconnectCycles; attempt++) {
             using var resumedClient = new TcpClient();
             await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
             await using var resumedStream = resumedClient.GetStream();

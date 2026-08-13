@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Extend the authoritative reconnect soak to twelve consecutive resume cycles
+  while a second participant remains connected, checking participant ordering
+  and canonical snapshot hashes on every resumed session.
 - Adopt protocol v0.2 as the production default for the C# server, Godot
   launcher, and native authoritative launcher, while retaining explicit v0.1
   compatibility selection.
