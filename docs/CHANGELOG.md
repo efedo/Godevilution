@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
   and monster-damage immunity.
 - Surface the authoritative Etherealize status in the Godot HUD and extend
   client-model regression coverage for its typed protocol projection.
+- Add the checked-in Hellfire content pack, which selects the native game
+  variant through a validated `combat.tsv` overlay while keeping remaining
+  Hellfire world and catalog metadata separate for later migration slices.
 
 - Advance the Diablo content schema to 0.55 with server-authoritative Golem
   (stable spell ID 52, native `SpellID` 21). Targeted summon placement,
