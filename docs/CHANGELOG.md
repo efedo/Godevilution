@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   type metadata; encounter rows inherit type resistances unless they provide
   an explicit instance override, with the content schema advanced to 0.67.
 
+- Apply validated monster-type baseline damage, level, armor, and capability
+  metadata when encounter rows omit per-instance values, while preserving
+  explicit encounter overrides.
+
 - Apply native single-player quest-pool exclusions to server-owned quest state
   during content activation. Unavailable quests reject progression and linked
   object interaction, and their state persists through snapshots, saves,

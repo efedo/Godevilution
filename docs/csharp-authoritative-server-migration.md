@@ -557,6 +557,8 @@ activation applies and clamps that amount instead of assuming one progress point
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.
+The same type metadata now supplies baseline armor, damage channels, monster
+level, and immutable capability flags when an encounter row omits them.
 
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster

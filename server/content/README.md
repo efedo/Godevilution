@@ -105,7 +105,9 @@ including stable/native IDs, baseline health, damage, level, and immutable
 capability flags. Schema 0.67 adds native fire, lightning, and magic resistance
 percentages; encounter rows inherit those values unless they provide an
 explicit per-instance override. Encounter rows now reject unknown type
-identities when the table is present.
+identities when the table is present. Baseline armor, damage channels, monster
+level, and immutable capability flags also inherit from the type when omitted
+from an encounter row.
 It also adds the normalized Undead Crown base item and unique definition
 (`unique_id=1003`); unique overlays use `(unique_id, power)` because each power
 is a separate normalized row. The Empyrean Band (`unique_id=1004`) and its
