@@ -348,6 +348,9 @@ Windows toolchain command.
   resulting authoritative Damage event or unchanged state.
 - Native monster regeneration is applied by the server before AI execution and
   appears through the authoritative monster health snapshot.
+- Succubus Blood Star missiles are created and resolved by the server; clients
+  render the existing Blood Star projectile behavior and resulting directed
+  damage events without simulating monster AI or magic rolls.
 
 ## Identity Note
 

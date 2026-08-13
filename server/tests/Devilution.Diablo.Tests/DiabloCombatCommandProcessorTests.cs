@@ -1523,6 +1523,96 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SuccubusAiFiresAUserVisibleBloodStarMagicProjectile()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Succubus",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(36, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                Range = 112,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.BloodStar,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                MagicDamageDivisor = 2,
+                MagicDamageReductionDivisor = 8,
+                SpellLevelDamage = 3,
+                SelfDamage = 5,
+                ResistantDamageDivisor = 4,
+            },
+        ]);
+        var processor = CreateProcessor(world, spells, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
+        Assert.Equal(9U, projectile.SourceEntityId);
+        Assert.Equal(36U, projectile.SpellId);
+        Assert.Equal(100, player.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(player.Life < 100);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(4 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
+    }
+
+    [Fact]
+    public void SuccubusAiDoesNotFallbackToAPhysicalHitWhenItsMissileLaneIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            attackDamage: 99,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Succubus");
+        var world = new DiabloWorldState(
+            fallbackMissileBlockedCells: [4],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void GoatRangedAiAvoidsAPlayerInsideItsNativeFourTileBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

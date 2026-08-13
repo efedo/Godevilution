@@ -3723,6 +3723,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
+                continue;
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
                 continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
@@ -4054,6 +4056,84 @@ public sealed class DiabloCombatCommandProcessor
             .ThenBy(candidate => candidate.X)
             .ToArray();
         return candidates.Length == 0 ? null : candidates[0];
+    }
+
+    /** Native AiRanged Blood Star dispatch for Succubus-family monsters. */
+    private bool TryAdvanceSuccubusRangedAttack(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance)
+    {
+        if (monster.NativeAi != "Succubus")
+            return false;
+
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar))
+            return true;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < 4
+            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
+            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
+            if (retreat.HasValue) {
+                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                return true;
+            }
+        }
+
+        if (!world.HasMissileLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY)) {
+            return true;
+        }
+
+        var spell = spells.Definitions.FirstOrDefault(definition =>
+            definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BloodStar);
+        var spellId = spell?.SpellId ?? 36U;
+        var speed = spell?.ProjectileSpeed > 0 ? spell.ProjectileSpeed : 16;
+        var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+        var damageType = spell?.DamageType ?? AuthoritativeDamageType.Magic;
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            speed);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            spellId,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            damageType,
+            0,
+            checked((uint)lifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.BloodStar,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
     }
 
     private bool ApplyNativeRangedAttack(
@@ -6866,13 +6946,24 @@ public sealed class DiabloCombatCommandProcessor
             && TryResolveFireboltHit(projectile, target, players, events);
         var playerStopsProjectile = false;
         if (!hitTarget && playerTarget is not null) {
-            _ = TryResolveFireboltPlayerHit(
-                tick,
-                projectile,
-                playerTarget,
-                players,
-                events,
-                out playerStopsProjectile);
+            if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar
+                && projectile.TargetEntityId != 0
+                && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                playerStopsProjectile = TryResolveMonsterBloodStarPlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events);
+            } else {
+                _ = TryResolveFireboltPlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events,
+                    out playerStopsProjectile);
+            }
         }
 
         var blocked = world.IsMissileBlocked(
@@ -6951,6 +7042,89 @@ public sealed class DiabloCombatCommandProcessor
         ApplyResolvedDamageQ6(owner, target, damageQ6, gameplayEvents);
         foreach (var gameplayEvent in gameplayEvents)
             events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
+    }
+
+    /** Native PlayerMHit magic branch for a monster-owned Blood Star. */
+    private bool TryResolveMonsterBloodStarPlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.CombatTargets.TryGetValue(projectile.SourceEntityId, out var monster)
+            || IsPlayerProtectedByFlash(target)) {
+            return false;
+        }
+
+        var distance = Math.Max(
+            Math.Abs(target.PositionX - monster.PositionX),
+            Math.Abs(target.PositionY - monster.PositionY));
+        var minimumHitChance = target.LevelId switch {
+            14 => 20,
+            15 => 25,
+            16 => 30,
+            _ => 10,
+        };
+        var hitChance = Math.Max(
+            minimumHitChance,
+            40 + (2 * monster.MonsterLevel)
+                - (2 * checked((int)target.CharacterLevel))
+                - (2 * distance));
+        if (random.RandomIntLessThan(100) >= Math.Clamp(hitChance, 0, 100))
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var resistance = GetPlayerResistance(
+            target,
+            targetClass,
+            projectile.DamageType);
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * 2)
+                - (2 * monster.MonsterLevel),
+            0,
+            100);
+        if ((resistance <= 0 || rules.GameVariant == DiabloGameVariant.Hellfire)
+            && blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            return true;
+        }
+
+        var damageQ6 = checked(
+            Math.Max(1, projectile.Damage) * DiabloFixedPointQ6.Scale
+            + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
+                * DiabloFixedPointQ6.Scale);
+        if (resistance > 0)
+            damageQ6 -= damageQ6 * resistance / 100;
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    monster.EntityId,
+                    target.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        else if (resistance == 0
+            && ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
+            StartHit(target, targetClass, tick);
         return true;
     }
 

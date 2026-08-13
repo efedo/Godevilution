@@ -29,6 +29,8 @@ All notable changes to this fork are documented below.
   `15 + 4 * intelligence` and `20 + 4 * intelligence` boundaries.
 - Route native live-monster regeneration through externalized level metadata and
   authoritative Q6 health state before AI execution.
+- Route native `Succubus` `AiRanged` attacks through server-owned Blood Star
+  projectiles with magic hit, block, resistance, and Q6 damage resolution.
 
 ## 2026-08-13
 

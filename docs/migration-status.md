@@ -164,6 +164,9 @@ Status date: 2026-08-13
 - Native `ProcessMonsters` regeneration is now server-owned: externalized
   monster levels drive the native one-life or `level / 2` per-tick recovery in
   exact Q6 state before AI execution.
+- Native `Succubus` `AiRanged` dispatch is now server-owned: its Blood Star
+  projectile uses the retained native missile behavior, magic hit boundary,
+  player resistance/block rules, and authoritative Q6 damage.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base
