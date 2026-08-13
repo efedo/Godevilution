@@ -212,3 +212,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1054	Schaefer's Hammer	146	16	56125	TOHIT	30	30
 1054	Schaefer's Hammer	146	16	56125	LIGHTRES	80	80
 1054	Schaefer's Hammer	146	16	56125	LIGHT	1	1
+1055	Dreamflange	142	26	26450	MAG	30	30
+1055	Dreamflange	142	26	26450	MANA	50	50
+1055	Dreamflange	142	26	26450	MAGICRES	50	50
+1055	Dreamflange	142	26	26450	LIGHT	2	2
+1055	Dreamflange	142	26	26450	SPLLVLADD	1	1

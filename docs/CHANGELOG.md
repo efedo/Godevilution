@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Dreamflange (`unique_id=1055`) through schema 1.14,
+  reusing the validated Mace base item with magic, mana, magic-resistance,
+  light, and spell-level powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Schaefer's Hammer (`unique_id=1054`) through schema
   1.13, adding its native War Hammer base item with damage-curse, lightning
   damage, life, to-hit, lightning-resistance, and light powers.

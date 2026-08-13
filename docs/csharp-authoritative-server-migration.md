@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.14 adds the native-derived Hellfire Dreamflange unique definition
+(`unique_id=1055`), reusing the validated Mace base item with magic, mana,
+magic-resistance, light, and spell-level powers.
+
 Schema 1.13 adds the native-derived Hellfire Schaefer's Hammer base item and
 unique definition (`unique_id=1054`) with its War Hammer identity, damage-curse,
 lightning-damage, life, to-hit, lightning-resistance, and light powers.

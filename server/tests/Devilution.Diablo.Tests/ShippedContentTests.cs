@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.13.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.14.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.13.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.14.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -808,6 +808,19 @@ public sealed class ShippedContentTests
         Assert.Equal(30, schaefersHammer.PlusToHit);
         Assert.Equal(80, schaefersHammer.PlusLightningResistance);
         Assert.Equal(1, schaefersHammer.PlusLight);
+        var dreamflange = hellfireItems.GenerateUnique(1055, 0x12345678, 26);
+        Assert.Equal(1055, dreamflange.UniqueId);
+        Assert.Equal(26450, dreamflange.Value);
+        Assert.Equal(137, dreamflange.ItemIndex);
+        Assert.Equal(1, dreamflange.MinDamage);
+        Assert.Equal(8, dreamflange.MaxDamage);
+        Assert.Equal(16, dreamflange.MinimumStrength);
+        Assert.Equal(1, dreamflange.EquipLocation);
+        Assert.Equal(30, dreamflange.PlusMagic);
+        Assert.Equal(50 << 6, dreamflange.PlusMana);
+        Assert.Equal(50, dreamflange.PlusMagicResistance);
+        Assert.Equal(2, dreamflange.PlusLight);
+        Assert.Equal(1, dreamflange.SpellLevelAdd);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
