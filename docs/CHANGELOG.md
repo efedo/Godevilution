@@ -18,6 +18,10 @@ All notable changes to this fork are documented below.
   content columns, authoritative saves, snapshots, protocol fields 9-11, and
   compatibility-aware hashes.
 
+- Add an optional data-driven quest monster-completion trigger. Matching native
+  monster defeats now advance the server-owned quest, update quest-log state,
+  and complete the quest at its validated progress limit.
+
 ## 2026-08-12
 
 - Advance the Diablo content schema to 0.66 with validated quest pools and

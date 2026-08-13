@@ -66,7 +66,8 @@ Status date: 2026-08-13
   initial/active/done lifecycle and quest-log bit through protocol fields 7-8;
   optional `_qvar1`, `_qvar2`, and `_qmsg` values now flow through protocol
   fields 9-11, saves, snapshots, and compatibility-aware hashes; quest-specific
-  behavior and remaining state variables remain incremental.
+  behavior now includes an optional validated monster-completion trigger;
+  remaining quest behavior and state variables remain incremental.
 - Native level-range generation rules are now externalized through validated
   `level_generation.tsv` metadata and exposed by Diablo activation; procedural
   map generation still remains a separate migration.
@@ -676,8 +677,8 @@ restores stable set-level identities in quest type rows. Single-player
 activation now applies the deterministic pool exclusions to server-owned quest
 state, while multiplayer activation preserves the full pool. Quest state also
 preserves native initial/active/done and quest-log flags plus optional `_qvar1`,
-`_qvar2`, and `_qmsg` values through the same authoritative persistence
-boundary. Content schema 0.65
+`_qvar2`, `_qmsg`, and monster-completion trigger values through the same
+authoritative persistence boundary. Content schema 0.65
 adds validated native level-range generation metadata in
 `level_generation.tsv`, including monster density, multiplayer scaling, and
 trap percentages. Content schema 0.64 adds validated native-compatible `quest_types.tsv`

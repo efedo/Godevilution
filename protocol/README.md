@@ -137,6 +137,10 @@ Windows toolchain command.
   only for accepted movement, attack, and cast intents, persists it in saves,
   and uses it for directional death-drop placement. Non-South state uses the
   tagged `godevilution-player-facing-v1` hash extension.
+- `QuestSnapshot` fields 9-12 carry optional native quest synchronization values:
+  `_qvar1`, `_qvar2`, `_qmsg`, and a validated monster identity whose defeat
+  advances the quest. Zero values are additive defaults and preserve legacy
+  hashes and peer compatibility.
 - `ItemStateSnapshot.base_name`, `identified_name`, and optional
   `native_cursor_graphic` fields 59-61 carry runtime-authored presentation for
   dynamic items such as PvP ears. A dynamic identity is complete only when
