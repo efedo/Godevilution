@@ -531,6 +531,11 @@ future breaking protocol version may give those fields distinct meanings.
 
 Recent spell slices
 
+Schema 0.58 externalizes native rune-source identity mapping through the active
+spell catalog. Rune of Stone miscellaneous ID `51` resolves to stable Stone
+Curse spell ID `8`; legacy rune IDs remain preserved while the other rune
+behaviors await their own migration slices.
+
 Schema 0.57 externalizes Golem's native 12-frame death-animation timing on
 spell row `52`. The server carries remaining terminal ticks through
 snapshots, version-1 saves, canonical hashes, and protocol fields 34-35, then

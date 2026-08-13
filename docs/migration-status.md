@@ -646,6 +646,14 @@ stable identity separately from the legacy native-ID ceiling. The live Godot
 protocol suite verifies Etherealize selected through an external loadout,
 memorized-source admission, and typed status projection.
 
+Content schema 0.58 adds a validated `consumable_misc_id` spell mapping for
+native rune sources. The base pack maps Rune of Stone miscellaneous ID `51` to
+stable Stone Curse spell ID `8`; legacy item parsing now preserves all five
+rune IDs, and both loadout validation and combat resolution use the active
+spell catalog instead of treating native misc IDs as stable spell identities.
+The remaining Rune of Fire, Light, Nova, and Immolation behaviors remain
+follow-up migration work.
+
 Content schema 0.57 externalizes Golem's native 12-frame death-animation
 timing on spell row `52`. Remaining terminal ticks cross snapshots, saves,
 hashes, and protocol fields 34-35; the server removes the minion after the
