@@ -190,6 +190,76 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            randomSeed: 1);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-sorcerer-recharge", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(2U, player.CharacterClassId);
+        Assert.Equal(27U, player.AbilitySpellId);
+        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
+        var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
+        Assert.Equal(30, staff.State.SpellId);
+        Assert.Equal(40, staff.State.Charges);
+        Assert.Equal(40, staff.State.MaxCharges);
+
+        var castSequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = (uint)staff.State.SpellId,
+                TargetEntityId = target.EntityId,
+                Source = CastSourceKind.ChargedItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(
+            CommandStatus.Accepted,
+            (await WaitForAcknowledgementAsync(client, castSequence)).Status);
+        var consumed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(item => item.Slot == 4).State.Charges == 39);
+        model.Apply(consumed);
+
+        var rechargeSequence = client.Queue(new Command {
+            RechargeItemRequested = new RechargeItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = 4,
+                },
+                Source = ItemServiceSourceKind.ClassAbility,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var rechargeAcknowledgement = await WaitForAcknowledgementAsync(client, rechargeSequence);
+        Assert.True(
+            rechargeAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer Recharge was {rechargeAcknowledgement.Status}/{rechargeAcknowledgement.RejectReason} at tick {rechargeAcknowledgement.AppliedTick}; staff had {staff.State.Charges}/{staff.State.MaxCharges} charges before the cast.");
+
+        var recharged = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Equipment
+                .Single(item => item.Slot == 4).State is { Charges: 39, MaxCharges: 39 });
+        var rechargedStaff = Assert.Single(recharged.Snapshot!.Players).Equipment
+            .Single(item => item.Slot == 4).State;
+        Assert.Equal(39, rechargedStaff.Charges);
+        Assert.Equal(39, rechargedStaff.MaxCharges);
+    }
+
+    [Fact]
     public async Task LiveServerConsumesTheExactDeclaredCastSource()
     {
         using var server = await StartedServer.StartAsync(
