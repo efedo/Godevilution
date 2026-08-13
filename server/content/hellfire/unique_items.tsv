@@ -50,3 +50,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1015	The Celestial Bow	122	2	1200	NOMINSTR	0	0
 1015	The Celestial Bow	122	2	1200	DAMMOD	2	2
 1015	The Celestial Bow	122	2	1200	SETAC	5	5
+1016	Deadly Hunter	123	3	8750	3XDAMVDEM	0	0
+1016	Deadly Hunter	123	3	8750	TOHIT	20	20
+1016	Deadly Hunter	123	3	8750	MAG_CURSE	5	5

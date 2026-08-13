@@ -583,6 +583,10 @@ Schema 0.74 adds the native-derived Hellfire The Celestial Bow base item and
 unique definition (`unique_id=1015`) with its long-bow identity,
 minimum-strength, damage, and armor powers.
 
+Schema 0.75 adds the native-derived Hellfire Deadly Hunter base item and
+unique definition (`unique_id=1016`) with its composite-bow identity,
+triple-damage, hit, and magic-curse powers.
+
 Schema 0.67 adds native monster resistance percentages to `monster_types.tsv`.
 Encounter rows may override those values per instance; otherwise the validated
 type metadata supplies the authoritative resistance projection.

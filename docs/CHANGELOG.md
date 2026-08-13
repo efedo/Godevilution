@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Deadly Hunter (`unique_id=1016`) through schema 0.75,
+  including its native composite-bow base item and triple-damage, hit, and
+  magic-curse powers.
+
 - Externalize Hellfire The Celestial Bow (`unique_id=1015`) through schema
   0.74, including its native long-bow base item and minimum-strength,
   damage, and armor powers.

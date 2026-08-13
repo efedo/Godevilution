@@ -43,8 +43,8 @@ Status date: 2026-08-13
   native-derived encounter set plus the Undead Crown, Empyrean Band, Optic
   Amulet, Ring of Truth, Harlequin Crest, Veil of Steel, Arkaine's Valor, and
   Griswold's Edge, Bovine Plate, The Rift Bow, The Butcher's Cleaver, and The
-  Needler, and The Celestial Bow unique items, and Sorcerer Firebolt staff
-  through Diablo activation and the live Godot protocol
+  Needler, The Celestial Bow, and Deadly Hunter unique items, and Sorcerer
+  Firebolt staff through Diablo activation and the live Godot protocol
   path, including charged-source validation, charge consumption, and target
   damage; blocked cell generation and remaining Hellfire world and catalog
   tables stay explicit follow-up content migrations.
@@ -705,6 +705,9 @@ native hit, fixed-damage, and attack-speed powers.
 Content schema 0.74 adds the native-derived Hellfire The Celestial Bow base
 item and unique definition (`unique_id=1015`) with its long-bow identity,
 minimum-strength, damage, and armor powers.
+Content schema 0.75 adds the native-derived Hellfire Deadly Hunter base item
+and unique definition (`unique_id=1016`) with its composite-bow identity,
+triple-damage, hit, and magic-curse powers.
 Content schema 0.67 adds native monster fire, lightning, and magic resistance
 percentages to `monster_types.tsv`; encounter rows inherit those values unless
 they provide an explicit per-instance override. Content schema 0.66 adds
