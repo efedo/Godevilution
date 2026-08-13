@@ -540,6 +540,9 @@ bad-seed discard behavior, rejects excluded quest progression and linked object
 use, and carries the state through snapshots, saves, protocol field 6, and
 canonical hashes. Quest rows and transitions also preserve the native
 initial/active/done lifecycle and quest-log bit through protocol fields 7-8.
+Optional quest columns now also preserve native `_qvar1`, `_qvar2`, and `_qmsg`
+values through authoritative saves, snapshots, protocol fields 9-11, and
+compatibility-aware state hashes.
 Multiplayer activation leaves pool exclusions disabled.
 
 Schema 0.65 adds validated native level-range generation metadata through

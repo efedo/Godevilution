@@ -14,6 +14,10 @@ All notable changes to this fork are documented below.
   7-8, and canonical hashes; refresh the affected deterministic replay
   checkpoints.
 
+- Preserve native quest `_qvar1`, `_qvar2`, and `_qmsg` state through optional
+  content columns, authoritative saves, snapshots, protocol fields 9-11, and
+  compatibility-aware hashes.
+
 ## 2026-08-12
 
 - Advance the Diablo content schema to 0.66 with validated quest pools and
