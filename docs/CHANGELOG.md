@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Butcher's Cleaver (`unique_id=1013`) through schema
+  0.72, including its native two-handed axe base item and strength,
+  fixed-damage, and durability powers.
+
 - Externalize Hellfire The Rift Bow (`unique_id=1012`) through schema 0.71,
   reusing the validated Short Bow base item with native arrow-velocity,
   damage, and dexterity-curse powers.

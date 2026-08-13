@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.71.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.72.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "0.71.0"),
+            new ContentSchemaIdentity("devilution.diablo", "0.72.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -301,6 +301,15 @@ public sealed class ShippedContentTests
         Assert.Equal(2, riftBow.PlusDamageModifier);
         Assert.Equal(-3, riftBow.PlusDexterity);
         Assert.NotEqual(0U, riftBow.Flags & 0x00000004U);
+        var butchersCleaver = hellfireItems.GenerateUnique(1013, 0x12345678, 1);
+        Assert.Equal(1013, butchersCleaver.UniqueId);
+        Assert.Equal(3650, butchersCleaver.Value);
+        Assert.Equal(6, butchersCleaver.ItemIndex);
+        Assert.Equal(4, butchersCleaver.MinDamage);
+        Assert.Equal(24, butchersCleaver.MaxDamage);
+        Assert.Equal(10, butchersCleaver.PlusStrength);
+        Assert.Equal(10, butchersCleaver.Durability);
+        Assert.Equal(10, butchersCleaver.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

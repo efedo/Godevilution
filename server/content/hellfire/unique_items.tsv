@@ -41,3 +41,6 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1012	The Rift Bow	103	1	1800	RNDARROWVEL	0	0
 1012	The Rift Bow	103	1	1800	DAMMOD	2	2
 1012	The Rift Bow	103	1	1800	DEX_CURSE	3	3
+1013	The Butcher's Cleaver	121	1	3650	STR	10	10
+1013	The Butcher's Cleaver	121	1	3650	SETDAM	4	24
+1013	The Butcher's Cleaver	121	1	3650	SETDUR	10	10
