@@ -693,6 +693,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void QuestLifecycleStateChangesTheHash()
+    {
+        var initial = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3001, RequiredProgress = 1, Initial = true },
+            },
+        };
+        var logged = initial.Clone();
+        logged.Quests[0].Logged = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(initial),
+            SnapshotStateHasher.Compute(logged));
+    }
+
+    [Fact]
     public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
     {
         var baseline = new Snapshot();

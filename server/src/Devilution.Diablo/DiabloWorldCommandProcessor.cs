@@ -683,9 +683,13 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
             && !quest.Unavailable
             && !quest.Completed && quest.LevelId == player.LevelId) {
+            quest.Active = true;
+            quest.Logged = true;
             quest.Progress++;
-            if (quest.Progress >= quest.RequiredProgress)
+            if (quest.Progress >= quest.RequiredProgress) {
                 quest.Completed = true;
+                quest.Active = false;
+            }
         }
 
         if (@object.EffectAmount <= 0)
@@ -773,9 +777,13 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
+        quest.Active = true;
+        quest.Logged = true;
         quest.Progress++;
-        if (quest.Progress >= quest.RequiredProgress)
+        if (quest.Progress >= quest.RequiredProgress) {
             quest.Completed = true;
+            quest.Active = false;
+        }
         return DiabloWorldIntentResult.Accepted;
     }
 

@@ -475,6 +475,10 @@ message QuestSnapshot {
 	bool completed = 5;
 	// Native single-player quest-pool exclusion state.
 	bool unavailable = 6;
+	// Native QUEST_INIT state; omitted means the legacy active behavior.
+	bool initial = 7;
+	// Native quest-log visibility bit.
+	bool logged = 8;
 }
 
 message ProjectileSnapshot {

@@ -103,7 +103,9 @@ public sealed record DiabloQuestState(
     uint Progress,
     uint RequiredProgress,
     bool Completed,
-    bool Unavailable = false);
+    bool Unavailable = false,
+    bool Active = true,
+    bool Logged = false);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -335,7 +337,9 @@ public sealed partial class DiabloSimulation
                     quest.Progress,
                     quest.RequiredProgress,
                     quest.Completed,
-                    quest.Unavailable))
+                    quest.Unavailable,
+                    quest.Active,
+                    quest.Logged))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1294,6 +1298,8 @@ public sealed partial class DiabloSimulation
                 target.RequiredProgress = quest.RequiredProgress;
                 target.Completed = quest.Completed;
                 target.Unavailable = quest.Unavailable;
+                target.Active = quest.Active && !quest.Completed && !quest.Unavailable;
+                target.Logged = quest.Logged && !quest.Unavailable;
             } else {
                 WorldState.Quests.Add(quest.QuestId, new AuthoritativeQuestState(
                     quest.QuestId,
@@ -1301,7 +1307,9 @@ public sealed partial class DiabloSimulation
                     quest.RequiredProgress,
                     quest.Progress,
                     quest.Completed,
-                    quest.Unavailable));
+                    quest.Unavailable,
+                    quest.Active,
+                    quest.Logged));
             }
         }
     }

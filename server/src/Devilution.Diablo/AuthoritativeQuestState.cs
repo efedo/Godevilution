@@ -11,11 +11,13 @@ public sealed class AuthoritativeQuestState
         uint requiredProgress,
         uint progress = 0,
         bool completed = false,
-        bool unavailable = false)
+        bool unavailable = false,
+        bool active = true,
+        bool logged = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
-        if (unavailable && (completed || progress != 0))
+        if (unavailable && (completed || progress != 0 || logged))
             throw new ArgumentOutOfRangeException(nameof(unavailable));
         QuestId = questId;
         LevelId = levelId;
@@ -23,6 +25,8 @@ public sealed class AuthoritativeQuestState
         Progress = progress;
         Completed = completed || progress == requiredProgress;
         Unavailable = unavailable;
+        Active = active && !Completed && !Unavailable;
+        Logged = logged && !Unavailable;
     }
 
     public uint QuestId { get; }
@@ -32,6 +36,10 @@ public sealed class AuthoritativeQuestState
     public bool Completed { get; set; }
     /** Native single-player pool state; unavailable quests cannot advance. */
     public bool Unavailable { get; set; }
+    /** Native QUEST_INIT/QUEST_ACTIVE distinction; legacy rows default active. */
+    public bool Active { get; set; }
+    /** Native quest-log visibility bit set when the quest is surfaced. */
+    public bool Logged { get; set; }
 }
 
 /** External quest definitions and initial progress. */
@@ -54,7 +62,9 @@ public static class AuthoritativeQuestCatalog
                 row.RequiredUInt32("required_progress"),
                 row.OptionalUInt32("progress"),
                 row.OptionalInt32("completed") != 0,
-                row.OptionalInt32("unavailable") != 0);
+                row.OptionalInt32("unavailable") != 0,
+                active: row.OptionalInt32("initial") == 0,
+                logged: row.OptionalInt32("logged") != 0);
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");
@@ -70,7 +80,12 @@ public static class AuthoritativeQuestCatalog
         ArgumentNullException.ThrowIfNull(quests);
         ArgumentNullException.ThrowIfNull(questPools);
         var unavailable = questPools.SelectUnavailableQuestIds(seed).ToHashSet();
-        foreach (var quest in quests)
+        foreach (var quest in quests) {
             quest.Unavailable = !quest.Completed && unavailable.Contains(quest.QuestId);
+            if (quest.Unavailable) {
+                quest.Active = false;
+                quest.Logged = false;
+            }
+        }
     }
 }

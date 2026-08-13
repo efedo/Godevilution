@@ -110,6 +110,8 @@ internal static class DiabloProtocolMapper
                 RequiredProgress = quest.RequiredProgress,
                 Completed = quest.Completed,
                 Unavailable = quest.Unavailable,
+                Initial = !quest.Active && !quest.Completed && !quest.Unavailable,
+                Logged = quest.Logged,
             });
         }
         foreach (var projectile in source.Projectiles) {
@@ -365,7 +367,9 @@ internal static class DiabloProtocolMapper
                 quest.Progress,
                 quest.RequiredProgress,
                 quest.Completed,
-                quest.Unavailable)).ToArray(),
+                quest.Unavailable,
+                !quest.Initial && !quest.Completed && !quest.Unavailable,
+                quest.Logged)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

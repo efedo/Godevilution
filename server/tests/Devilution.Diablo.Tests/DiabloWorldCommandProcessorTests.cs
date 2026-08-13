@@ -652,6 +652,8 @@ public sealed class DiabloWorldCommandProcessorTests
             new DiabloAdvanceQuestIntent(30),
             1,
             [player]).Succeeded);
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
         Assert.True(processor.Execute(
             player,
             new DiabloAdvanceQuestIntent(30),
@@ -659,6 +661,7 @@ public sealed class DiabloWorldCommandProcessorTests
             [player]).Succeeded);
         Assert.Equal(2U, quest.Progress);
         Assert.True(quest.Completed);
+        Assert.False(quest.Active);
 
         AssertRejected(
             processor.Execute(player, new DiabloAdvanceQuestIntent(30), 3, [player]),

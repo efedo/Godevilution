@@ -59,4 +59,17 @@ public sealed class AuthoritativeQuestCatalogTests
         Assert.True(quest.Unavailable);
         Assert.False(quest.Completed);
     }
+
+    [Fact]
+    public void QuestStateCanLoadNativeInitialAndLoggedFlags()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tinitial\tlogged\n"
+                + "3001\t1\t3\t0\t0\t1\t1\n");
+
+        var quest = Assert.Single(quests);
+        Assert.False(quest.Active);
+        Assert.True(quest.Logged);
+    }
 }

@@ -303,6 +303,14 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-quest-unavailable-v1");
                     hasher.AppendBool(true);
                 }
+                if (quest.Initial && !quest.Completed && !quest.Unavailable) {
+                    hasher.AppendString("godevilution-quest-initial-v1");
+                    hasher.AppendBool(true);
+                }
+                if (quest.Logged) {
+                    hasher.AppendString("godevilution-quest-logged-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 
