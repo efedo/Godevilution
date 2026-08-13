@@ -82,6 +82,33 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerProjectsTheHellfireSorcererFireboltStaff()
+    {
+        var hellfireRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "hellfire");
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            hellfireRoot);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-hellfire-sorcerer", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var player = Assert.Single(initial.Snapshot!.Players);
+        var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
+
+        Assert.Equal(1, staff.State.SpellId);
+        Assert.Equal(166, staff.State.ItemIndex);
+        Assert.Equal(40, staff.State.Charges);
+        Assert.Equal(40, staff.State.MaxCharges);
+    }
+
+    [Fact]
     public async Task LiveServerConsumesTheExactDeclaredCastSource()
     {
         using var server = await StartedServer.StartAsync(
