@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.7 adds the native-derived Hellfire Hammer of Jholm base item and
+unique definition (`unique_id=1048`) with its Maul identity, fixed damage,
+indestructibility, strength, and to-hit powers.
+
 Schema 1.6 adds the native-derived Hellfire Crackrust base item and unique
 definition (`unique_id=1047`) with its Mace identity, attributes,
 indestructibility, all-resistance, damage, and spell-level powers.

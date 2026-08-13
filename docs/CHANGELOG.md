@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Hammer of Jholm (`unique_id=1048`) through schema 1.7,
+  adding its native Maul base item with fixed damage, indestructibility,
+  strength, and to-hit powers.
+
 - Externalize Hellfire Crackrust (`unique_id=1047`) through schema 1.6,
   adding its native Mace base item with attributes, indestructibility,
   all-resistance, damage, and spell-level powers.

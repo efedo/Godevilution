@@ -178,3 +178,7 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1047	Crackrust	142	1	11375	ALLRES	15	15
 1047	Crackrust	142	1	11375	DAMP	50	50
 1047	Crackrust	142	1	11375	SPLLVLADD	-1	-1
+1048	Hammer of Jholm	143	1	8700	SETDAM	4	10
+1048	Hammer of Jholm	143	1	8700	INDESTRUCTIBLE	0	0
+1048	Hammer of Jholm	143	1	8700	STR	3	3
+1048	Hammer of Jholm	143	1	8700	TOHIT	15	15

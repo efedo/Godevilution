@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.6.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.7.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.6.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.7.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -712,6 +712,18 @@ public sealed class ShippedContentTests
         Assert.Equal(-1, crackrust.SpellLevelAdd);
         Assert.Equal(255, crackrust.Durability);
         Assert.Equal(255, crackrust.MaxDurability);
+        var hammerOfJholm = hellfireItems.GenerateUnique(1048, 0x12345678, 1);
+        Assert.Equal(1048, hammerOfJholm.UniqueId);
+        Assert.Equal(8700, hammerOfJholm.Value);
+        Assert.Equal(143, hammerOfJholm.ItemIndex);
+        Assert.Equal(4, hammerOfJholm.MinDamage);
+        Assert.Equal(10, hammerOfJholm.MaxDamage);
+        Assert.Equal(55, hammerOfJholm.MinimumStrength);
+        Assert.Equal(2, hammerOfJholm.EquipLocation);
+        Assert.Equal(3, hammerOfJholm.PlusStrength);
+        Assert.Equal(15, hammerOfJholm.PlusToHit);
+        Assert.Equal(255, hammerOfJholm.Durability);
+        Assert.Equal(255, hammerOfJholm.MaxDurability);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
