@@ -240,6 +240,10 @@ native `43 + 2 * intelligence` probability boundary. Its
 resulting monster/player positions, damage event, and blocked-lane fallback are
 ordinary authoritative snapshot state; clients do not simulate the charge.
 
+The `SkeletonRanged` identity drives a server-owned clear-lane arrow boundary
+using the native `3 + 2 * intelligence` attack band. Its resolved damage is an
+ordinary directed gameplay event; clients do not perform the hit roll.
+
 `ProjectileSnapshot` fields 14 through 27 carry behavior, phase, origin, 16.16
 traveled distance and velocity, original direction, wandering path
 position/cadence, speed, impact lifetime, and resistance tuning. Field 28 stores

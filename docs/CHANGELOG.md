@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 44, replay fixtures, and canonical hashes; Rhino charge
   probability now follows the native intelligence boundary.
+- Route the native `SkeletonRanged` clear-lane arrow boundary through the
+  authoritative accuracy, damage, and directed-event path, retaining blocked
+  lane fallback.
 
 ## 2026-08-13
 

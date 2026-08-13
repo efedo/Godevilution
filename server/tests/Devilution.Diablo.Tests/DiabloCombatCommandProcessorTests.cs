@@ -1310,6 +1310,75 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 14 ^ 9 ^ 7 = 0, inside the native 3 + 2 * intelligence band.
+        var deliveries = processor.AdvanceTick(14, [player]);
+
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(98, player.Life);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(2, damage.Amount);
+    }
+
+    [Fact]
+    public void SkeletonRangedAiFallsBackToMovementWhenTheArrowLaneIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [4],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(14, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

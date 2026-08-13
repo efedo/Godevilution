@@ -207,6 +207,40 @@ public sealed class AuthoritativeCombatRules
         return Math.Max(1, baseDamage);
     }
 
+    /** Resolves a native monster arrow hit, including its distance penalty. */
+    public int ResolveMonsterRangedAttackDamage(
+        int baseDamage,
+        int monsterToHit,
+        int monsterLevel,
+        uint targetCharacterLevel,
+        uint targetLevelId,
+        int targetArmorClass,
+        int distance,
+        uint seed)
+    {
+        if (baseDamage <= 0 || monsterToHit <= 0)
+            return 0;
+        if (monsterToHit > 255
+            || monsterLevel < 0
+            || targetArmorClass < 0
+            || distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(monsterToHit));
+
+        var minimumHitChance = targetLevelId switch {
+            14 => 20,
+            15 => 25,
+            16 => 30,
+            _ => 10,
+        };
+        var levelDelta = checked(2 * (monsterLevel - checked((int)targetCharacterLevel)));
+        var hitChance = Math.Max(
+            minimumHitChance,
+            checked(monsterToHit + levelDelta + 30 - (2 * distance) - targetArmorClass));
+        if (!ResolveAttackHit(Math.Clamp(hitChance, 0, 100), seed))
+            return 0;
+        return Math.Max(1, baseDamage);
+    }
+
     /** Resolves the native hit roll independently from post-armor damage. */
     public bool ResolveAttackHit(int hitChancePercent, uint seed)
     {

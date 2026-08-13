@@ -189,6 +189,9 @@ Hellfire rows copy native `monstdat.tsv` intelligence values; authoritative AI
 probability bands consume the validated value while clients continue to treat it
 as server-owned metadata. The Rhino charge now uses the native `43 + 2 *
 intelligence` boundary.
+The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
+attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
+damage event, and blocked-lane movement fallback.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

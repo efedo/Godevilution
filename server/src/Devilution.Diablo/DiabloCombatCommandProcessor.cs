@@ -3717,6 +3717,8 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(victim.PositionY - target.PositionY));
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
+                continue;
             if (distance <= 1) {
                 if (IsPlayerProtectedByFlash(victim)
                     || IsPlayerEtherealized(victim))
@@ -3834,6 +3836,80 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    /** Native SkeletonBow AI: fire an arrow when its deterministic attack band and lane are clear. */
+    private bool TryAdvanceSkeletonRangedAttack(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        int distance)
+    {
+        if (monster.NativeAi != "SkeletonRanged"
+            || distance < 2
+            || monster.ToHit <= 0
+            || monster.MaxDamage <= 0
+            || IsPlayerProtectedByFlash(player)
+            || IsPlayerEtherealized(player))
+            return false;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var attackChance = Math.Min(100, 3 + (2 * monster.Intelligence));
+        if (attackSeed % 100U >= (uint)attackChance
+            || !world.HasLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return false;
+
+        var armorClass = player.ArmorClass;
+        if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+            armorClass = AuthoritativeEquipmentIncomingDamageRules
+                .ApplyHellfireMonsterClassArmor(
+                    armorClass,
+                    monster.IsDemon,
+                    monster.IsUndead,
+                    player.Equipment);
+        }
+        var attackDamage = SelectNativeDamage(
+            monster.MinDamage,
+            monster.MaxDamage,
+            attackSeed);
+        var damage = rules.ResolveMonsterRangedAttackDamage(
+            attackDamage,
+            monster.ToHit,
+            monster.MonsterLevel,
+            player.CharacterLevel,
+            monster.LevelId,
+            armorClass,
+            distance,
+            attackSeed);
+        damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+            damage,
+            rules.MinimumDamage,
+            player.Equipment);
+        var damageResult = playerDamage.Apply(player, damage);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                player,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    monster.EntityId,
+                    player.EntityId,
+                    damageResult.IncomingDamageQ6)));
+        }
+        if (player.Life == 0)
+            StartPlayerDeath(
+                player,
+                monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        return true;
     }
 
     /** Native Rhino AI charge: clear long-range lanes end in a special melee hit. */
@@ -3991,8 +4067,13 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         uint attackSeed)
     {
-        var range = checked(target.MaxDamageSpecial - target.MinDamageSpecial + 1);
-        return checked(target.MinDamageSpecial + (int)(attackSeed % (uint)range));
+        return SelectNativeDamage(target.MinDamageSpecial, target.MaxDamageSpecial, attackSeed);
+    }
+
+    private static int SelectNativeDamage(int minimum, int maximum, uint attackSeed)
+    {
+        var range = checked(maximum - minimum + 1);
+        return checked(minimum + (int)(attackSeed % (uint)range));
     }
 
     private void AdvancePlayerMinion(

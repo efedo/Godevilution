@@ -142,6 +142,9 @@ Status date: 2026-08-13
   retained Hellfire `monstdat.tsv` rows and persists through authoritative
   targets, snapshots, saves, protocol field 44, and canonical hashes. Rhino
   charge probability now uses the native `43 + 2 * intelligence` boundary.
+- The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
+  its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
+  blocked-lane fallback resolve through the authoritative directed event path.
 - Native class melee and ranged to-hit is now authoritative for initialized
   content players: the validated class catalog applies `level + dexterity / 2`
   or `level + dexterity`, respectively, plus each class's external base
