@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.64.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.65.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.64.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.65.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1437,6 +1437,19 @@ public sealed class ShippedContentTests
         Assert.Equal(100, shirotachi.MaxDurability);
         Assert.NotEqual(0U, shirotachi.Flags & 0x00100000U);
         Assert.NotEqual(0U, shirotachi.Flags & 0x00000020U);
+        var eaterOfSouls = hellfireItems.GenerateUnique(1106, 0x12345678, 23);
+        Assert.Equal(1106, eaterOfSouls.UniqueId);
+        Assert.Equal(42000, eaterOfSouls.Value);
+        Assert.Equal(129, eaterOfSouls.ItemIndex);
+        Assert.Equal(1, eaterOfSouls.EquipLocation);
+        Assert.Equal(8, eaterOfSouls.MinDamage);
+        Assert.Equal(16, eaterOfSouls.MaxDamage);
+        Assert.Equal(3200, eaterOfSouls.PlusHitPoints);
+        Assert.Equal(255, eaterOfSouls.Durability);
+        Assert.Equal(255, eaterOfSouls.MaxDurability);
+        Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00010000U);
+        Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00004000U);
+        Assert.NotEqual(0U, eaterOfSouls.Flags & 0x00000040U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

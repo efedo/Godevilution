@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Eater of Souls (`unique_id=1106`) through schema 1.65,
+  reusing native Two-Handed Sword with indestructibility, life, life-steal,
+  mana-steal, and drain-life powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Shirotachi (`unique_id=1105`) through schema 1.64,
   reusing native Great Sword with one-handed, fastest-attack, target-armor,
   and lightning-damage powers.

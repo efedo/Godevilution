@@ -412,3 +412,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1105	Shirotachi	136	21	36000	FASTATTACK	4	4
 1105	Shirotachi	136	21	36000	TARGAC	2	2
 1105	Shirotachi	136	21	36000	LIGHTDAM	6	6
+1106	Eater of Souls	135	23	42000	INDESTRUCTIBLE	0	0
+1106	Eater of Souls	135	23	42000	LIFE	50	50
+1106	Eater of Souls	135	23	42000	STEALLIFE	5	5
+1106	Eater of Souls	135	23	42000	STEALMANA	5	5
+1106	Eater of Souls	135	23	42000	DRAINLIFE	0	0
