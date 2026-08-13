@@ -198,6 +198,11 @@ public sealed class ClientModelTests
                             RemainingTicks = 255,
                             Behavior = StatusEffectBehavior.Search,
                         },
+                        new StatusEffectSnapshot {
+                            EffectId = 53,
+                            RemainingTicks = 100,
+                            Behavior = StatusEffectBehavior.Etherealize,
+                        },
                     },
                 },
             },
@@ -222,7 +227,11 @@ public sealed class ClientModelTests
         Assert.Equal("Dead-RogueDM", model.Snapshot!.Players[0].CharacterName);
         Assert.True(model.Snapshot.Players[0].ManaShieldActive);
         Assert.Equal(
-            [StatusEffectBehavior.Infravision, StatusEffectBehavior.Search],
+            [
+                StatusEffectBehavior.Infravision,
+                StatusEffectBehavior.Search,
+                StatusEffectBehavior.Etherealize,
+            ],
             model.Snapshot.Players[0].StatusEffects.Select(effect => effect.Behavior));
         var ear = Assert.Single(model.Snapshot.WorldItems);
         Assert.Equal(0U, ear.ItemSeed);

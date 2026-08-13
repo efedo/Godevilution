@@ -178,7 +178,7 @@ public partial class HudPresentation : CanvasLayer
             selectedInventoryIndex = -1;
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
-            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
+            : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize) ? "   Etherealize" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
 
         commandFeedback.Text = FormatCommandResult(model.LastCommandResult);
         diagnostics.Text = FormatDiagnostics(model, client);
