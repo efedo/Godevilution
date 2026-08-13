@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire The Protector (`unique_id=1061`) through schema 1.20,
+  reusing the validated Short Staff base item with vitality, get-hit, armor,
+  charged-spell, and thorns powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Thundercall (`unique_id=1060`) through schema 1.19,
   adding its native Composite Staff base item with to-hit, lightning-damage,
   charged-spell, lightning-resistance, and light powers.

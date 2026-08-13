@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.20 adds the native-derived Hellfire The Protector unique definition
+(`unique_id=1061`), reusing the validated Short Staff base item with vitality,
+get-hit, armor, charged-spell, and thorns powers.
+
 Schema 1.19 adds the native-derived Hellfire Thundercall base item and unique
 definition (`unique_id=1060`) with its Composite Staff identity, to-hit,
 lightning-damage, charged-spell, lightning-resistance, and light powers.

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.19.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.20.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.19.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.20.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -893,6 +893,21 @@ public sealed class ShippedContentTests
         Assert.Equal(76, thundercall.MaxCharges);
         Assert.Equal(30, thundercall.PlusLightningResistance);
         Assert.Equal(2, thundercall.PlusLight);
+        var theProtector = hellfireItems.GenerateUnique(1061, 0x12345678, 16);
+        Assert.Equal(1061, theProtector.UniqueId);
+        Assert.Equal(17240, theProtector.Value);
+        Assert.Equal(152, theProtector.ItemIndex);
+        Assert.Equal(1, theProtector.MinDamage);
+        Assert.Equal(4, theProtector.MaxDamage);
+        Assert.Equal(0, theProtector.MinimumStrength);
+        Assert.Equal(2, theProtector.EquipLocation);
+        Assert.Equal(5, theProtector.PlusVitality);
+        Assert.Equal(-5, theProtector.PlusGetHit);
+        Assert.Equal(40, theProtector.ArmorClass);
+        Assert.Equal(2, theProtector.SpellId);
+        Assert.Equal(86, theProtector.Charges);
+        Assert.Equal(86, theProtector.MaxCharges);
+        Assert.NotEqual(0U, theProtector.Flags & 0x04000000U);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,

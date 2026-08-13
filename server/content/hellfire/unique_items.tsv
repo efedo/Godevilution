@@ -239,3 +239,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1060	Thundercall	150	14	22250	SPELL	3	76
 1060	Thundercall	150	14	22250	LIGHTRES	30	30
 1060	Thundercall	150	14	22250	LIGHT	2	2
+1061	The Protector	149	16	17240	VIT	5	5
+1061	The Protector	149	16	17240	GETHIT	5	5
+1061	The Protector	149	16	17240	SETAC	40	40
+1061	The Protector	149	16	17240	SPELL	2	86
+1061	The Protector	149	16	17240	THORNS	1	3
