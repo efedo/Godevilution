@@ -118,6 +118,9 @@ Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
 misses leave positions unchanged.
+Hellfire `ACAgainstDemons` and `ACAgainstUndead` item powers add 40 and 20
+armor respectively before autonomous monster hit resolution when the target
+monster carries the corresponding validated demon or undead capability.
 Native monster IDs are variant-local compatibility metadata; reverse lookup is
 available only for unambiguous IDs in a composed catalog, without making the
 engine parse TSV.

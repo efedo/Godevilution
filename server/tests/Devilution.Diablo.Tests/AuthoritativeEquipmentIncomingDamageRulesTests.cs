@@ -67,4 +67,60 @@ public sealed class AuthoritativeEquipmentIncomingDamageRulesTests
                 1,
                 equipment));
     }
+
+    [Fact]
+    public void AppliesHellfireMonsterClassArmorOncePerEligibleFlag()
+    {
+        var equipment = new[] {
+            new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag,
+                }),
+            new EquippedStoreItem(
+                5,
+                2,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.AgainstUndeadFlag,
+                }),
+            new EquippedStoreItem(
+                6,
+                3,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Magical = 1,
+                    Identified = false,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag
+                        | AuthoritativeEquipmentIncomingDamageRules.AgainstUndeadFlag,
+                }),
+        };
+
+        Assert.Equal(
+            70,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
+                30,
+                targetDemon: true,
+                targetUndead: false,
+                equipment));
+        Assert.Equal(
+            50,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
+                30,
+                targetDemon: false,
+                targetUndead: true,
+                equipment));
+        Assert.Equal(
+            30,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
+                30,
+                targetDemon: false,
+                targetUndead: false,
+                equipment));
+    }
 }

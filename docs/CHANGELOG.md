@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Apply native Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment
+  armor bonuses to authoritative autonomous monster hits.
 - Externalize native monster demon-class capability through schema 1.71 and
   apply usable identified `TripleDemonDamage` equipment at the authoritative
   physical attack boundary.

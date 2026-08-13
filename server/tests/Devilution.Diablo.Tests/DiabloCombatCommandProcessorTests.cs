@@ -886,6 +886,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireMonsterClassArmorFlagsReduceAutonomousMonsterDamage()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 50,
+            aggroRange: 5,
+            demon: true);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag,
+                })]);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(90, player.Life);
+
+        var baseMonster = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            20,
+            attackDamage: 50,
+            aggroRange: 5,
+            demon: true);
+        var basePlayer = CreatePlayer(
+            entityId: 8,
+            life: 100,
+            lifeMaximum: 100,
+            equipment: player.Equipment);
+        var baseProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [baseMonster]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Diablo));
+
+        Assert.Single(baseProcessor.AdvanceTick(1, [basePlayer]));
+        Assert.Equal(50, basePlayer.Life);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

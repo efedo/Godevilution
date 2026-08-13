@@ -72,6 +72,9 @@ Status date: 2026-08-13
   non-petrified physical target one valid unoccupied cell away from the
   attacker; the existing authoritative position snapshot/hash boundary owns
   the resulting movement.
+- Hellfire `ACAgainstDemons` and `ACAgainstUndead` equipment flags now add the
+  native 40/20 armor bonuses before authoritative autonomous monster damage;
+  unusable and unidentified magical equipment remains excluded.
 - Quest type identity is now externalized through validated `quest_types.tsv`
   rows covering the base and Hellfire native quest IDs. Quest-state rows must
   resolve a declared stable/native identity; quest behavior and remaining

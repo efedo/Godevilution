@@ -3443,9 +3443,18 @@ public sealed class DiabloCombatCommandProcessor
                 if (IsPlayerProtectedByFlash(victim)
                     || IsPlayerEtherealized(victim))
                     continue;
+                var armorClass = victim.ArmorClass;
+                if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+                    armorClass = AuthoritativeEquipmentIncomingDamageRules
+                        .ApplyHellfireMonsterClassArmor(
+                            armorClass,
+                            target.IsDemon,
+                            target.IsUndead,
+                            victim.Equipment);
+                }
                 var damage = rules.ResolveAttackDamage(
                     target.AttackDamage,
-                    victim.ArmorClass,
+                    armorClass,
                     unchecked((uint)tick ^ target.EntityId ^ victim.EntityId));
                 damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
                     damage,
