@@ -408,6 +408,94 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerUsesEtherealizeFromExternalMemorizedLoadout()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Etherealize-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.etherealize-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "0.57.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t53\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingManaOverride: 10000);
+            await using var client = new AuthoritativeClient(
+                CreateOptions(server, "godot-etherealize-overlay", requestedClassId: 2));
+
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            var initial = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is not null);
+            var model = new AuthoritativeClientModel();
+            model.Apply(initial);
+            var player = Assert.Single(model.Snapshot!.Players);
+            Assert.Equal(2U, player.CharacterClassId);
+            Assert.Equal(27U, player.AbilitySpellId);
+            var spell = Assert.Single(
+                player.MemorizedSpells,
+                memorized => memorized.SpellId == 53);
+            Assert.Equal(1U, spell.Level);
+
+            var sequence = client.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 53,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Etherealize was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; memorized spell was {spell.SpellId} level {spell.Level}.");
+
+            var etherealized = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot?.Players.Single().StatusEffects
+                    .Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize
+                        && effect.RemainingTicks > 0) == true);
+            var effect = Assert.Single(
+                Assert.Single(etherealized.Snapshot!.Players).StatusEffects,
+                candidate => candidate.Behavior == StatusEffectBehavior.Etherealize);
+            Assert.True(effect.RemainingTicks > 0);
+            Assert.Equal(0, effect.Magnitude);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnStaff()
     {
         using var server = await StartedServer.StartAsync(
@@ -914,6 +1002,7 @@ public sealed class LiveAuthoritativeServerTests
             CancellationToken cancellationToken,
             string? contentOverlayRoot = null,
             uint? startingGoldOverride = null,
+            int? startingManaOverride = null,
             uint? randomSeed = null)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
@@ -944,6 +1033,11 @@ public sealed class LiveAuthoritativeServerTests
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");
                 startInfo.ArgumentList.Add(startingGoldOverride.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture));
+            }
+            if (startingManaOverride.HasValue) {
+                startInfo.ArgumentList.Add("--starting-mana");
+                startInfo.ArgumentList.Add(startingManaOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (randomSeed.HasValue) {
