@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Dragon's Breach (`unique_id=1083`) through schema 1.42,
+  adding its native Kite Shield base item with armor, fire-resistance,
+  strength, magic-curse, and indestructible powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Split Skull Shield (`unique_id=1082`) through schema
   1.41, reusing the native Buckler base item with armor, life, strength,
   light-curse, and durability powers.

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.41.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.42.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.41.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.42.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -1198,6 +1198,18 @@ public sealed class ShippedContentTests
         Assert.Equal(10 << 6, splitSkullShield.PlusHitPoints);
         Assert.Equal(2, splitSkullShield.PlusStrength);
         Assert.Equal(-1, splitSkullShield.PlusLight);
+        var dragonsBreach = hellfireItems.GenerateUnique(1083, 0x12345678, 2);
+        Assert.Equal(1083, dragonsBreach.UniqueId);
+        Assert.Equal(19200, dragonsBreach.Value);
+        Assert.Equal(75, dragonsBreach.ItemIndex);
+        Assert.Equal(20, dragonsBreach.ArmorClass);
+        Assert.Equal(255, dragonsBreach.Durability);
+        Assert.Equal(255, dragonsBreach.MaxDurability);
+        Assert.Equal(50, dragonsBreach.MinimumStrength);
+        Assert.Equal(4, dragonsBreach.EquipLocation);
+        Assert.Equal(25, dragonsBreach.PlusFireResistance);
+        Assert.Equal(5, dragonsBreach.PlusStrength);
+        Assert.Equal(-5, dragonsBreach.PlusMagic);
         var hellfireSorcerer = activation.PlayerLoadouts.CreateTemplate(
             "hellfire-sorcerer",
             2,
