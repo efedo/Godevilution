@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## 2026-08-13
 
+- Externalize Hellfire Thundercall (`unique_id=1060`) through schema 1.19,
+  adding its native Composite Staff base item with to-hit, lightning-damage,
+  charged-spell, lightning-resistance, and light powers.
+
+## 2026-08-13
+
 - Externalize Hellfire Gleamsong (`unique_id=1059`) through schema 1.18,
   adding its native Short Staff base item with mana, strength-curse,
   vitality-curse, and charged-spell powers.

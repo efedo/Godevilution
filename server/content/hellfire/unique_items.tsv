@@ -234,3 +234,8 @@ unique_id	name	base_item_id	min_level	value	power	value1	value2
 1059	Gleamsong	149	8	6520	STR_CURSE	3	3
 1059	Gleamsong	149	8	6520	VIT_CURSE	3	3
 1059	Gleamsong	149	8	6520	SPELL	10	76
+1060	Thundercall	150	14	22250	TOHIT	35	35
+1060	Thundercall	150	14	22250	LIGHTDAM	1	10
+1060	Thundercall	150	14	22250	SPELL	3	76
+1060	Thundercall	150	14	22250	LIGHTRES	30	30
+1060	Thundercall	150	14	22250	LIGHT	2	2

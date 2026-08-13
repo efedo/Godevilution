@@ -635,6 +635,10 @@ Schema 0.87 adds the native-derived Hellfire Ice Shank base item and unique
 definition (`unique_id=1028`) with its Long Sword identity, fire resistance,
 durability, and strength powers.
 
+Schema 1.19 adds the native-derived Hellfire Thundercall base item and unique
+definition (`unique_id=1060`) with its Composite Staff identity, to-hit,
+lightning-damage, charged-spell, lightning-resistance, and light powers.
+
 Schema 1.18 adds the native-derived Hellfire Gleamsong base item and unique
 definition (`unique_id=1059`) with its Short Staff identity, mana,
 strength-curse, vitality-curse, and charged-spell powers.
