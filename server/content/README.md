@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.142.0` schema in
+It declares its identity and `devilution.diablo@1.143.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -734,7 +734,7 @@ optional host `--starting-life` and `--starting-mana` values are explicit Q6
 development overrides. They are not content defaults.
 
 `class_loadouts.tsv` defines one complete starting wallet, stable class-skill
-ID, and optional learned spell/level for every active class. Its companion
+ID, semantic `ability_kind`, and optional learned spell/level for every active class. Its companion
 `class_loadout_items.tsv` gives each starting item a contiguous per-class order,
 stable `item_id`, exact `Inventory`, `Equipment`, or `Belt` location, and native
 slot or inventory-grid anchor. Activation rejects missing classes, unknown
@@ -748,6 +748,10 @@ interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
 
+`ability_kind` identifies the content-owned semantic role of a class skill
+(`Repair`, `TrapDisarm`, `Recharge`, `Search`, `Identify`, or `Rage`) so
+presentation clients do not infer behavior from numeric spell IDs. The server
+still validates and admits the stable `ability_spell_id` independently.
 `ability_spell_id` and `starting_spell_id` use the stable authoritative
 `spells.tsv` identity, not the legacy native `SpellID` ceiling. This allows a
 content pack to expose stable rows such as Etherealize `53` while native
@@ -1242,7 +1246,7 @@ the complete target header even when they upsert only one row.
 | --- | --- | --- |
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, and class-ability tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
-| `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
+| `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
 | `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
@@ -1289,7 +1293,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.142.0"
+      "version": "1.143.0"
   },
   "dependencyConstraints": [
     {
@@ -1321,7 +1325,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.142.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.143.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1518,6 +1522,10 @@ values.
 Schema 1.142 adds the optional Hellfire class-armor bonus columns to
 `combat.tsv`; checked-in combat rows own the native demon/undead adjustments
 while older rows retain the compatibility values.
+Schema 1.143 adds the optional semantic `ability_kind` column to
+`class_loadouts.tsv`; checked-in loadouts identify each native class skill for
+typed client presentation while legacy loadout tables retain their numeric-ID
+compatibility behavior.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

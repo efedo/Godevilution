@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.143 externalizes semantic class-skill roles through validated
+  `class_loadouts.tsv` content and carries them through authoritative snapshots
+  and protocol projections, so Godot service presentation no longer infers
+  Repair, Trap Disarm, Recharge, Identify, Search, or Rage from numeric IDs.
+
 - Schema 1.142 externalizes native Hellfire class-armor adjustments through
   validated `combat.tsv` content; older combat definitions retain the 40/20
   demon/undead compatibility values.

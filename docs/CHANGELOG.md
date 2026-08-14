@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.143's semantic class-skill roles, carrying validated loadout
+  capability identities through authoritative snapshots and the protocol so
+  Godot no longer hard-codes class-service spell IDs.
 - Add schema 1.142's optional Hellfire class-armor bonuses, moving the native
   demon and undead adjustments into validated combat content while preserving
   compatibility values.

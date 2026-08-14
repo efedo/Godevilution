@@ -105,6 +105,10 @@ Windows toolchain command.
   `memorized_spells` carries stable spell IDs with nonzero levels. The list is
   canonicalized by spell ID. Native peers reject IDs above their supported
   spell range and rebuild their ability/learned-spell masks from each snapshot.
+- `PlayerSnapshot.ability_kind` is the additive semantic class-skill role from
+  validated loadout content. Godot uses it for typed presentation and service
+  intents instead of inferring class behavior from numeric spell IDs; an
+  unspecified value preserves compatibility for older snapshots.
 - Spell state extends the canonical player hash only when the ability is
   nonzero or the learned-spell list is nonempty. The tagged
   `godevilution-player-spells-v1` suffix preserves every pre-extension hash for
