@@ -1565,7 +1565,8 @@ available armor categories, while older rows retain native item-type compatibili
 behavior.
 The authoritative server centralizes these tag-first subtype decisions for
 combat, armor, loadout, and monster rules; direct legacy states still use their
-native item-type fallback.
+native item-type fallback. Gold identity likewise uses the validated `Gold` or
+`Currency` tag through this seam before the native type/index fallback.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
 - Centralize content-first equipment subtype classification for player combat,
   block eligibility, Hellfire weapon decay, loadouts, armor scaling, and monster
   weapon modifiers while retaining native item-type fallback for legacy state.
+- Route Gold identity through the shared validated item-classification seam for
+  wallet and death-drop topology, retaining native type/index fallback.
 - Centralize content-first weapon classification for attack-animation selection,
   Monk flexible blocking, and loadout off-hand validation; conflicting legacy
   item classes now follow validated `Weapon`/subtype tags with numeric fallback.

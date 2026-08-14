@@ -69,6 +69,10 @@ Status date: 2026-08-14
   decay, loadout validation, equipment damage, armor scaling, and monster
   weapon modifiers; metadata-free states retain their native item-type fallback.
 
+- Gold identity is now centralized in the same validated item-classification
+  helper for wallet topology, spending, generation, and death drops; legacy
+  states retain the native type/index fallback.
+
 - Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`, and
   `Staff` subtype tags to base and Hellfire item rows; player and monster
   weapon modifiers consume those tags before falling back to native item type.
