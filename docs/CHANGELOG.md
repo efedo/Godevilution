@@ -23,6 +23,9 @@ All notable changes to this fork are documented below.
   tick through the server-owned Q6 damage and death boundary.
 - Apply externalized `ABSHALFTRAP` equipment to armed-object damage through the
   server-owned Q6 interaction path.
+- Apply externalized `FIREDAM` and `LIGHTDAM` equipment channels after a
+  successful authoritative physical attack, including native eligibility,
+  resistance, deterministic rolls, and Q6 event state.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

@@ -137,6 +137,10 @@ Status date: 2026-08-14
 - Native `ABSHALFTRAP` is now server-owned at the armed-object boundary:
   eligible usable equipment halves trap damage before the player damage
   resolver, preserving exact Q6 event state.
+- Native `FIREDAM` and `LIGHTDAM` equipment are now server-owned at the
+  authoritative attack boundary: eligible usable equipment rolls inclusive
+  elemental channels, applies target resistance, and emits exact Q6 damage
+  events after a successful physical hit.
 - Native class `CriticalStrike` is now authoritative for eligible player
   attacks: the level-based roll is consumed only after a successful hit and
   doubles physical damage before armor and later class/item effects. The shared

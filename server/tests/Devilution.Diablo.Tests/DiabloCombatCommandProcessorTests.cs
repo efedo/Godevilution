@@ -1143,6 +1143,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AttackAppliesUsableIdentifiedElementalWeaponDamageThroughResistances()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 0,
+            fireResistance: 50,
+            lightningResistance: 25);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [
+                new EquippedStoreItem(
+                    4,
+                    42,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                        FireMinDamage = 4,
+                        FireMaxDamage = 4,
+                    }),
+                new EquippedStoreItem(
+                    5,
+                    43,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Flags = AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                        LightningMinDamage = 8,
+                        LightningMaxDamage = 8,
+                    }),
+                new EquippedStoreItem(
+                    6,
+                    44,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = false,
+                        Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                        FireMinDamage = 100,
+                        FireMaxDamage = 100,
+                    }),
+            ]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(82, target.HitPoints);
+        Assert.Equal(
+            [
+                (DiabloGameplayEventKind.Damage, 10, 640),
+                (DiabloGameplayEventKind.Damage, 2, 128),
+                (DiabloGameplayEventKind.Damage, 6, 384),
+            ],
+            result.Events.Select(gameplayEvent => (
+                gameplayEvent.Kind,
+                gameplayEvent.Amount,
+                gameplayEvent.AmountQ6)));
+    }
+
+    [Fact]
     public void RejectedAttackDoesNotMutateCombatState()
     {
         var target = new AuthoritativeCombatTarget(9, 4, 4, 10);

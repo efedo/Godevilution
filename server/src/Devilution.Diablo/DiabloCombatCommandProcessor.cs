@@ -434,6 +434,8 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
+        if (attackHit && target.HitPointsQ6 > 0)
+            ApplyEquipmentElementalDamage(player, target, events);
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
@@ -442,6 +444,33 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Applies native fire/lightning weapon channels after a physical hit. */
+    private void ApplyEquipmentElementalDamage(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        var elemental = AuthoritativeEquipmentElementalDamageRules.Resolve(
+            player.Equipment,
+            random.GenerateRnd);
+        if (elemental.Fire > 0) {
+            var fireDamage = rules.ResolveDamage(
+                elemental.Fire,
+                target.ArmorClass,
+                AuthoritativeDamageType.Fire,
+                target);
+            ApplyResolvedDamage(player, target, fireDamage, events);
+        }
+        if (elemental.Lightning > 0 && target.HitPointsQ6 > 0) {
+            var lightningDamage = rules.ResolveDamage(
+                elemental.Lightning,
+                target.ArmorClass,
+                AuthoritativeDamageType.Lightning,
+                target);
+            ApplyResolvedDamage(player, target, lightningDamage, events);
+        }
     }
 
     /** Applies native knockback after a successful non-lethal physical hit. */

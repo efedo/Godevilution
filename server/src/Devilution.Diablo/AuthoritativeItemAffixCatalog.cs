@@ -430,14 +430,16 @@ public sealed class AuthoritativeItemAffixCatalog
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
-                Flags = (state.Flags | 0x00000010U) & ~0x00000020U,
+                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
             },
             "LIGHTDAM" => state with {
                 LightningMinDamage = affix.Value1,
                 LightningMaxDamage = affix.Value2,
                 FireMinDamage = 0,
                 FireMaxDamage = 0,
-                Flags = (state.Flags | 0x00000020U) & ~0x00000010U,
+                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
             },
             "DEVASTATION" => state with {
                 HellfireDamageArmorFlags = state.HellfireDamageArmorFlags
@@ -462,14 +464,20 @@ public sealed class AuthoritativeItemAffixCatalog
             },
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
             "FIRE_ARROWS" => state with {
-                Flags = (state.Flags | 0x00000008U | 0x00000010U) & ~0x02000000U,
+                Flags = (state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag,
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
             },
             "LIGHT_ARROWS" => state with {
-                Flags = (state.Flags | 0x02000000U | 0x00000020U) & ~0x00000008U,
+                Flags = (state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 LightningMinDamage = affix.Value1,
                 LightningMaxDamage = affix.Value2,
                 FireMinDamage = 0,
@@ -502,14 +510,18 @@ public sealed class AuthoritativeItemAffixCatalog
             },
             "RNDSTEALLIFE" => state with { Flags = state.Flags | 0x00000002U },
             "ADDACLIFE" => state with {
-                Flags = state.Flags | 0x02000000U | 0x00000008U,
+                Flags = state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 1,
                 LightningMaxDamage = 0,
             },
             "ADDMANAAC" => state with {
-                Flags = state.Flags | 0x00000020U | 0x00000010U,
+                Flags = state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
                 FireMinDamage = affix.Value1,
                 FireMaxDamage = affix.Value2,
                 LightningMinDamage = 2,

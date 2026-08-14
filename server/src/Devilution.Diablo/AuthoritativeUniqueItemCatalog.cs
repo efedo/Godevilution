@@ -257,14 +257,18 @@ public sealed class AuthoritativeUniqueItemCatalog
                 PlusMagicResistance = Math.Max(state.PlusMagicResistance + value, 0),
             },
             "ADDACLIFE" => state with {
-                Flags = state.Flags | 0x02000000U | 0x00000008U,
+                Flags = state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 1,
                 LightningMaxDamage = 0,
             },
             "ADDMANAAC" => state with {
-                Flags = state.Flags | 0x00000020U | 0x00000010U,
+                Flags = state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 2,
@@ -278,14 +282,16 @@ public sealed class AuthoritativeUniqueItemCatalog
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
-                Flags = (state.Flags | 0x00000010U) & ~0x00000020U,
+                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
             },
             "LIGHTDAM" => state with {
                 LightningMinDamage = power.Value1,
                 LightningMaxDamage = power.Value2,
                 FireMinDamage = 0,
                 FireMaxDamage = 0,
-                Flags = (state.Flags | 0x00000020U) & ~0x00000010U,
+                Flags = (state.Flags | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
             },
             "FIRERES_CURSE" => state with { PlusFireResistance = state.PlusFireResistance - value },
             "LIGHTRES_CURSE" => state with { PlusLightningResistance = state.PlusLightningResistance - value },
@@ -314,7 +320,9 @@ public sealed class AuthoritativeUniqueItemCatalog
             // Native Hellfire IPL_FIREBALL marks both arrow channels so the bow
             // command selects the persistent FireballBow projectile.
             "FIREBALL" => state with {
-                Flags = state.Flags | 0x02000000U | 0x00000008U,
+                Flags = state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 0,
@@ -329,14 +337,20 @@ public sealed class AuthoritativeUniqueItemCatalog
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
             "SPELL" => state with { SpellId = power.Value1, Charges = power.Value2, MaxCharges = power.Value2 },
             "FIRE_ARROWS" => state with {
-                Flags = (state.Flags | 0x00000008U | 0x00000010U) & ~0x02000000U,
+                Flags = (state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.FireDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag,
                 FireMinDamage = power.Value1,
                 FireMaxDamage = power.Value2,
                 LightningMinDamage = 0,
                 LightningMaxDamage = 0,
             },
             "LIGHT_ARROWS" => state with {
-                Flags = (state.Flags | 0x02000000U | 0x00000020U) & ~0x00000008U,
+                Flags = (state.Flags
+                    | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag
+                    | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag)
+                    & ~AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 LightningMinDamage = power.Value1,
                 LightningMaxDamage = power.Value2,
                 FireMinDamage = 0,

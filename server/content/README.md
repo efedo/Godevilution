@@ -268,6 +268,9 @@ non-town tick; the server routes it through Mana Shield and the environment
 death boundary, which does not drop equipment or a PvP ear.
 Native `ABSHALFTRAP` halves armed-object damage before the server-owned player
 damage resolver and preserves the exact Q6 amount for protocol events.
+Native `FIREDAM` and `LIGHTDAM` equipment rolls its validated elemental ranges
+after a successful physical hit, applies target resistance, and preserves the
+exact Q6 damage events through the server-owned combat boundary.
 The `CriticalStrike` class flag enables the native class rule for eligible
 player attacks: after a successful hit, the server consumes one level-based
 roll and doubles physical damage before armor and downstream class/item
