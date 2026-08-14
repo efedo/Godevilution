@@ -4870,14 +4870,15 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        if (target.NativeAi != "Scavenger")
+        var scavengerTuning = GetScavengerTuning(target);
+        if (!scavengerTuning.HasValue)
             return false;
         if (target.HitPointsQ6 >= target.MaxHitPointsQ6 / 2
             && target.ScavengerHealingTicks == 0) {
             return false;
         }
         if (target.ScavengerHealingTicks == 0)
-            target.StartScavengerHealing(10);
+            target.StartScavengerHealing(scavengerTuning.Value.HealingDurationTicks);
 
         AuthoritativeCorpse? corpse = null;
         if (target.ScavengerCorpseEntityId != 0)
@@ -4886,7 +4887,8 @@ public sealed class DiabloCombatCommandProcessor
             || (corpse.LevelId != 0 && corpse.LevelId != target.LevelId)
             || Math.Max(
                 Math.Abs(corpse.PositionX - target.PositionX),
-                Math.Abs(corpse.PositionY - target.PositionY)) > 4
+                Math.Abs(corpse.PositionY - target.PositionY))
+                > scavengerTuning.Value.CorpseSearchRadius
             || !world.HasLineOfSight(
                 target.LevelId,
                 target.PositionX,
@@ -4897,7 +4899,8 @@ public sealed class DiabloCombatCommandProcessor
                 .Where(candidate => (candidate.LevelId == 0 || candidate.LevelId == target.LevelId)
                     && Math.Max(
                         Math.Abs(candidate.PositionX - target.PositionX),
-                        Math.Abs(candidate.PositionY - target.PositionY)) <= 4
+                        Math.Abs(candidate.PositionY - target.PositionY))
+                    <= scavengerTuning.Value.CorpseSearchRadius
                     && world.HasLineOfSight(
                         target.LevelId,
                         target.PositionX,
@@ -4922,15 +4925,17 @@ public sealed class DiabloCombatCommandProcessor
         if (target.PositionX == corpse.PositionX
             && target.PositionY == corpse.PositionY) {
             var healingQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
-                ? target.MaxHitPointsQ6 / 8
-                : DiabloFixedPointQ6.FromWhole(1);
+                ? target.MaxHitPointsQ6 / scavengerTuning.Value.HellfireHealingDivisor
+                : DiabloFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
             if (rules.GameVariant != DiabloGameVariant.Hellfire)
-                healingQ6 = DiabloFixedPointQ6.FromWhole(1);
+                healingQ6 = DiabloFixedPointQ6.FromWhole(scavengerTuning.Value.BaseHealingAmount);
             target.ApplyHealingQ6(healingQ6);
             target.AdvanceScavengerHealing();
             var targetHealthQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
                 ? target.MaxHitPointsQ6
-                : target.MaxHitPointsQ6 * 3 / 4;
+                : target.MaxHitPointsQ6
+                    * scavengerTuning.Value.BaseHealingTargetPercent
+                    / 100;
             if (rules.GameVariant == DiabloGameVariant.Hellfire
                 && (target.HitPointsQ6 == target.MaxHitPointsQ6
                     || target.ScavengerHealingTicks == 0)) {
@@ -4972,6 +4977,35 @@ public sealed class DiabloCombatCommandProcessor
         if (target.ScavengerHealingTicks == 0)
             target.ClearScavengerHealing();
         return true;
+    }
+
+    private (
+        int HealingDurationTicks,
+        int CorpseSearchRadius,
+        int HellfireHealingDivisor,
+        int BaseHealingAmount,
+        int BaseHealingTargetPercent)? GetScavengerTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Scavenger")
+                return null;
+            if (definition.ScavengerHealingDurationTicks > 0
+                && definition.ScavengerCorpseSearchRadius > 0
+                && definition.ScavengerHellfireHealingDivisor > 0
+                && definition.ScavengerBaseHealingAmount > 0
+                && definition.ScavengerBaseHealingTargetPercent > 0) {
+                return (
+                    definition.ScavengerHealingDurationTicks,
+                    definition.ScavengerCorpseSearchRadius,
+                    definition.ScavengerHellfireHealingDivisor,
+                    definition.ScavengerBaseHealingAmount,
+                    definition.ScavengerBaseHealingTargetPercent);
+            }
+        }
+        return target.NativeAi == "Scavenger"
+            ? (10, 4, 8, 1, 75)
+            : null;
     }
 
     private void ReplaceDeadMonsterWithCorpse(AuthoritativeCombatTarget target)

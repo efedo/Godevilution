@@ -1175,6 +1175,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ScavengerUsesValidatedHealingAndSearchTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                16,
+                "Scavenger",
+                0,
+                0,
+                2,
+                3,
+                6,
+                10,
+                1,
+                5,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Scavenger",
+                ScavengerHealingDurationTicks = 10,
+                ScavengerCorpseSearchRadius = 5,
+                ScavengerHellfireHealingDivisor = 4,
+                ScavengerBaseHealingAmount = 3,
+                ScavengerBaseHealingTargetPercent = 50,
+            },
+        ]);
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            4,
+            maxHitPoints: 20,
+            monsterId: 1,
+            nativeAi: "Scavenger");
+        var world = new DiabloWorldState(
+            combatTargets: [scavenger],
+            corpses: [new AuthoritativeCorpse(10, 0, 7, 0)]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(entityId: 7);
+
+        for (ulong tick = 1; tick <= 7; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(10, scavenger.HitPoints);
+        Assert.Equal(0, scavenger.ScavengerHealingTicks);
+        Assert.Contains(10U, world.Corpses.Keys);
+    }
+
+    [Fact]
     public void SkeletonKingSummonsAValidatedSkeletonMeleeTarget()
     {
         var nativeWorld = new AuthoritativeWorld();

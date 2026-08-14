@@ -192,6 +192,21 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Gargoyle self-heal divisor random offset. */
     public int GargoyleHealDivisorRandomOffset { get; init; }
 
+    /** Native Scavenger corpse-eating duration in authoritative ticks. */
+    public int ScavengerHealingDurationTicks { get; init; }
+
+    /** Native Scavenger corpse search radius. */
+    public int ScavengerCorpseSearchRadius { get; init; }
+
+    /** Native Hellfire Scavenger healing maximum-health divisor. */
+    public int ScavengerHellfireHealingDivisor { get; init; }
+
+    /** Native base-game Scavenger healing amount per corpse-eating tick. */
+    public int ScavengerBaseHealingAmount { get; init; }
+
+    /** Native base-game Scavenger target-health percentage. */
+    public int ScavengerBaseHealingTargetPercent { get; init; }
+
     /** Native SkeletonRanged minimum distance for retreat admission. */
     public int SkeletonRangedRetreatMinimumDistance { get; init; }
 
@@ -474,6 +489,28 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.GargoyleHealDivisorMultiplier != 0
                         || definition.GargoyleHealDivisorRandomRange != 0
                         || definition.GargoyleHealDivisorRandomOffset != 0))
+                || definition.ScavengerHealingDurationTicks is < 0 or > 64
+                || definition.ScavengerCorpseSearchRadius is < 0 or > 64
+                || definition.ScavengerHellfireHealingDivisor is < 0 or > 256
+                || definition.ScavengerBaseHealingAmount is < 0 or > 256
+                || definition.ScavengerBaseHealingTargetPercent is < 0 or > 100
+                || (definition.NativeAi == "Scavenger"
+                    && ((definition.ScavengerHealingDurationTicks != 0
+                            || definition.ScavengerCorpseSearchRadius != 0
+                            || definition.ScavengerHellfireHealingDivisor != 0
+                            || definition.ScavengerBaseHealingAmount != 0
+                            || definition.ScavengerBaseHealingTargetPercent != 0)
+                        && (definition.ScavengerHealingDurationTicks <= 0
+                            || definition.ScavengerCorpseSearchRadius <= 0
+                            || definition.ScavengerHellfireHealingDivisor <= 0
+                            || definition.ScavengerBaseHealingAmount <= 0
+                            || definition.ScavengerBaseHealingTargetPercent <= 0)))
+                || (definition.NativeAi != "Scavenger"
+                    && (definition.ScavengerHealingDurationTicks != 0
+                        || definition.ScavengerCorpseSearchRadius != 0
+                        || definition.ScavengerHellfireHealingDivisor != 0
+                        || definition.ScavengerBaseHealingAmount != 0
+                        || definition.ScavengerBaseHealingTargetPercent != 0))
                 || definition.SkeletonRangedRetreatMinimumDistance is < 0 or > 64
                 || definition.SkeletonRangedRetreatChanceBase is < 0 or > 100
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
@@ -639,6 +676,11 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GargoyleHealDivisorMultiplier = row.OptionalInt32("gargoyle_heal_divisor_multiplier"),
                 GargoyleHealDivisorRandomRange = row.OptionalInt32("gargoyle_heal_divisor_random_range"),
                 GargoyleHealDivisorRandomOffset = row.OptionalInt32("gargoyle_heal_divisor_random_offset"),
+                ScavengerHealingDurationTicks = row.OptionalInt32("scavenger_healing_duration_ticks"),
+                ScavengerCorpseSearchRadius = row.OptionalInt32("scavenger_corpse_search_radius"),
+                ScavengerHellfireHealingDivisor = row.OptionalInt32("scavenger_hellfire_healing_divisor"),
+                ScavengerBaseHealingAmount = row.OptionalInt32("scavenger_base_healing_amount"),
+                ScavengerBaseHealingTargetPercent = row.OptionalInt32("scavenger_base_healing_target_percent"),
                 SkeletonRangedRetreatMinimumDistance = row.OptionalInt32("skeleton_ranged_retreat_minimum_distance"),
                 SkeletonRangedRetreatChanceBase = row.OptionalInt32("skeleton_ranged_retreat_chance_base"),
                 SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),

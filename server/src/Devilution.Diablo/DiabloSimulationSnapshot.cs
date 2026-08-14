@@ -681,7 +681,7 @@ public sealed partial class DiabloSimulation
                 || monster.SneakRetreatTicks is < 0 or > 64
                 || (monster.SneakHidden && monster.NativeAi != "Sneak")
                 || (monster.SneakRetreatTicks != 0 && monster.NativeAi != "Sneak")
-                || monster.ScavengerHealingTicks is < 0 or > 10
+                || monster.ScavengerHealingTicks is < 0 or > 64
                 || (monster.ScavengerHealingTicks != 0 && monster.NativeAi != "Scavenger")
                 || (monster.ScavengerCorpseEntityId != 0
                     && monster.NativeAi != "Scavenger")
