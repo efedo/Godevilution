@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make the validated `level_generation.tsv` catalog own deterministic
+  encounter-count calculation and reject active worlds with uncovered levels;
+  preserve static map geometry while procedural synthesis remains future work.
 - Make general store recharge validation consult validated `Staff` tags from
   the active item catalog before legacy item-type/miscellaneous-ID fallback.
 - Centralize content-first equipment subtype classification for player combat,

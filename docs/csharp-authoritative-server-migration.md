@@ -976,7 +976,10 @@ parsing into the engine.
 Schema 0.65 adds validated native level-range generation metadata through
 `level_generation.tsv`. The Diablo activation exposes the native monster
 density, multiplayer multiplier, and trap-percentage rules to the server-owned
-module without embedding them in the host or presentation client.
+module without embedding them in the host or presentation client. Activation
+also rejects a composed world with an uncovered level, and the catalog owns
+the deterministic encounter-count calculation consumed by the spawn planner;
+procedural map synthesis remains a later migration stage.
 
 The Hellfire monster catalog now also carries native IDs 6 through 11 with
 validated baseline level, health, damage, and undead/capability metadata.

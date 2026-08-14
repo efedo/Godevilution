@@ -667,8 +667,10 @@ Status date: 2026-08-14
   use validated encounter/item rows and its exact unique identity; remaining quest behavior and state
   variables remain incremental.
 - Native level-range generation rules are now externalized through validated
-  `level_generation.tsv` metadata and exposed by Diablo activation; procedural
-  map generation still remains a separate migration.
+  `level_generation.tsv` metadata. Activation checks that every declared world
+  level is covered, and the catalog owns deterministic encounter-count
+  calculation used by the server-owned spawn planner; procedural map
+  synthesis still remains a separate migration.
 - Reflect is now a content-selected immediate self effect. The server owns native
   level/character-scaled uint16 charges, consumes one charge per successful
   monster hit, and applies the seeded 20–30% physical return damage; charges

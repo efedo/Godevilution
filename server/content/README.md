@@ -704,8 +704,9 @@ single-player availability remain external metadata.
 
 Schema 0.65 adds `level_generation.tsv`, which externalizes the native
 level-range monster-density divisor, multiplayer monster multiplier, and trap
-percentage. The catalog is validated and exposed by Diablo activation; actual
-procedural map generation remains a separate migration.
+percentage. The catalog is validated at activation, must cover every declared
+world level when present, and owns deterministic encounter-count calculation;
+actual procedural map synthesis remains a separate migration.
 
 Schema 0.66 adds `quest_pools.tsv` and `set_level_names.tsv`. Quest types now
 retain native set-level identities (`SL_*`) rather than an unresolved sentinel;
