@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.101 externalizes two native class traits through validated
+  `class_flags`: Monk staff fast-block timing and Barbarian hit-stun threshold
+  scaling. Combat no longer selects those rules by class symbol, and older
+  class overlays retain their previous behavior through compatibility defaults.
+
 - Fallen fear is now a server-owned monster state: nearby Fallen receive the
   native `max(8 - level, 2)` retreat countdown and source-to-survivor direction
   at the death boundary, with deterministic walk fallback and snapshot,

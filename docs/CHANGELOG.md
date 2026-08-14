@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.101's validated `FastBlock` and `HeavyHitThreshold` class
+  flags, moving Monk staff-block timing and Barbarian hit-stun threshold
+  selection out of symbol-specific combat checks while preserving legacy
+  class-row defaults.
 - Clarify the `monster_missiles.tsv` migration contract: checked-in rows use
   explicit migrated projectile behaviors, while legacy `Targeted` values are
   accepted only as compatibility spellings for older overlays.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.100.0` schema in
+It declares its identity and `devilution.diablo@1.101.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -87,7 +87,11 @@ focused module tests retain broader speed-tier coverage.
 The `FlexibleBlock` class flag externalizes the Monk's native alternative block
 equipment rules. In addition to an ordinary usable shield, that class may block
 with a usable staff, while unarmed, or while holding exactly one usable
-one-handed weapon. Activation rejects unknown class flags.
+one-handed weapon. The `FastBlock` flag separately declares the native staff
+fast-block timing, and `HeavyHitThreshold` declares the native Barbarian
+hit-stun threshold multiplier. Activation rejects unknown class flags. Legacy
+class rows without the new flags retain those two native traits through the
+loader's compatibility mapping.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the
@@ -1148,7 +1152,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.100.0"
+      "version": "1.101.0"
   },
   "dependencyConstraints": [
     {
@@ -1180,7 +1184,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.100.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.101.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1239,6 +1243,9 @@ legacy class rows retain the disabled-rule compatibility default.
 Schema 1.100 adds the optional `jester_spell_ids` spell column; the shipped
 Jester row now owns its ten-way native dispatch table, while legacy rows retain
 the compatibility table.
+Schema 1.101 adds the `FastBlock` and `HeavyHitThreshold` values to the
+validated `class_flags` vocabulary; the shipped Monk and Barbarian rows now
+declare those native combat traits, while older rows remain valid without them.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
