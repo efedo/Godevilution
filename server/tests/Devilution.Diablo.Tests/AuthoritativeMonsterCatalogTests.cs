@@ -184,6 +184,37 @@ public sealed class AuthoritativeMonsterCatalogTests
             bat.BatAttackChanceIntelligenceScale));
     }
 
+    [Fact]
+    public void RejectsInvalidSkeletonMeleeTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "SkeletonMelee",
+                SkeletonMeleeDelayChanceBase = 35,
+                SkeletonMeleeDelayChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                SkeletonMeleeDelayChanceBase = 35,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsSkeletonMeleeTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_melee_delay_chance_base\tskeleton_melee_delay_chance_intelligence_scale\n"
+                + "2\t0\tSkeleton\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tSkeletonMelee\t32\t3\n");
+
+        var skeleton = Assert.Single(catalog.Definitions);
+        Assert.Equal((32, 3), (
+            skeleton.SkeletonMeleeDelayChanceBase,
+            skeleton.SkeletonMeleeDelayChanceIntelligenceScale));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

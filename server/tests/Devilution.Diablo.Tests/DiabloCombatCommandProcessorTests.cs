@@ -2158,6 +2158,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonMeleeAiUsesValidatedMonsterTypeDelayTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            monsterId: 1,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "SkeletonMelee",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Skeleton",
+                1,
+                16,
+                1,
+                1,
+                10,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                SkeletonMeleeDelayChanceBase = 10,
+                SkeletonMeleeDelayChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void AutonomousMonsterRoutesAroundBlockedCorridor()
     {
         var geometry = new AuthoritativeWorld();

@@ -4631,11 +4631,15 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monster.NativeAi != "SkeletonMelee" || distance <= 1)
+        var skeletonTuning = GetSkeletonMeleeDelayTuning(monster);
+        if (!skeletonTuning.HasValue || distance <= 1)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
+        var delayBand = Math.Max(
+            0,
+            skeletonTuning.Value.ChanceBase
+                - (skeletonTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand)
             return true;
 
@@ -5010,6 +5014,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "Bat"
             ? (8, 4)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetSkeletonMeleeDelayTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "SkeletonMelee")
+                return null;
+            if (definition.SkeletonMeleeDelayChanceBase > 0
+                && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0) {
+                return (
+                    definition.SkeletonMeleeDelayChanceBase,
+                    definition.SkeletonMeleeDelayChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "SkeletonMelee"
+            ? (35, 4)
             : null;
     }
 
