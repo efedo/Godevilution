@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.105 externalizes Sneak visibility-band and hit-retreat tuning
+  through validated `monster_types.tsv` rows; the active catalog feeds
+  server-owned AI while older targets retain the native compatibility values.
+
 - Schema 1.104 externalizes Fallen fear radius and countdown tuning through
   validated `monster_types.tsv` rows; the active catalog feeds server-owned
   combat while older targets retain the native compatibility values.

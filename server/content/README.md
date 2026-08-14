@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.104.0` schema in
+It declares its identity and `devilution.diablo@1.105.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -106,6 +106,10 @@ The optional `fallen_fear_radius`, `fallen_fear_level_offset`, and
 `fallen_fear_minimum_ticks` monster-type columns externalize the Fallen fear
 admission radius and countdown formula. Legacy monster rows retain the native
 radius-four, offset-eight, minimum-two compatibility values.
+The optional `sneak_distance_base`, `sneak_distance_intelligence_scale`,
+`sneak_retreat_release_distance`, and `sneak_retreat_ticks` columns externalize
+the Sneak visibility band and hit-retreat timing. Legacy monster rows retain
+the native base-five, intelligence-scale-one, release-three, nine-tick values.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the
@@ -1166,7 +1170,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.104.0"
+      "version": "1.105.0"
   },
   "dependencyConstraints": [
     {
@@ -1198,7 +1202,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.104.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.105.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1267,6 +1271,9 @@ Schema 1.103 adds the two Monk unarmed damage level-divisor columns; legacy
 1.102 and older class schemas retain the native defaults.
 Schema 1.104 adds the optional Fallen fear tuning columns to `monster_types.tsv`;
 checked-in Fallen rows own their radius and countdown values while older rows
+retain the compatibility formula.
+Schema 1.105 adds the optional Sneak tuning columns to `monster_types.tsv`;
+checked-in Sneak rows own their visibility and retreat values while older rows
 retain the compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or

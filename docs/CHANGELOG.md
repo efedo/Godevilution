@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.105's optional Sneak monster tuning, moving the native
+  visibility band and hit-retreat timing into validated monster content while
+  preserving legacy target behavior.
 - Add schema 1.104's optional Fallen fear monster tuning, moving the native
   fear radius and countdown formula into validated monster content while
   preserving legacy target behavior.
