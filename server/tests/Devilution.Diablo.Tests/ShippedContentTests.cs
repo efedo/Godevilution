@@ -66,10 +66,14 @@ public sealed class ShippedContentTests
         Assert.Equal("ThinLightningControl", storm.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Lightning, storm.ProjectileBehavior);
         Assert.Equal(3U, storm.SpellId);
+        Assert.Equal(32, storm.ProjectileSpeed);
+        Assert.Equal(256, storm.ProjectileLifetime);
         Assert.True(activation.MonsterMissiles.TryGet("Diablo", out var diablo));
         Assert.Equal("DiabloApocalypse", diablo.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, diablo.ProjectileBehavior);
         Assert.Equal(25U, diablo.SpellId);
+        Assert.Equal(0, diablo.ProjectileSpeed);
+        Assert.Equal(15, diablo.ProjectileLifetime);
         Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magma));
         Assert.Equal("MagmaBall", magma.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, magma.ProjectileBehavior);
@@ -77,6 +81,8 @@ public sealed class ShippedContentTests
         Assert.Equal("InfernoControl", mega.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.InfernoController, mega.ProjectileBehavior);
         Assert.Equal(21U, mega.SpellId);
+        Assert.Equal(32, mega.ProjectileSpeed);
+        Assert.Equal(256, mega.ProjectileLifetime);
         Assert.True(activation.MonsterMissiles.TryGet("Acid", out var acid));
         Assert.Equal("Acid", acid.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.ProjectileBehavior);

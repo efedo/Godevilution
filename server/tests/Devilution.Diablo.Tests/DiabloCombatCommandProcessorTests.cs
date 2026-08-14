@@ -3214,7 +3214,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 "FireBat",
                 "Firebolt",
                 AuthoritativeProjectileBehavior.Firebolt,
-                SpellId: 52),
+                SpellId: 52,
+                ProjectileSpeed: 17,
+                ProjectileLifetime: 19),
         ]);
         var processor = CreateProcessor(
             world,
@@ -3235,6 +3237,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
         Assert.Equal(9U, projectile.SourceEntityId);
         Assert.Equal(52U, projectile.SpellId);
+        Assert.Equal(17, projectile.Speed);
+        Assert.Equal(18U, projectile.RemainingTicks);
         Assert.Equal(100, player.Life);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();

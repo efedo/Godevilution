@@ -5494,18 +5494,22 @@ public sealed class DiabloCombatCommandProcessor
         // Native monster Firebolt/Fireball use speed 16; Storm's
         // ThinLightningControl and Mega's InfernoControl use speed 32.
         // Player spell speed remains content-owned separately in spells.tsv.
-        var speed = missile.ProjectileBehavior switch {
-            AuthoritativeProjectileBehavior.MonsterChargedBolt => 8,
-            AuthoritativeProjectileBehavior.Lightning => 32,
-            AuthoritativeProjectileBehavior.InfernoController => spell?.ProjectileSpeed > 0
-                ? spell.ProjectileSpeed
-                : 32,
-            AuthoritativeProjectileBehavior.ApocalypseController => 0,
-            _ => 16,
-        };
-        var lifetime = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
-            ? checked(5 * (monster.Intelligence + 4))
-            : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+        var speed = missile.ProjectileSpeed > 0
+            ? missile.ProjectileSpeed
+            : missile.ProjectileBehavior switch {
+                AuthoritativeProjectileBehavior.MonsterChargedBolt => 8,
+                AuthoritativeProjectileBehavior.Lightning => 32,
+                AuthoritativeProjectileBehavior.InfernoController => spell?.ProjectileSpeed > 0
+                    ? spell.ProjectileSpeed
+                    : 32,
+                AuthoritativeProjectileBehavior.ApocalypseController => 0,
+                _ => 16,
+            };
+        var lifetime = missile.ProjectileLifetime > 0
+            ? missile.ProjectileLifetime
+            : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+                ? checked(5 * (monster.Intelligence + 4))
+                : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
             ?? (missile.MissileId == "MagmaBall"
                 ? AuthoritativeDamageType.Fire
