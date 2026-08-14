@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.114 externalizes the Gargoyle wounded retreat/self-heal safety
+  boundary through validated `monster_types.tsv` rows; the active catalog feeds
+  server-owned AI while older targets retain the native compatibility values.
+
 - Schema 1.113 externalizes Hork Demon adjacent attack, Hork Spawn, and
   non-adjacent movement admission tuning through validated `monster_types.tsv`
   rows; the active catalog feeds server-owned AI while older targets retain the

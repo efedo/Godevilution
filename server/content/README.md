@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.113.0` schema in
+It declares its identity and `devilution.diablo@1.114.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -149,6 +149,10 @@ Hork Demon adjacent attack, Hork Spawn, and non-adjacent movement admissions.
 Legacy monster rows retain the native base-twenty-eight, minimum-three,
 base-forty-three, and base-thirty-three compatibility values with
 intelligence-scale-two chance bands.
+The optional `gargoyle_safe_distance_base` and
+`gargoyle_safe_distance_intelligence_scale` columns externalize the Gargoyle
+wounded retreat/self-heal safety boundary. Legacy monster rows retain the
+native base-two, intelligence-scale-one compatibility values.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the
@@ -1209,7 +1213,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.113.0"
+      "version": "1.114.0"
   },
   "dependencyConstraints": [
     {
@@ -1241,7 +1245,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.113.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.114.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1339,6 +1343,9 @@ Schema 1.113 adds the optional Hork Demon admission columns to
 `monster_types.tsv`; checked-in HorkDemon rows own their adjacent attack,
 Hork Spawn, and movement chance bands while older rows retain the compatibility
 formula.
+Schema 1.114 adds the optional Gargoyle safety-boundary columns to
+`monster_types.tsv`; checked-in Gargoyle rows own their wounded retreat and
+self-heal boundary while older rows retain the compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

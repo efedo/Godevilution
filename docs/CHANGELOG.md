@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.114's optional Gargoyle safety-boundary tuning, moving the
+  native wounded retreat/self-heal distance into validated monster content
+  while preserving legacy target behavior.
 - Add schema 1.113's optional Hork Demon admission tuning, moving its native
   adjacent attack, Hork Spawn, and non-adjacent movement bands into validated
   monster content while preserving legacy target behavior.
