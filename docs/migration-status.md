@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.140 externalizes native monster accuracy formula tuning through
+  validated `combat.tsv` content; older combat definitions retain the 2/30/2
+  level-scale, base-bonus, and ranged-distance compatibility values.
+
 - Schema 1.139 externalizes native monster hit-chance floors through validated
   `combat.tsv` content; older combat definitions retain the 15/10 ordinary and
   20/25/30 level-specific compatibility values.

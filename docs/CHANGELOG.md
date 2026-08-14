@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.140's optional monster accuracy formula tuning, moving the
+  native level scale, base bonus, and ranged distance penalty into validated
+  combat content while preserving compatibility values for older definitions.
 - Add schema 1.139's optional monster hit-chance floors, moving the native
   ordinary and level-specific accuracy minimums into validated combat content
   while preserving the compatibility values for older definitions.
