@@ -429,6 +429,63 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingSummonsAValidatedSkeletonMeleeTarget()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                1,
+                "Skeleton",
+                1,
+                1,
+                1,
+                4,
+                4,
+                10,
+                2,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            nativeWorld,
+            monsterTypes,
+            generation);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            levelId: 1,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 255);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
+        var processor = CreateProcessor(world, monsterSpawnPlanner: planner);
+        var player = CreatePlayer(positionX: 5, positionY: 1, levelId: 1, entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        var summoned = Assert.Single(
+            world.CombatTargets.Values,
+            target => target.EntityId != king.EntityId);
+        Assert.Equal("SkeletonMelee", summoned.NativeAi);
+        Assert.Equal(1U, summoned.LevelId);
+        Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
+    }
+
+    [Fact]
     public void AttackUsesValidatedMonsterExperienceReward()
     {
         var target = new AuthoritativeCombatTarget(
@@ -8091,7 +8148,8 @@ public sealed class DiabloCombatCommandProcessorTests
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
         DiabloWorldCommandProcessor? worldCommands = null,
-        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -8107,7 +8165,8 @@ public sealed class DiabloCombatCommandProcessorTests
             gameMode: gameMode,
             items: items,
             worldCommands: worldCommands,
-            monsterMissiles: monsterMissiles);
+            monsterMissiles: monsterMissiles,
+            monsterSpawnPlanner: monsterSpawnPlanner);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(

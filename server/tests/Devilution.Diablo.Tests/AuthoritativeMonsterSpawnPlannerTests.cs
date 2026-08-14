@@ -149,6 +149,43 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void CreatesOnlyLevelValidSkeletonMeleeSummons()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 6, 2, 3) with { NativeAi = "SkeletonMelee" },
+            CreateType(3, 1, 1, 8, 8, 4, 4) with { NativeAi = "Zombie" },
+            CreateType(4, 2, 2, 9, 9, 5, 5) with { NativeAi = "SkeletonMelee" },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var summon = planner.CreateSkeletonSummon(
+            levelId: 1,
+            seed: 7,
+            positionX: 2,
+            positionY: 2,
+            entityId: 99);
+
+        Assert.NotNull(summon);
+        Assert.Equal(99U, summon!.EntityId);
+        Assert.Equal(2U, summon.MonsterId);
+        Assert.Equal("SkeletonMelee", summon.NativeAi);
+        Assert.InRange(summon.HitPoints, 4, 6);
+        Assert.InRange(summon.MinDamage, 2, 3);
+        Assert.InRange(summon.MaxDamage, 2, 3);
+        Assert.Null(planner.CreateSkeletonSummon(
+            levelId: 2,
+            seed: 7,
+            positionX: 2,
+            positionY: 2,
+            entityId: 100));
+    }
+
+    [Fact]
     public void CarriesValidatedStaticDropPolicyIntoGeneratedTargets()
     {
         var world = new AuthoritativeWorld();

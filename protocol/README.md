@@ -343,6 +343,9 @@ Windows toolchain command.
   are state metadata only; clients never execute the AI.
 - `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
   identity and position are server-owned and included in canonical hashing.
+- The `SkeletonKing` identity drives a server-owned summon boundary. The server
+  selects a level-valid `SkeletonMelee` definition and emits the resulting
+  authoritative monster snapshot; clients never create or simulate summons.
 - GoatRanged attack and avoidance outcomes use ordinary authoritative monster
   snapshots and directed Damage events; no client-side AI or hit roll is needed.
 - GoatMelee admission and special attacks likewise resolve on the server and

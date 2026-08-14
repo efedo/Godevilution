@@ -130,6 +130,48 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             .ToArray();
     }
 
+    /** Creates one content-defined SkeletonMelee summon at an explicit cell. */
+    public AuthoritativeCombatTarget? CreateSkeletonSummon(
+        uint levelId,
+        uint seed,
+        int positionX,
+        int positionY,
+        uint entityId)
+    {
+        if (entityId == 0)
+            throw new ArgumentOutOfRangeException(nameof(entityId));
+        if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
+            return null;
+
+        var definitions = monsterTypes.GetAvailableForDungeonLevel((int)levelId)
+            .Where(definition => definition.NativeAi == "SkeletonMelee")
+            .OrderBy(definition => definition.MonsterId)
+            .ToArray();
+        if (definitions.Length == 0)
+            return null;
+
+        var definition = definitions[(int)(seed % (uint)definitions.Length)];
+        var hitPointRange = checked(
+            definition.MaximumHitPoints - definition.MinimumHitPoints + 1);
+        var damageRange = checked(
+            definition.MaximumDamage - definition.MinimumDamage + 1);
+        var hitPoints = definition.MinimumHitPoints
+            + (int)((seed / (uint)definitions.Length) % (uint)hitPointRange);
+        var attackDamage = definition.MinimumDamage
+            + (int)((seed / 0x100U) % (uint)damageRange);
+        return CreateCombatTarget(
+            new AuthoritativeMonsterSpawn(
+                definition,
+                levelId,
+                positionX,
+                positionY,
+                hitPoints,
+                attackDamage),
+            0,
+            seed,
+            entityId);
+    }
+
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,
         int index,

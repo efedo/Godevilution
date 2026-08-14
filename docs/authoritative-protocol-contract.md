@@ -246,6 +246,12 @@ values but never execute the corresponding AI.
 `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
 identity and position are server-owned and included in canonical hashing.
 
+The `SkeletonKing` identity drives a server-owned summon boundary. When its
+validated single-player admission succeeds, the server selects a level-valid
+`SkeletonMelee` definition, creates the summon on an available adjacent cell,
+and projects it through the ordinary monster snapshot. Clients never create or
+simulate the summon.
+
 The server currently uses the `Fat` identity for the native Overlord normal
 (`15 + 4 * intelligence`) and special (`20 + 4 * intelligence`) melee bands;
 the resulting damage event and snapshot remain authoritative. Other AI-specific

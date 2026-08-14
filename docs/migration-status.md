@@ -35,6 +35,10 @@ Status date: 2026-08-13
   non-minion monsters become persisted corpse tiles; Scavenger healing goals,
   deterministic navigation, native base/Hellfire healing, and Hellfire corpse
   consumption cross snapshots, saves, protocol, and canonical hashes.
+- Native SkeletonKing summoning is now server-owned. A validated, level-aware
+  SkeletonMelee content boundary creates deterministic summons on an available
+  adjacent cell; clients receive ordinary authoritative monster snapshots and
+  never execute the summon AI.
 
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.

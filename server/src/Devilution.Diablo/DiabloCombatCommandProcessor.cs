@@ -21,6 +21,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
+    private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextMonsterEntityId = 0x10000000;
     private uint nextProjectileEntityId = 0x80000000;
@@ -124,7 +125,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeItemCatalog? items = null,
         AuthoritativePlayerDamageResolver? playerDamage = null,
         DiabloWorldCommandProcessor? worldCommands = null,
-        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -138,6 +140,7 @@ public sealed class DiabloCombatCommandProcessor
             : throw new ArgumentOutOfRangeException(nameof(gameMode));
         this.items = items;
         this.monsterMissiles = monsterMissiles;
+        this.monsterSpawnPlanner = monsterSpawnPlanner;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -3763,6 +3766,8 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(victim.PositionY - target.PositionY));
             if (TryAdvanceSneakAi(target, victim, players, distance))
                 continue;
+            if (TryAdvanceSkeletonKingAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceGargoyleHealing(target, victim, tick, players, events, distance))
@@ -4119,6 +4124,60 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
         return false;
+    }
+
+    private bool TryAdvanceSkeletonKingAi(
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (target.NativeAi != "SkeletonKing"
+            || monsterSpawnPlanner is null
+            || gameMode == DiabloGameMode.Multiplayer
+            || distance < 3
+            || random.RandomIntLessThan(100)
+                >= Math.Min(100, 4 * target.Intelligence + 35)
+            || !world.HasMissileLineOfSight(
+                target.LevelId,
+                target.PositionX,
+                target.PositionY,
+                victim.PositionX,
+                victim.PositionY)
+            || world.CombatTargets.Count >= 256) {
+            return false;
+        }
+
+        var direction = GetDirection(
+            target.PositionX,
+            target.PositionY,
+            victim.PositionX,
+            victim.PositionY);
+        var displacement = DirectionDisplacements[direction];
+        var positionX = checked(target.PositionX + displacement.X);
+        var positionY = checked(target.PositionY + displacement.Y);
+        if (!world.IsWalkable(target.LevelId, positionX, positionY)
+            || world.IsOccupied(
+                target.LevelId,
+                positionX,
+                positionY,
+                players,
+                target.EntityId)) {
+            return false;
+        }
+
+        var entityId = AllocateMonsterEntityId(players);
+        var summon = monsterSpawnPlanner.CreateSkeletonSummon(
+            target.LevelId,
+            unchecked((uint)tick ^ target.EntityId ^ victim.EntityId),
+            positionX,
+            positionY,
+            entityId);
+        if (summon is null)
+            return false;
+        world.CombatTargets.Add(entityId, summon);
+        return true;
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
