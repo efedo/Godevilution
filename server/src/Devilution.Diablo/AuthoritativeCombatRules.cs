@@ -35,11 +35,23 @@ public sealed class AuthoritativeCombatRules
         int deathGoldItemType = 11,
         int deathGoldItemIndex = 0,
         int deathDropSearchRadius = 50,
-        uint pvpEarItemId = 24)
+        uint pvpEarItemId = 24,
+        int monsterMeleeMinimumHitChance = 15,
+        int monsterRangedMinimumHitChance = 10,
+        int monsterMinimumHitChanceLevel14 = 20,
+        int monsterMinimumHitChanceLevel15 = 25,
+        int monsterMinimumHitChanceLevel16 = 30)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
             throw new InvalidDataException("Combat damage bounds are invalid.");
+        if (monsterMeleeMinimumHitChance is < 0 or > 100
+            || monsterRangedMinimumHitChance is < 0 or > 100
+            || monsterMinimumHitChanceLevel14 is < 0 or > 100
+            || monsterMinimumHitChanceLevel15 is < 0 or > 100
+            || monsterMinimumHitChanceLevel16 is < 0 or > 100) {
+            throw new InvalidDataException("Monster hit-chance floors are invalid.");
+        }
         if (!Enum.IsDefined(gameVariant))
             throw new InvalidDataException("Combat game variant is invalid.");
         if (restartPositionX < 0 || restartPositionY < 0
@@ -76,6 +88,11 @@ public sealed class AuthoritativeCombatRules
         DeathGoldItemIndex = deathGoldItemIndex;
         DeathDropSearchRadius = deathDropSearchRadius;
         PvpEarItemId = pvpEarItemId;
+        MonsterMeleeMinimumHitChance = monsterMeleeMinimumHitChance;
+        MonsterRangedMinimumHitChance = monsterRangedMinimumHitChance;
+        MonsterMinimumHitChanceLevel14 = monsterMinimumHitChanceLevel14;
+        MonsterMinimumHitChanceLevel15 = monsterMinimumHitChanceLevel15;
+        MonsterMinimumHitChanceLevel16 = monsterMinimumHitChanceLevel16;
     }
 
     public int BaseAttackDamage { get; }
@@ -123,6 +140,21 @@ public sealed class AuthoritativeCombatRules
 
     /** Stable content item ID for the native `IDI_EAR` definition. */
     public uint PvpEarItemId { get; }
+
+    /** Native minimum hit chance for ordinary monster melee attacks. */
+    public int MonsterMeleeMinimumHitChance { get; }
+
+    /** Native minimum hit chance for ordinary monster ranged attacks. */
+    public int MonsterRangedMinimumHitChance { get; }
+
+    /** Native minimum hit chance on level 14, regardless of attack type. */
+    public int MonsterMinimumHitChanceLevel14 { get; }
+
+    /** Native minimum hit chance on level 15, regardless of attack type. */
+    public int MonsterMinimumHitChanceLevel15 { get; }
+
+    /** Native minimum hit chance on level 16, regardless of attack type. */
+    public int MonsterMinimumHitChanceLevel16 { get; }
 
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
@@ -192,12 +224,7 @@ public sealed class AuthoritativeCombatRules
         // DevilutionX's MonsterAttackPlayer computes to-hit as the content
         // baseline plus level delta and 30, then subtracts player armor. The
         // level-specific floor is the native GetMinHit() rule.
-        var minimumHitChance = targetLevelId switch {
-            14 => 20,
-            15 => 25,
-            16 => 30,
-            _ => 15,
-        };
+        var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: false);
         var levelDelta = checked(2 * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
             minimumHitChance,
@@ -226,12 +253,7 @@ public sealed class AuthoritativeCombatRules
             || distance < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterToHit));
 
-        var minimumHitChance = targetLevelId switch {
-            14 => 20,
-            15 => 25,
-            16 => 30,
-            _ => 10,
-        };
+        var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: true);
         var levelDelta = checked(2 * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
             minimumHitChance,
@@ -248,6 +270,16 @@ public sealed class AuthoritativeCombatRules
             throw new ArgumentOutOfRangeException(nameof(hitChancePercent));
         var hitRoll = unchecked(seed * 1664525U + 1013904223U) % 100U;
         return hitRoll < hitChancePercent;
+    }
+
+    private int ResolveMonsterMinimumHitChance(uint targetLevelId, bool ranged)
+    {
+        return targetLevelId switch {
+            14 => MonsterMinimumHitChanceLevel14,
+            15 => MonsterMinimumHitChanceLevel15,
+            16 => MonsterMinimumHitChanceLevel16,
+            _ => ranged ? MonsterRangedMinimumHitChance : MonsterMeleeMinimumHitChance,
+        };
     }
 
     /** Mirrors native physical hit chance after armor and piercing rules. */
@@ -333,7 +365,12 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("death_gold_item_type", 11),
             row.OptionalInt32("death_gold_item_index"),
             row.OptionalInt32("death_drop_search_radius", 50),
-            row.OptionalUInt32("pvp_ear_item_id", 24));
+            row.OptionalUInt32("pvp_ear_item_id", 24),
+            row.OptionalInt32("monster_melee_minimum_hit_chance", 15),
+            row.OptionalInt32("monster_ranged_minimum_hit_chance", 10),
+            row.OptionalInt32("monster_minimum_hit_chance_level_14", 20),
+            row.OptionalInt32("monster_minimum_hit_chance_level_15", 25),
+            row.OptionalInt32("monster_minimum_hit_chance_level_16", 30));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

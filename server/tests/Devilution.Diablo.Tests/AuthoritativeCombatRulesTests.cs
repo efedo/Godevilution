@@ -52,9 +52,60 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredMonsterHitChanceFloors()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\n10\t1\t100\t50\t60\t70\t80\t90\n");
+
+        Assert.Equal((50, 60, 70, 80, 90), (
+            rules.MonsterMeleeMinimumHitChance,
+            rules.MonsterRangedMinimumHitChance,
+            rules.MonsterMinimumHitChanceLevel14,
+            rules.MonsterMinimumHitChanceLevel15,
+            rules.MonsterMinimumHitChanceLevel16));
+        Assert.Equal(
+            10,
+            rules.ResolveMonsterAttackDamage(
+                10,
+                monsterToHit: 1,
+                monsterLevel: 1,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                targetArmorClass: 30,
+                seed: 0));
+        Assert.Equal(
+            0,
+            new AuthoritativeCombatRules(10, 1, 100).ResolveMonsterAttackDamage(
+                10,
+                monsterToHit: 1,
+                monsterLevel: 1,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                targetArmorClass: 30,
+                seed: 0));
+        Assert.Equal(
+            10,
+            rules.ResolveMonsterRangedAttackDamage(
+                10,
+                monsterToHit: 1,
+                monsterLevel: 1,
+                targetCharacterLevel: 1,
+                targetLevelId: 14,
+                targetArmorClass: 30,
+                distance: 0,
+                seed: 0));
+    }
+
+    [Fact]
     public void RejectsInvalidDamageBounds()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(1, 2, 0));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            monsterMeleeMinimumHitChance: 101));
     }
 
     [Fact]
