@@ -4402,8 +4402,13 @@ public sealed class DiabloCombatCommandProcessor
                             + (skeletonMeleeAttackTuning.Value.IntelligenceScale
                                 * target.Intelligence)))
                     continue;
-                if (target.NativeAi == "GoatMelee"
-                    && attackSeed % 100U >= (uint)Math.Min(100, 23 + (2 * target.Intelligence)))
+                var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
+                if (goatMeleeAttackTuning.HasValue
+                    && attackSeed % 100U >= (uint)Math.Min(
+                        100,
+                        goatMeleeAttackTuning.Value.ChanceBase
+                            + (goatMeleeAttackTuning.Value.IntelligenceScale
+                                * target.Intelligence)))
                     continue;
                 if (target.NativeAi == "Fat"
                     && !NativeFatAttackBandAllowsAttack(target, attackSeed))
@@ -5129,6 +5134,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "GoatMelee"
             ? (28, 2)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeAttackTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "GoatMelee")
+                return null;
+            if (definition.GoatMeleeAttackChanceBase > 0
+                && definition.GoatMeleeAttackChanceIntelligenceScale > 0) {
+                return (
+                    definition.GoatMeleeAttackChanceBase,
+                    definition.GoatMeleeAttackChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "GoatMelee"
+            ? (23, 2)
             : null;
     }
 

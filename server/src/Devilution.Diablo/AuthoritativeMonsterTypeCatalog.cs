@@ -102,6 +102,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native GoatMelee movement admission chance increase per intelligence point. */
     public int GoatMeleeMovementChanceIntelligenceScale { get; init; }
 
+    /** Native GoatMelee adjacent attack chance base before intelligence scaling. */
+    public int GoatMeleeAttackChanceBase { get; init; }
+
+    /** Native GoatMelee adjacent attack chance increase per intelligence point. */
+    public int GoatMeleeAttackChanceIntelligenceScale { get; init; }
+
     /** Native Fat movement admission chance base before intelligence scaling. */
     public int FatMovementChanceBase { get; init; }
 
@@ -302,6 +308,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "GoatMelee"
                     && (definition.GoatMeleeMovementChanceBase != 0
                         || definition.GoatMeleeMovementChanceIntelligenceScale != 0))
+                || definition.GoatMeleeAttackChanceBase is < 0 or > 100
+                || definition.GoatMeleeAttackChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "GoatMelee"
+                    && ((definition.GoatMeleeAttackChanceBase != 0
+                            || definition.GoatMeleeAttackChanceIntelligenceScale != 0)
+                        && (definition.GoatMeleeAttackChanceBase <= 0
+                            || definition.GoatMeleeAttackChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "GoatMelee"
+                    && (definition.GoatMeleeAttackChanceBase != 0
+                        || definition.GoatMeleeAttackChanceIntelligenceScale != 0))
                 || definition.FatMovementChanceBase is < 0 or > 100
                 || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "Fat"
@@ -525,6 +541,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonMeleeAttackChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_attack_chance_intelligence_scale"),
                 GoatMeleeMovementChanceBase = row.OptionalInt32("goat_melee_movement_chance_base"),
                 GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
+                GoatMeleeAttackChanceBase = row.OptionalInt32("goat_melee_attack_chance_base"),
+                GoatMeleeAttackChanceIntelligenceScale = row.OptionalInt32("goat_melee_attack_chance_intelligence_scale"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
                 ZombieActionChanceBase = row.OptionalInt32("zombie_action_chance_base"),
