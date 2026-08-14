@@ -153,7 +153,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.IdentifyAbilitySpellId,
                 options.RepairAbilitySpellId,
                 options.RechargeAbilitySpellId,
-                spells),
+                spells,
+                options.Items),
             worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,

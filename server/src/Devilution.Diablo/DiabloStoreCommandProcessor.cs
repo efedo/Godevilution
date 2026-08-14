@@ -19,6 +19,7 @@ public sealed class DiabloStoreCommandProcessor
     private readonly uint repairAbilitySpellId;
     private readonly uint rechargeAbilitySpellId;
     private readonly AuthoritativeSpellCatalog? spells;
+    private readonly AuthoritativeItemCatalog? items;
 
     public DiabloStoreCommandProcessor(
         StoreCatalog catalog,
@@ -28,7 +29,8 @@ public sealed class DiabloStoreCommandProcessor
         uint identifyAbilitySpellId = 0,
         uint repairAbilitySpellId = 0,
         uint rechargeAbilitySpellId = 0,
-        AuthoritativeSpellCatalog? spells = null)
+        AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeItemCatalog? items = null)
     {
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.rules = rules ?? new DiabloStoreRules();
@@ -38,6 +40,7 @@ public sealed class DiabloStoreCommandProcessor
         this.repairAbilitySpellId = repairAbilitySpellId;
         this.rechargeAbilitySpellId = rechargeAbilitySpellId;
         this.spells = spells;
+        this.items = items;
     }
 
     public DiabloIntentResult Execute(
@@ -301,7 +304,7 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (item.State.Deleted)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (item.State.ItemType != 10
+        if (!IsStaff(item.State)
             || item.State.SpellId <= 0
             || spells is null
             || !spells.TryGet(checked((uint)item.State.SpellId), out var spell)
@@ -341,6 +344,26 @@ public sealed class DiabloStoreCommandProcessor
             });
         return DiabloIntentResult.Accepted;
     }
+
+    private bool IsStaff(AuthoritativeItemState state)
+    {
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
+            if (definition.GenerationTags.Contains("Staff"))
+                return true;
+            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+                return false;
+        }
+        return state.ItemType == 10;
+    }
+
+    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("Sword")
+            || tags.Contains("Axe")
+            || tags.Contains("Mace")
+            || tags.Contains("Bow")
+            || tags.Contains("Shield")
+            || tags.Contains("Staff");
 
     private DiabloIntentResult Identify(
         AuthoritativePlayerState player,

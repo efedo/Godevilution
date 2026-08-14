@@ -16,7 +16,8 @@ public sealed class DiabloStoreCommandProcessorTests
             100,
             0,
             AuthoritativeItemState.Empty with {
-                ItemType = 10,
+                ItemIndex = 88,
+                ItemType = 1,
                 SpellId = 30,
                 Charges = 1,
                 MaxCharges = 10,
@@ -28,11 +29,16 @@ public sealed class DiabloStoreCommandProcessorTests
         var spells = new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) { StaffLevel = 1 },
         ]);
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t10\t1\t1\tStaff\t88\n");
         var processor = new DiabloStoreCommandProcessor(
             new StoreCatalog(),
             random: random,
             rechargeAbilitySpellId: rechargeSpellId,
-            spells: spells);
+            spells: spells,
+            items: items);
 
         var result = processor.Execute(
             player,
