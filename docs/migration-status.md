@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.129 externalizes Bat post-hit retreat duration through validated
+  `monster_types.tsv` rows; the active catalog feeds server-owned retreat state
+  while older targets retain the native compatibility duration.
+
 - Schema 1.128 externalizes Scavenger corpse-eating duration, search radius,
   variant healing, and base-game target-health tuning through validated
   `monster_types.tsv` rows; the active catalog feeds server-owned healing while
