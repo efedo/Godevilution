@@ -53,6 +53,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native AI-to-missile mappings supplied by active content. */
     public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; init; }
 
+    /** Validated monster type metadata supplied by active content. */
+    public AuthoritativeMonsterTypeCatalog? MonsterTypes { get; init; }
+
     public AuthoritativeCombatRules? CombatRules { get; init; }
 
     public AuthoritativeItemCatalog? Items { get; init; }
@@ -165,7 +168,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 playerDamage,
                 worldCommands,
                 options.MonsterMissiles,
-                options.MonsterSpawnPlanner),
+                options.MonsterSpawnPlanner,
+                options.MonsterTypes),
             random,
             combatRules,
             options.PlayerClasses,

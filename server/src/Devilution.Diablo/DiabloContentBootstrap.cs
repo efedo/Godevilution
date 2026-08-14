@@ -397,6 +397,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
             MonsterMissiles = monsterMissiles,
+            MonsterTypes = monsterTypes,
             UseNativePlayerActionTiming = true,
             RandomSeed = randomSeed,
             GameMode = gameMode,

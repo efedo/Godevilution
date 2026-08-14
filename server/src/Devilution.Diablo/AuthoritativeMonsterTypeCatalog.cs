@@ -56,6 +56,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native intelligence value used by AI-specific probability bands. */
     public int Intelligence { get; init; }
+
+    /** Native Fallen fear radius; zero preserves the legacy compatibility path. */
+    public int FallenFearRadius { get; init; }
+
+    /** Native Fallen fear level offset used by its retreat countdown. */
+    public int FallenFearLevelOffset { get; init; }
+
+    /** Native minimum Fallen fear countdown in authoritative ticks. */
+    public int FallenFearMinimumTicks { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -104,6 +113,20 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.ToHitSpecial is < 0 or > 255
                 || definition.Intelligence is < 0 or > 255
                 || !IsValidNativeAi(definition.NativeAi)
+                || definition.FallenFearRadius is < 0 or > 64
+                || definition.FallenFearLevelOffset is < 0 or > 255
+                || definition.FallenFearMinimumTicks is < 0 or > 255
+                || (definition.NativeAi == "Fallen"
+                    && ((definition.FallenFearRadius != 0
+                            || definition.FallenFearLevelOffset != 0
+                            || definition.FallenFearMinimumTicks != 0)
+                        && (definition.FallenFearRadius <= 0
+                            || definition.FallenFearLevelOffset <= 0
+                            || definition.FallenFearMinimumTicks <= 0)))
+                || (definition.NativeAi != "Fallen"
+                    && (definition.FallenFearRadius != 0
+                        || definition.FallenFearLevelOffset != 0
+                        || definition.FallenFearMinimumTicks != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -188,6 +211,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     ? nativeAi
                     : "Zombie",
                 Intelligence = row.OptionalInt32("intelligence"),
+                FallenFearRadius = row.OptionalInt32("fallen_fear_radius"),
+                FallenFearLevelOffset = row.OptionalInt32("fallen_fear_level_offset"),
+                FallenFearMinimumTicks = row.OptionalInt32("fallen_fear_minimum_ticks"),
             }));
     }
 

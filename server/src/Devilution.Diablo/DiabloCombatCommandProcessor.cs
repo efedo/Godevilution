@@ -20,6 +20,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
+    private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
@@ -129,7 +130,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerDamageResolver? playerDamage = null,
         DiabloWorldCommandProcessor? worldCommands = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
-        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -144,6 +146,7 @@ public sealed class DiabloCombatCommandProcessor
         this.items = items;
         this.monsterMissiles = monsterMissiles;
         this.monsterSpawnPlanner = monsterSpawnPlanner;
+        this.monsterTypes = monsterTypes;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -11133,25 +11136,53 @@ public sealed class DiabloCombatCommandProcessor
 
     private void TriggerFallenFear(AuthoritativeCombatTarget deceased)
     {
-        if (deceased.NativeAi != "Fallen")
+        var deceasedTuning = GetFallenFearTuning(deceased);
+        if (!deceasedTuning.HasValue)
             return;
         foreach (var fallen in world.CombatTargets.Values
-                     .Where(candidate => candidate.EntityId != deceased.EntityId
-                         && candidate.NativeAi == "Fallen"
-                         && candidate.HitPointsQ6 > 0
-                         && (candidate.LevelId == 0 || candidate.LevelId == deceased.LevelId)
-                         && Math.Max(
-                             Math.Abs(candidate.PositionX - deceased.PositionX),
-                             Math.Abs(candidate.PositionY - deceased.PositionY)) <= 4)
+                     .Where(candidate => {
+                         var tuning = GetFallenFearTuning(candidate);
+                         return candidate.EntityId != deceased.EntityId
+                             && tuning.HasValue
+                             && candidate.HitPointsQ6 > 0
+                             && (candidate.LevelId == 0 || candidate.LevelId == deceased.LevelId)
+                             && Math.Max(
+                                 Math.Abs(candidate.PositionX - deceased.PositionX),
+                                 Math.Abs(candidate.PositionY - deceased.PositionY))
+                                 <= deceasedTuning.Value.Radius;
+                     })
                      .OrderBy(candidate => candidate.EntityId)) {
+            var tuning = GetFallenFearTuning(fallen)!.Value;
             fallen.StartFallenFear(
-                Math.Max(8 - fallen.MonsterLevel, 2),
+                Math.Max(
+                    tuning.LevelOffset - fallen.MonsterLevel,
+                    tuning.MinimumTicks),
                 GetDirection(
                     deceased.PositionX,
                     deceased.PositionY,
                     fallen.PositionX,
                     fallen.PositionY));
         }
+    }
+
+    private (int Radius, int LevelOffset, int MinimumTicks)? GetFallenFearTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Fallen")
+                return null;
+            if (definition.FallenFearRadius > 0
+                && definition.FallenFearLevelOffset > 0
+                && definition.FallenFearMinimumTicks > 0) {
+                return (
+                    definition.FallenFearRadius,
+                    definition.FallenFearLevelOffset,
+                    definition.FallenFearMinimumTicks);
+            }
+        }
+        return target.NativeAi == "Fallen"
+            ? (4, 8, 2)
+            : null;
     }
 
     /** Applies an optional external quest kill trigger at the authoritative death boundary. */

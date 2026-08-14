@@ -85,6 +85,39 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]));
     }
 
+    [Fact]
+    public void RejectsInvalidFallenFearTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Fallen",
+                FallenFearRadius = 4,
+                FallenFearLevelOffset = 0,
+                FallenFearMinimumTicks = 2,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                FallenFearRadius = 4,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsFallenFearTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tfallen_fear_radius\tfallen_fear_level_offset\tfallen_fear_minimum_ticks\n"
+                + "2\t0\tFallen\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t3\t7\t2\n");
+
+        var fallen = Assert.Single(catalog.Definitions);
+        Assert.Equal((3, 7, 2), (
+            fallen.FallenFearRadius,
+            fallen.FallenFearLevelOffset,
+            fallen.FallenFearMinimumTicks));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.103.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.104.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -160,7 +160,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.103.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.104.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -244,6 +244,16 @@ public sealed class ShippedContentTests
         Assert.Equal(10, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).ToHit);
         Assert.Equal("Zombie", monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).NativeAi);
         Assert.Equal(0, monsterTypes.Definitions.Single(definition => definition.MonsterId == 2).Intelligence);
+        Assert.Equal(
+            (4, 8, 2),
+            monsterTypes.Definitions
+                .Where(definition => definition.NativeAi == "Fallen")
+                .Select(definition => (
+                    definition.FallenFearRadius,
+                    definition.FallenFearLevelOffset,
+                    definition.FallenFearMinimumTicks))
+                .Distinct()
+                .Single());
         var toadDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 54);
         Assert.Equal(("Fat", 40, 8, 20), (
             toadDemon.NativeAi,

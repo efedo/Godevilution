@@ -946,6 +946,66 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FallenFearUsesValidatedMonsterTypeTuning()
+    {
+        var deceased = new AuthoritativeCombatTarget(
+            9,
+            2,
+            2,
+            8,
+            monsterId: 1,
+            nativeAi: "Fallen",
+            monsterLevel: 1,
+            deathAnimationTicks: 3);
+        var survivor = new AuthoritativeCombatTarget(
+            10,
+            3,
+            2,
+            20,
+            monsterId: 1,
+            nativeAi: "Fallen",
+            monsterLevel: 3,
+            aggroRange: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Fallen",
+                1,
+                16,
+                1,
+                1,
+                4,
+                0,
+                1,
+                3,
+                0,
+                5,
+                false,
+                false,
+                false) {
+                NativeAi = "Fallen",
+                FallenFearRadius = 1,
+                FallenFearLevelOffset = 4,
+                FallenFearMinimumTicks = 1,
+            },
+        ]);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 8, 8, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [deceased, survivor]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(positionX: 2, positionY: 1, entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(1, survivor.FallenFearTicks);
+    }
+
+    [Fact]
     public void SneakUsesIntelligenceVisibilityBandAndUnhidesWhenApproached()
     {
         var sneak = new AuthoritativeCombatTarget(
@@ -9491,6 +9551,7 @@ public sealed class DiabloCombatCommandProcessorTests
         DiabloWorldCommandProcessor? worldCommands = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         bool useNativePlayerActionTiming = false)
     {
         if (playerAnimations is null && playerClasses is not null)
@@ -9509,7 +9570,8 @@ public sealed class DiabloCombatCommandProcessorTests
             items: items,
             worldCommands: worldCommands,
             monsterMissiles: monsterMissiles,
-            monsterSpawnPlanner: monsterSpawnPlanner);
+            monsterSpawnPlanner: monsterSpawnPlanner,
+            monsterTypes: monsterTypes);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(
