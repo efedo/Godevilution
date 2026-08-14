@@ -453,17 +453,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SkeletonKingSummonMinimumDistance is < 0 or > 64
                 || definition.SkeletonKingSummonChanceBase is < 0 or > 100
                 || definition.SkeletonKingSummonChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "SkeletonKing"
-                    && ((definition.SkeletonKingSummonMinimumDistance != 0
-                            || definition.SkeletonKingSummonChanceBase != 0
-                            || definition.SkeletonKingSummonChanceIntelligenceScale != 0)
-                        && (definition.SkeletonKingSummonMinimumDistance <= 0
-                            || definition.SkeletonKingSummonChanceBase <= 0
-                            || definition.SkeletonKingSummonChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "SkeletonKing"
-                    && (definition.SkeletonKingSummonMinimumDistance != 0
+                || ((definition.SkeletonKingSummonMinimumDistance != 0
                         || definition.SkeletonKingSummonChanceBase != 0
-                        || definition.SkeletonKingSummonChanceIntelligenceScale != 0))
+                        || definition.SkeletonKingSummonChanceIntelligenceScale != 0)
+                    && (definition.SkeletonKingSummonMinimumDistance <= 0
+                        || definition.SkeletonKingSummonChanceBase <= 0
+                        || definition.SkeletonKingSummonChanceIntelligenceScale <= 0))
                 || definition.HorkDemonAttackChanceBase is < 0 or > 100
                 || definition.HorkDemonAttackChanceIntelligenceScale is < 0 or > 100
                 || definition.HorkDemonSpawnMinimumDistance is < 0 or > 64

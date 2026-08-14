@@ -1381,7 +1381,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "SkeletonKing",
+                NativeAi = "Fallen",
                 SkeletonKingSummonMinimumDistance = 5,
                 SkeletonKingSummonChanceBase = 100,
                 SkeletonKingSummonChanceIntelligenceScale = 1,
@@ -1402,7 +1402,7 @@ public sealed class DiabloCombatCommandProcessorTests
             levelId: 1,
             monsterId: 51,
             aggroRange: 8,
-            nativeAi: "SkeletonKing",
+            nativeAi: "Fallen",
             intelligence: 0);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
         var processor = CreateProcessor(

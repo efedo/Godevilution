@@ -5461,8 +5461,6 @@ public sealed class DiabloCombatCommandProcessor
         GetSkeletonKingSummonTuning(AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "SkeletonKing")
-                return null;
             if (definition.SkeletonKingSummonMinimumDistance > 0
                 && definition.SkeletonKingSummonChanceBase > 0
                 && definition.SkeletonKingSummonChanceIntelligenceScale > 0) {

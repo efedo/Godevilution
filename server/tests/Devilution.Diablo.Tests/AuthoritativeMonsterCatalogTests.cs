@@ -488,12 +488,12 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
-    public void LoadsSkeletonKingSummonTuningFromMonsterTypes()
+    public void LoadsContentSelectedSkeletonKingSummonTuningFromMonsterTypes()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_king_summon_minimum_distance\tskeleton_king_summon_chance_base\tskeleton_king_summon_chance_intelligence_scale\n"
-                + "2\t0\tSkeleton King\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t1\t0\tSkeletonKing\t4\t37\t5\n");
+                + "2\t0\tSkeleton King\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t1\t0\tFallen\t4\t37\t5\n");
 
         var king = Assert.Single(catalog.Definitions);
         Assert.Equal((4, 37, 5), (
