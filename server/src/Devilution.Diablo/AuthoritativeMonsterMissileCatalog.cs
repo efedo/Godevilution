@@ -18,7 +18,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int AvoidanceProbabilityPercent = 100,
     uint MonsterId = 0,
     uint SpellId = 0,
-    uint SpawnMonsterId = 0);
+    uint SpawnMonsterId = 0,
+    int ProjectileSpeed = 0,
+    int ProjectileLifetime = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -37,6 +39,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || !Enum.IsDefined(definition.ProjectileBehavior)
                 || !Enum.IsDefined(definition.AttackMode)
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
+                || definition.ProjectileSpeed < 0
+                || definition.ProjectileLifetime < 0
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -91,7 +95,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("avoidance_probability_percent", 100),
                 row.OptionalUInt32("monster_id"),
                 row.OptionalUInt32("spell_id"),
-                row.OptionalUInt32("spawn_monster_id"));
+                row.OptionalUInt32("spawn_monster_id"),
+                row.OptionalInt32("projectile_speed"),
+                row.OptionalInt32("projectile_lifetime"));
         }));
     }
 

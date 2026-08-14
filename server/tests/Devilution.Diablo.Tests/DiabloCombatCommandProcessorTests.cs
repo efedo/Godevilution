@@ -1170,7 +1170,9 @@ public sealed class DiabloCombatCommandProcessorTests
                     "HorkDemon",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
-                    SpawnMonsterId: 117),
+                    SpawnMonsterId: 117,
+                    ProjectileSpeed: 8,
+                    ProjectileLifetime: 9),
             ]),
             monsterSpawnPlanner: planner);
         var player = CreatePlayer(

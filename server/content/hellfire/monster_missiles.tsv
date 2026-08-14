@@ -1,2 +1,2 @@
-native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spawn_monster_id
-HorkDemon	HorkSpawn	HorkSpawn	Ranged	100	0	0	117
+native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spawn_monster_id	projectile_speed	projectile_lifetime
+HorkDemon	HorkSpawn	HorkSpawn	Ranged	100	0	0	117	8	9

@@ -4745,12 +4745,18 @@ public sealed class DiabloCombatCommandProcessor
                     positionY,
                     players,
                     monster.EntityId)) {
+                var projectileSpeed = missile.ProjectileSpeed > 0
+                    ? missile.ProjectileSpeed
+                    : 8;
+                var projectileLifetime = missile.ProjectileLifetime > 0
+                    ? missile.ProjectileLifetime
+                    : 9;
                 var velocity = CalculateVelocity(
                     monster.PositionX,
                     monster.PositionY,
                     victim.PositionX,
                     victim.PositionY,
-                    8);
+                    projectileSpeed);
                 var projectile = new AuthoritativeProjectile(
                     AllocateProjectileEntityId(),
                     monster.EntityId,
@@ -4766,12 +4772,12 @@ public sealed class DiabloCombatCommandProcessor
                     0,
                     AuthoritativeDamageType.Physical,
                     0,
-                    9) {
+                    checked((uint)projectileLifetime)) {
                     Behavior = missile.ProjectileBehavior,
                     VelocityX = velocity.X,
                     VelocityY = velocity.Y,
                     OriginalDirection = direction,
-                    Speed = 8,
+                    Speed = projectileSpeed,
                     ImpactLifetime = 1,
                     ResistantDamageDivisor = 1,
                 };
