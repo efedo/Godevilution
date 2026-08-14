@@ -64,6 +64,9 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Diablo", out var diablo));
         Assert.Equal("DiabloApocalypse", diablo.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, diablo.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magma));
+        Assert.Equal("MagmaBall", magma.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, magma.ProjectileBehavior);
     }
 
     [Fact]

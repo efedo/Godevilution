@@ -4097,7 +4097,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
             or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm"
-            or "Diablo")
+            or "Diablo" or "Magma")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
@@ -4118,7 +4118,7 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo") {
+        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo" or "Magma") {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4144,7 +4144,7 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo");
+            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo" or "Magma");
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);
@@ -4165,9 +4165,11 @@ public sealed class DiabloCombatCommandProcessor
         };
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
-            ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
-                ? AuthoritativeDamageType.Magic
-                : AuthoritativeDamageType.Fire);
+            ?? (missile.MissileId == "MagmaBall"
+                ? AuthoritativeDamageType.Fire
+                : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
+                    ? AuthoritativeDamageType.Magic
+                    : AuthoritativeDamageType.Fire);
         var direction = GetDirection(
             monster.PositionX,
             monster.PositionY,

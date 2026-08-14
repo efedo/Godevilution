@@ -10,7 +10,7 @@ Lich	OrangeFlare	MonsterMagic
 ArchLich	YellowFlare	MonsterMagic
 Psychorb	BlueFlare	MonsterMagic
 Necromorb	RedFlare	MonsterMagic
-Magma	MagmaBall	Targeted
+Magma	MagmaBall	MonsterMagic
 Storm	ThinLightningControl	Lightning
 Diablo	DiabloApocalypse	ApocalypseController
 BoneDemon	BlueFlare2	MonsterMagic

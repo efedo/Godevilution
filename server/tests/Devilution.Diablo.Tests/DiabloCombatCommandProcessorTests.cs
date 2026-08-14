@@ -1885,6 +1885,100 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MagmaAiFiresTheValidatedFireProjectile()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
+        Assert.Equal(16, projectile.Speed);
+        Assert.Equal(3, projectile.Damage);
+        Assert.Equal(100, player.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(player.Life < 100);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.AmountQ6 == 3 * DiabloFixedPointQ6.Scale);
+    }
+
+    [Fact]
+    public void MagmaAiDefersMagmaBallOutsideItsNativeAvoidanceBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 5000 ^ 9 ^ 7 = 5006, outside the native 1,000-per-10,000 band.
+        processor.AdvanceTick(5000, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void DiabloAiEmitsAValidatedApocalypseBoomForEachClearLanePlayer()
     {
         var monster = new AuthoritativeCombatTarget(

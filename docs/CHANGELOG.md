@@ -27,6 +27,8 @@ All notable changes to this fork are documented below.
 - Route native `Diablo` `DiabloApocalypse` through a validated Apocalypse
   controller that emits physical booms for clear-lane players and resolves
   their server-owned monster-to-player damage.
+- Route native `Magma` `MagmaBall` through the validated server-owned fire
+  projectile path, preserving its avoidance admission, speed, and hit rules.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.
