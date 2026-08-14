@@ -56,6 +56,40 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportUsesTheSameProtocolInSinglePlayerMode()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-single-player-live-test", requestedClassId: 2));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(GameMode.SinglePlayer, client.ServerGameMode);
+        var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
+        model.Apply(initial);
+        Assert.Single(model.Snapshot!.Players);
+        var player = model.Snapshot.Players.Single();
+        var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
+
+        var castSequence = client.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = 1,
+                TargetEntityId = monster.EntityId,
+                TargetX = monster.PositionX,
+                TargetY = monster.PositionY,
+                Source = CastSourceKind.MemorizedSpell,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var castAcknowledgement = await WaitForAcknowledgementAsync(client, castSequence);
+        Assert.True(
+            castAcknowledgement.Status == CommandStatus.Accepted,
+            $"Single-player cast was {castAcknowledgement.Status}/{castAcknowledgement.RejectReason} at tick {castAcknowledgement.AppliedTick}; player was ({player.PositionX},{player.PositionY}), target was ({monster.PositionX},{monster.PositionY}).");
+    }
+
+    [Fact]
     public async Task LiveServerAdmitsEntityTargetedAttackAndPublishesActionState()
     {
         using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
@@ -1824,7 +1858,8 @@ public sealed class LiveAuthoritativeServerTests
             string? contentOverlayRoot = null,
             uint? startingGoldOverride = null,
             int? startingManaOverride = null,
-            uint? randomSeed = null)
+            uint? randomSeed = null,
+            string? gameMode = null)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var saveRoot = Path.Combine(Path.GetTempPath(), "Godevilution-Godot-Test-" + Guid.NewGuid().ToString("N"));
@@ -1867,6 +1902,10 @@ public sealed class LiveAuthoritativeServerTests
                 startInfo.ArgumentList.Add("--random-seed");
                 startInfo.ArgumentList.Add(randomSeed.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
+            }
+            if (!string.IsNullOrWhiteSpace(gameMode)) {
+                startInfo.ArgumentList.Add("--game-mode");
+                startInfo.ArgumentList.Add(gameMode);
             }
             if (!string.IsNullOrWhiteSpace(contentOverlayRoot)) {
                 startInfo.ArgumentList.Add("--content-overlay");
