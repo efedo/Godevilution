@@ -266,7 +266,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             baseLifeMaximum: baseLife,
             baseManaMaximum: baseMana,
             playerClass: playerClass,
-            abilityKind: loadout.AbilityKind);
+            abilityKind: loadout.AbilityKind,
+            items: items);
     }
 
     public static AuthoritativePlayerLoadoutCatalog LoadTsv(

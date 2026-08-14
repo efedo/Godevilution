@@ -74,7 +74,8 @@ public sealed class DiabloPlayerTemplate
         int baseLifeMaximum = -1,
         int baseManaMaximum = -1,
         AuthoritativePlayerClassDefinition? playerClass = null,
-        DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None)
+        DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
+        AuthoritativeItemCatalog? items = null)
     {
         Gold = gold;
         Experience = experience;
@@ -99,6 +100,7 @@ public sealed class DiabloPlayerTemplate
         ArmorClass = Math.Max(0, armorClass);
         CharacterClassId = characterClassId;
         PlayerClass = playerClass;
+        Items = items;
         AbilityKind = Enum.IsDefined(abilityKind)
             ? abilityKind
             : throw new ArgumentOutOfRangeException(nameof(abilityKind));
@@ -140,6 +142,7 @@ public sealed class DiabloPlayerTemplate
     public int ArmorClass { get; }
     public uint CharacterClassId { get; }
     public AuthoritativePlayerClassDefinition? PlayerClass { get; }
+    public AuthoritativeItemCatalog? Items { get; }
     public IReadOnlyList<OwnedStoreItem> Inventory { get; }
     public uint AbilitySpellId { get; }
     public DiabloPlayerAbilityKind AbilityKind { get; }
@@ -187,7 +190,8 @@ public sealed class DiabloPlayerTemplate
             BaseLifeMaximum,
             BaseManaMaximum,
             PlayerClass,
-            AbilityKind);
+            AbilityKind,
+            Items);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -224,7 +228,8 @@ public sealed class DiabloPlayerTemplate
             BaseLifeMaximum,
             BaseManaMaximum,
             PlayerClass,
-            AbilityKind);
+            AbilityKind,
+            Items);
         player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;

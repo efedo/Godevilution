@@ -14,7 +14,8 @@ public static class AuthoritativeEquipmentStatRules
         int dexterity,
         IEnumerable<EquippedStoreItem> equipment,
         AuthoritativePlayerClassDefinition? playerClass = null,
-        uint characterLevel = 1)
+        uint characterLevel = 1,
+        AuthoritativeItemCatalog? items = null)
     {
         if (baseArmorClass < 0)
             throw new ArgumentOutOfRangeException(nameof(baseArmorClass));
@@ -49,13 +50,14 @@ public static class AuthoritativeEquipmentStatRules
             if (chest?.State.StatFlag == true) {
                 var state = chest.State;
                 var level = checked((int)characterLevel);
-                var numerator = state.ItemType switch {
-                    8 when state.Magical == 2
+                var armorSubtype = ResolveChestArmorSubtype(state, items);
+                var numerator = armorSubtype switch {
+                    ArmorSubtype.Medium when state.Magical == 2
                         => playerClass.MonkUniqueMediumArmorLevelMultiplier,
-                    8 => playerClass.MonkMediumArmorLevelMultiplier,
-                    9 when state.Magical == 2
+                    ArmorSubtype.Medium => playerClass.MonkMediumArmorLevelMultiplier,
+                    ArmorSubtype.Heavy when state.Magical == 2
                         => playerClass.MonkUniqueHeavyArmorLevelMultiplier,
-                    6 => playerClass.MonkLightArmorLevelMultiplier,
+                    ArmorSubtype.Light => playerClass.MonkLightArmorLevelMultiplier,
                     _ => 0,
                 };
                 armorClass = checked(
@@ -65,5 +67,35 @@ public static class AuthoritativeEquipmentStatRules
         }
 
         return Math.Max(0, armorClass);
+    }
+
+    private static ArmorSubtype ResolveChestArmorSubtype(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items)
+    {
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
+            if (definition.GenerationTags.Contains("LightArmor"))
+                return ArmorSubtype.Light;
+            if (definition.GenerationTags.Contains("MediumArmor"))
+                return ArmorSubtype.Medium;
+            if (definition.GenerationTags.Contains("HeavyArmor"))
+                return ArmorSubtype.Heavy;
+        }
+
+        return state.ItemType switch {
+            6 => ArmorSubtype.Light,
+            8 => ArmorSubtype.Medium,
+            9 => ArmorSubtype.Heavy,
+            _ => ArmorSubtype.None,
+        };
+    }
+
+    private enum ArmorSubtype
+    {
+        None,
+        Light,
+        Medium,
+        Heavy,
     }
 }

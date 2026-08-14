@@ -761,6 +761,68 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void MonkChestArmorUsesValidatedSubtypeBeforeNativeItemType()
+    {
+        var monk = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "classes.tsv"))).Resolve("monk") with {
+                    Symbol = "custom",
+                };
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(1, 9, 1, 1, 0, 0, 0, 1, 1, 1, 1, true) {
+                NativeItemIndex = 44,
+                GenerationTags = new HashSet<string>(["Armor", "LightArmor"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var chest = new EquippedStoreItem(
+            3,
+            44,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 44,
+                ItemType = 9,
+                StatFlag = true,
+            });
+
+        Assert.Equal(
+            5 + (23 / 5) + 10,
+            AuthoritativeEquipmentStatRules.CalculateArmorClass(
+                5,
+                23,
+                [chest],
+                monk,
+                10,
+                items));
+        var player = new DiabloPlayerTemplate(
+            0,
+            0,
+            0,
+            0,
+            0,
+            new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(23, 23),
+                new PlayerAttributeState(0, 0)),
+            [chest],
+            Enumerable.Repeat(-1, 40).ToArray(),
+            [],
+            0,
+            0,
+            0,
+            10,
+            0,
+            5,
+            playerClass: monk,
+            items: items).CreatePlayer();
+        Assert.Equal(5 + (23 / 5) + 10, player.ArmorClass);
+    }
+
+    [Fact]
     public void EquippedAttributesUseRequirementsAndIdentificationRules()
     {
         var identifiedItem = new EquippedStoreItem(

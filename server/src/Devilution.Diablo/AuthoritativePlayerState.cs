@@ -256,7 +256,8 @@ public sealed class AuthoritativePlayerState(
     int baseLifeMaximum = -1,
     int baseManaMaximum = -1,
     AuthoritativePlayerClassDefinition? playerClass = null,
-    DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None)
+    DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
+    AuthoritativeItemCatalog? items = null)
 {
     public uint Gold { get; set; } = gold;
 
@@ -288,6 +289,9 @@ public sealed class AuthoritativePlayerState(
 
     /** Content-owned native class metadata used for equipment resource scaling. */
     public AuthoritativePlayerClassDefinition? PlayerClass { get; internal set; } = playerClass;
+
+    /** Validated item definitions used for semantic equipment classification. */
+    public AuthoritativeItemCatalog? Items { get; } = items;
 
     /** Native-compatible character identity used for multiplayer presentation and ears. */
     public string CharacterName { get; set; } = string.IsNullOrEmpty(characterName)
@@ -442,6 +446,7 @@ public sealed class AuthoritativePlayerState(
             Attributes.Dexterity.Current,
             Equipment,
             PlayerClass,
-            CharacterLevel);
+            CharacterLevel,
+            Items);
     }
 }

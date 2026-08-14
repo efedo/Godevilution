@@ -161,7 +161,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             facingDirection: startingFacingDirection,
             characterName: startingCharacterName,
             manaShieldActive: startingManaShieldActive,
-            reflectCharges: startingReflectCharges);
+            reflectCharges: startingReflectCharges,
+            items: startingItems);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
         this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();
