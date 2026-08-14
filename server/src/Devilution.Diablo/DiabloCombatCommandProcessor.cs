@@ -4911,12 +4911,16 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (target.NativeAi != "Sneak")
+        var sneakTuning = GetSneakTuning(target);
+        if (!sneakTuning.HasValue)
             return false;
 
-        var preferredDistance = Math.Max(1, 5 - target.Intelligence);
+        var preferredDistance = Math.Max(
+            1,
+            sneakTuning.Value.DistanceBase
+                - (target.Intelligence * sneakTuning.Value.DistanceIntelligenceScale));
         if (target.SneakRetreatTicks != 0) {
-            if (distance >= preferredDistance + 3) {
+            if (distance >= preferredDistance + sneakTuning.Value.RetreatReleaseDistance) {
                 target.StartSneakRetreat(0);
                 return false;
             }
@@ -4962,6 +4966,28 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
         return false;
+    }
+
+    private (int DistanceBase, int DistanceIntelligenceScale, int RetreatReleaseDistance, int RetreatTicks)?
+        GetSneakTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Sneak")
+                return null;
+            if (definition.SneakDistanceBase > 0
+                && definition.SneakDistanceIntelligenceScale > 0
+                && definition.SneakRetreatReleaseDistance > 0
+                && definition.SneakRetreatTicks > 0) {
+                return (
+                    definition.SneakDistanceBase,
+                    definition.SneakDistanceIntelligenceScale,
+                    definition.SneakRetreatReleaseDistance,
+                    definition.SneakRetreatTicks);
+            }
+        }
+        return target.NativeAi == "Sneak"
+            ? (5, 1, 3, 9)
+            : null;
     }
 
     private bool TryAdvanceSkeletonKingAi(
@@ -11107,8 +11133,8 @@ public sealed class DiabloCombatCommandProcessor
         if (wasAlive
             && target.HitPointsQ6 > 0
             && damageQ6 > 0
-            && target.NativeAi == "Sneak") {
-            target.StartSneakRetreat(9);
+            && GetSneakTuning(target) is { } sneakTuning) {
+            target.StartSneakRetreat(sneakTuning.RetreatTicks);
         }
         if (!wasAlive || target.HitPointsQ6 != 0)
             return;

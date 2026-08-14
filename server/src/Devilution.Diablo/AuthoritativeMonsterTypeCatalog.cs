@@ -65,6 +65,18 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native minimum Fallen fear countdown in authoritative ticks. */
     public int FallenFearMinimumTicks { get; init; }
+
+    /** Native Sneak preferred-distance base before intelligence scaling. */
+    public int SneakDistanceBase { get; init; }
+
+    /** Native Sneak preferred-distance reduction per intelligence point. */
+    public int SneakDistanceIntelligenceScale { get; init; }
+
+    /** Native Sneak distance beyond its preferred band that ends retreat. */
+    public int SneakRetreatReleaseDistance { get; init; }
+
+    /** Native Sneak retreat duration after taking a successful hit. */
+    public int SneakRetreatTicks { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -127,6 +139,24 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.FallenFearRadius != 0
                         || definition.FallenFearLevelOffset != 0
                         || definition.FallenFearMinimumTicks != 0))
+                || definition.SneakDistanceBase is < 0 or > 64
+                || definition.SneakDistanceIntelligenceScale is < 0 or > 64
+                || definition.SneakRetreatReleaseDistance is < 0 or > 64
+                || definition.SneakRetreatTicks is < 0 or > 64
+                || (definition.NativeAi == "Sneak"
+                    && ((definition.SneakDistanceBase != 0
+                            || definition.SneakDistanceIntelligenceScale != 0
+                            || definition.SneakRetreatReleaseDistance != 0
+                            || definition.SneakRetreatTicks != 0)
+                        && (definition.SneakDistanceBase <= 0
+                            || definition.SneakDistanceIntelligenceScale <= 0
+                            || definition.SneakRetreatReleaseDistance <= 0
+                            || definition.SneakRetreatTicks <= 0)))
+                || (definition.NativeAi != "Sneak"
+                    && (definition.SneakDistanceBase != 0
+                        || definition.SneakDistanceIntelligenceScale != 0
+                        || definition.SneakRetreatReleaseDistance != 0
+                        || definition.SneakRetreatTicks != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -214,6 +244,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 FallenFearRadius = row.OptionalInt32("fallen_fear_radius"),
                 FallenFearLevelOffset = row.OptionalInt32("fallen_fear_level_offset"),
                 FallenFearMinimumTicks = row.OptionalInt32("fallen_fear_minimum_ticks"),
+                SneakDistanceBase = row.OptionalInt32("sneak_distance_base"),
+                SneakDistanceIntelligenceScale = row.OptionalInt32("sneak_distance_intelligence_scale"),
+                SneakRetreatReleaseDistance = row.OptionalInt32("sneak_retreat_release_distance"),
+                SneakRetreatTicks = row.OptionalInt32("sneak_retreat_ticks"),
             }));
     }
 

@@ -118,6 +118,41 @@ public sealed class AuthoritativeMonsterCatalogTests
             fallen.FallenFearMinimumTicks));
     }
 
+    [Fact]
+    public void RejectsInvalidSneakTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Sneak",
+                SneakDistanceBase = 5,
+                SneakDistanceIntelligenceScale = 0,
+                SneakRetreatReleaseDistance = 3,
+                SneakRetreatTicks = 9,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                SneakDistanceBase = 5,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsSneakTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tsneak_distance_base\tsneak_distance_intelligence_scale\tsneak_retreat_release_distance\tsneak_retreat_ticks\n"
+                + "2\t0\tSneak\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tSneak\t6\t2\t4\t11\n");
+
+        var sneak = Assert.Single(catalog.Definitions);
+        Assert.Equal((6, 2, 4, 11), (
+            sneak.SneakDistanceBase,
+            sneak.SneakDistanceIntelligenceScale,
+            sneak.SneakRetreatReleaseDistance,
+            sneak.SneakRetreatTicks));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

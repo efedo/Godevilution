@@ -1066,6 +1066,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SneakUsesValidatedMonsterTypeTuning()
+    {
+        var sneak = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 1,
+            aggroRange: 8,
+            nativeAi: "Sneak",
+            intelligence: 2);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Sneak",
+                1,
+                16,
+                1,
+                1,
+                20,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Sneak",
+                SneakDistanceBase = 8,
+                SneakDistanceIntelligenceScale = 2,
+                SneakRetreatReleaseDistance = 1,
+                SneakRetreatTicks = 4,
+            },
+        ]);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [sneak]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(4, sneak.SneakRetreatTicks);
+    }
+
+    [Fact]
     public void ScavengerSeeksAndEatsACorpseWithNativeHealingTiming()
     {
         var scavenger = new AuthoritativeCombatTarget(
