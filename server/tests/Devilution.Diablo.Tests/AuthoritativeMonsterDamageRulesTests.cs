@@ -27,6 +27,31 @@ public sealed class AuthoritativeMonsterDamageRulesTests
     }
 
     [Fact]
+    public void ExplicitContentTagOverridesNativeItemTypeForWeaponClassModifier()
+    {
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t4\t1\t1\tWeapon,Mace\t99\n");
+        var equipment = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 99,
+                ItemType = 1,
+                StatFlag = true,
+            });
+
+        var damage = AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
+            11,
+            undead: true,
+            [equipment],
+            items: items);
+
+        Assert.Equal(16, damage);
+    }
+
+    [Fact]
     public void AnimalModifiersReverseTheSwordAndMaceResults()
     {
         Assert.Equal(

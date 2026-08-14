@@ -1158,7 +1158,8 @@ public sealed class DiabloCombatCommandProcessor
             criticalDamage,
             target.IsUndead,
             player.Equipment,
-            target.IsAnimal);
+            target.IsAnimal,
+            items);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
             target.ArmorClass,

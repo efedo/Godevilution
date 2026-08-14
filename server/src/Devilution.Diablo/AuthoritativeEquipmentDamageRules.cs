@@ -93,11 +93,22 @@ public static class AuthoritativeEquipmentDamageRules
         int legacyItemType)
     {
         if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
-            && definition.GenerationTags.Contains(tag))
-            return true;
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
+            if (definition.GenerationTags.Contains(tag))
+                return true;
+            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+                return false;
+        }
         return state.ItemType == legacyItemType;
     }
+
+    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("Sword")
+            || tags.Contains("Axe")
+            || tags.Contains("Mace")
+            || tags.Contains("Bow")
+            || tags.Contains("Shield")
+            || tags.Contains("Staff");
 
     private static int CalculateBarbarianModifier(
         int level,

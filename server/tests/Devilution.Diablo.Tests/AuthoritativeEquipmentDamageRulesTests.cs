@@ -101,6 +101,40 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
         Assert.Equal(8, profile.DamageModifier);
     }
 
+    [Fact]
+    public void ExplicitShieldTagSuppressesConflictingLegacySwordType()
+    {
+        var attributes = new PlayerAttributesState(
+            new PlayerAttributeState(100, 100),
+            new PlayerAttributeState(0, 0),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(20, 20));
+        var bard = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Bard,
+        };
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t1\t1\t1\tArmor,Shield\t99\n");
+        var equipment = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 99,
+                ItemType = 1,
+                StatFlag = true,
+            });
+
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            attributes,
+            [equipment],
+            bard,
+            items);
+
+        Assert.Equal(10, profile.DamageModifier);
+    }
+
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)
     {
         return new AuthoritativePlayerClassDefinition(

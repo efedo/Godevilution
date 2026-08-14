@@ -8,7 +8,8 @@ public static class AuthoritativeMonsterDamageRules
         int damage,
         bool undead,
         IEnumerable<EquippedStoreItem> equipment,
-        bool animal = false)
+        bool animal = false,
+        AuthoritativeItemCatalog? items = null)
     {
         if (damage < 0)
             throw new ArgumentOutOfRangeException(nameof(damage));
@@ -16,20 +17,43 @@ public static class AuthoritativeMonsterDamageRules
         if (!undead && !animal)
             return damage;
 
-        var handTypes = equipment
+        var handItems = equipment
             .Where(item => item is not null
                 && item.State.StatFlag
                 && item.Slot is 4 or 5)
-            .Select(item => item.State.ItemType)
             .ToArray();
-        if (handTypes.Contains(4))
+        if (handItems.Any(item => HasItemTag(item.State, items, "Mace", 4)))
             return undead
                 ? checked(damage + damage / 2)
                 : damage - damage / 2;
-        if (handTypes.Contains(1))
+        if (handItems.Any(item => HasItemTag(item.State, items, "Sword", 1)))
             return undead
                 ? damage - damage / 2
                 : checked(damage + damage / 2);
         return damage;
     }
+
+    private static bool HasItemTag(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items,
+        string tag,
+        int legacyItemType)
+    {
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
+            if (definition.GenerationTags.Contains(tag))
+                return true;
+            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+                return false;
+        }
+        return state.ItemType == legacyItemType;
+    }
+
+    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("Sword")
+            || tags.Contains("Axe")
+            || tags.Contains("Mace")
+            || tags.Contains("Bow")
+            || tags.Contains("Shield")
+            || tags.Contains("Staff");
 }
