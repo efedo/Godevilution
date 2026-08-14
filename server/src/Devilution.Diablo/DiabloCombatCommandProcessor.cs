@@ -6341,7 +6341,9 @@ public sealed class DiabloCombatCommandProcessor
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BloodStar);
-        var spellId = spell?.SpellId ?? 36U;
+        var spellId = missile is { SpellId: > 0 }
+            ? missile.SpellId
+            : spell?.SpellId ?? 36U;
         var speed = spell?.ProjectileSpeed > 0 ? spell.ProjectileSpeed : 16;
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType ?? AuthoritativeDamageType.Magic;

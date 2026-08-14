@@ -133,6 +133,37 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ValidatesConfiguredSpellReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspell_id\n"
+                + "Succubus\tBloodStar\tBloodStar\t36\n");
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(36, 1, 0, 0, 0, 0),
+        ]);
+
+        catalog.ValidateSpellReferences(spells);
+    }
+
+    [Fact]
+    public void RejectsUnknownConfiguredSpellReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspell_id\n"
+                + "Succubus\tBloodStar\tBloodStar\t36\n");
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateSpellReferences(spells));
+
+        Assert.Contains("unknown spell ID 36", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsExplicitMonsterArrowBehavior()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

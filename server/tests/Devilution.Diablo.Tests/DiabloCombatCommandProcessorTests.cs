@@ -4311,6 +4311,18 @@ public sealed class DiabloCombatCommandProcessorTests
                 SelfDamage = 5,
                 ResistantDamageDivisor = 4,
             },
+            new AuthoritativeSpellDefinition(37, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                Range = 112,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.BloodStar,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                MagicDamageDivisor = 2,
+                MagicDamageReductionDivisor = 8,
+                SpellLevelDamage = 3,
+                SelfDamage = 5,
+                ResistantDamageDivisor = 4,
+            },
         ]);
         var processor = CreateProcessor(
             world,
@@ -4320,7 +4332,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     nativeAi,
                     "BloodStar",
-                    AuthoritativeProjectileBehavior.BloodStar),
+                    AuthoritativeProjectileBehavior.BloodStar,
+                    SpellId: 37),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -4335,7 +4348,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
         Assert.Equal(9U, projectile.SourceEntityId);
-        Assert.Equal(36U, projectile.SpellId);
+        Assert.Equal(37U, projectile.SpellId);
         Assert.Equal(100, player.Life);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();

@@ -197,6 +197,20 @@ public sealed class AuthoritativeMonsterMissileCatalog
         => definitions.TryGetValue(CreateKey(nativeAi, monsterId), out definition!)
             || definitions.TryGetValue(CreateKey(nativeAi, 0), out definition!);
 
+    /** Validates optional stable spell references against the active spell catalog. */
+    public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(spells);
+        foreach (var definition in Definitions) {
+            if (definition.SpellId == 0)
+                continue;
+            if (!spells.TryGet(definition.SpellId, out _))
+                throw new InvalidDataException(
+                    $"Monster missile '{definition.NativeAi}'/{definition.MissileId} "
+                    + $"references unknown spell ID {definition.SpellId}.");
+        }
+    }
+
     public static AuthoritativeMonsterMissileCatalog LoadTsv(
         string sourcePath,
         string contents)
