@@ -462,7 +462,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -482,7 +482,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t34\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t34\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -592,7 +592,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -612,7 +612,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t1\t1\n3\t100\t22\t32\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t1\t1\n3\t100\t22\tNone\t32\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -764,7 +764,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -784,7 +784,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t30\t2\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t30\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -901,7 +901,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -921,7 +921,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t38\t2\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t38\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -1038,7 +1038,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1318,6 +1318,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(4U, player.CharacterClassId);
         Assert.Equal(5U, player.AbilitySpellId);
+        Assert.Equal(PlayerAbilityKind.Identify, player.AbilityKind);
         var item = Assert.Single(player.Equipment, candidate => candidate.Slot == 4);
         Assert.False(item.State.Identified);
 
@@ -1362,6 +1363,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(0U, player.CharacterClassId);
         Assert.Equal(26U, player.AbilitySpellId);
+        Assert.Equal(PlayerAbilityKind.Repair, player.AbilityKind);
         var equipment = Assert.Single(player.Equipment, item => item.Slot == 4);
         Assert.Equal(1, equipment.State.ItemIndex);
         Assert.Equal(24, equipment.State.Durability);
@@ -1408,7 +1410,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1446,6 +1448,7 @@ public sealed class LiveAuthoritativeServerTests
             var player = Assert.Single(model.Snapshot!.Players);
             Assert.Equal(1U, player.CharacterClassId);
             Assert.Equal(28U, player.AbilitySpellId);
+            Assert.Equal(PlayerAbilityKind.TrapDisarm, player.AbilityKind);
             var trap = Assert.Single(model.Snapshot.Objects, @object => @object.EntityId == 2001);
             Assert.True(trap.TrapArmed);
 
@@ -1503,6 +1506,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(3U, player.CharacterClassId);
         Assert.Equal(46U, player.AbilitySpellId);
+        Assert.Equal(PlayerAbilityKind.Search, player.AbilityKind);
         Assert.DoesNotContain(
             player.StatusEffects,
             effect => effect.Behavior == StatusEffectBehavior.Search);
@@ -1548,6 +1552,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(5U, player.CharacterClassId);
         Assert.Equal(22U, player.AbilitySpellId);
+        Assert.Equal(PlayerAbilityKind.Rage, player.AbilityKind);
         var initialLife = player.Life;
 
         var sequence = client.Queue(new Command {
@@ -1595,7 +1600,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1615,7 +1620,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t53\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tRecharge\t53\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -1634,6 +1639,7 @@ public sealed class LiveAuthoritativeServerTests
             var player = Assert.Single(model.Snapshot!.Players);
             Assert.Equal(2U, player.CharacterClassId);
             Assert.Equal(27U, player.AbilitySpellId);
+            Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
             var spell = Assert.Single(
                 player.MemorizedSpells,
                 memorized => memorized.SpellId == 53);
@@ -1685,6 +1691,7 @@ public sealed class LiveAuthoritativeServerTests
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(2U, player.CharacterClassId);
         Assert.Equal(27U, player.AbilitySpellId);
+        Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
         var target = Assert.Single(model.Snapshot.Monsters, monster => monster.Alive);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
         Assert.Equal(30, staff.State.SpellId);
@@ -1872,6 +1879,7 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal(4480, player.ManaMaximum);
             Assert.Equal(100U, player.Gold);
             Assert.Equal(27U, player.AbilitySpellId);
+            Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
             var firebolt = Assert.Single(player.MemorizedSpells);
             Assert.Equal(1U, firebolt.SpellId);
             Assert.Equal(2U, firebolt.Level);
@@ -1902,6 +1910,7 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal(1440, player.ManaMaximum);
             Assert.Equal(100U, player.Gold);
             Assert.Equal(28U, player.AbilitySpellId);
+            Assert.Equal(PlayerAbilityKind.TrapDisarm, player.AbilityKind);
             Assert.Empty(player.MemorizedSpells);
             Assert.Equal(4, Assert.Single(player.Equipment).State.ItemIndex);
             Assert.Equal(2, player.Belt.Count);
@@ -1919,6 +1928,7 @@ public sealed class LiveAuthoritativeServerTests
             var player = initial.Snapshot.Players[0];
             Assert.Equal(2U, player.CharacterClassId);
             Assert.Equal(27U, player.AbilitySpellId);
+            Assert.Equal(PlayerAbilityKind.Recharge, player.AbilityKind);
             Assert.Equal(1U, Assert.Single(player.MemorizedSpells).SpellId);
             Assert.Equal(166, Assert.Single(player.Equipment).State.ItemIndex);
             Assert.Equal(2, player.Belt.Count);
@@ -1998,7 +2008,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2070,7 +2080,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.142.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.143.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",

@@ -54,6 +54,18 @@ enum GameMode {
 	GAME_MODE_MULTIPLAYER = 2;
 }
 
+// Semantic role of the content-owned class skill, independent of its stable
+// spell identity. Clients use this for presentation and typed service intents.
+enum PlayerAbilityKind {
+	PLAYER_ABILITY_KIND_UNSPECIFIED = 0;
+	PLAYER_ABILITY_KIND_REPAIR = 1;
+	PLAYER_ABILITY_KIND_TRAP_DISARM = 2;
+	PLAYER_ABILITY_KIND_RECHARGE = 3;
+	PLAYER_ABILITY_KIND_SEARCH = 4;
+	PLAYER_ABILITY_KIND_IDENTIFY = 5;
+	PLAYER_ABILITY_KIND_RAGE = 6;
+}
+
 message CommandBatch {
 	repeated Command commands = 1;
 }
@@ -347,6 +359,8 @@ message PlayerSnapshot {
 	// Zero falls back to the corresponding effective maximum for legacy snapshots.
 	int32 base_mana_maximum = 31;
 	int32 base_life_maximum = 32;
+	// Semantic class-skill role supplied by the active content loadout.
+	PlayerAbilityKind ability_kind = 33;
 }
 
 enum PlayerDirection {

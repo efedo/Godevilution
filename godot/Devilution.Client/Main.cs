@@ -11,9 +11,6 @@ public partial class Main : Node2D
     private const uint FireboltSpellId = 1;
     private const uint ChargedBoltSpellId = 30;
     private const uint BoneSpiritSpellId = 38;
-    private const uint IdentifySpellId = 5;
-    private const uint RepairSpellId = 26;
-    private const uint RechargeSpellId = 27;
 
     private readonly AuthoritativeClientModel model = new();
     private readonly CancellationTokenSource lifetime = new();
@@ -41,19 +38,19 @@ public partial class Main : Node2D
         hud.RepairItemRequested += inventoryIndex => QueueIfConnected(new Command {
             RepairItemRequested = new RepairItemRequested {
                 InventoryIndex = inventoryIndex,
-                Source = ResolveItemServiceSource(RepairSpellId),
+                Source = ResolveItemServiceSource(PlayerAbilityKind.Repair),
             },
         });
         hud.RechargeItemRequested += inventoryIndex => QueueIfConnected(new Command {
             RechargeItemRequested = new RechargeItemRequested {
                 InventoryIndex = inventoryIndex,
-                Source = ResolveItemServiceSource(RechargeSpellId),
+                Source = ResolveItemServiceSource(PlayerAbilityKind.Recharge),
             },
         });
         hud.IdentifyItemRequested += inventoryIndex => QueueIfConnected(new Command {
             IdentifyItemRequested = new IdentifyItemRequested {
                 InventoryIndex = inventoryIndex,
-                Source = ResolveItemServiceSource(IdentifySpellId),
+                Source = ResolveItemServiceSource(PlayerAbilityKind.Identify),
             },
         });
         hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
@@ -240,10 +237,10 @@ public partial class Main : Node2D
         });
     }
 
-    private ItemServiceSourceKind ResolveItemServiceSource(uint abilitySpellId)
+    private ItemServiceSourceKind ResolveItemServiceSource(PlayerAbilityKind abilityKind)
     {
         var player = model.Snapshot?.Players.FirstOrDefault();
-        return player?.ActiveStoreId == 0 && player.AbilitySpellId == abilitySpellId
+        return player?.ActiveStoreId == 0 && player.AbilityKind == abilityKind
             ? ItemServiceSourceKind.ClassAbility
             : ItemServiceSourceKind.Unspecified;
     }

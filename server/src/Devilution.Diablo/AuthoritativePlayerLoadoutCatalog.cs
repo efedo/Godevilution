@@ -13,6 +13,18 @@ public enum DiabloPlayerLoadoutItemLocation
     Belt,
 }
 
+/** Semantic class skill identity exposed to authoritative clients. */
+public enum DiabloPlayerAbilityKind
+{
+    None,
+    Repair,
+    TrapDisarm,
+    Recharge,
+    Search,
+    Identify,
+    Rage,
+}
+
 /** One explicitly placed item in a content-defined class loadout. */
 public sealed record AuthoritativePlayerLoadoutItemDefinition(
     uint Order,
@@ -27,7 +39,11 @@ public sealed record AuthoritativePlayerLoadoutDefinition(
     uint AbilitySpellId,
     uint StartingSpellId,
     uint StartingSpellLevel,
-    IReadOnlyList<AuthoritativePlayerLoadoutItemDefinition> Items);
+    IReadOnlyList<AuthoritativePlayerLoadoutItemDefinition> Items)
+{
+    /** Content-owned semantic role for the class skill's presentation. */
+    public DiabloPlayerAbilityKind AbilityKind { get; init; }
+}
 
 /** Validated external starting loadouts keyed by stable player-class ID. */
 public sealed class AuthoritativePlayerLoadoutCatalog
@@ -45,6 +61,14 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         "class_id",
         "starting_gold",
         "ability_spell_id",
+        "starting_spell_id",
+        "starting_spell_level",
+    ];
+    private static readonly IReadOnlyList<string> CurrentLoadoutColumns = [
+        "class_id",
+        "starting_gold",
+        "ability_spell_id",
+        "ability_kind",
         "starting_spell_id",
         "starting_spell_level",
     ];
@@ -248,7 +272,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             memorizedSpells,
             baseLifeMaximum: baseLife,
             baseManaMaximum: baseMana,
-            playerClass: playerClass);
+            playerClass: playerClass,
+            abilityKind: loadout.AbilityKind);
     }
 
     public static AuthoritativePlayerLoadoutCatalog LoadTsv(
@@ -262,7 +287,11 @@ public sealed class AuthoritativePlayerLoadoutCatalog
     {
         var loadoutTable = TsvTable.Parse(loadoutSourcePath, loadoutContents);
         var itemTable = TsvTable.Parse(itemSourcePath, itemContents);
-        if (!loadoutTable.Columns.SequenceEqual(LoadoutColumns, StringComparer.Ordinal)
+        var hasAbilityKind = loadoutTable.Columns.SequenceEqual(
+            CurrentLoadoutColumns,
+            StringComparer.Ordinal);
+        if (!hasAbilityKind
+            && !loadoutTable.Columns.SequenceEqual(LoadoutColumns, StringComparer.Ordinal)
             || !itemTable.Columns.SequenceEqual(ItemColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
                 "Player-loadout tables do not match their required ordered schemas.");
@@ -290,7 +319,11 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 row.RequiredUInt32("ability_spell_id"),
                 row.RequiredUInt32("starting_spell_id"),
                 row.RequiredUInt32("starting_spell_level"),
-                itemsByClass.GetValueOrDefault(classId) ?? []);
+                itemsByClass.GetValueOrDefault(classId) ?? []) {
+                AbilityKind = hasAbilityKind
+                    ? ParseAbilityKind(row)
+                    : DiabloPlayerAbilityKind.None,
+            };
         }).ToArray();
         var extraItemClassIds = itemsByClass.Keys
             .Except(definitions.Select(definition => definition.ClassId))
@@ -305,6 +338,17 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             items,
             combatRules,
             definitions);
+    }
+
+    private static DiabloPlayerAbilityKind ParseAbilityKind(TsvRow row)
+    {
+        var value = row.Required("ability_kind");
+        if (Enum.TryParse<DiabloPlayerAbilityKind>(value, ignoreCase: false, out var kind)
+            && Enum.IsDefined(kind)) {
+            return kind;
+        }
+        throw new InvalidDataException(
+            $"Class loadout row {row.LineNumber} contains unknown ability kind '{value}'.");
     }
 
     private void AddStartingGold(
@@ -384,6 +428,12 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 != (definition.StartingSpellLevel == 0)) {
             throw new InvalidDataException(
                 $"Player loadout {definition.ClassId} has invalid resource or spell bounds.");
+        }
+        if (!Enum.IsDefined(definition.AbilityKind)
+            || (definition.AbilityKind != DiabloPlayerAbilityKind.None
+                && definition.AbilitySpellId == 0)) {
+            throw new InvalidDataException(
+                $"Player loadout {definition.ClassId} has an invalid ability kind.");
         }
         if (definition.Items is null
             || definition.Items.Count > MaximumLoadoutItemCount) {

@@ -14,6 +14,7 @@ public sealed class ClientModelTests
                 new PlayerSnapshot {
                     EntityId = 7,
                     AbilitySpellId = 28,
+                    AbilityKind = PlayerAbilityKind.TrapDisarm,
                     MemorizedSpells = {
                         new PlayerSpellLevelSnapshot { SpellId = 3, Level = 2 },
                         new PlayerSpellLevelSnapshot { SpellId = 1, Level = 1 },
@@ -54,6 +55,7 @@ public sealed class ClientModelTests
         Assert.Equal(CastSourceKind.ConsumableItem, sources[3].Kind);
         Assert.Equal(PlayerItemLocation.Inventory, sources[3].SourceItem!.Location);
         Assert.Equal(CastSourceKind.Ability, sources[^1].Kind);
+        Assert.Equal("Ability TrapDisarm", sources[^1].DisplayName);
 
         var selected = AuthoritativeSpellSourceSelector.Select(sources, "memorized:3:2");
         Assert.Equal("memorized:3:2", selected!.Key);

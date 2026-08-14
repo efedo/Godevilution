@@ -257,6 +257,7 @@ internal static class DiabloProtocolMapper
             ManaShieldActive = state.ManaShieldActive,
             ReflectCharges = state.ReflectCharges,
             AbilitySpellId = state.AbilitySpellId,
+            AbilityKind = (PlayerAbilityKind)state.AbilityKind,
             HostileMode = !state.FriendlyMode,
             FacingDirection = (PlayerDirection)state.FacingDirection,
             CombatMode = (PlayerCombatMode)state.CombatMode,
@@ -615,6 +616,7 @@ internal static class DiabloProtocolMapper
             ManaShieldActive = source.ManaShieldActive,
             ReflectCharges = source.ReflectCharges,
             AbilitySpellId = source.AbilitySpellId,
+            AbilityKind = (DiabloPlayerAbilityKind)source.AbilityKind,
             MemorizedSpells = source.MemorizedSpells.Select(spell =>
                 new MemorizedSpellState(spell.SpellId, spell.Level)).ToArray(),
             LevelId = source.LevelId,

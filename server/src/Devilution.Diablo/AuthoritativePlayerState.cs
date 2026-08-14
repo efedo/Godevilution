@@ -187,6 +187,8 @@ public sealed record StorePlayerSnapshot(
     public bool ManaShieldActive { get; init; }
     public uint ReflectCharges { get; init; }
     public uint AbilitySpellId { get; init; }
+    /** Content-owned semantic role for the active class skill. */
+    public DiabloPlayerAbilityKind AbilityKind { get; init; }
     public IReadOnlyList<MemorizedSpellState> MemorizedSpells { get; init; } = [];
     public IReadOnlyList<AuthoritativeStatusEffect> StatusEffects { get; init; } = [];
 
@@ -253,7 +255,8 @@ public sealed class AuthoritativePlayerState(
     uint reflectCharges = 0,
     int baseLifeMaximum = -1,
     int baseManaMaximum = -1,
-    AuthoritativePlayerClassDefinition? playerClass = null)
+    AuthoritativePlayerClassDefinition? playerClass = null,
+    DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None)
 {
     public uint Gold { get; set; } = gold;
 
@@ -292,6 +295,12 @@ public sealed class AuthoritativePlayerState(
         : DiabloPlayerName.RequireValid(characterName, nameof(characterName));
 
     public uint AbilitySpellId { get; set; } = abilitySpellId;
+
+    /** Content-owned semantic role for the active class skill. */
+    public DiabloPlayerAbilityKind AbilityKind { get; internal set; } =
+        Enum.IsDefined(abilityKind)
+            ? abilityKind
+            : throw new ArgumentOutOfRangeException(nameof(abilityKind));
 
     /** True while the server-owned native Mana Shield defense is active. */
     public bool ManaShieldActive { get; set; } = manaShieldActive;

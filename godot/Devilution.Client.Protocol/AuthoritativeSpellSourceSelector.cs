@@ -88,9 +88,12 @@ public static class AuthoritativeSpellSourceSelector
         }
 
         if (player.AbilitySpellId != 0) {
+            var abilityName = player.AbilityKind == PlayerAbilityKind.Unspecified
+                ? $"Ability {player.AbilitySpellId}"
+                : player.AbilityKind.ToString();
             sources.Add(new AuthoritativeSpellSource(
                 $"ability:{player.AbilitySpellId}",
-                $"Ability {player.AbilitySpellId}",
+                $"Ability {abilityName}",
                 player.AbilitySpellId,
                 1,
                 CastSourceKind.Ability,

@@ -1,7 +1,7 @@
-class_id	starting_gold	ability_spell_id	starting_spell_id	starting_spell_level
-0	100	26	0	0
-1	100	28	0	0
-2	100	27	1	2
-3	100	46	0	0
-4	100	5	0	0
-5	100	22	0	0
+class_id	starting_gold	ability_spell_id	ability_kind	starting_spell_id	starting_spell_level
+0	100	26	Repair	0	0
+1	100	28	TrapDisarm	0	0
+2	100	27	Recharge	1	2
+3	100	46	Search	0	0
+4	100	5	Identify	0	0
+5	100	22	Rage	0	0

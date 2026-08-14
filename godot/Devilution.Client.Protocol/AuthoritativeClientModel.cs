@@ -52,6 +52,10 @@ public sealed class AuthoritativeClientModel
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid player facing direction.");
                 }
+                if (!Enum.IsDefined(player.AbilityKind)) {
+                    throw new InvalidDataException(
+                        "The authoritative snapshot contains an invalid player ability kind.");
+                }
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
                         && player.CombatModeEndTick != 0)

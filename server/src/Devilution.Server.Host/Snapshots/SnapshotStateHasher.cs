@@ -57,6 +57,10 @@ public static class SnapshotStateHasher
             if (player.AbilitySpellId != 0 || memorizedSpells.Length != 0) {
                 hasher.AppendString("godevilution-player-spells-v1");
                 hasher.AppendUInt32(player.AbilitySpellId);
+                if (player.AbilityKind != PlayerAbilityKind.Unspecified) {
+                    hasher.AppendString("godevilution-player-ability-kind-v1");
+                    hasher.AppendInt32((int)player.AbilityKind);
+                }
                 hasher.AppendUInt64((ulong)memorizedSpells.Length);
                 foreach (var spell in memorizedSpells) {
                     hasher.AppendUInt32(spell.SpellId);

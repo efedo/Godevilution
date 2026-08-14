@@ -327,6 +327,7 @@ public sealed partial class DiabloSimulation
             ManaShieldActive = player.ManaShieldActive,
             ReflectCharges = player.ReflectCharges,
             AbilitySpellId = player.AbilitySpellId,
+            AbilityKind = player.AbilityKind,
             MemorizedSpells = player.MemorizedSpells.ToArray(),
             StatusEffects = player.StatusEffects.ToArray(),
             FriendlyMode = player.FriendlyMode,
@@ -1385,6 +1386,7 @@ public sealed partial class DiabloSimulation
         if (!string.IsNullOrEmpty(source.CharacterName))
             destination.CharacterName = source.CharacterName;
         destination.AbilitySpellId = source.AbilitySpellId;
+        destination.AbilityKind = source.AbilityKind;
         destination.ManaShieldActive = source.ManaShieldActive;
         destination.ReflectCharges = source.ReflectCharges;
         destination.FriendlyMode = source.FriendlyMode;
@@ -1748,6 +1750,7 @@ public sealed partial class DiabloSimulation
             || source.Belt.Count > 8
             || source.InventoryGrid.Count > 400
             || source.AbilitySpellId > AuthoritativePlayerLoadoutCatalog.MaximumSpellId
+            || !Enum.IsDefined(source.AbilityKind)
             || source.ReflectCharges > ushort.MaxValue
             || source.MemorizedSpells.Count > AuthoritativePlayerLoadoutCatalog.MaximumMemorizedSpellCount
             || source.StatusEffects.Count > 128

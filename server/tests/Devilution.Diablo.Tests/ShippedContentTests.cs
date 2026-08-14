@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.142.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.143.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.142.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.143.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 8, 3, 5, 3, 5, 40, 20), (
@@ -2001,6 +2001,7 @@ public sealed class ShippedContentTests
         Assert.Equal(640, initial.Player.ManaMaximum);
         Assert.Equal(100U, initial.Player.Gold);
         Assert.Equal(26U, initial.Player.AbilitySpellId);
+        Assert.Equal(DiabloPlayerAbilityKind.Repair, initial.Player.AbilityKind);
         Assert.Empty(initial.Player.MemorizedSpells);
         Assert.Equal(2, initial.Player.Equipment.Count);
         Assert.Equal(2, initial.Player.Belt.Count);

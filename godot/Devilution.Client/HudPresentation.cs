@@ -7,10 +7,6 @@ namespace Devilution.Client;
 /** Data-driven authoritative inventory, store, interaction, and event UI. */
 public partial class HudPresentation : CanvasLayer
 {
-    private const uint IdentifySpellId = 5;
-    private const uint RepairSpellId = 26;
-    private const uint RechargeSpellId = 27;
-    private const uint TrapDisarmSpellId = 28;
     private const int InventoryColumns = 10;
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
@@ -196,10 +192,10 @@ public partial class HudPresentation : CanvasLayer
         var activeStore = model.Snapshot?.ActiveStore;
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
-        var hasIdentifyAbility = player?.AbilitySpellId == IdentifySpellId;
-        var hasRepairAbility = player?.AbilitySpellId == RepairSpellId;
-        var hasRechargeAbility = player?.AbilitySpellId == RechargeSpellId;
-        var hasTrapDisarmAbility = player?.AbilitySpellId == TrapDisarmSpellId;
+        var hasIdentifyAbility = player?.AbilityKind == PlayerAbilityKind.Identify;
+        var hasRepairAbility = player?.AbilityKind == PlayerAbilityKind.Repair;
+        var hasRechargeAbility = player?.AbilityKind == PlayerAbilityKind.Recharge;
+        var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;

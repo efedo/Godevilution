@@ -16,11 +16,22 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         Assert.Equal(
             [26U, 28U, 27U, 46U, 5U, 22U],
             catalog.Definitions.Select(definition => definition.AbilitySpellId));
+        Assert.Equal(
+            [
+                DiabloPlayerAbilityKind.Repair,
+                DiabloPlayerAbilityKind.TrapDisarm,
+                DiabloPlayerAbilityKind.Recharge,
+                DiabloPlayerAbilityKind.Search,
+                DiabloPlayerAbilityKind.Identify,
+                DiabloPlayerAbilityKind.Rage,
+            ],
+            catalog.Definitions.Select(definition => definition.AbilityKind));
 
         var warrior = catalog.CreateTemplate("warrior-session", 0, null, null, null, 1)
             .CreatePlayer();
         Assert.Equal(100U, warrior.Gold);
         Assert.Equal(26U, warrior.AbilitySpellId);
+        Assert.Equal(DiabloPlayerAbilityKind.Repair, warrior.AbilityKind);
         Assert.Empty(warrior.MemorizedSpells);
         Assert.Equal([4U, 5U], warrior.Equipment.Select(item => item.Slot));
         Assert.Equal([0U, 1U], warrior.Belt.Select(item => item.Slot));
@@ -43,6 +54,7 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         var sorcerer = catalog.CreateTemplate("sorcerer-session", 2, null, null, null, 1)
             .CreatePlayer();
         Assert.Equal(27U, sorcerer.AbilitySpellId);
+        Assert.Equal(DiabloPlayerAbilityKind.Recharge, sorcerer.AbilityKind);
         Assert.Equal(new MemorizedSpellState(1, 2), Assert.Single(sorcerer.MemorizedSpells));
         var staff = Assert.Single(sorcerer.Equipment);
         Assert.Equal(166, staff.State.ItemIndex);
@@ -257,6 +269,35 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
             classes, items, combatRules, "class_loadouts.tsv", loadouts,
             "class_loadout_items.tsv", overlapping));
+    }
+
+    [Fact]
+    public void LegacyLoadoutSchemaDefaultsSemanticAbilityKind()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var items = LoadItems(root);
+        var combatRules = LoadCombatRules(root);
+        var current = ReadBase(root, "class_loadouts.tsv")
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => string.Join(
+                '\t',
+                line.Split('\t').Where((_, index) => index != 3)))
+            .ToArray();
+        var legacy = string.Join("\r\n", current) + "\r\n";
+
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            classes,
+            items,
+            combatRules,
+            "class_loadouts.tsv",
+            legacy,
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"));
+
+        Assert.All(
+            catalog.Definitions,
+            definition => Assert.Equal(DiabloPlayerAbilityKind.None, definition.AbilityKind));
     }
 
     private static uint[] GetSeeds(AuthoritativePlayerState player)
