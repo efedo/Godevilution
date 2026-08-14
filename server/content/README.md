@@ -208,8 +208,11 @@ base-three compatibility values with intelligence-scale-two chance bands.
 The optional `rhino_charge_minimum_distance`,
 `rhino_charge_chance_base`, and
 `rhino_charge_chance_intelligence_scale` columns externalize the Rhino clear-
-lane charge admission boundary. Legacy monster rows retain the native
-minimum-five, base-forty-three, intelligence-scale-two compatibility values.
+lane charge admission boundary. When all three values are present and positive,
+the tuple selects the server-owned charge controller regardless of the row's
+`native_ai` label; rows without migrated tuning retain the native-name
+compatibility defaults. Legacy monster rows retain the native minimum-five,
+base-forty-three, intelligence-scale-two compatibility values.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the

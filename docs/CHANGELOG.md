@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Rhino charge admission from a complete validated tuning tuple rather
+  than requiring the `Rhino` native-AI name; legacy rows without tuning retain
+  the native-name compatibility defaults.
 - Select Skeleton King summon admission from a complete validated tuning tuple
   rather than requiring the `SkeletonKing` native-AI name; legacy rows without
   tuning retain the native-name compatibility defaults.

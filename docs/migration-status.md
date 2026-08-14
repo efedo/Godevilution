@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Rhino charge admission is now selected by its complete validated tuning tuple
+  independent of the row's native-AI label; rows without migrated tuning retain
+  the native-name compatibility path.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path.
