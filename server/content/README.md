@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.97.0` schema in
+It declares its identity and `devilution.diablo@1.98.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -41,6 +41,9 @@ double and Rogue/Bard half-again self-Healing modifiers.
 `heal_other_spell_percent` separately externalizes Heal Other's class modifier;
 the Monk uses 300 percent for another player while retaining 200 percent for
 self-Healing.
+`mana_spell_percent` externalizes the native Mana spell multiplier: Sorcerer
+uses 200 percent, Rogue/Bard use 150 percent, and the remaining classes use
+100 percent. Legacy class rows default to 100 percent during migration.
 The five `monk_*_armor_*` columns externalize the native Monk chest-armor
 bonuses: light armor, ordinary medium armor, unique medium armor, and unique
 heavy armor use their declared level multipliers over the shared divisor.
@@ -1093,7 +1096,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, and Monk chest-armor tuning. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, and Monk chest-armor tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1142,7 +1145,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.97.0"
+      "version": "1.98.0"
   },
   "dependencyConstraints": [
     {
@@ -1174,7 +1177,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.97.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.98.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1224,6 +1227,9 @@ damage threshold and values.
 Schema 1.97 adds the optional `damage_type` column for mapped monster missiles;
 checked-in damaging rows now declare their authoritative channel, while legacy
 rows retain spell/name inference during migration.
+Schema 1.98 adds the optional `mana_spell_percent` class column; checked-in
+classes now own the native Mana spell multiplier, while legacy class rows retain
+the 100-percent compatibility default.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

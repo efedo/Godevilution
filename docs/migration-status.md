@@ -258,6 +258,10 @@ Status date: 2026-08-14
 - Schema 1.97 externalizes mapped monster-missile `damage_type`; shipped
   damaging rows now declare their authoritative channel, while legacy rows
   retain spell/name inference during migration.
+- Schema 1.98 externalizes the Mana spell class multiplier through
+  `mana_spell_percent`; shipped classes now own Sorcerer 200-percent and
+  Rogue/Bard 150-percent scaling, while legacy class rows default to 100
+  percent.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
