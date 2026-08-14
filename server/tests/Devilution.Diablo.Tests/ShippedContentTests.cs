@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.123.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.124.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -184,7 +184,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.123.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.124.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -333,12 +333,16 @@ public sealed class ShippedContentTests
                 .Distinct()
                 .Single());
         Assert.Equal(
-            (20, 4),
+            (20, 4, 20, 4, 15, 4),
             monsterTypes.Definitions
                 .Where(definition => definition.NativeAi == "Fat")
                 .Select(definition => (
                     definition.FatMovementChanceBase,
-                    definition.FatMovementChanceIntelligenceScale))
+                    definition.FatMovementChanceIntelligenceScale,
+                    definition.FatAttackChanceBase,
+                    definition.FatAttackChanceIntelligenceScale,
+                    definition.FatSpecialChanceBase,
+                    definition.FatSpecialChanceIntelligenceScale))
                 .Distinct()
                 .Single());
         Assert.Equal(

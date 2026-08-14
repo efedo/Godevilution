@@ -4410,8 +4410,12 @@ public sealed class DiabloCombatCommandProcessor
                             + (goatMeleeAttackTuning.Value.IntelligenceScale
                                 * target.Intelligence)))
                     continue;
-                if (target.NativeAi == "Fat"
-                    && !NativeFatAttackBandAllowsAttack(target, attackSeed))
+                var fatAttackTuning = GetFatAttackTuning(target);
+                if (fatAttackTuning.HasValue
+                    && !NativeFatAttackBandAllowsAttack(
+                        target,
+                        attackSeed,
+                        fatAttackTuning.Value))
                     continue;
                 var batAttackTuning = GetBatAttackTuning(target);
                 if (batAttackTuning.HasValue
@@ -4424,7 +4428,8 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var usesSpecialAttack = UsesNativeFatSpecialAttack(
                     target,
-                    attackSeed)
+                    attackSeed,
+                    fatAttackTuning)
                     || UsesNativeGoatSpecialAttack(target, attackSeed);
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
@@ -5170,6 +5175,32 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "Fat"
             ? (20, 4)
+            : null;
+    }
+
+    private (
+        int AttackChanceBase,
+        int AttackChanceIntelligenceScale,
+        int SpecialChanceBase,
+        int SpecialChanceIntelligenceScale)? GetFatAttackTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Fat")
+                return null;
+            if (definition.FatAttackChanceBase > 0
+                && definition.FatAttackChanceIntelligenceScale > 0
+                && definition.FatSpecialChanceBase > 0
+                && definition.FatSpecialChanceIntelligenceScale > 0) {
+                return (
+                    definition.FatAttackChanceBase,
+                    definition.FatAttackChanceIntelligenceScale,
+                    definition.FatSpecialChanceBase,
+                    definition.FatSpecialChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Fat"
+            ? (20, 4, 15, 4)
             : null;
     }
 
@@ -6481,20 +6512,42 @@ public sealed class DiabloCombatCommandProcessor
     /** Native Overlord/Fat AI selects its special melee band five percent of the time. */
     private static bool UsesNativeFatSpecialAttack(
         AuthoritativeCombatTarget target,
-        uint attackSeed)
+        uint attackSeed,
+        (
+            int AttackChanceBase,
+            int AttackChanceIntelligenceScale,
+            int SpecialChanceBase,
+            int SpecialChanceIntelligenceScale)? tuning)
     {
-        return target.NativeAi == "Fat"
+        return tuning.HasValue
+            && target.NativeAi == "Fat"
             && target.ToHitSpecial > 0
             && target.MaxDamageSpecial > 0
-            && attackSeed % 100U >= (uint)Math.Min(100, 15 + (4 * target.Intelligence))
-            && attackSeed % 100U < (uint)Math.Min(100, 20 + (4 * target.Intelligence));
+            && attackSeed % 100U >= (uint)Math.Min(
+                100,
+                tuning.Value.SpecialChanceBase
+                    + (tuning.Value.SpecialChanceIntelligenceScale
+                        * target.Intelligence))
+            && attackSeed % 100U < (uint)Math.Min(
+                100,
+                tuning.Value.AttackChanceBase
+                    + (tuning.Value.AttackChanceIntelligenceScale
+                        * target.Intelligence));
     }
 
     private static bool NativeFatAttackBandAllowsAttack(
         AuthoritativeCombatTarget target,
-        uint attackSeed)
+        uint attackSeed,
+        (
+            int AttackChanceBase,
+            int AttackChanceIntelligenceScale,
+            int SpecialChanceBase,
+            int SpecialChanceIntelligenceScale) tuning)
     {
-        return attackSeed % 100U < (uint)Math.Min(100, 20 + (4 * target.Intelligence));
+        return attackSeed % 100U < (uint)Math.Min(
+            100,
+            tuning.AttackChanceBase
+                + (tuning.AttackChanceIntelligenceScale * target.Intelligence));
     }
 
     /** Native AiAvoidance selects a wounded GoatMelee special on its second 50% roll. */

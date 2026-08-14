@@ -114,6 +114,18 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Fat movement admission chance increase per intelligence point. */
     public int FatMovementChanceIntelligenceScale { get; init; }
 
+    /** Native Fat adjacent attack chance base before intelligence scaling. */
+    public int FatAttackChanceBase { get; init; }
+
+    /** Native Fat adjacent attack chance increase per intelligence point. */
+    public int FatAttackChanceIntelligenceScale { get; init; }
+
+    /** Native Fat special-attack lower-band chance base before intelligence scaling. */
+    public int FatSpecialChanceBase { get; init; }
+
+    /** Native Fat special-attack lower-band chance increase per intelligence point. */
+    public int FatSpecialChanceIntelligenceScale { get; init; }
+
     /** Native Zombie action admission chance base before intelligence scaling. */
     public int ZombieActionChanceBase { get; init; }
 
@@ -328,6 +340,24 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Fat"
                     && (definition.FatMovementChanceBase != 0
                         || definition.FatMovementChanceIntelligenceScale != 0))
+                || definition.FatAttackChanceBase is < 0 or > 100
+                || definition.FatAttackChanceIntelligenceScale is < 0 or > 100
+                || definition.FatSpecialChanceBase is < 0 or > 100
+                || definition.FatSpecialChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Fat"
+                    && ((definition.FatAttackChanceBase != 0
+                            || definition.FatAttackChanceIntelligenceScale != 0
+                            || definition.FatSpecialChanceBase != 0
+                            || definition.FatSpecialChanceIntelligenceScale != 0)
+                        && (definition.FatAttackChanceBase <= 0
+                            || definition.FatAttackChanceIntelligenceScale <= 0
+                            || definition.FatSpecialChanceBase <= 0
+                            || definition.FatSpecialChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Fat"
+                    && (definition.FatAttackChanceBase != 0
+                        || definition.FatAttackChanceIntelligenceScale != 0
+                        || definition.FatSpecialChanceBase != 0
+                        || definition.FatSpecialChanceIntelligenceScale != 0))
                 || definition.ZombieActionChanceBase is < 0 or > 100
                 || definition.ZombieActionChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "Zombie"
@@ -545,6 +575,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GoatMeleeAttackChanceIntelligenceScale = row.OptionalInt32("goat_melee_attack_chance_intelligence_scale"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
+                FatAttackChanceBase = row.OptionalInt32("fat_attack_chance_base"),
+                FatAttackChanceIntelligenceScale = row.OptionalInt32("fat_attack_chance_intelligence_scale"),
+                FatSpecialChanceBase = row.OptionalInt32("fat_special_chance_base"),
+                FatSpecialChanceIntelligenceScale = row.OptionalInt32("fat_special_chance_intelligence_scale"),
                 ZombieActionChanceBase = row.OptionalInt32("zombie_action_chance_base"),
                 ZombieActionChanceIntelligenceScale = row.OptionalInt32("zombie_action_chance_intelligence_scale"),
                 ZombieMovementDistanceMinimum = row.OptionalInt32("zombie_movement_distance_minimum"),
