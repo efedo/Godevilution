@@ -5715,14 +5715,32 @@ public sealed class DiabloCombatCommandProcessor
                     return false;
             }
         } else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
-            // Native AiRangedAvoidance admits a clear-lane special attack from
-            // distance two with 500 * (intelligence + 1) per 10,000, and uses
-            // the intelligence + 2 band at distance three or farther.
-            if (distance < 2)
+            // Legacy rows retain the native AiRangedAvoidance values while
+            // validated content progressively owns this admission boundary.
+            var minimumDistance = missile.RangedAvoidanceMinimumDistance == 0
+                ? 2
+                : missile.RangedAvoidanceMinimumDistance;
+            var farDistance = missile.RangedAvoidanceFarDistance == 0
+                ? 3
+                : missile.RangedAvoidanceFarDistance;
+            var chanceBase = missile.RangedAvoidanceChanceBase == 0
+                ? 500
+                : missile.RangedAvoidanceChanceBase;
+            var chanceIntelligenceScale = missile.RangedAvoidanceChanceIntelligenceScale == 0
+                ? 500
+                : missile.RangedAvoidanceChanceIntelligenceScale;
+            var farIntelligenceOffset = missile.RangedAvoidanceFarIntelligenceOffset;
+            if (missile.RangedAvoidanceMinimumDistance == 0
+                && missile.RangedAvoidanceFarDistance == 0
+                && missile.RangedAvoidanceChanceBase == 0
+                && missile.RangedAvoidanceChanceIntelligenceScale == 0
+                && missile.RangedAvoidanceFarIntelligenceOffset == 0)
+                farIntelligenceOffset = 1;
+            if (distance < minimumDistance)
                 return false;
-            var attackBand = distance >= 3
-                ? 500 * (monster.Intelligence + 2)
-                : 500 * (monster.Intelligence + 1);
+            var attackBand = checked(
+                chanceBase + chanceIntelligenceScale * (monster.Intelligence
+                    + (distance >= farDistance ? farIntelligenceOffset : 0)));
             attackBand = checked(
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))

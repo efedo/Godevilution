@@ -4469,6 +4469,96 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesConfiguredDistanceBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceMinimumDistance: 4,
+                    RangedAvoidanceFarDistance: 5,
+                    RangedAvoidanceChanceBase: 10_000,
+                    RangedAvoidanceChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // The configured minimum distance supersedes the native compatibility
+        // default of two tiles, so this clear lane must remain idle.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void RangedAvoidanceUsesConfiguredChanceBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceMinimumDistance: 2,
+                    RangedAvoidanceFarDistance: 3,
+                    RangedAvoidanceChanceBase: 1,
+                    RangedAvoidanceChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // Tick 1 produces seed 15 (1 ^ 9 ^ 7), which is outside the
+        // configured one-per-10,000 near-distance band.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void AcidAiCreatesAValidatedSplatAndPersistentPuddle()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -32,7 +32,12 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     AuthoritativeDamageType? DamageType = null,
     int ChargeMinimumDistance = 0,
     int ChargeChanceBase = 0,
-    int ChargeChanceIntelligenceScale = 0);
+    int ChargeChanceIntelligenceScale = 0,
+    int RangedAvoidanceMinimumDistance = 0,
+    int RangedAvoidanceFarDistance = 0,
+    int RangedAvoidanceChanceBase = 0,
+    int RangedAvoidanceChanceIntelligenceScale = 0,
+    int RangedAvoidanceFarIntelligenceOffset = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -66,6 +71,11 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
+                || definition.RangedAvoidanceMinimumDistance is < 0 or > 64
+                || definition.RangedAvoidanceFarDistance is < 0 or > 64
+                || definition.RangedAvoidanceChanceBase is < 0 or > 10_000
+                || definition.RangedAvoidanceChanceIntelligenceScale is < 0 or > 10_000
+                || definition.RangedAvoidanceFarIntelligenceOffset is < 0 or > 64
                 || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BatCharge
                     && ((definition.ChargeMinimumDistance != 0
                             || definition.ChargeChanceBase != 0
@@ -82,6 +92,23 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && (definition.ChargeMinimumDistance != 0
                         || definition.ChargeChanceBase != 0
                         || definition.ChargeChanceIntelligenceScale != 0))
+                || (definition.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+                    && (definition.RangedAvoidanceMinimumDistance != 0
+                        || definition.RangedAvoidanceFarDistance != 0
+                        || definition.RangedAvoidanceChanceBase != 0
+                        || definition.RangedAvoidanceChanceIntelligenceScale != 0
+                        || definition.RangedAvoidanceFarIntelligenceOffset != 0)
+                    && (definition.RangedAvoidanceMinimumDistance <= 0
+                        || definition.RangedAvoidanceFarDistance
+                            < definition.RangedAvoidanceMinimumDistance
+                        || definition.RangedAvoidanceChanceBase <= 0
+                        || definition.RangedAvoidanceChanceIntelligenceScale <= 0))
+                || (definition.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+                    && (definition.RangedAvoidanceMinimumDistance != 0
+                        || definition.RangedAvoidanceFarDistance != 0
+                        || definition.RangedAvoidanceChanceBase != 0
+                        || definition.RangedAvoidanceChanceIntelligenceScale != 0
+                        || definition.RangedAvoidanceFarIntelligenceOffset != 0))
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -150,7 +177,12 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 ParseDamageType(row),
                 row.OptionalInt32("charge_minimum_distance"),
                 row.OptionalInt32("charge_chance_base"),
-                row.OptionalInt32("charge_chance_intelligence_scale"));
+                row.OptionalInt32("charge_chance_intelligence_scale"),
+                row.OptionalInt32("ranged_avoidance_minimum_distance"),
+                row.OptionalInt32("ranged_avoidance_far_distance"),
+                row.OptionalInt32("ranged_avoidance_chance_base"),
+                row.OptionalInt32("ranged_avoidance_chance_intelligence_scale"),
+                row.OptionalInt32("ranged_avoidance_far_intelligence_offset"));
         }));
     }
 
