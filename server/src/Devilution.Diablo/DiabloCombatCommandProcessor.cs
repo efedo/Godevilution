@@ -5823,7 +5823,8 @@ public sealed class DiabloCombatCommandProcessor
         return monsterMissiles is not null
             && monsterMissiles.TryGet(nativeAi, out var missile)
             && missile.MissileId == "Arrow"
-            && missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Targeted;
+            && missile.ProjectileBehavior is AuthoritativeProjectileBehavior.MonsterArrow
+                or AuthoritativeProjectileBehavior.Targeted;
     }
 
     /** Native Rhino AI charge: clear long-range lanes end in a special melee hit. */

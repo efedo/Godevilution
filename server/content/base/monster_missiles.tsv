@@ -1,6 +1,6 @@
 native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id
-GoatRanged	Arrow	Targeted	Ranged	100	0
-SkeletonRanged	Arrow	Targeted	Ranged	100	0
+GoatRanged	Arrow	MonsterArrow	Ranged	100	0
+SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0
 Snake	Rhino	SnakeCharge	Ranged	100	0
 Succubus	BloodStar	BloodStar	Ranged	100	0
 LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0
