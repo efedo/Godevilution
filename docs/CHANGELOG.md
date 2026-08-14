@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.130's optional GoatMelee wounded-special tuning, moving the
+  native health threshold and deterministic random-group gate into validated
+  monster type content while preserving legacy target behavior.
 - Add schema 1.129's optional Bat retreat-duration tuning, moving the native
   post-hit retreat length into validated monster type content while preserving
   legacy target behavior.
