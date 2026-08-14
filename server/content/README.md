@@ -173,7 +173,10 @@ two, base-four, intelligence-scale-two compatibility values.
 The optional `skeleton_king_summon_minimum_distance`,
 `skeleton_king_summon_chance_base`, and
 `skeleton_king_summon_chance_intelligence_scale` columns externalize the
-Skeleton King summon admission boundary. Legacy monster rows retain the native
+Skeleton King summon admission boundary. When all three values are present and
+positive, the tuple selects the server-owned summon controller regardless of
+the row's `native_ai` label; rows without migrated tuning retain the native-name
+compatibility defaults. Legacy monster rows retain the native
 minimum-three, base-thirty-five, intelligence-scale-four compatibility values.
 The optional `hork_demon_attack_chance_base`,
 `hork_demon_attack_chance_intelligence_scale`,

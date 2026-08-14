@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Skeleton King summon admission is now selected by its complete validated
+  tuning tuple independent of the row's native-AI label; rows without migrated
+  tuning retain the native-name compatibility path.
+
 - Hork Spawn admission is now selected by a complete validated tuning tuple,
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path, while content can assign the controller

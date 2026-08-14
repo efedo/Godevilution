@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Skeleton King summon admission from a complete validated tuning tuple
+  rather than requiring the `SkeletonKing` native-AI name; legacy rows without
+  tuning retain the native-name compatibility defaults.
 - Select the migrated Hork Spawn controller from a complete validated Hork
   tuning tuple instead of requiring the `HorkDemon` native-AI name; legacy
   rows without tuning retain the native-name compatibility defaults.
