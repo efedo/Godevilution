@@ -12,5 +12,5 @@ Psychorb	BlueFlare	MonsterMagic
 Necromorb	RedFlare	MonsterMagic
 Magma	MagmaBall	Targeted
 Storm	ThinLightningControl	Lightning
-Diablo	DiabloApocalypse	Targeted
+Diablo	DiabloApocalypse	ApocalypseController
 BoneDemon	BlueFlare2	MonsterMagic

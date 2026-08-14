@@ -2788,6 +2788,30 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    private static AuthoritativeProjectile CreateMonsterApocalypseBoom(
+        uint projectileEntityId,
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativePlayerState target)
+    {
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            controller.SourceEntityId,
+            target.EntityId,
+            controller.SpellId,
+            controller.LevelId,
+            target.PositionX,
+            target.PositionY,
+            target.PositionX,
+            target.PositionY,
+            controller.Damage,
+            AuthoritativeDamageType.Physical,
+            0,
+            checked((uint)spell.ProjectileLifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+        };
+    }
+
     private static AuthoritativeProjectile CreateRageController(
         uint projectileEntityId,
         AuthoritativePlayerState player,
@@ -4072,23 +4096,29 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
-            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm")
+            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm"
+            or "Diablo")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Firebolt
                 or AuthoritativeProjectileBehavior.Fireball
                 or AuthoritativeProjectileBehavior.MonsterMagic
-                or AuthoritativeProjectileBehavior.Lightning))
+                or AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.ApocalypseController))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
                 projectile.SourceEntityId == monster.EntityId
-                && projectile.Behavior == missile.ProjectileBehavior))
+                && (projectile.Behavior == missile.ProjectileBehavior
+                    || (missile.ProjectileBehavior
+                            == AuthoritativeProjectileBehavior.ApocalypseController
+                        && projectile.Behavior
+                            == AuthoritativeProjectileBehavior.ApocalypseBoom))))
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (monster.NativeAi is "BoneDemon" or "Storm") {
+        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo") {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4114,7 +4144,7 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return monster.NativeAi is not ("BoneDemon" or "Storm");
+            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo");
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);
@@ -4122,14 +4152,17 @@ public sealed class DiabloCombatCommandProcessor
             ?? (missile.ProjectileBehavior switch {
                 AuthoritativeProjectileBehavior.Fireball => 12U,
                 AuthoritativeProjectileBehavior.Lightning => 3U,
+                AuthoritativeProjectileBehavior.ApocalypseController => 25U,
                 _ => 1U,
             });
         // Native monster Firebolt/Fireball use speed 16; Storm's
         // ThinLightningControl uses speed 32. Player spell speed remains
         // content-owned separately in spells.tsv.
-        var speed = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Lightning
-            ? 32
-            : 16;
+        var speed = missile.ProjectileBehavior switch {
+            AuthoritativeProjectileBehavior.Lightning => 32,
+            AuthoritativeProjectileBehavior.ApocalypseController => 0,
+            _ => 16,
+        };
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
             ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
@@ -4156,9 +4189,11 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Lightning
-                ? 0
-                : SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            missile.ProjectileBehavior switch {
+                AuthoritativeProjectileBehavior.Lightning => 0,
+                AuthoritativeProjectileBehavior.ApocalypseController => 40,
+                _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            },
             damageType,
             0,
             checked((uint)lifetime)) {
@@ -4818,7 +4853,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseBoom) {
-                    AdvanceApocalypseBoom(projectile, players, events);
+                    AdvanceApocalypseBoom(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.RageController) {
@@ -6244,8 +6279,15 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         if (!spells.TryGet(controller.SpellId, out var spell)
-            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ApocalypseController
-            || !players.Any(player => IsProjectileOwner(controller, player))) {
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ApocalypseController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+        if (world.CombatTargets.TryGetValue(controller.SourceEntityId, out var monster)) {
+            AdvanceMonsterApocalypseController(controller, spell, monster, players);
+            return;
+        }
+        if (!players.Any(player => IsProjectileOwner(controller, player))) {
             world.Projectiles.Remove(controller.EntityId);
             return;
         }
@@ -6294,6 +6336,37 @@ public sealed class DiabloCombatCommandProcessor
         world.Projectiles.Remove(controller.EntityId);
     }
 
+    /** Native AddDiabloApocalypse emits one physical boom per clear-lane player. */
+    private void AdvanceMonsterApocalypseController(
+        AuthoritativeProjectile controller,
+        AuthoritativeSpellDefinition spell,
+        AuthoritativeCombatTarget monster,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        foreach (var player in players
+                     .Where(player => player.Life > 0
+                         && player.LevelId == controller.LevelId)
+                     .OrderBy(player => player.EntityId)) {
+            if (!world.HasMissileLineOfSight(
+                    controller.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY)) {
+                continue;
+            }
+            var entityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                entityId,
+                CreateMonsterApocalypseBoom(
+                    entityId,
+                    controller,
+                    spell,
+                    player));
+        }
+        world.Projectiles.Remove(controller.EntityId);
+    }
+
     private void AdvanceNovaBall(
         ulong tick,
         AuthoritativeProjectile projectile,
@@ -6331,11 +6404,34 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     private void AdvanceApocalypseBoom(
+        ulong tick,
         AuthoritativeProjectile projectile,
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
         projectile.RemainingTicks--;
+        if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+            if (!projectile.ApocalypseHit) {
+                var playerTarget = players.FirstOrDefault(player =>
+                    player.EntityId == projectile.TargetEntityId
+                    && player.Life > 0
+                    && player.LevelId == projectile.LevelId
+                    && player.PositionX == projectile.PositionX
+                    && player.PositionY == projectile.PositionY);
+                if (playerTarget is not null
+                    && TryResolveMonsterMagicProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events)) {
+                    projectile.ApocalypseHit = true;
+                }
+            }
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
         if (!projectile.ApocalypseHit) {
             var target = FindProjectileTarget(
                 projectile.LevelId,

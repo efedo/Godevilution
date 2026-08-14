@@ -1885,6 +1885,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void DiabloAiEmitsAValidatedApocalypseBoomForEachClearLanePlayer()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            aggroRange: 8,
+            monsterLevel: 5,
+            nativeAi: "Diablo",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateApocalypseSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Diablo",
+                    "DiabloApocalypse",
+                    AuthoritativeProjectileBehavior.ApocalypseController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        var firstDeliveries = processor.AdvanceTick(1, [player]);
+
+        var boom = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseBoom, boom.Behavior);
+        Assert.Equal((9U, 7U), (boom.SourceEntityId, boom.TargetEntityId));
+        Assert.Equal(AuthoritativeDamageType.Physical, boom.DamageType);
+        Assert.Equal(40, boom.Damage);
+        Assert.True(player.Life < 100);
+        Assert.Contains(
+            firstDeliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.Amount == 40);
+
+        var deliveries = processor.AdvanceTick(2, [player]);
+
+        Assert.Empty(deliveries);
+    }
+
+    [Fact]
     public void GoatRangedAiAvoidsAPlayerInsideItsNativeFourTileBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

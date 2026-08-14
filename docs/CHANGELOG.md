@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
 - Route the native `Storm` `ThinLightningControl` through the validated
   Lightning mapping, preserving its speed-32 controller, doubled monster
   damage, persistent segments, and server-owned monster-to-player hit path.
+- Route native `Diablo` `DiabloApocalypse` through a validated Apocalypse
+  controller that emits physical booms for clear-lane players and resolves
+  their server-owned monster-to-player damage.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

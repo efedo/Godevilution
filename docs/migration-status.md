@@ -166,6 +166,9 @@ Status date: 2026-08-13
 - Native `Storm` `AiRangedAvoidance` now consumes its validated
   `ThinLightningControl` Lightning mapping; the server owns the speed-32
   controller, doubled monster damage, persistent segments, and magic hit.
+- Native `Diablo` `DiabloApocalypse` now consumes its validated Apocalypse
+  controller mapping; the server emits one physical boom per clear-lane player
+  and owns the resulting monster-to-player damage.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.
