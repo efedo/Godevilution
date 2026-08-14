@@ -4429,7 +4429,9 @@ public sealed class DiabloCombatCommandProcessor
                             armorClass,
                             target.IsDemon,
                             target.IsUndead,
-                            victim.Equipment);
+                            victim.Equipment,
+                            rules.HellfireArmorBonusAgainstDemons,
+                            rules.HellfireArmorBonusAgainstUndead);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
                 var skeletonMeleeAttackTuning = GetSkeletonMeleeAttackTuning(target);
@@ -6354,7 +6356,9 @@ public sealed class DiabloCombatCommandProcessor
                     armorClass,
                     monster.IsDemon,
                     monster.IsUndead,
-                    player.Equipment);
+                    player.Equipment,
+                    rules.HellfireArmorBonusAgainstDemons,
+                    rules.HellfireArmorBonusAgainstUndead);
         }
         var damage = rules.ResolveMonsterRangedAttackDamage(
             SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
@@ -6560,7 +6564,9 @@ public sealed class DiabloCombatCommandProcessor
                     armorClass,
                     monster.IsDemon,
                     monster.IsUndead,
-                    player.Equipment);
+                    player.Equipment,
+                    rules.HellfireArmorBonusAgainstDemons,
+                    rules.HellfireArmorBonusAgainstUndead);
         }
         var specialDamage = SelectNativeSpecialDamage(monster, attackSeed);
         var damage = rules.ResolveMonsterAttackDamage(
@@ -8028,7 +8034,9 @@ public sealed class DiabloCombatCommandProcessor
                     armorClass,
                     monster.IsDemon,
                     monster.IsUndead,
-                    target.Equipment);
+                    target.Equipment,
+                    rules.HellfireArmorBonusAgainstDemons,
+                    rules.HellfireArmorBonusAgainstUndead);
         }
         var minimumHitChance = target.LevelId switch {
             14 => 20,

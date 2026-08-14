@@ -82,9 +82,13 @@ public static class AuthoritativeEquipmentIncomingDamageRules
         int armorClass,
         bool targetDemon,
         bool targetUndead,
-        IEnumerable<EquippedStoreItem> equipment)
+        IEnumerable<EquippedStoreItem> equipment,
+        int againstDemonsArmorBonus = AgainstDemonsArmorBonus,
+        int againstUndeadArmorBonus = AgainstUndeadArmorBonus)
     {
         ArgumentNullException.ThrowIfNull(equipment);
+        if (againstDemonsArmorBonus < 0 || againstUndeadArmorBonus < 0)
+            throw new ArgumentOutOfRangeException(nameof(againstDemonsArmorBonus));
         var againstDemons = false;
         var againstUndead = false;
         foreach (var equippedItem in equipment) {
@@ -98,9 +102,9 @@ public static class AuthoritativeEquipmentIncomingDamageRules
 
         var result = armorClass;
         if (targetDemon && againstDemons)
-            result = checked(result + AgainstDemonsArmorBonus);
+            result = checked(result + againstDemonsArmorBonus);
         if (targetUndead && againstUndead)
-            result = checked(result + AgainstUndeadArmorBonus);
+            result = checked(result + againstUndeadArmorBonus);
         return result;
     }
 }

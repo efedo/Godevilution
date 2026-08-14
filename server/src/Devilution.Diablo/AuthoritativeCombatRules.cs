@@ -48,7 +48,9 @@ public sealed class AuthoritativeCombatRules
         int stealLife3Percent = 3,
         int stealLife5Percent = 5,
         int stealMana3Percent = 3,
-        int stealMana5Percent = 5)
+        int stealMana5Percent = 5,
+        int hellfireArmorBonusAgainstDemons = 40,
+        int hellfireArmorBonusAgainstUndead = 20)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -71,6 +73,10 @@ public sealed class AuthoritativeCombatRules
             || stealMana3Percent is < 0 or > 100
             || stealMana5Percent is < 0 or > 100) {
             throw new InvalidDataException("Equipment attack-effect tuning is invalid.");
+        }
+        if (hellfireArmorBonusAgainstDemons < 0
+            || hellfireArmorBonusAgainstUndead < 0) {
+            throw new InvalidDataException("Hellfire armor bonus tuning is invalid.");
         }
         if (!Enum.IsDefined(gameVariant))
             throw new InvalidDataException("Combat game variant is invalid.");
@@ -121,6 +127,8 @@ public sealed class AuthoritativeCombatRules
         StealLife5Percent = stealLife5Percent;
         StealMana3Percent = stealMana3Percent;
         StealMana5Percent = stealMana5Percent;
+        HellfireArmorBonusAgainstDemons = hellfireArmorBonusAgainstDemons;
+        HellfireArmorBonusAgainstUndead = hellfireArmorBonusAgainstUndead;
     }
 
     public int BaseAttackDamage { get; }
@@ -207,6 +215,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Native percentage for the mana-steal-5 equipment effect. */
     public int StealMana5Percent { get; }
+
+    /** Native Hellfire armor bonus against demon-class monsters. */
+    public int HellfireArmorBonusAgainstDemons { get; }
+
+    /** Native Hellfire armor bonus against undead-class monsters. */
+    public int HellfireArmorBonusAgainstUndead { get; }
 
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
@@ -436,7 +450,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("steal_life_3_percent", 3),
             row.OptionalInt32("steal_life_5_percent", 5),
             row.OptionalInt32("steal_mana_3_percent", 3),
-            row.OptionalInt32("steal_mana_5_percent", 5));
+            row.OptionalInt32("steal_mana_5_percent", 5),
+            row.OptionalInt32("hellfire_armor_bonus_against_demons", 40),
+            row.OptionalInt32("hellfire_armor_bonus_against_undead", 20));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

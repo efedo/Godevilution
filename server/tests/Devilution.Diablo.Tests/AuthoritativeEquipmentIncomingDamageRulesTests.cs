@@ -123,4 +123,37 @@ public sealed class AuthoritativeEquipmentIncomingDamageRulesTests
                 targetUndead: false,
                 equipment));
     }
+
+    [Fact]
+    public void UsesConfiguredHellfireMonsterClassArmorBonuses()
+    {
+        var equipment = new[] {
+            new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag
+                        | AuthoritativeEquipmentIncomingDamageRules.AgainstUndeadFlag,
+                }),
+        };
+
+        Assert.Equal(
+            57,
+            AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
+                30,
+                targetDemon: true,
+                targetUndead: true,
+                equipment,
+                againstDemonsArmorBonus: 17,
+                againstUndeadArmorBonus: 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
+                30,
+                targetDemon: true,
+                targetUndead: false,
+                equipment,
+                againstDemonsArmorBonus: -1));
+    }
 }

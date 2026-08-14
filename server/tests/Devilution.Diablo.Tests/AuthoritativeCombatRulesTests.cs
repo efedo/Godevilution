@@ -56,9 +56,9 @@ public sealed class AuthoritativeCombatRulesTests
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
-            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t10\t7\t9\t11\t13\n");
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\thellfire_armor_bonus_against_demons\thellfire_armor_bonus_against_undead\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t10\t7\t9\t11\t13\t17\t19\n");
 
-        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 10, 7, 9, 11, 13), (
+        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 10, 7, 9, 11, 13, 17, 19), (
             rules.MonsterMeleeMinimumHitChance,
             rules.MonsterRangedMinimumHitChance,
             rules.MonsterMinimumHitChanceLevel14,
@@ -71,7 +71,9 @@ public sealed class AuthoritativeCombatRulesTests
             rules.StealLife3Percent,
             rules.StealLife5Percent,
             rules.StealMana3Percent,
-            rules.StealMana5Percent));
+            rules.StealMana5Percent,
+            rules.HellfireArmorBonusAgainstDemons,
+            rules.HellfireArmorBonusAgainstUndead));
         Assert.Equal(
             10,
             rules.ResolveMonsterAttackDamage(
@@ -196,6 +198,11 @@ public sealed class AuthoritativeCombatRulesTests
             1,
             100,
             randomStealLifeDivisor: 0));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            hellfireArmorBonusAgainstDemons: -1));
     }
 
     [Fact]
