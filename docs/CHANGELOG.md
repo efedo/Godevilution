@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.107's optional SkeletonMelee delay-band tuning, moving the
+  native movement admission chance into validated monster content while
+  preserving legacy target behavior.
 - Add schema 1.106's optional Bat attack-band tuning, moving the native
   adjacent attack chance into validated monster content while preserving
   legacy target behavior.

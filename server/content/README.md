@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.106.0` schema in
+It declares its identity and `devilution.diablo@1.107.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -114,6 +114,10 @@ The optional `bat_attack_chance_base` and
 `bat_attack_chance_intelligence_scale` columns externalize the Bat adjacent
 attack admission band. Legacy monster rows retain the native base-eight,
 intelligence-scale-four compatibility values.
+The optional `skeleton_melee_delay_chance_base` and
+`skeleton_melee_delay_chance_intelligence_scale` columns externalize the
+SkeletonMelee movement-delay band. Legacy monster rows retain the native
+base-thirty-five, intelligence-scale-four compatibility values.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the
@@ -1174,7 +1178,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.106.0"
+      "version": "1.107.0"
   },
   "dependencyConstraints": [
     {
@@ -1206,7 +1210,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.106.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.107.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1282,6 +1286,9 @@ retain the compatibility formula.
 Schema 1.106 adds the optional Bat attack-band columns to `monster_types.tsv`;
 checked-in Bat rows own their adjacent attack chance while older rows retain
 the compatibility formula.
+Schema 1.107 adds the optional SkeletonMelee delay-band columns to
+`monster_types.tsv`; checked-in SkeletonMelee rows own their movement delay
+chance while older rows retain the compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
