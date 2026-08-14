@@ -116,6 +116,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Zombie long-range movement distance increase per intelligence point. */
     public int ZombieMovementDistanceIntelligenceScale { get; init; }
+
+    /** Native SkeletonKing minimum distance required for summon admission. */
+    public int SkeletonKingSummonMinimumDistance { get; init; }
+
+    /** Native SkeletonKing summon chance base before intelligence scaling. */
+    public int SkeletonKingSummonChanceBase { get; init; }
+
+    /** Native SkeletonKing summon chance increase per intelligence point. */
+    public int SkeletonKingSummonChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -260,6 +269,20 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.ZombieMovementDistanceMinimum != 0
                         || definition.ZombieMovementDistanceBase != 0
                         || definition.ZombieMovementDistanceIntelligenceScale != 0))
+                || definition.SkeletonKingSummonMinimumDistance is < 0 or > 64
+                || definition.SkeletonKingSummonChanceBase is < 0 or > 100
+                || definition.SkeletonKingSummonChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "SkeletonKing"
+                    && ((definition.SkeletonKingSummonMinimumDistance != 0
+                            || definition.SkeletonKingSummonChanceBase != 0
+                            || definition.SkeletonKingSummonChanceIntelligenceScale != 0)
+                        && (definition.SkeletonKingSummonMinimumDistance <= 0
+                            || definition.SkeletonKingSummonChanceBase <= 0
+                            || definition.SkeletonKingSummonChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "SkeletonKing"
+                    && (definition.SkeletonKingSummonMinimumDistance != 0
+                        || definition.SkeletonKingSummonChanceBase != 0
+                        || definition.SkeletonKingSummonChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -364,6 +387,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 ZombieMovementDistanceMinimum = row.OptionalInt32("zombie_movement_distance_minimum"),
                 ZombieMovementDistanceBase = row.OptionalInt32("zombie_movement_distance_base"),
                 ZombieMovementDistanceIntelligenceScale = row.OptionalInt32("zombie_movement_distance_intelligence_scale"),
+                SkeletonKingSummonMinimumDistance = row.OptionalInt32("skeleton_king_summon_minimum_distance"),
+                SkeletonKingSummonChanceBase = row.OptionalInt32("skeleton_king_summon_chance_base"),
+                SkeletonKingSummonChanceIntelligenceScale = row.OptionalInt32("skeleton_king_summon_chance_intelligence_scale"),
             }));
     }
 

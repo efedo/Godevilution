@@ -5124,12 +5124,16 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (target.NativeAi != "SkeletonKing"
+        var summonTuning = GetSkeletonKingSummonTuning(target);
+        if (!summonTuning.HasValue
             || monsterSpawnPlanner is null
             || gameMode == DiabloGameMode.Multiplayer
-            || distance < 3
+            || distance < summonTuning.Value.MinimumDistance
             || random.RandomIntLessThan(100)
-                >= Math.Min(100, 4 * target.Intelligence + 35)
+                >= Math.Min(
+                    100,
+                    summonTuning.Value.ChanceBase
+                        + (summonTuning.Value.IntelligenceScale * target.Intelligence))
             || !world.HasMissileLineOfSight(
                 target.LevelId,
                 target.PositionX,
@@ -5169,6 +5173,26 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         world.CombatTargets.Add(entityId, summon);
         return true;
+    }
+
+    private (int MinimumDistance, int ChanceBase, int IntelligenceScale)?
+        GetSkeletonKingSummonTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "SkeletonKing")
+                return null;
+            if (definition.SkeletonKingSummonMinimumDistance > 0
+                && definition.SkeletonKingSummonChanceBase > 0
+                && definition.SkeletonKingSummonChanceIntelligenceScale > 0) {
+                return (
+                    definition.SkeletonKingSummonMinimumDistance,
+                    definition.SkeletonKingSummonChanceBase,
+                    definition.SkeletonKingSummonChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "SkeletonKing"
+            ? (3, 35, 4)
+            : null;
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */

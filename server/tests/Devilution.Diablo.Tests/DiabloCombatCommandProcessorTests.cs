@@ -1232,6 +1232,166 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingUsesValidatedSummonDistanceTuning()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                1,
+                "Skeleton",
+                1,
+                1,
+                1,
+                4,
+                4,
+                10,
+                2,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+            new AuthoritativeMonsterTypeDefinition(
+                51,
+                2,
+                "Skeleton King",
+                1,
+                1,
+                1,
+                20,
+                20,
+                10,
+                2,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonKing",
+                SkeletonKingSummonMinimumDistance = 5,
+                SkeletonKingSummonChanceBase = 100,
+                SkeletonKingSummonChanceIntelligenceScale = 1,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            nativeWorld,
+            monsterTypes,
+            generation);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            levelId: 1,
+            monsterId: 51,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
+        var processor = CreateProcessor(
+            world,
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes,
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(positionX: 5, positionY: 1, levelId: 1, entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Single(world.CombatTargets);
+        Assert.Equal((2, 1), (king.FuturePositionX, king.FuturePositionY));
+    }
+
+    [Fact]
+    public void SkeletonKingUsesValidatedSummonChanceTuning()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                2,
+                1,
+                "Skeleton",
+                1,
+                1,
+                1,
+                4,
+                4,
+                10,
+                2,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+            new AuthoritativeMonsterTypeDefinition(
+                51,
+                2,
+                "Skeleton King",
+                1,
+                1,
+                1,
+                20,
+                20,
+                10,
+                2,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonKing",
+                SkeletonKingSummonMinimumDistance = 3,
+                SkeletonKingSummonChanceBase = 1,
+                SkeletonKingSummonChanceIntelligenceScale = 1,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            nativeWorld,
+            monsterTypes,
+            generation);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            levelId: 1,
+            monsterId: 51,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
+        var processor = CreateProcessor(
+            world,
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes,
+            random: new DiabloRandom(9));
+        var player = CreatePlayer(positionX: 5, positionY: 1, levelId: 1, entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Single(world.CombatTargets);
+        Assert.Equal((2, 1), (king.FuturePositionX, king.FuturePositionY));
+    }
+
+    [Fact]
     public void HorkDemonUsesItsNativeSpawnAdmissionAndValidatedSpawnIdentity()
     {
         var nativeWorld = new AuthoritativeWorld();
