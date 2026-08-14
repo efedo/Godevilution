@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.122 externalizes SkeletonMelee's adjacent attack chance base and
+  intelligence scale through validated `monster_types.tsv` rows; older targets
+  retain the native compatibility values.
+
 - Schema 1.121 externalizes Mega's monster-Inferno maximum distance, adjacent
   and ranged intelligence bands, far-distance offset, and adjacent choice
   modulo through validated `monster_missiles.tsv` content; older mappings retain

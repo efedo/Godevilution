@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.121.0` schema in
+It declares its identity and `devilution.diablo@1.122.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -300,6 +300,9 @@ Inferno admission values are supplied by the validated missile row.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
+The `SkeletonMelee` identity now consumes the validated adjacent attack band
+(`20 + 2 * intelligence` in the checked-in rows) while older rows retain the
+native compatibility formula.
 The `Gargoyle` identity now owns the native wounded self-heal boundary: once the
 monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 `max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
@@ -1192,7 +1195,7 @@ the complete target header even when they upsert only one row.
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
-| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch metadata. |
+| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch/admission metadata. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
@@ -1229,7 +1232,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.121.0"
+      "version": "1.122.0"
   },
   "dependencyConstraints": [
     {
@@ -1261,7 +1264,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.121.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.122.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1386,6 +1389,9 @@ Schema 1.121 adds optional monster-Inferno admission columns to
 `monster_missiles.tsv`; the checked-in `Mega` row owns its special maximum
 distance, adjacent/ranged intelligence bands, far-distance offset, and adjacent
 choice modulo while older rows retain the native compatibility values.
+Schema 1.122 adds optional SkeletonMelee adjacent attack-band columns to
+`monster_types.tsv`; checked-in SkeletonMelee rows own their `20 + 2 *
+intelligence` admission while older rows retain the native compatibility values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

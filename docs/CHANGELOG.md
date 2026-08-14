@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.121's optional monster-Inferno admission tuning, moving Mega's
   distance, intelligence bands, and adjacent choice modulo into validated
   missile content while preserving legacy target behavior.
+- Add schema 1.122's optional SkeletonMelee adjacent attack-band tuning,
+  moving its native `20 + 2 * intelligence` admission into validated monster
+  type content while preserving legacy target behavior.
 - Route the GoatRanged Arrow path through schema 1.120's validated
   ranged-retreat tuning so its dedicated dispatch shares the server-owned
   generic close-range boundary.
