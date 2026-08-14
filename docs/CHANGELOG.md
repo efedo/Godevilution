@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use validated `LightArmor`, `MediumArmor`, and `HeavyArmor` item tags for Monk
+  chest-armor scaling, with native item-type fallback for legacy states.
 - Make the Sorcerer Recharge class ability resolve Staff eligibility from the
   active item catalog, with numeric item-type fallback for legacy callers.
 - Make store recharge validation honor explicit item spell-source metadata,

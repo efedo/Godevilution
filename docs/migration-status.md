@@ -28,6 +28,10 @@ Status date: 2026-08-14
   active catalog; direct legacy states without catalog metadata retain the
   native item-type path.
 
+- Monk chest-armor scaling now consults validated `LightArmor`, `MediumArmor`,
+  and `HeavyArmor` item tags through the active catalog; direct legacy states
+  retain the native item-type path.
+
 - Store recharge validation now accepts only explicit `ChargedItem` sources
   when source metadata is present; metadata-free legacy rows retain the native
   staff and miscellaneous-ID fallback.
