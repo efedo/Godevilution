@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.106's optional Bat attack-band tuning, moving the native
+  adjacent attack chance into validated monster content while preserving
+  legacy target behavior.
 - Add schema 1.105's optional Sneak monster tuning, moving the native
   visibility band and hit-retreat timing into validated monster content while
   preserving legacy target behavior.
