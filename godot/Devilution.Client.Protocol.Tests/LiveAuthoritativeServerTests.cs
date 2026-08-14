@@ -577,6 +577,178 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerResolvesResurrectionAgainstADeadRemotePlayer()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Resurrection-Pvp-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.resurrection-pvp-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.90.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t1\t1\n3\t100\t22\t32\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingLifeOverride: 64,
+                startingManaOverride: 10000,
+                randomSeed: 1);
+            await using var victimClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-resurrection-victim", requestedClassId: 1));
+            await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var victimInitial = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot is not null);
+            var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
+            var moveModel = new AuthoritativeClientModel();
+            moveModel.Apply(victimInitial);
+            var moveSequence = victimClient.Queue(new Command {
+                MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            await victimClient.PollAsync(TestContext.Current.CancellationToken);
+            var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
+            Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+            var moved = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == initialVictim.EntityId).PositionY
+                    == initialVictim.PositionY + 1);
+            var victim = moved.Snapshot!.Players.Single(
+                player => player.EntityId == initialVictim.EntityId);
+
+            await using var attackerClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-resurrection-attacker", requestedClassId: 2));
+            await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var attackerInitial = await WaitForMessageAsync(
+                attackerClient,
+                message => message.Snapshot is { Players.Count: 2 });
+            var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
+                player => player.EntityId != victim.EntityId).EntityId;
+            var attackerSnapshot = attackerInitial.Snapshot.Players.Single(
+                player => player.EntityId == attackerEntityId);
+            Assert.Contains(
+                attackerSnapshot.MemorizedSpells,
+                memorized => memorized.SpellId == 1 && memorized.Level == 1);
+            var attackModel = new AuthoritativeClientModel();
+            attackModel.Apply(attackerInitial);
+            var attackSequence = attackerClient.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 1,
+                    TargetEntityId = victim.EntityId,
+                    TargetX = victim.PositionX,
+                    TargetY = victim.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, attackerClient.SuggestedCommandTick(attackModel.CurrentTick));
+            await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+            var attackAcknowledgement = await WaitForAcknowledgementAsync(attackerClient, attackSequence);
+            Assert.Equal(CommandStatus.Accepted, attackAcknowledgement.Status);
+            var attackAction = await WaitForMessageAsync(
+                attackerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == attackerEntityId).CurrentAction is {
+                        Kind: PlayerActionKind.Cast,
+                        TargetEntityId: var targetEntityId,
+                    } && targetEntityId == victim.EntityId);
+            var victimLifeBeforeImpact = attackAction.Snapshot!.Players.Single(
+                player => player.EntityId == victim.EntityId).Life;
+            var dead = await WaitForMessageAsync(
+                attackerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life == 0);
+            Assert.True(
+                dead.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
+                    < victimLifeBeforeImpact);
+
+            await using var resurrectorClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-resurrection-caster", requestedClassId: 3));
+            await resurrectorClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var resurrectorInitial = await WaitForMessageAsync(
+                resurrectorClient,
+                message => message.Snapshot is { Players.Count: 3 });
+            var resurrectorEntityId = resurrectorInitial.Snapshot!.Players.Single(
+                player => player.EntityId != victim.EntityId && player.EntityId != attackerEntityId).EntityId;
+            var resurrectorSnapshot = resurrectorInitial.Snapshot.Players.Single(
+                player => player.EntityId == resurrectorEntityId);
+            Assert.Contains(
+                resurrectorSnapshot.MemorizedSpells,
+                memorized => memorized.SpellId == 32 && memorized.Level == 1);
+            var deadTargetSnapshot = resurrectorInitial.Snapshot.Players.Single(
+                player => player.EntityId == victim.EntityId);
+            Assert.Equal(0, deadTargetSnapshot.Life);
+
+            var resurrectModel = new AuthoritativeClientModel();
+            resurrectModel.Apply(resurrectorInitial);
+            var resurrectSequence = resurrectorClient.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 32,
+                    TargetEntityId = victim.EntityId,
+                    TargetX = deadTargetSnapshot.PositionX,
+                    TargetY = deadTargetSnapshot.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, resurrectorClient.SuggestedCommandTick(resurrectModel.CurrentTick));
+            await resurrectorClient.PollAsync(TestContext.Current.CancellationToken);
+            var resurrectAcknowledgement = await WaitForAcknowledgementAsync(
+                resurrectorClient,
+                resurrectSequence);
+            Assert.True(
+                resurrectAcknowledgement.Status == CommandStatus.Accepted,
+                $"Resurrection was {resurrectAcknowledgement.Status}/{resurrectAcknowledgement.RejectReason} at tick {resurrectAcknowledgement.AppliedTick}.");
+            var resurrectAction = await WaitForMessageAsync(
+                resurrectorClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == resurrectorEntityId).CurrentAction is {
+                        Kind: PlayerActionKind.Cast,
+                        TargetEntityId: var targetEntityId,
+                    } && targetEntityId == victim.EntityId);
+            var actionSnapshot = resurrectAction.Snapshot!.Players.Single(
+                player => player.EntityId == resurrectorEntityId).CurrentAction!;
+            Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
+            Assert.Equal(32U, actionSnapshot.Cast.SpellId);
+
+            var restored = await WaitForMessageAsync(
+                resurrectorClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life > 0);
+            Assert.True(
+                restored.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
+                    > 0);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerResolvesAPlayerTargetedChargedBoltFromValidatedLoadout()
     {
         var overlayRoot = Path.Combine(
