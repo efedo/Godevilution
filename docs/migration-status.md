@@ -36,6 +36,9 @@ Status date: 2026-08-14
   validated `Gold` item tag through the active catalog; metadata-free states
   retain the native type/index fallback.
 
+- Flexible and fast block staff eligibility now consults validated `Staff`
+  item tags through the active catalog; legacy states retain numeric fallback.
+
 - Store recharge validation now accepts only explicit `ChargedItem` sources
   when source metadata is present; metadata-free legacy rows retain the native
   staff and miscellaneous-ID fallback.

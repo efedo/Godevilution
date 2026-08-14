@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Resolve Monk flexible/fast staff blocking from validated `Staff` item tags
+  when active content is present, retaining native item-type fallback.
 - Use the validated `Gold` item tag for canonical Gold recognition and stack
   generation, while preserving numeric type/index fallback for legacy content.
 - Use validated `LightArmor`, `MediumArmor`, and `HeavyArmor` item tags for Monk
