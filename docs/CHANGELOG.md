@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Gargoyle safety, wounded-health, and healing-formula behavior from
+  validated tuning regardless of the row's `Gargoyle` native-AI name; legacy
+  rows without migrated tuning retain native-name compatibility defaults.
 - Select SkeletonRanged retreat and clear-lane arrow admission from complete
   validated tuning tuples rather than requiring the `SkeletonRanged` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.

@@ -206,10 +206,13 @@ intelligence-scale-two chance bands.
 The optional `gargoyle_safe_distance_base` and
 `gargoyle_safe_distance_intelligence_scale` columns externalize the Gargoyle
 wounded retreat/self-heal safety boundary. Legacy monster rows retain the
-native base-two, intelligence-scale-one compatibility values.
+native base-two, intelligence-scale-one compatibility values. A complete
+positive tuple selects the behavior regardless of the row's `native_ai` label;
+rows without migrated tuning retain the native-name compatibility path.
 The optional `gargoyle_healing_health_threshold_percent` column externalizes
 the Gargoyle wounded-health admission threshold for self-healing. Legacy
-monster rows retain the native 50-percent compatibility threshold.
+monster rows retain the native 50-percent compatibility threshold. The
+validated threshold is selected independently of the row's `native_ai` label.
 The optional `skeleton_ranged_retreat_minimum_distance`,
 `skeleton_ranged_retreat_chance_base`,
 `skeleton_ranged_retreat_chance_intelligence_scale`,
@@ -393,7 +396,9 @@ behavior regardless of the row's `native_ai` label.
 The `Gargoyle` identity now owns the native wounded self-heal boundary: once the
 monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 `max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
-closes that boundary. Clients do not execute this behavior.
+closes that boundary. Validated safety, threshold, and healing-formula tuning
+is selected independently of the row's `native_ai` label; clients do not
+execute this behavior.
 The `GoatRanged` identity now uses the shared native `AiRanged` boundary: clear
 missile lanes produce authoritative arrow damage, while the validated `Arrow`
 row supplies the native close-range retreat distance and
@@ -1490,7 +1495,8 @@ Hork Spawn, and movement chance bands while older rows retain the compatibility
 formula.
 Schema 1.114 adds the optional Gargoyle safety-boundary columns to
 `monster_types.tsv`; checked-in Gargoyle rows own their wounded retreat and
-self-heal boundary while older rows retain the compatibility formula.
+self-heal boundary while older rows retain the compatibility formula. Complete
+positive tuples are selected independently of the `native_ai` label.
 Schema 1.115 adds the optional SkeletonRanged admission columns to
 `monster_types.tsv`; checked-in SkeletonRanged rows own their retreat and
 clear-lane arrow chance bands while older rows retain the compatibility formula.
@@ -1541,7 +1547,8 @@ mapped charges.
 Schema 1.127 adds optional Gargoyle healing-formula columns to
 `monster_types.tsv`; checked-in Gargoyle rows own the native divisor multiplier,
 random-range modulus, and random offset (`16 * (seed % 5 + 4)`) while older rows
-retain the compatibility formula.
+retain the compatibility formula. Complete positive tuples are selected
+independently of the `native_ai` label.
 Schema 1.128 adds optional Scavenger healing/search columns to
 `monster_types.tsv`; checked-in Scavenger rows own the corpse-eating duration,
 search radius, Hellfire maximum-health divisor, base-game healing amount, and
@@ -1560,7 +1567,8 @@ Schema 1.131 adds the optional Scavenger wounded-health threshold column to
 seeking threshold while older rows retain the compatibility value.
 Schema 1.132 adds the optional Gargoyle wounded-health threshold column to
 `monster_types.tsv`; checked-in Gargoyle rows own the native 50-percent
-self-healing threshold while older rows retain the compatibility value.
+self-healing threshold while older rows retain the compatibility value. The
+validated threshold is selected independently of the `native_ai` label.
 Schema 1.133 adds the optional Mana restoration random-range columns to
 `spells.tsv`; the checked-in Mana row owns the native 10, 4, and 6 ranges while
 older rows retain the compatibility values.

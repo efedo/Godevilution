@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Gargoyle safety, wounded-health, and healing-formula behavior now use
+  validated tuning independent of the row's native-AI label; rows without
+  migrated tuning retain the native-name compatibility path, while the
+  persisted special lock remains snapshot/save compatible.
+
 - SkeletonRanged retreat and clear-lane arrow admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
   without migrated tuning retain the native-name compatibility path.
