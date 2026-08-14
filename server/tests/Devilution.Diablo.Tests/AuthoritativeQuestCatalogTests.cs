@@ -95,4 +95,30 @@ public sealed class AuthoritativeQuestCatalogTests
 
         Assert.Equal(12U, Assert.Single(quests).CompletionMonsterId);
     }
+
+    [Fact]
+    public void QuestStateTablesMergeAdditivelyAndRejectDuplicateIds()
+    {
+        var baseQuests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\n"
+                + "3001\t1\t3\t0\t0\n");
+        var additionalQuests = AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\n"
+                + "3017\t17\t1\t0\t0\n");
+
+        var merged = AuthoritativeQuestCatalog.Merge(
+            baseQuests,
+            additionalQuests,
+            "hellfire/quest_states.tsv");
+        Assert.Equal([3001U, 3017U], merged.Select(quest => quest.QuestId));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeQuestCatalog.Merge(
+            baseQuests,
+            AuthoritativeQuestCatalog.LoadTsv(
+                "quest_states.tsv",
+                "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\n"
+                    + "3001\t17\t1\t0\t0\n"),
+            "hellfire/quest_states.tsv"));
+    }
 }

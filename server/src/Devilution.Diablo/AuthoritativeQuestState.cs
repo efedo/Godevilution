@@ -97,6 +97,27 @@ public static class AuthoritativeQuestCatalog
         return quests;
     }
 
+    /** Combines base quest state with an additive variant-specific state table. */
+    public static IReadOnlyList<AuthoritativeQuestState> Merge(
+        IReadOnlyList<AuthoritativeQuestState> baseQuests,
+        IReadOnlyList<AuthoritativeQuestState> additionalQuests,
+        string additionalSourcePath = "quest_states.tsv")
+    {
+        ArgumentNullException.ThrowIfNull(baseQuests);
+        ArgumentNullException.ThrowIfNull(additionalQuests);
+        ArgumentException.ThrowIfNullOrWhiteSpace(additionalSourcePath);
+
+        var result = baseQuests.ToList();
+        var knownQuestIds = result.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var quest in additionalQuests) {
+            if (!knownQuestIds.Add(quest.QuestId))
+                throw new InvalidDataException(
+                    $"Quest state table '{additionalSourcePath}' contains duplicate quest ID {quest.QuestId}.");
+            result.Add(quest);
+        }
+        return result;
+    }
+
     /** Applies native single-player pool exclusions to the loaded quest state. */
     public static void ApplySinglePlayerPoolSelection(
         IReadOnlyList<AuthoritativeQuestState> quests,

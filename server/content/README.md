@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.87.0` schema in
+It declares its identity and `devilution.diablo@1.88.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1096,6 +1096,7 @@ the complete target header even when they upsert only one row.
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, and optional monster-specific controller; unsupported controllers remain explicitly `Targeted` during migration. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
+| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, and completion-trigger fields. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
@@ -1128,7 +1129,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.87.0"
+      "version": "1.88.0"
   },
   "dependencyConstraints": [
     {
@@ -1160,7 +1161,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.87.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.88.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1185,7 +1186,9 @@ and the monster-owned Charged Bolt behavior. Schema 1.85 adds Mega's
 monster-owned Inferno controller and persistent segment path. Schema 1.86
 externalizes the Hork Demon native AI identity and its validated Hork Spawn
 summon admission. Schema 1.87 adds the validated Hork Spawn missile mapping,
-speed-8 nine-tick trajectory, and expiry summon controller.
+speed-8 nine-tick trajectory, and expiry summon controller. Schema 1.88 adds
+the additive Hellfire `quest_states.tsv` catalog, merging native initial quest
+state with the shared authoritative quest catalog.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

@@ -314,6 +314,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questsTable.ToCanonicalTsv(),
                 questTypes)
             : null;
+        if (content.TryGetTable("quest_states.tsv", out var questStatesTable)) {
+            var additionalQuests = AuthoritativeQuestCatalog.LoadTsv(
+                questStatesTable.SourcePath,
+                questStatesTable.ToCanonicalTsv(),
+                questTypes);
+            quests = quests is null
+                ? additionalQuests
+                : AuthoritativeQuestCatalog.Merge(
+                    quests,
+                    additionalQuests,
+                    questStatesTable.SourcePath);
+        }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null
             && questPools is not null) {

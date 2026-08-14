@@ -11,6 +11,8 @@ All notable changes to this fork are documented below.
   an explicit follow-up controller migration.
 - Add schema 1.87's validated Hork Spawn missile mapping, native speed-8
   nine-tick trajectory, and expiry summon controller.
+- Add schema 1.88's additive Hellfire `quest_states.tsv` catalog, merging the
+  native initial quest lifecycle into the shared authoritative quest state.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

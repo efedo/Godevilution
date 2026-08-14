@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.87.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.88.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -131,7 +131,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.87.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.88.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -172,10 +172,12 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        var baseQuest = Assert.Single(activation.Simulation.WorldState.Quests.Values);
+        Assert.Equal(9, activation.Simulation.WorldState.Quests.Count);
+        var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),
             baseQuest.Unavailable);
+        Assert.False(activation.Simulation.WorldState.Quests[3021].Active);
         Assert.Equal(1, activation.QuestTypes.Definitions[12].SetLevel);
         Assert.Equal("Archbishop Lazarus' Lair", activation.SetLevelNames!.GetDisplayName(5));
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
