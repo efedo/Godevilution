@@ -1105,7 +1105,7 @@ the complete target header even when they upsert only one row.
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch metadata. |
-| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, and optional monster-specific controller; native `Arrow` rows retain `Targeted` content identity and are projected as the server-owned `MonsterArrow` lifecycle. |
+| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, and optional monster-specific controller; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, and completion-trigger fields. |
@@ -1189,9 +1189,9 @@ individual pack.
 
 Schema 1.81 adds the validated `monster_missiles.tsv` table. Each native AI
 identity maps to its retained native missile ID and authoritative projectile
-behavior. Unsupported behaviors remain declared as `Targeted` until their
-native projectile controllers are migrated; the mapping itself remains
-content-owned and validated. Schema 1.82 additionally externalizes the
+behavior. The checked-in `Arrow` rows explicitly select the server-owned
+`MonsterArrow` lifecycle; older overlays that declare `Targeted` for those rows
+remain accepted as a compatibility spelling. Schema 1.82 additionally externalizes the
 native ranged-AI branch and avoidance probability columns. Schema 1.83 adds
 monster-specific mapping rows. Schema 1.84 adds the Counselor missile rows
 and the monster-owned Charged Bolt behavior. Schema 1.85 adds Mega's

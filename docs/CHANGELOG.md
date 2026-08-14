@@ -52,6 +52,9 @@ All notable changes to this fork are documented below.
 - Add live Godot protocol coverage for Resurrection targeting a dead remote
   player, including authoritative death, revive placement, and beam lifecycle
   through one shared protocol.
+- Make the checked-in GoatRanged and SkeletonRanged content rows select the
+  authoritative `MonsterArrow` behavior directly, while retaining compatibility
+  with older `Targeted` overlays.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.

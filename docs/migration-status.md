@@ -195,10 +195,9 @@ Status date: 2026-08-14
 - Native monster missile identities are now externalized in schema 1.81 through
   validated `monster_missiles.tsv` mappings. The active content pack supplies
   each native AI's retained missile ID and projectile behavior; GoatRanged and
-  SkeletonRanged `Arrow` rows now project as server-owned `MonsterArrow`
-  behavior, while other unsupported controllers remain explicitly `Targeted`
-  until their server-owned behavior is migrated. Clients never dispatch these
-  mappings.
+  SkeletonRanged `Arrow` rows explicitly select the server-owned `MonsterArrow`
+  behavior, while older `Targeted` rows remain compatible. Clients never
+  dispatch these mappings.
 - Validated ranged mappings now admit their native AI directly from the active
   content pack; the server no longer maintains a separate allow-list for which
   native identities may enter the migrated projectile path. Existing
