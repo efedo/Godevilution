@@ -152,6 +152,40 @@ public sealed class DiabloPlayerActionLifecycleTests
     }
 
     [Fact]
+    public void SemanticWeaponTagsSelectMonkSwordTimingWhenLegacyClassConflicts()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 99, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                ItemClass = 0,
+                GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+                NativeItemIndex = 101,
+                EquipLocation = 1,
+            },
+        ]);
+        var processor = CreateCombatProcessor(world, classes, animations, items: items);
+        var sword = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            ItemType = 99,
+            ItemClass = 0,
+            EquipLocation = 1,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 3,
+            equipment: [new EquippedStoreItem(4, 101, sword)]);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 10).Succeeded);
+        Assert.Equal((21UL, 22UL, 25UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+    }
+
+    [Fact]
     public void NativeQuickAttackAddsItsFirstFrameSkipOnlyToChainedMeleeAttacks()
     {
         var (classes, animations) = LoadShippedPlayerMetadata();
@@ -690,7 +724,8 @@ public sealed class DiabloPlayerActionLifecycleTests
         AuthoritativePlayerClassCatalog classes,
         AuthoritativePlayerAnimationCatalog animations,
         AuthoritativeSpellCatalog? spells = null,
-        AuthoritativeCombatRules? rules = null)
+        AuthoritativeCombatRules? rules = null,
+        AuthoritativeItemCatalog? items = null)
     {
         return new DiabloCombatCommandProcessor(
             world,
@@ -700,6 +735,7 @@ public sealed class DiabloPlayerActionLifecycleTests
             rules ?? new AuthoritativeCombatRules(10, 1, 100),
             playerClasses: classes,
             playerAnimations: animations,
+            items: items,
             useNativePlayerActionTiming: true);
     }
 

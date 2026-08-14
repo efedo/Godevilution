@@ -11530,7 +11530,7 @@ public sealed class DiabloCombatCommandProcessor
             .OrderBy(item => item.Slot)
             .ToArray();
         var hasShield = hands.Any(item => HasEquipmentTag(item.State, "Shield", 5));
-        var weapon = hands.FirstOrDefault(item => item.State.ItemClass == 1
+        var weapon = hands.FirstOrDefault(item => AuthoritativeItemClassification.IsWeapon(item.State, items)
             && !HasEquipmentTag(item.State, "Shield", 5));
         if (weapon is null)
             return hasShield
@@ -11649,11 +11649,11 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         return left is not null
             && right is null
-            && left.State.ItemClass == 1
+            && AuthoritativeItemClassification.IsWeapon(left.State, items)
             && left.State.EquipLocation != 2
             || right is not null
             && left is null
-            && right.State.ItemClass == 1
+            && AuthoritativeItemClassification.IsWeapon(right.State, items)
             && right.State.EquipLocation != 2;
     }
 

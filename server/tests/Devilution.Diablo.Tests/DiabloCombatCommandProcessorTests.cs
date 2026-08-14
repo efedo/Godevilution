@@ -10956,6 +10956,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SemanticWeaponTagsEnableMonkFlexibleBlockingWhenLegacyClassConflicts()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 99, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                ItemClass = 0,
+                GenerationTags = new HashSet<string>(["Weapon", "Sword"], StringComparer.OrdinalIgnoreCase),
+                NativeItemIndex = 101,
+                EquipLocation = 1,
+            },
+        ]);
+        var processor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: classes,
+            items: items);
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var sword = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            ItemType = 99,
+            ItemClass = 0,
+            EquipLocation = 1,
+            StatFlag = true,
+        };
+        var monk = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 101, sword)],
+            characterClassId: 3);
+
+        Assert.Empty(processor.AdvanceTick(1, [owner, monk]));
+        Assert.Equal(640, monk.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, monk.CombatMode);
+    }
+
+    [Fact]
     public void LightningResistanceOverridesBlockAndUsesNativePercentageDamage()
     {
         var projectile = CreateStationaryChargedBolt(1, 1);

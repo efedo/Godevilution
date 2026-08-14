@@ -539,7 +539,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             _ => false,
         };
         var weaponInOffHand = slot == 5
-            && item.ItemClass == 1
+            && AuthoritativeItemClassification.IsWeapon(item)
             && !IsShield(item);
         if (!slotMatchesLocation
             || (weaponInOffHand
