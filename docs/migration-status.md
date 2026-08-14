@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.138 externalizes the Warrior Repair ability's durability-loss
+  denominator offset through validated `classes.tsv` content; older class
+  definitions retain the native offset compatibility behavior.
+
 - Schema 1.137 externalizes Charged Bolt's initial path random range through
   validated `spells.tsv` content; older definitions retain the native 1–15
   compatibility range.

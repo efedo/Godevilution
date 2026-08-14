@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.137.0` schema in
+It declares its identity and `devilution.diablo@1.138.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -101,6 +101,10 @@ The `monk_unarmed_minimum_damage_level_divisor` and
 `monk_unarmed_maximum_damage_level_divisor` columns externalize the native
 level divisors used by Monk unarmed base damage; older class schemas retain
 the native `2` and `1` defaults.
+The optional `repair_ability_durability_level_offset` column externalizes the
+Warrior Repair ability's native durability-loss denominator offset; the
+shipped Warrior row uses `9`, while older class schemas retain the legacy
+offset.
 
 The optional `fallen_fear_radius`, `fallen_fear_level_offset`, and
 `fallen_fear_minimum_ticks` monster-type columns externalize the Fallen fear
@@ -1218,7 +1222,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, and Monk chest-armor tuning. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, and class-ability tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1267,7 +1271,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.137.0"
+      "version": "1.138.0"
   },
   "dependencyConstraints": [
     {
@@ -1299,7 +1303,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.137.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.138.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1479,6 +1483,10 @@ rows retain the compatibility value.
 Schema 1.137 adds the optional Charged Bolt initial path random range to
 `spells.tsv`; the checked-in Charged Bolt row owns the native 1–15 range while
 older rows retain the compatibility value.
+
+Schema 1.138 adds the optional `repair_ability_durability_level_offset`
+class column to `classes.tsv`; the checked-in Warrior row owns the native
+offset `9` while older class schemas retain the compatibility offset.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

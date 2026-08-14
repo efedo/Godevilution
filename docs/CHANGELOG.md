@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.138's optional Warrior Repair durability level offset, moving
+  the native durability-loss denominator tuning into validated class content
+  while preserving the legacy offset for older definitions.
 - Add schema 1.137's optional Charged Bolt initial path random range, moving
   the native projectile-state roll into validated spell content while
   preserving the legacy 1–15 compatibility range.
