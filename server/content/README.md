@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.130.0` schema in
+It declares its identity and `devilution.diablo@1.131.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -119,6 +119,9 @@ The optional `goat_melee_special_health_threshold_percent` and
 wounded-special health threshold and deterministic random-group period.
 Legacy monster rows retain the native 50-percent threshold and two-group
 compatibility gate.
+The optional `scavenger_healing_health_threshold_percent` column externalizes
+the Scavenger wounded-health admission threshold for corpse seeking. Legacy
+monster rows retain the native 50-percent compatibility threshold.
 The optional `skeleton_melee_delay_chance_base` and
 `skeleton_melee_delay_chance_intelligence_scale` columns externalize the
 SkeletonMelee movement-delay band. Legacy monster rows retain the native
@@ -1247,7 +1250,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.130.0"
+      "version": "1.131.0"
   },
   "dependencyConstraints": [
     {
@@ -1279,7 +1282,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.130.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.131.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1438,6 +1441,9 @@ Schema 1.130 adds optional GoatMelee wounded-special columns to
 `monster_types.tsv`; checked-in GoatMelee rows own the native 50-percent
 health threshold and two-group deterministic gate while older rows retain the
 compatibility values.
+Schema 1.131 adds the optional Scavenger wounded-health threshold column to
+`monster_types.tsv`; checked-in Scavenger rows own the native 50-percent corpse
+seeking threshold while older rows retain the compatibility value.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

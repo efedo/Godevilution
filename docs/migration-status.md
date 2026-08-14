@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.131 externalizes Scavenger wounded-healing admission through
+  validated `monster_types.tsv` rows; the active catalog feeds the native
+  health threshold while older targets retain the 50-percent compatibility
+  value.
+
 - Schema 1.130 externalizes GoatMelee wounded-special admission through
   validated `monster_types.tsv` rows; the active catalog feeds the native
   health threshold and deterministic random-group gate while older targets
