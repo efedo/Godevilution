@@ -1095,7 +1095,8 @@ public sealed class DiabloCombatCommandProcessor
                 player.CharacterLevel,
                 player.Attributes,
                 player.Equipment,
-                playerClass!)
+                playerClass!,
+                items)
             : new AuthoritativePhysicalDamageProfile(
                 rules.BaseAttackDamage,
                 rules.BaseAttackDamage,

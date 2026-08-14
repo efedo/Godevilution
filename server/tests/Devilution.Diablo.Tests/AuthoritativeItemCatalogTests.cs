@@ -22,6 +22,23 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void NativeIndexLookupRejectsConflictingDuplicateTags()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 7,
+                GenerationTags = new HashSet<string>(["Sword"], StringComparer.OrdinalIgnoreCase),
+            },
+            new AuthoritativeItemDefinition(2, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 7,
+                GenerationTags = new HashSet<string>(["Axe"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+
+        Assert.False(catalog.TryGetByNativeItemIndex(7, out _));
+    }
+
+    [Fact]
     public void LoadsAndPropagatesExplicitSpellSourceKind()
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(

@@ -132,6 +132,32 @@ public sealed class AuthoritativeItemCatalog
 
     public bool TryGet(uint itemId, out AuthoritativeItemDefinition definition) => definitions.TryGetValue(itemId, out definition!);
 
+    /** Resolves a content definition from the native item index retained in state. */
+    public bool TryGetByNativeItemIndex(
+        int nativeItemIndex,
+        out AuthoritativeItemDefinition definition)
+    {
+        var matches = definitions.Values
+            .Where(item => item.NativeItemIndex == nativeItemIndex)
+            .ToArray();
+        if (matches.Length == 0) {
+            definition = null!;
+            return false;
+        }
+
+        // Several legacy rows intentionally share an index. Only expose the
+        // lookup when their content-owned tags agree; otherwise the caller
+        // must retain the native item-type fallback.
+        var firstTags = matches[0].GenerationTags;
+        if (matches.Any(match => !firstTags.SetEquals(match.GenerationTags))) {
+            definition = null!;
+            return false;
+        }
+
+        definition = matches[0];
+        return true;
+    }
+
     public AuthoritativeItemDefinition GetRequired(uint itemId)
     {
         return TryGet(itemId, out var definition)

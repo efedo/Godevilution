@@ -67,6 +67,40 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
         Assert.Equal((2, 5, 4), (shielded.MinimumDamage, shielded.MaximumDamage, shielded.DamageModifier));
     }
 
+    [Fact]
+    public void ExplicitContentTagOverridesNativeItemTypeForDamageProfile()
+    {
+        var attributes = new PlayerAttributesState(
+            new PlayerAttributeState(100, 100),
+            new PlayerAttributeState(0, 0),
+            new PlayerAttributeState(20, 20),
+            new PlayerAttributeState(20, 20));
+        var monk = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Monk,
+        };
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t10\t1\t1\tStaff\t99\n");
+        var equipment = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemIndex = 99,
+                ItemType = 1,
+                StatFlag = true,
+            });
+
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            attributes,
+            [equipment],
+            monk,
+            items);
+
+        Assert.Equal(8, profile.DamageModifier);
+    }
+
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)
     {
         return new AuthoritativePlayerClassDefinition(

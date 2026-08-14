@@ -7,7 +7,8 @@ public static class AuthoritativeEquipmentDamageRules
         uint characterLevel,
         PlayerAttributesState attributes,
         IEnumerable<EquippedStoreItem> equipment,
-        AuthoritativePlayerClassDefinition playerClass)
+        AuthoritativePlayerClassDefinition playerClass,
+        AuthoritativeItemCatalog? items = null)
     {
         if (characterLevel == 0)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
@@ -29,12 +30,12 @@ public static class AuthoritativeEquipmentDamageRules
             .Where(item => item.Slot is 4 or 5)
             .Select(item => item.State)
             .ToArray();
-        var hasShield = handItems.Any(item => item.ItemType == 5);
-        var hasStaff = handItems.Any(item => item.ItemType == 10);
-        var hasBow = handItems.Any(item => item.ItemType == 3);
-        var hasSword = handItems.Any(item => item.ItemType == 1);
-        var hasAxe = handItems.Any(item => item.ItemType == 2);
-        var hasMace = handItems.Any(item => item.ItemType == 4);
+        var hasShield = handItems.Any(item => HasItemTag(item, items, "Shield", 5));
+        var hasStaff = handItems.Any(item => HasItemTag(item, items, "Staff", 10));
+        var hasBow = handItems.Any(item => HasItemTag(item, items, "Bow", 3));
+        var hasSword = handItems.Any(item => HasItemTag(item, items, "Sword", 1));
+        var hasAxe = handItems.Any(item => HasItemTag(item, items, "Axe", 2));
+        var hasMace = handItems.Any(item => HasItemTag(item, items, "Mace", 4));
 
         if (minimumDamage == 0 && maximumDamage == 0) {
             minimumDamage = 1;
@@ -83,6 +84,19 @@ public static class AuthoritativeEquipmentDamageRules
             minimumDamage,
             maximumDamage,
             damageModifier);
+    }
+
+    private static bool HasItemTag(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items,
+        string tag,
+        int legacyItemType)
+    {
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
+            && definition.GenerationTags.Contains(tag))
+            return true;
+        return state.ItemType == legacyItemType;
     }
 
     private static int CalculateBarbarianModifier(
