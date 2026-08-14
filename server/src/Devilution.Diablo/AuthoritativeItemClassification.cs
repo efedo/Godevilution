@@ -87,6 +87,29 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemCatalog? items = null)
         => HasSubtype(state, items, "Bow", 3);
 
+    public static bool IsGold(AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return definition.GenerationTags.Contains("Gold")
+            || definition.GenerationTags.Contains("Currency");
+    }
+
+    public static bool IsGold(
+        AuthoritativeItemState state,
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(rules);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
+            && IsGold(definition)) {
+            return true;
+        }
+        return state.ItemType == rules.DeathGoldItemType
+            && state.ItemIndex == rules.DeathGoldItemIndex;
+    }
+
     public static bool IsLightArmor(AuthoritativeItemDefinition definition)
         => HasArmorSubtype(definition, "LightArmor", 6);
 

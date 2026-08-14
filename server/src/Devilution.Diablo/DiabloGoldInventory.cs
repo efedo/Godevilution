@@ -55,14 +55,7 @@ internal static class DiabloGoldInventory
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(rules);
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
-            && (definition.GenerationTags.Contains("Gold")
-                || definition.GenerationTags.Contains("Currency"))) {
-            return true;
-        }
-        return state.ItemType == rules.DeathGoldItemType
-            && state.ItemIndex == rules.DeathGoldItemIndex;
+        return AuthoritativeItemClassification.IsGold(state, rules, items);
     }
 
     /** Removes Gold in native store order: nonmaximum piles first, then all piles. */

@@ -81,6 +81,33 @@ public sealed class AuthoritativeItemClassificationTests
             CreateDefinition(itemClass: 0, tags: []) with { ItemType = 9 }));
     }
 
+    [Fact]
+    public void GoldTagsOverrideConflictingNativeGoldIdentity()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var definition = CreateDefinition(itemClass: 0, tags: ["Gold"])
+            with {
+                ItemType = 99,
+                NativeItemIndex = 99,
+            };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(42);
+
+        Assert.True(AuthoritativeItemClassification.IsGold(state, rules, catalog));
+    }
+
+    [Fact]
+    public void GoldClassificationRetainsLegacyTypeAndIndexFallback()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var state = AuthoritativeItemState.Empty with {
+            ItemType = rules.DeathGoldItemType,
+            ItemIndex = rules.DeathGoldItemIndex,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsGold(state, rules));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)
