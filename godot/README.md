@@ -163,7 +163,8 @@ intent for that monster. The presentation client only resolves the clicked tile
 to a snapshot entity ID; the server owns range, timing, hit, damage, and action
 state. The protocol/server path also admits adjacent melee attacks against a
 same-level remote player when friendly-mode rules allow it; it owns timing, hit,
-damage, equipment knockback, death, and PvP-ear creation. The current Godot
+damage, fire/lightning equipment channels with resistance, equipment knockback,
+death, and PvP-ear creation. The current Godot
 cursor remains monster-only until player-targeted ranged presentation is added.
 Left-click remains the cast or item-interaction path.
 

@@ -455,6 +455,66 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ElementalEquipmentDamagesPlayerTargetsThroughTheirResistances()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [
+                new EquippedStoreItem(
+                    4,
+                    42,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                        FireMinDamage = 4,
+                        FireMaxDamage = 4,
+                    }),
+                new EquippedStoreItem(
+                    5,
+                    43,
+                    AuthoritativeItemState.Empty with {
+                        StatFlag = true,
+                        Flags = AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                        LightningMinDamage = 8,
+                        LightningMaxDamage = 8,
+                    }),
+            ]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400,
+            equipment: [new EquippedStoreItem(
+                0,
+                44,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusFireResistance = 50,
+                })]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(5120, victim.Life);
+        Assert.Equal(
+            [
+                (DiabloGameplayEventKind.Damage, 10, 640),
+                (DiabloGameplayEventKind.Damage, 2, 128),
+                (DiabloGameplayEventKind.Damage, 8, 512),
+            ],
+            result.Events.Select(gameplayEvent => (
+                gameplayEvent.Kind,
+                gameplayEvent.Amount,
+                gameplayEvent.AmountQ6)));
+    }
+
+    [Fact]
     public void NormalBowAttackUsesOneAuthoritativeMissileAndResolvesOnImpact()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);

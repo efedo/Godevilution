@@ -511,6 +511,14 @@ public sealed class DiabloCombatCommandProcessor
             armorClass: target.ArmorClass,
             maxHitPoints: target.LifeMaximum,
             levelId: target.LevelId,
+            fireResistance: GetPlayerResistance(
+                target,
+                GetPlayerClass(target),
+                AuthoritativeDamageType.Fire),
+            lightningResistance: GetPlayerResistance(
+                target,
+                GetPlayerClass(target),
+                AuthoritativeDamageType.Lightning),
             unique: true);
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
@@ -520,7 +528,7 @@ public sealed class DiabloCombatCommandProcessor
             out var perilSelfDamageQ6,
             out var perilActive,
             out _,
-            out _);
+            out var attackHit);
         var events = new List<DiabloGameplayEvent>();
         if (perilActive) {
             var selfDamageResult = playerDamage.Apply(player, perilSelfDamageQ6);
@@ -563,6 +571,14 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 PlayerDeathReason.Player);
         }
+        if (attackHit && target.Life > 0)
+            ApplyPlayerElementalDamage(
+                player,
+                target,
+                targetProxy,
+                appliedTick,
+                players,
+                events);
         ApplyPlayerKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
@@ -678,6 +694,79 @@ public sealed class DiabloCombatCommandProcessor
                 target);
             ApplyResolvedDamage(player, target, lightningDamage, events);
         }
+    }
+
+    /** Applies native fire/lightning weapon channels to a live player target. */
+    private void ApplyPlayerElementalDamage(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        AuthoritativeCombatTarget targetProxy,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        var elemental = AuthoritativeEquipmentElementalDamageRules.Resolve(
+            player.Equipment,
+            random.GenerateRnd,
+            ranged: false);
+        if (elemental.Fire > 0) {
+            var fireDamage = rules.ResolveDamage(
+                elemental.Fire,
+                targetProxy.ArmorClass,
+                AuthoritativeDamageType.Fire,
+                targetProxy);
+            ApplyPlayerElementalDamageQ6(
+                player,
+                target,
+                DiabloFixedPointQ6.FromWhole(fireDamage),
+                appliedTick,
+                players,
+                events);
+        }
+        if (elemental.Lightning > 0 && target.Life > 0) {
+            var lightningDamage = rules.ResolveDamage(
+                elemental.Lightning,
+                targetProxy.ArmorClass,
+                AuthoritativeDamageType.Lightning,
+                targetProxy);
+            ApplyPlayerElementalDamageQ6(
+                player,
+                target,
+                DiabloFixedPointQ6.FromWhole(lightningDamage),
+                appliedTick,
+                players,
+                events);
+        }
+    }
+
+    private void ApplyPlayerElementalDamageQ6(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        int damageQ6,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        if (damageQ6 <= 0 || target.Life <= 0)
+            return;
+        var damageResult = playerDamage.Apply(target, damageQ6);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Damage,
+                player.EntityId,
+                target.EntityId,
+                DiabloFixedPointQ6.ToWholeTruncated(
+                    damageResult.IncomingDamageQ6)) {
+                AmountQ6 = damageResult.IncomingDamageQ6,
+            });
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                player.EntityId,
+                appliedTick,
+                players,
+                PlayerDeathReason.Player);
     }
 
     /** Applies native knockback after a successful non-lethal physical hit. */
