@@ -4748,6 +4748,91 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireboltCastAdmitsAndResolvesAnAuthoritativePlayerTarget()
+    {
+        var world = new DiabloWorldState();
+        var spells = new AuthoritativeSpellCatalog([CreateFireboltSpell()]);
+        var processor = CreateProcessor(
+            world,
+            spells,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses(),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            positionX: 0,
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+        var target = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                1,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(616, caster.Mana);
+        Assert.Single(world.Projectiles);
+        Assert.Equal(6400, target.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 1; tick <= 256 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [caster, target]));
+
+        Assert.True(target.Life < 6400);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal((7U, 8U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void FriendlyModeRejectsPlayerTargetedFireboltWhenRulesDisableFriendlyFire()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: false),
+            playerClasses: LoadShippedPlayerClasses(),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+        var target = CreatePlayer(positionX: 3, entityId: 8, life: 6400, lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                1,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(1000, caster.Mana);
+        Assert.Equal(6400, target.Life);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void AbilityCastRequiresOwnedAbilityAndConsumesNoMana()
     {
         var spells = new AuthoritativeSpellCatalog([

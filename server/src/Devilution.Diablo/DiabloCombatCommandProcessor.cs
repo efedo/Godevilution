@@ -1459,6 +1459,12 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Telekinesis;
         var isTownPortal = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.TownPortal;
+        var canTargetLivingPlayer = hasDamage
+            && spell.ProjectileSpeed > 0
+            && spell.ProjectileBehavior is (AuthoritativeProjectileBehavior.Targeted
+                or AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.BoneSpirit);
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -1474,6 +1480,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         AuthoritativeCombatTarget? target = null;
+        AuthoritativePlayerState? damagePlayerTarget = null;
         AuthoritativePlayerState? resurrectionTarget = null;
         AuthoritativePlayerState? healOtherTarget = null;
         IReadOnlyList<AuthoritativeCombatTarget> damageTargets = [];
@@ -1528,6 +1535,16 @@ public sealed class DiabloCombatCommandProcessor
                     respectMagicResistance: false);
             } else if (intent.TargetEntityId != 0) {
                 world.CombatTargets.TryGetValue(intent.TargetEntityId, out target);
+                if (target is null
+                    && canTargetLivingPlayer
+                    && TryGetPlayerAttackTarget(
+                        player,
+                        intent.TargetEntityId,
+                        ranged: true,
+                        players,
+                        out var selectedPlayerTarget)) {
+                    damagePlayerTarget = selectedPlayerTarget;
+                }
             } else {
                 target = world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
@@ -1538,8 +1555,12 @@ public sealed class DiabloCombatCommandProcessor
                     .OrderBy(candidate => candidate.EntityId)
                     .FirstOrDefault();
             }
-            centerX = target?.PositionX ?? intent.TargetX;
-            centerY = target?.PositionY ?? intent.TargetY;
+            centerX = target?.PositionX
+                ?? damagePlayerTarget?.PositionX
+                ?? intent.TargetX;
+            centerY = target?.PositionY
+                ?? damagePlayerTarget?.PositionY
+                ?? intent.TargetY;
             if (isRuneFire) {
                 runeFirePosition = FindRuneFirePosition(player, centerX, centerY);
                 if (!runeFirePosition.HasValue)
@@ -1547,7 +1568,9 @@ public sealed class DiabloCombatCommandProcessor
                 centerX = runeFirePosition.Value.X;
                 centerY = runeFirePosition.Value.Y;
             }
-            if ((intent.TargetEntityId != 0 && target is null)
+            if ((intent.TargetEntityId != 0
+                    && target is null
+                    && damagePlayerTarget is null)
                 || (isBerserk && target is null)
                 || (target is not null
                     && (target.HitPoints <= 0
@@ -1558,7 +1581,8 @@ public sealed class DiabloCombatCommandProcessor
                     Math.Abs(centerY - player.PositionY)) > spell.Range
                 || (!(isFireWall || isLightningWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova || isJester) && spell.AreaRadius == 0
                     && spell.ProjectileSpeed == 0
-                    && target is null)) {
+                    && target is null
+                    && damagePlayerTarget is null)) {
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
             var hasLineOfSight = isFireWall || isLightningWall || isRingOfFire || isFlameWave || isInferno || isChainLightning || isNova || spell.ProjectileSpeed > 0
