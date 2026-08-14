@@ -1174,6 +1174,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ButcherAiUsesDedicatedPursuitBeforeTheSharedMeleeAttack()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "Butcher");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+        Assert.Equal((1, 1), (monster.FuturePositionX, monster.FuturePositionY));
+
+        var deliveries = processor.AdvanceTick(3, [player]);
+        Assert.Equal(17, player.Life);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 9, 7, 3),
+            Assert.Single(deliveries).Event);
+    }
+
+    [Fact]
     public void AutonomousMonsterRoutesAroundBlockedCorridor()
     {
         var geometry = new AuthoritativeWorld();

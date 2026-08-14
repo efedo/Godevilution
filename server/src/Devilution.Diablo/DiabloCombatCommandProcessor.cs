@@ -3772,6 +3772,8 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(victim.PositionY - target.PositionY));
             if (TryAdvanceSneakAi(target, victim, players, distance))
                 continue;
+            if (TryAdvanceButcherAi(target, victim, players, distance))
+                continue;
             if (TryAdvanceSkeletonKingAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
@@ -3991,6 +3993,26 @@ public sealed class DiabloCombatCommandProcessor
             target.BeginMovement(candidateX, candidateY);
         }
         target.AdvanceBatRetreat();
+        return true;
+    }
+
+    /** Native ButcherAi pursues through the server navigation boundary until adjacent. */
+    private bool TryAdvanceButcherAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance)
+    {
+        if (monster.NativeAi != "Butcher" || distance <= 1)
+            return false;
+
+        var next = AuthoritativeMonsterNavigation.FindStep(
+            world,
+            monster,
+            victim,
+            players);
+        if (next.HasValue)
+            monster.BeginMovement(next.Value.X, next.Value.Y);
         return true;
     }
 

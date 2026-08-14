@@ -42,6 +42,9 @@ Status date: 2026-08-14
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.
+- Native Butcher pursuit now has an explicit server-owned AI boundary: the
+  monster follows deterministic navigation until adjacent, then uses the shared
+  authoritative melee path.
 - Native Stone Curse now retains a defeated petrified target through its
   authoritative shatter phase; ordinary defeated monsters become persisted
   corpse tiles, and snapshots preserve the distinction between the two states.

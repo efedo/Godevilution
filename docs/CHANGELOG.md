@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
   SkeletonMelee content and creating deterministic authoritative summons.
 - Add server-owned Bat attack admission and a persisted two-step native retreat
   after adjacent attacks, including protocol, save, and canonical-hash state.
+- Add the server-owned Butcher pursuit boundary, routing its native close-range
+  chase through deterministic navigation before shared melee resolution.
 - Preserve native Stone Curse shatter state for defeated petrified monsters and
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and
