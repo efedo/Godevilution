@@ -302,6 +302,27 @@ public sealed class AuthoritativePlayerState(
             ? abilityKind
             : throw new ArgumentOutOfRangeException(nameof(abilityKind));
 
+    /**
+     * Checks a class capability by its content-owned semantic role.
+     *
+     * Legacy snapshots and direct callers may only carry the historical
+     * spell identity, so the optional fallback is considered only when no
+     * semantic role was serialized. An explicit role always takes precedence.
+     */
+    public bool HasAbility(
+        DiabloPlayerAbilityKind requiredKind,
+        uint legacySpellId = 0)
+    {
+        if (!Enum.IsDefined(requiredKind)
+            || requiredKind == DiabloPlayerAbilityKind.None
+            || AbilitySpellId == 0) {
+            return false;
+        }
+        if (AbilityKind != DiabloPlayerAbilityKind.None)
+            return AbilityKind == requiredKind;
+        return legacySpellId != 0 && AbilitySpellId == legacySpellId;
+    }
+
     /** True while the server-owned native Mana Shield defense is active. */
     public bool ManaShieldActive { get; set; } = manaShieldActive;
 

@@ -781,8 +781,9 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         uint objectEntityId)
     {
-        if (trapDisarmAbilitySpellId == 0
-            || player.AbilitySpellId != trapDisarmAbilitySpellId) {
+        if (!player.HasAbility(
+                DiabloPlayerAbilityKind.TrapDisarm,
+                trapDisarmAbilitySpellId)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)

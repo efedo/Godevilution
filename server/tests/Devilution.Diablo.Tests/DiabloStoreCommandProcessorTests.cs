@@ -52,6 +52,87 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void SemanticRechargeRoleAuthorizesAConfiguredCustomSpellIdentity()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 10,
+                SpellId = 30,
+                Charges = 1,
+                MaxCharges = 10,
+            });
+        var player = CreatePlayer(
+            gold: 0,
+            inventory: [item],
+            abilityKind: DiabloPlayerAbilityKind.Recharge);
+        player.AbilitySpellId = 900;
+        player.CharacterLevel = 10;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: new DiabloRandom(1),
+            rechargeAbilitySpellId: 27,
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) { StaffLevel = 1 },
+            ]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloRechargeItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(8, Assert.Single(player.Inventory).State.Charges);
+    }
+
+    [Fact]
+    public void ExplicitSemanticRoleRejectsAConflictingLegacySpellIdentity()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemType = 10,
+                SpellId = 30,
+                Charges = 1,
+                MaxCharges = 10,
+            });
+        var player = CreatePlayer(
+            gold: 0,
+            inventory: [item],
+            abilityKind: DiabloPlayerAbilityKind.Repair);
+        player.AbilitySpellId = 27;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            rechargeAbilitySpellId: 27,
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(30, 6, 0, 0, 0, 0) { StaffLevel = 1 },
+            ]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloRechargeItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Equal(1, Assert.Single(player.Inventory).State.Charges);
+    }
+
+    [Fact]
     public void SorcererRechargeAbilityAcceptsFullyChargedStaffWithoutAdvancingRandom()
     {
         const uint rechargeSpellId = 27;
@@ -960,7 +1041,8 @@ public sealed class DiabloStoreCommandProcessorTests
         IReadOnlyList<int>? inventoryGrid = null,
         IReadOnlyList<BeltStoreItem>? belt = null,
         PlayerAttributesState? attributes = null,
-        AuthoritativePlayerClassDefinition? playerClass = null)
+        AuthoritativePlayerClassDefinition? playerClass = null,
+        DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None)
     {
         return new AuthoritativePlayerState(
             gold,
@@ -979,7 +1061,8 @@ public sealed class DiabloStoreCommandProcessorTests
             0,
             0,
             inventory: inventory,
-            playerClass: playerClass);
+            playerClass: playerClass,
+            abilityKind: abilityKind);
     }
 
     private static AuthoritativePlayerClassDefinition LoadWarriorClass()

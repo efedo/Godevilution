@@ -174,8 +174,9 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         if (isClassAbility) {
-            if (repairAbilitySpellId == 0
-                || player.AbilitySpellId != repairAbilitySpellId) {
+            if (!player.HasAbility(
+                    DiabloPlayerAbilityKind.Repair,
+                    repairAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
         } else if (player.ActiveStoreId is null) {
@@ -260,8 +261,9 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         if (isClassAbility) {
-            if (rechargeAbilitySpellId == 0
-                || player.AbilitySpellId != rechargeAbilitySpellId) {
+            if (!player.HasAbility(
+                    DiabloPlayerAbilityKind.Recharge,
+                    rechargeAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
         } else if (player.ActiveStoreId is null) {
@@ -348,8 +350,9 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
         if (isClassAbility) {
-            if (identifyAbilitySpellId == 0
-                || player.AbilitySpellId != identifyAbilitySpellId) {
+            if (!player.HasAbility(
+                    DiabloPlayerAbilityKind.Identify,
+                    identifyAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
         } else if (player.ActiveStoreId is null) {
