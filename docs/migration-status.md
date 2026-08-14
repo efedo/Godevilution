@@ -81,10 +81,14 @@ Status date: 2026-08-14
   and dual-wield admission; active rows use `TwoHanded` tags while legacy
   states retain the native equipment-location fallback.
 
+- Loadout equipment-slot admission is now content-first for hand, two-handed,
+  body-armor, helmet, ring, and amulet locations; untagged legacy rows retain
+  the native `equip_location` mapping.
+
 - Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
-  `Staff`, `Belt`, and `TwoHanded` subtype tags to `items.tsv`; player and
-  monster weapon modifiers consume those tags before falling back to native
-  item type.
+  `Staff`, `Belt`, `OneHanded`, `TwoHanded`, `BodyArmor`, `Helmet`, `Ring`,
+  and `Amulet` subtype tags to `items.tsv`; player and monster weapon
+  modifiers consume those tags before falling back to native item type.
 
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;

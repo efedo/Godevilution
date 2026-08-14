@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
   assets remain only as a fallback and saves/hashes omit static geometry.
 - Classify two-handed equipment from normalized `TwoHanded` tags before
   falling back to native equipment-location metadata for legacy content.
+- Validate loadout equipment slots from semantic hand, body-armor, helmet,
+  ring, and amulet tags before falling back to native location values.
 - Validate starting belt items from the normalized `Belt` tag before falling
   back to native equipment-location/item-class metadata for legacy content.
 - Make the validated `level_generation.tsv` catalog own deterministic
