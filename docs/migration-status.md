@@ -29,6 +29,11 @@ Status date: 2026-08-14
   and protocol projections, so Godot service presentation no longer infers
   Repair, Trap Disarm, Recharge, Identify, Search, or Rage from numeric IDs.
 
+- Authoritative item-service and trap-disarm admission now checks the semantic
+  class-skill role first, allowing content packs to assign different spell
+  identities without changing gameplay authorization; legacy snapshots that
+  lack a role retain their configured spell-ID fallback.
+
 - Schema 1.142 externalizes native Hellfire class-armor adjustments through
   validated `combat.tsv` content; older combat definitions retain the 40/20
   demon/undead compatibility values.
