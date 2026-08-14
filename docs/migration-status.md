@@ -239,6 +239,9 @@ Status date: 2026-08-14
 - Schema 1.92 externalizes the Hork Spawn `spawn_monster_id` through
   `monster_missiles.tsv`; the Hellfire row now supplies native monster ID 117,
   while legacy rows and snapshots retain the compatibility fallback.
+- Schema 1.93 externalizes Hork Spawn `projectile_speed` and
+  `projectile_lifetime`; the Hellfire row now supplies the native speed-8,
+  nine-tick trajectory, while legacy rows retain server defaults.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

@@ -80,6 +80,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.92's optional monster-missile `spawn_monster_id`, moving the
   Hork Spawn summon target into validated Hellfire content while preserving
   compatibility for older rows and snapshots.
+- Add schema 1.93's optional Hork Spawn projectile speed and lifetime fields,
+  moving its native speed-8, nine-tick trajectory tuning into validated content
+  while preserving legacy defaults.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
