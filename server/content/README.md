@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.124.0` schema in
+It declares its identity and `devilution.diablo@1.125.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -135,6 +135,10 @@ The optional `zombie_action_chance_base` and
 `zombie_action_chance_intelligence_scale` columns externalize the Zombie
 autonomous action admission band. Legacy monster rows retain the native
 base-ten, intelligence-scale-two compatibility values.
+The optional `zombie_random_direction_chance_base` and
+`zombie_random_direction_chance_intelligence_scale` columns externalize the
+Zombie random-direction prepend chance during long-range movement. Legacy
+monster rows retain the native base-twenty, intelligence-scale-two values.
 The optional `zombie_movement_distance_minimum`,
 `zombie_movement_distance_base`, and
 `zombie_movement_distance_intelligence_scale` columns externalize the Zombie
@@ -322,8 +326,9 @@ The `GoatMelee` identity now consumes the validated adjacent attack band
 with special accuracy and damage resolved by the server.
 The `SkeletonMelee` identity now uses its native adjacent `20 + 2 * intelligence`
 attack admission boundary; clients never perform the monster attack roll.
-The `Zombie` identity now uses its native `10 + 2 * intelligence` action band
-and long-range `2 * intelligence + 4` movement boundary; movement remains
+The `Zombie` identity now uses its native `10 + 2 * intelligence` action band,
+validated random-direction prepend chance, and long-range
+`2 * intelligence + 4` movement boundary; movement remains
 server-owned and falls back to the shared authoritative navigation when needed.
 Native monster regeneration is also server-owned: each live monster recovers
 one life at level 1 or `level / 2` at higher levels per simulation tick, capped
@@ -1237,7 +1242,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.124.0"
+      "version": "1.125.0"
   },
   "dependencyConstraints": [
     {
@@ -1269,7 +1274,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.124.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.125.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1404,6 +1409,9 @@ Schema 1.124 adds optional Fat/Overlord adjacent attack and special-band columns
 to `monster_types.tsv`; checked-in Fat rows own their `20 + 4 * intelligence`
 admission and `15 + 4 * intelligence` special lower bound while older rows
 retain the native compatibility values.
+Schema 1.125 adds optional Zombie random-direction chance columns to
+`monster_types.tsv`; checked-in Zombie rows own their `20 + 2 * intelligence`
+movement-prepend chance while older rows retain the native compatibility values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

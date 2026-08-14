@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.125 externalizes Zombie’s random-direction prepend chance base and
+  intelligence scale through validated `monster_types.tsv` rows; older targets
+  retain the native compatibility values.
+
 - Schema 1.124 externalizes Fat/Overlord's adjacent attack and special-band
   chance bases and intelligence scales through validated `monster_types.tsv`
   rows; older targets retain the native compatibility values.

@@ -17,6 +17,9 @@ All notable changes to this fork are documented below.
   native `20 + 4 * intelligence` admission and `15 + 4 * intelligence` special
   lower bound into validated monster type content while preserving legacy
   target behavior.
+- Add schema 1.125's optional Zombie random-direction chance tuning, moving its
+  native `20 + 2 * intelligence` movement-prepend chance into validated monster
+  type content while preserving legacy target behavior.
 - Route the GoatRanged Arrow path through schema 1.120's validated
   ranged-retreat tuning so its dedicated dispatch shares the server-owned
   generic close-range boundary.
