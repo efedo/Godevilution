@@ -5507,9 +5507,14 @@ public sealed class DiabloCombatCommandProcessor
             };
         var lifetime = missile.ProjectileLifetime > 0
             ? missile.ProjectileLifetime
-            : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
-                ? checked(5 * (monster.Intelligence + 4))
-                : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+            : missile.ProjectileLifetimeBase > 0
+                || missile.ProjectileLifetimeIntelligenceScale > 0
+                ? checked(
+                    missile.ProjectileLifetimeBase
+                    + missile.ProjectileLifetimeIntelligenceScale * monster.Intelligence)
+                : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+                    ? checked(5 * (monster.Intelligence + 4))
+                    : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
             ?? (missile.MissileId == "MagmaBall"
                 ? AuthoritativeDamageType.Fire

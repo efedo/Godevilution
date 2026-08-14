@@ -3724,7 +3724,9 @@ public sealed class DiabloCombatCommandProcessorTests
                     "Acid",
                     AuthoritativeProjectileBehavior.Acid,
                     AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
-                    50),
+                    50,
+                    ProjectileLifetimeBase: 22,
+                    ProjectileLifetimeIntelligenceScale: 4),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -3747,7 +3749,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.Behavior);
         Assert.Equal(AuthoritativeDamageType.Acid, acid.DamageType);
         Assert.Equal(16, acid.Speed);
-        Assert.Equal(19U, acid.RemainingTicks);
+        Assert.Equal(21U, acid.RemainingTicks);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();
         AuthoritativeProjectile? puddle = null;

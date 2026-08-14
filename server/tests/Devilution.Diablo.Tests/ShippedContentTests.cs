@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.93.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.94.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -86,9 +86,13 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Acid", out var acid));
         Assert.Equal("Acid", acid.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.ProjectileBehavior);
+        Assert.Equal(20, acid.ProjectileLifetimeBase);
+        Assert.Equal(5, acid.ProjectileLifetimeIntelligenceScale);
         Assert.True(activation.MonsterMissiles.TryGet("AcidUnique", out var acidUnique));
         Assert.Equal("Acid", acidUnique.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
+        Assert.Equal(20, acidUnique.ProjectileLifetimeBase);
+        Assert.Equal(5, acidUnique.ProjectileLifetimeIntelligenceScale);
         Assert.True(activation.MonsterMissiles.TryGet("SkeletonRanged", out var skeletonRanged));
         Assert.Equal("Arrow", skeletonRanged.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, skeletonRanged.ProjectileBehavior);
@@ -142,7 +146,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.93.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.94.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);

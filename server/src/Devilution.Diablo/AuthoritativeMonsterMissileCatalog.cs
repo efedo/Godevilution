@@ -20,7 +20,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     uint SpellId = 0,
     uint SpawnMonsterId = 0,
     int ProjectileSpeed = 0,
-    int ProjectileLifetime = 0);
+    int ProjectileLifetime = 0,
+    int ProjectileLifetimeBase = 0,
+    int ProjectileLifetimeIntelligenceScale = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -41,6 +43,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
                 || definition.ProjectileSpeed < 0
                 || definition.ProjectileLifetime < 0
+                || definition.ProjectileLifetimeBase < 0
+                || definition.ProjectileLifetimeIntelligenceScale < 0
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -97,7 +101,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalUInt32("spell_id"),
                 row.OptionalUInt32("spawn_monster_id"),
                 row.OptionalInt32("projectile_speed"),
-                row.OptionalInt32("projectile_lifetime"));
+                row.OptionalInt32("projectile_lifetime"),
+                row.OptionalInt32("projectile_lifetime_base"),
+                row.OptionalInt32("projectile_lifetime_intelligence_scale"));
         }));
     }
 
