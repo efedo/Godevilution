@@ -25,6 +25,8 @@ All notable changes to this fork are documented below.
   native/C# checkpoint convergence without gameplay RNG drift.
 - Add a multiplayer autonomous-tick replay fixture, hashing a second participant
   alongside monster movement, attacks, and a late movement command.
+- Route replay fixture commands to an explicit participant session, preserving
+  per-participant client sequences and native/C# hashes for a secondary move.
 - Add a shared deterministic quest-pool selection replay fixture, including
   unavailable-quest rejection and matching native/C# checkpoint hashes.
 - Add schema 1.84 Counselor missile mappings for all native intelligence

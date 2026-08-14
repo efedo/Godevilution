@@ -8,7 +8,9 @@ A fixture records its format and protocol versions, content identity, tick rate,
 RNG seed, initial state, authoritative command order, checkpoint hashes, and an
 optional final hash. Commands are ordered by `(target_tick,
 server_receipt_sequence)` and retain client sequences so retry and deduplication
-behavior can be characterized.
+behavior can be characterized. An optional command-level `player` routes a
+command to a declared participant; omitted commands target the primary player,
+and client sequences are unique per participant.
 
 An optional top-level `player_action_timing` object records the activated
 walking, selected attack-profile, and casting frame boundaries used by a
@@ -106,8 +108,9 @@ Fixtures under `test/fixtures/replay` cover store transactions against synthetic
 and checked-in content, movement and combat, healing, portals, world-item
 pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
-autonomous-tick participant timeline, and multi-level world occupancy. The
-native and C# runners preserve the same baseline resources,
+autonomous-tick participant timeline with explicit secondary-session movement
+commands, and multi-level world occupancy. The native and C# runners preserve
+the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
 world items in their canonical projections. Spell fixtures now reject unowned

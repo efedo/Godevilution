@@ -4295,6 +4295,8 @@ private:
 			return ParseUnsigned(command.order.targetTick);
 		if (key == "server_receipt_sequence")
 			return ParseUnsigned(command.order.serverReceiptSequence);
+		if (key == "player")
+			return ParseString(command.player);
 		if (key == "kind")
 			return ParseString(command.kind);
 		if (key == "payload")
@@ -4668,6 +4670,14 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture contains invalid secondary-player state.";
 		return false;
 	}
+	for (const auto &command : fixture.commands) {
+		if (!command.player.empty()
+		    && command.player != fixture.initialState.player
+		    && (!secondaryPlayer.defined || command.player != secondaryPlayer.player)) {
+			error = "Replay fixture command participant must be the primary or secondary player.";
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -4866,7 +4876,26 @@ bool ExecuteReplayFixture(
 			if (command.order.targetTick != timelineTick)
 				continue;
 			bool accepted = false;
-			if (command.kind == "OpenStore") {
+			if (!command.player.empty() && command.player == state.secondaryPlayer) {
+				if (command.kind != "Move") {
+					error = "Secondary replay participant currently supports Move commands only.";
+					return false;
+				}
+				const int32_t targetX = state.secondaryPlayerPositionX + command.directionX;
+				const int32_t targetY = state.secondaryPlayerPositionY + command.directionY;
+				const bool occupiedByPrimary = targetX == state.positionX
+				    && targetY == state.positionY
+				    && state.life > 0
+				    && state.levelId == state.secondaryPlayerLevelId;
+				if ((command.directionX != 0 || command.directionY != 0)
+				    && targetX >= 0 && targetX < 40
+				    && targetY >= 0 && targetY < 40
+				    && !occupiedByPrimary) {
+					state.secondaryPlayerPositionX = targetX;
+					state.secondaryPlayerPositionY = targetY;
+					accepted = true;
+				}
+			} else if (command.kind == "OpenStore") {
 				state.activeStoreId = command.storeId;
 				if (command.storeId == 10)
 					state.activeStoreItems.clear();
@@ -5199,7 +5228,8 @@ bool ExecuteReplayFixture(
 				error = "Unsupported replay command kind: " + command.kind;
 				return false;
 			}
-			if (accepted && command.kind == "Move") {
+			if ((command.player.empty() || command.player == fixture.initialState.player)
+			    && accepted && command.kind == "Move") {
 				for (uint32_t direction = 0; direction < 8; ++direction) {
 					if (DirectionDisplacements[direction]
 					    == std::pair<int32_t, int32_t> { command.directionX, command.directionY }) {

@@ -219,6 +219,9 @@ public sealed record ReplayFixtureCommand(
     uint StoreId,
     uint StoreSlot)
 {
+    /** Optional participant session identity; omitted commands target the primary player. */
+    public string Player { get; init; } = string.Empty;
+
     public int DirectionX { get; init; }
 
     public int DirectionY { get; init; }

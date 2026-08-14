@@ -1014,6 +1014,8 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-multiplayer-autonomous-tick.json");
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        Assert.Equal("B", fixture.Commands[0].Player);
+        Assert.Equal(string.Empty, fixture.Commands[1].Player);
         var target = new AuthoritativeCombatTarget(
             fixture.InitialState.CombatTargetEntityId,
             fixture.InitialState.CombatTargetPositionX,
@@ -1045,10 +1047,13 @@ public sealed class ReplayFixtureTests
             new AuthoritativeCommandServer(executor));
 
         Assert.Equal(DiabloGameMode.Multiplayer, fixture.GameMode);
-        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
         Assert.Equal([1U, 8U], result.FinalSnapshot.Players.Select(player => player.EntityId));
         Assert.Equal(73, result.FinalSnapshot.Players[0].Life);
         Assert.Equal(80, result.FinalSnapshot.Players[1].Life);
+        Assert.Equal(6, result.FinalSnapshot.Players[1].PositionX);
+        Assert.Equal(6, result.FinalSnapshot.Players[1].PositionY);
         Assert.Equal(10UL, result.FinalSnapshot.Tick);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
@@ -1193,6 +1198,24 @@ public sealed class ReplayFixtureTests
     public void MalformedFixtureIsRejected()
     {
         Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load("{\"format_version\":1}"));
+    }
+
+    [Fact]
+    public void SecondaryReplayParticipantRejectsUnsupportedCommand()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-autonomous-tick.json");
+        var json = File.ReadAllText(path)
+            .Replace("\"kind\": \"Move\"", "\"kind\": \"Attack\"", StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal(
+            "Secondary replay participant currently supports Move commands only.",
+            exception.Message);
     }
 
     [Fact]

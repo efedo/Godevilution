@@ -46,9 +46,17 @@
   },
   "commands": [
     {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 5,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 1, "direction_y": 1 }
+    },
+    {
       "client_sequence": 1,
       "target_tick": 10,
-      "server_receipt_sequence": 1,
+      "server_receipt_sequence": 2,
       "kind": "Move",
       "payload": { "direction_x": 0, "direction_y": 1 }
     }
@@ -56,6 +64,7 @@
   "checkpoints": [
     { "tick": 1, "state_sha256": "579fbd99fb7c372baf433e211d0f1aaee0b13197d338135e7718a47c4151d8a8" },
     { "tick": 2, "state_sha256": "68cc9999d9ffe2c73dd93c6e7ed79887021b272f1b38c6418e20f37dd647853b" },
-    { "tick": 10, "state_sha256": "fa9d41f97c69d2b40d9e4c5149b5bd50b8b04c3f6447074290bf051265ca9604" }
+    { "tick": 5, "state_sha256": "dccc674d0f45baa18d0f09d660e1b7d6c7e51f566e8b06a793d0026779b013c1" },
+    { "tick": 10, "state_sha256": "5cda8500a61ce505c6e571f180a9c96491f0ea2820571d167eca82b022700467" }
   ]
 }

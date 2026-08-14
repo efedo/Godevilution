@@ -110,8 +110,26 @@ public static class ReplayFixtureLoader
         }
         if (fixture.Commands.Count == 0)
             throw new InvalidDataException("Replay fixture must contain commands.");
-        if (fixture.Commands.Select(command => command.ClientSequence).Distinct().Count() != fixture.Commands.Count)
-            throw new InvalidDataException("Replay fixture command sequences must be unique.");
+        var commandPlayers = fixture.Commands
+            .Select(command => string.IsNullOrEmpty(command.Player)
+                ? fixture.InitialState.Player
+                : command.Player)
+            .ToArray();
+        if (fixture.Commands
+                .Zip(commandPlayers)
+                .GroupBy(pair => pair.Second)
+                .Any(group => group.Select(pair => pair.First.ClientSequence).Distinct().Count() != group.Count()))
+            throw new InvalidDataException("Replay fixture command sequences must be unique per participant.");
+        if (fixture.Commands.Any(command => !string.IsNullOrEmpty(command.Player)
+                && !string.Equals(command.Player, fixture.InitialState.Player, StringComparison.Ordinal)
+                && !string.Equals(command.Player, fixture.InitialState.SecondaryPlayer?.Player, StringComparison.Ordinal)))
+            throw new InvalidDataException("Replay fixture command participant must be the primary or secondary player.");
+        if (fixture.Commands.Any(command => string.Equals(
+                command.Player,
+                fixture.InitialState.SecondaryPlayer?.Player,
+                StringComparison.Ordinal)
+                && command.Kind != "Move"))
+            throw new InvalidDataException("Secondary replay participant currently supports Move commands only.");
         if (fixture.Checkpoints.Select(checkpoint => checkpoint.Tick).Distinct().Count() != fixture.Checkpoints.Count)
             throw new InvalidDataException("Replay fixture checkpoint ticks must be unique.");
         if (fixture.ContentManifest is not null) {
@@ -556,6 +574,7 @@ public static class ReplayFixtureLoader
                 kind,
                 storeId,
                 storeSlot) {
+                Player = OptionalString(command, "player") ?? string.Empty,
                 DirectionX = GetOptionalInt(payload, "direction_x"),
                 DirectionY = GetOptionalInt(payload, "direction_y"),
                 TargetEntityId = GetOptionalUInt(payload, "target_entity_id"),

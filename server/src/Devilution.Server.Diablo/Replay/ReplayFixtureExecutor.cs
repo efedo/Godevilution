@@ -93,7 +93,10 @@ public static class ReplayFixtureExecutor
         foreach (var tick in timelineTicks) {
             foreach (var fixtureCommand in orderedCommands.Where(command => command.TargetTick == tick)) {
                 var command = ToProtocolCommand(fixtureCommand);
-                var result = commandServer.Process(sessionId, command, tick);
+                var commandSessionId = string.IsNullOrEmpty(fixtureCommand.Player)
+                    ? sessionId
+                    : fixtureCommand.Player;
+                var result = commandServer.Process(commandSessionId, command, tick);
                 if (result.ServerReceiptSequence != fixtureCommand.ServerReceiptSequence) {
                     throw new InvalidDataException(
                         $"Replay receipt mismatch for client sequence {fixtureCommand.ClientSequence}.");

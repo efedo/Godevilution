@@ -2193,6 +2193,8 @@ TEST(ReplayFixture, ExecutesMultiplayerAutonomousTickAgainstCSharpCheckpoints)
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
 	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_EQ(fixture.commands[0].player, "B");
+	EXPECT_TRUE(fixture.commands[1].player.empty());
 
 	ReplayFixtureExecutionState state;
 	state.life = fixture.initialState.life;
@@ -2213,13 +2215,16 @@ TEST(ReplayFixture, ExecutesMultiplayerAutonomousTickAgainstCSharpCheckpoints)
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	ASSERT_EQ(result.transitions.size(), 1U);
+	ASSERT_EQ(result.transitions.size(), 2U);
 	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 10U);
 	EXPECT_EQ(state.positionX, 0);
 	EXPECT_EQ(state.positionY, 1);
 	EXPECT_EQ(state.life, 73);
 	EXPECT_EQ(state.secondaryPlayerLife, 80);
+	EXPECT_EQ(state.secondaryPlayerPositionX, 6);
+	EXPECT_EQ(state.secondaryPlayerPositionY, 6);
 	EXPECT_EQ(state.combatTargetPositionX, 1);
 	EXPECT_EQ(state.combatTargetPositionY, 0);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
