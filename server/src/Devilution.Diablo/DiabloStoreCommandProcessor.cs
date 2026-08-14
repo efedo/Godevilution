@@ -224,10 +224,15 @@ public sealed class DiabloStoreCommandProcessor
         }
 
         var level = checked((int)player.CharacterLevel);
+        var durabilityLevelOffset = player.PlayerClass?.RepairAbilityDurabilityLevelOffset > 0
+            ? player.PlayerClass.RepairAbilityDurabilityLevelOffset
+            : 9;
         var repaired = 0;
         do {
             repaired = checked(repaired + level + random.GenerateRnd(level));
-            maximumDurability -= Math.Max(maximumDurability / (level + 9), 1);
+            maximumDurability -= Math.Max(
+                maximumDurability / (level + durabilityLevelOffset),
+                1);
             if (maximumDurability == 0) {
                 RemoveItem(player, intent.Item, intent.LegacyInventoryIndex);
                 return DiabloIntentResult.Accepted;

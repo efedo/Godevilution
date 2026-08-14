@@ -16,6 +16,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(200, catalog.Default.HealOtherSpellPercent);
         Assert.Equal(100, catalog.Default.ManaSpellPercent);
         Assert.Equal(0, catalog.Default.MeleeArmorReductionDivisor);
+        Assert.Equal(9, catalog.Default.RepairAbilityDurabilityLevelOffset);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -113,7 +114,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 5; remove++)
+                    for (var remove = 0; remove < 6; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -158,7 +159,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 2; remove++)
+                    for (var remove = 0; remove < 3; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -192,7 +193,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 4; remove++)
+                    for (var remove = 0; remove < 5; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));

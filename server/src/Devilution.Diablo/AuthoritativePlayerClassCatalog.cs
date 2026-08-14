@@ -89,6 +89,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native Monk unarmed maximum-damage level divisor. */
     public int MonkUnarmedMaximumDamageLevelDivisor { get; init; } = 1;
 
+    /** Native Warrior Repair durability denominator offset; zero keeps legacy 9. */
+    public int RepairAbilityDurabilityLevelOffset { get; init; }
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -237,6 +240,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "monk_unarmed_maximum_damage_level_divisor",
     ];
 
+    private static readonly IReadOnlyList<string> RepairTuningColumns = [
+        ..PhysicalDamageTuningColumns,
+        "repair_ability_durability_level_offset",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -316,9 +324,13 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var hasPhysicalDamageTuning = table.Columns.SequenceEqual(
-            PhysicalDamageTuningColumns,
+        var hasRepairTuning = table.Columns.SequenceEqual(
+            RepairTuningColumns,
             StringComparer.Ordinal);
+        var hasPhysicalDamageTuning = table.Columns.SequenceEqual(
+                PhysicalDamageTuningColumns,
+                StringComparer.Ordinal)
+            || hasRepairTuning;
         var hasPhysicalDamageFormula = table.Columns.SequenceEqual(
             PhysicalDamageColumns,
             StringComparer.Ordinal)
@@ -328,6 +340,7 @@ public sealed class AuthoritativePlayerClassCatalog
         var hasManaSpellPercent = hasMeleeArmorReduction
             || table.Columns.SequenceEqual(ManaColumns, StringComparer.Ordinal);
         if (!hasManaSpellPercent
+            && !hasRepairTuning
             && !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
                 $"Player-class table '{sourcePath}' does not match the required ordered schema.");
@@ -395,6 +408,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 MonkUnarmedMaximumDamageLevelDivisor = hasPhysicalDamageTuning
                     ? row.RequiredInt32("monk_unarmed_maximum_damage_level_divisor")
                     : 1,
+                RepairAbilityDurabilityLevelOffset = hasRepairTuning
+                    ? row.RequiredInt32("repair_ability_durability_level_offset")
+                    : 0,
             }));
     }
 
@@ -443,6 +459,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || !Enum.IsDefined(definition.PhysicalDamageFormula)
             || definition.MonkUnarmedMinimumDamageLevelDivisor <= 0
             || definition.MonkUnarmedMaximumDamageLevelDivisor <= 0
+            || definition.RepairAbilityDurabilityLevelOffset < 0
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

@@ -220,6 +220,59 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void WarriorRepairAbilityUsesConfiguredDurabilityLevelOffset()
+    {
+        const uint repairSpellId = 26;
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                Durability = 1,
+                MaxDurability = 20,
+            });
+        var player = CreatePlayer(
+            gold: 0,
+            inventory: [item],
+            playerClass: LoadWarriorClass() with {
+                RepairAbilityDurabilityLevelOffset = 1,
+            });
+        player.AbilitySpellId = repairSpellId;
+        player.CharacterLevel = 10;
+        var random = new DiabloRandom(0);
+        var expectedRandom = new DiabloRandom(0);
+        var expectedDurability = 1;
+        var expectedMaximum = 20;
+        var repaired = 0;
+        do {
+            repaired += 10 + expectedRandom.GenerateRnd(10);
+            expectedMaximum -= Math.Max(expectedMaximum / 11, 1);
+        } while (repaired + expectedDurability < expectedMaximum);
+
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: random,
+            repairAbilitySpellId: repairSpellId);
+        var result = processor.Execute(
+            player,
+            new DiabloRepairItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ClassAbility),
+            1);
+
+        Assert.True(result.Succeeded);
+        var repairedItem = Assert.Single(player.Inventory);
+        Assert.Equal(expectedMaximum, repairedItem.State.MaxDurability);
+        Assert.Equal(
+            Math.Min(expectedDurability + repaired, expectedMaximum),
+            repairedItem.State.Durability);
+        Assert.Equal(expectedRandom.State, random.State);
+    }
+
+    [Fact]
     public void WarriorRepairAbilityAcceptsFullyRepairedItemWithoutAdvancingRandom()
     {
         const uint repairSpellId = 26;
@@ -906,7 +959,8 @@ public sealed class DiabloStoreCommandProcessorTests
         IReadOnlyList<OwnedStoreItem>? inventory = null,
         IReadOnlyList<int>? inventoryGrid = null,
         IReadOnlyList<BeltStoreItem>? belt = null,
-        PlayerAttributesState? attributes = null)
+        PlayerAttributesState? attributes = null,
+        AuthoritativePlayerClassDefinition? playerClass = null)
     {
         return new AuthoritativePlayerState(
             gold,
@@ -924,7 +978,39 @@ public sealed class DiabloStoreCommandProcessorTests
             1,
             0,
             0,
-            inventory: inventory);
+            inventory: inventory,
+            playerClass: playerClass);
+    }
+
+    private static AuthoritativePlayerClassDefinition LoadWarriorClass()
+    {
+        var root = FindRepositoryRoot();
+        var path = Path.Combine(root, "server", "content", "base", "classes.tsv");
+        return AuthoritativePlayerClassCatalog.LoadTsv(path, File.ReadAllText(path))
+            .Resolve("warrior");
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] {
+                configuredRoot!,
+                Directory.GetCurrentDirectory(),
+                AppContext.BaseDirectory,
+            };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
     }
 
     private static OwnedStoreItem CreateGoldStack(
