@@ -5554,8 +5554,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
-            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge
-            || distance < 5)
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge)
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
@@ -5563,8 +5562,22 @@ public sealed class DiabloCombatCommandProcessor
                 && projectile.Behavior == AuthoritativeProjectileBehavior.BatCharge))
             return true;
 
+        var chargeTuning = missile.ChargeMinimumDistance > 0
+            && missile.ChargeChanceBase > 0
+            && missile.ChargeChanceIntelligenceScale > 0
+            ? (
+                MinimumDistance: missile.ChargeMinimumDistance,
+                ChanceBase: missile.ChargeChanceBase,
+                IntelligenceScale: missile.ChargeChanceIntelligenceScale)
+            : (MinimumDistance: 5, ChanceBase: 33, IntelligenceScale: 4);
+        if (distance < chargeTuning.MinimumDistance)
+            return false;
+
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var chargeChance = Math.Min(100, 33 + (4 * monster.Intelligence));
+        var chargeChance = Math.Min(
+            100,
+            chargeTuning.ChanceBase
+                + (chargeTuning.IntelligenceScale * monster.Intelligence));
         if (attackSeed % 100U >= (uint)chargeChance
             || !world.HasLineOfSight(
                 monster.LevelId,

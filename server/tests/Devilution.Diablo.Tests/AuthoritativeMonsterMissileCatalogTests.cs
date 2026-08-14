@@ -70,6 +70,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.PuddleDamageMinimumMonsterLevel);
         Assert.Equal(0, succubus.PuddleDamageLow);
         Assert.Equal(0, succubus.PuddleDamageHigh);
+        Assert.Equal(0, succubus.ChargeMinimumDistance);
+        Assert.Equal(0, succubus.ChargeChanceBase);
+        Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);
     }
 
     [Fact]
@@ -85,6 +88,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedBatChargeTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\tcharge_minimum_distance\tcharge_chance_base\tcharge_chance_intelligence_scale\n"
+                + "Bat\tRhino\tBatCharge\t42\t6\t35\t5\n");
+
+        Assert.True(catalog.TryGet("Bat", 42, out var batCharge));
+        Assert.Equal((6, 35, 5), (
+            batCharge.ChargeMinimumDistance,
+            batCharge.ChargeChanceBase,
+            batCharge.ChargeChanceIntelligenceScale));
+    }
+
+    [Fact]
     public void RejectsAnOutOfRangeAvoidanceProbability()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -96,6 +114,28 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
                     0),
             ]));
+    }
+
+    [Fact]
+    public void RejectsInvalidChargeTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Bat",
+                "Rhino",
+                AuthoritativeProjectileBehavior.BatCharge,
+                MonsterId: 42,
+                ChargeMinimumDistance: 5,
+                ChargeChanceBase: 33,
+                ChargeChanceIntelligenceScale: 0),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                ChargeMinimumDistance: 5),
+        ]));
     }
 
     [Fact]

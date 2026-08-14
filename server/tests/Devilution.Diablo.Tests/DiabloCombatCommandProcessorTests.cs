@@ -3613,6 +3613,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GloomUsesValidatedMappedChargeBoundaryTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 6,
+                    ChargeChanceBase: 100,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 6,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void ValidatedMappedRangedContentAdmitsAnOtherwiseUnroutedNativeAi()
     {
         var monster = new AuthoritativeCombatTarget(
