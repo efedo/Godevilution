@@ -3358,6 +3358,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonRangedUsesValidatedRetreatBoundaryTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Skeleton Bow",
+                0,
+                0,
+                1,
+                4,
+                4,
+                10,
+                2,
+                9,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonRanged",
+                SkeletonRangedRetreatMinimumDistance = 5,
+                SkeletonRangedRetreatChanceBase = 100,
+                SkeletonRangedRetreatChanceIntelligenceScale = 1,
+                SkeletonRangedAttackChanceBase = 100,
+                SkeletonRangedAttackChanceIntelligenceScale = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 1,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.True(monster.IsMoving);
+        Assert.True(monster.FuturePositionX < monster.PositionX);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void SkeletonRangedAiNeverFallsThroughToAdjacentMelee()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.114.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.115.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -160,7 +160,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.114.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.115.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -281,6 +281,18 @@ public sealed class ShippedContentTests
                 .Select(definition => (
                     definition.SkeletonMeleeDelayChanceBase,
                     definition.SkeletonMeleeDelayChanceIntelligenceScale))
+                .Distinct()
+                .Single());
+        Assert.Equal(
+            (4, 13, 2, 3, 2),
+            monsterTypes.Definitions
+                .Where(definition => definition.NativeAi == "SkeletonRanged")
+                .Select(definition => (
+                    definition.SkeletonRangedRetreatMinimumDistance,
+                    definition.SkeletonRangedRetreatChanceBase,
+                    definition.SkeletonRangedRetreatChanceIntelligenceScale,
+                    definition.SkeletonRangedAttackChanceBase,
+                    definition.SkeletonRangedAttackChanceIntelligenceScale))
                 .Distinct()
                 .Single());
         Assert.Equal(

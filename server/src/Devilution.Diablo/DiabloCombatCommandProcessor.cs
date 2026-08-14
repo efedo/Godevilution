@@ -6030,11 +6030,17 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monster.NativeAi != "SkeletonRanged" || distance >= 4)
+        var skeletonRangedTuning = GetSkeletonRangedTuning(monster);
+        if (!skeletonRangedTuning.HasValue
+            || distance >= skeletonRangedTuning.Value.RetreatMinimumDistance)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var retreatChance = Math.Min(100, 13 + (2 * monster.Intelligence));
+        var retreatChance = Math.Min(
+            100,
+            skeletonRangedTuning.Value.RetreatChanceBase
+                + (skeletonRangedTuning.Value.RetreatChanceIntelligenceScale
+                    * monster.Intelligence));
         if ((actionSeed / 100U) % 100U >= (uint)retreatChance)
             return false;
 
@@ -6057,7 +6063,8 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "SkeletonRanged"
+        var skeletonRangedTuning = GetSkeletonRangedTuning(monster);
+        if (!skeletonRangedTuning.HasValue
             || !HasValidatedArrowMapping(monster.NativeAi)
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0)
@@ -6070,7 +6077,11 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var attackChance = Math.Min(100, 3 + (2 * monster.Intelligence));
+        var attackChance = Math.Min(
+            100,
+            skeletonRangedTuning.Value.AttackChanceBase
+                + (skeletonRangedTuning.Value.AttackChanceIntelligenceScale
+                    * monster.Intelligence));
         if (!world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
@@ -6086,6 +6097,35 @@ public sealed class DiabloCombatCommandProcessor
             player,
             distance,
             attackSeed);
+    }
+
+    private (
+        int RetreatMinimumDistance,
+        int RetreatChanceBase,
+        int RetreatChanceIntelligenceScale,
+        int AttackChanceBase,
+        int AttackChanceIntelligenceScale)? GetSkeletonRangedTuning(
+            AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "SkeletonRanged")
+                return null;
+            if (definition.SkeletonRangedRetreatMinimumDistance > 0
+                && definition.SkeletonRangedRetreatChanceBase > 0
+                && definition.SkeletonRangedRetreatChanceIntelligenceScale > 0
+                && definition.SkeletonRangedAttackChanceBase > 0
+                && definition.SkeletonRangedAttackChanceIntelligenceScale > 0) {
+                return (
+                    definition.SkeletonRangedRetreatMinimumDistance,
+                    definition.SkeletonRangedRetreatChanceBase,
+                    definition.SkeletonRangedRetreatChanceIntelligenceScale,
+                    definition.SkeletonRangedAttackChanceBase,
+                    definition.SkeletonRangedAttackChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "SkeletonRanged"
+            ? (4, 13, 2, 3, 2)
+            : null;
     }
 
     /** Native ranged bows retain the Arrow missile identity in validated content. */

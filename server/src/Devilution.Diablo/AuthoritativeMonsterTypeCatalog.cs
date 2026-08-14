@@ -152,6 +152,21 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Gargoyle safety-boundary increase per intelligence point. */
     public int GargoyleSafeDistanceIntelligenceScale { get; init; }
+
+    /** Native SkeletonRanged minimum distance for retreat admission. */
+    public int SkeletonRangedRetreatMinimumDistance { get; init; }
+
+    /** Native SkeletonRanged retreat chance base before intelligence scaling. */
+    public int SkeletonRangedRetreatChanceBase { get; init; }
+
+    /** Native SkeletonRanged retreat chance increase per intelligence point. */
+    public int SkeletonRangedRetreatChanceIntelligenceScale { get; init; }
+
+    /** Native SkeletonRanged arrow attack chance base before intelligence scaling. */
+    public int SkeletonRangedAttackChanceBase { get; init; }
+
+    /** Native SkeletonRanged arrow attack chance increase per intelligence point. */
+    public int SkeletonRangedAttackChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -350,6 +365,28 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Gargoyle"
                     && (definition.GargoyleSafeDistanceBase != 0
                         || definition.GargoyleSafeDistanceIntelligenceScale != 0))
+                || definition.SkeletonRangedRetreatMinimumDistance is < 0 or > 64
+                || definition.SkeletonRangedRetreatChanceBase is < 0 or > 100
+                || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
+                || definition.SkeletonRangedAttackChanceBase is < 0 or > 100
+                || definition.SkeletonRangedAttackChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "SkeletonRanged"
+                    && ((definition.SkeletonRangedRetreatMinimumDistance != 0
+                            || definition.SkeletonRangedRetreatChanceBase != 0
+                            || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
+                            || definition.SkeletonRangedAttackChanceBase != 0
+                            || definition.SkeletonRangedAttackChanceIntelligenceScale != 0)
+                        && (definition.SkeletonRangedRetreatMinimumDistance <= 0
+                            || definition.SkeletonRangedRetreatChanceBase <= 0
+                            || definition.SkeletonRangedRetreatChanceIntelligenceScale <= 0
+                            || definition.SkeletonRangedAttackChanceBase <= 0
+                            || definition.SkeletonRangedAttackChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "SkeletonRanged"
+                    && (definition.SkeletonRangedRetreatMinimumDistance != 0
+                        || definition.SkeletonRangedRetreatChanceBase != 0
+                        || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
+                        || definition.SkeletonRangedAttackChanceBase != 0
+                        || definition.SkeletonRangedAttackChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -466,6 +503,11 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 HorkDemonMovementChanceIntelligenceScale = row.OptionalInt32("hork_demon_movement_chance_intelligence_scale"),
                 GargoyleSafeDistanceBase = row.OptionalInt32("gargoyle_safe_distance_base"),
                 GargoyleSafeDistanceIntelligenceScale = row.OptionalInt32("gargoyle_safe_distance_intelligence_scale"),
+                SkeletonRangedRetreatMinimumDistance = row.OptionalInt32("skeleton_ranged_retreat_minimum_distance"),
+                SkeletonRangedRetreatChanceBase = row.OptionalInt32("skeleton_ranged_retreat_chance_base"),
+                SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),
+                SkeletonRangedAttackChanceBase = row.OptionalInt32("skeleton_ranged_attack_chance_base"),
+                SkeletonRangedAttackChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_attack_chance_intelligence_scale"),
             }));
     }
 
