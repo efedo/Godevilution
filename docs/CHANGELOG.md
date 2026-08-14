@@ -33,6 +33,9 @@ All notable changes to this fork are documented below.
   for Firebolt, Charged Bolt, and Bone Spirit, while retaining the existing
   Resurrection and Heal Other target rules; the presentation client still
   performs no gameplay admission.
+- Extend managed authoritative regression coverage through the Charged Bolt and
+  Bone Spirit player-impact paths, including native resource consumption and
+  distinct projectile collision lifecycles.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
