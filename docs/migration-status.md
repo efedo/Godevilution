@@ -152,6 +152,9 @@ Status date: 2026-08-13
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.
+- The native `Torchant` `AiRanged` boundary now consumes its validated Fireball
+  mapping and resolves server-owned travel, impact crawl, and
+  monster-to-player explosion damage.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

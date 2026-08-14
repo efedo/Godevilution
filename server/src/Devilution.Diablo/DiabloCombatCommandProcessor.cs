@@ -3728,7 +3728,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
-            if (TryAdvanceFireBatRangedAttack(target, victim, tick, players, distance))
+            if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
                 continue;
@@ -4063,23 +4063,25 @@ public sealed class DiabloCombatCommandProcessor
         return candidates.Length == 0 ? null : candidates[0];
     }
 
-    /** Native AiRanged Firebolt dispatch for Fire Bat monsters. */
-    private bool TryAdvanceFireBatRangedAttack(
+    /** Native AiRanged projectile dispatch for validated Fire Bat/Torchant mappings. */
+    private bool TryAdvanceMappedRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "FireBat"
+        if (monster.NativeAi is not ("FireBat" or "Torchant")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
-            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.Firebolt)
+            || missile.ProjectileBehavior is not (
+                AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.Fireball))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
                 projectile.SourceEntityId == monster.EntityId
-                && projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt))
+                && projectile.Behavior == missile.ProjectileBehavior))
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
@@ -4101,9 +4103,14 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
-            definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Firebolt);
-        var spellId = spell?.SpellId ?? 1U;
-        var speed = spell?.ProjectileSpeed > 0 ? spell.ProjectileSpeed : 26;
+            definition.ProjectileBehavior == missile.ProjectileBehavior);
+        var spellId = spell?.SpellId
+            ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Fireball
+                ? 12U
+                : 1U);
+        // Native AddFirebolt/AddFireball use speed 16 for monster-owned missiles;
+        // player spell speed is content-owned separately in spells.tsv.
+        var speed = 16;
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType ?? AuthoritativeDamageType.Fire;
         var direction = GetDirection(
@@ -4131,7 +4138,7 @@ public sealed class DiabloCombatCommandProcessor
             damageType,
             0,
             checked((uint)lifetime)) {
-            Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            Behavior = missile.ProjectileBehavior,
             VelocityX = velocityX,
             VelocityY = velocityY,
             OriginalDirection = direction,
@@ -5924,12 +5931,21 @@ public sealed class DiabloCombatCommandProcessor
                 positionX,
                 positionY);
             if (playerTarget is not null) {
-                _ = TryResolvePersistentShiftedProjectilePlayerHit(
-                    tick,
-                    projectile,
-                    playerTarget,
-                    players,
-                    events);
+                if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                    _ = TryResolveMonsterMagicProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events);
+                } else {
+                    _ = TryResolvePersistentShiftedProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events);
+                }
             }
             if (world.TryGetMissileBlockingObject(
                     projectile.LevelId,

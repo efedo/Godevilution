@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   hit, resistance, block, and Q6 damage rules.
 - Extend the server-owned Blood Star dispatch to native `LazarusSuccubus`
   minions, which retain the native `LazarusMinionAi` -> `AiRanged` path.
+- Route the native `Torchant` `AiRanged` behavior through its validated
+  Fireball mapping, including server-owned travel, impact crawl, and
+  monster-to-player explosion damage.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.
