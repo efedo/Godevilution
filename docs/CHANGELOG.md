@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend schema 1.118's mapped-charge tuning to Snake `SnakeCharge` rows,
+  moving the native clear two-tile admission into validated missile content
+  while preserving legacy target behavior.
 - Add schema 1.117's optional mapped-charge admission tuning, moving the native
   Bat-family charge distance and intelligence-scaled chance into validated
   missile content while preserving legacy target behavior.

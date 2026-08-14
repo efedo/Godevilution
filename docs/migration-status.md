@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.118 extends validated `monster_missiles.tsv` charge-distance tuning
+  to Snake `SnakeCharge` rows; the active catalog feeds server-owned AI while
+  older mappings retain the native compatibility distance.
+
 - Schema 1.117 externalizes Bat-family mapped-charge admission tuning through
   validated `monster_missiles.tsv` rows; the active catalog feeds server-owned
   AI while older mappings retain the native compatibility values.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.117.0` schema in
+It declares its identity and `devilution.diablo@1.118.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1226,7 +1226,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.117.0"
+      "version": "1.118.0"
   },
   "dependencyConstraints": [
     {
@@ -1258,7 +1258,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.117.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.118.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1368,6 +1368,9 @@ while older rows retain the compatibility formula.
 Schema 1.117 adds the optional mapped-charge admission columns to
 `monster_missiles.tsv`; checked-in Bat `BatCharge` rows own their charge
 boundary while older rows retain the compatibility formula.
+Schema 1.118 extends the mapped-charge distance column to `SnakeCharge` rows;
+the checked-in Snake `Rhino` row owns its clear two-tile admission while older
+rows retain the native compatibility distance.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
