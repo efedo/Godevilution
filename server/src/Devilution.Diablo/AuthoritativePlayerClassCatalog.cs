@@ -12,6 +12,8 @@ public enum DiabloPlayerClassFlags : uint
     NaturalResistance = 1U << 3,
     TrapSense = 1U << 4,
     FlexibleBlock = 1U << 5,
+    FastBlock = 1U << 6,
+    HeavyHitThreshold = 1U << 7,
 }
 
 public enum DiabloPlayerClassAvailability
@@ -211,7 +213,9 @@ public sealed class AuthoritativePlayerClassCatalog
             | DiabloPlayerClassFlags.IronSkin
             | DiabloPlayerClassFlags.NaturalResistance
             | DiabloPlayerClassFlags.TrapSense
-            | DiabloPlayerClassFlags.FlexibleBlock;
+            | DiabloPlayerClassFlags.FlexibleBlock
+            | DiabloPlayerClassFlags.FastBlock
+            | DiabloPlayerClassFlags.HeavyHitThreshold;
 
     private readonly Dictionary<uint, AuthoritativePlayerClassDefinition> byId;
     private readonly Dictionary<string, AuthoritativePlayerClassDefinition> bySymbol;
@@ -464,10 +468,12 @@ public sealed class AuthoritativePlayerClassCatalog
     {
         if (!row.TryGet("class_flags", out var value)
             || string.IsNullOrWhiteSpace(value)) {
-            return DiabloPlayerClassFlags.None;
+            value = string.Empty;
         }
         var result = DiabloPlayerClassFlags.None;
-        var names = value.Split(',', StringSplitOptions.TrimEntries);
+        var names = value.Length == 0
+            ? Array.Empty<string>()
+            : value.Split(',', StringSplitOptions.TrimEntries);
         if (names.Any(string.IsNullOrWhiteSpace)
             || names.Distinct(StringComparer.Ordinal).Count() != names.Length) {
             throw new InvalidDataException(
@@ -483,6 +489,14 @@ public sealed class AuthoritativePlayerClassCatalog
             }
             result |= flag;
         }
+        // Older class overlays predate the declarative trait flags. Preserve
+        // their native identities at the data boundary while the combat engine
+        // consumes only the validated flag values above.
+        var symbol = row.Required("symbol");
+        if (string.Equals(symbol, "monk", StringComparison.Ordinal))
+            result |= DiabloPlayerClassFlags.FastBlock;
+        if (string.Equals(symbol, "barbarian", StringComparison.Ordinal))
+            result |= DiabloPlayerClassFlags.HeavyHitThreshold;
         return result;
     }
 }

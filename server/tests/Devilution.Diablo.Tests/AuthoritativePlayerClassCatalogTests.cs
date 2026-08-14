@@ -30,7 +30,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(DiabloPlayerClassAvailability.Hellfire, monk.Availability);
         Assert.Equal(352, monk.ManaAdjustmentQ6);
         Assert.Equal(96, monk.ItemLifePerVitalityQ6);
-        Assert.Equal(DiabloPlayerClassFlags.FlexibleBlock, monk.Flags);
+        Assert.Equal(
+            DiabloPlayerClassFlags.FlexibleBlock
+                | DiabloPlayerClassFlags.FastBlock,
+            monk.Flags);
         Assert.Equal(25, monk.SpellManaReductionPercent);
         Assert.Equal(25, monk.HellfireSpellManaReductionPercent);
         Assert.Equal(200, monk.SelfHealingSpellPercent);
@@ -68,7 +71,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(
             DiabloPlayerClassFlags.CriticalStrike
                 | DiabloPlayerClassFlags.IronSkin
-                | DiabloPlayerClassFlags.NaturalResistance,
+                | DiabloPlayerClassFlags.NaturalResistance
+                | DiabloPlayerClassFlags.HeavyHitThreshold,
             barbarian.Flags);
     }
 
@@ -111,6 +115,26 @@ public sealed class AuthoritativePlayerClassCatalogTests
             legacySource);
 
         Assert.Equal(100, catalog.Resolve("sorcerer").ManaSpellPercent);
+    }
+
+    [Fact]
+    public void LegacyClassRowsRetainNativeTraitDefaults()
+    {
+        var legacySource = ReadShippedTable()
+            .Replace("FlexibleBlock,FastBlock", "FlexibleBlock", StringComparison.Ordinal)
+            .Replace(
+                "CriticalStrike,IronSkin,NaturalResistance,HeavyHitThreshold",
+                "CriticalStrike,IronSkin,NaturalResistance",
+                StringComparison.Ordinal);
+
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            legacySource);
+
+        Assert.True(catalog.Resolve("monk").Flags.HasFlag(
+            DiabloPlayerClassFlags.FastBlock));
+        Assert.True(catalog.Resolve("barbarian").Flags.HasFlag(
+            DiabloPlayerClassFlags.HeavyHitThreshold));
     }
 
     [Fact]

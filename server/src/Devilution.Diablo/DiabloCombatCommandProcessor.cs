@@ -10683,7 +10683,7 @@ public sealed class DiabloCombatCommandProcessor
         DiabloPlayerActionLifecycle.Cancel(player);
         var blockingFrames = GetPlayerAnimation(player)?.BlockingFrames ?? 2;
         var skippedFrames = HasUsableEquipmentFlag(player, FastBlockFlag)
-                || IsNativeFastBlockingMonk(player, playerClass)
+                || IsNativeFastBlockingClass(player, playerClass)
             ? blockingFrames - 2
             : 0;
         var duration = checked((blockingFrames - 1 - skippedFrames) * 3 + 1);
@@ -10697,7 +10697,7 @@ public sealed class DiabloCombatCommandProcessor
         int damageQ6)
     {
         var threshold = checked((int)player.CharacterLevel);
-        if (string.Equals(playerClass?.Symbol, "barbarian", StringComparison.Ordinal))
+        if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.HeavyHitThreshold) == true)
             threshold += threshold / 4;
         return (damageQ6 >> 6) >= threshold;
     }
@@ -10895,11 +10895,11 @@ public sealed class DiabloCombatCommandProcessor
             .Aggregate(0U, (flags, item) => flags | item.State.Flags);
     }
 
-    private static bool IsNativeFastBlockingMonk(
+    private static bool IsNativeFastBlockingClass(
         AuthoritativePlayerState player,
         AuthoritativePlayerClassDefinition? playerClass)
     {
-        if (!string.Equals(playerClass?.Symbol, "monk", StringComparison.Ordinal))
+        if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.FastBlock) != true)
             return false;
         var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
         var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
