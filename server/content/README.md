@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.138.0` schema in
+It declares its identity and `devilution.diablo@1.139.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -210,6 +210,13 @@ minimum-five, base-forty-three, intelligence-scale-two compatibility values.
 restart-in-town level, position, whole-life amount, Q6 scale, and NewLevel
 duration. It also declares the player-death gold divisor, maximum projected
 stack, native compatibility item type/index, and radius-50 drop search.
+The `monster_melee_minimum_hit_chance` and
+`monster_ranged_minimum_hit_chance` columns externalize the native ordinary
+monster attack floors, while `monster_minimum_hit_chance_level_14`,
+`monster_minimum_hit_chance_level_15`, and
+`monster_minimum_hit_chance_level_16` externalize the level-specific floors
+shared by both attack modes. Legacy combat rows retain the native 15/10 and
+20/25/30 compatibility values.
 `pvp_ear_item_id` selects the normalized item definition used for a player-kill
 ear; activation requires that definition to project native `IDI_EAR` index 23
 and miscellaneous ID 44. Activation also requires a walkable restart
@@ -1226,7 +1233,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, restart rules, death-gold rules, and PvP-ear identity. |
+| `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors, restart rules, death-gold rules, and PvP-ear identity. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1271,7 +1278,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.138.0"
+      "version": "1.139.0"
   },
   "dependencyConstraints": [
     {
@@ -1303,7 +1310,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.138.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.139.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1487,6 +1494,9 @@ older rows retain the compatibility value.
 Schema 1.138 adds the optional `repair_ability_durability_level_offset`
 class column to `classes.tsv`; the checked-in Warrior row owns the native
 offset `9` while older class schemas retain the compatibility offset.
+Schema 1.139 adds the optional monster hit-chance floor columns to
+`combat.tsv`; checked-in combat rows own the native ordinary and level-specific
+floors while older rows retain the compatibility values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

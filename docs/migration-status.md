@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.139 externalizes native monster hit-chance floors through validated
+  `combat.tsv` content; older combat definitions retain the 15/10 ordinary and
+  20/25/30 level-specific compatibility values.
+
 - Schema 1.138 externalizes the Warrior Repair ability's durability-loss
   denominator offset through validated `classes.tsv` content; older class
   definitions retain the native offset compatibility behavior.
