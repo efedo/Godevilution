@@ -168,16 +168,21 @@ the row's `native_ai` label.
 The optional `zombie_action_chance_base` and
 `zombie_action_chance_intelligence_scale` columns externalize the Zombie
 autonomous action admission band. Legacy monster rows retain the native
-base-ten, intelligence-scale-two compatibility values.
+base-ten, intelligence-scale-two compatibility values. A complete positive
+tuple selects the behavior regardless of the row's `native_ai` label; rows
+without migrated tuning retain the native-name compatibility path.
 The optional `zombie_random_direction_chance_base` and
 `zombie_random_direction_chance_intelligence_scale` columns externalize the
 Zombie random-direction prepend chance during long-range movement. Legacy
-monster rows retain the native base-twenty, intelligence-scale-two values.
+monster rows retain the native base-twenty, intelligence-scale-two values. A
+complete positive tuple selects the behavior regardless of the row's
+`native_ai` label.
 The optional `zombie_movement_distance_minimum`,
 `zombie_movement_distance_base`, and
 `zombie_movement_distance_intelligence_scale` columns externalize the Zombie
 long-range movement threshold. Legacy monster rows retain the native minimum-
-two, base-four, intelligence-scale-two compatibility values.
+two, base-four, intelligence-scale-two compatibility values. A complete
+positive tuple selects the behavior regardless of the row's `native_ai` label.
 The optional `skeleton_king_summon_minimum_distance`,
 `skeleton_king_summon_chance_base`, and
 `skeleton_king_summon_chance_intelligence_scale` columns externalize the
@@ -1465,10 +1470,12 @@ the compatibility formula. Complete positive tuples are selected independently
 of the `native_ai` label.
 Schema 1.110 adds the optional Zombie action-band columns to `monster_types.tsv`;
 checked-in Zombie rows own their action admission chance while older rows retain
-the compatibility formula.
+the compatibility formula. Complete positive tuples are selected independently
+of the `native_ai` label.
 Schema 1.111 adds the optional Zombie movement-distance columns to
 `monster_types.tsv`; checked-in Zombie rows own their long-range threshold
-while older rows retain the compatibility formula.
+while older rows retain the compatibility formula. Complete positive tuples are
+selected independently of the `native_ai` label.
 Schema 1.112 adds the optional Skeleton King summon-admission columns to
 `monster_types.tsv`; checked-in SkeletonKing rows own their summon boundary
 while older rows retain the compatibility formula.
@@ -1519,6 +1526,7 @@ independently of the `native_ai` label.
 Schema 1.125 adds optional Zombie random-direction chance columns to
 `monster_types.tsv`; checked-in Zombie rows own their `20 + 2 * intelligence`
 movement-prepend chance while older rows retain the native compatibility values.
+Complete positive tuples are selected independently of the `native_ai` label.
 The active Snake `Rhino` and Bat `Rhino` missile rows also supply the mapped
 charge projectile speed and lifetime through the existing validated projectile
 columns; older rows retain the native speed-18, lifetime-256 defaults.
