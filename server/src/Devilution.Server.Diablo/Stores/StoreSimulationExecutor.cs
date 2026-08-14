@@ -344,12 +344,16 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         });
     }
 
-    /** Serializes complete authoritative session state for persistence or migration. */
+    /**
+     * Serializes complete authoritative session state for persistence or migration.
+     * Capturing at the last advanced tick flushes native-timed effects before save.
+     */
     public string ExportPlayerSave(string sessionId)
     {
+        var tick = runtime.LastAdvancedTick;
         var snapshot = runtime.Capture(
             sessionId,
-            0,
+            tick,
             state => simulation.CaptureSnapshot(state, 0));
         return saveCodec.Serialize(snapshot);
     }

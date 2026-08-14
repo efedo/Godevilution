@@ -328,9 +328,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         var token = string.IsNullOrWhiteSpace(resumeToken)
             ? Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant()
             : resumeToken;
-        var sessionId = string.IsNullOrWhiteSpace(resumeToken)
-            ? Guid.NewGuid().ToString("N")
-            : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(resumeToken))).ToLowerInvariant();
+        var sessionId = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(token)))
+            .ToLowerInvariant();
         var session = new SessionState(sessionId, token, entityIds.Allocate());
         sessionsByToken.TryAdd(session.Token, session);
         return session;
