@@ -642,6 +642,13 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
+        if (attackHit && TryResolvePlayerBlock(player, target, appliedTick)) {
+            ApplyHellfireWeaponDecay(player);
+            return events.Count == 0
+                ? DiabloCombatIntentResult.Accepted
+                : new DiabloCombatIntentResult(true, null, events);
+        }
+
         var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
         if (damageResult.IncomingDamageQ6 > 0) {
             events.Add(new DiabloGameplayEvent(
@@ -6551,6 +6558,13 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
+        if (projectile.AttackHit
+            && TryResolvePlayerBlock(owner, target, tick)) {
+            foreach (var gameplayEvent in gameplayEvents)
+                events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+            return;
+        }
+
         var damageResult = playerDamage.Apply(target, Math.Max(0, projectile.DamageQ6));
         if (damageResult.IncomingDamageQ6 > 0) {
             gameplayEvents.Add(new DiabloGameplayEvent(
@@ -10755,6 +10769,33 @@ public sealed class DiabloCombatCommandProcessor
             && left is null
             && right.State.ItemClass == 1
             && right.State.EquipLocation != 2;
+    }
+
+    /** Applies the native player-versus-player shield/class block boundary. */
+    private bool TryResolvePlayerBlock(
+        AuthoritativePlayerState attacker,
+        AuthoritativePlayerState target,
+        ulong tick)
+    {
+        if (target.CombatMode is not (DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            || !CanBlock(target))
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var blockRoll = random.RandomIntLessThan(100);
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * 2)
+                - checked((int)attacker.CharacterLevel * 2),
+            0,
+            100);
+        if (blockRoll >= blockChance)
+            return false;
+
+        StartBlock(target, targetClass, tick);
+        return true;
     }
 
     private static bool HasUsableEquipmentFlag(AuthoritativePlayerState player, uint flag)

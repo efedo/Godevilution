@@ -316,6 +316,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ShieldedPlayerTargetBlocksAnAdjacentMeleeAttack()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var attacker = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            life: 1280,
+            lifeMaximum: 1280);
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(result.Events);
+        Assert.Equal(1280, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(5UL, victim.CombatModeEndTick);
+    }
+
+    [Fact]
     public void FriendlyModeRejectsPlayerAttackWhenRulesDisableFriendlyFire()
     {
         var world = new DiabloWorldState();
@@ -559,6 +598,56 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(
             new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 8, 10),
             delivery.Event);
+    }
+
+    [Fact]
+    public void ShieldedPlayerTargetBlocksAnAuthoritativeBowImpact()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(result.Events);
+        Assert.Single(world.Projectiles);
+
+        var deliveries = processor.AdvanceTick(1, [attacker, victim]).ToList();
+        deliveries.AddRange(processor.AdvanceTick(2, [attacker, victim]));
+        deliveries.AddRange(processor.AdvanceTick(3, [attacker, victim]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.Empty(deliveries);
+        Assert.Equal(6400, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(7UL, victim.CombatModeEndTick);
     }
 
     [Fact]
