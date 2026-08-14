@@ -258,6 +258,189 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerResolvesShieldBlockForAPlayerTargetedMeleeAttack()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Pvp-Block-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.pvp-block-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.90.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "classes.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    },
+                    {
+                      "table": "monsters.tsv",
+                      "keys": ["entity_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            var classTablePath = Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "classes.tsv");
+            var classLines = await File.ReadAllLinesAsync(
+                classTablePath,
+                TestContext.Current.CancellationToken);
+            var warriorCells = classLines.Single(
+                line => line.StartsWith("0\t", StringComparison.Ordinal)).Split('\t');
+            warriorCells[14] = "100";
+            warriorCells[16] = "100";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "classes.tsv"),
+                [classLines[0], string.Join('\t', warriorCells)],
+                TestContext.Current.CancellationToken);
+            var monsterTablePath = Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "monsters.tsv");
+            var monsterLines = await File.ReadAllLinesAsync(
+                monsterTablePath,
+                TestContext.Current.CancellationToken);
+            var monsterCells = monsterLines.Single(
+                line => line.StartsWith("9\t", StringComparison.Ordinal)).Split('\t');
+            monsterCells[3] = "20";
+            monsterCells[4] = "20";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "monsters.tsv"),
+                [monsterLines[0], string.Join('\t', monsterCells)],
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                randomSeed: 0);
+            await using var victimClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-pvp-block-victim", requestedClassId: 0));
+            await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var victimInitial = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot is not null);
+            var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
+            var moveModel = new AuthoritativeClientModel();
+            moveModel.Apply(victimInitial);
+            var moveSequence = victimClient.Queue(new Command {
+                MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            await victimClient.PollAsync(TestContext.Current.CancellationToken);
+            var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
+            Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+            _ = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == initialVictim.EntityId).PositionY
+                    == initialVictim.PositionY + 1);
+            var ready = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == initialVictim.EntityId) is {
+                        PositionY: var positionY,
+                        CombatMode: PlayerCombatMode.Stand,
+                    } && positionY == initialVictim.PositionY + 1);
+            var victim = ready.Snapshot!.Players.Single(
+                player => player.EntityId == initialVictim.EntityId);
+            Assert.Equal(0U, victim.CharacterClassId);
+            Assert.Contains(victim.Equipment, item =>
+                item.State.ItemType == 5 && item.State.StatFlag);
+
+            await using var attackerClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-pvp-block-attacker", requestedClassId: 0));
+            await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var attackerInitial = await WaitForMessageAsync(
+                attackerClient,
+                message => message.Snapshot is { Players.Count: 2 });
+            var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
+                player => player.EntityId != victim.EntityId).EntityId;
+            var attacker = attackerInitial.Snapshot.Players.Single(
+                player => player.EntityId == attackerEntityId);
+            Assert.InRange(
+                Math.Max(
+                    Math.Abs(attacker.PositionX - victim.PositionX),
+                    Math.Abs(attacker.PositionY - victim.PositionY)),
+                0,
+                1);
+            var model = new AuthoritativeClientModel();
+            model.Apply(attackerInitial);
+            PlayerSnapshot? blockedVictim = null;
+            for (var attempt = 0; attempt < 8 && blockedVictim is null; attempt++) {
+                var sequence = attackerClient.Queue(new Command {
+                    AttackRequested = new AttackRequested {
+                        TargetEntityId = victim.EntityId,
+                    },
+                }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+                await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+                var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
+                Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+                var action = await WaitForMessageAsync(
+                    attackerClient,
+                    message => message.Snapshot?.Players.Single(
+                        player => player.EntityId == attackerEntityId).CurrentAction is {
+                            Kind: PlayerActionKind.Attack,
+                            TargetEntityId: var targetEntityId,
+                        } && targetEntityId == victim.EntityId);
+                model.Apply(action);
+                var effectTick = action.Snapshot!.Players.Single(
+                    player => player.EntityId == attackerEntityId).CurrentAction!.EffectTick;
+                var endTick = action.Snapshot.Players.Single(
+                    player => player.EntityId == attackerEntityId).CurrentAction!.EndTick;
+                var victimLifeBeforeImpact = action.Snapshot.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life;
+                var resolved = await WaitForMessageAsync(
+                    attackerClient,
+                    message => {
+                        if (message.Snapshot is not { Tick: var tick }
+                            || tick < effectTick)
+                            return false;
+                        var candidate = message.Snapshot.Players.Single(
+                            player => player.EntityId == victim.EntityId);
+                        return candidate.CombatMode == PlayerCombatMode.Block
+                            || candidate.Life < victimLifeBeforeImpact
+                            || tick >= endTick;
+                    });
+                model.Apply(resolved);
+                var candidate = resolved.Snapshot!.Players.Single(
+                    player => player.EntityId == victim.EntityId);
+                if (candidate.CombatMode == PlayerCombatMode.Block) {
+                    blockedVictim = candidate;
+                    Assert.Equal(victimLifeBeforeImpact, candidate.Life);
+                }
+            }
+
+            Assert.NotNull(blockedVictim);
+            Assert.Equal(PlayerCombatMode.Block, blockedVictim!.CombatMode);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerProjectsTheCheckedInHellfireOverlayEncounter()
     {
         var hellfireRoot = Path.Combine(
