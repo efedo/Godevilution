@@ -4722,6 +4722,89 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MappedRangedAttackUsesConfiguredRetreatDistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    RangedRetreatMinimumDistance: 5,
+                    RangedRetreatChanceBase: 100,
+                    RangedRetreatChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MappedRangedAttackUsesConfiguredRetreatChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    RangedRetreatMinimumDistance: 4,
+                    RangedRetreatChanceBase: 1,
+                    RangedRetreatChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 1 ^ 9 ^ 7 = 15, outside the configured one-per-100 band.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Single(world.Projectiles);
+    }
+
+    [Fact]
     public void DiabloAiEmitsAValidatedApocalypseBoomForEachClearLanePlayer()
     {
         var monster = new AuthoritativeCombatTarget(

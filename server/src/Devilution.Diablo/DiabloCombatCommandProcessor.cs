@@ -5745,12 +5745,32 @@ public sealed class DiabloCombatCommandProcessor
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
                 return false;
-        } else if (distance < 4
-            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
-            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
-            if (retreat.HasValue) {
-                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
-                return true;
+        } else {
+            // Legacy rows retain the native AiRanged close-range retreat
+            // values while validated content progressively owns this branch.
+            var retreatMinimumDistance = missile.RangedRetreatMinimumDistance == 0
+                ? 4
+                : missile.RangedRetreatMinimumDistance;
+            var retreatChanceBase = missile.RangedRetreatChanceBase == 0
+                ? 70
+                : missile.RangedRetreatChanceBase;
+            var retreatChanceIntelligenceScale = missile.RangedRetreatChanceIntelligenceScale == 0
+                ? 10
+                : missile.RangedRetreatChanceIntelligenceScale;
+            var retreatChance = checked(
+                retreatChanceBase
+                + retreatChanceIntelligenceScale * monster.Intelligence);
+            if (distance < retreatMinimumDistance
+                && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
+                var retreat = FindGoatRangedRetreatDestination(
+                    monster,
+                    player,
+                    players,
+                    distance);
+                if (retreat.HasValue) {
+                    monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                    return true;
+                }
             }
         }
 

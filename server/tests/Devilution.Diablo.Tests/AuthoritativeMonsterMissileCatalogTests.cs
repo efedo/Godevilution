@@ -55,6 +55,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedRangedRetreatTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tranged_retreat_minimum_distance\tranged_retreat_chance_base\tranged_retreat_chance_intelligence_scale\n"
+                + "AcidUnique\tAcid\tAcid\tRanged\t5\t70\t10\n");
+
+        Assert.True(catalog.TryGet("AcidUnique", out var acidUnique));
+        Assert.Equal((5, 70, 10), (
+            acidUnique.RangedRetreatMinimumDistance,
+            acidUnique.RangedRetreatChanceBase,
+            acidUnique.RangedRetreatChanceIntelligenceScale));
+    }
+
+    [Fact]
     public void LegacyRowsDefaultToCompatibilitySpellIdentity()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -84,6 +99,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedAvoidanceChanceBase);
         Assert.Equal(0, succubus.RangedAvoidanceChanceIntelligenceScale);
         Assert.Equal(0, succubus.RangedAvoidanceFarIntelligenceOffset);
+        Assert.Equal(0, succubus.RangedRetreatMinimumDistance);
+        Assert.Equal(0, succubus.RangedRetreatChanceBase);
+        Assert.Equal(0, succubus.RangedRetreatChanceIntelligenceScale);
     }
 
     [Fact]
@@ -187,6 +205,28 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 "BloodStar",
                 AuthoritativeProjectileBehavior.BloodStar,
                 RangedAvoidanceMinimumDistance: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsPartialRangedRetreatTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "AcidUnique",
+                "Acid",
+                AuthoritativeProjectileBehavior.Acid,
+                RangedRetreatMinimumDistance: 4),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Acid",
+                "Acid",
+                AuthoritativeProjectileBehavior.Acid,
+                AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                RangedRetreatMinimumDistance: 4,
+                RangedRetreatChanceBase: 70,
+                RangedRetreatChanceIntelligenceScale: 10),
         ]));
     }
 
