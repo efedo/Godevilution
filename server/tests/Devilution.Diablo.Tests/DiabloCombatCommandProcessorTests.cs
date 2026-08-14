@@ -484,7 +484,8 @@ public sealed class DiabloCombatCommandProcessorTests
     public void NativeTimedBowAttackPublishesAPlayerBlockAtArrowImpact()
     {
         var bow = AuthoritativeItemState.Empty with {
-            ItemType = 3,
+            ItemIndex = 88,
+            ItemType = 1,
             ItemClass = 1,
             MinDamage = 10,
             MaxDamage = 10,
@@ -496,11 +497,16 @@ public sealed class DiabloCombatCommandProcessorTests
         };
         var world = new DiabloWorldState();
         var classes = LoadShippedPlayerClasses();
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t3\t1\t1\tBow\t88\n");
         var processor = CreateProcessor(
             world,
             rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
             random: new DiabloRandom(0),
             playerClasses: classes,
+            items: items,
             gameMode: DiabloGameMode.Multiplayer,
             useNativePlayerActionTiming: true);
         var attacker = CreatePlayer(

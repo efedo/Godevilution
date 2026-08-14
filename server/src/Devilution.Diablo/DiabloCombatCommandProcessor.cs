@@ -11520,31 +11520,63 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    private static DiabloPlayerAttackAnimationProfile GetAttackAnimationProfile(
+    private DiabloPlayerAttackAnimationProfile GetAttackAnimationProfile(
         AuthoritativePlayerState player)
     {
         var hands = player.Equipment
             .Where(item => item.Slot is 4 or 5 && IsUsable(item.State))
             .OrderBy(item => item.Slot)
             .ToArray();
-        var hasShield = hands.Any(item => item.State.ItemType == 5);
+        var hasShield = hands.Any(item => HasEquipmentTag(item.State, "Shield", 5));
         var weapon = hands.FirstOrDefault(item => item.State.ItemClass == 1
-            && item.State.ItemType != 5);
-        return weapon?.State.ItemType switch {
-            1 => hasShield
-                ? DiabloPlayerAttackAnimationProfile.SwordShield
-                : DiabloPlayerAttackAnimationProfile.Sword,
-            2 => DiabloPlayerAttackAnimationProfile.Axe,
-            3 => DiabloPlayerAttackAnimationProfile.Bow,
-            4 => hasShield
-                ? DiabloPlayerAttackAnimationProfile.MaceShield
-                : DiabloPlayerAttackAnimationProfile.Mace,
-            10 => DiabloPlayerAttackAnimationProfile.Staff,
-            _ => hasShield
+            && !HasEquipmentTag(item.State, "Shield", 5));
+        if (weapon is null)
+            return hasShield
                 ? DiabloPlayerAttackAnimationProfile.UnarmedShield
-                : DiabloPlayerAttackAnimationProfile.Unarmed,
-        };
+                : DiabloPlayerAttackAnimationProfile.Unarmed;
+
+        var state = weapon.State;
+        if (HasEquipmentTag(state, "Sword", 1))
+            return hasShield
+                ? DiabloPlayerAttackAnimationProfile.SwordShield
+                : DiabloPlayerAttackAnimationProfile.Sword;
+        if (HasEquipmentTag(state, "Axe", 2))
+            return DiabloPlayerAttackAnimationProfile.Axe;
+        if (HasEquipmentTag(state, "Bow", 3))
+            return DiabloPlayerAttackAnimationProfile.Bow;
+        if (HasEquipmentTag(state, "Mace", 4))
+            return hasShield
+                ? DiabloPlayerAttackAnimationProfile.MaceShield
+                : DiabloPlayerAttackAnimationProfile.Mace;
+        if (HasEquipmentTag(state, "Staff", 10))
+            return DiabloPlayerAttackAnimationProfile.Staff;
+        return hasShield
+            ? DiabloPlayerAttackAnimationProfile.UnarmedShield
+            : DiabloPlayerAttackAnimationProfile.Unarmed;
     }
+
+    private bool HasEquipmentTag(
+        AuthoritativeItemState state,
+        string tag,
+        int legacyItemType)
+    {
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
+            if (definition.GenerationTags.Contains(tag))
+                return true;
+            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+                return false;
+        }
+        return state.ItemType == legacyItemType;
+    }
+
+    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("Sword")
+            || tags.Contains("Axe")
+            || tags.Contains("Mace")
+            || tags.Contains("Bow")
+            || tags.Contains("Shield")
+            || tags.Contains("Staff");
 
     private int GetAttackSkippedFrames(
         AuthoritativePlayerState player,
