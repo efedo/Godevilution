@@ -217,7 +217,10 @@ The optional `skeleton_ranged_retreat_minimum_distance`,
 `skeleton_ranged_attack_chance_intelligence_scale` columns externalize the
 SkeletonRanged retreat and clear-lane arrow admission bands. Legacy monster
 rows retain the native minimum-four, retreat base-thirteen, and attack
-base-three compatibility values with intelligence-scale-two chance bands.
+base-three compatibility values with intelligence-scale-two chance bands. A
+complete positive tuple selects the behavior regardless of the row's
+`native_ai` label; rows without migrated tuning retain the native-name
+compatibility path.
 The optional `rhino_charge_minimum_distance`,
 `rhino_charge_chance_base`, and
 `rhino_charge_chance_intelligence_scale` columns externalize the Rhino clear-
@@ -380,7 +383,9 @@ same server-owned persistent collision path used by player Inferno. The current
 Inferno admission values are supplied by the validated missile row.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
-damage event, and blocked-lane movement fallback.
+damage event, and blocked-lane movement fallback. Complete positive tuples
+select the retreat and attack behavior regardless of the row's `native_ai`
+label.
 The `SkeletonMelee` identity now consumes the validated adjacent attack band
 (`20 + 2 * intelligence` in the checked-in rows) while older rows retain the
 native compatibility formula. A complete positive attack tuple selects the
@@ -1489,6 +1494,7 @@ self-heal boundary while older rows retain the compatibility formula.
 Schema 1.115 adds the optional SkeletonRanged admission columns to
 `monster_types.tsv`; checked-in SkeletonRanged rows own their retreat and
 clear-lane arrow chance bands while older rows retain the compatibility formula.
+Complete positive tuples are selected independently of the `native_ai` label.
 Schema 1.116 adds the optional Rhino charge-admission columns to
 `monster_types.tsv`; checked-in Rhino rows own their clear-lane charge boundary
 while older rows retain the compatibility formula.

@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- SkeletonRanged retreat and clear-lane arrow admission now use complete
+  validated tuning tuples independent of the row's native-AI label; rows
+  without migrated tuning retain the native-name compatibility path.
+
 - Zombie action, random-direction, and movement-distance behavior now use
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.
