@@ -16,6 +16,8 @@ All notable changes to this fork are documented below.
   SkeletonMelee content and creating deterministic authoritative summons.
 - Add server-owned Bat attack admission and a persisted two-step native retreat
   after adjacent attacks, including protocol, save, and canonical-hash state.
+- Preserve native Stone Curse shatter state for defeated petrified monsters and
+  expose corpse conversion consistently in authoritative snapshots.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

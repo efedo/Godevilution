@@ -1411,11 +1411,9 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(100U, defeatEvents.Events.Single(gameEvent => gameEvent.Experience is not null).Experience.Amount);
 
         var snapshot = executor.CreateSnapshot("player-a", 7, 2);
-        var monster = Assert.Single(snapshot.Monsters);
-        Assert.Equal(9U, monster.EntityId);
-        Assert.Equal(0, monster.HitPoints);
-        Assert.Equal(11, monster.MaxHitPoints);
-        Assert.False(monster.Alive);
+        Assert.Empty(snapshot.Monsters);
+        var corpse = Assert.Single(snapshot.Corpses);
+        Assert.Equal(9U, corpse.EntityId);
 
         var distant = new AuthoritativeCombatTarget(10, 4, 4, 10);
         var distantExecutor = new StoreSimulationExecutor(CreateCatalog(), 100, startingCombatTargets: [distant]);

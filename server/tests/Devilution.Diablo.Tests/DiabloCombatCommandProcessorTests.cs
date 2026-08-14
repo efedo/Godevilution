@@ -296,11 +296,13 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "Fallen",
             monsterLevel: 3,
             aggroRange: 0);
-        var world = new DiabloWorldState(combatTargets: [deceased, survivor]);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 8, 8, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [deceased, survivor]);
         var processor = CreateProcessor(
             world,
             rules: new AuthoritativeCombatRules(10, 1, 100));
-        var player = CreatePlayer(entityId: 7);
+        var player = CreatePlayer(positionX: 2, positionY: 1, entityId: 7);
 
         var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
@@ -310,8 +312,11 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(5, survivor.PositionX);
+        Assert.Equal(4, survivor.PositionX);
         Assert.Equal(2, survivor.PositionY);
+        Assert.True(survivor.IsMoving);
+        Assert.Equal(5, survivor.FuturePositionX);
+        Assert.Equal(2, survivor.FuturePositionY);
         Assert.Equal(4, survivor.FallenFearTicks);
     }
 
@@ -354,7 +359,9 @@ public sealed class DiabloCombatCommandProcessorTests
             aggroRange: 8,
             nativeAi: "Sneak",
             intelligence: 2);
-        var world = new DiabloWorldState(combatTargets: [sneak]);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [sneak]);
         var processor = CreateProcessor(
             world,
             rules: new AuthoritativeCombatRules(10, 1, 100));
@@ -367,7 +374,9 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        Assert.Equal((2, 0), (sneak.PositionX, sneak.PositionY));
+        Assert.Equal((1, 0), (sneak.PositionX, sneak.PositionY));
+        Assert.True(sneak.IsMoving);
+        Assert.Equal((2, 0), (sneak.FuturePositionX, sneak.FuturePositionY));
         Assert.Equal(8, sneak.SneakRetreatTicks);
     }
 

@@ -134,7 +134,8 @@ public sealed class DiabloSimulationTests
         Assert.Single(player.Inventory);
         Assert.Equal(0, target.HitPoints);
         Assert.Equal(100U, player.Experience);
-        Assert.Same(target, simulation.WorldState.CombatTargets[9]);
+        Assert.DoesNotContain(9U, simulation.WorldState.CombatTargets.Keys);
+        Assert.Equal(9U, Assert.Single(simulation.WorldState.Corpses).Key);
     }
 
     [Fact]

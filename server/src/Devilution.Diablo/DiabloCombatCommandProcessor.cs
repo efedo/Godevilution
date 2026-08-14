@@ -3723,6 +3723,10 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             }
             if (target.HitPoints <= 0) {
+                // Native Stone Curse keeps a dead target in its petrified
+                // shatter state instead of converting it into a corpse tile.
+                if (target.IsPetrified)
+                    continue;
                 if (target.DeathAnimationTicks != 0
                     && target.AdvanceDeathAnimation()) {
                     if (target.IsPlayerMinion)
