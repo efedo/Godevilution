@@ -71,6 +71,8 @@ public enum AuthoritativeProjectileBehavior
     MonsterChargedBolt = 56,
     /** Native Hork Demon missile that creates a Hork Spawn on expiry. */
     HorkSpawn = 57,
+    /** Native player bow missile, including delayed Multiple Arrows shots. */
+    WeaponArrow = 58,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
@@ -389,6 +391,9 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.StaffLevel < -1)
                 throw new InvalidDataException("Spell staff level cannot be less than the native unavailable sentinel.");
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.WeaponArrow)
+                throw new InvalidDataException(
+                    "WeaponArrow is a player attack projectile and cannot be declared as a spell behavior.");
             var hasDamage = definition.DamageAmount > 0
                 || definition.RandomMagicDamageDivisor > 0
                 || definition.RandomDamageRange > 0

@@ -255,6 +255,20 @@ public sealed record DiabloProjectileState(
     public int ElementalOriginX { get; init; }
 
     public int ElementalOriginY { get; init; }
+
+    public int DamageQ6 { get; init; }
+
+    public int ElementalFireDamage { get; init; }
+
+    public int ElementalLightningDamage { get; init; }
+
+    public bool AttackHit { get; init; }
+
+    public int PerilSelfDamageQ6 { get; init; }
+
+    public bool DoppelgangerProc { get; init; }
+
+    public uint ActivationDelayTicks { get; init; }
 }
 
 /** Remaining stock for the store visible to the projected player. */
@@ -488,6 +502,13 @@ public sealed partial class DiabloSimulation
                     GuardianState = projectile.GuardianState,
                     ElementalOriginX = projectile.ElementalOriginX,
                     ElementalOriginY = projectile.ElementalOriginY,
+                    DamageQ6 = projectile.DamageQ6,
+                    ElementalFireDamage = projectile.ElementalFireDamage,
+                    ElementalLightningDamage = projectile.ElementalLightningDamage,
+                    AttackHit = projectile.AttackHit,
+                    PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
+                    DoppelgangerProc = projectile.DoppelgangerProc,
+                    ActivationDelayTicks = projectile.ActivationDelayTicks,
                 })
                 .ToArray(),
             activeStore) {
@@ -713,9 +734,14 @@ public sealed partial class DiabloSimulation
         }).ToArray();
         var restoredProjectiles = snapshot.Projectiles.Select(projectile => {
             if (projectile.SourceEntityId == 0
-                || projectile.SpellId == 0
+                || (projectile.SpellId == 0
+                    && projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow)
                 || projectile.RemainingTicks == 0
                 || projectile.Damage < 0
+                || projectile.DamageQ6 < 0
+                || projectile.ElementalFireDamage < 0
+                || projectile.ElementalLightningDamage < 0
+                || projectile.PerilSelfDamageQ6 < 0
                 || projectile.AreaRadius < 0
                 || projectile.EffectiveSpellLevel < 0
                 || !Enum.IsDefined(projectile.DamageType)
@@ -723,6 +749,40 @@ public sealed partial class DiabloSimulation
                 || !Enum.IsDefined(projectile.Phase)
                 || projectile.Behavior is AuthoritativeProjectileBehavior.Flash
                     or AuthoritativeProjectileBehavior.Resurrection
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.WeaponArrow
+                    && (projectile.SpellId != 0
+                        || projectile.TargetEntityId == 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.Damage != DiabloFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
+                        || projectile.ActivationDelayTicks > 2
+                        || projectile.VelocityX != 0
+                        || projectile.VelocityY != 0
+                        || projectile.OriginalDirection != 0
+                        || projectile.PathIndex != 0
+                        || projectile.PathTicks != 0
+                        || projectile.ImpactLifetime != 1
+                        || projectile.ResistantDamageDivisor != 1
+                        || projectile.EffectiveSpellLevel != 0
+                        || projectile.LastCollisionTargetEntityId != 0
+                        || projectile.WallLeftX != 0
+                        || projectile.WallLeftY != 0
+                        || projectile.WallRightX != 0
+                        || projectile.WallRightY != 0
+                        || projectile.WallLeftDirection != -1
+                        || projectile.WallRightDirection != -1
+                        || projectile.WallLeftStopped
+                        || projectile.WallRightStopped
+                        || projectile.WallHitDirection != -1
+                        || projectile.ApocalypseScanX != 0
+                        || projectile.ApocalypseScanY != 0
+                        || projectile.ApocalypseHit
+                        || projectile.RingOfFireLimitReached
+                        || projectile.GuardianState != 0
+                        || projectile.ElementalOriginX != 0
+                        || projectile.ElementalOriginY != 0))
                 || IsInvalidStoneCurseProjectile(projectile, restoredMonsters)
                 || !WorldState.ContainsPosition(
                     projectile.LevelId,
@@ -1116,7 +1176,8 @@ public sealed partial class DiabloSimulation
                 projectile.Damage,
                 projectile.DamageType,
                 projectile.AreaRadius,
-                projectile.RemainingTicks) {
+                projectile.RemainingTicks,
+                allowZeroSpellId: projectile.Behavior == AuthoritativeProjectileBehavior.WeaponArrow) {
                 Behavior = projectile.Behavior,
                 Phase = projectile.Phase,
                 StartX = projectile.Behavior == AuthoritativeProjectileBehavior.Targeted
@@ -1157,6 +1218,13 @@ public sealed partial class DiabloSimulation
                 GuardianState = projectile.GuardianState,
                 ElementalOriginX = projectile.ElementalOriginX,
                 ElementalOriginY = projectile.ElementalOriginY,
+                DamageQ6 = projectile.DamageQ6,
+                ElementalFireDamage = projectile.ElementalFireDamage,
+                ElementalLightningDamage = projectile.ElementalLightningDamage,
+                AttackHit = projectile.AttackHit,
+                PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
+                DoppelgangerProc = projectile.DoppelgangerProc,
+                ActivationDelayTicks = projectile.ActivationDelayTicks,
             };
         }).ToArray();
         if (restoredProjectiles

@@ -414,6 +414,15 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         UpdateFacingToward(player, target.PositionX, target.PositionY);
+        if (ranged
+            && HasUsableEquipmentFlag(
+                player,
+                AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)) {
+            return ResolveMultipleArrowsAttack(
+                player,
+                target,
+                appliedTick);
+        }
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
@@ -458,6 +467,82 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /**
+     * Emits the native three-missile Multiple Arrows volley. The first arrow
+     * starts on the attack effect frame; the two spread arrows begin two
+     * frames later, matching DoRangeAttack's second firing window.
+     */
+    private DiabloCombatIntentResult ResolveMultipleArrowsAttack(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        ulong appliedTick)
+    {
+        var targetDistance = Math.Max(
+            Math.Abs(target.PositionX - player.PositionX),
+            Math.Abs(target.PositionY - player.PositionY));
+        var direction = DiabloPlayerDirections.Toward(
+            player.PositionX,
+            player.PositionY,
+            target.PositionX,
+            target.PositionY);
+        var directionDisplacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
+        for (var arrowIndex = 0; arrowIndex < 3; arrowIndex++) {
+            var damageQ6 = ResolvePlayerAttackDamageQ6(
+                player,
+                target,
+                ranged: true,
+                unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
+                out var perilSelfDamageQ6,
+                out var perilActive,
+                out var doppelgangerProc,
+                out var attackHit);
+            var elemental = attackHit
+                ? AuthoritativeEquipmentElementalDamageRules.Resolve(
+                    player.Equipment,
+                    random.GenerateRnd,
+                    ranged: true)
+                : default;
+            var spread = arrowIndex == 0
+                ? (X: 0, Y: 0)
+                : (X: checked(perpendicular.Item1 * (arrowIndex == 1 ? -1 : 1)),
+                    Y: checked(perpendicular.Item2 * (arrowIndex == 1 ? -1 : 1)));
+            var arrowPositionX = checked(player.PositionX + spread.X);
+            var arrowPositionY = checked(player.PositionY + spread.Y);
+            if (!world.ContainsPosition(player.LevelId, arrowPositionX, arrowPositionY)) {
+                arrowPositionX = player.PositionX;
+                arrowPositionY = player.PositionY;
+            }
+            var projectile = new AuthoritativeProjectile(
+                AllocateProjectileEntityId(),
+                player.EntityId == 0 ? 1U : player.EntityId,
+                target.EntityId,
+                0,
+                player.LevelId,
+                arrowPositionX,
+                arrowPositionY,
+                target.PositionX,
+                target.PositionY,
+                DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
+                AuthoritativeDamageType.Physical,
+                0,
+                checked((uint)Math.Max(1, targetDistance)),
+                allowZeroSpellId: true) {
+                Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
+                DamageQ6 = Math.Max(0, damageQ6),
+                ElementalFireDamage = elemental.Fire,
+                ElementalLightningDamage = elemental.Lightning,
+                AttackHit = attackHit,
+                PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
+                DoppelgangerProc = doppelgangerProc,
+                ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+            };
+            world.Projectiles.Add(projectile.EntityId, projectile);
+            ApplyHellfireWeaponDecay(player);
+        }
+        return DiabloCombatIntentResult.Accepted;
     }
 
     /** Applies native fire/lightning weapon channels after a physical hit. */
@@ -5730,6 +5815,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceChargedBolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.WeaponArrow) {
+                    AdvanceWeaponArrow(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.HorkSpawn) {
                     AdvanceHorkSpawn(projectile, players);
                     continue;
@@ -5918,6 +6007,126 @@ public sealed class DiabloCombatCommandProcessor
                     projectileEntityIds.Add(newEntityId);
                 }
             }
+        }
+    }
+
+    private void AdvanceWeaponArrow(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (projectile.ActivationDelayTicks > 0) {
+            projectile.ActivationDelayTicks--;
+            return;
+        }
+        if (projectile.RemainingTicks > 1) {
+            var nextX = projectile.PositionX
+                + Math.Sign(projectile.TargetX - projectile.PositionX);
+            var nextY = projectile.PositionY
+                + Math.Sign(projectile.TargetY - projectile.PositionY);
+            if (world.IsMissileBlocked(projectile.LevelId, nextX, nextY)
+                || !world.HasMissileLineOfSight(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY,
+                    nextX,
+                    nextY)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            projectile.PositionX = nextX;
+            projectile.PositionY = nextY;
+            projectile.RemainingTicks--;
+            return;
+        }
+
+        if (projectile.TargetEntityId != 0
+            && world.CombatTargets.TryGetValue(projectile.TargetEntityId, out var target)
+            && target.HitPoints > 0
+            && (target.LevelId == 0 || target.LevelId == projectile.LevelId)) {
+            ResolveWeaponArrowImpact(tick, projectile, target, players, events);
+        }
+        world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private void ResolveWeaponArrowImpact(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(player =>
+            player.EntityId == projectile.SourceEntityId
+            || (projectile.SourceEntityId == 1 && player.EntityId == 0));
+        if (owner is null)
+            return;
+
+        var gameplayEvents = new List<DiabloGameplayEvent>();
+        if (projectile.DoppelgangerProc)
+            SpawnDoppelganger(target, players);
+        if (projectile.PerilSelfDamageQ6 > 0) {
+            var damageResult = playerDamage.Apply(owner, projectile.PerilSelfDamageQ6);
+            if (damageResult.IncomingDamageQ6 > 0) {
+                gameplayEvents.Add(new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    owner.EntityId,
+                    owner.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                });
+            }
+            if (owner.Life == 0) {
+                StartPlayerDeath(
+                    owner,
+                    owner.EntityId,
+                    tick,
+                    players,
+                    PlayerDeathReason.MonsterOrTrap);
+            }
+        }
+        ApplyResolvedDamageQ6(
+            owner,
+            target,
+            projectile.DamageQ6,
+            gameplayEvents);
+        if (projectile.AttackHit && target.HitPointsQ6 > 0) {
+            ApplyWeaponArrowElementalDamage(
+                owner,
+                target,
+                projectile,
+                gameplayEvents);
+        }
+        ApplyEquipmentKnockback(owner, target, projectile.DamageQ6, players);
+        if (projectile.DamageQ6 > 0)
+            ApplyEquipmentAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
+        foreach (var gameplayEvent in gameplayEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+    }
+
+    private void ApplyWeaponArrowElementalDamage(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        AuthoritativeProjectile projectile,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        if (projectile.ElementalFireDamage > 0) {
+            var fireDamage = rules.ResolveDamage(
+                projectile.ElementalFireDamage,
+                target.ArmorClass,
+                AuthoritativeDamageType.Fire,
+                target);
+            ApplyResolvedDamage(player, target, fireDamage, events);
+        }
+        if (projectile.ElementalLightningDamage > 0 && target.HitPointsQ6 > 0) {
+            var lightningDamage = rules.ResolveDamage(
+                projectile.ElementalLightningDamage,
+                target.ArmorClass,
+                AuthoritativeDamageType.Lightning,
+                target);
+            ApplyResolvedDamage(player, target, lightningDamage, events);
         }
     }
 

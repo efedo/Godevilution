@@ -6,7 +6,7 @@ public enum AuthoritativeProjectilePhase
     Impact,
 }
 
-/** Server-owned in-flight spell state. Projectiles resolve in stable entity order. */
+/** Server-owned in-flight spell or weapon-missile state. Projectiles resolve in stable entity order. */
 public sealed class AuthoritativeProjectile
 {
     public AuthoritativeProjectile(
@@ -22,9 +22,13 @@ public sealed class AuthoritativeProjectile
         int damage,
         AuthoritativeDamageType damageType,
         int areaRadius,
-        uint remainingTicks)
+        uint remainingTicks,
+        bool allowZeroSpellId = false)
     {
-        if (entityId == 0 || sourceEntityId == 0 || spellId == 0 || remainingTicks == 0)
+        if (entityId == 0
+            || sourceEntityId == 0
+            || (!allowZeroSpellId && spellId == 0)
+            || remainingTicks == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
         if (damage < 0 || areaRadius < 0)
             throw new ArgumentOutOfRangeException(nameof(damage));
@@ -56,6 +60,26 @@ public sealed class AuthoritativeProjectile
     public int TargetX { get; set; }
     public int TargetY { get; set; }
     public int Damage { get; }
+
+    /** Exact physical attack damage in native Q6 units for weapon arrows. */
+    public int DamageQ6 { get; init; }
+
+    /** Elemental channels captured when a weapon arrow is fired. */
+    public int ElementalFireDamage { get; init; }
+
+    public int ElementalLightningDamage { get; init; }
+
+    /** Whether the native physical attack roll hit its target. */
+    public bool AttackHit { get; init; }
+
+    /** Deferred Hellfire Peril self-damage for a weapon arrow. */
+    public int PerilSelfDamageQ6 { get; init; }
+
+    /** Deferred Hellfire Doppelganger proc for a weapon arrow. */
+    public bool DoppelgangerProc { get; init; }
+
+    /** Ticks before a delayed arrow begins moving. */
+    public uint ActivationDelayTicks { get; set; }
     public AuthoritativeDamageType DamageType { get; }
     public int AreaRadius { get; }
     public uint RemainingTicks { get; set; }

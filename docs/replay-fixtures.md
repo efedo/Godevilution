@@ -48,6 +48,11 @@ be checked independently. Both runners validate unique native slots and hash
 the resulting equipment. Attack profile, ranged admission, combat mode, and
 native speed flags are then derived from that state rather than declared as
 separate fixture outcomes.
+The authoritative server additionally represents native `MultipleArrows` shots
+as `WeaponArrow` projectiles: the first shot is emitted at the attack effect
+boundary and the two spread shots carry a two-tick activation delay. Their
+captured Q6 and elemental channels are part of the snapshot hash, allowing
+replay and reconnect tests to observe the complete volley.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.

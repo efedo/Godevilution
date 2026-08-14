@@ -246,6 +246,12 @@ Windows toolchain command.
   Guardian uses behavior value `36` for its stationary turret controller;
   `ProjectileSnapshot.guardian_state` field 44 carries its firing animation
   countdown through snapshots and the wire protocol.
+  Native `MultipleArrows` uses behavior value `58` for server-owned weapon
+  arrows. The first arrow is emitted at the ranged attack effect and the two
+  spread arrows carry a two-tick activation delay. Additive fields 46 through
+  52 retain physical Q6 damage, captured arrow elemental channels, hit state,
+  deferred Hellfire proc state, and activation delay; clients render the
+  volley but never resolve its damage.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

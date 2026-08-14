@@ -278,6 +278,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultipleArrowsEmitsOneImmediateAndTwoDelayedAuthoritativeMissiles()
+    {
+        var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3, world.Projectiles.Count);
+        Assert.All(
+            world.Projectiles.Values,
+            projectile => Assert.Equal(
+                AuthoritativeProjectileBehavior.WeaponArrow,
+                projectile.Behavior));
+        Assert.Equal(
+            [0U, 2U, 2U],
+            world.Projectiles.Values
+                .OrderBy(projectile => projectile.EntityId)
+                .Select(projectile => projectile.ActivationDelayTicks)
+                .ToArray());
+        Assert.All(world.Projectiles.Values, projectile => Assert.Equal(640, projectile.DamageQ6));
+        Assert.Equal(5000, target.HitPoints);
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+        processor.AdvanceTick(3, [player]);
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.Equal(4990, target.HitPoints);
+
+        processor.AdvanceTick(4, [player]);
+        processor.AdvanceTick(5, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(4970, target.HitPoints);
+    }
+
+    [Fact]
     public void DefilerDeathCompletesItsQuestAndLeavesTheCathedralMap()
     {
         var quest = new AuthoritativeQuestState(

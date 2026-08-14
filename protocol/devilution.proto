@@ -593,6 +593,16 @@ message ProjectileSnapshot {
 	int32 guardian_state = 44;
 	// Native Ring of Fire crawl stops after its first missile blocker.
 	bool ring_of_fire_limit_reached = 45;
+	// Native weapon-arrow physical damage retained in Q6 units.
+	int32 damage_q6 = 46;
+	// Weapon-arrow elemental channels captured at firing time.
+	int32 elemental_fire_damage = 47;
+	int32 elemental_lightning_damage = 48;
+	bool attack_hit = 49;
+	int32 peril_self_damage_q6 = 50;
+	bool doppelganger_proc = 51;
+	// Delayed Multiple Arrows shots wait before beginning travel.
+	uint32 activation_delay_ticks = 52;
 }
 
 message StatusEffectSnapshot {

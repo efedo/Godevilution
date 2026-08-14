@@ -259,6 +259,12 @@ Status date: 2026-08-14
 - Native `GoatRanged` and `SkeletonRanged` now require validated `Arrow`
   identities from `monster_missiles.tsv` before their server-owned clear-lane
   ranged boundaries execute.
+- Native player `MultipleArrows` is now represented by authoritative
+  `WeaponArrow` projectiles. The server emits the first arrow at the ranged
+  attack effect and two spread arrows after the native two-frame delay;
+  captured physical Q6 damage, arrow elemental channels, and activation state
+  survive protocol snapshots, save/restore, and canonical hashing. Ordinary
+  bow projectile travel and remaining arrow-item flags remain incremental.
 - Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
   clear two-tile charge controller, monster movement, special physical damage,
   blocking, and Q6 event resolution.

@@ -189,6 +189,13 @@ internal static class DiabloProtocolMapper
                 ElementalOriginX = projectile.ElementalOriginX,
                 ElementalOriginY = projectile.ElementalOriginY,
                 GuardianState = projectile.GuardianState,
+                DamageQ6 = projectile.DamageQ6,
+                ElementalFireDamage = projectile.ElementalFireDamage,
+                ElementalLightningDamage = projectile.ElementalLightningDamage,
+                AttackHit = projectile.AttackHit,
+                PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
+                DoppelgangerProc = projectile.DoppelgangerProc,
+                ActivationDelayTicks = projectile.ActivationDelayTicks,
             });
         }
         foreach (var portal in source.Portals.OrderBy(portal => portal.PortalId)) {
@@ -485,6 +492,13 @@ internal static class DiabloProtocolMapper
                 ElementalOriginX = projectile.ElementalOriginX,
                 ElementalOriginY = projectile.ElementalOriginY,
                 GuardianState = projectile.GuardianState,
+                DamageQ6 = projectile.DamageQ6,
+                ElementalFireDamage = projectile.ElementalFireDamage,
+                ElementalLightningDamage = projectile.ElementalLightningDamage,
+                AttackHit = projectile.AttackHit,
+                PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
+                DoppelgangerProc = projectile.DoppelgangerProc,
+                ActivationDelayTicks = projectile.ActivationDelayTicks,
             }).ToArray(),
             activeStore) {
             RandomState = source.RandomState,

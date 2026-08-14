@@ -27,6 +27,9 @@ public static class AuthoritativeEquipmentAttackEffectRules
     /** Native ItemSpecialEffect::Knockback flag. */
     public const uint KnockbackFlag = 1U << 11;
 
+    /** Native ItemSpecialEffect::MultipleArrows flag. */
+    public const uint MultipleArrowsFlag = 1U << 9;
+
     /** Resource gains in the simulation's native Q6 unit. */
     public readonly record struct ResourceGain(int LifeQ6, int ManaQ6);
 

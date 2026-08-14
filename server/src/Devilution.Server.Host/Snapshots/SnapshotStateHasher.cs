@@ -6,6 +6,8 @@ namespace Devilution.Server.Snapshots;
 /** Hashes the authoritative fields currently exposed by Snapshot. */
 public static class SnapshotStateHasher
 {
+    private const int WeaponArrowBehavior = 58;
+
     public static string Compute(Snapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -489,6 +491,23 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(projectile.ElementalOriginX);
                     hasher.AppendInt32(projectile.ElementalOriginY);
                     hasher.AppendInt32(projectile.GuardianState);
+                }
+                if (projectile.Behavior == WeaponArrowBehavior
+                    || projectile.DamageQ6 != 0
+                    || projectile.ElementalFireDamage != 0
+                    || projectile.ElementalLightningDamage != 0
+                    || projectile.AttackHit
+                    || projectile.PerilSelfDamageQ6 != 0
+                    || projectile.DoppelgangerProc
+                    || projectile.ActivationDelayTicks != 0) {
+                    hasher.AppendString("godevilution-projectile-weapon-arrow-v1");
+                    hasher.AppendInt32(projectile.DamageQ6);
+                    hasher.AppendInt32(projectile.ElementalFireDamage);
+                    hasher.AppendInt32(projectile.ElementalLightningDamage);
+                    hasher.AppendBool(projectile.AttackHit);
+                    hasher.AppendInt32(projectile.PerilSelfDamageQ6);
+                    hasher.AppendBool(projectile.DoppelgangerProc);
+                    hasher.AppendUInt32(projectile.ActivationDelayTicks);
                 }
                 if (projectile.LastCollisionTargetEntityId != 0) {
                     hasher.AppendString("godevilution-projectile-collision-v1");

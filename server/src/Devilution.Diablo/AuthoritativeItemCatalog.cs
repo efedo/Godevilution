@@ -441,7 +441,7 @@ public sealed class AuthoritativeItemCatalog
                 "LIGHTNINGDAMAGE" => AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
                 "DRAINLIFE" => AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag,
                 "LIGHTNINGARROWS" => AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag,
-                "MULTIPLE ARROWS" or "MULTIPLEARROWS" => 0x00000200U,
+                "MULTIPLE ARROWS" or "MULTIPLEARROWS" => AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag,
                 "KNOCKBACK" => 0x00000800U,
                 "THORNS" => AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
                 "NOMANA" => 0x08000000U,
