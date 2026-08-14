@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.109 externalizes Fat/Overlord non-adjacent movement-band tuning
+  through validated `monster_types.tsv` rows; the active catalog feeds
+  server-owned AI while older targets retain the native compatibility values.
+
 - Schema 1.108 externalizes GoatMelee non-adjacent movement-band tuning
   through validated `monster_types.tsv` rows; the active catalog feeds
   server-owned AI while older targets retain the native compatibility values.
