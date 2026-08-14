@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.142 externalizes native Hellfire class-armor adjustments through
+  validated `combat.tsv` content; older combat definitions retain the 40/20
+  demon/undead compatibility values.
+
 - Schema 1.141 externalizes native post-hit equipment resource restoration
   through validated `combat.tsv` content; older combat definitions retain the
   8/3/5/3/5 random divisor and life/mana compatibility values.

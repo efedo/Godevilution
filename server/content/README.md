@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.141.0` schema in
+It declares its identity and `devilution.diablo@1.142.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -225,6 +225,9 @@ The `random_steal_life_divisor`, `steal_life_3_percent`,
 `steal_life_5_percent`, `steal_mana_3_percent`, and
 `steal_mana_5_percent` columns externalize post-hit equipment resource gains;
 legacy rows retain the native 8/3/5/3/5 compatibility values.
+The `hellfire_armor_bonus_against_demons` and
+`hellfire_armor_bonus_against_undead` columns externalize the native Hellfire
+class-armor adjustments; legacy rows retain the 40/20 compatibility values.
 `pvp_ear_item_id` selects the normalized item definition used for a player-kill
 ear; activation requires that definition to project native `IDI_EAR` index 23
 and miscellaneous ID 44. Activation also requires a walkable restart
@@ -1241,7 +1244,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, restart rules, death-gold rules, and PvP-ear identity. |
+| `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1286,7 +1289,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.141.0"
+      "version": "1.142.0"
   },
   "dependencyConstraints": [
     {
@@ -1318,7 +1321,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.141.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.142.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1512,6 +1515,9 @@ Schema 1.141 adds the optional equipment attack-effect tuning columns to
 `combat.tsv`; checked-in combat rows own the native random life-steal divisor
 and 3/5-percent life/mana channels while older rows retain the compatibility
 values.
+Schema 1.142 adds the optional Hellfire class-armor bonus columns to
+`combat.tsv`; checked-in combat rows own the native demon/undead adjustments
+while older rows retain the compatibility values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

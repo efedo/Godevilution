@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.142's optional Hellfire class-armor bonuses, moving the native
+  demon and undead adjustments into validated combat content while preserving
+  compatibility values.
 - Add schema 1.141's optional equipment attack-effect tuning, moving the
   native random life-steal divisor and 3/5-percent life/mana channels into
   validated combat content while preserving compatibility values.
