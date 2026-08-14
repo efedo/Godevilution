@@ -427,6 +427,60 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTimedPlayerAttackPublishesAPlayerBlockAtItsEffectTick()
+    {
+        var world = new DiabloWorldState();
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            playerClasses: classes,
+            useNativePlayerActionTiming: true);
+        var attacker = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            characterClassId: 2,
+            life: 1280,
+            lifeMaximum: 1280);
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            characterClassId: 0,
+            life: 1280,
+            lifeMaximum: 1280,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var action = Assert.IsType<AuthoritativePlayerActionState>(attacker.CurrentAction);
+        Assert.Equal(1280, victim.Life);
+
+        for (ulong tick = 1; tick < action.EffectTick; tick++)
+            processor.AdvanceTick(tick, [attacker, victim]);
+
+        processor.AdvanceTick(action.EffectTick, [attacker, victim]);
+
+        Assert.Equal(1280, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(action.EffectTick + 4, victim.CombatModeEndTick);
+    }
+
+    [Fact]
     public void LethalAdjacentPlayerAttackCreatesTheAuthoritativePvpEar()
     {
         var world = new DiabloWorldState();

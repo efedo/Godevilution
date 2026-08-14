@@ -306,7 +306,8 @@ public sealed class DiabloCombatCommandProcessor
                         action.TargetEntityId,
                         action.StartedAtTick,
                         player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
-                        players),
+                        players,
+                        effectTick: tick),
                     events);
                 break;
             case DiabloPlayerActionKind.Cast:
@@ -417,7 +418,8 @@ public sealed class DiabloCombatCommandProcessor
         uint targetEntityId,
         ulong appliedTick,
         bool ranged = false,
-        IReadOnlyList<AuthoritativePlayerState>? players = null)
+        IReadOnlyList<AuthoritativePlayerState>? players = null,
+        ulong? effectTick = null)
     {
         players ??= [player];
         if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target)) {
@@ -436,7 +438,8 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     playerTarget,
                     appliedTick,
-                    players);
+                    players,
+                    effectTick ?? appliedTick);
             }
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
@@ -606,7 +609,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativePlayerState target,
         ulong appliedTick,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong effectTick)
     {
         UpdateFacingToward(player, target.PositionX, target.PositionY);
         var targetProxy = CreatePlayerCombatTargetProxy(target);
@@ -642,7 +646,7 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        if (attackHit && TryResolvePlayerBlock(player, target, appliedTick)) {
+        if (attackHit && TryResolvePlayerBlock(player, target, effectTick)) {
             ApplyHellfireWeaponDecay(player);
             return events.Count == 0
                 ? DiabloCombatIntentResult.Accepted
