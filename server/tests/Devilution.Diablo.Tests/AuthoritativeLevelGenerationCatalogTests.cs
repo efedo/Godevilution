@@ -30,4 +30,37 @@ public sealed class AuthoritativeLevelGenerationCatalogTests
             new AuthoritativeLevelGenerationRule(0, 1, 0, 150, 10),
         ]));
     }
+
+    [Fact]
+    public void CalculatesDeterministicMonsterCountsFromWalkableCells()
+    {
+        var catalog = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 30, 150, 10),
+        ]);
+
+        Assert.Equal(2, catalog.CalculateMonsterCount(1, 60, multiplayer: false));
+        Assert.Equal(3, catalog.CalculateMonsterCount(1, 60, multiplayer: true));
+        Assert.Equal(0, catalog.CalculateMonsterCount(1, 29, multiplayer: false));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => catalog.CalculateMonsterCount(1, -1, multiplayer: false));
+    }
+
+    [Fact]
+    public void ValidatesCoverageForEveryDeclaredWorldLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        world.AddLevel(new AuthoritativeLevel(3, 4, 4));
+
+        var complete = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 30, 100, 0),
+            new AuthoritativeLevelGenerationRule(3, 3, 30, 100, 0),
+        ]);
+        complete.ValidateWorld(world);
+
+        var incomplete = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 30, 100, 0),
+        ]);
+        Assert.Throws<InvalidDataException>(() => incomplete.ValidateWorld(world));
+    }
 }

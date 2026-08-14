@@ -59,7 +59,6 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         if (levelId > int.MaxValue)
             throw new InvalidDataException($"Monster spawn level {levelId} exceeds native level bounds.");
 
-        var rule = levelGeneration.GetRequired(levelId);
         var candidates = monsterTypes.GetAvailableForDungeonLevel((int)levelId);
         if (maximumMonsters == 0 || candidates.Count == 0)
             return [];
@@ -71,10 +70,10 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             .Where(position => level.IsWalkable(position.X, position.Y)
                 && !reserved.Contains(position))
             .ToArray();
-        var baseCount = positions.Length / rule.MonsterDensityDivisor;
-        var requestedCount = multiplayer
-            ? checked(baseCount * rule.MultiplayerMonsterMultiplierPercent / 100)
-            : baseCount;
+        var requestedCount = levelGeneration.CalculateMonsterCount(
+            levelId,
+            positions.Length,
+            multiplayer);
         var spawnCount = Math.Min(maximumMonsters, requestedCount);
         if (spawnCount == 0)
             return [];

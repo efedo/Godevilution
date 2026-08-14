@@ -256,6 +256,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 world.AddWarpTarget(warp);
             }
         }
+        if (world is not null && levelGeneration is not null)
+            levelGeneration.ValidateWorld(world);
         playerLoadouts.ValidateCastSources(spells);
         if (world is not null)
             combatRules.ValidateWorld(world);

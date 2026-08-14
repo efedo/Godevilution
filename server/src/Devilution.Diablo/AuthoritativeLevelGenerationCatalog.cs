@@ -16,7 +16,7 @@ public sealed record AuthoritativeLevelGenerationRule(
             && levelId <= MaximumLevel;
 }
 
-/** Validated level-range metadata for future server-owned map generation. */
+/** Validated level-range metadata for server-owned encounter generation. */
 public sealed class AuthoritativeLevelGenerationCatalog
 {
     private readonly IReadOnlyList<AuthoritativeLevelGenerationRule> definitions;
@@ -45,6 +45,31 @@ public sealed class AuthoritativeLevelGenerationCatalog
     }
 
     public IReadOnlyList<AuthoritativeLevelGenerationRule> Definitions => definitions;
+
+    /** Ensures every declared world level has an applicable generation rule. */
+    public void ValidateWorld(AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var level in world.Levels)
+            _ = GetRequired(level.LevelId);
+    }
+
+    /** Calculates the native-compatible encounter count before runtime caps. */
+    public int CalculateMonsterCount(
+        uint levelId,
+        int walkableCellCount,
+        bool multiplayer)
+    {
+        if (walkableCellCount < 0)
+            throw new ArgumentOutOfRangeException(nameof(walkableCellCount));
+
+        var rule = GetRequired(levelId);
+        var baseCount = walkableCellCount / rule.MonsterDensityDivisor;
+        var scaledCount = multiplayer
+            ? checked((long)baseCount * rule.MultiplayerMonsterMultiplierPercent / 100)
+            : baseCount;
+        return checked((int)scaledCount);
+    }
 
     public bool TryGet(uint levelId, out AuthoritativeLevelGenerationRule definition)
     {
