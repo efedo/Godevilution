@@ -243,6 +243,10 @@ Status date: 2026-08-14
   `projectile_lifetime`; migrated ranged rows now supply their authoritative
   movement/lifetime tuning, including Hork Spawn's native speed-8, nine-tick
   trajectory, while legacy rows retain server defaults.
+- Schema 1.94 externalizes Acid's `projectile_lifetime_base` and
+  `projectile_lifetime_intelligence_scale`; the shipped Acid mappings now own
+  the native intelligence-scaled lifetime, while legacy rows retain the server
+  formula fallback.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

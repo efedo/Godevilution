@@ -83,6 +83,9 @@ All notable changes to this fork are documented below.
 - Use schema 1.93's optional missile projectile speed and lifetime fields for
   migrated ranged rows, moving Hork Spawn's native speed-8, nine-tick tuning
   into validated content while preserving legacy defaults.
+- Add schema 1.94's optional intelligence-scaled missile lifetime terms, moving
+  Acid's native lifetime formula into validated content while preserving the
+  compatibility formula for older rows.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
