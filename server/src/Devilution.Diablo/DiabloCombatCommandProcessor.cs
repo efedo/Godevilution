@@ -4403,9 +4403,14 @@ public sealed class DiabloCombatCommandProcessor
                 if (target.NativeAi == "Fat"
                     && !NativeFatAttackBandAllowsAttack(target, attackSeed))
                     continue;
-                if (target.NativeAi == "Bat"
+                var batAttackTuning = GetBatAttackTuning(target);
+                if (batAttackTuning.HasValue
                     && attackSeed % 100U
-                        >= (uint)Math.Min(100, 4 * target.Intelligence + 8))
+                        >= (uint)Math.Min(
+                            100,
+                            batAttackTuning.Value.ChanceBase
+                                + (batAttackTuning.Value.IntelligenceScale
+                                    * target.Intelligence)))
                     continue;
                 var usesSpecialAttack = UsesNativeFatSpecialAttack(
                     target,
@@ -4487,7 +4492,7 @@ public sealed class DiabloCombatCommandProcessor
                         PlayerDeathReason.MonsterOrTrap);
                 else if (damage > 0 && target.HitPointsQ6 > 0)
                     ApplyMonsterKnockback(target, victim, players);
-                if (target.NativeAi == "Bat" && target.HitPointsQ6 > 0)
+                if (target.HitPointsQ6 > 0 && GetBatAttackTuning(target).HasValue)
                     target.StartBatRetreat(GetDirection(
                         target.PositionX,
                         target.PositionY,
@@ -4574,7 +4579,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ulong tick)
     {
-        if (target.NativeAi != "Bat" || target.BatRetreatTicks == 0)
+        if (!GetBatAttackTuning(target).HasValue || target.BatRetreatTicks == 0)
             return false;
 
         var direction = target.BatRetreatTicks == 2
@@ -4987,6 +4992,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "Sneak"
             ? (5, 1, 3, 9)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetBatAttackTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Bat")
+                return null;
+            if (definition.BatAttackChanceBase > 0
+                && definition.BatAttackChanceIntelligenceScale > 0) {
+                return (
+                    definition.BatAttackChanceBase,
+                    definition.BatAttackChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Bat"
+            ? (8, 4)
             : null;
     }
 

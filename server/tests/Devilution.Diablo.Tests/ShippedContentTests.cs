@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.105.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.106.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -160,7 +160,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.105.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.106.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -263,6 +263,15 @@ public sealed class ShippedContentTests
                     definition.SneakDistanceIntelligenceScale,
                     definition.SneakRetreatReleaseDistance,
                     definition.SneakRetreatTicks))
+                .Distinct()
+                .Single());
+        Assert.Equal(
+            (8, 4),
+            monsterTypes.Definitions
+                .Where(definition => definition.NativeAi == "Bat")
+                .Select(definition => (
+                    definition.BatAttackChanceBase,
+                    definition.BatAttackChanceIntelligenceScale))
                 .Distinct()
                 .Single());
         var toadDemon = monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 54);

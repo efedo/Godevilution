@@ -153,6 +153,37 @@ public sealed class AuthoritativeMonsterCatalogTests
             sneak.SneakRetreatTicks));
     }
 
+    [Fact]
+    public void RejectsInvalidBatTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Bat",
+                BatAttackChanceBase = 8,
+                BatAttackChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                BatAttackChanceBase = 8,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsBatTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tbat_attack_chance_base\tbat_attack_chance_intelligence_scale\n"
+                + "2\t0\tBat\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tBat\t9\t5\n");
+
+        var bat = Assert.Single(catalog.Definitions);
+        Assert.Equal((9, 5), (
+            bat.BatAttackChanceBase,
+            bat.BatAttackChanceIntelligenceScale));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

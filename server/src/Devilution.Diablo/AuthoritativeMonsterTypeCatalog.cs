@@ -77,6 +77,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Sneak retreat duration after taking a successful hit. */
     public int SneakRetreatTicks { get; init; }
+
+    /** Native Bat adjacent attack chance base before intelligence scaling. */
+    public int BatAttackChanceBase { get; init; }
+
+    /** Native Bat adjacent attack chance increase per intelligence point. */
+    public int BatAttackChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -157,6 +163,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.SneakDistanceIntelligenceScale != 0
                         || definition.SneakRetreatReleaseDistance != 0
                         || definition.SneakRetreatTicks != 0))
+                || definition.BatAttackChanceBase is < 0 or > 100
+                || definition.BatAttackChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Bat"
+                    && ((definition.BatAttackChanceBase != 0
+                            || definition.BatAttackChanceIntelligenceScale != 0)
+                        && (definition.BatAttackChanceBase <= 0
+                            || definition.BatAttackChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Bat"
+                    && (definition.BatAttackChanceBase != 0
+                        || definition.BatAttackChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -248,6 +264,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SneakDistanceIntelligenceScale = row.OptionalInt32("sneak_distance_intelligence_scale"),
                 SneakRetreatReleaseDistance = row.OptionalInt32("sneak_retreat_release_distance"),
                 SneakRetreatTicks = row.OptionalInt32("sneak_retreat_ticks"),
+                BatAttackChanceBase = row.OptionalInt32("bat_attack_chance_base"),
+                BatAttackChanceIntelligenceScale = row.OptionalInt32("bat_attack_chance_intelligence_scale"),
             }));
     }
 
