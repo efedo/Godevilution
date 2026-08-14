@@ -447,6 +447,136 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerResolvesAPlayerTargetedHealOtherFromValidatedLoadout()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Heal-Other-Pvp-Overlay-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.heal-other-pvp-overlay",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.90.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\t34\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingLifeOverride: 64,
+                startingManaOverride: 10000,
+                randomSeed: 0);
+            await using var victimClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-heal-other-victim", requestedClassId: 1));
+            await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var victimInitial = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot is not null);
+            var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
+            Assert.True(initialVictim.Life > 0);
+            var moveModel = new AuthoritativeClientModel();
+            moveModel.Apply(victimInitial);
+            var moveSequence = victimClient.Queue(new Command {
+                MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+            }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+            await victimClient.PollAsync(TestContext.Current.CancellationToken);
+            var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
+            Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+            var moved = await WaitForMessageAsync(
+                victimClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == initialVictim.EntityId).PositionY
+                    == initialVictim.PositionY + 1);
+            var victim = moved.Snapshot!.Players.Single(
+                player => player.EntityId == initialVictim.EntityId);
+
+            await using var healerClient = new AuthoritativeClient(
+                CreateOptions(server, "godot-live-heal-other-healer", requestedClassId: 2));
+            await healerClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var healerInitial = await WaitForMessageAsync(
+                healerClient,
+                message => message.Snapshot is { Players.Count: 2 });
+            var healerEntityId = healerInitial.Snapshot!.Players.Single(
+                player => player.EntityId != victim.EntityId).EntityId;
+            var healerSnapshot = healerInitial.Snapshot.Players.Single(
+                player => player.EntityId == healerEntityId);
+            Assert.Contains(
+                healerSnapshot.MemorizedSpells,
+                memorized => memorized.SpellId == 34 && memorized.Level == 1);
+            var targetSnapshot = healerInitial.Snapshot.Players.Single(
+                player => player.EntityId == victim.EntityId);
+            Assert.Equal(victim.PositionY, targetSnapshot.PositionY);
+
+            var model = new AuthoritativeClientModel();
+            model.Apply(healerInitial);
+            var sequence = healerClient.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 34,
+                    TargetEntityId = victim.EntityId,
+                    TargetX = victim.PositionX,
+                    TargetY = victim.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, healerClient.SuggestedCommandTick(model.CurrentTick));
+            await healerClient.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(healerClient, sequence);
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Heal Other was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
+
+            var action = await WaitForMessageAsync(
+                healerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == healerEntityId).CurrentAction is {
+                        Kind: PlayerActionKind.Cast,
+                        TargetEntityId: var targetEntityId,
+                    } && targetEntityId == victim.EntityId);
+            var actionSnapshot = action.Snapshot!.Players.Single(
+                player => player.EntityId == healerEntityId).CurrentAction!;
+            Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
+            Assert.Equal(34U, actionSnapshot.Cast.SpellId);
+            var victimLifeBeforeHealing = action.Snapshot.Players.Single(
+                player => player.EntityId == victim.EntityId).Life;
+
+            var resolved = await WaitForMessageAsync(
+                healerClient,
+                message => message.Snapshot?.Players.Single(
+                    player => player.EntityId == victim.EntityId).Life > victimLifeBeforeHealing);
+            Assert.True(
+                resolved.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
+                    > victimLifeBeforeHealing);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerResolvesAPlayerTargetedChargedBoltFromValidatedLoadout()
     {
         var overlayRoot = Path.Combine(
@@ -1929,6 +2059,7 @@ public sealed class LiveAuthoritativeServerTests
             CancellationToken cancellationToken,
             string? contentOverlayRoot = null,
             uint? startingGoldOverride = null,
+            int? startingLifeOverride = null,
             int? startingManaOverride = null,
             uint? randomSeed = null,
             string? gameMode = null,
@@ -1968,6 +2099,11 @@ public sealed class LiveAuthoritativeServerTests
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");
                 startInfo.ArgumentList.Add(startingGoldOverride.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture));
+            }
+            if (startingLifeOverride.HasValue) {
+                startInfo.ArgumentList.Add("--starting-life");
+                startInfo.ArgumentList.Add(startingLifeOverride.Value.ToString(
                     System.Globalization.CultureInfo.InvariantCulture));
             }
             if (startingManaOverride.HasValue) {
