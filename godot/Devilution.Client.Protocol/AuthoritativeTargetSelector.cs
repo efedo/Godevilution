@@ -40,6 +40,34 @@ public static class AuthoritativeTargetSelector
         return null;
     }
 
+    /** Resolves a visible remote player for a player-targeted cast request. */
+    public static uint? SelectRemotePlayerTarget(
+        Snapshot? snapshot,
+        uint localPlayerEntityId,
+        int targetX,
+        int targetY,
+        bool includeDead)
+    {
+        if (snapshot is null)
+            return null;
+
+        var localPlayer = snapshot.Players.FirstOrDefault(
+            player => player.EntityId == localPlayerEntityId)
+            ?? snapshot.Players.FirstOrDefault();
+        if (localPlayer is null)
+            return null;
+
+        return snapshot.Players
+            .Where(candidate => candidate.EntityId != localPlayer.EntityId
+                && (includeDead || candidate.Life > 0)
+                && IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && candidate.PositionX == targetX
+                && candidate.PositionY == targetY)
+            .OrderBy(candidate => candidate.EntityId)
+            .Select(candidate => (uint?)candidate.EntityId)
+            .FirstOrDefault();
+    }
+
     private static bool IsVisible(uint levelId, uint localLevelId)
         => levelId == 0 || levelId == localLevelId;
 }

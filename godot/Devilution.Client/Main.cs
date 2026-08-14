@@ -8,6 +8,9 @@ public partial class Main : Node2D
 {
     private const uint ResurrectionSpellId = 32;
     private const uint HealOtherSpellId = 34;
+    private const uint FireboltSpellId = 1;
+    private const uint ChargedBoltSpellId = 30;
+    private const uint BoneSpiritSpellId = 38;
     private const uint IdentifySpellId = 5;
     private const uint RepairSpellId = 26;
     private const uint RechargeSpellId = 27;
@@ -280,17 +283,19 @@ public partial class Main : Node2D
         Vector2I target,
         PlayerSnapshot localPlayer)
     {
-        if (spellId is not (ResurrectionSpellId or HealOtherSpellId))
+        if (spellId is not (ResurrectionSpellId
+            or HealOtherSpellId
+            or FireboltSpellId
+            or ChargedBoltSpellId
+            or BoneSpiritSpellId))
             return 0;
-        return model.Snapshot?.Players
-            .Where(player => player.EntityId != localPlayer.EntityId
-                && player.LevelId == localPlayer.LevelId
-                && (spellId != HealOtherSpellId || player.Life > 0)
-                && player.PositionX == target.X
-                && player.PositionY == target.Y)
-            .OrderBy(player => player.EntityId)
-            .Select(player => player.EntityId)
-            .FirstOrDefault() ?? 0;
+        var includeDead = spellId == ResurrectionSpellId;
+        return AuthoritativeTargetSelector.SelectRemotePlayerTarget(
+            model.Snapshot,
+            localPlayer.EntityId,
+            target.X,
+            target.Y,
+            includeDead) ?? 0;
     }
 
     public override async void _ExitTree()
