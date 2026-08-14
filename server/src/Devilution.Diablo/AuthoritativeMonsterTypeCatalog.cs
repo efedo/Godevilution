@@ -216,6 +216,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native base-game Scavenger target-health percentage. */
     public int ScavengerBaseHealingTargetPercent { get; init; }
 
+    /** Native Scavenger wounded-health threshold for corpse seeking. */
+    public int ScavengerHealingHealthThresholdPercent { get; init; }
+
     /** Native SkeletonRanged minimum distance for retreat admission. */
     public int SkeletonRangedRetreatMinimumDistance { get; init; }
 
@@ -516,6 +519,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.ScavengerHellfireHealingDivisor is < 0 or > 256
                 || definition.ScavengerBaseHealingAmount is < 0 or > 256
                 || definition.ScavengerBaseHealingTargetPercent is < 0 or > 100
+                || definition.ScavengerHealingHealthThresholdPercent is < 0 or > 100
                 || (definition.NativeAi == "Scavenger"
                     && ((definition.ScavengerHealingDurationTicks != 0
                             || definition.ScavengerCorpseSearchRadius != 0
@@ -533,6 +537,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.ScavengerHellfireHealingDivisor != 0
                         || definition.ScavengerBaseHealingAmount != 0
                         || definition.ScavengerBaseHealingTargetPercent != 0))
+                || (definition.NativeAi != "Scavenger"
+                    && definition.ScavengerHealingHealthThresholdPercent != 0)
                 || definition.SkeletonRangedRetreatMinimumDistance is < 0 or > 64
                 || definition.SkeletonRangedRetreatChanceBase is < 0 or > 100
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
@@ -706,6 +712,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 ScavengerHellfireHealingDivisor = row.OptionalInt32("scavenger_hellfire_healing_divisor"),
                 ScavengerBaseHealingAmount = row.OptionalInt32("scavenger_base_healing_amount"),
                 ScavengerBaseHealingTargetPercent = row.OptionalInt32("scavenger_base_healing_target_percent"),
+                ScavengerHealingHealthThresholdPercent = row.OptionalInt32("scavenger_healing_health_threshold_percent"),
                 SkeletonRangedRetreatMinimumDistance = row.OptionalInt32("skeleton_ranged_retreat_minimum_distance"),
                 SkeletonRangedRetreatChanceBase = row.OptionalInt32("skeleton_ranged_retreat_chance_base"),
                 SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),

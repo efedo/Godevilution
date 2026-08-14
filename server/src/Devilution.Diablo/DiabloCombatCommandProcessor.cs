@@ -4879,7 +4879,9 @@ public sealed class DiabloCombatCommandProcessor
         var scavengerTuning = GetScavengerTuning(target);
         if (!scavengerTuning.HasValue)
             return false;
-        if (target.HitPointsQ6 >= target.MaxHitPointsQ6 / 2
+        if (target.HitPointsQ6 >= target.MaxHitPointsQ6
+                * scavengerTuning.Value.HealingHealthThresholdPercent
+                / 100
             && target.ScavengerHealingTicks == 0) {
             return false;
         }
@@ -4990,7 +4992,8 @@ public sealed class DiabloCombatCommandProcessor
         int CorpseSearchRadius,
         int HellfireHealingDivisor,
         int BaseHealingAmount,
-        int BaseHealingTargetPercent)? GetScavengerTuning(
+        int BaseHealingTargetPercent,
+        int HealingHealthThresholdPercent)? GetScavengerTuning(
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
@@ -5006,11 +5009,14 @@ public sealed class DiabloCombatCommandProcessor
                     definition.ScavengerCorpseSearchRadius,
                     definition.ScavengerHellfireHealingDivisor,
                     definition.ScavengerBaseHealingAmount,
-                    definition.ScavengerBaseHealingTargetPercent);
+                    definition.ScavengerBaseHealingTargetPercent,
+                    definition.ScavengerHealingHealthThresholdPercent > 0
+                        ? definition.ScavengerHealingHealthThresholdPercent
+                        : 50);
             }
         }
         return target.NativeAi == "Scavenger"
-            ? (10, 4, 8, 1, 75)
+            ? (10, 4, 8, 1, 75, 50)
             : null;
     }
 

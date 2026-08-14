@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.130.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.131.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.130.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.131.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -421,14 +421,15 @@ public sealed class ShippedContentTests
                 definition.GargoyleHealDivisorRandomOffset))
             .Distinct()
             .Single());
-        Assert.Equal((10, 4, 8, 1, 75), monsterTypes.Definitions
+        Assert.Equal((10, 4, 8, 1, 75, 50), monsterTypes.Definitions
             .Where(definition => definition.NativeAi == "Scavenger")
             .Select(definition => (
                 definition.ScavengerHealingDurationTicks,
                 definition.ScavengerCorpseSearchRadius,
                 definition.ScavengerHellfireHealingDivisor,
                 definition.ScavengerBaseHealingAmount,
-                definition.ScavengerBaseHealingTargetPercent))
+                definition.ScavengerBaseHealingTargetPercent,
+                definition.ScavengerHealingHealthThresholdPercent))
             .Distinct()
             .Single());
         Assert.True(activation.MonsterMissiles!.TryGet("HorkDemon", out var horkDemonMissile));
