@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.134's optional Rage admission life threshold, moving the native
+  cast safety boundary into validated spell content while preserving the
+  legacy character-level Q6 fallback.
 - Add schema 1.133's optional Mana restoration random-range tuning, moving the
   native initial, character-level, and spell-level rolls into validated spell
   content while preserving legacy behavior.

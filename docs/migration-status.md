@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.134 externalizes Rage's minimum-life admission threshold through
+  validated `spells.tsv` content; older definitions retain the native
+  character-level 64-Q6 compatibility threshold.
+
 - Schema 1.133 externalizes the Mana spell's three native restoration ranges
   through validated `spells.tsv` content; older definitions retain the native
   10/4/6 compatibility values.
