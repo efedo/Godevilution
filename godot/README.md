@@ -78,14 +78,11 @@ Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates
 all identities and action state, applies prediction only to that first player,
 and renders same-level remote players from their authoritative coordinates.
-When Resurrection spell `32` is selected, clicking a same-level remote player
-sends that player's stable entity ID. The server alone admits the cast, revives
-and places a dead target, and owns the timed beam; Godot only renders the
-resulting participant and projectile snapshots.
-When Heal Other spell `34` is selected, the same cursor mapping sends a living
-same-level remote player's stable entity ID. Godot does not roll healing,
-consume mana, change life, or decide whether the target is valid; it renders the
-authoritative event and updated participant snapshot.
+When a player-targeted Resurrection or Heal Other source is selected, clicking a
+same-level remote player sends that player's stable entity ID. The server uses
+the active external spell behavior to admit the cast, validate life state,
+revive or heal the target, and own every resulting snapshot. Godot does not
+infer targeting from numeric spell IDs.
 Mana Shield is likewise presentation-only in Godot: the authoritative
 `mana_shield_active` flag adds a cyan player halo and a HUD state label. The
 client neither converts damage to mana nor predicts shield expiry.
@@ -169,9 +166,11 @@ creation.
 Left-click remains the cast or item-interaction path.
 
 Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
-same-level remote player. Godot sends the snapshot entity ID and coordinates;
-the server validates friendly-fire, range, and missile line of sight, then
-owns projectile impact, resistance, blocking, damage, and death handling.
+same-level remote player. The client supplies any visible remote-player entity
+alongside the clicked tile; the server decides from the external spell behavior
+whether that identity is a valid player target or merely a presentation hint for
+the tile. It then validates friendly-fire, range, and missile line of sight,
+owning projectile impact, resistance, blocking, damage, and death handling.
 
 The cast cursor now exposes every source present in the authoritative snapshot.
 Memorized spells, the charged left-hand staff, inventory consumables, belt

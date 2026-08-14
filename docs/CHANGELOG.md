@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Authorize class item services and trap disarm through the semantic class
   capability role, while retaining the configured spell-ID fallback for legacy
   snapshots and direct compatibility callers.
+- Remove Godot's fixed remote-player spell-ID table; the server now resolves
+  player targeting from active external spell behavior and preserves tile casts
+  for non-player spells.
 - Add schema 1.142's optional Hellfire class-armor bonuses, moving the native
   demon and undead adjustments into validated combat content while preserving
   compatibility values.
