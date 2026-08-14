@@ -98,6 +98,69 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerResolvesAPlayerTargetedMeleeAttackInTheSharedSession()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            randomSeed: 1);
+        await using var attackerClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-pvp-attacker", requestedClassId: 2));
+        await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var attackerInitial = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot is not null);
+        var attackerEntityId = Assert.Single(attackerInitial.Snapshot!.Players).EntityId;
+
+        await using var victimClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-pvp-victim", requestedClassId: 1));
+        await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var victimInitial = await WaitForMessageAsync(
+            victimClient,
+            message => message.Snapshot is { Players.Count: 2 });
+        var victim = victimInitial.Snapshot!.Players.Single(
+            player => player.EntityId != attackerEntityId);
+        var attacker = victimInitial.Snapshot.Players.Single(
+            player => player.EntityId == attackerEntityId);
+        Assert.InRange(
+            Math.Max(
+                Math.Abs(attacker.PositionX - victim.PositionX),
+                Math.Abs(attacker.PositionY - victim.PositionY)),
+            0,
+            1);
+
+        var model = new AuthoritativeClientModel();
+        model.Apply(victimInitial);
+        var sequence = attackerClient.Queue(new Command {
+            AttackRequested = new AttackRequested {
+                TargetEntityId = victim.EntityId,
+            },
+        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+        await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
+        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+        var action = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot?.Players.Single(
+                player => player.EntityId == attackerEntityId).CurrentAction is {
+                    Kind: PlayerActionKind.Attack,
+                    TargetEntityId: var targetEntityId,
+                } && targetEntityId == victim.EntityId);
+        Assert.Equal(
+            PlayerActionKind.Attack,
+            action.Snapshot!.Players.Single(
+                player => player.EntityId == attackerEntityId).CurrentAction!.Kind);
+
+        var resolved = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot?.Players.Single(
+                player => player.EntityId == victim.EntityId).Life < victim.Life);
+        Assert.True(
+            resolved.Snapshot!.Players.Single(player => player.EntityId == victim.EntityId).Life
+                < victim.Life);
+    }
+
+    [Fact]
     public async Task LiveServerProjectsTheCheckedInHellfireOverlayEncounter()
     {
         var hellfireRoot = Path.Combine(
