@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Hork Spawn now requires its summoned native monster identity in the validated
+  `monster_missiles.tsv` mapping; the processor no longer embeds native ID 117,
+  and malformed or stale mappings are rejected during content activation.
+
 - Weapon classification now consults validated `Weapon`, `Sword`, `Axe`,
   `Mace`, `Bow`, and `Staff` tags for attack-animation selection, Monk flexible
   blocking, and loadout off-hand validation; metadata-free or ambiguous rows
@@ -530,8 +534,8 @@ Status date: 2026-08-14
   `monster_missiles.tsv`; checked-in ranged rows now supply their authoritative
   spell identity, while legacy overlays retain the prior inference fallback.
 - Schema 1.92 externalizes the Hork Spawn `spawn_monster_id` through
-  `monster_missiles.tsv`; the Hellfire row now supplies native monster ID 117,
-  while legacy rows and snapshots retain the compatibility fallback.
+  `monster_missiles.tsv`; the Hellfire row supplies native monster ID 117, and
+  current activation rejects Hork Spawn mappings that omit the projection.
 - Schema 1.93 externalizes mapped missile `projectile_speed` and
   `projectile_lifetime`; migrated ranged rows now supply their authoritative
   movement/lifetime tuning, including Hork Spawn's native speed-8, nine-tick

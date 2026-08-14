@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Require validated `monster_missiles.tsv` Hork Spawn mappings to declare their
+  summoned native monster identity, removing the processor's remaining native
+  ID fallback while preserving the checked-in Hellfire projection.
 - Project validated level dimensions and blocked-cell geometry in additive
   live snapshots so Godot can render the active server world; legacy client
   assets remain only as a fallback and saves/hashes omit static geometry.

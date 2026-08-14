@@ -1389,8 +1389,10 @@ and server-owned save boundary. Schema 1.91 adds the optional `spell_id` to
 `monster_missiles.tsv`, moving mapped monster projectile spell identities into
 validated content while preserving legacy inference for older overlays. Schema
 1.92 adds the optional `spawn_monster_id` to `monster_missiles.tsv`; Hork Spawn
-now selects its summoned native monster from the Hellfire row, with `117`
-retained as the compatibility fallback. Schema 1.93 adds optional
+now selects its summoned native monster from the Hellfire row. Current
+activation requires Hork Spawn mappings to provide that projection, so stale
+rows without it are rejected instead of falling back to a processor-native ID.
+Schema 1.93 adds optional
 `projectile_speed` and `projectile_lifetime` columns; the Hellfire Hork Spawn
 row supplies its native speed `8` and nine-tick lifetime, and migrated ranged
 rows may override their server-compatible movement and lifetime values. Schema
