@@ -41,6 +41,8 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
             new PlayerAttributeState(20, 20));
         var monk = CreateClass("custom") with {
             PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Monk,
+            MonkUnarmedMinimumDamageLevelDivisor = 5,
+            MonkUnarmedMaximumDamageLevelDivisor = 2,
         };
 
         var unarmed = AuthoritativeEquipmentDamageRules.Calculate(
@@ -61,8 +63,8 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
                 })],
             monk);
 
-        Assert.Equal((5, 10, 8), (unarmed.MinimumDamage, unarmed.MaximumDamage, unarmed.DamageModifier));
-        Assert.Equal((5, 10, 4), (shielded.MinimumDamage, shielded.MaximumDamage, shielded.DamageModifier));
+        Assert.Equal((2, 5, 8), (unarmed.MinimumDamage, unarmed.MaximumDamage, unarmed.DamageModifier));
+        Assert.Equal((2, 5, 4), (shielded.MinimumDamage, shielded.MaximumDamage, shielded.DamageModifier));
     }
 
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)

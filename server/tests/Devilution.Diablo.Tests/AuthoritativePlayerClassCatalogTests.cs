@@ -31,6 +31,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(352, monk.ManaAdjustmentQ6);
         Assert.Equal(96, monk.ItemLifePerVitalityQ6);
         Assert.Equal(AuthoritativePhysicalDamageFormula.Monk, monk.PhysicalDamageFormula);
+        Assert.Equal(2, monk.MonkUnarmedMinimumDamageLevelDivisor);
+        Assert.Equal(1, monk.MonkUnarmedMaximumDamageLevelDivisor);
         Assert.Equal(
             DiabloPlayerClassFlags.FlexibleBlock
                 | DiabloPlayerClassFlags.FastBlock,
@@ -110,9 +112,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
                 .Select(line => {
                     if (!line.Contains('\t'))
                         return line;
-                    var withoutPhysicalDamageFormula = line[..line.LastIndexOf('\t')];
-                    var withoutMeleeArmorReduction = withoutPhysicalDamageFormula[..withoutPhysicalDamageFormula.LastIndexOf('\t')];
-                    return withoutMeleeArmorReduction[..withoutMeleeArmorReduction.LastIndexOf('\t')];
+                    var legacyLine = line;
+                    for (var remove = 0; remove < 5; remove++)
+                        legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
+                    return legacyLine;
                 }));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
@@ -151,9 +154,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             legacySource
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
-                .Select(line => line.Contains('\t')
-                    ? line[..line.LastIndexOf('\t')]
-                    : line));
+                .Select(line => {
+                    if (!line.Contains('\t'))
+                        return line;
+                    var legacyLine = line;
+                    for (var remove = 0; remove < 2; remove++)
+                        legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
+                    return legacyLine;
+                }));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
@@ -168,6 +176,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(
             AuthoritativePhysicalDamageFormula.Standard,
             catalog.Resolve("sorcerer").PhysicalDamageFormula);
+        Assert.Equal(2, catalog.Resolve("monk").MonkUnarmedMinimumDamageLevelDivisor);
+        Assert.Equal(1, catalog.Resolve("monk").MonkUnarmedMaximumDamageLevelDivisor);
     }
 
     [Fact]
@@ -178,9 +188,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             ReadShippedTable()
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
-                .Select(line => line.Contains('\t')
-                    ? line[..line[..line.LastIndexOf('\t')].LastIndexOf('\t')]
-                    : line));
+                .Select(line => {
+                    if (!line.Contains('\t'))
+                        return line;
+                    var legacyLine = line;
+                    for (var remove = 0; remove < 4; remove++)
+                        legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
+                    return legacyLine;
+                }));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
@@ -377,6 +392,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\tStandard",
             "\tUnknown",
             StringComparison.Ordinal);
+        var invalidMonkUnarmedDivisor = string.Join(
+            '\n',
+            source
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.StartsWith("3\tmonk\t", StringComparison.Ordinal)
+                    ? line[..line.LastIndexOf('\t', line.LastIndexOf('\t') - 1)] + "\t0\t1"
+                    : line));
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -400,6 +423,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMeleeArmorReduction));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidPhysicalDamageFormula));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMonkUnarmedDivisor));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()

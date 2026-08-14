@@ -40,8 +40,14 @@ public static class AuthoritativeEquipmentDamageRules
             minimumDamage = 1;
             maximumDamage = hasShield ? 3 : 1;
             if (playerClass.PhysicalDamageFormula == AuthoritativePhysicalDamageFormula.Monk) {
-                minimumDamage = Math.Max(minimumDamage, checked((int)characterLevel / 2));
-                maximumDamage = Math.Max(maximumDamage, checked((int)characterLevel));
+                minimumDamage = Math.Max(
+                    minimumDamage,
+                    checked((int)characterLevel
+                        / playerClass.MonkUnarmedMinimumDamageLevelDivisor));
+                maximumDamage = Math.Max(
+                    maximumDamage,
+                    checked((int)characterLevel
+                        / playerClass.MonkUnarmedMaximumDamageLevelDivisor));
             }
         }
 

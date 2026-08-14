@@ -83,6 +83,12 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Validated native class formula for equipped physical damage. */
     public AuthoritativePhysicalDamageFormula PhysicalDamageFormula { get; init; }
 
+    /** Native Monk unarmed minimum-damage level divisor. */
+    public int MonkUnarmedMinimumDamageLevelDivisor { get; init; } = 2;
+
+    /** Native Monk unarmed maximum-damage level divisor. */
+    public int MonkUnarmedMaximumDamageLevelDivisor { get; init; } = 1;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -225,6 +231,12 @@ public sealed class AuthoritativePlayerClassCatalog
         "physical_damage_formula",
     ];
 
+    private static readonly IReadOnlyList<string> PhysicalDamageTuningColumns = [
+        ..PhysicalDamageColumns,
+        "monk_unarmed_minimum_damage_level_divisor",
+        "monk_unarmed_maximum_damage_level_divisor",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -304,9 +316,13 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasPhysicalDamageTuning = table.Columns.SequenceEqual(
+            PhysicalDamageTuningColumns,
+            StringComparer.Ordinal);
         var hasPhysicalDamageFormula = table.Columns.SequenceEqual(
             PhysicalDamageColumns,
-            StringComparer.Ordinal);
+            StringComparer.Ordinal)
+            || hasPhysicalDamageTuning;
         var hasMeleeArmorReduction = hasPhysicalDamageFormula
             || table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
         var hasManaSpellPercent = hasMeleeArmorReduction
@@ -373,6 +389,12 @@ public sealed class AuthoritativePlayerClassCatalog
                 PhysicalDamageFormula = hasPhysicalDamageFormula
                     ? ParsePhysicalDamageFormula(row)
                     : InferLegacyPhysicalDamageFormula(row),
+                MonkUnarmedMinimumDamageLevelDivisor = hasPhysicalDamageTuning
+                    ? row.RequiredInt32("monk_unarmed_minimum_damage_level_divisor")
+                    : 2,
+                MonkUnarmedMaximumDamageLevelDivisor = hasPhysicalDamageTuning
+                    ? row.RequiredInt32("monk_unarmed_maximum_damage_level_divisor")
+                    : 1,
             }));
     }
 
@@ -419,6 +441,8 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.HealOtherSpellPercent is < 1 or > 400
             || definition.ManaSpellPercent is < 1 or > 400
             || !Enum.IsDefined(definition.PhysicalDamageFormula)
+            || definition.MonkUnarmedMinimumDamageLevelDivisor <= 0
+            || definition.MonkUnarmedMaximumDamageLevelDivisor <= 0
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
