@@ -89,11 +89,11 @@ fixture.
 ## Known parity debt
 
 The compact native replay projection now carries the same server-owned corpse
-tile representation as the C# checkpoints, and all ordinary-death checkpoint
-hashes pass in both runners. The native runner still has four outstanding
-spell-timeline hash mismatches (Firebolt, Fireball, Lightning, and Flash).
-These are tracked in `migration-status.md` and must be resolved before
-deterministic replay can be called complete.
+tile representation and per-tick monster regeneration as the C# checkpoints.
+Ordinary-death and Firebolt, Fireball, Lightning, and Flash spell-timeline
+checkpoints pass in both runners; the native replay gate reports 65/65 tests.
+Remaining replay work is broader fixture coverage rather than a known hash
+mismatch.
 
 ## Current Coverage
 

@@ -19,8 +19,8 @@ All notable changes to this fork are documented below.
 - Preserve native Stone Curse shatter state for defeated petrified monsters and
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and
-  refresh all ordinary-death replay checkpoints; four spell-timeline hashes
-  remain as tracked parity debt.
+  refresh all ordinary-death and spell-timeline replay checkpoints; the native
+  replay gate now passes all 65 tests alongside the managed checkpoints.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

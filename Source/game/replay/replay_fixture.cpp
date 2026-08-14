@@ -3541,6 +3541,23 @@ void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick
 	}
 }
 
+/** Applies the native per-tick monster regeneration boundary used by the C# simulation. */
+void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetMonsterLevel <= 0
+	    || state.combatTargetHitPointsQ6 >= state.combatTargetMaxHitPointsQ6)
+		return;
+	const int32_t healing = state.combatTargetMonsterLevel > 1
+	    ? state.combatTargetMonsterLevel / 2
+	    : state.combatTargetMonsterLevel;
+	state.combatTargetHitPointsQ6 = std::min(
+	    state.combatTargetMaxHitPointsQ6,
+	    state.combatTargetHitPointsQ6 + healing * 64);
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+}
+
 void AdvanceReplayStateToTick(
     ReplayFixtureExecutionState &state,
     const ReplayFixture &fixture,
@@ -3565,6 +3582,7 @@ void AdvanceReplayStateToTick(
 			return effect.remainingTicks == 0;
 		}),
 		    state.statusEffects.end());
+		AdvanceReplayMonsterRegeneration(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state);
 		AdvanceFireballsOneTick(state);
