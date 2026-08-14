@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select native player attack-animation profiles from validated equipment
+  subtype tags, including shield variants, while retaining numeric item-type
+  fallback for legacy or untagged content.
 - Resolve equipped-item combat categories from validated content tags when the
   active catalog has an unambiguous native-index mapping, while retaining the
   legacy numeric item-type fallback for older or ambiguous rows.

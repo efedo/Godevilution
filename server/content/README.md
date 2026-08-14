@@ -964,7 +964,8 @@ classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
 matching uses the normalized `spell_id` and no longer depends on native
 miscellaneous-ID ranges for current packs. The content ID remains the key for
 catalog references and overlays; native row/index values must not become
-authoritative identities. The base pack assigns stable ID `24` to the native
+authoritative identities. Native player attack timing and weapon-class damage
+consume these subtype tags at the server boundary. The base pack assigns stable ID `24` to the native
 ear definition. Its victim-derived name and cursor are runtime state carried by
 the generic item snapshot rather than localized catalog text.
 Normalized unique-item and magic-affix `SPELL` powers also preserve this

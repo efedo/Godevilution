@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Native player attack-animation selection now consumes validated equipment
+  subtype tags for sword, axe, mace, bow, staff, and shield profiles; legacy
+  snapshots and untagged rows retain numeric item-type fallback.
+
 - Equipment damage profiles now consult active item content tags through the
   retained native item index; conflicting duplicate mappings are rejected and
   legacy item-type classification remains the compatibility fallback.
