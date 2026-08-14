@@ -90,6 +90,70 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerRestoresAuthoritativeStateAfterProcessRestart()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Persistence-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(saveRoot);
+        try {
+            string resumeToken;
+            int movedPositionY;
+            using (var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot,
+                deleteSaveRootOnDispose: false)) {
+                await using var client = new AuthoritativeClient(
+                    CreateOptions(server, "godot-persistence-first", requestedClassId: 0));
+                await client.ConnectAsync(TestContext.Current.CancellationToken);
+                var initial = await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot is not null);
+                var model = new AuthoritativeClientModel();
+                model.Apply(initial);
+                var player = Assert.Single(model.Snapshot!.Players);
+                var moveSequence = client.Queue(new Command {
+                    MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+                }, client.SuggestedCommandTick(model.CurrentTick));
+                await client.PollAsync(TestContext.Current.CancellationToken);
+                var moveAcknowledgement = await WaitForAcknowledgementAsync(client, moveSequence);
+                Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+                var moved = await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot?.Players.Single(
+                        candidate => candidate.EntityId == player.EntityId).PositionY
+                        == player.PositionY + 1);
+                movedPositionY = moved.Snapshot!.Players.Single(
+                    candidate => candidate.EntityId == player.EntityId).PositionY;
+                resumeToken = client.SessionToken;
+
+                for (var attempt = 0; attempt < 200 && !Directory.EnumerateFiles(saveRoot, "*.json").Any(); attempt++)
+                    await Task.Delay(25, TestContext.Current.CancellationToken);
+                Assert.NotEmpty(Directory.EnumerateFiles(saveRoot, "*.json"));
+                await Task.Delay(500, TestContext.Current.CancellationToken);
+            }
+
+            using var restartedServer = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot);
+            await using var resumedClient = new AuthoritativeClient(
+                CreateOptions(restartedServer, "godot-persistence-resumed", requestedClassId: 2) with {
+                    ResumeToken = resumeToken,
+                });
+            await resumedClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var restored = await WaitForMessageAsync(
+                resumedClient,
+                message => message.Snapshot is not null);
+            var restoredPlayer = Assert.Single(restored.Snapshot!.Players);
+            Assert.Equal(movedPositionY, restoredPlayer.PositionY);
+            Assert.Equal(0U, restoredPlayer.CharacterClassId);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerAdmitsEntityTargetedAttackAndPublishesActionState()
     {
         using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
@@ -1837,11 +1901,19 @@ public sealed class LiveAuthoritativeServerTests
     {
         private readonly Process process;
         private readonly string saveRoot;
+        private readonly bool deleteSaveRootOnDispose;
 
-        private StartedServer(Process process, string saveRoot, int port, string contentHash, string rulesetHash)
+        private StartedServer(
+            Process process,
+            string saveRoot,
+            bool deleteSaveRootOnDispose,
+            int port,
+            string contentHash,
+            string rulesetHash)
         {
             this.process = process;
             this.saveRoot = saveRoot;
+            this.deleteSaveRootOnDispose = deleteSaveRootOnDispose;
             Port = port;
             ContentHash = contentHash;
             RulesetHash = rulesetHash;
@@ -1859,10 +1931,15 @@ public sealed class LiveAuthoritativeServerTests
             uint? startingGoldOverride = null,
             int? startingManaOverride = null,
             uint? randomSeed = null,
-            string? gameMode = null)
+            string? gameMode = null,
+            string? saveRootOverride = null,
+            bool deleteSaveRootOnDispose = true)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
-            var saveRoot = Path.Combine(Path.GetTempPath(), "Godevilution-Godot-Test-" + Guid.NewGuid().ToString("N"));
+            var ownsSaveRoot = string.IsNullOrWhiteSpace(saveRootOverride);
+            var saveRoot = saveRootOverride ?? Path.Combine(
+                Path.GetTempPath(),
+                "Godevilution-Godot-Test-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(saveRoot);
             var startInfo = new ProcessStartInfo {
                 FileName = "dotnet",
@@ -1925,13 +2002,20 @@ public sealed class LiveAuthoritativeServerTests
                 if (line.StartsWith("Ruleset identity: ", StringComparison.Ordinal))
                     rulesetHash = line["Ruleset identity: ".Length..];
                 if (port.HasValue && contentHash is not null && rulesetHash is not null)
-                    return new StartedServer(process, saveRoot, port.Value, contentHash, rulesetHash);
+                    return new StartedServer(
+                        process,
+                        saveRoot,
+                        deleteSaveRootOnDispose,
+                        port.Value,
+                        contentHash,
+                        rulesetHash);
             }
             var error = await standardError;
             await process.WaitForExitAsync(cancellationToken);
             var exitCode = process.ExitCode;
             process.Dispose();
-            Directory.Delete(saveRoot, true);
+            if (ownsSaveRoot && Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, true);
             var detail = string.IsNullOrWhiteSpace(error) ? string.Empty : Environment.NewLine + error.Trim();
             throw new InvalidOperationException(
                 $"The authoritative server exited with code {exitCode} before publishing its identity.{detail}");
@@ -1944,7 +2028,7 @@ public sealed class LiveAuthoritativeServerTests
                 process.WaitForExit();
             }
             process.Dispose();
-            if (Directory.Exists(saveRoot))
+            if (deleteSaveRootOnDispose && Directory.Exists(saveRoot))
                 Directory.Delete(saveRoot, true);
         }
     }
