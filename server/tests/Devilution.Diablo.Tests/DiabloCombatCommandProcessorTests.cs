@@ -1832,6 +1832,59 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void StormAiFiresTheValidatedThinLightningController()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Storm",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateLightningSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Storm",
+                    "ThinLightningControl",
+                    AuthoritativeProjectileBehavior.Lightning),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var controller = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.SourceEntityId == 9
+                && projectile.Behavior == AuthoritativeProjectileBehavior.Lightning);
+        Assert.Equal(32, controller.Speed);
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.True(player.Life < 100);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.Amount == 6);
+    }
+
+    [Fact]
     public void GoatRangedAiAvoidsAPlayerInsideItsNativeFourTileBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

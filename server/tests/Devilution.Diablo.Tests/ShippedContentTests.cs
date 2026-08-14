@@ -58,6 +58,9 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("BoneDemon", out var boneDemon));
         Assert.Equal("BlueFlare2", boneDemon.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, boneDemon.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Storm", out var storm));
+        Assert.Equal("ThinLightningControl", storm.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Lightning, storm.ProjectileBehavior);
     }
 
     [Fact]

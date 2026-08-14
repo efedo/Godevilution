@@ -163,6 +163,9 @@ Status date: 2026-08-13
 - Native `BoneDemon` `AiRangedAvoidance` now consumes its validated
   `BlueFlare2` `MonsterMagic` mapping; the server owns the clear-lane
   500-per-10,000 intelligence admission band and resulting magic hit.
+- Native `Storm` `AiRangedAvoidance` now consumes its validated
+  `ThinLightningControl` Lightning mapping; the server owns the speed-32
+  controller, doubled monster damage, persistent segments, and magic hit.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

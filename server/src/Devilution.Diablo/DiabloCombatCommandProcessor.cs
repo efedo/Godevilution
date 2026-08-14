@@ -4072,13 +4072,14 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
-            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon")
+            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Firebolt
                 or AuthoritativeProjectileBehavior.Fireball
-                or AuthoritativeProjectileBehavior.MonsterMagic))
+                or AuthoritativeProjectileBehavior.MonsterMagic
+                or AuthoritativeProjectileBehavior.Lightning))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
@@ -4087,7 +4088,7 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (monster.NativeAi == "BoneDemon") {
+        if (monster.NativeAi is "BoneDemon" or "Storm") {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4113,17 +4114,22 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return monster.NativeAi != "BoneDemon";
+            return monster.NativeAi is not ("BoneDemon" or "Storm");
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);
         var spellId = spell?.SpellId
-            ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Fireball
-                ? 12U
-                : 1U);
-        // Native AddFirebolt/AddFireball use speed 16 for monster-owned missiles;
-        // player spell speed is content-owned separately in spells.tsv.
-        var speed = 16;
+            ?? (missile.ProjectileBehavior switch {
+                AuthoritativeProjectileBehavior.Fireball => 12U,
+                AuthoritativeProjectileBehavior.Lightning => 3U,
+                _ => 1U,
+            });
+        // Native monster Firebolt/Fireball use speed 16; Storm's
+        // ThinLightningControl uses speed 32. Player spell speed remains
+        // content-owned separately in spells.tsv.
+        var speed = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Lightning
+            ? 32
+            : 16;
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
             ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
@@ -4150,7 +4156,9 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Lightning
+                ? 0
+                : SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
             damageType,
             0,
             checked((uint)lifetime)) {
@@ -6014,6 +6022,12 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
+        if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Lightning
+            && projectile.TargetEntityId != 0
+            && world.CombatTargets.TryGetValue(projectile.SourceEntityId, out var monster)) {
+            AdvanceMonsterLightningController(projectile, monster);
+            return;
+        }
         var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
         if (owner is null) {
             world.Projectiles.Remove(projectile.EntityId);
@@ -6052,6 +6066,39 @@ public sealed class DiabloCombatCommandProcessor
 
         if (projectile.PositionX != previousX || projectile.PositionY != previousY)
             CreateLightningSegment(projectile, spell, damageQ6);
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native ProcessLightningControl branch for a Storm-owned ThinLightning missile. */
+    private void AdvanceMonsterLightningController(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget monster)
+    {
+        projectile.RemainingTicks--;
+        var damage = checked(
+            2 * SelectNativeDamage(
+                monster.MinDamage,
+                monster.MaxDamage,
+                projectile.EntityId ^ monster.EntityId));
+        projectile.RemainingTicks--;
+
+        var previousX = projectile.PositionX;
+        var previousY = projectile.PositionY;
+        var visitedTiles = MoveNativeProjectile(projectile);
+        foreach (var tile in visitedTiles) {
+            if (!world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y))
+                continue;
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        if (projectile.PositionX != previousX || projectile.PositionY != previousY)
+            CreateMonsterLightningSegment(projectile, damage);
         if (projectile.RemainingTicks == 0)
             world.Projectiles.Remove(projectile.EntityId);
     }
@@ -6686,6 +6733,33 @@ public sealed class DiabloCombatCommandProcessor
         world.Projectiles.Add(entityId, segment);
     }
 
+    private void CreateMonsterLightningSegment(
+        AuthoritativeProjectile controller,
+        int damage)
+    {
+        var entityId = AllocateProjectileEntityId();
+        var segment = new AuthoritativeProjectile(
+            entityId,
+            controller.SourceEntityId,
+            controller.TargetEntityId,
+            controller.SpellId,
+            controller.LevelId,
+            controller.PositionX,
+            controller.PositionY,
+            controller.StartX,
+            controller.StartY,
+            damage,
+            AuthoritativeDamageType.Lightning,
+            0,
+            10U) {
+            Behavior = AuthoritativeProjectileBehavior.LightningSegment,
+            StartX = controller.StartX,
+            StartY = controller.StartY,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(entityId, segment);
+    }
+
     private void AdvanceLightningSegment(
         ulong tick,
         AuthoritativeProjectile projectile,
@@ -6711,12 +6785,22 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     events);
             } else if (playerTarget is not null) {
-                _ = TryResolvePersistentShiftedProjectilePlayerHit(
-                    tick,
-                    projectile,
-                    playerTarget,
-                    players,
-                    events);
+                if (projectile.TargetEntityId != 0
+                    && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                    _ = TryResolveMonsterMagicProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events);
+                } else {
+                    _ = TryResolvePersistentShiftedProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events);
+                }
             }
         }
 

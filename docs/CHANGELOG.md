@@ -21,6 +21,9 @@ All notable changes to this fork are documented below.
 - Route the native `BoneDemon` `AiRangedAvoidance` clear-lane admission through
   its validated `BlueFlare2` `MonsterMagic` mapping and server-owned projectile
   travel and magic hit resolution.
+- Route the native `Storm` `ThinLightningControl` through the validated
+  Lightning mapping, preserving its speed-32 controller, doubled monster
+  damage, persistent segments, and server-owned monster-to-player hit path.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.
