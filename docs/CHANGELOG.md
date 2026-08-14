@@ -22,6 +22,8 @@ All notable changes to this fork are documented below.
   native intelligence-based delay before deterministic navigation.
 - Make validated SkeletonRanged monsters retreat inside the native four-tile
   boundary and remain ranged-only instead of falling through to melee.
+- Add the server-owned GoatMelee non-adjacent movement admission, preserving
+  its native intelligence-based avoidance band before shared melee.
 - Preserve native Stone Curse shatter state for defeated petrified monsters and
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and

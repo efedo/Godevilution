@@ -3776,6 +3776,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSkeletonMeleeAi(target, victim, players, tick, distance))
                 continue;
+            if (TryAdvanceGoatMeleeAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSkeletonKingAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
@@ -4036,6 +4038,32 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand)
+            return true;
+
+        var next = AuthoritativeMonsterNavigation.FindStep(
+            world,
+            monster,
+            victim,
+            players);
+        if (next.HasValue)
+            monster.BeginMovement(next.Value.X, next.Value.Y);
+        return true;
+    }
+
+    /** Native AiAvoidance admits GoatMelee movement through its intelligence band. */
+    private bool TryAdvanceGoatMeleeAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (monster.NativeAi != "GoatMelee" || distance <= 1)
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+        if (actionSeed % 100U >= (uint)movementChance)
             return true;
 
         var next = AuthoritativeMonsterNavigation.FindStep(

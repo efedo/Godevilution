@@ -49,6 +49,8 @@ Status date: 2026-08-14
   admission band, delaying or navigating deterministically before shared melee.
 - Native SkeletonRanged now has a server-owned four-tile retreat boundary and
   ranged-only idle path; generic melee is no longer admitted for validated bows.
+- Native GoatMelee non-adjacent movement now uses a server-owned
+  `28 + 2 * intelligence` avoidance admission before shared melee resolution.
 - Native Stone Curse now retains a defeated petrified target through its
   authoritative shatter phase; ordinary defeated monsters become persisted
   corpse tiles, and snapshots preserve the distinction between the two states.
