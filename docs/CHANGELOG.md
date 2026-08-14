@@ -4,12 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Add Godot right-click monster targeting: the client resolves visible monster
-  snapshots to `AttackRequested` intents while the server retains all combat
-  admission, timing, hit, damage, and action-state ownership; live protocol
-  coverage verifies the entity-targeted action state. Server-owned SneakHidden
-  monsters are excluded from Godot rendering and target selection, and Godot
-  renders authoritative player action indicators without simulating them.
+- Add Godot right-click combat targeting: the client resolves visible monster
+  and living remote-player snapshots to `AttackRequested` intents while the
+  server retains all combat admission, timing, hit, damage, and action-state
+  ownership; live protocol coverage verifies entity-targeted action state.
+  Server-owned SneakHidden monsters are excluded from Godot rendering and target
+  selection, and Godot renders authoritative player action indicators without
+  simulating them.
 - Add the initial server-owned adjacent melee player-versus-player path:
   friendly-mode admission, native animation timing, deterministic physical Q6
   damage, fire/lightning equipment channels with target resistance, equipment
