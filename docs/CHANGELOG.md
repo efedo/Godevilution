@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.132's optional Gargoyle wounded-health tuning, moving the native
+  self-healing admission threshold into validated monster type content while
+  preserving legacy target behavior.
 - Make Bat retreat phase selection honor each validated row's configured
   retreat duration, preserving the native first-step direction for overlays
   that use a duration other than two ticks.

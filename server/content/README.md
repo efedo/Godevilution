@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.131.0` schema in
+It declares its identity and `devilution.diablo@1.132.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -170,6 +170,9 @@ The optional `gargoyle_safe_distance_base` and
 `gargoyle_safe_distance_intelligence_scale` columns externalize the Gargoyle
 wounded retreat/self-heal safety boundary. Legacy monster rows retain the
 native base-two, intelligence-scale-one compatibility values.
+The optional `gargoyle_healing_health_threshold_percent` column externalizes
+the Gargoyle wounded-health admission threshold for self-healing. Legacy
+monster rows retain the native 50-percent compatibility threshold.
 The optional `skeleton_ranged_retreat_minimum_distance`,
 `skeleton_ranged_retreat_chance_base`,
 `skeleton_ranged_retreat_chance_intelligence_scale`,
@@ -1250,7 +1253,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.131.0"
+      "version": "1.132.0"
   },
   "dependencyConstraints": [
     {
@@ -1282,7 +1285,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.131.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.132.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1444,6 +1447,9 @@ compatibility values.
 Schema 1.131 adds the optional Scavenger wounded-health threshold column to
 `monster_types.tsv`; checked-in Scavenger rows own the native 50-percent corpse
 seeking threshold while older rows retain the compatibility value.
+Schema 1.132 adds the optional Gargoyle wounded-health threshold column to
+`monster_types.tsv`; checked-in Gargoyle rows own the native 50-percent
+self-healing threshold while older rows retain the compatibility value.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
