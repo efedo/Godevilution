@@ -10905,7 +10905,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(5UL, fastRogue.CombatModeEndTick);
 
         var staff = AuthoritativeItemState.Empty with {
-            ItemType = 10,
+            ItemIndex = 101,
+            ItemType = 1,
             StatFlag = true,
         };
         var monk = CreatePlayer(
@@ -10919,10 +10920,15 @@ public sealed class DiabloCombatCommandProcessorTests
             },
             equipment: [new EquippedStoreItem(4, 101, staff)],
             characterClassId: 3);
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "7\t10\t1\t1\tStaff\t101\n");
         var monkProcessor = CreateProcessor(
             new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
             random: new DiabloRandom(0),
-            playerClasses: classes);
+            playerClasses: classes,
+            items: items);
 
         Assert.Empty(monkProcessor.AdvanceTick(1, [owner, monk]));
         Assert.Equal(5UL, monk.CombatModeEndTick);

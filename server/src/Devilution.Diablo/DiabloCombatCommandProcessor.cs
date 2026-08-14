@@ -11637,13 +11637,13 @@ public sealed class DiabloCombatCommandProcessor
     {
         var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
         var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
-        if (IsUsableType(left, 5) || IsUsableType(right, 5))
+        if (IsUsableType(left, "Shield", 5) || IsUsableType(right, "Shield", 5))
             return true;
 
         var playerClass = GetPlayerClass(player);
         if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.FlexibleBlock) != true)
             return false;
-        if (IsUsableType(left, 10) || IsUsableType(right, 10))
+        if (IsUsableType(left, "Staff", 10) || IsUsableType(right, "Staff", 10))
             return true;
         if (left is null && right is null)
             return true;
@@ -11709,7 +11709,7 @@ public sealed class DiabloCombatCommandProcessor
             .Aggregate(0U, (flags, item) => flags | item.State.Flags);
     }
 
-    private static bool IsNativeFastBlockingClass(
+    private bool IsNativeFastBlockingClass(
         AuthoritativePlayerState player,
         AuthoritativePlayerClassDefinition? playerClass)
     {
@@ -11717,13 +11717,16 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
         var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
-        return IsUsableType(left, 10) || IsUsableType(right, 10);
+        return IsUsableType(left, "Staff", 10) || IsUsableType(right, "Staff", 10);
     }
 
-    private static bool IsUsableType(EquippedStoreItem? item, int itemType)
+    private bool IsUsableType(
+        EquippedStoreItem? item,
+        string tag,
+        int legacyItemType)
     {
         return item is not null
-            && item.State.ItemType == itemType
+            && HasEquipmentTag(item.State, tag, legacyItemType)
             && IsUsable(item.State);
     }
 
