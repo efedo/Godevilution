@@ -258,6 +258,97 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerResolvesAPlayerTargetedFireboltThroughTheSharedProtocol()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            randomSeed: 1);
+        await using var victimClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-spell-victim", requestedClassId: 1));
+        await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var victimInitial = await WaitForMessageAsync(
+            victimClient,
+            message => message.Snapshot is not null);
+        var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
+        var moveModel = new AuthoritativeClientModel();
+        moveModel.Apply(victimInitial);
+        var moveSequence = victimClient.Queue(new Command {
+            MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+        }, victimClient.SuggestedCommandTick(moveModel.CurrentTick));
+        await victimClient.PollAsync(TestContext.Current.CancellationToken);
+        var moveAcknowledgement = await WaitForAcknowledgementAsync(victimClient, moveSequence);
+        Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+        var moved = await WaitForMessageAsync(
+            victimClient,
+            message => message.Snapshot?.Players.Single(
+                player => player.EntityId == initialVictim.EntityId).PositionY
+                == initialVictim.PositionY + 1);
+        var victim = moved.Snapshot!.Players.Single(
+            player => player.EntityId == initialVictim.EntityId);
+
+        await using var attackerClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-spell-attacker", requestedClassId: 2));
+        await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var attackerInitial = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot is { Players.Count: 2 });
+        var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
+            player => player.EntityId != victim.EntityId).EntityId;
+        var targetSnapshot = attackerInitial.Snapshot.Players.Single(
+            player => player.EntityId == victim.EntityId);
+        Assert.Equal(victim.PositionY, targetSnapshot.PositionY);
+        var model = new AuthoritativeClientModel();
+        model.Apply(attackerInitial);
+        var sequence = attackerClient.Queue(new Command {
+            CastRequested = new CastRequested {
+                SpellId = 1,
+                TargetEntityId = victim.EntityId,
+                TargetX = victim.PositionX,
+                TargetY = victim.PositionY,
+                Source = CastSourceKind.MemorizedSpell,
+            },
+        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+        await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; target was ({victim.PositionX},{victim.PositionY}).");
+
+        var action = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot?.Players.Single(
+                player => player.EntityId == attackerEntityId).CurrentAction is {
+                    Kind: PlayerActionKind.Cast,
+                    TargetEntityId: var targetEntityId,
+                } && targetEntityId == victim.EntityId);
+        var actionSnapshot = action.Snapshot!.Players.Single(
+            player => player.EntityId == attackerEntityId).CurrentAction!;
+        Assert.Equal(PlayerActionKind.Cast, actionSnapshot.Kind);
+        Assert.Equal(1U, actionSnapshot.Cast.SpellId);
+        Assert.Equal(victim.EntityId, actionSnapshot.TargetEntityId);
+        var victimLifeBeforeImpact = action.Snapshot.Players.Single(
+            player => player.EntityId == victim.EntityId).Life;
+
+        var resolved = await WaitForMessageAsync(
+            attackerClient,
+            message => message.Snapshot?.Players.Single(
+                player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
+                || message.Events?.Events.Any(gameEvent =>
+                    gameEvent.Damage is not null
+                    && gameEvent.Damage.TargetEntityId == victim.EntityId
+                    && gameEvent.Damage.Amount > 0) == true);
+        if (resolved.Snapshot is not null) {
+            Assert.True(
+                resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
+                    < victimLifeBeforeImpact);
+        } else {
+            var damage = Assert.Single(resolved.Events!.Events).Damage;
+            Assert.Equal(victim.EntityId, damage.TargetEntityId);
+            Assert.True(damage.Amount > 0);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerResolvesShieldBlockForAPlayerTargetedMeleeAttack()
     {
         var overlayRoot = Path.Combine(
