@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.119's optional ranged-avoidance distance/chance tuning, moving
+  generic native distance and 10,000-scale intelligence chance into validated
+  missile content while preserving legacy target behavior.
 - Extend schema 1.118's mapped-charge tuning to Snake `SnakeCharge` rows,
   moving the native clear two-tile admission into validated missile content
   while preserving legacy target behavior.
