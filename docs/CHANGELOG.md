@@ -14,8 +14,9 @@ All notable changes to this fork are documented below.
   friendly-mode admission, native animation timing, deterministic physical Q6
   damage, fire/lightning equipment channels with target resistance, equipment
   knockback, lethal player death/PvP-ear handling, and managed plus live
-  multiplayer regression coverage. Ranged player-target presentation remains
-  a follow-up.
+  multiplayer regression coverage. The same `WeaponArrow` lifecycle now admits
+  line-of-sight ranged player targets and resolves physical/elemental impact;
+  Godot player-target cursor presentation remains a follow-up.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
