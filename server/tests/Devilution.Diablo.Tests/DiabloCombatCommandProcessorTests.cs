@@ -3293,7 +3293,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Rhino",
+                NativeAi = "Fallen",
                 RhinoChargeMinimumDistance = 6,
                 RhinoChargeChanceBase = 100,
                 RhinoChargeChanceIntelligenceScale = 1,
@@ -3311,7 +3311,7 @@ public sealed class DiabloCombatCommandProcessorTests
             minDamageSpecial: 5,
             maxDamageSpecial: 32,
             toHitSpecial: 100,
-            nativeAi: "Rhino");
+            nativeAi: "Fallen");
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(world, monsterTypes: monsterTypes);
         var player = CreatePlayer(

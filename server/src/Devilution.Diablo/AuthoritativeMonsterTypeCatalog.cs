@@ -556,17 +556,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.RhinoChargeMinimumDistance is < 0 or > 64
                 || definition.RhinoChargeChanceBase is < 0 or > 100
                 || definition.RhinoChargeChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Rhino"
-                    && ((definition.RhinoChargeMinimumDistance != 0
-                            || definition.RhinoChargeChanceBase != 0
-                            || definition.RhinoChargeChanceIntelligenceScale != 0)
-                        && (definition.RhinoChargeMinimumDistance <= 0
-                            || definition.RhinoChargeChanceBase <= 0
-                            || definition.RhinoChargeChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Rhino"
-                    && (definition.RhinoChargeMinimumDistance != 0
+                || ((definition.RhinoChargeMinimumDistance != 0
                         || definition.RhinoChargeChanceBase != 0
-                        || definition.RhinoChargeChanceIntelligenceScale != 0))
+                        || definition.RhinoChargeChanceIntelligenceScale != 0)
+                    && (definition.RhinoChargeMinimumDistance <= 0
+                        || definition.RhinoChargeChanceBase <= 0
+                        || definition.RhinoChargeChanceIntelligenceScale <= 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }

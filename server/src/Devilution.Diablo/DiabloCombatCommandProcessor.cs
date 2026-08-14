@@ -6643,8 +6643,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Rhino")
-                return null;
             if (definition.RhinoChargeMinimumDistance > 0
                 && definition.RhinoChargeChanceBase > 0
                 && definition.RhinoChargeChanceIntelligenceScale > 0) {
