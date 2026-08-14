@@ -962,6 +962,8 @@ catalog references and overlays; native row/index values must not become
 authoritative identities. The base pack assigns stable ID `24` to the native
 ear definition. Its victim-derived name and cursor are runtime state carried by
 the generic item snapshot rather than localized catalog text.
+Normalized unique-item and magic-affix `SPELL` powers also preserve this
+classification when they add a charged spell after base-item generation.
 
 Spell casting uses the validated source kind and spell identity. A charged cast
 must name the matching source equipped in native left-hand slot `4`; an

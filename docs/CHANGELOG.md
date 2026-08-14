@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve charged-source classification when normalized unique items or magic
+  affixes add a `SPELL` power after base item generation.
 - Add schema 1.144's explicit normalized item spell-source kind, so current
   content no longer derives charged or consumable source identity from native
   miscellaneous IDs while legacy tables retain their compatibility fallback.

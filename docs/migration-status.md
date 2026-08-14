@@ -26,7 +26,8 @@ Status date: 2026-08-14
 
 - Schema 1.144 externalizes normalized item spell-source classification through
   `items.tsv`; generated state and protocol matching use the validated source
-  kind and spell identity, while legacy item tables retain native-ID fallback.
+  kind and spell identity, including charged `SPELL` powers applied by unique
+  items and magic affixes, while legacy item tables retain native-ID fallback.
 
 - Schema 1.143 externalizes semantic class-skill roles through validated
   `class_loadouts.tsv` content and carries them through authoritative snapshots
