@@ -5746,21 +5746,11 @@ public sealed class DiabloCombatCommandProcessor
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
                 return false;
         } else {
-            // Legacy rows retain the native AiRanged close-range retreat
-            // values while validated content progressively owns this branch.
-            var retreatMinimumDistance = missile.RangedRetreatMinimumDistance == 0
-                ? 4
-                : missile.RangedRetreatMinimumDistance;
-            var retreatChanceBase = missile.RangedRetreatChanceBase == 0
-                ? 70
-                : missile.RangedRetreatChanceBase;
-            var retreatChanceIntelligenceScale = missile.RangedRetreatChanceIntelligenceScale == 0
-                ? 10
-                : missile.RangedRetreatChanceIntelligenceScale;
+            var retreatTuning = ResolveRangedRetreatTuning(missile);
             var retreatChance = checked(
-                retreatChanceBase
-                + retreatChanceIntelligenceScale * monster.Intelligence);
-            if (distance < retreatMinimumDistance
+                retreatTuning.ChanceBase
+                + retreatTuning.IntelligenceScale * monster.Intelligence);
+            if (distance < retreatTuning.MinimumDistance
                 && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
                 var retreat = FindGoatRangedRetreatDestination(
                     monster,
@@ -5883,6 +5873,23 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    private static (int MinimumDistance, int ChanceBase, int IntelligenceScale)
+        ResolveRangedRetreatTuning(AuthoritativeMonsterMissileDefinition? missile)
+    {
+        // Legacy rows retain the native four-tile and 70 + 10 * intelligence
+        // values while validated content progressively owns this boundary.
+        return (
+            missile?.RangedRetreatMinimumDistance > 0
+                ? missile.RangedRetreatMinimumDistance
+                : 4,
+            missile?.RangedRetreatChanceBase > 0
+                ? missile.RangedRetreatChanceBase
+                : 70,
+            missile?.RangedRetreatChanceIntelligenceScale > 0
+                ? missile.RangedRetreatChanceIntelligenceScale
+                : 10);
+    }
+
     /** Native AddInfernoControl state for a monster-owned Mega projectile. */
     private AuthoritativeProjectile CreateMonsterInfernoController(
         uint projectileEntityId,
@@ -5943,11 +5950,17 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus")
-            || (monsterMissiles is not null
-                && (!monsterMissiles.TryGet(monster.NativeAi, out var missile)
-                    || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BloodStar)))
+        if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus"))
             return false;
+
+        AuthoritativeMonsterMissileDefinition? missile = null;
+        if (monsterMissiles is not null) {
+            if (!monsterMissiles.TryGet(monster.NativeAi, out var mappedMissile)
+                || mappedMissile.ProjectileBehavior
+                    != AuthoritativeProjectileBehavior.BloodStar)
+                return false;
+            missile = mappedMissile;
+        }
 
         if (world.Projectiles.Values.Any(projectile =>
                 projectile.SourceEntityId == monster.EntityId
@@ -5955,8 +5968,12 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (distance < 4
-            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
+        var retreatTuning = ResolveRangedRetreatTuning(missile);
+        var retreatChance = checked(
+            retreatTuning.ChanceBase
+            + retreatTuning.IntelligenceScale * monster.Intelligence);
+        if (distance < retreatTuning.MinimumDistance
+            && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
             var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
             if (retreat.HasValue) {
                 monster.BeginMovement(retreat.Value.X, retreat.Value.Y);

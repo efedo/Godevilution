@@ -3930,6 +3930,92 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SuccubusFamilyUsesConfiguredRetreatDistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Succubus",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Succubus",
+                    "BloodStar",
+                    AuthoritativeProjectileBehavior.BloodStar,
+                    RangedRetreatMinimumDistance: 5,
+                    RangedRetreatChanceBase: 100,
+                    RangedRetreatChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void SuccubusFamilyUsesConfiguredRetreatChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Succubus",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Succubus",
+                    "BloodStar",
+                    AuthoritativeProjectileBehavior.BloodStar,
+                    RangedRetreatMinimumDistance: 4,
+                    RangedRetreatChanceBase: 1,
+                    RangedRetreatChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 1 ^ 9 ^ 7 = 15, outside the configured one-per-100 band.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Single(world.Projectiles);
+        Assert.Equal(
+            AuthoritativeProjectileBehavior.BloodStar,
+            Assert.Single(world.Projectiles.Values).Behavior);
+    }
+
+    [Fact]
     public void SuccubusAiDoesNotFallbackToAPhysicalHitWhenItsMissileLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
