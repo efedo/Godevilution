@@ -6147,15 +6147,18 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
-        if (monster.NativeAi != "Rhino"
-            || distance < 5
+        var rhinoTuning = GetRhinoTuning(monster);
+        if (!rhinoTuning.HasValue
+            || distance < rhinoTuning.Value.MinimumDistance
             || monster.ToHitSpecial <= 0
             || monster.MaxDamageSpecial <= 0)
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        // RhinoAi uses 2 * intelligence + 43 as its native charge boundary.
-        var chargeChance = Math.Min(100, 43 + (2 * monster.Intelligence));
+        var chargeChance = Math.Min(
+            100,
+            rhinoTuning.Value.ChanceBase
+                + (rhinoTuning.Value.IntelligenceScale * monster.Intelligence));
         if (attackSeed % 100U >= (uint)chargeChance
             || !world.HasLineOfSight(
                 monster.LevelId,
@@ -6212,6 +6215,26 @@ public sealed class DiabloCombatCommandProcessor
         else if (damage > 0)
             ApplyRhinoChargeKnockback(monster, player, players);
         return true;
+    }
+
+    private (int MinimumDistance, int ChanceBase, int IntelligenceScale)? GetRhinoTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Rhino")
+                return null;
+            if (definition.RhinoChargeMinimumDistance > 0
+                && definition.RhinoChargeChanceBase > 0
+                && definition.RhinoChargeChanceIntelligenceScale > 0) {
+                return (
+                    definition.RhinoChargeMinimumDistance,
+                    definition.RhinoChargeChanceBase,
+                    definition.RhinoChargeChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Rhino"
+            ? (5, 43, 2)
+            : null;
     }
 
     private (int X, int Y)? FindRhinoChargeDestination(

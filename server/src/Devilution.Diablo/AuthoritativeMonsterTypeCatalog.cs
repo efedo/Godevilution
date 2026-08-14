@@ -167,6 +167,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native SkeletonRanged arrow attack chance increase per intelligence point. */
     public int SkeletonRangedAttackChanceIntelligenceScale { get; init; }
+
+    /** Native Rhino minimum distance required for charge admission. */
+    public int RhinoChargeMinimumDistance { get; init; }
+
+    /** Native Rhino charge chance base before intelligence scaling. */
+    public int RhinoChargeChanceBase { get; init; }
+
+    /** Native Rhino charge chance increase per intelligence point. */
+    public int RhinoChargeChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -387,6 +396,20 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
                         || definition.SkeletonRangedAttackChanceBase != 0
                         || definition.SkeletonRangedAttackChanceIntelligenceScale != 0))
+                || definition.RhinoChargeMinimumDistance is < 0 or > 64
+                || definition.RhinoChargeChanceBase is < 0 or > 100
+                || definition.RhinoChargeChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Rhino"
+                    && ((definition.RhinoChargeMinimumDistance != 0
+                            || definition.RhinoChargeChanceBase != 0
+                            || definition.RhinoChargeChanceIntelligenceScale != 0)
+                        && (definition.RhinoChargeMinimumDistance <= 0
+                            || definition.RhinoChargeChanceBase <= 0
+                            || definition.RhinoChargeChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Rhino"
+                    && (definition.RhinoChargeMinimumDistance != 0
+                        || definition.RhinoChargeChanceBase != 0
+                        || definition.RhinoChargeChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -508,6 +531,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),
                 SkeletonRangedAttackChanceBase = row.OptionalInt32("skeleton_ranged_attack_chance_base"),
                 SkeletonRangedAttackChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_attack_chance_intelligence_scale"),
+                RhinoChargeMinimumDistance = row.OptionalInt32("rhino_charge_minimum_distance"),
+                RhinoChargeChanceBase = row.OptionalInt32("rhino_charge_chance_base"),
+                RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
             }));
     }
 

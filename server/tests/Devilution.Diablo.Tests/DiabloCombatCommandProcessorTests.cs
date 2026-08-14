@@ -3036,6 +3036,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoUsesValidatedChargeBoundaryTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                64,
+                "Horned Demon",
+                0,
+                0,
+                1,
+                4,
+                4,
+                10,
+                2,
+                5,
+                5,
+                32,
+                false,
+                false,
+                false) {
+                NativeAi = "Rhino",
+                RhinoChargeMinimumDistance = 6,
+                RhinoChargeChanceBase = 100,
+                RhinoChargeChanceIntelligenceScale = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 1,
+            levelId: 0,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 6,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void GargoyleAiHealsFromBeyondItsNativeSafetyBoundaryAndLocksItsSpecial()
     {
         var monster = new AuthoritativeCombatTarget(

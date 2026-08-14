@@ -483,6 +483,39 @@ public sealed class AuthoritativeMonsterCatalogTests
             skeletonRanged.SkeletonRangedAttackChanceIntelligenceScale));
     }
 
+    [Fact]
+    public void RejectsInvalidRhinoTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Rhino",
+                RhinoChargeMinimumDistance = 5,
+                RhinoChargeChanceBase = 43,
+                RhinoChargeChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                RhinoChargeChanceBase = 43,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsRhinoTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\trhino_charge_minimum_distance\trhino_charge_chance_base\trhino_charge_chance_intelligence_scale\n"
+                + "2\t0\tHorned Demon\t1\t2\t1\t4\t7\t10\t2\t5\t5\t32\t0\t0\t0\tRhino\t6\t45\t3\n");
+
+        var rhino = Assert.Single(catalog.Definitions);
+        Assert.Equal((6, 45, 3), (
+            rhino.RhinoChargeMinimumDistance,
+            rhino.RhinoChargeChanceBase,
+            rhino.RhinoChargeChanceIntelligenceScale));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,
