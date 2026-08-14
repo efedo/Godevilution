@@ -48,6 +48,10 @@ Status date: 2026-08-14
   when source metadata is present; metadata-free legacy rows retain the native
   staff and miscellaneous-ID fallback.
 
+- General store recharge now consults the active catalog's validated `Staff`
+  tag before applying the native type/miscellaneous-ID fallback; conflicting
+  item metadata therefore remains content-owned without breaking legacy rows.
+
 - Player loadout validation now uses the active item definition's `Shield`
   subtype for off-hand eligibility and only falls back to native item type
   when no explicit equipment subtype is declared.

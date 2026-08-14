@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make general store recharge validation consult validated `Staff` tags from
+  the active item catalog before legacy item-type/miscellaneous-ID fallback.
 - Centralize content-first weapon classification for attack-animation selection,
   Monk flexible blocking, and loadout off-hand validation; conflicting legacy
   item classes now follow validated `Weapon`/subtype tags with numeric fallback.
