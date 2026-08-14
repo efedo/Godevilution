@@ -77,6 +77,13 @@ public enum AuthoritativeProjectileBehavior
     MonsterArrow = 59,
 }
 
+/** Special handling selected by validated consumable-spell content. */
+public enum AuthoritativeConsumableBehavior
+{
+    Standard,
+    RuneFire,
+}
+
 /** Declarative spell tuning consumed by authoritative cast resolution. */
 public sealed record AuthoritativeSpellDefinition(
     uint SpellId,
@@ -91,6 +98,9 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native rune miscellaneous ID that resolves to this stable spell row. */
     public int ConsumableMiscId { get; init; }
+
+    /** Optional legacy-compatible override for special consumable cast handling. */
+    public AuthoritativeConsumableBehavior? ConsumableBehavior { get; init; }
 
     public int DamageAmount { get; init; }
 
@@ -407,6 +417,10 @@ public sealed class AuthoritativeSpellCatalog
                     $"Spell {definition.SpellId} has an invalid consumable miscellaneous ID {definition.ConsumableMiscId}. "
                     + $"Only rune IDs {FirstRuneMiscId} through {LastRuneMiscId} are supported.");
             }
+            if (definition.ConsumableBehavior is not null
+                && !Enum.IsDefined(definition.ConsumableBehavior.Value))
+                throw new InvalidDataException(
+                    $"Spell {definition.SpellId} has an invalid consumable behavior.");
             if (definition.ManaAdjustment < 0
                 || definition.ManaAdjustmentDivisor <= 0
                 || definition.CharacterLevelManaCost < 0
@@ -1722,6 +1736,7 @@ public sealed class AuthoritativeSpellCatalog
             row.OptionalInt32("status_magnitude")) {
             NativeSpellId = row.OptionalUInt32("native_spell_id"),
             ConsumableMiscId = row.OptionalInt32("consumable_misc_id"),
+            ConsumableBehavior = ParseConsumableBehavior(row),
             DamageAmount = row.OptionalInt32("damage_amount"),
             ManaAdjustment = row.OptionalInt32("mana_adjustment"),
             ManaAdjustmentDivisor = row.OptionalInt32("mana_adjustment_divisor", 1),
@@ -1911,5 +1926,22 @@ public sealed class AuthoritativeSpellCatalog
         }
         throw new InvalidDataException(
             $"Spell row {row.LineNumber} contains an unknown projectile behavior '{value}'.");
+    }
+
+    private static AuthoritativeConsumableBehavior? ParseConsumableBehavior(TsvRow row)
+    {
+        if (!row.TryGet("consumable_behavior", out var value))
+            return null;
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidDataException(
+                $"Column 'consumable_behavior' is empty on TSV row {row.LineNumber}.");
+        if (Enum.TryParse<AuthoritativeConsumableBehavior>(
+                value,
+                ignoreCase: true,
+                out var behavior)
+            && Enum.IsDefined(behavior))
+            return behavior;
+        throw new InvalidDataException(
+            $"Spell row {row.LineNumber} contains an unknown consumable behavior '{value}'.");
     }
 }

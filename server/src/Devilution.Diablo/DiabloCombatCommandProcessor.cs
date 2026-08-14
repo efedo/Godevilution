@@ -1392,7 +1392,7 @@ public sealed class DiabloCombatCommandProcessor
             && !TryResolveCastSource(player, intent, out source, out var sourceFailure))
             return DiabloCombatIntentResult.Rejected(sourceFailure);
         var isRuneFire = source.Kind == DiabloCastSourceKind.ConsumableItem
-            && source.Item?.State.MiscId == 47;
+            && IsRuneFireSpell(spell);
         var hasDamage = HasDamage(spell);
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
@@ -3200,6 +3200,12 @@ public sealed class DiabloCombatCommandProcessor
             ImpactLifetime = 1,
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
         };
+    }
+
+    private static bool IsRuneFireSpell(AuthoritativeSpellDefinition spell)
+    {
+        return spell.ConsumableBehavior == AuthoritativeConsumableBehavior.RuneFire
+            || (spell.ConsumableBehavior is null && spell.ConsumableMiscId == 47);
     }
 
     private AuthoritativeProjectile CreateLightningController(

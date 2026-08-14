@@ -26,6 +26,29 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void LoadsExplicitConsumableBehavior()
+    {
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tmana_cost\thealing_amount\tdamage_amount\tconsumable_behavior\n"
+            + "12\t16\t0\t0\tRuneFire\n");
+
+        var spell = Assert.Single(catalog.Definitions);
+        Assert.Equal(AuthoritativeConsumableBehavior.RuneFire, spell.ConsumableBehavior);
+    }
+
+    [Fact]
+    public void RejectsUnknownConsumableBehavior()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tmana_cost\thealing_amount\tdamage_amount\tconsumable_behavior\n"
+            + "12\t16\t0\t0\tUnknown\n"));
+
+        Assert.Contains("unknown consumable behavior", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedChargedBoltCarriesNativeStaffLevel()
     {
         var path = Path.Combine(
