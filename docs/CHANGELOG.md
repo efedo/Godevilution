@@ -74,6 +74,9 @@ All notable changes to this fork are documented below.
   and quest completion trigger through validated monster and item content.
 - Add schema 1.90's validated unique-monster catalog and opaque protocol/save
   identity, binding Defiler quest completion to the native unique identity.
+- Add schema 1.91's optional monster-missile `spell_id`, so mapped monster
+  projectile spell identities are supplied by validated content while older
+  overlays retain the compatibility inference path.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town

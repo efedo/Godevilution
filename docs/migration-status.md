@@ -233,6 +233,9 @@ Status date: 2026-08-14
   `unique_monsters.tsv`; the identity is persisted in snapshots/saves and
   projected through additive protocol fields so unique quest triggers remain
   exact rather than matching every base monster of the same type.
+- Schema 1.91 externalizes the mapped monster projectile `spell_id` through
+  `monster_missiles.tsv`; checked-in ranged rows now supply their authoritative
+  spell identity, while legacy overlays retain the prior inference fallback.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
