@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.99.0` schema in
+It declares its identity and `devilution.diablo@1.100.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1119,7 +1119,7 @@ the complete target header even when they upsert only one row.
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, and damage rules. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, and optional Jester dispatch tables. |
 | `items.tsv` | `item_id` | Normalized item identity, native compatibility metadata, placement, charges, and generation inputs. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
@@ -1148,7 +1148,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.99.0"
+      "version": "1.100.0"
   },
   "dependencyConstraints": [
     {
@@ -1180,7 +1180,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.99.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.100.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1236,6 +1236,9 @@ the 100-percent compatibility default.
 Schema 1.99 adds the optional `melee_armor_reduction_divisor` class column;
 checked-in classes now own the native Hellfire melee armor reduction rule, while
 legacy class rows retain the disabled-rule compatibility default.
+Schema 1.100 adds the optional `jester_spell_ids` spell column; the shipped
+Jester row now owns its ten-way native dispatch table, while legacy rows retain
+the compatibility table.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
