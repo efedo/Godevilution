@@ -4507,12 +4507,15 @@ public sealed class DiabloCombatCommandProcessor
                         PlayerDeathReason.MonsterOrTrap);
                 else if (damage > 0 && target.HitPointsQ6 > 0)
                     ApplyMonsterKnockback(target, victim, players);
-                if (target.HitPointsQ6 > 0 && GetBatAttackTuning(target).HasValue)
-                    target.StartBatRetreat(GetDirection(
-                        target.PositionX,
-                        target.PositionY,
-                        victim.PositionX,
-                        victim.PositionY));
+                var batTuning = GetBatAttackTuning(target);
+                if (target.HitPointsQ6 > 0 && batTuning.HasValue)
+                    target.StartBatRetreat(
+                        GetDirection(
+                            target.PositionX,
+                            target.PositionY,
+                            victim.PositionX,
+                            victim.PositionY),
+                        batTuning.Value.RetreatDurationTicks);
                 continue;
             }
 
@@ -5104,7 +5107,10 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    private (int ChanceBase, int IntelligenceScale)? GetBatAttackTuning(
+    private (
+        int ChanceBase,
+        int IntelligenceScale,
+        int RetreatDurationTicks)? GetBatAttackTuning(
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
@@ -5114,11 +5120,14 @@ public sealed class DiabloCombatCommandProcessor
                 && definition.BatAttackChanceIntelligenceScale > 0) {
                 return (
                     definition.BatAttackChanceBase,
-                    definition.BatAttackChanceIntelligenceScale);
+                    definition.BatAttackChanceIntelligenceScale,
+                    definition.BatRetreatDurationTicks > 0
+                        ? definition.BatRetreatDurationTicks
+                        : 2);
             }
         }
         return target.NativeAi == "Bat"
-            ? (8, 4)
+            ? (8, 4, 2)
             : null;
     }
 

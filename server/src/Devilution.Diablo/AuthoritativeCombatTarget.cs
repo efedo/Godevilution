@@ -486,19 +486,21 @@ public sealed class AuthoritativeCombatTarget
         ScavengerCorpseEntityId = corpseEntityId;
     }
 
-    internal void StartBatRetreat(int direction)
+    internal void StartBatRetreat(int direction, int retreatTicks)
     {
         if (NativeAi != "Bat")
             throw new InvalidOperationException("Only Bats can enter retreat.");
         if (direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(direction));
-        BatRetreatTicks = 2;
+        if (retreatTicks is < 1 or > 64)
+            throw new ArgumentOutOfRangeException(nameof(retreatTicks));
+        BatRetreatTicks = retreatTicks;
         BatRetreatDirection = direction;
     }
 
     internal void RestoreBatRetreat(int ticks, int direction)
     {
-        if (ticks is < 0 or > 2 || direction is < 0 or >= 8)
+        if (ticks is < 0 or > 64 || direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         if (ticks != 0 && NativeAi != "Bat")
             throw new InvalidDataException("Only Bats can restore retreat state.");

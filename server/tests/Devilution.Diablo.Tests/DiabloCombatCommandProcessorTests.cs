@@ -1716,6 +1716,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 NativeAi = "Bat",
                 BatAttackChanceBase = 20,
                 BatAttackChanceIntelligenceScale = 1,
+                BatRetreatDurationTicks = 5,
             },
         ]);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [bat]);
@@ -1726,7 +1727,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(2, [player]);
 
-        Assert.Equal(2, bat.BatRetreatTicks);
+        Assert.Equal(5, bat.BatRetreatTicks);
     }
 
     [Fact]

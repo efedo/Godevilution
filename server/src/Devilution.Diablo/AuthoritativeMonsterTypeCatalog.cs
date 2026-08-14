@@ -84,6 +84,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Bat adjacent attack chance increase per intelligence point. */
     public int BatAttackChanceIntelligenceScale { get; init; }
 
+    /** Native Bat post-hit retreat duration in authoritative ticks. */
+    public int BatRetreatDurationTicks { get; init; }
+
     /** Native SkeletonMelee movement-delay chance base before intelligence scaling. */
     public int SkeletonMeleeDelayChanceBase { get; init; }
 
@@ -320,6 +323,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Bat"
                     && (definition.BatAttackChanceBase != 0
                         || definition.BatAttackChanceIntelligenceScale != 0))
+                || definition.BatRetreatDurationTicks is < 0 or > 64
+                || (definition.NativeAi != "Bat"
+                    && definition.BatRetreatDurationTicks != 0)
                 || definition.SkeletonMeleeDelayChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeDelayChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "SkeletonMelee"
@@ -640,6 +646,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SneakRetreatTicks = row.OptionalInt32("sneak_retreat_ticks"),
                 BatAttackChanceBase = row.OptionalInt32("bat_attack_chance_base"),
                 BatAttackChanceIntelligenceScale = row.OptionalInt32("bat_attack_chance_intelligence_scale"),
+                BatRetreatDurationTicks = row.OptionalInt32("bat_retreat_duration_ticks"),
                 SkeletonMeleeDelayChanceBase = row.OptionalInt32("skeleton_melee_delay_chance_base"),
                 SkeletonMeleeDelayChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_delay_chance_intelligence_scale"),
                 SkeletonMeleeAttackChanceBase = row.OptionalInt32("skeleton_melee_attack_chance_base"),
