@@ -22,7 +22,10 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int ProjectileSpeed = 0,
     int ProjectileLifetime = 0,
     int ProjectileLifetimeBase = 0,
-    int ProjectileLifetimeIntelligenceScale = 0);
+    int ProjectileLifetimeIntelligenceScale = 0,
+    int PuddleDurationRandomRange = 0,
+    int PuddleDurationBase = 0,
+    int PuddleDurationIntelligenceScale = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -45,6 +48,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.ProjectileLifetime < 0
                 || definition.ProjectileLifetimeBase < 0
                 || definition.ProjectileLifetimeIntelligenceScale < 0
+                || definition.PuddleDurationRandomRange < 0
+                || definition.PuddleDurationBase < 0
+                || definition.PuddleDurationIntelligenceScale < 0
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -103,7 +109,10 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("projectile_speed"),
                 row.OptionalInt32("projectile_lifetime"),
                 row.OptionalInt32("projectile_lifetime_base"),
-                row.OptionalInt32("projectile_lifetime_intelligence_scale"));
+                row.OptionalInt32("projectile_lifetime_intelligence_scale"),
+                row.OptionalInt32("puddle_duration_random_range"),
+                row.OptionalInt32("puddle_duration_base"),
+                row.OptionalInt32("puddle_duration_intelligence_scale"));
         }));
     }
 

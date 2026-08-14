@@ -27,8 +27,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\n"
-                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\t8\t9\t20\t5\n");
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\t8\t9\t20\t5\t15\t40\t40\n");
 
         Assert.True(catalog.TryGet("Acid", out var acid));
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
@@ -39,6 +39,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(9, acid.ProjectileLifetime);
         Assert.Equal(20, acid.ProjectileLifetimeBase);
         Assert.Equal(5, acid.ProjectileLifetimeIntelligenceScale);
+        Assert.Equal(15, acid.PuddleDurationRandomRange);
+        Assert.Equal(40, acid.PuddleDurationBase);
+        Assert.Equal(40, acid.PuddleDurationIntelligenceScale);
     }
 
     [Fact]
@@ -56,6 +59,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.ProjectileLifetime);
         Assert.Equal(0, succubus.ProjectileLifetimeBase);
         Assert.Equal(0, succubus.ProjectileLifetimeIntelligenceScale);
+        Assert.Equal(0, succubus.PuddleDurationRandomRange);
+        Assert.Equal(0, succubus.PuddleDurationBase);
+        Assert.Equal(0, succubus.PuddleDurationIntelligenceScale);
     }
 
     [Fact]

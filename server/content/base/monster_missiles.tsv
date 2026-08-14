@@ -1,25 +1,25 @@
-native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spawn_monster_id	projectile_speed	projectile_lifetime	projectile_lifetime_base	projectile_lifetime_intelligence_scale
-GoatRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	0	0	0	0
-SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	0	0	0	0
-Snake	Rhino	SnakeCharge	Ranged	100	0	0	0	0	0	0	0
-Succubus	BloodStar	BloodStar	Ranged	100	0	36	0	0	0	0	0
-LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0	36	0	0	0	0	0
-Acid	Acid	Acid	RangedAvoidance	50	0	1	0	0	0	20	5
-AcidUnique	Acid	Acid	Ranged	100	0	1	0	0	0	20	5
-FireBat	Firebolt	Firebolt	Ranged	100	0	1	0	16	256	0	0
-Torchant	Fireball	Fireball	Ranged	100	0	12	0	16	256	0	0
-Lich	OrangeFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0
-ArchLich	YellowFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0
-Psychorb	BlueFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0
-Necromorb	RedFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0
-Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0	1	0	16	256	0	0
-Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0	3	0	32	256	0	0
-Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0	25	0	0	15	0	0
-BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0	1	0	16	256	0	0
-Mega	InfernoControl	InfernoController	Ranged	100	0	21	0	32	256	0	0
-Bat	Rhino	BatCharge	RangedAvoidance	100	42	0	0	0	0	0	0
-Counselor	Firebolt	Firebolt	Ranged	100	107	1	0	16	256	0	0
-Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	0	8	256	0	0
-Counselor	LightningControl	Lightning	Ranged	100	109	3	0	32	256	0	0
-Counselor	Fireball	Fireball	Ranged	100	110	12	0	16	256	0	0
-Counselor	Fireball	Fireball	Ranged	100	113	12	0	16	256	0	0
+native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spawn_monster_id	projectile_speed	projectile_lifetime	projectile_lifetime_base	projectile_lifetime_intelligence_scale	puddle_duration_random_range	puddle_duration_base	puddle_duration_intelligence_scale
+GoatRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	0	0	0	0	0	0	0
+SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	0	0	0	0	0	0	0
+Snake	Rhino	SnakeCharge	Ranged	100	0	0	0	0	0	0	0	0	0	0
+Succubus	BloodStar	BloodStar	Ranged	100	0	36	0	0	0	0	0	0	0	0
+LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0	36	0	0	0	0	0	0	0	0
+Acid	Acid	Acid	RangedAvoidance	50	0	1	0	0	0	20	5	15	40	40
+AcidUnique	Acid	Acid	Ranged	100	0	1	0	0	0	20	5	15	40	40
+FireBat	Firebolt	Firebolt	Ranged	100	0	1	0	16	256	0	0	0	0	0
+Torchant	Fireball	Fireball	Ranged	100	0	12	0	16	256	0	0	0	0	0
+Lich	OrangeFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0	0	0	0
+ArchLich	YellowFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0	0	0	0
+Psychorb	BlueFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0	0	0	0
+Necromorb	RedFlare	MonsterMagic	Ranged	100	0	1	0	16	256	0	0	0	0	0
+Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0	1	0	16	256	0	0	0	0	0
+Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0	3	0	32	256	0	0	0	0	0
+Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0	25	0	0	15	0	0	0	0	0
+BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0	1	0	16	256	0	0	0	0	0
+Mega	InfernoControl	InfernoController	Ranged	100	0	21	0	32	256	0	0	0	0	0
+Bat	Rhino	BatCharge	RangedAvoidance	100	42	0	0	0	0	0	0	0	0	0
+Counselor	Firebolt	Firebolt	Ranged	100	107	1	0	16	256	0	0	0	0	0
+Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	0	8	256	0	0	0	0	0
+Counselor	LightningControl	Lightning	Ranged	100	109	3	0	32	256	0	0	0	0	0
+Counselor	Fireball	Fireball	Ranged	100	110	12	0	16	256	0	0	0	0	0
+Counselor	Fireball	Fireball	Ranged	100	113	12	0	16	256	0	0	0	0	0

@@ -7079,9 +7079,24 @@ public sealed class DiabloCombatCommandProcessor
 
         var puddlePositionX = checked(projectile.PositionX + 1);
         var puddlePositionY = checked(projectile.PositionY + 1);
+        var puddleMapping = monsterMissiles is not null
+            && monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var mappedMissile)
+            && mappedMissile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+            ? mappedMissile
+            : null;
+        var puddleRandomRange = puddleMapping?.PuddleDurationRandomRange > 0
+            ? puddleMapping.PuddleDurationRandomRange
+            : 15;
+        var puddleDurationBase = puddleMapping?.PuddleDurationBase > 0
+            ? puddleMapping.PuddleDurationBase
+            : 40;
+        var puddleDurationIntelligenceScale = puddleMapping?.PuddleDurationIntelligenceScale > 0
+            ? puddleMapping.PuddleDurationIntelligenceScale
+            : 40;
         var puddleDuration = checked(
-            random.GenerateRnd(15)
-            + 40 * (monster.Intelligence + 1));
+            random.GenerateRnd(puddleRandomRange)
+            + puddleDurationBase
+            + puddleDurationIntelligenceScale * monster.Intelligence);
         var puddleDamage = monster.MonsterLevel >= 2 ? 2 : 1;
         var entityId = AllocateProjectileEntityId();
         world.Projectiles.Add(

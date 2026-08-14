@@ -3726,7 +3726,10 @@ public sealed class DiabloCombatCommandProcessorTests
                     AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
                     50,
                     ProjectileLifetimeBase: 22,
-                    ProjectileLifetimeIntelligenceScale: 4),
+                    ProjectileLifetimeIntelligenceScale: 4,
+                    PuddleDurationRandomRange: 1,
+                    PuddleDurationBase: 100,
+                    PuddleDurationIntelligenceScale: 1),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -3765,6 +3768,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.NotNull(puddle);
         Assert.Equal((8, 1), (puddle!.PositionX, puddle.PositionY));
+        Assert.Equal(98U, puddle.RemainingTicks);
         Assert.Equal(2, puddle.Damage);
         Assert.Contains(
             deliveries,
