@@ -4394,8 +4394,13 @@ public sealed class DiabloCombatCommandProcessor
                             victim.Equipment);
                 }
                 var attackSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
-                if (target.NativeAi == "SkeletonMelee"
-                    && attackSeed % 100U >= (uint)Math.Min(100, 20 + (2 * target.Intelligence)))
+                var skeletonMeleeAttackTuning = GetSkeletonMeleeAttackTuning(target);
+                if (skeletonMeleeAttackTuning.HasValue
+                    && attackSeed % 100U >= (uint)Math.Min(
+                        100,
+                        skeletonMeleeAttackTuning.Value.ChanceBase
+                            + (skeletonMeleeAttackTuning.Value.IntelligenceScale
+                                * target.Intelligence)))
                     continue;
                 if (target.NativeAi == "GoatMelee"
                     && attackSeed % 100U >= (uint)Math.Min(100, 23 + (2 * target.Intelligence)))
@@ -5088,6 +5093,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "SkeletonMelee"
             ? (35, 4)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetSkeletonMeleeAttackTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "SkeletonMelee")
+                return null;
+            if (definition.SkeletonMeleeAttackChanceBase > 0
+                && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0) {
+                return (
+                    definition.SkeletonMeleeAttackChanceBase,
+                    definition.SkeletonMeleeAttackChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "SkeletonMelee"
+            ? (20, 2)
             : null;
     }
 

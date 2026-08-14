@@ -462,7 +462,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -592,7 +592,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -764,7 +764,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -901,7 +901,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1038,7 +1038,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1408,7 +1408,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1595,7 +1595,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1998,7 +1998,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2070,7 +2070,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.121.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.122.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",

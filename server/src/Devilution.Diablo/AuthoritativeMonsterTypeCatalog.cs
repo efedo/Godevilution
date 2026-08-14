@@ -90,6 +90,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonMelee movement-delay chance reduction per intelligence point. */
     public int SkeletonMeleeDelayChanceIntelligenceScale { get; init; }
 
+    /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
+    public int SkeletonMeleeAttackChanceBase { get; init; }
+
+    /** Native SkeletonMelee adjacent attack chance increase per intelligence point. */
+    public int SkeletonMeleeAttackChanceIntelligenceScale { get; init; }
+
     /** Native GoatMelee movement admission chance base before intelligence scaling. */
     public int GoatMeleeMovementChanceBase { get; init; }
 
@@ -276,6 +282,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "SkeletonMelee"
                     && (definition.SkeletonMeleeDelayChanceBase != 0
                         || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0))
+                || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
+                || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "SkeletonMelee"
+                    && ((definition.SkeletonMeleeAttackChanceBase != 0
+                            || definition.SkeletonMeleeAttackChanceIntelligenceScale != 0)
+                        && (definition.SkeletonMeleeAttackChanceBase <= 0
+                            || definition.SkeletonMeleeAttackChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "SkeletonMelee"
+                    && (definition.SkeletonMeleeAttackChanceBase != 0
+                        || definition.SkeletonMeleeAttackChanceIntelligenceScale != 0))
                 || definition.GoatMeleeMovementChanceBase is < 0 or > 100
                 || definition.GoatMeleeMovementChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "GoatMelee"
@@ -505,6 +521,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 BatAttackChanceIntelligenceScale = row.OptionalInt32("bat_attack_chance_intelligence_scale"),
                 SkeletonMeleeDelayChanceBase = row.OptionalInt32("skeleton_melee_delay_chance_base"),
                 SkeletonMeleeDelayChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_delay_chance_intelligence_scale"),
+                SkeletonMeleeAttackChanceBase = row.OptionalInt32("skeleton_melee_attack_chance_base"),
+                SkeletonMeleeAttackChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_attack_chance_intelligence_scale"),
                 GoatMeleeMovementChanceBase = row.OptionalInt32("goat_melee_movement_chance_base"),
                 GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),

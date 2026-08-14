@@ -5440,6 +5440,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonMeleeAiUsesValidatedAdjacentAttackTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            monsterId: 1,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "SkeletonMelee",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Skeleton",
+                1,
+                16,
+                1,
+                1,
+                10,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                SkeletonMeleeAttackChanceBase = 10,
+                SkeletonMeleeAttackChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, outside the configured ten-percent band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void ZombieAiUsesItsNativeActionBandBeforeLongRangeMovement()
     {
         var monster = new AuthoritativeCombatTarget(
