@@ -22,6 +22,23 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsAndPropagatesExplicitSpellSourceKind()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tspell_id\tmax_charges\tspell_source_kind\n"
+                + "7\t10\t75\t100\t3\t9\t42\t40\tChargedItem\n");
+
+        var state = catalog.Generate(7, 42);
+
+        Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, state.SpellSourceKind);
+        Assert.Equal(
+            DiabloItemSpellSourceKind.ChargedItem,
+            DiabloCastSourceRules.ClassifyItem(state));
+        Assert.True(DiabloCastSourceRules.IsMatchingChargedItem(state, 42));
+    }
+
+    [Fact]
     public void LegacyArmorRollUsesTheNativeLcgSequence()
     {
         var catalog = new AuthoritativeItemCatalog([

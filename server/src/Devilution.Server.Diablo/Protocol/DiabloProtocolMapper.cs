@@ -752,6 +752,9 @@ internal static class DiabloProtocolMapper
             Flags = source.Flags,
             MiscId = source.MiscId,
             SpellId = source.SpellId,
+            SpellSourceKind = source.SpellSourceKind == ItemSpellSourceKind.Unspecified
+                ? null
+                : (DiabloItemSpellSourceKind)source.SpellSourceKind,
             ItemIndex = source.ItemIndex,
             Charges = source.Charges,
             MaxCharges = source.MaxCharges,
@@ -870,9 +873,8 @@ internal static class DiabloProtocolMapper
             InventoryHeight = state.InventoryHeight > 1 ? (uint)state.InventoryHeight : 0,
             BaseName = state.BaseName,
             IdentifiedName = state.IdentifiedName,
-            SpellSourceKind = (ItemSpellSourceKind)DiabloCastSourceRules.ClassifyItem(
-                state,
-                spells),
+            SpellSourceKind = (ItemSpellSourceKind)(state.SpellSourceKind
+                ?? DiabloCastSourceRules.ClassifyItem(state, spells)),
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;

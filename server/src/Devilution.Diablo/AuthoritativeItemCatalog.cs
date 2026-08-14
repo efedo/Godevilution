@@ -17,6 +17,9 @@ public sealed record AuthoritativeItemDefinition(
     int InventoryHeight,
     bool Identified)
 {
+    /** Explicit content-owned classification; null preserves legacy native fallback. */
+    public DiabloItemSpellSourceKind? SpellSourceKind { get; init; }
+
     public IReadOnlySet<string> GenerationTags { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     public int MinArmorClass { get; init; } = -1;
@@ -63,6 +66,7 @@ public sealed record AuthoritativeItemDefinition(
             ItemClass = ItemClass,
             MiscId = MiscId,
             SpellId = SpellId,
+            SpellSourceKind = SpellSourceKind,
             Flags = Flags,
             MinimumStrength = MinimumStrength,
             MinimumMagic = MinimumMagic,
@@ -107,7 +111,13 @@ public sealed class AuthoritativeItemCatalog
                 || definition.Durability < 0 || definition.MaxDurability < definition.Durability
                 || definition.InventoryWidth <= 0 || definition.InventoryHeight <= 0
                 || definition.NativeItemIndex < -1
-                || definition.Charges < 0 || definition.MaxCharges < definition.Charges)
+                || definition.Charges < 0 || definition.MaxCharges < definition.Charges
+                || (definition.SpellSourceKind is not null
+                    && !Enum.IsDefined(definition.SpellSourceKind.Value))
+                || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
+                    && (definition.SpellId <= 0 || definition.MaxCharges <= 0))
+                || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem
+                    && definition.SpellId <= 0))
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
                 throw new InvalidDataException($"Item {definition.ItemId} is defined more than once.");
@@ -235,6 +245,7 @@ public sealed class AuthoritativeItemCatalog
                 ItemClass = row.OptionalInt32("item_class"),
                 MiscId = row.OptionalInt32("misc_id"),
                 SpellId = row.OptionalInt32("spell_id"),
+                SpellSourceKind = ParseSpellSourceKind(row),
                 Flags = row.OptionalUInt32("flags"),
                 MinimumStrength = row.OptionalInt32("min_strength"),
                 MinimumMagic = row.OptionalInt32("min_magic"),
@@ -246,6 +257,20 @@ public sealed class AuthoritativeItemCatalog
                 MaxCharges = row.OptionalInt32("max_charges"),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
+    }
+
+    internal static DiabloItemSpellSourceKind? ParseSpellSourceKind(TsvRow row)
+    {
+        if (!row.TryGet("spell_source_kind", out var value))
+            return null;
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidDataException(
+                $"Column 'spell_source_kind' is empty on TSV row {row.LineNumber}.");
+        if (Enum.TryParse<DiabloItemSpellSourceKind>(value, ignoreCase: true, out var kind)
+            && Enum.IsDefined(kind))
+            return kind;
+        throw new InvalidDataException(
+            $"TSV row {row.LineNumber} contains unknown item spell source kind '{value}'.");
     }
 
     /** Loads the shipped itemdat.tsv shape and assigns stable IDs by explicit row order. */

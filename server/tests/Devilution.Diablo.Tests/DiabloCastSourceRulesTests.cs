@@ -43,4 +43,28 @@ public sealed class DiabloCastSourceRulesTests
             DiabloItemSpellSourceKind.None,
             DiabloCastSourceRules.ClassifyItem(item));
     }
+
+    [Fact]
+    public void ExplicitSourceKindOverridesNativeMiscellaneousIdentity()
+    {
+        var charged = AuthoritativeItemState.Empty with {
+            MiscId = 99,
+            SpellId = 7,
+            MaxCharges = 40,
+            SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+        };
+        var suppressed = charged with {
+            MiscId = 23,
+            SpellSourceKind = DiabloItemSpellSourceKind.None,
+        };
+
+        Assert.Equal(
+            DiabloItemSpellSourceKind.ChargedItem,
+            DiabloCastSourceRules.ClassifyItem(charged));
+        Assert.True(DiabloCastSourceRules.IsMatchingChargedItem(charged, 7));
+        Assert.Equal(
+            DiabloItemSpellSourceKind.None,
+            DiabloCastSourceRules.ClassifyItem(suppressed));
+        Assert.False(DiabloCastSourceRules.IsMatchingChargedItem(suppressed, 7));
+    }
 }
