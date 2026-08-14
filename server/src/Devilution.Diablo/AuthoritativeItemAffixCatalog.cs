@@ -422,7 +422,12 @@ public sealed class AuthoritativeItemAffixCatalog
             "LIGHT_CURSE" => state with { PlusLight = state.PlusLight - affix.Value1 },
             "SPLLVLADD" => state with { SpellLevelAdd = state.SpellLevelAdd + value },
             "CHARGES" => state with { Charges = state.Charges * Math.Max(1, affix.Value1), MaxCharges = state.MaxCharges * Math.Max(1, affix.Value1) },
-            "SPELL" => state with { SpellId = affix.Value1, Charges = affix.Value2, MaxCharges = affix.Value2 },
+            "SPELL" => state with {
+                SpellId = affix.Value1,
+                Charges = affix.Value2,
+                MaxCharges = affix.Value2,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
             "DUR" => state with { Durability = state.MaxDurability + state.MaxDurability * value / 100, MaxDurability = state.MaxDurability + state.MaxDurability * value / 100 },
             "DUR_CURSE" => state with { Durability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100), MaxDurability = Math.Max(1, state.MaxDurability - state.MaxDurability * value / 100) },
             "FIREDAM" => state with {

@@ -335,7 +335,12 @@ public sealed class AuthoritativeUniqueItemCatalog
             },
             "SETDUR" => state with { Durability = value, MaxDurability = value },
             "INDESTRUCTIBLE" => state with { Durability = 255, MaxDurability = 255 },
-            "SPELL" => state with { SpellId = power.Value1, Charges = power.Value2, MaxCharges = power.Value2 },
+            "SPELL" => state with {
+                SpellId = power.Value1,
+                Charges = power.Value2,
+                MaxCharges = power.Value2,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
             "FIRE_ARROWS" => state with {
                 Flags = (state.Flags
                     | AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag

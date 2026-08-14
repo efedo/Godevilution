@@ -334,6 +334,54 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void AffixSpellPowerMarksTheGeneratedItemAsCharged()
+    {
+        var affixes = new AuthoritativeItemAffixCatalog(
+            [new AuthoritativeItemAffix(
+                "Charged",
+                "SPELL",
+                7,
+                7,
+                1,
+                new HashSet<string>(),
+                1,
+                true)],
+            [new AuthoritativeItemAffix(
+                "Charged Suffix",
+                "SPELL",
+                7,
+                7,
+                1,
+                new HashSet<string>(),
+                1,
+                true)],
+            new AuthoritativeItemGenerationRules(0, 0, 0, 0, 0, 100, 100, 100, 0, 0));
+        var definition = new AuthoritativeItemDefinition(
+            7,
+            10,
+            75,
+            75,
+            0,
+            0,
+            0,
+            20,
+            20,
+            1,
+            1,
+            true);
+
+        var state = affixes.Apply(
+            definition.Generate(42),
+            42,
+            1,
+            new HashSet<string>());
+
+        Assert.Equal(7, state.SpellId);
+        Assert.Equal(7, state.MaxCharges);
+        Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, state.SpellSourceKind);
+    }
+
+    [Fact]
     public void LoadsLegacyItemAndUniqueTableShapesWithStableAliases()
     {
         const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
@@ -472,6 +520,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(10, item.SpellId);
         Assert.Equal(76, item.Charges);
         Assert.Equal(76, item.MaxCharges);
+        Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, item.SpellSourceKind);
         Assert.Equal(0, item.MinimumStrength);
         Assert.Equal(0x80000000U | 0x00040000U, item.Flags);
     }
