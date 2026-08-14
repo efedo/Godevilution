@@ -3780,7 +3780,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "SkeletonRanged",
+                NativeAi = "Fallen",
                 SkeletonRangedRetreatMinimumDistance = 5,
                 SkeletonRangedRetreatChanceBase = 100,
                 SkeletonRangedRetreatChanceIntelligenceScale = 1,

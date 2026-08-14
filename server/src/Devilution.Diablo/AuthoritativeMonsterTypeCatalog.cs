@@ -493,23 +493,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
                 || definition.SkeletonRangedAttackChanceBase is < 0 or > 100
                 || definition.SkeletonRangedAttackChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "SkeletonRanged"
-                    && ((definition.SkeletonRangedRetreatMinimumDistance != 0
-                            || definition.SkeletonRangedRetreatChanceBase != 0
-                            || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
-                            || definition.SkeletonRangedAttackChanceBase != 0
-                            || definition.SkeletonRangedAttackChanceIntelligenceScale != 0)
-                        && (definition.SkeletonRangedRetreatMinimumDistance <= 0
-                            || definition.SkeletonRangedRetreatChanceBase <= 0
-                            || definition.SkeletonRangedRetreatChanceIntelligenceScale <= 0
-                            || definition.SkeletonRangedAttackChanceBase <= 0
-                            || definition.SkeletonRangedAttackChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "SkeletonRanged"
-                    && (definition.SkeletonRangedRetreatMinimumDistance != 0
+                || ((definition.SkeletonRangedRetreatMinimumDistance != 0
                         || definition.SkeletonRangedRetreatChanceBase != 0
                         || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
                         || definition.SkeletonRangedAttackChanceBase != 0
-                        || definition.SkeletonRangedAttackChanceIntelligenceScale != 0))
+                        || definition.SkeletonRangedAttackChanceIntelligenceScale != 0)
+                    && (definition.SkeletonRangedRetreatMinimumDistance <= 0
+                        || definition.SkeletonRangedRetreatChanceBase <= 0
+                        || definition.SkeletonRangedRetreatChanceIntelligenceScale <= 0
+                        || definition.SkeletonRangedAttackChanceBase <= 0
+                        || definition.SkeletonRangedAttackChanceIntelligenceScale <= 0))
                 || definition.RhinoChargeMinimumDistance is < 0 or > 64
                 || definition.RhinoChargeChanceBase is < 0 or > 100
                 || definition.RhinoChargeChanceIntelligenceScale is < 0 or > 100

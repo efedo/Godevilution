@@ -6510,8 +6510,6 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "SkeletonRanged")
-                return null;
             if (definition.SkeletonRangedRetreatMinimumDistance > 0
                 && definition.SkeletonRangedRetreatChanceBase > 0
                 && definition.SkeletonRangedRetreatChanceIntelligenceScale > 0

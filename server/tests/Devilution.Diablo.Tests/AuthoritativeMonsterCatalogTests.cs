@@ -676,7 +676,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_ranged_retreat_minimum_distance\tskeleton_ranged_retreat_chance_base\tskeleton_ranged_retreat_chance_intelligence_scale\tskeleton_ranged_attack_chance_base\tskeleton_ranged_attack_chance_intelligence_scale\n"
-                + "2\t0\tSkeleton Bow\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tSkeletonRanged\t5\t15\t3\t4\t3\n");
+                + "2\t0\tSkeleton Bow\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tFallen\t5\t15\t3\t4\t3\n");
 
         var skeletonRanged = Assert.Single(catalog.Definitions);
         Assert.Equal((5, 15, 3, 4, 3), (
