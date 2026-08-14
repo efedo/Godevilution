@@ -272,6 +272,45 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void ShieldTagAllowsOffHandLoadoutDespiteConflictingLegacyItemType()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var source = ReadBase(root, "items.tsv");
+        var conflictingItems = string.Join(
+            "\r\n",
+            source.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => {
+                    if (!line.StartsWith("101\t", StringComparison.Ordinal))
+                        return line;
+                    var fields = line.Split('\t');
+                    fields[1] = "1";
+                    fields[14] = "1";
+                    return string.Join('\t', fields);
+                })) + "\r\n";
+        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", conflictingItems);
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            classes,
+            items,
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"));
+
+        var barbarian = catalog.CreateTemplate(
+                "tag-shield",
+                5,
+                null,
+                null,
+                null,
+                1)
+            .CreatePlayer();
+
+        Assert.Equal(2, Assert.Single(barbarian.Equipment, item => item.Slot == 5).State.ItemIndex);
+    }
+
+    [Fact]
     public void LegacyLoadoutSchemaDefaultsSemanticAbilityKind()
     {
         var root = FindRepositoryRoot();

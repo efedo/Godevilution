@@ -536,7 +536,9 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             6 => slot == 3,
             _ => false,
         };
-        var weaponInOffHand = slot == 5 && item.ItemClass == 1 && item.ItemType != 5;
+        var weaponInOffHand = slot == 5
+            && item.ItemClass == 1
+            && !IsShield(item);
         if (!slotMatchesLocation
             || (weaponInOffHand
                 && !playerClass.Flags.HasFlag(DiabloPlayerClassFlags.DualWield))
@@ -547,6 +549,23 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 $"Player loadout {playerClass.ClassId} cannot equip item {item.ItemId} in slot {slot}.");
         }
     }
+
+    private static bool IsShield(AuthoritativeItemDefinition item)
+    {
+        if (item.GenerationTags.Contains("Shield"))
+            return true;
+        if (HasExplicitEquipmentSubtype(item.GenerationTags))
+            return false;
+        return item.ItemType == 5;
+    }
+
+    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("Sword")
+            || tags.Contains("Axe")
+            || tags.Contains("Mace")
+            || tags.Contains("Bow")
+            || tags.Contains("Shield")
+            || tags.Contains("Staff");
 
     private static DiabloPlayerLoadoutItemLocation ParseLocation(TsvRow row)
     {
