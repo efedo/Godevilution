@@ -4071,12 +4071,13 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi is not ("FireBat" or "Torchant")
+        if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Firebolt
-                or AuthoritativeProjectileBehavior.Fireball))
+                or AuthoritativeProjectileBehavior.Fireball
+                or AuthoritativeProjectileBehavior.MonsterMagic))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
@@ -4112,7 +4113,10 @@ public sealed class DiabloCombatCommandProcessor
         // player spell speed is content-owned separately in spells.tsv.
         var speed = 16;
         var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
-        var damageType = spell?.DamageType ?? AuthoritativeDamageType.Fire;
+        var damageType = spell?.DamageType
+            ?? (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
+                ? AuthoritativeDamageType.Magic
+                : AuthoritativeDamageType.Fire);
         var direction = GetDirection(
             monster.PositionX,
             monster.PositionY,
@@ -4731,6 +4735,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterMagic) {
+                    AdvanceFirebolt(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
                     AdvanceBoneSpirit(tick, projectile, players, events);
                     continue;
@@ -4947,7 +4955,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         projectile.RemainingTicks--;
         if (projectile.RemainingTicks == 0) {
-            if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar
+            if ((projectile.Behavior is AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.MonsterMagic)
                 || projectile.Phase == AuthoritativeProjectilePhase.Impact) {
                 world.Projectiles.Remove(projectile.EntityId);
             } else {
@@ -4982,7 +4991,8 @@ public sealed class DiabloCombatCommandProcessor
                     playerTarget,
                     players,
                     events)) {
-                if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar) {
+                if (projectile.Behavior is AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.MonsterMagic) {
                     world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
@@ -5015,7 +5025,8 @@ public sealed class DiabloCombatCommandProcessor
                     playerTarget,
                     players,
                     events)) {
-                if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar) {
+                if (projectile.Behavior is AuthoritativeProjectileBehavior.BloodStar
+                    or AuthoritativeProjectileBehavior.MonsterMagic) {
                     world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }

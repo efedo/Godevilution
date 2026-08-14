@@ -43,6 +43,9 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles!.TryGet("Succubus", out var succubus));
         Assert.Equal("BloodStar", succubus.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Lich", out var lich));
+        Assert.Equal("OrangeFlare", lich.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, lich.ProjectileBehavior);
     }
 
     [Fact]

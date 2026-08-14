@@ -55,6 +55,8 @@ public enum AuthoritativeProjectileBehavior
     LightningWallController = 47,
     Golem = 48,
     Etherealize = 49,
+    /** Direct non-player magic missile emitted by a server-owned monster AI. */
+    MonsterMagic = 50,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */
