@@ -41,31 +41,43 @@ public static class AuthoritativeEquipmentAttackEffectRules
     public static ResourceGain Resolve(
         int damageQ6,
         uint usableEquipmentFlags,
-        Func<int, int> generateRnd)
+        Func<int, int> generateRnd,
+        int randomStealLifeDivisor = 8,
+        int stealLife3Percent = 3,
+        int stealLife5Percent = 5,
+        int stealMana3Percent = 3,
+        int stealMana5Percent = 5)
     {
         if (damageQ6 < 0)
             throw new ArgumentOutOfRangeException(nameof(damageQ6));
         ArgumentNullException.ThrowIfNull(generateRnd);
+        if (randomStealLifeDivisor <= 0
+            || stealLife3Percent is < 0 or > 100
+            || stealLife5Percent is < 0 or > 100
+            || stealMana3Percent is < 0 or > 100
+            || stealMana5Percent is < 0 or > 100) {
+            throw new ArgumentOutOfRangeException(nameof(randomStealLifeDivisor));
+        }
         if (damageQ6 == 0)
             return new ResourceGain(0, 0);
 
         var lifeQ6 = 0;
         if ((usableEquipmentFlags & RandomStealLifeFlag) != 0)
-            lifeQ6 = generateRnd(damageQ6 / 8);
+            lifeQ6 = generateRnd(damageQ6 / randomStealLifeDivisor);
 
         if ((usableEquipmentFlags & (StealLife3Flag | StealLife5Flag)) != 0) {
             if ((usableEquipmentFlags & StealLife5Flag) != 0)
-                lifeQ6 = checked(lifeQ6 + 5 * damageQ6 / 100);
+                lifeQ6 = checked(lifeQ6 + stealLife5Percent * damageQ6 / 100);
             else if ((usableEquipmentFlags & StealLife3Flag) != 0)
-                lifeQ6 = checked(lifeQ6 + 3 * damageQ6 / 100);
+                lifeQ6 = checked(lifeQ6 + stealLife3Percent * damageQ6 / 100);
         }
 
         var manaQ6 = 0;
         if ((usableEquipmentFlags & NoManaFlag) == 0) {
             if ((usableEquipmentFlags & StealMana5Flag) != 0)
-                manaQ6 = checked(5 * damageQ6 / 100);
+                manaQ6 = checked(stealMana5Percent * damageQ6 / 100);
             else if ((usableEquipmentFlags & StealMana3Flag) != 0)
-                manaQ6 = checked(3 * damageQ6 / 100);
+                manaQ6 = checked(stealMana3Percent * damageQ6 / 100);
         }
 
         return new ResourceGain(lifeQ6, manaQ6);

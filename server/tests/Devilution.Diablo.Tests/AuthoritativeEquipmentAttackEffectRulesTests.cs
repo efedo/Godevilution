@@ -49,4 +49,42 @@ public sealed class AuthoritativeEquipmentAttackEffectRulesTests
 
         Assert.Equal(new AuthoritativeEquipmentAttackEffectRules.ResourceGain(0, 0), gain);
     }
+
+    [Fact]
+    public void UsesConfiguredResourceRestorationTuning()
+    {
+        var gain = AuthoritativeEquipmentAttackEffectRules.Resolve(
+            damageQ6: 10000,
+            usableEquipmentFlags:
+                AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag
+                | AuthoritativeEquipmentAttackEffectRules.StealLife3Flag
+                | AuthoritativeEquipmentAttackEffectRules.StealMana5Flag,
+            generateRnd: limit => {
+                Assert.Equal(1000, limit);
+                return 25;
+            },
+            randomStealLifeDivisor: 10,
+            stealLife3Percent: 7,
+            stealMana5Percent: 9);
+
+        Assert.Equal(725, gain.LifeQ6);
+        Assert.Equal(900, gain.ManaQ6);
+    }
+
+    [Fact]
+    public void RejectsInvalidResourceRestorationTuning()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AuthoritativeEquipmentAttackEffectRules.Resolve(
+                100,
+                0,
+                _ => 0,
+                randomStealLifeDivisor: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AuthoritativeEquipmentAttackEffectRules.Resolve(
+                100,
+                0,
+                _ => 0,
+                stealMana5Percent: 101));
+    }
 }

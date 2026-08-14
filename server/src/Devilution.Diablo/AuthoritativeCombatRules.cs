@@ -43,7 +43,12 @@ public sealed class AuthoritativeCombatRules
         int monsterMinimumHitChanceLevel16 = 30,
         int monsterToHitLevelScale = 2,
         int monsterToHitBaseBonus = 30,
-        int monsterRangedDistancePenalty = 2)
+        int monsterRangedDistancePenalty = 2,
+        int randomStealLifeDivisor = 8,
+        int stealLife3Percent = 3,
+        int stealLife5Percent = 5,
+        int stealMana3Percent = 3,
+        int stealMana5Percent = 5)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -59,6 +64,13 @@ public sealed class AuthoritativeCombatRules
             || monsterToHitBaseBonus is < 0 or > 255
             || monsterRangedDistancePenalty is < 0 or > 64) {
             throw new InvalidDataException("Monster accuracy formula tuning is invalid.");
+        }
+        if (randomStealLifeDivisor <= 0
+            || stealLife3Percent is < 0 or > 100
+            || stealLife5Percent is < 0 or > 100
+            || stealMana3Percent is < 0 or > 100
+            || stealMana5Percent is < 0 or > 100) {
+            throw new InvalidDataException("Equipment attack-effect tuning is invalid.");
         }
         if (!Enum.IsDefined(gameVariant))
             throw new InvalidDataException("Combat game variant is invalid.");
@@ -104,6 +116,11 @@ public sealed class AuthoritativeCombatRules
         MonsterToHitLevelScale = monsterToHitLevelScale;
         MonsterToHitBaseBonus = monsterToHitBaseBonus;
         MonsterRangedDistancePenalty = monsterRangedDistancePenalty;
+        RandomStealLifeDivisor = randomStealLifeDivisor;
+        StealLife3Percent = stealLife3Percent;
+        StealLife5Percent = stealLife5Percent;
+        StealMana3Percent = stealMana3Percent;
+        StealMana5Percent = stealMana5Percent;
     }
 
     public int BaseAttackDamage { get; }
@@ -175,6 +192,21 @@ public sealed class AuthoritativeCombatRules
 
     /** Native per-tile accuracy penalty for monster ranged attacks. */
     public int MonsterRangedDistancePenalty { get; }
+
+    /** Native divisor for the random life-steal equipment effect. */
+    public int RandomStealLifeDivisor { get; }
+
+    /** Native percentage for the life-steal-3 equipment effect. */
+    public int StealLife3Percent { get; }
+
+    /** Native percentage for the life-steal-5 equipment effect. */
+    public int StealLife5Percent { get; }
+
+    /** Native percentage for the mana-steal-3 equipment effect. */
+    public int StealMana3Percent { get; }
+
+    /** Native percentage for the mana-steal-5 equipment effect. */
+    public int StealMana5Percent { get; }
 
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
@@ -399,7 +431,12 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_minimum_hit_chance_level_16", 30),
             row.OptionalInt32("monster_to_hit_level_scale", 2),
             row.OptionalInt32("monster_to_hit_base_bonus", 30),
-            row.OptionalInt32("monster_ranged_distance_penalty", 2));
+            row.OptionalInt32("monster_ranged_distance_penalty", 2),
+            row.OptionalInt32("random_steal_life_divisor", 8),
+            row.OptionalInt32("steal_life_3_percent", 3),
+            row.OptionalInt32("steal_life_5_percent", 5),
+            row.OptionalInt32("steal_mana_3_percent", 3),
+            row.OptionalInt32("steal_mana_5_percent", 5));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

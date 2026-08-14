@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.140.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.141.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,10 +188,10 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.140.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.141.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
-        Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2), (
+        Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 8, 3, 5, 3, 5), (
             combat.MonsterMeleeMinimumHitChance,
             combat.MonsterRangedMinimumHitChance,
             combat.MonsterMinimumHitChanceLevel14,
@@ -199,7 +199,12 @@ public sealed class ShippedContentTests
             combat.MonsterMinimumHitChanceLevel16,
             combat.MonsterToHitLevelScale,
             combat.MonsterToHitBaseBonus,
-            combat.MonsterRangedDistancePenalty));
+            combat.MonsterRangedDistancePenalty,
+            combat.RandomStealLifeDivisor,
+            combat.StealLife3Percent,
+            combat.StealLife5Percent,
+            combat.StealMana3Percent,
+            combat.StealMana5Percent));
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
         Assert.Equal(
             [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],

@@ -1000,7 +1000,12 @@ public sealed class DiabloCombatCommandProcessor
         var gain = AuthoritativeEquipmentAttackEffectRules.Resolve(
             damageQ6,
             GetUsableEquipmentFlags(player),
-            random.GenerateRnd);
+            random.GenerateRnd,
+            rules.RandomStealLifeDivisor,
+            rules.StealLife3Percent,
+            rules.StealLife5Percent,
+            rules.StealMana3Percent,
+            rules.StealMana5Percent);
         var lifeGain = Math.Min(
             Math.Max(0, player.LifeMaximum - player.Life),
             gain.LifeQ6);
