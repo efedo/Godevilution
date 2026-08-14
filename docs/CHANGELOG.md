@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route wounded Gargoyles through the native retreat boundary before their
+  server-owned self-heal, preserving the intelligence-based safety radius and
+  deterministic movement fallback.
 - Add schema 1.83 monster-specific `monster_missiles.tsv` rows so Gloom can
   use its native Rhino movement charge without hardcoded monster-type checks.
 - Add schema 1.82 ranged-AI mode and avoidance-probability fields to

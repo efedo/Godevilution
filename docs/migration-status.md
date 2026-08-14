@@ -200,7 +200,8 @@ Status date: 2026-08-13
 - The native `Gargoyle` wounded self-heal boundary is now server-owned: the
   deterministic native heal amount, Healing event, and distance-based special
   lock persist through snapshots, saves, protocol field 45, and canonical
-  hashes. Gargoyle retreat movement and animation timing remain incremental.
+  hashes. Wounded Gargoyles now retreat through a deterministic server-owned
+  movement fallback before healing; native animation timing remains incremental.
 - The native `GoatRanged` shared `AiRanged` boundary is now server-owned:
   clear-lane arrow damage, close-range avoidance probability, deterministic
   retreat selection, and blocked-lane fallback resolve through the authoritative

@@ -3746,7 +3746,7 @@ public sealed class DiabloCombatCommandProcessor
                 Math.Abs(victim.PositionY - target.PositionY));
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
                 continue;
-            if (TryAdvanceGargoyleHealing(target, victim, tick, events, distance))
+            if (TryAdvanceGargoyleHealing(target, victim, tick, players, events, distance))
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
@@ -3971,6 +3971,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
@@ -3984,9 +3985,11 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        if (monster.HitPointsQ6 >= monster.MaxHitPointsQ6 / 2
-            || distance < safeDistance)
+        if (monster.HitPointsQ6 >= monster.MaxHitPointsQ6 / 2)
             return false;
+
+        if (distance < safeDistance)
+            return TryBeginGargoyleRetreat(monster, player, players, distance);
 
         var healSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var divisor = 16 * ((int)(healSeed % 5U) + 4);
@@ -4008,6 +4011,48 @@ public sealed class DiabloCombatCommandProcessor
         // Native MFLAG_ALLOW_SPECIAL remains set until the player closes the
         // intelligence+2 boundary, unless this heal reached full life.
         monster.GargoyleSpecialActive = monster.HitPointsQ6 < monster.MaxHitPointsQ6;
+        return true;
+    }
+
+    /** Native GargoyleAi retreats from a wounded player before healing. */
+    private bool TryBeginGargoyleRetreat(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int currentDistance)
+    {
+        var retreat = Enumerable.Range(-1, 3)
+            .SelectMany(offsetY => Enumerable.Range(-1, 3)
+                .Select(offsetX => (
+                    X: monster.PositionX + offsetX,
+                    Y: monster.PositionY + offsetY)))
+            .Where(candidate => candidate.X != monster.PositionX
+                || candidate.Y != monster.PositionY)
+            .Where(candidate => world.IsWalkable(
+                monster.LevelId,
+                candidate.X,
+                candidate.Y))
+            .Where(candidate => !world.IsOccupied(
+                monster.LevelId,
+                candidate.X,
+                candidate.Y,
+                players,
+                monster.EntityId))
+            .Where(candidate => Math.Max(
+                Math.Abs(player.PositionX - candidate.X),
+                Math.Abs(player.PositionY - candidate.Y)) >= currentDistance)
+            .OrderByDescending(candidate => Math.Max(
+                Math.Abs(player.PositionX - candidate.X),
+                Math.Abs(player.PositionY - candidate.Y)))
+            .ThenBy(candidate => candidate.Y)
+            .ThenBy(candidate => candidate.X)
+            .Select(candidate => ((int X, int Y)?)candidate)
+            .FirstOrDefault();
+
+        if (!retreat.HasValue)
+            return false;
+
+        monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
         return true;
     }
 

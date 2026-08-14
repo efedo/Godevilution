@@ -1377,6 +1377,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiRetreatsBeforeHealingInsideItsNativeSafetyBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            8,
+            4,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            nativeAi: "Gargoyle",
+            intelligence: 2);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 6,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((3, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(40, monster.HitPoints);
+        Assert.False(monster.GargoyleSpecialActive);
+
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal((3, 0), (monster.PositionX, monster.PositionY));
+
+        var healing = processor.AdvanceTick(3, [player]);
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
+        Assert.True(monster.GargoyleSpecialActive);
+        Assert.Single(healing);
+    }
+
+    [Fact]
     public void GargoyleSpecialLockRequiresTheGargoyleNativeIdentity()
     {
         Assert.Throws<ArgumentException>(() => new AuthoritativeCombatTarget(
