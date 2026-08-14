@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.145.0` schema in
+It declares its identity and `devilution.diablo@1.146.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -955,7 +955,10 @@ its endpoint. Ball damage is generated once as
 effective spell level) * 64`.
 
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
-`native_item_index` used only for compatibility projection. `charges` and
+`native_item_index` used only for compatibility projection. `item_tags` also
+declares semantic equipment subtypes (`Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
+and `Staff`) for active rows; combat uses these tags before the native numeric
+fallback. `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
 matching uses the normalized `spell_id` and no longer depends on native
@@ -1304,7 +1307,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.145.0"
+      "version": "1.146.0"
   },
   "dependencyConstraints": [
     {
@@ -1336,7 +1339,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.145.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.146.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1545,6 +1548,9 @@ they are normalized.
 Schema 1.145 adds the optional `consumable_behavior` column to `spells.tsv`;
 the checked-in Rune of Fire row selects `RuneFire`, while older spell tables
 retain miscellaneous-ID fallback.
+Schema 1.146 adds the normalized equipment subtype tags to `items.tsv`; the
+checked-in base and Hellfire rows declare their weapon, bow, shield, and staff
+categories, while older rows retain native item-type compatibility behavior.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

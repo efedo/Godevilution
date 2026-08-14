@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Resolve equipped-item combat categories from validated content tags when the
   active catalog has an unambiguous native-index mapping, while retaining the
   legacy numeric item-type fallback for older or ambiguous rows.
+- Add schema 1.146's normalized equipment subtype tags and use them for the
+  server's player damage and undead/animal weapon modifiers, preserving the
+  native item-type fallback for legacy rows.
 - Honor `monster_missiles.tsv` spell identities for Succubus-family Blood Star
   projectiles and validate configured missile spell references against the active
   spell catalog, while preserving legacy inference for older rows.
