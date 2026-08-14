@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.112 externalizes Skeleton King summon-admission tuning through
+  validated `monster_types.tsv` rows; the active catalog feeds server-owned AI
+  while older targets retain the native compatibility values.
+
 - Schema 1.111 externalizes Zombie long-range movement-distance tuning through
   validated `monster_types.tsv` rows; the active catalog feeds server-owned AI
   while older targets retain the native compatibility values.

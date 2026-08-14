@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.112's optional Skeleton King summon-admission tuning, moving the
+  native minimum-distance and intelligence-scaled chance into validated monster
+  content while preserving legacy target behavior.
 - Add schema 1.111's optional Zombie movement-distance tuning, moving the
   native long-range movement threshold into validated monster content while
   preserving legacy target behavior.
