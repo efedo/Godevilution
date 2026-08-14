@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.102 externalizes native equipped-damage formula selection through
+  validated class content and removes symbol checks from physical damage and
+  Monk armor resolution. Legacy class tables retain their formula mapping at
+  the loader boundary.
+
 - Schema 1.101 externalizes two native class traits through validated
   `class_flags`: Monk staff fast-block timing and Barbarian hit-stun threshold
   scaling. Combat no longer selects those rules by class symbol, and older

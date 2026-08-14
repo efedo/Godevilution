@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.102's validated `physical_damage_formula` class column, moving
+  native equipped-damage formula selection out of symbol-specific equipment
+  rules while preserving legacy loader inference.
 - Add schema 1.101's validated `FastBlock` and `HeavyHitThreshold` class
   flags, moving Monk staff-block timing and Barbarian hit-stun threshold
   selection out of symbol-specific combat checks while preserving legacy
