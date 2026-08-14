@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.103's validated Monk unarmed damage level-divisor columns,
+  removing the remaining fixed base-damage divisors from the equipment rule.
 - Add schema 1.102's validated `physical_damage_formula` class column, moving
   native equipped-damage formula selection out of symbol-specific equipment
   rules while preserving legacy loader inference.

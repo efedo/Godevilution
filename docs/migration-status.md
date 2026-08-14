@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.103 externalizes the native Monk unarmed minimum and maximum
+  damage level divisors through validated class content, with compatibility
+  defaults for older class schemas.
+
 - Schema 1.102 externalizes native equipped-damage formula selection through
   validated class content and removes symbol checks from physical damage and
   Monk armor resolution. Legacy class tables retain their formula mapping at
