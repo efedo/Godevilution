@@ -3300,6 +3300,63 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleUsesValidatedHealingFormulaTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Gargoyle",
+                0,
+                0,
+                9,
+                60,
+                90,
+                45,
+                10,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Gargoyle",
+                GargoyleSafeDistanceBase = 2,
+                GargoyleSafeDistanceIntelligenceScale = 1,
+                GargoyleHealDivisorMultiplier = 16,
+                GargoyleHealDivisorRandomRange = 1,
+                GargoyleHealDivisorRandomOffset = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 1,
+            nativeAi: "Gargoyle");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var healing = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(46, monster.HitPoints);
+        var healingEvent = Assert.Single(healing).Event;
+        Assert.Equal(DiabloGameplayEventKind.Healing, healingEvent.Kind);
+        Assert.Equal(6, healingEvent.Amount);
+        Assert.Equal(6 * DiabloFixedPointQ6.Scale, healingEvent.AmountQ6);
+    }
+
+    [Fact]
     public void GargoyleAiClearsItsSpecialLockWhenThePlayerClosesDistance()
     {
         var monster = new AuthoritativeCombatTarget(

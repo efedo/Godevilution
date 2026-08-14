@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.126.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.127.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.126.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.127.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -408,11 +408,14 @@ public sealed class ShippedContentTests
             monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonSpawnChanceIntelligenceScale,
             monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonMovementChanceBase,
             monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonMovementChanceIntelligenceScale));
-        Assert.Equal((2, 1), monsterTypes.Definitions
+        Assert.Equal((2, 1, 16, 5, 4), monsterTypes.Definitions
             .Where(definition => definition.NativeAi == "Gargoyle")
             .Select(definition => (
                 definition.GargoyleSafeDistanceBase,
-                definition.GargoyleSafeDistanceIntelligenceScale))
+                definition.GargoyleSafeDistanceIntelligenceScale,
+                definition.GargoyleHealDivisorMultiplier,
+                definition.GargoyleHealDivisorRandomRange,
+                definition.GargoyleHealDivisorRandomOffset))
             .Distinct()
             .Single());
         Assert.True(activation.MonsterMissiles!.TryGet("HorkDemon", out var horkDemonMissile));

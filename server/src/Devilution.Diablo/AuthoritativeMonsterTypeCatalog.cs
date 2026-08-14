@@ -183,6 +183,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Gargoyle safety-boundary increase per intelligence point. */
     public int GargoyleSafeDistanceIntelligenceScale { get; init; }
 
+    /** Native Gargoyle self-heal divisor multiplier. */
+    public int GargoyleHealDivisorMultiplier { get; init; }
+
+    /** Native Gargoyle self-heal divisor random-range modulus. */
+    public int GargoyleHealDivisorRandomRange { get; init; }
+
+    /** Native Gargoyle self-heal divisor random offset. */
+    public int GargoyleHealDivisorRandomOffset { get; init; }
+
     /** Native SkeletonRanged minimum distance for retreat admission. */
     public int SkeletonRangedRetreatMinimumDistance { get; init; }
 
@@ -452,6 +461,19 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Gargoyle"
                     && (definition.GargoyleSafeDistanceBase != 0
                         || definition.GargoyleSafeDistanceIntelligenceScale != 0))
+                || definition.GargoyleHealDivisorMultiplier is < 0 or > 256
+                || definition.GargoyleHealDivisorRandomRange is < 0 or > 256
+                || definition.GargoyleHealDivisorRandomOffset is < 0 or > 256
+                || (definition.NativeAi == "Gargoyle"
+                    && ((definition.GargoyleHealDivisorMultiplier != 0
+                            || definition.GargoyleHealDivisorRandomRange != 0
+                            || definition.GargoyleHealDivisorRandomOffset != 0)
+                        && (definition.GargoyleHealDivisorMultiplier <= 0
+                            || definition.GargoyleHealDivisorRandomRange <= 0)))
+                || (definition.NativeAi != "Gargoyle"
+                    && (definition.GargoyleHealDivisorMultiplier != 0
+                        || definition.GargoyleHealDivisorRandomRange != 0
+                        || definition.GargoyleHealDivisorRandomOffset != 0))
                 || definition.SkeletonRangedRetreatMinimumDistance is < 0 or > 64
                 || definition.SkeletonRangedRetreatChanceBase is < 0 or > 100
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
@@ -614,6 +636,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 HorkDemonMovementChanceIntelligenceScale = row.OptionalInt32("hork_demon_movement_chance_intelligence_scale"),
                 GargoyleSafeDistanceBase = row.OptionalInt32("gargoyle_safe_distance_base"),
                 GargoyleSafeDistanceIntelligenceScale = row.OptionalInt32("gargoyle_safe_distance_intelligence_scale"),
+                GargoyleHealDivisorMultiplier = row.OptionalInt32("gargoyle_heal_divisor_multiplier"),
+                GargoyleHealDivisorRandomRange = row.OptionalInt32("gargoyle_heal_divisor_random_range"),
+                GargoyleHealDivisorRandomOffset = row.OptionalInt32("gargoyle_heal_divisor_random_offset"),
                 SkeletonRangedRetreatMinimumDistance = row.OptionalInt32("skeleton_ranged_retreat_minimum_distance"),
                 SkeletonRangedRetreatChanceBase = row.OptionalInt32("skeleton_ranged_retreat_chance_base"),
                 SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),

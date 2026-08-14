@@ -5455,7 +5455,9 @@ public sealed class DiabloCombatCommandProcessor
             return TryBeginGargoyleRetreat(monster, player, players, distance);
 
         var healSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var divisor = 16 * ((int)(healSeed % 5U) + 4);
+        var divisor = gargoyleTuning.Value.HealDivisorMultiplier
+            * ((int)(healSeed % (uint)gargoyleTuning.Value.HealDivisorRandomRange)
+                + gargoyleTuning.Value.HealDivisorRandomOffset);
         var healingQ6 = DiabloFixedPointQ6.FromWhole(
             monster.MaxHitPoints / divisor);
         var appliedHealingQ6 = monster.ApplyHealingQ6(healingQ6);
@@ -5477,7 +5479,12 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    private (int DistanceBase, int IntelligenceScale)? GetGargoyleTuning(
+    private (
+        int DistanceBase,
+        int IntelligenceScale,
+        int HealDivisorMultiplier,
+        int HealDivisorRandomRange,
+        int HealDivisorRandomOffset)? GetGargoyleTuning(
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
@@ -5487,11 +5494,20 @@ public sealed class DiabloCombatCommandProcessor
                 && definition.GargoyleSafeDistanceIntelligenceScale > 0) {
                 return (
                     definition.GargoyleSafeDistanceBase,
-                    definition.GargoyleSafeDistanceIntelligenceScale);
+                    definition.GargoyleSafeDistanceIntelligenceScale,
+                    definition.GargoyleHealDivisorMultiplier > 0
+                        ? definition.GargoyleHealDivisorMultiplier
+                        : 16,
+                    definition.GargoyleHealDivisorRandomRange > 0
+                        ? definition.GargoyleHealDivisorRandomRange
+                        : 5,
+                    definition.GargoyleHealDivisorMultiplier > 0
+                        ? definition.GargoyleHealDivisorRandomOffset
+                        : 4);
             }
         }
         return target.NativeAi == "Gargoyle"
-            ? (2, 1)
+            ? (2, 1, 16, 5, 4)
             : null;
     }
 
