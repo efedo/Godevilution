@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.121 externalizes Mega's monster-Inferno maximum distance, adjacent
+  and ranged intelligence bands, far-distance offset, and adjacent choice
+  modulo through validated `monster_missiles.tsv` content; older mappings retain
+  native compatibility values.
+
 - Schema 1.120 externalizes generic `Ranged` close-range retreat distance and
   chance tuning through validated `monster_missiles.tsv` rows; the active
   catalog feeds server-owned AI, including the dedicated Succubus-family Blood
