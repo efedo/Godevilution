@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.145 externalizes special consumable spell behavior through
+  `spells.tsv`; the checked-in Rune of Fire row declares `RuneFire`, while
+  legacy spell tables retain miscellaneous-ID fallback.
+
 - Schema 1.144 externalizes normalized item spell-source classification through
   `items.tsv`; generated state and protocol matching use the validated source
   kind and spell identity, including charged `SPELL` powers applied by unique

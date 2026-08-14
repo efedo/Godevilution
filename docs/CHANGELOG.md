@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.145's optional `consumable_behavior` spell metadata, so Rune of
+  Fire special handling is selected by validated content while older tables
+  retain the native miscellaneous-ID fallback.
 - Preserve charged-source classification when normalized unique items or magic
   affixes add a `SPELL` power after base item generation.
 - Add schema 1.144's explicit normalized item spell-source kind, so current

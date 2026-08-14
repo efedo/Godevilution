@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.144.0` schema in
+It declares its identity and `devilution.diablo@1.145.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1003,6 +1003,10 @@ count, and `projectile_count_level_divisor` adds the floor of effective spell
 level divided by that value. `projectile_behavior` selects a typed module-owned
 transition; its behavior-specific damage, resistance, impact, speed, and
 lifetime values remain external data rather than host policy.
+`consumable_behavior` optionally selects special handling for consumable spell
+casts (`Standard` or `RuneFire`). The checked-in Rune of Fire row declares
+`RuneFire`; older tables without the column retain the native miscellaneous-ID
+fallback.
 
 Spell `1` uses `Firebolt` behavior. Its mana columns reproduce the native
 post-first-level adjustment, Firebolt-specific adjustment divisor, minimum,
@@ -1298,7 +1302,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.144.0"
+      "version": "1.145.0"
   },
   "dependencyConstraints": [
     {
@@ -1330,7 +1334,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.144.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.145.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1536,6 +1540,9 @@ Schema 1.144 adds the optional `spell_source_kind` column to normalized
 `items.tsv`; checked-in item rows explicitly classify charged and consumable
 sources, while legacy item tables retain native miscellaneous-ID fallback until
 they are normalized.
+Schema 1.145 adds the optional `consumable_behavior` column to `spells.tsv`;
+the checked-in Rune of Fire row selects `RuneFire`, while older spell tables
+retain miscellaneous-ID fallback.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
