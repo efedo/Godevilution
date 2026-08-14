@@ -29,6 +29,11 @@ Status date: 2026-08-14
   blocking, and loadout off-hand validation; metadata-free or ambiguous rows
   retain the legacy `ItemClass` fallback.
 
+- PvP-ear native projection now comes from optional validated `combat.tsv`
+  fields for the native item index and miscellaneous ID; omitted fields retain
+  the compatibility values 23 and 44, while activation still rejects an ear
+  definition that disagrees with the configured projection.
+
 - Class Recharge admission now consults validated `Staff` item tags through the
   active catalog; direct legacy states without catalog metadata retain the
   native item-type path.

@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Project validated level dimensions and blocked-cell geometry in additive
   live snapshots so Godot can render the active server world; legacy client
   assets remain only as a fallback and saves/hashes omit static geometry.
+- Move the PvP-ear native item-index and miscellaneous-ID projection into
+  validated `combat.tsv` content, retaining the native 23/44 defaults for
+  legacy rows and covering custom projections with loader and replay tests.
 - Classify two-handed equipment from normalized `TwoHanded` tags before
   falling back to native equipment-location metadata for legacy content.
 - Validate loadout equipment slots from semantic hand, body-armor, helmet,

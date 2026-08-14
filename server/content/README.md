@@ -229,8 +229,10 @@ The `hellfire_armor_bonus_against_demons` and
 `hellfire_armor_bonus_against_undead` columns externalize the native Hellfire
 class-armor adjustments; legacy rows retain the 40/20 compatibility values.
 `pvp_ear_item_id` selects the normalized item definition used for a player-kill
-ear; activation requires that definition to project native `IDI_EAR` index 23
-and miscellaneous ID 44. Activation also requires a walkable restart
+ear. The optional `pvp_ear_native_item_index` and `pvp_ear_misc_id` columns
+select the native item-index and miscellaneous-ID projection, defaulting to
+23 and 44 for legacy rows; activation requires the normalized ear definition to
+match those configured values. Activation also requires a walkable restart
 destination and validates all death-drop bounds. For canonical
 inventory-backed Gold, the Diablo module applies the
 native two-pass stack-removal order, preserves whole-stack seeds, generates a
@@ -1276,7 +1278,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity. |
+| `combat.tsv` | singleton | Variant, combat defaults, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
