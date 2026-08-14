@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.115's optional SkeletonRanged admission tuning, moving the
+  native retreat and clear-lane arrow chance bands into validated monster
+  content while preserving legacy target behavior.
 - Add schema 1.114's optional Gargoyle safety-boundary tuning, moving the
   native wounded retreat/self-heal distance into validated monster content
   while preserving legacy target behavior.
