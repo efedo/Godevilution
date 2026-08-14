@@ -1778,6 +1778,10 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(2, [player]);
 
         Assert.Equal(5, bat.BatRetreatTicks);
+        processor.AdvanceTick(3, [player]);
+
+        Assert.Equal((0, 0), (bat.FuturePositionX, bat.FuturePositionY));
+        Assert.Equal(4, bat.BatRetreatTicks);
     }
 
     [Fact]

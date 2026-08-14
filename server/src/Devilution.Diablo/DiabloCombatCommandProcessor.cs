@@ -4600,10 +4600,11 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ulong tick)
     {
-        if (!GetBatAttackTuning(target).HasValue || target.BatRetreatTicks == 0)
+        var batTuning = GetBatAttackTuning(target);
+        if (!batTuning.HasValue || target.BatRetreatTicks == 0)
             return false;
 
-        var direction = target.BatRetreatTicks == 2
+        var direction = target.BatRetreatTicks == batTuning.Value.RetreatDurationTicks
             ? RotateDirection(target.BatRetreatDirection, 4)
             : RotateDirection(
                 target.BatRetreatDirection,
