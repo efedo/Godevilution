@@ -351,6 +351,37 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void TwoHandedTagRejectsOffHandLoadoutDespiteConflictingLegacyEquipmentLocation()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var source = ReadBase(root, "items.tsv");
+        var conflictingItems = string.Join(
+            "\r\n",
+            source.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => {
+                    if (!line.StartsWith("103\t", StringComparison.Ordinal))
+                        return line;
+                    var fields = line.Split('\t');
+                    fields[12] = "Bow,TwoHanded";
+                    fields[13] = "1";
+                    return string.Join('\t', fields);
+                })) + "\r\n";
+        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", conflictingItems);
+        var loadoutItems = ReadBase(root, "class_loadout_items.tsv") +
+            "1\t1\t101\tEquipment\t5\r\n";
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            classes,
+            items,
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            loadoutItems));
+    }
+
+    [Fact]
     public void LegacyLoadoutSchemaDefaultsSemanticAbilityKind()
     {
         var root = FindRepositoryRoot();

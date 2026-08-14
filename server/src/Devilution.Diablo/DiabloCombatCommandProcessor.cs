@@ -11627,11 +11627,11 @@ public sealed class DiabloCombatCommandProcessor
         return left is not null
             && right is null
             && AuthoritativeItemClassification.IsWeapon(left.State, items)
-            && left.State.EquipLocation != 2
+            && !AuthoritativeItemClassification.IsTwoHanded(left.State, items)
             || right is not null
             && left is null
             && AuthoritativeItemClassification.IsWeapon(right.State, items)
-            && right.State.EquipLocation != 2;
+            && !AuthoritativeItemClassification.IsTwoHanded(right.State, items);
     }
 
     /** Applies the native player-versus-player shield/class block boundary. */

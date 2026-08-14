@@ -128,6 +128,24 @@ public static class AuthoritativeItemClassification
         return state.EquipLocation == 7 && state.ItemClass == 3;
     }
 
+    public static bool IsTwoHanded(AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return definition.GenerationTags.Contains("TwoHanded")
+            || definition.EquipLocation == 2;
+    }
+
+    public static bool IsTwoHanded(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return IsTwoHanded(definition);
+        return state.EquipLocation == 2;
+    }
+
     public static bool IsLightArmor(AuthoritativeItemDefinition definition)
         => HasArmorSubtype(definition, "LightArmor", 6);
 

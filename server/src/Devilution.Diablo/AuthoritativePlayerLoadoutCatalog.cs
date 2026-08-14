@@ -501,7 +501,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         }
 
         var twoHanded = equipmentDefinitions
-            .FirstOrDefault(entry => entry.Slot == 4 && entry.Item.EquipLocation == 2);
+            .FirstOrDefault(entry => entry.Slot == 4
+                && AuthoritativeItemClassification.IsTwoHanded(entry.Item));
         if (twoHanded.Item is not null
             && equipmentDefinitions.Any(entry => entry.Slot == 5)) {
             throw new InvalidDataException(

@@ -130,6 +130,33 @@ public sealed class AuthoritativeItemClassificationTests
         Assert.True(AuthoritativeItemClassification.IsBelt(definition));
     }
 
+    [Fact]
+    public void ExplicitTwoHandedTagOverridesConflictingLegacyEquipmentLocation()
+    {
+        var definition = CreateDefinition(itemClass: 1, tags: ["Weapon", "TwoHanded"])
+            with {
+                EquipLocation = 1,
+                NativeItemIndex = 101,
+            };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+
+        Assert.True(AuthoritativeItemClassification.IsTwoHanded(definition));
+        Assert.True(AuthoritativeItemClassification.IsTwoHanded(
+            definition.Generate(42),
+            catalog));
+    }
+
+    [Fact]
+    public void TwoHandedClassificationRetainsLegacyEquipmentLocationFallback()
+    {
+        var definition = CreateDefinition(itemClass: 1, tags: [])
+            with {
+                EquipLocation = 2,
+            };
+
+        Assert.True(AuthoritativeItemClassification.IsTwoHanded(definition));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)
