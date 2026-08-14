@@ -36,8 +36,6 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
     private const uint QuickAttackFlag = 1U << 17;
-    /** Legacy Hork Spawn summon identity retained for old content/snapshots. */
-    private const uint HorkSpawnNativeMonsterId = 117;
 
     private static readonly int[] ChargedBoltPath = [
         -1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0,
@@ -4887,9 +4885,7 @@ public sealed class DiabloCombatCommandProcessor
                     AllocateProjectileEntityId(),
                     monster.EntityId,
                     victim.EntityId,
-                    missile.SpawnMonsterId != 0
-                        ? missile.SpawnMonsterId
-                        : HorkSpawnNativeMonsterId,
+                    missile.SpawnMonsterId,
                     monster.LevelId,
                     monster.PositionX,
                     monster.PositionY,
@@ -7713,11 +7709,12 @@ public sealed class DiabloCombatCommandProcessor
         if (!spawnPosition.HasValue)
             return;
 
+        if (projectile.SpellId == 0)
+            return;
+
         var summon = monsterSpawnPlanner.CreateNativeMonsterSummon(
             projectile.LevelId,
-            projectile.SpellId != 0
-                ? projectile.SpellId
-                : HorkSpawnNativeMonsterId,
+            projectile.SpellId,
             unchecked(
                 projectile.EntityId
                 ^ projectile.SourceEntityId

@@ -248,6 +248,17 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void RejectsHorkSpawnWithoutValidatedSpawnIdentity()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "HorkDemon",
+                "HorkSpawn",
+                AuthoritativeProjectileBehavior.HorkSpawn),
+        ]));
+    }
+
+    [Fact]
     public void RejectsPartialRangedAvoidanceTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([

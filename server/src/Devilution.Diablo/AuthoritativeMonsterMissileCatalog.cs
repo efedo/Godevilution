@@ -98,6 +98,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.InfernoRangedChanceIntelligenceScale is < 0 or > 100
                 || definition.InfernoRangedFarIntelligenceOffset is < 0 or > 64
                 || definition.InfernoAdjacentChoiceModulo is < 0 or > 100
+                || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HorkSpawn
+                    && definition.SpawnMonsterId == 0)
                 || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BatCharge
                     && ((definition.ChargeMinimumDistance != 0
                             || definition.ChargeChanceBase != 0
