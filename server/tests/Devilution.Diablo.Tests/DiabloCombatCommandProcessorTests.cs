@@ -3388,7 +3388,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Gargoyle",
+                NativeAi = "Fallen",
                 GargoyleSafeDistanceBase = 5,
                 GargoyleSafeDistanceIntelligenceScale = 1,
             },
@@ -3441,7 +3441,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Gargoyle",
+                NativeAi = "Fallen",
                 GargoyleSafeDistanceBase = 2,
                 GargoyleSafeDistanceIntelligenceScale = 1,
                 GargoyleHealingHealthThresholdPercent = 75,
@@ -3493,7 +3493,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Gargoyle",
+                NativeAi = "Fallen",
                 GargoyleSafeDistanceBase = 2,
                 GargoyleSafeDistanceIntelligenceScale = 1,
                 GargoyleHealDivisorMultiplier = 16,

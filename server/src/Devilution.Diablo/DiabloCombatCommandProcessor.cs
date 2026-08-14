@@ -5610,8 +5610,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Gargoyle")
-                return null;
             if (definition.GargoyleSafeDistanceBase > 0
                 && definition.GargoyleSafeDistanceIntelligenceScale > 0) {
                 return (

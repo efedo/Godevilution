@@ -439,30 +439,19 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.HorkDemonMovementChanceIntelligenceScale <= 0))
                 || definition.GargoyleSafeDistanceBase is < 0 or > 64
                 || definition.GargoyleSafeDistanceIntelligenceScale is < 0 or > 64
-                || (definition.NativeAi == "Gargoyle"
-                    && ((definition.GargoyleSafeDistanceBase != 0
-                            || definition.GargoyleSafeDistanceIntelligenceScale != 0)
-                        && (definition.GargoyleSafeDistanceBase <= 0
-                            || definition.GargoyleSafeDistanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Gargoyle"
-                    && (definition.GargoyleSafeDistanceBase != 0
-                        || definition.GargoyleSafeDistanceIntelligenceScale != 0))
+                || ((definition.GargoyleSafeDistanceBase != 0
+                        || definition.GargoyleSafeDistanceIntelligenceScale != 0)
+                    && (definition.GargoyleSafeDistanceBase <= 0
+                        || definition.GargoyleSafeDistanceIntelligenceScale <= 0))
                 || definition.GargoyleHealingHealthThresholdPercent is < 0 or > 100
-                || (definition.NativeAi != "Gargoyle"
-                    && definition.GargoyleHealingHealthThresholdPercent != 0)
                 || definition.GargoyleHealDivisorMultiplier is < 0 or > 256
                 || definition.GargoyleHealDivisorRandomRange is < 0 or > 256
                 || definition.GargoyleHealDivisorRandomOffset is < 0 or > 256
-                || (definition.NativeAi == "Gargoyle"
-                    && ((definition.GargoyleHealDivisorMultiplier != 0
-                            || definition.GargoyleHealDivisorRandomRange != 0
-                            || definition.GargoyleHealDivisorRandomOffset != 0)
-                        && (definition.GargoyleHealDivisorMultiplier <= 0
-                            || definition.GargoyleHealDivisorRandomRange <= 0)))
-                || (definition.NativeAi != "Gargoyle"
-                    && (definition.GargoyleHealDivisorMultiplier != 0
+                || ((definition.GargoyleHealDivisorMultiplier != 0
                         || definition.GargoyleHealDivisorRandomRange != 0
-                        || definition.GargoyleHealDivisorRandomOffset != 0))
+                        || definition.GargoyleHealDivisorRandomOffset != 0)
+                    && (definition.GargoyleHealDivisorMultiplier <= 0
+                        || definition.GargoyleHealDivisorRandomRange <= 0))
                 || definition.ScavengerHealingDurationTicks is < 0 or > 64
                 || definition.ScavengerCorpseSearchRadius is < 0 or > 64
                 || definition.ScavengerHellfireHealingDivisor is < 0 or > 256

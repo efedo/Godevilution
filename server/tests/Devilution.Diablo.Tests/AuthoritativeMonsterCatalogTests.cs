@@ -554,11 +554,6 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
             CreateType(1, 1, 1) with {
-                GargoyleHealingHealthThresholdPercent = 50,
-            },
-        ]));
-        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
-            CreateType(1, 1, 1) with {
                 NativeAi = "Gargoyle",
                 GargoyleSafeDistanceBase = 2,
                 GargoyleSafeDistanceIntelligenceScale = 0,
@@ -576,12 +571,6 @@ public sealed class AuthoritativeMonsterCatalogTests
                 GargoyleHealDivisorRandomRange = 0,
             },
         ]));
-        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
-            CreateType(1, 1, 1) with {
-                GargoyleHealDivisorMultiplier = 16,
-                GargoyleHealDivisorRandomRange = 5,
-            },
-        ]));
     }
 
     [Fact]
@@ -590,7 +579,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tgargoyle_safe_distance_base\tgargoyle_safe_distance_intelligence_scale\tgargoyle_healing_health_threshold_percent\tgargoyle_heal_divisor_multiplier\tgargoyle_heal_divisor_random_range\tgargoyle_heal_divisor_random_offset\n"
-                + "2\t0\tGargoyle\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tGargoyle\t3\t2\t75\t16\t5\t4\n");
+                + "2\t0\tGargoyle\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t3\t2\t75\t16\t5\t4\n");
 
         var gargoyle = Assert.Single(catalog.Definitions);
         Assert.Equal((3, 2, 75), (
