@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.128 externalizes Scavenger corpse-eating duration, search radius,
+  variant healing, and base-game target-health tuning through validated
+  `monster_types.tsv` rows; the active catalog feeds server-owned healing while
+  older targets retain the native compatibility values.
+
 - Schema 1.127 externalizes the Gargoyle self-heal divisor multiplier,
   random-range modulus, and random offset through validated `monster_types.tsv`
   rows; the active catalog feeds server-owned healing while older targets retain

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.128's optional Scavenger healing/search tuning, moving corpse
+  duration, search radius, variant healing, and target-health rules into
+  validated monster type content while preserving legacy target behavior.
 - Add schema 1.127's optional Gargoyle healing-formula tuning, moving the native
   divisor multiplier, random-range modulus, and random offset into validated
   monster type content while preserving legacy target behavior.
