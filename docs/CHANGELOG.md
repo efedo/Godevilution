@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Clarify the `monster_missiles.tsv` migration contract: checked-in rows use
+  explicit migrated projectile behaviors, while legacy `Targeted` values are
+  accepted only as compatibility spellings for older overlays.
 - Add Godot right-click combat targeting: the client resolves visible monster
   and living remote-player snapshots to `AttackRequested` intents while the
   server retains all combat admission, timing, hit, damage, and action-state

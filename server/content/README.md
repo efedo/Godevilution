@@ -191,9 +191,10 @@ as server-owned metadata. The Rhino charge now uses the native `43 + 2 *
 intelligence` boundary.
 Schema 1.81 adds the validated `monster_missiles.tsv` table. Each native AI
 identity maps to its retained native missile ID and authoritative projectile
-behavior. Unsupported behaviors remain declared as `Targeted` until their
-native projectile controllers are migrated; the mapping itself remains
-content-owned and validated.
+behavior. The mapping remains content-owned and validated; checked-in rows use
+the most specific migrated behavior, while older overlays may retain
+`Targeted` as a compatibility spelling until their projectile controllers are
+migrated.
 Schema 1.82 adds optional `attack_mode` and
 `avoidance_probability_percent` columns to `monster_missiles.tsv`. The active
 content pack now selects the native `AiRanged` or `AiRangedAvoidance` branch
