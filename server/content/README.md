@@ -122,7 +122,8 @@ The optional `goat_melee_special_health_threshold_percent` and
 `goat_melee_special_chance_group_period` columns externalize the GoatMelee
 wounded-special health threshold and deterministic random-group period.
 Legacy monster rows retain the native 50-percent threshold and two-group
-compatibility gate.
+compatibility gate. A complete positive special tuple selects the behavior
+regardless of the row's `native_ai` label.
 The optional `scavenger_healing_health_threshold_percent` column externalizes
 the Scavenger wounded-health admission threshold for corpse seeking. Legacy
 monster rows retain the native 50-percent compatibility threshold.
@@ -149,7 +150,9 @@ rows without migrated tuning retain the native-name compatibility path.
 The optional `goat_melee_movement_chance_base` and
 `goat_melee_movement_chance_intelligence_scale` columns externalize the
 GoatMelee non-adjacent movement admission band. Legacy monster rows retain the
-native base-twenty-eight, intelligence-scale-two compatibility values.
+native base-twenty-eight, intelligence-scale-two compatibility values. A
+complete positive tuple selects the behavior regardless of the row's `native_ai`
+label; rows without migrated tuning retain the native-name compatibility path.
 The optional `fat_movement_chance_base` and
 `fat_movement_chance_intelligence_scale` columns externalize the Fat/Overlord
 non-adjacent movement admission band. Legacy monster rows retain the native
@@ -384,7 +387,8 @@ row supplies the native close-range retreat distance and
 selection.
 The `GoatMelee` identity now consumes the validated adjacent attack band
 (`23 + 2 * intelligence` in the checked-in rows) and wounded special branch,
-with special accuracy and damage resolved by the server.
+with special accuracy and damage resolved by the server. Complete positive
+tuples select these behaviors regardless of the row's `native_ai` label.
 The `SkeletonMelee` identity now uses its native adjacent `20 + 2 * intelligence`
 attack admission boundary; clients never perform the monster attack roll.
 The `Zombie` identity now uses its native `10 + 2 * intelligence` action band,
@@ -1500,7 +1504,8 @@ intelligence` admission while older rows retain the native compatibility values.
 Complete positive tuples are selected independently of the `native_ai` label.
 Schema 1.123 adds optional GoatMelee adjacent attack-band columns to
 `monster_types.tsv`; checked-in GoatMelee rows own their `23 + 2 * intelligence`
-admission while older rows retain the native compatibility values.
+admission while older rows retain the native compatibility values. Complete
+positive tuples are selected independently of the `native_ai` label.
 Schema 1.124 adds optional Fat/Overlord adjacent attack and special-band columns
 to `monster_types.tsv`; checked-in Fat rows own their `20 + 4 * intelligence`
 admission and `15 + 4 * intelligence` special lower bound while older rows
@@ -1528,7 +1533,8 @@ while older rows retain the compatibility duration.
 Schema 1.130 adds optional GoatMelee wounded-special columns to
 `monster_types.tsv`; checked-in GoatMelee rows own the native 50-percent
 health threshold and two-group deterministic gate while older rows retain the
-compatibility values.
+compatibility values. Complete positive tuples are selected independently of
+the `native_ai` label.
 Schema 1.131 adds the optional Scavenger wounded-health threshold column to
 `monster_types.tsv`; checked-in Scavenger rows own the native 50-percent corpse
 seeking threshold while older rows retain the compatibility value.

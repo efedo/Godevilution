@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select GoatMelee movement, adjacent attack, and wounded-special behavior from
+  complete validated tuning tuples rather than requiring the `GoatMelee`
+  native-AI name; legacy rows without tuning retain native-name compatibility
+  defaults.
 - Select SkeletonMelee movement-delay and adjacent attack admission from
   complete validated tuning tuples rather than requiring the `SkeletonMelee`
   native-AI name; legacy rows without tuning retain native-name compatibility
