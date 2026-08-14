@@ -39,6 +39,9 @@ Status date: 2026-08-13
   SkeletonMelee content boundary creates deterministic summons on an available
   adjacent cell; clients receive ordinary authoritative monster snapshots and
   never execute the summon AI.
+- Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
+  band, then retain the native two-step retreat direction and countdown through
+  snapshots, saves, protocol, and canonical hashes.
 
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.

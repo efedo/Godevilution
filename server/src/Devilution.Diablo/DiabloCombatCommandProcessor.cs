@@ -3742,6 +3742,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceFallenFear(target, players))
                 continue;
+            if (TryAdvanceBatRetreat(target, players, tick))
+                continue;
             if (target.AggroRange <= 0)
                 continue;
 
@@ -3809,6 +3811,10 @@ public sealed class DiabloCombatCommandProcessor
                 if (target.NativeAi == "Fat"
                     && !NativeFatAttackBandAllowsAttack(target, attackSeed))
                     continue;
+                if (target.NativeAi == "Bat"
+                    && attackSeed % 100U
+                        >= (uint)Math.Min(100, 4 * target.Intelligence + 8))
+                    continue;
                 var usesSpecialAttack = UsesNativeFatSpecialAttack(
                     target,
                     attackSeed)
@@ -3873,6 +3879,12 @@ public sealed class DiabloCombatCommandProcessor
                         PlayerDeathReason.MonsterOrTrap);
                 else if (damage > 0)
                     ApplyMonsterKnockback(target, victim, players);
+                if (target.NativeAi == "Bat")
+                    target.StartBatRetreat(GetDirection(
+                        target.PositionX,
+                        target.PositionY,
+                        victim.PositionX,
+                        victim.PositionY));
                 continue;
             }
 
@@ -3945,6 +3957,36 @@ public sealed class DiabloCombatCommandProcessor
             break;
         }
         target.AdvanceFallenFear();
+        return true;
+    }
+
+    /** Native Bat retreat: move away once, then take one deterministic side step. */
+    private bool TryAdvanceBatRetreat(
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick)
+    {
+        if (target.NativeAi != "Bat" || target.BatRetreatTicks == 0)
+            return false;
+
+        var direction = target.BatRetreatTicks == 2
+            ? RotateDirection(target.BatRetreatDirection, 4)
+            : RotateDirection(
+                target.BatRetreatDirection,
+                ((unchecked((uint)tick) ^ target.EntityId) & 1U) == 0 ? 1 : -1);
+        var displacement = DirectionDisplacements[direction];
+        var candidateX = checked(target.PositionX + displacement.X);
+        var candidateY = checked(target.PositionY + displacement.Y);
+        if (world.IsWalkable(target.LevelId, candidateX, candidateY)
+            && !world.IsOccupied(
+                target.LevelId,
+                candidateX,
+                candidateY,
+                players,
+                target.EntityId)) {
+            target.BeginMovement(candidateX, candidateY);
+        }
+        target.AdvanceBatRetreat();
         return true;
     }
 

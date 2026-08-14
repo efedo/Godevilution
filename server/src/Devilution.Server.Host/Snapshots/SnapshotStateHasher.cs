@@ -307,6 +307,11 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.ScavengerHealingTicks);
                     hasher.AppendUInt32(monster.ScavengerCorpseEntityId);
                 }
+                if (monster.BatRetreatTicks != 0 || monster.BatRetreatDirection != 0) {
+                    hasher.AppendString("godevilution-monster-bat-retreat-v1");
+                    hasher.AppendInt32(monster.BatRetreatTicks);
+                    hasher.AppendInt32(monster.BatRetreatDirection);
+                }
             }
         }
 

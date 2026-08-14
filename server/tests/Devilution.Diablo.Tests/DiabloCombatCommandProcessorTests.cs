@@ -486,6 +486,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BatUsesNativeAttackBandAndTwoStepRetreat()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            maxHitPoints: 20,
+            aggroRange: 6,
+            levelId: 0,
+            nativeAi: "Bat",
+            intelligence: 255);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [bat]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(positionX: 2, positionY: 0, levelId: 0, entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(2, bat.BatRetreatTicks);
+        Assert.Equal(7, bat.BatRetreatDirection);
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal((1, 0), (bat.PositionX, bat.PositionY));
+        Assert.Equal((0, 0), (bat.FuturePositionX, bat.FuturePositionY));
+        Assert.Equal(1, bat.BatRetreatTicks);
+
+        processor.AdvanceTick(3, [player]);
+
+        Assert.Equal((0, 0), (bat.PositionX, bat.PositionY));
+        Assert.Equal((1, 1), (bat.FuturePositionX, bat.FuturePositionY));
+        Assert.Equal(0, bat.BatRetreatTicks);
+        Assert.Equal(0, bat.BatRetreatDirection);
+    }
+
+    [Fact]
+    public void BatSkipsAdjacentAttackOutsideNativeAttackBand()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 6,
+            levelId: 0,
+            nativeAi: "Bat",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [bat]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(positionX: 2, positionY: 0, levelId: 0, entityId: 7);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(0, bat.BatRetreatTicks);
+    }
+
+    [Fact]
     public void AttackUsesValidatedMonsterExperienceReward()
     {
         var target = new AuthoritativeCombatTarget(

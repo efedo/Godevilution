@@ -89,6 +89,8 @@ internal static class DiabloProtocolMapper
                 SneakRetreatTicks = monster.SneakRetreatTicks,
                 ScavengerHealingTicks = monster.ScavengerHealingTicks,
                 ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
+                BatRetreatTicks = monster.BatRetreatTicks,
+                BatRetreatDirection = monster.BatRetreatDirection,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -385,6 +387,8 @@ internal static class DiabloProtocolMapper
                 SneakRetreatTicks = monster.SneakRetreatTicks,
                 ScavengerHealingTicks = monster.ScavengerHealingTicks,
                 ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
+                BatRetreatTicks = monster.BatRetreatTicks,
+                BatRetreatDirection = monster.BatRetreatDirection,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),

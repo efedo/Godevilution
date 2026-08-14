@@ -246,6 +246,11 @@ values but never execute the corresponding AI.
 `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
 identity and position are server-owned and included in canonical hashing.
 
+`MonsterSnapshot` fields 52-53 carry Bat retreat steps and the direction toward
+the victim captured when the retreat began. The server applies the native
+`4 * intelligence + 8` adjacent-attack admission and performs the two-step
+retreat; clients render only the authoritative state.
+
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid
 `SkeletonMelee` definition, creates the summon on an available adjacent cell,

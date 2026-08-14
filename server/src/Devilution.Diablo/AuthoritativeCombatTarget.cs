@@ -57,7 +57,9 @@ public sealed class AuthoritativeCombatTarget
         bool sneakHidden = false,
         int sneakRetreatTicks = 0,
         int scavengerHealingTicks = 0,
-        uint scavengerCorpseEntityId = 0)
+        uint scavengerCorpseEntityId = 0,
+        int batRetreatTicks = 0,
+        int batRetreatDirection = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -85,6 +87,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
         if (scavengerHealingTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(scavengerHealingTicks));
+        if (batRetreatTicks is < 0 or > 2)
+            throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
+        if (batRetreatDirection is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -109,6 +115,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "Scavenger healing requires the Scavenger native AI identity.",
                 nameof(scavengerHealingTicks));
+        if (batRetreatTicks != 0 && nativeAi != "Bat")
+            throw new ArgumentException(
+                "Bat retreat requires the Bat native AI identity.",
+                nameof(batRetreatTicks));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -159,6 +169,8 @@ public sealed class AuthoritativeCombatTarget
         SneakRetreatTicks = sneakRetreatTicks;
         ScavengerHealingTicks = scavengerHealingTicks;
         ScavengerCorpseEntityId = scavengerCorpseEntityId;
+        BatRetreatTicks = batRetreatTicks;
+        BatRetreatDirection = batRetreatDirection;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -274,6 +286,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Selected corpse identity for the native Scavenger healing goal. */
     public uint ScavengerCorpseEntityId { get; private set; }
+
+    /** Remaining native Bat retreat steps after an adjacent attack. */
+    public int BatRetreatTicks { get; private set; }
+
+    /** Direction toward the victim when the native Bat retreat started. */
+    public int BatRetreatDirection { get; private set; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
@@ -455,6 +473,36 @@ public sealed class AuthoritativeCombatTarget
             throw new InvalidDataException("Only Scavengers can restore healing state.");
         ScavengerHealingTicks = ticks;
         ScavengerCorpseEntityId = corpseEntityId;
+    }
+
+    internal void StartBatRetreat(int direction)
+    {
+        if (NativeAi != "Bat")
+            throw new InvalidOperationException("Only Bats can enter retreat.");
+        if (direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(direction));
+        BatRetreatTicks = 2;
+        BatRetreatDirection = direction;
+    }
+
+    internal void RestoreBatRetreat(int ticks, int direction)
+    {
+        if (ticks is < 0 or > 2 || direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        if (ticks != 0 && NativeAi != "Bat")
+            throw new InvalidDataException("Only Bats can restore retreat state.");
+        BatRetreatTicks = ticks;
+        BatRetreatDirection = direction;
+    }
+
+    internal bool AdvanceBatRetreat()
+    {
+        if (BatRetreatTicks == 0)
+            return false;
+        BatRetreatTicks--;
+        if (BatRetreatTicks == 0)
+            BatRetreatDirection = 0;
+        return true;
     }
 
     internal void BeginMovement(int futurePositionX, int futurePositionY)

@@ -106,6 +106,12 @@ public sealed record DiabloMonsterState(
     /** Selected corpse identity for the native Scavenger healing goal. */
     public uint ScavengerCorpseEntityId { get; init; }
 
+    /** Remaining native Bat retreat steps after an adjacent attack. */
+    public int BatRetreatTicks { get; init; }
+
+    /** Direction toward the victim when the native Bat retreat started. */
+    public int BatRetreatDirection { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -376,6 +382,8 @@ public sealed partial class DiabloSimulation
                     SneakRetreatTicks = target.SneakRetreatTicks,
                     ScavengerHealingTicks = target.ScavengerHealingTicks,
                     ScavengerCorpseEntityId = target.ScavengerCorpseEntityId,
+                    BatRetreatTicks = target.BatRetreatTicks,
+                    BatRetreatDirection = target.BatRetreatDirection,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -648,6 +656,9 @@ public sealed partial class DiabloSimulation
                 || (monster.ScavengerHealingTicks != 0 && monster.NativeAi != "Scavenger")
                 || (monster.ScavengerCorpseEntityId != 0
                     && monster.NativeAi != "Scavenger")
+                || monster.BatRetreatTicks is < 0 or > 2
+                || monster.BatRetreatDirection is < 0 or >= 8
+                || (monster.BatRetreatTicks != 0 && monster.NativeAi != "Bat")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1421,6 +1432,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreScavengerHealing(
                     monster.ScavengerHealingTicks,
                     monster.ScavengerCorpseEntityId);
+                target.RestoreBatRetreat(
+                    monster.BatRetreatTicks,
+                    monster.BatRetreatDirection);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1483,6 +1497,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreScavengerHealing(
                     monster.ScavengerHealingTicks,
                     monster.ScavengerCorpseEntityId);
+                restoredTarget.RestoreBatRetreat(
+                    monster.BatRetreatTicks,
+                    monster.BatRetreatDirection);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

@@ -481,6 +481,10 @@ message MonsterSnapshot {
 	int32 scavenger_healing_ticks = 50;
 	// Selected corpse identity for the native Scavenger healing goal.
 	uint32 scavenger_corpse_entity_id = 51;
+	// Remaining native Bat retreat steps after an adjacent attack.
+	int32 bat_retreat_ticks = 52;
+	// Direction toward the victim when the native Bat retreat started (0-7).
+	int32 bat_retreat_direction = 53;
 }
 
 message WorldItemSnapshot {

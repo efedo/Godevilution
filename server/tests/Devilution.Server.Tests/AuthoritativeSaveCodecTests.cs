@@ -136,6 +136,25 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(30U, Assert.Single(restored.Corpses).EntityId);
     }
 
+    [Fact]
+    public void VersionOneRoundTripsBatRetreatStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Bat",
+                BatRetreatTicks = 1,
+                BatRetreatDirection = 7,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((1, 7), (monster.BatRetreatTicks, monster.BatRetreatDirection));
+    }
+
     [Theory]
     [InlineData(
         DiabloPlayerActionKind.Death,
