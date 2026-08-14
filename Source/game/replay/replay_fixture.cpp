@@ -29,6 +29,8 @@ constexpr uint32_t FireDamageFlag = 1U << 4;
 constexpr uint32_t LightningDamageFlag = 1U << 5;
 constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
+constexpr uint32_t MultipleArrowsFlag = 1U << 9;
+constexpr int32_t WeaponArrowBehavior = 58;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -590,6 +592,23 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 				hasher.AppendInt32(projectile.elementalOriginX);
 				hasher.AppendInt32(projectile.elementalOriginY);
 				hasher.AppendInt32(projectile.guardianState);
+			}
+			if (projectile.behavior == WeaponArrowBehavior
+			    || projectile.damageQ6 != 0
+			    || projectile.elementalFireDamage != 0
+			    || projectile.elementalLightningDamage != 0
+			    || projectile.attackHit
+			    || projectile.perilSelfDamageQ6 != 0
+			    || projectile.doppelgangerProc
+			    || projectile.activationDelayTicks != 0) {
+				hasher.AppendString("godevilution-projectile-weapon-arrow-v1");
+				hasher.AppendInt32(projectile.damageQ6);
+				hasher.AppendInt32(projectile.elementalFireDamage);
+				hasher.AppendInt32(projectile.elementalLightningDamage);
+				hasher.AppendBool(projectile.attackHit);
+				hasher.AppendInt32(projectile.perilSelfDamageQ6);
+				hasher.AppendBool(projectile.doppelgangerProc);
+				hasher.AppendUint32(projectile.activationDelayTicks);
 			}
 			if (projectile.lastCollisionTargetEntityId != 0) {
 				hasher.AppendString("godevilution-projectile-collision-v1");
@@ -2501,6 +2520,167 @@ bool IsReplayAttackTargetValid(
 	    && (ranged ? distance > 0 : distance <= 1);
 }
 
+bool HasReplayEquipmentFlag(
+    const ReplayFixtureExecutionState &state,
+    uint32_t flag)
+{
+	return std::any_of(
+	    state.equipment.begin(),
+	    state.equipment.end(),
+	    [flag](const ReplayFixtureSlottedItem &item) {
+		    return IsReplayEquipmentUsable(item.state)
+		        && (item.state.flags & flag) != 0;
+	    });
+}
+
+void CreateReplayWeaponArrow(
+    ReplayFixtureExecutionState &state,
+    uint32_t targetEntityId,
+    uint32_t arrowIndex,
+    uint32_t arrowCount,
+    bool consumeRandom)
+{
+	const int32_t targetDistance = std::max(
+	    std::abs(state.combatTargetPositionX - state.positionX),
+	    std::abs(state.combatTargetPositionY - state.positionY));
+	if (consumeRandom)
+		static_cast<void>(GenerateRnd(state, 1));
+
+	const int32_t fireDamage = ResolveReplayElementalDamage(
+	    state,
+	    FireArrowsFlag,
+	    &ReplayFixtureItemState::fireMinDamage,
+	    &ReplayFixtureItemState::fireMaxDamage);
+	const int32_t lightningDamage = ResolveReplayElementalDamage(
+	    state,
+	    LightningArrowsFlag,
+	    &ReplayFixtureItemState::lightningMinDamage,
+	    &ReplayFixtureItemState::lightningMaxDamage);
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	projectile.targetEntityId = targetEntityId;
+	projectile.levelId = state.levelId;
+	projectile.positionX = state.positionX;
+	projectile.positionY = state.positionY;
+	projectile.targetX = state.combatTargetPositionX;
+	projectile.targetY = state.combatTargetPositionY;
+	if (arrowCount == 3 && arrowIndex != 0) {
+		const auto direction = DirectionDisplacements[
+		    GetDirection(
+		        state.positionX,
+		        state.positionY,
+		        state.combatTargetPositionX,
+		        state.combatTargetPositionY)];
+		const int32_t spreadX = -direction.second * (arrowIndex == 1 ? -1 : 1);
+		const int32_t spreadY = direction.first * (arrowIndex == 1 ? -1 : 1);
+		const int32_t candidateX = state.positionX + spreadX;
+		const int32_t candidateY = state.positionY + spreadY;
+		if (candidateX >= 0 && candidateX < 40 && candidateY >= 0 && candidateY < 40) {
+			projectile.positionX = candidateX;
+			projectile.positionY = candidateY;
+		}
+	}
+	projectile.damage = 1;
+	projectile.damageQ6 = 64;
+	projectile.elementalFireDamage = fireDamage;
+	projectile.elementalLightningDamage = lightningDamage;
+	projectile.damageType = 0;
+	projectile.remainingTicks = static_cast<uint32_t>(std::max(targetDistance, 1));
+	projectile.behavior = WeaponArrowBehavior;
+	projectile.attackHit = true;
+	projectile.activationDelayTicks = arrowIndex == 0 ? 0 : 2;
+	state.projectiles.push_back(projectile);
+}
+
+void ApplyReplayWeaponArrowImpact(
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &projectile)
+{
+	if (projectile.targetEntityId != state.combatTargetEntityId
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || (projectile.levelId != state.combatTargetLevelId
+	        && state.combatTargetLevelId != 0))
+		return;
+
+	const int32_t damageQ6 = projectile.damageQ6 != 0
+	    ? projectile.damageQ6
+	    : projectile.damage * 64;
+	state.combatTargetHitPointsQ6 = std::max(
+	    0,
+	    state.combatTargetHitPointsQ6 - std::max(0, damageQ6));
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	if (projectile.attackHit && state.combatTargetHitPointsQ6 > 0) {
+		const int32_t fireDamage = ApplyReplayElementalResistance(
+		    projectile.elementalFireDamage,
+		    state.combatTargetFireResistance);
+		const int32_t lightningDamage = ApplyReplayElementalResistance(
+		    projectile.elementalLightningDamage,
+		    state.combatTargetLightningResistance);
+		state.combatTargetHitPointsQ6 = std::max(
+		    0,
+		    state.combatTargetHitPointsQ6 - fireDamage * 64);
+		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+		if (state.combatTargetHitPointsQ6 > 0) {
+			state.combatTargetHitPointsQ6 = std::max(
+			    0,
+			    state.combatTargetHitPointsQ6 - lightningDamage * 64);
+			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+		}
+	}
+	if (state.combatTargetHitPointsQ6 <= 0)
+		DefeatReplayCombatTarget(state);
+}
+
+void AdvanceReplayWeaponArrowsOneTick(ReplayFixtureExecutionState &state)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != WeaponArrowBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.activationDelayTicks > 0) {
+			--projectile.activationDelayTicks;
+			++iterator;
+			continue;
+		}
+		if (projectile.remainingTicks > 1) {
+			const int32_t nextX = projectile.positionX
+			    + (projectile.targetX > projectile.positionX)
+			        - (projectile.targetX < projectile.positionX);
+			const int32_t nextY = projectile.positionY
+			    + (projectile.targetY > projectile.positionY)
+			        - (projectile.targetY < projectile.positionY);
+			const bool outsideWorld = nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40;
+			const bool blockingObject = state.objectEntityId != 0
+			    && !state.objectActivated
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == nextX
+			    && state.objectPositionY == nextY;
+			if (outsideWorld || blockingObject) {
+				if (blockingObject && state.objectBreakable)
+					state.objectDestroyed = true;
+				iterator = state.projectiles.erase(iterator);
+				continue;
+			}
+			projectile.positionX = nextX;
+			projectile.positionY = nextY;
+			--projectile.remainingTicks;
+			++iterator;
+			continue;
+		}
+		ApplyReplayWeaponArrowImpact(state, projectile);
+		iterator = state.projectiles.erase(iterator);
+	}
+}
+
 bool ApplyReplayAttack(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
@@ -2510,6 +2690,12 @@ bool ApplyReplayAttack(
 {
 	if (!IsReplayAttackTargetValid(state, targetEntityId, ranged))
 		return false;
+	if (ranged) {
+		const uint32_t arrowCount = HasReplayEquipmentFlag(state, MultipleArrowsFlag) ? 3U : 1U;
+		for (uint32_t arrowIndex = 0; arrowIndex < arrowCount; ++arrowIndex)
+			CreateReplayWeaponArrow(state, targetEntityId, arrowIndex, arrowCount, consumeRandom);
+		return true;
+	}
 	// Native attacks consume the deterministic damage-range draw even for the
 	// compact unarmed fallback used by replay fixtures.
 	if (consumeRandom)
@@ -3679,6 +3865,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state);
 		AdvanceFireballsOneTick(state);

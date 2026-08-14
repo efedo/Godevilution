@@ -48,11 +48,12 @@ be checked independently. Both runners validate unique native slots and hash
 the resulting equipment. Attack profile, ranged admission, combat mode, and
 native speed flags are then derived from that state rather than declared as
 separate fixture outcomes.
-The authoritative server additionally represents native `MultipleArrows` shots
-as `WeaponArrow` projectiles: the first shot is emitted at the attack effect
-boundary and the two spread shots carry a two-tick activation delay. Their
-captured Q6 and elemental channels are part of the snapshot hash, allowing
-replay and reconnect tests to observe the complete volley.
+The authoritative server represents every player bow shot as a `WeaponArrow`
+projectile. A normal bow emits one arrow; native `MultipleArrows` emits the
+first shot at the attack effect boundary and two spread shots with a two-tick
+activation delay. Captured Q6 and elemental channels are part of the snapshot
+hash, allowing replay and reconnect tests to observe travel, impact, and the
+complete volley.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -142,9 +143,10 @@ effect ticks, delayed mana/healing, and final cleanup.
 `gameplay-player-action-ranged-diablo.json` and
 `gameplay-player-action-ranged-hellfire.json` equip the same Rogue fast Bow and
 attack a nonadjacent target. The Diablo timeline skips one native logic frame,
-applying damage at tick 15 and admitting its chained move at tick 16; Hellfire
-applies at tick 16 and admits the move at tick 17. Five checkpoints per fixture
-prove the variant divergence and common final state. Their initialized Rogue
+emits the arrow at tick 15, admits its chained move at tick 16, and resolves
+impact at tick 17; Hellfire emits at tick 16, admits the move at tick 17, and
+resolves impact at tick 18. Five checkpoints per fixture prove the variant
+divergence and common final state. Their initialized Rogue
 attributes use the native equipment-damage profile; because the compact replay
 equipment shape omits base damage, the native unarmed one-damage fallback is
 used against a one-hit-point target. Focused module tests retain additional

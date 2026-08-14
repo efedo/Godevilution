@@ -324,6 +324,13 @@ struct ReplayFixtureProjectileState {
 	int32_t targetX = 0;
 	int32_t targetY = 0;
 	int32_t damage = 0;
+	int32_t damageQ6 = 0;
+	int32_t elementalFireDamage = 0;
+	int32_t elementalLightningDamage = 0;
+	bool attackHit = false;
+	int32_t perilSelfDamageQ6 = 0;
+	bool doppelgangerProc = false;
+	uint32_t activationDelayTicks = 0;
 	int32_t damageType = 0;
 	int32_t areaRadius = 0;
 	uint32_t remainingTicks = 0;

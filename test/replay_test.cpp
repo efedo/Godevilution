@@ -476,7 +476,12 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_EQ(state.combatTargetHitPoints, 95);
+	EXPECT_EQ(state.combatTargetHitPoints, 100);
+	EXPECT_EQ(state.randomState, 22695478U);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(state.projectiles[0].damageQ6, 64);
+	EXPECT_EQ(state.projectiles[0].elementalFireDamage, 4);
+	EXPECT_TRUE(state.projectiles[0].attackHit);
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
 }
 

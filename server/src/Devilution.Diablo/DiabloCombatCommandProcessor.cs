@@ -414,14 +414,17 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         UpdateFacingToward(player, target.PositionX, target.PositionY);
-        if (ranged
-            && HasUsableEquipmentFlag(
+        if (ranged) {
+            var arrowCount = HasUsableEquipmentFlag(
                 player,
-                AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)) {
-            return ResolveMultipleArrowsAttack(
+                AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)
+                ? 3
+                : 1;
+            return ResolveWeaponArrowVolley(
                 player,
                 target,
-                appliedTick);
+                appliedTick,
+                arrowCount);
         }
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
@@ -470,15 +473,18 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /**
-     * Emits the native three-missile Multiple Arrows volley. The first arrow
-     * starts on the attack effect frame; the two spread arrows begin two
-     * frames later, matching DoRangeAttack's second firing window.
+     * Emits a server-owned bow missile. Multiple Arrows uses three missiles;
+     * the first starts on the attack effect frame and the two spread arrows
+     * begin two frames later, matching DoRangeAttack's second firing window.
      */
-    private DiabloCombatIntentResult ResolveMultipleArrowsAttack(
+    private DiabloCombatIntentResult ResolveWeaponArrowVolley(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
-        ulong appliedTick)
+        ulong appliedTick,
+        int arrowCount)
     {
+        if (arrowCount is not (1 or 3))
+            throw new ArgumentOutOfRangeException(nameof(arrowCount));
         var targetDistance = Math.Max(
             Math.Abs(target.PositionX - player.PositionX),
             Math.Abs(target.PositionY - player.PositionY));
@@ -489,7 +495,7 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionY);
         var directionDisplacement = DiabloPlayerDirections.GetDisplacement(direction);
         var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
-        for (var arrowIndex = 0; arrowIndex < 3; arrowIndex++) {
+        for (var arrowIndex = 0; arrowIndex < arrowCount; arrowIndex++) {
             var damageQ6 = ResolvePlayerAttackDamageQ6(
                 player,
                 target,
@@ -505,7 +511,7 @@ public sealed class DiabloCombatCommandProcessor
                     random.GenerateRnd,
                     ranged: true)
                 : default;
-            var spread = arrowIndex == 0
+            var spread = arrowCount == 1 || arrowIndex == 0
                 ? (X: 0, Y: 0)
                 : (X: checked(perpendicular.Item1 * (arrowIndex == 1 ? -1 : 1)),
                     Y: checked(perpendicular.Item2 * (arrowIndex == 1 ? -1 : 1)));

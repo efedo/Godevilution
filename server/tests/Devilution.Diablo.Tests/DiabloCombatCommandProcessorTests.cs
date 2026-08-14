@@ -278,6 +278,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NormalBowAttackUsesOneAuthoritativeMissileAndResolvesOnImpact()
+    {
+        var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.WeaponArrow, projectile.Behavior);
+        Assert.Equal(640, projectile.DamageQ6);
+        Assert.Equal(5000, target.HitPoints);
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal(5000, target.HitPoints);
+        Assert.Same(projectile, Assert.Single(world.Projectiles.Values));
+
+        var deliveries = processor.AdvanceTick(3, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(4990, target.HitPoints);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(640, damage.AmountQ6);
+    }
+
+    [Fact]
     public void MultipleArrowsEmitsOneImmediateAndTwoDelayedAuthoritativeMissiles()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);

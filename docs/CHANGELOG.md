@@ -39,6 +39,9 @@ All notable changes to this fork are documented below.
   `MultipleArrows`: one arrow fires on the attack effect frame and two spread
   arrows activate two ticks later, with physical Q6 damage, elemental channels,
   and deferred impact state persisted through protocol snapshots and saves.
+- Route ordinary bow attacks through the same server-owned `WeaponArrow`
+  lifecycle, preserving captured physical/elemental state through tile travel,
+  impact resolution, replay checkpoints, and native/C# hash parity.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

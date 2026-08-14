@@ -264,7 +264,8 @@ Status date: 2026-08-14
   attack effect and two spread arrows after the native two-frame delay;
   captured physical Q6 damage, arrow elemental channels, and activation state
   survive protocol snapshots, save/restore, and canonical hashing. Ordinary
-  bow projectile travel and remaining arrow-item flags remain incremental.
+  bow attacks now use the same one-arrow travel and impact lifecycle; remaining
+  native arrow-item flags remain incremental.
 - Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
   clear two-tile charge controller, monster movement, special physical damage,
   blocking, and Q6 event resolution.

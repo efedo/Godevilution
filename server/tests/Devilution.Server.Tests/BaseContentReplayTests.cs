@@ -91,7 +91,13 @@ public sealed class BaseContentReplayTests
             new AuthoritativeCommandServer(executor));
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
-        Assert.Equal(95, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        var arrowTarget = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(100, arrowTarget.HitPoints);
+        var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal(58, arrow.Behavior);
+        Assert.Equal(64, arrow.DamageQ6);
+        Assert.Equal(4, arrow.ElementalFireDamage);
+        Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
