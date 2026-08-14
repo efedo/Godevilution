@@ -172,6 +172,9 @@ Status date: 2026-08-13
 - Native `Magma` `MagmaBall` now consumes its validated MonsterMagic mapping;
   the server owns its AiRangedAvoidance admission, speed-16 travel, fire
   resistance/block resolution, and monster-to-player damage.
+- Native `Acid`/`AcidUnique` now consume validated Acid mappings; the server
+  owns projectile travel, expiry splat, persistent puddle lifetime,
+  acid/magic resistance, and per-tick monster-to-player damage.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

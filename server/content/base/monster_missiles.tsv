@@ -2,8 +2,8 @@ native_ai	missile_id	projectile_behavior
 GoatRanged	Arrow	Targeted
 Succubus	BloodStar	BloodStar
 LazarusSuccubus	BloodStar	BloodStar
-Acid	Acid	Targeted
-AcidUnique	Acid	Targeted
+Acid	Acid	Acid
+AcidUnique	Acid	Acid
 FireBat	Firebolt	Firebolt
 Torchant	Fireball	Fireball
 Lich	OrangeFlare	MonsterMagic

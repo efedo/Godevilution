@@ -1979,6 +1979,155 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AcidAiCreatesAValidatedSplatAndPersistentPuddle()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            monsterLevel: 5,
+            nativeAi: "Acid",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "Acid",
+                    AuthoritativeProjectileBehavior.Acid),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+        var puddlePlayer = CreatePlayer(
+            entityId: 8,
+            positionX: 8,
+            positionY: 1,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player, puddlePlayer]);
+
+        var acid = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Acid, acid.DamageType);
+        Assert.Equal(16, acid.Speed);
+        Assert.Equal(19U, acid.RemainingTicks);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        AuthoritativeProjectile? puddle = null;
+        for (ulong tick = 2; tick < 64; tick++) {
+            deliveries.AddRange(processor.AdvanceTick(tick, [player, puddlePlayer]));
+            puddle ??= world.Projectiles.Values.FirstOrDefault(projectile =>
+                    projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle);
+            if (puddle is not null
+                && deliveries.Any(delivery =>
+                    delivery.Event.TargetEntityId == puddlePlayer.EntityId))
+                break;
+        }
+
+        Assert.NotNull(puddle);
+        Assert.Equal((8, 1), (puddle!.PositionX, puddle.PositionY));
+        Assert.Equal(2, puddle.Damage);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 8
+                && delivery.Event.AmountQ6 == 2 * DiabloFixedPointQ6.Scale);
+    }
+
+    [Fact]
+    public void AcidAiDefersItsProjectileOutsideTheNativeHalfRateAvoidanceBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            monsterLevel: 5,
+            nativeAi: "Acid",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "Acid",
+                    AuthoritativeProjectileBehavior.Acid),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 1000 ^ 9 ^ 7 = 1006, outside Acid's 250-per-10,000 band.
+        processor.AdvanceTick(1000, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void AcidUniqueUsesTheSharedAiRangedProjectileBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            monsterLevel: 5,
+            nativeAi: "AcidUnique",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "AcidUnique",
+                    "Acid",
+                    AuthoritativeProjectileBehavior.Acid),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Acid, projectile.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Acid, projectile.DamageType);
+        Assert.Equal(16, projectile.Speed);
+    }
+
+    [Fact]
     public void DiabloAiEmitsAValidatedApocalypseBoomForEachClearLanePlayer()
     {
         var monster = new AuthoritativeCombatTarget(

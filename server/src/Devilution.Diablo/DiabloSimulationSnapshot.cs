@@ -648,6 +648,37 @@ public sealed partial class DiabloSimulation
                         || projectile.Speed <= 0
                         || projectile.ImpactLifetime <= 0
                         || projectile.ResistantDamageDivisor <= 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.Acid
+                    && (projectile.TargetEntityId == 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Acid
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 16
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.VelocityX == 0
+                            && projectile.VelocityY == 0
+                        || projectile.ResistantDamageDivisor <= 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.AcidSplat
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Acid
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.RemainingTicks != 1))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle
+                    && (projectile.TargetEntityId != 0
+                        || projectile.Damage <= 0
+                        || projectile.DamageType != AuthoritativeDamageType.Acid
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 0
+                        || projectile.Phase is not (
+                            AuthoritativeProjectilePhase.Travel
+                            or AuthoritativeProjectilePhase.Impact)
+                        || projectile.PositionX != projectile.TargetX
+                        || projectile.PositionY != projectile.TargetY
+                        || projectile.RemainingTicks == 0))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.HolyBolt
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

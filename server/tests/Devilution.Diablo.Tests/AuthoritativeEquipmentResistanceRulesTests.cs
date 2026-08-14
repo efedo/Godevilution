@@ -91,4 +91,24 @@ public sealed class AuthoritativeEquipmentResistanceRulesTests
                 AuthoritativeDamageType.Magic,
                 naturalResistanceBonus: 12));
     }
+
+    [Fact]
+    public void AcidUsesTheNativeMagicResistanceChannel()
+    {
+        var equipment = new[] {
+            new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusMagicResistance = 35,
+                }),
+        };
+
+        Assert.Equal(
+            35,
+            AuthoritativeEquipmentResistanceRules.Calculate(
+                equipment,
+                AuthoritativeDamageType.Acid));
+    }
 }

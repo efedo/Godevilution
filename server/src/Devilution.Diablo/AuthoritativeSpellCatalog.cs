@@ -57,6 +57,12 @@ public enum AuthoritativeProjectileBehavior
     Etherealize = 49,
     /** Direct non-player magic missile emitted by a server-owned monster AI. */
     MonsterMagic = 50,
+    /** Native monster Acid projectile, including its expiry splat transition. */
+    Acid = 51,
+    /** Native Acid expiry visual that creates a puddle on its final tick. */
+    AcidSplat = 52,
+    /** Native persistent Acid puddle that checks players every active tick. */
+    AcidPuddle = 53,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */

@@ -4097,7 +4097,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
             or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm"
-            or "Diablo" or "Magma")
+            or "Diablo" or "Magma" or "Acid" or "AcidUnique")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
@@ -4105,7 +4105,8 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.Fireball
                 or AuthoritativeProjectileBehavior.MonsterMagic
                 or AuthoritativeProjectileBehavior.Lightning
-                or AuthoritativeProjectileBehavior.ApocalypseController))
+                or AuthoritativeProjectileBehavior.ApocalypseController
+                or AuthoritativeProjectileBehavior.Acid))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
@@ -4118,7 +4119,8 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo" or "Magma") {
+        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo" or "Magma"
+            or "Acid") {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4127,6 +4129,8 @@ public sealed class DiabloCombatCommandProcessor
             var attackBand = distance >= 3
                 ? 500 * (monster.Intelligence + 2)
                 : 500 * (monster.Intelligence + 1);
+            if (monster.NativeAi == "Acid")
+                attackBand >>= 1;
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
                 return false;
         } else if (distance < 4
@@ -4144,7 +4148,8 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo" or "Magma");
+            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo" or "Magma"
+                or "Acid");
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);
@@ -4163,13 +4168,17 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeProjectileBehavior.ApocalypseController => 0,
             _ => 16,
         };
-        var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+        var lifetime = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+            ? checked(5 * (monster.Intelligence + 4))
+            : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
         var damageType = spell?.DamageType
             ?? (missile.MissileId == "MagmaBall"
                 ? AuthoritativeDamageType.Fire
-                : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
-                    ? AuthoritativeDamageType.Magic
-                    : AuthoritativeDamageType.Fire);
+                : missile.MissileId == "Acid"
+                    ? AuthoritativeDamageType.Acid
+                    : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
+                        ? AuthoritativeDamageType.Magic
+                        : AuthoritativeDamageType.Fire);
         var direction = GetDirection(
             monster.PositionX,
             monster.PositionY,
@@ -4796,6 +4805,18 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.Acid) {
+                    AdvanceAcid(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.AcidSplat) {
+                    AdvanceAcidSplat(projectile);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle) {
+                    AdvanceAcidPuddle(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
                     AdvanceBoneSpirit(tick, projectile, players, events);
                     continue;
@@ -5099,6 +5120,189 @@ public sealed class DiabloCombatCommandProcessor
             previousY = tile.Y;
             previousTraveledX = tile.TraveledX;
             previousTraveledY = tile.TraveledY;
+        }
+    }
+
+    /** Native AddAcid/ProcessGenericProjectile travel and expiry transition. */
+    private void AdvanceAcid(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        projectile.RemainingTicks--;
+        var visitedTiles = MoveNativeProjectile(projectile);
+        foreach (var tile in visitedTiles) {
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            if (TryResolveAcidProjectileCollision(
+                    tick,
+                    projectile,
+                    players,
+                    events)) {
+                return;
+            }
+        }
+
+        if (visitedTiles.Count == 0
+            && TryResolveAcidProjectileCollision(
+                tick,
+                projectile,
+                players,
+                events)) {
+            return;
+        }
+
+        if (projectile.RemainingTicks == 0)
+            SpawnAcidSplat(projectile);
+    }
+
+    private bool TryResolveAcidProjectileCollision(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var playerTarget = FindProjectilePlayer(
+            projectile,
+            players,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (playerTarget is not null
+            && projectile.LastCollisionTargetEntityId != playerTarget.EntityId) {
+            projectile.LastCollisionTargetEntityId = playerTarget.EntityId;
+            if (TryResolveMonsterMagicProjectilePlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events,
+                    damageShifted: true)) {
+                SpawnAcidSplat(projectile);
+                return true;
+            }
+        }
+
+        if (!world.IsMissileBlocked(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY))
+            return false;
+
+        if (world.TryGetMissileBlockingObject(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                out var @object)
+            && @object!.Breakable) {
+            @object.Destroyed = true;
+        }
+        SpawnAcidSplat(projectile);
+        return true;
+    }
+
+    private void SpawnAcidSplat(AuthoritativeProjectile projectile)
+    {
+        if (!world.Projectiles.Remove(projectile.EntityId))
+            return;
+
+        var entityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            entityId,
+            new AuthoritativeProjectile(
+                entityId,
+                projectile.SourceEntityId,
+                0,
+                projectile.SpellId,
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                projectile.PositionX,
+                projectile.PositionY,
+                0,
+                AuthoritativeDamageType.Acid,
+                0,
+                1U) {
+                Behavior = AuthoritativeProjectileBehavior.AcidSplat,
+            });
+    }
+
+    /** Native ProcessAcidSplate shifts the visual one tile before creating its puddle. */
+    private void AdvanceAcidSplat(AuthoritativeProjectile projectile)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks != 0)
+            return;
+
+        if (!world.CombatTargets.TryGetValue(
+                projectile.SourceEntityId,
+                out var monster)) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var puddlePositionX = checked(projectile.PositionX + 1);
+        var puddlePositionY = checked(projectile.PositionY + 1);
+        var puddleDuration = checked(
+            random.GenerateRnd(15)
+            + 40 * (monster.Intelligence + 1));
+        var puddleDamage = monster.MonsterLevel >= 2 ? 2 : 1;
+        var entityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            entityId,
+            new AuthoritativeProjectile(
+                entityId,
+                projectile.SourceEntityId,
+                0,
+                projectile.SpellId,
+                projectile.LevelId,
+                puddlePositionX,
+                puddlePositionY,
+                puddlePositionX,
+                puddlePositionY,
+                puddleDamage,
+                AuthoritativeDamageType.Acid,
+                0,
+                checked((uint)puddleDuration)) {
+                Behavior = AuthoritativeProjectileBehavior.AcidPuddle,
+            });
+        world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native ProcessAcidPuddle checks the occupied player every active tick. */
+    private void AdvanceAcidPuddle(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            projectile.RemainingTicks--;
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.RemainingTicks--;
+        var playerTarget = FindProjectilePlayer(
+            projectile,
+            players,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (playerTarget is not null) {
+            _ = TryResolveAcidPuddlePlayerHit(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events);
+        }
+
+        if (projectile.RemainingTicks == 0) {
+            projectile.Phase = AuthoritativeProjectilePhase.Impact;
+            projectile.RemainingTicks = 2;
         }
     }
 
@@ -7367,7 +7571,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeProjectile projectile,
         AuthoritativePlayerState target,
         IReadOnlyList<AuthoritativePlayerState> players,
-        ICollection<DiabloDirectedGameplayEvent> events)
+        ICollection<DiabloDirectedGameplayEvent> events,
+        bool damageShifted = false)
     {
         if (!world.CombatTargets.TryGetValue(projectile.SourceEntityId, out var monster)
             || IsPlayerProtectedByFlash(target)) {
@@ -7399,7 +7604,9 @@ public sealed class DiabloCombatCommandProcessor
         var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
                 or DiabloPlayerCombatMode.Attack)
             && CanBlock(target);
-        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockRoll = !damageShifted && canBlock
+            ? random.RandomIntLessThan(100)
+            : 100;
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
@@ -7407,14 +7614,20 @@ public sealed class DiabloCombatCommandProcessor
                 - (2 * monster.MonsterLevel),
             0,
             100);
-        if ((resistance <= 0 || rules.GameVariant == DiabloGameVariant.Hellfire)
+        if (!damageShifted
+            && (resistance <= 0 || rules.GameVariant == DiabloGameVariant.Hellfire)
             && blockRoll < blockChance) {
             StartBlock(target, targetClass, tick);
             return true;
         }
 
         var damageQ6 = checked(
-            Math.Max(1, projectile.Damage) * DiabloFixedPointQ6.Scale
+            Math.Max(
+                1,
+                damageShifted
+                    ? random.RandomIntBetween(projectile.Damage, projectile.Damage)
+                    : projectile.Damage)
+                * DiabloFixedPointQ6.Scale
             + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
                 * DiabloFixedPointQ6.Scale);
         if (resistance > 0)
@@ -7435,6 +7648,65 @@ public sealed class DiabloCombatCommandProcessor
             StartPlayerDeath(
                 target,
                 monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        else if (resistance == 0
+            && ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
+            StartHit(target, targetClass, tick);
+        return true;
+    }
+
+    /** Native PlayerMHit branch used by the persistent AcidPuddle missile. */
+    private bool TryResolveAcidPuddlePlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (IsPlayerProtectedByFlash(target))
+            return false;
+
+        var minimumHitChance = target.LevelId switch {
+            14 => 20,
+            15 => 25,
+            16 => 30,
+            _ => 10,
+        };
+        if (random.RandomIntLessThan(100)
+            >= Math.Clamp(Math.Max(minimumHitChance, 40), 0, 100))
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var resistance = GetPlayerResistance(
+            target,
+            targetClass,
+            AuthoritativeDamageType.Acid);
+        var damageQ6 = checked(
+            random.RandomIntBetween(projectile.Damage, projectile.Damage)
+                * DiabloFixedPointQ6.Scale
+            + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
+                * DiabloFixedPointQ6.Scale);
+        if (resistance > 0)
+            damageQ6 -= damageQ6 * resistance / 100;
+
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    projectile.SourceEntityId,
+                    target.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                projectile.SourceEntityId,
                 tick,
                 players,
                 PlayerDeathReason.MonsterOrTrap);

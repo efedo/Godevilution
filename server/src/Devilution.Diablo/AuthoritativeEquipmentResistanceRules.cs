@@ -33,7 +33,8 @@ public static class AuthoritativeEquipmentResistanceRules
             resistance = checked(resistance + damageType switch {
                 AuthoritativeDamageType.Fire => state.PlusFireResistance,
                 AuthoritativeDamageType.Lightning => state.PlusLightningResistance,
-                AuthoritativeDamageType.Magic => state.PlusMagicResistance,
+                AuthoritativeDamageType.Magic
+                    or AuthoritativeDamageType.Acid => state.PlusMagicResistance,
                 _ => 0,
             });
             zeroResistance |= (state.Flags & ZeroResistanceFlag) != 0;

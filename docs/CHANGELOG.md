@@ -29,6 +29,8 @@ All notable changes to this fork are documented below.
   their server-owned monster-to-player damage.
 - Route native `Magma` `MagmaBall` through the validated server-owned fire
   projectile path, preserving its avoidance admission, speed, and hit rules.
+- Route native `Acid`/`AcidUnique` `Acid` through server-owned Acid, splat,
+  and persistent puddle stages with native resistance and hit rules.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

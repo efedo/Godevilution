@@ -67,6 +67,12 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magma));
         Assert.Equal("MagmaBall", magma.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, magma.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Acid", out var acid));
+        Assert.Equal("Acid", acid.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("AcidUnique", out var acidUnique));
+        Assert.Equal("Acid", acidUnique.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
     }
 
     [Fact]
