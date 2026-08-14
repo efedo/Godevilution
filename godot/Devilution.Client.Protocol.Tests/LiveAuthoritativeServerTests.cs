@@ -178,22 +178,13 @@ public sealed class LiveAuthoritativeServerTests
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
             randomSeed: 1);
-        await using var attackerClient = new AuthoritativeClient(
-            CreateOptions(server, "godot-live-pvp-ranged-attacker", requestedClassId: 1));
-        await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
-        var attackerInitial = await WaitForMessageAsync(
-            attackerClient,
-            message => message.Snapshot is not null);
-        var attackerEntityId = Assert.Single(attackerInitial.Snapshot!.Players).EntityId;
-
         await using var victimClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-pvp-ranged-victim", requestedClassId: 0));
         await victimClient.ConnectAsync(TestContext.Current.CancellationToken);
         var victimInitial = await WaitForMessageAsync(
             victimClient,
-            message => message.Snapshot is { Players.Count: 2 });
-        var initialVictim = victimInitial.Snapshot!.Players.Single(
-            player => player.EntityId != attackerEntityId);
+            message => message.Snapshot is not null);
+        var initialVictim = Assert.Single(victimInitial.Snapshot!.Players);
         var moveModel = new AuthoritativeClientModel();
         moveModel.Apply(victimInitial);
         var moveSequence = victimClient.Queue(new Command {
@@ -212,14 +203,18 @@ public sealed class LiveAuthoritativeServerTests
         var victim = moved.Snapshot!.Players.Single(
             player => player.EntityId == initialVictim.EntityId);
 
-        var shared = await WaitForMessageAsync(
+        await using var attackerClient = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-pvp-ranged-attacker", requestedClassId: 1));
+        await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
+        var attackerInitial = await WaitForMessageAsync(
             attackerClient,
-            message => message.Snapshot is { Players.Count: 2 }
-                && message.Snapshot.Players.Single(
-                    player => player.EntityId == victim.EntityId).PositionY
-                    == victim.PositionY);
+            message => message.Snapshot is { Players.Count: 2 });
+        var attackerEntityId = attackerInitial.Snapshot!.Players.Single(
+            player => player.EntityId != victim.EntityId).EntityId;
+        Assert.Equal(victim.PositionY, attackerInitial.Snapshot.Players.Single(
+            player => player.EntityId == victim.EntityId).PositionY);
         var model = new AuthoritativeClientModel();
-        model.Apply(shared);
+        model.Apply(attackerInitial);
         var sequence = attackerClient.Queue(new Command {
             AttackRequested = new AttackRequested {
                 TargetEntityId = victim.EntityId,
