@@ -481,6 +481,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTimedBowAttackPublishesAPlayerBlockAtArrowImpact()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            playerClasses: classes,
+            gameMode: DiabloGameMode.Multiplayer,
+            useNativePlayerActionTiming: true);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 1,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            characterClassId: 0,
+            life: 6400,
+            lifeMaximum: 6400,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var action = Assert.IsType<AuthoritativePlayerActionState>(attacker.CurrentAction);
+        Assert.Equal(6400, victim.Life);
+
+        var blocked = false;
+        for (ulong tick = 1; tick <= action.EndTick + 8; tick++) {
+            processor.AdvanceTick(tick, [attacker, victim]);
+            if (victim.CombatMode == DiabloPlayerCombatMode.Block) {
+                blocked = true;
+                break;
+            }
+        }
+
+        Assert.True(blocked);
+        Assert.Equal(6400, victim.Life);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void LethalAdjacentPlayerAttackCreatesTheAuthoritativePvpEar()
     {
         var world = new DiabloWorldState();

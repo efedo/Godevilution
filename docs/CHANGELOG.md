@@ -19,9 +19,10 @@ All notable changes to this fork are documented below.
   lifecycle now admits line-of-sight ranged player targets and resolves
   physical/elemental impact plus shield/class blocking.
 - Preserve the native timed player-block boundary: player-target melee impacts
-  now resolve against the authoritative effect tick, and the live protocol
-  suite verifies shield blocking through a validated content overlay without
-  client-side combat simulation.
+  now resolve against the authoritative effect tick; delayed `WeaponArrow`
+  impacts receive the same target-side block boundary, and the live protocol
+  suite verifies melee shield blocking through a validated content overlay
+  without client-side combat simulation.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.

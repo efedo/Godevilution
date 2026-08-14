@@ -394,8 +394,8 @@ Status date: 2026-08-14
   items remain excluded.
 - Server-owned adjacent melee and line-of-sight ranged player targets now use
   the native shield/class block boundary at the authoritative attack effect
-  tick; block state, target life, and live protocol projection remain
-  server-owned.
+  tick and delayed `WeaponArrow` impact; block state, target life, and live
+  protocol projection remain server-owned.
 - Native usable, identified equipment `PlusGetHit` metadata now adjusts
   authoritative autonomous monster physical hits after hit/armor resolution,
   preserving the configured minimum damage; snapshot state remains server-owned.
