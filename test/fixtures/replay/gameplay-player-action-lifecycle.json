@@ -65,9 +65,9 @@
     { "tick": 10, "state_sha256": "5fdddbe0474272722c51bdc33b8411ad6cd6534acf034d8cec598bf4d9c1511a" },
     { "tick": 18, "state_sha256": "6d96258c27f14d9bd6047299f456566289ef0d324d86fdf861fa3afee394b2bb" },
     { "tick": 19, "state_sha256": "bb140eaf226e6b1a2e9cb97dd9f13f1411013fc7088e698439a9574f7babf6a1" },
-    { "tick": 27, "state_sha256": "d0833ca1cedb735b8fd6ae5e76c7aecdb612837d22e3b0ed6e5572682d83d9ba" },
-    { "tick": 28, "state_sha256": "7cca9461963374bd4aeadc01d40fce66426c9d493355742a60c0790e7c84d44b" },
-    { "tick": 42, "state_sha256": "3711e62565a0f452b3d3d0ff62d55d93d41ac7a73280d097bfd74f9d88827822" },
-    { "tick": 47, "state_sha256": "4adfae6d8f1973f4a7da4092e330f29c9f6309811165c553c7cec579c9668972" }
+    { "tick": 27, "state_sha256": "ca03a52eda331316d2928838c54f645513b8369349d7e3d73f37d2a21a2b4b62" },
+    { "tick": 28, "state_sha256": "c3b0554a8e3c626076001e32bf9f2c4cd1d20ef2cf03b49cef32debfdfe4f09c" },
+    { "tick": 42, "state_sha256": "0978587cf671f699b165ae506191f87b5519cc40195f4b7dc8b0c6917e2ee17a" },
+    { "tick": 47, "state_sha256": "ff308aa5e22d0c7158889f55b28b1ac0624741afbfb0f2ccceb36b47bb3b4053" }
   ]
 }

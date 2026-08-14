@@ -201,6 +201,23 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 		hasher.AppendInt32(-1);
 }
 
+void DefeatReplayCombatTarget(ReplayFixtureExecutionState &state)
+{
+	state.experience += 100;
+	if (state.combatTargetEntityId == 0)
+		return;
+	state.corpses.push_back({
+	    state.combatTargetEntityId,
+	    state.combatTargetLevelId,
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	});
+	state.combatTargetEntityId = 0;
+	state.combatTargetMoving = false;
+	state.combatTargetFuturePositionX = state.combatTargetPositionX;
+	state.combatTargetFuturePositionY = state.combatTargetPositionY;
+}
+
 void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutionState &state)
 {
 	const bool hasSecondaryPlayer = state.secondaryPlayerEntityId != 0;
@@ -387,6 +404,21 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		if (state.combatTargetStoneCurseImmune) {
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
+		}
+	}
+
+	if (!state.corpses.empty()) {
+		hasher.AppendString("godevilution-corpses-v1");
+		std::vector<ReplayFixtureCorpseState> corpses = state.corpses;
+		std::sort(corpses.begin(), corpses.end(), [](const auto &left, const auto &right) {
+			return left.entityId < right.entityId;
+		});
+		hasher.AppendUint64(corpses.size());
+		for (const auto &corpse : corpses) {
+			hasher.AppendUint32(corpse.entityId);
+			hasher.AppendUint32(corpse.levelId);
+			hasher.AppendInt32(corpse.positionX);
+			hasher.AppendInt32(corpse.positionY);
 		}
 	}
 
@@ -1651,12 +1683,8 @@ void AdvanceFireboltsOneTick(ReplayFixtureExecutionState &state)
 					    state.combatTargetHitPointsQ6 - damageQ6);
 					state.combatTargetHitPoints = ToWholeCeilingQ6(
 					    state.combatTargetHitPointsQ6);
-					if (state.combatTargetHitPointsQ6 == 0) {
-						state.experience += 100;
-						state.combatTargetMoving = false;
-						state.combatTargetFuturePositionX = state.combatTargetPositionX;
-						state.combatTargetFuturePositionY = state.combatTargetPositionY;
-					}
+					if (state.combatTargetHitPointsQ6 == 0)
+						DefeatReplayCombatTarget(state);
 					hitTarget = true;
 				}
 			}
@@ -1772,12 +1800,8 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state)
 			    state.combatTargetHitPointsQ6 - damageQ6);
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
 			    state.combatTargetHitPointsQ6);
-			if (state.combatTargetHitPointsQ6 == 0) {
-				state.experience += 100;
-				state.combatTargetMoving = false;
-				state.combatTargetFuturePositionX = state.combatTargetPositionX;
-				state.combatTargetFuturePositionY = state.combatTargetPositionY;
-			}
+			if (state.combatTargetHitPointsQ6 == 0)
+				DefeatReplayCombatTarget(state);
 			return true;
 		};
 		const auto resolveCollision = [&](int32_t x, int32_t y) {
@@ -2037,12 +2061,8 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					    state.combatTargetHitPointsQ6 - damage);
 					state.combatTargetHitPoints = ToWholeCeilingQ6(
 					    state.combatTargetHitPointsQ6);
-					if (state.combatTargetHitPointsQ6 == 0) {
-						state.experience += 100;
-						state.combatTargetMoving = false;
-						state.combatTargetFuturePositionX = state.combatTargetPositionX;
-						state.combatTargetFuturePositionY = state.combatTargetPositionY;
-					}
+					if (state.combatTargetHitPointsQ6 == 0)
+						DefeatReplayCombatTarget(state);
 				}
 			} else {
 				const bool playerAtTile = state.secondaryPlayerEntityId != 0
@@ -2145,12 +2165,8 @@ void AdvanceFlashOneTick(ReplayFixtureExecutionState &state)
 					    state.combatTargetHitPointsQ6 - damage);
 					state.combatTargetHitPoints = ToWholeCeilingQ6(
 					    state.combatTargetHitPointsQ6);
-					if (state.combatTargetHitPointsQ6 == 0) {
-						state.experience += 100;
-						state.combatTargetMoving = false;
-						state.combatTargetFuturePositionX = state.combatTargetPositionX;
-						state.combatTargetFuturePositionY = state.combatTargetPositionY;
-					}
+					if (state.combatTargetHitPointsQ6 == 0)
+						DefeatReplayCombatTarget(state);
 				}
 			}
 			if (state.objectEntityId != 0
@@ -2298,12 +2314,8 @@ void AdvanceChargedBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tic
 					damageQ6 /= projectile.resistantDamageDivisor;
 				state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 				state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
-				if (state.combatTargetHitPointsQ6 == 0) {
-					state.experience += 100;
-					state.combatTargetMoving = false;
-					state.combatTargetFuturePositionX = state.combatTargetPositionX;
-					state.combatTargetFuturePositionY = state.combatTargetPositionY;
-				}
+				if (state.combatTargetHitPointsQ6 == 0)
+					DefeatReplayCombatTarget(state);
 				hitTarget = true;
 			}
 		} else if (playerAtTile) {
@@ -2440,12 +2452,8 @@ bool ApplyReplayAttack(
 	const int32_t damageQ6 = damage * 64;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
-	if (state.combatTargetHitPointsQ6 <= 0) {
-		state.experience += 100;
-		state.combatTargetMoving = false;
-		state.combatTargetFuturePositionX = state.combatTargetPositionX;
-		state.combatTargetFuturePositionY = state.combatTargetPositionY;
-	}
+	if (state.combatTargetHitPointsQ6 <= 0)
+		DefeatReplayCombatTarget(state);
 	return true;
 }
 

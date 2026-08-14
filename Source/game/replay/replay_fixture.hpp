@@ -362,6 +362,14 @@ struct ReplayFixturePlayerActionState {
 	uint32_t castSourceItemSlot = 0;
 };
 
+/** Minimal authoritative corpse tile carried by the compact replay projection. */
+struct ReplayFixtureCorpseState {
+	uint32_t entityId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+};
+
 /** Minimal protocol-shaped state used by native replay transition tests. */
 struct ReplayFixtureExecutionState {
 	uint32_t entityId = 1;
@@ -441,6 +449,7 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetFuturePositionY = 0;
 	bool combatTargetPetrified = false;
 	bool combatTargetStoneCurseImmune = false;
+	std::vector<ReplayFixtureCorpseState> corpses;
 	uint32_t worldItemEntityId = 0;
 	uint32_t worldItemLevelId = 0;
 	int32_t worldItemPositionX = 0;

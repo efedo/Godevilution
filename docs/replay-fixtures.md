@@ -88,13 +88,12 @@ fixture.
 
 ## Known parity debt
 
-The current authoritative corpse lifecycle is ahead of the compact native
-replay projection: C# checkpoints that cross ordinary monster death need a
-corpse-tile representation before their hashes can be refreshed in both
-runners. The native runner also has four outstanding spell-timeline hash
-mismatches (Firebolt, Fireball, Lightning, and Flash). These are tracked in
-`migration-status.md` and must be resolved before deterministic replay can be
-called complete.
+The compact native replay projection now carries the same server-owned corpse
+tile representation as the C# checkpoints, and all ordinary-death checkpoint
+hashes pass in both runners. The native runner still has four outstanding
+spell-timeline hash mismatches (Firebolt, Fireball, Lightning, and Flash).
+These are tracked in `migration-status.md` and must be resolved before
+deterministic replay can be called complete.
 
 ## Current Coverage
 
