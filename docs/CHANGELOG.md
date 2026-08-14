@@ -49,6 +49,9 @@ All notable changes to this fork are documented below.
 - Add live Godot protocol coverage for Heal Other targeting a remote player
   through a validated memorized-spell loadout; healing remains server-owned and
   the client only supplies the selected entity intent.
+- Add live Godot protocol coverage for Resurrection targeting a dead remote
+  player, including authoritative death, revive placement, and beam lifecycle
+  through one shared protocol.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
