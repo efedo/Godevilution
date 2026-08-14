@@ -39,9 +39,14 @@ public interface IDiabloStoreRules
 /** Deterministic Diablo store validation and pricing rules. */
 public sealed class DiabloStoreRules : IDiabloStoreRules
 {
-    public DiabloStoreRules(StoreServicePricing? pricing = null)
+    private readonly AuthoritativeItemCatalog? items;
+
+    public DiabloStoreRules(
+        StoreServicePricing? pricing = null,
+        AuthoritativeItemCatalog? items = null)
     {
         Pricing = pricing ?? StoreServicePricing.Default;
+        this.items = items;
     }
 
     public StoreServicePricing Pricing { get; }
@@ -100,11 +105,12 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         return playerGold < price ? DiabloRuleFailure.InsufficientResources : null;
     }
 
-    private static bool IsRechargeable(AuthoritativeItemState state)
+    private bool IsRechargeable(AuthoritativeItemState state)
     {
         if (state.SpellSourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ChargedItem;
-        return state.ItemType == 10 || state.MiscId is 23 or 27;
+        return AuthoritativeItemClassification.IsStaff(state, items)
+            || state.MiscId is 23 or 27;
     }
 
     public DiabloRuleFailure? ValidateRecharge(OwnedStoreItem item, uint playerGold)

@@ -347,24 +347,7 @@ public sealed class DiabloStoreCommandProcessor
     }
 
     private bool IsStaff(AuthoritativeItemState state)
-    {
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
-            if (definition.GenerationTags.Contains("Staff"))
-                return true;
-            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-                return false;
-        }
-        return state.ItemType == 10;
-    }
-
-    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Shield")
-            || tags.Contains("Staff");
+        => AuthoritativeItemClassification.IsStaff(state, items);
 
     private DiabloIntentResult Identify(
         AuthoritativePlayerState player,

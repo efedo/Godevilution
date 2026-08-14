@@ -77,4 +77,25 @@ public sealed class DiabloStoreRulesTests
 
         Assert.Null(rules.ValidateRecharge(legacy, 100));
     }
+
+    [Fact]
+    public void StaffTagsAuthorizeRechargeWhenLegacyItemTypeConflicts()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 99, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                GenerationTags = new HashSet<string>(["Staff"], StringComparer.OrdinalIgnoreCase),
+                NativeItemIndex = 101,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var staff = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            ItemType = 99,
+            Charges = 0,
+            MaxCharges = 1,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRecharge(staff, 100));
+    }
 }

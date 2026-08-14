@@ -25,6 +25,28 @@ public static class AuthoritativeItemClassification
         return state.ItemClass == 1;
     }
 
+    public static bool IsStaff(
+        AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        if (definition.GenerationTags.Contains("Staff"))
+            return true;
+        if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+            return false;
+        return definition.ItemType == 10;
+    }
+
+    public static bool IsStaff(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return IsStaff(definition);
+        return state.ItemType == 10;
+    }
+
     private static bool HasWeaponSubtype(IReadOnlySet<string> tags)
         => tags.Contains("Weapon")
             || tags.Contains("Sword")

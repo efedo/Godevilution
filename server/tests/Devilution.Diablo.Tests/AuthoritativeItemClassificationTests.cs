@@ -28,6 +28,15 @@ public sealed class AuthoritativeItemClassificationTests
         Assert.True(AuthoritativeItemClassification.IsWeapon(definition));
     }
 
+    [Fact]
+    public void ExplicitStaffTagsOverrideConflictingLegacyItemType()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Staff"]);
+        definition = definition with { ItemType = 99 };
+
+        Assert.True(AuthoritativeItemClassification.IsStaff(definition));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)

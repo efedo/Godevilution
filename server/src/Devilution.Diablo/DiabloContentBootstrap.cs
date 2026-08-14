@@ -381,7 +381,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     objects));
         }
 
-        var rules = new DiabloStoreRules(pricing);
+        var rules = new DiabloStoreRules(pricing, itemCatalog);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
             CombatTargets = combatTargets,
