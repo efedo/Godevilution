@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.83 monster-specific `monster_missiles.tsv` rows so Gloom can
+  use its native Rhino movement charge without hardcoded monster-type checks.
 - Add schema 1.82 ranged-AI mode and avoidance-probability fields to
   `monster_missiles.tsv`, moving the remaining mapped `AiRanged` versus
   `AiRangedAvoidance` selection into validated content.

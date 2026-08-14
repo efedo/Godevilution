@@ -1,18 +1,19 @@
-native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent
-GoatRanged	Arrow	Targeted	Ranged	100
-SkeletonRanged	Arrow	Targeted	Ranged	100
-Snake	Rhino	SnakeCharge	Ranged	100
-Succubus	BloodStar	BloodStar	Ranged	100
-LazarusSuccubus	BloodStar	BloodStar	Ranged	100
-Acid	Acid	Acid	RangedAvoidance	50
-AcidUnique	Acid	Acid	Ranged	100
-FireBat	Firebolt	Firebolt	Ranged	100
-Torchant	Fireball	Fireball	Ranged	100
-Lich	OrangeFlare	MonsterMagic	Ranged	100
-ArchLich	YellowFlare	MonsterMagic	Ranged	100
-Psychorb	BlueFlare	MonsterMagic	Ranged	100
-Necromorb	RedFlare	MonsterMagic	Ranged	100
-Magma	MagmaBall	MonsterMagic	RangedAvoidance	100
-Storm	ThinLightningControl	Lightning	RangedAvoidance	100
-Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100
-BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100
+native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id
+GoatRanged	Arrow	Targeted	Ranged	100	0
+SkeletonRanged	Arrow	Targeted	Ranged	100	0
+Snake	Rhino	SnakeCharge	Ranged	100	0
+Succubus	BloodStar	BloodStar	Ranged	100	0
+LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0
+Acid	Acid	Acid	RangedAvoidance	50	0
+AcidUnique	Acid	Acid	Ranged	100	0
+FireBat	Firebolt	Firebolt	Ranged	100	0
+Torchant	Fireball	Fireball	Ranged	100	0
+Lich	OrangeFlare	MonsterMagic	Ranged	100	0
+ArchLich	YellowFlare	MonsterMagic	Ranged	100	0
+Psychorb	BlueFlare	MonsterMagic	Ranged	100	0
+Necromorb	RedFlare	MonsterMagic	Ranged	100	0
+Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0
+Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0
+Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0
+BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0
+Bat	Rhino	BatCharge	RangedAvoidance	100	42

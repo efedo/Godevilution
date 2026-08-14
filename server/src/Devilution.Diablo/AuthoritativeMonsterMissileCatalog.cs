@@ -15,7 +15,8 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     string MissileId,
     AuthoritativeProjectileBehavior ProjectileBehavior,
     AuthoritativeMonsterRangedAttackMode AttackMode = AuthoritativeMonsterRangedAttackMode.Ranged,
-    int AvoidanceProbabilityPercent = 100);
+    int AvoidanceProbabilityPercent = 100,
+    uint MonsterId = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -34,7 +35,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || !Enum.IsDefined(definition.ProjectileBehavior)
                 || !Enum.IsDefined(definition.AttackMode)
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
-                || !this.definitions.TryAdd(definition.NativeAi, definition)) {
+                || !this.definitions.TryAdd(
+                    CreateKey(definition.NativeAi, definition.MonsterId),
+                    definition)) {
                 throw new InvalidDataException(
                     "Monster missile definitions contain invalid or duplicate identities.");
             }
@@ -44,12 +47,23 @@ public sealed class AuthoritativeMonsterMissileCatalog
     }
 
     public IReadOnlyList<AuthoritativeMonsterMissileDefinition> Definitions
-        => definitions.Values.OrderBy(definition => definition.NativeAi).ToArray();
+        => definitions.Values
+            .OrderBy(definition => definition.NativeAi)
+            .ThenBy(definition => definition.MonsterId)
+            .ToArray();
 
     public bool TryGet(
         string nativeAi,
         out AuthoritativeMonsterMissileDefinition definition)
-        => definitions.TryGetValue(nativeAi, out definition!);
+        => definitions.TryGetValue(CreateKey(nativeAi, 0), out definition!);
+
+    /** Resolves a monster-specific row first, then its native-AI wildcard. */
+    public bool TryGet(
+        string nativeAi,
+        uint monsterId,
+        out AuthoritativeMonsterMissileDefinition definition)
+        => definitions.TryGetValue(CreateKey(nativeAi, monsterId), out definition!)
+            || definitions.TryGetValue(CreateKey(nativeAi, 0), out definition!);
 
     public static AuthoritativeMonsterMissileCatalog LoadTsv(
         string sourcePath,
@@ -72,9 +86,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.Required("missile_id"),
                 behavior,
                 ParseAttackMode(row),
-                row.OptionalInt32("avoidance_probability_percent", 100));
+                row.OptionalInt32("avoidance_probability_percent", 100),
+                row.OptionalUInt32("monster_id"));
         }));
     }
+
+    private static string CreateKey(string nativeAi, uint monsterId)
+        => $"{nativeAi}\u001F{monsterId}";
 
     private static AuthoritativeMonsterRangedAttackMode ParseAttackMode(TsvRow row)
     {

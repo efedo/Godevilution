@@ -690,6 +690,17 @@ public sealed partial class DiabloSimulation
                         || projectile.VelocityX == 0
                             && projectile.VelocityY == 0
                         || projectile.ResistantDamageDivisor <= 0))
+                || (projectile.Behavior == AuthoritativeProjectileBehavior.BatCharge
+                    && (projectile.TargetEntityId == 0
+                        || projectile.Damage != 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 18
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.OriginalDirection is < 0 or > 7
+                        || projectile.VelocityX == 0
+                            && projectile.VelocityY == 0
+                        || projectile.ResistantDamageDivisor <= 0))
                 || (projectile.Behavior == AuthoritativeProjectileBehavior.HolyBolt
                     && (projectile.TargetEntityId != 0
                         || projectile.OriginalDirection is < 0 or > 7

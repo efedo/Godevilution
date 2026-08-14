@@ -65,6 +65,8 @@ public enum AuthoritativeProjectileBehavior
     AcidPuddle = 53,
     /** Native Snake Rhino charge controller that moves the source monster. */
     SnakeCharge = 54,
+    /** Native Gloom Rhino controller that moves the source monster without a hit. */
+    BatCharge = 55,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */

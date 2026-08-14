@@ -155,6 +155,10 @@ Status date: 2026-08-13
   the migrated projectile path consumes those fields instead of identifying
   the `AiRangedAvoidance` identities in code. Native behavior remains
   server-owned, while its selection is content-owned and validated.
+- Schema 1.83 adds optional monster-specific missile rows. Native Gloom
+  (`Bat`, monster type 42) now consumes a validated `Rhino` mapping; the
+  server owns its clear-lane, speed-18, movement-only charge and blocked-lane
+  stop while the content row selects the controller.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

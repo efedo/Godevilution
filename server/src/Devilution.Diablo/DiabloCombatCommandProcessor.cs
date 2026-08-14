@@ -3752,6 +3752,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSnakeAi(target, victim, distance))
                 continue;
+            if (TryAdvanceMappedChargeAi(target, victim, tick, distance))
+                continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
@@ -4119,6 +4121,72 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    /** Native Bat-family charge admitted by a monster-specific missile row. */
+    private bool TryAdvanceMappedChargeAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        int distance)
+    {
+        if (monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge
+            || distance < 5)
+            return false;
+
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == AuthoritativeProjectileBehavior.BatCharge))
+            return true;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var chargeChance = Math.Min(100, 33 + (4 * monster.Intelligence));
+        if (attackSeed % 100U >= (uint)chargeChance
+            || !world.HasLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return false;
+
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            18);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            1,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            256) {
+            Behavior = AuthoritativeProjectileBehavior.BatCharge,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = 18,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
+    }
+
     private (int X, int Y)? FindGoatRangedRetreatDestination(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -4163,7 +4231,7 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
+            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Firebolt
                 or AuthoritativeProjectileBehavior.Fireball
@@ -4893,6 +4961,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceSnakeCharge(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.BatCharge) {
+                    AdvanceBatCharge(projectile, players);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
                     AdvanceBoneSpirit(tick, projectile, players, events);
                     continue;
@@ -5435,6 +5507,49 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             }
 
+            previousX = tile.X;
+            previousY = tile.Y;
+        }
+
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native ProcessRhino movement for a Gloom-owned movement-only charge. */
+    private void AdvanceBatCharge(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (!world.CombatTargets.TryGetValue(
+                projectile.SourceEntityId,
+                out var monster)
+            || monster.HitPoints <= 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.RemainingTicks--;
+        var previousX = projectile.PositionX;
+        var previousY = projectile.PositionY;
+        foreach (var tile in MoveNativeProjectile(projectile)) {
+            if (!world.ContainsPosition(projectile.LevelId, tile.X, tile.Y)
+                || world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y)
+                || world.IsOccupied(
+                    projectile.LevelId,
+                    tile.X,
+                    tile.Y,
+                    players,
+                    monster.EntityId)) {
+                monster.ApplyKnockback(previousX, previousY);
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            monster.ApplyKnockback(tile.X, tile.Y);
             previousX = tile.X;
             previousY = tile.Y;
         }

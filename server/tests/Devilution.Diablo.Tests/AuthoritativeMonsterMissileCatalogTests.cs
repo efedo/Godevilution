@@ -50,6 +50,22 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ResolvesMonsterSpecificRowsBeforeNativeAiWildcards()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\n"
+                + "Bat\tArrow\tTargeted\t0\n"
+                + "Bat\tRhino\tBatCharge\t42\n");
+
+        Assert.True(catalog.TryGet("Bat", 42, out var gloom));
+        Assert.Equal("Rhino", gloom.MissileId);
+        Assert.Equal(42U, gloom.MonsterId);
+        Assert.True(catalog.TryGet("Bat", out var wildcard));
+        Assert.Equal("Arrow", wildcard.MissileId);
+    }
+
+    [Fact]
     public void RejectsUnknownNativeAiIdentity()
     {
         Assert.Throws<InvalidDataException>(() => AuthoritativeMonsterMissileCatalog.LoadTsv(

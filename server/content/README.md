@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.82.0` schema in
+It declares its identity and `devilution.diablo@1.83.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -199,6 +199,10 @@ Schema 1.82 adds optional `attack_mode` and
 content pack now selects the native `AiRanged` or `AiRangedAvoidance` branch
 and its probability scaling; omitted values retain the `Ranged`/100-percent
 compatibility defaults.
+Schema 1.83 adds the optional `monster_id` discriminator to
+`monster_missiles.tsv`. A monster-specific row takes precedence over its
+native-AI wildcard, allowing shared native AI identities such as `Bat` to
+retain content-specific controllers without engine-side type checks.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
@@ -1081,7 +1085,7 @@ the complete target header even when they upsert only one row.
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch metadata. |
-| `monster_missiles.tsv` | `native_ai` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, and avoidance probability; unsupported controllers remain explicitly `Targeted` during migration. |
+| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, and optional monster-specific controller; unsupported controllers remain explicitly `Targeted` during migration. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
@@ -1116,7 +1120,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.82.0"
+      "version": "1.83.0"
   },
   "dependencyConstraints": [
     {
@@ -1148,7 +1152,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.82.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.83.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1167,7 +1171,8 @@ identity maps to its retained native missile ID and authoritative projectile
 behavior. Unsupported behaviors remain declared as `Targeted` until their
 native projectile controllers are migrated; the mapping itself remains
 content-owned and validated. Schema 1.82 additionally externalizes the
-native ranged-AI branch and avoidance probability columns.
+native ranged-AI branch and avoidance probability columns. Schema 1.83 adds
+monster-specific mapping rows.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

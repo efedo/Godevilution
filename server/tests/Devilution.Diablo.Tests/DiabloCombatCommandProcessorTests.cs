@@ -1551,6 +1551,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GloomUsesItsMonsterSpecificRhinoMappingForMovementOnlyCharge()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 2);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var charge = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BatCharge, charge.Behavior);
+        Assert.Equal(18, charge.Speed);
+        Assert.Equal(100, player.Life);
+
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal((6, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void ValidatedMappedRangedContentAdmitsAnOtherwiseUnroutedNativeAi()
     {
         var monster = new AuthoritativeCombatTarget(
