@@ -525,12 +525,12 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
-    public void LoadsHorkDemonTuningFromMonsterTypes()
+    public void LoadsContentSelectedHorkTuningFromMonsterTypes()
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\thork_demon_attack_chance_base\thork_demon_attack_chance_intelligence_scale\thork_demon_spawn_minimum_distance\thork_demon_spawn_chance_base\thork_demon_spawn_chance_intelligence_scale\thork_demon_movement_chance_base\thork_demon_movement_chance_intelligence_scale\n"
-                + "2\t0\tHork Demon\t18\t19\t27\t120\t160\t80\t20\t35\t0\t0\t0\t0\t0\tHorkDemon\t29\t3\t4\t45\t3\t34\t3\n");
+                + "2\t0\tHork Demon\t18\t19\t27\t120\t160\t80\t20\t35\t0\t0\t0\t0\t0\tZombie\t29\t3\t4\t45\t3\t34\t3\n");
 
         var horkDemon = Assert.Single(catalog.Definitions);
         Assert.Equal((29, 3, 4, 45, 3, 34, 3), (

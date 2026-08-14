@@ -4924,11 +4924,9 @@ public sealed class DiabloCombatCommandProcessor
         int SpawnChanceIntelligenceScale,
         int MovementChanceBase,
         int MovementChanceIntelligenceScale)? GetHorkDemonTuning(
-            AuthoritativeCombatTarget target)
+        AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "HorkDemon")
-                return null;
             if (definition.HorkDemonAttackChanceBase > 0
                 && definition.HorkDemonAttackChanceIntelligenceScale > 0
                 && definition.HorkDemonSpawnMinimumDistance > 0

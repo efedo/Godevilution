@@ -1499,7 +1499,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void HorkDemonUsesItsNativeSpawnAdmissionAndValidatedSpawnIdentity()
+    public void HorkSpawnUsesContentSelectedAdmissionAndValidatedSpawnIdentity()
     {
         var nativeWorld = new AuthoritativeWorld();
         nativeWorld.AddLevel(new AuthoritativeLevel(18, 10, 10));
@@ -1521,7 +1521,14 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "SkeletonMelee",
+                NativeAi = "Zombie",
+                HorkDemonAttackChanceBase = 28,
+                HorkDemonAttackChanceIntelligenceScale = 2,
+                HorkDemonSpawnMinimumDistance = 3,
+                HorkDemonSpawnChanceBase = 43,
+                HorkDemonSpawnChanceIntelligenceScale = 2,
+                HorkDemonMovementChanceBase = 33,
+                HorkDemonMovementChanceIntelligenceScale = 2,
                 AggroRange = 6,
             },
         ]);
@@ -1538,29 +1545,31 @@ public sealed class DiabloCombatCommandProcessorTests
             1,
             120,
             levelId: 18,
+            monsterId: 119,
             aggroRange: 8,
-            nativeAi: "HorkDemon",
+            nativeAi: "Zombie",
             intelligence: 0);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
         var processor = CreateProcessor(
             world,
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
-                    "HorkDemon",
+                    "Zombie",
                     "HorkSpawn",
                     AuthoritativeProjectileBehavior.HorkSpawn,
                     SpawnMonsterId: 117,
                     ProjectileSpeed: 8,
                     ProjectileLifetime: 9),
             ]),
-            monsterSpawnPlanner: planner);
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes);
         var player = CreatePlayer(
             positionX: 5,
             positionY: 1,
             levelId: 18,
             entityId: 7);
 
-        // 1 ^ 9 ^ 7 = 15, inside HorkDemonAi's 43% spawn admission band.
+        // 1 ^ 9 ^ 7 = 15, inside the content-selected 43% spawn band.
         Assert.Empty(processor.AdvanceTick(1, [player]));
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
@@ -1574,7 +1583,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(world.Projectiles);
         var summoned = Assert.Single(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
         Assert.Equal((119U, 117U), (summoned.MonsterId, monsterTypes.Definitions[0].NativeMonsterId));
-        Assert.Equal("SkeletonMelee", summoned.NativeAi);
+        Assert.Equal("Zombie", summoned.NativeAi);
         Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
     }
 

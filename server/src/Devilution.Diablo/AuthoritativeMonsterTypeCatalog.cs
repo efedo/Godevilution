@@ -471,29 +471,20 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.HorkDemonSpawnChanceIntelligenceScale is < 0 or > 100
                 || definition.HorkDemonMovementChanceBase is < 0 or > 100
                 || definition.HorkDemonMovementChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "HorkDemon"
-                    && ((definition.HorkDemonAttackChanceBase != 0
-                            || definition.HorkDemonAttackChanceIntelligenceScale != 0
-                            || definition.HorkDemonSpawnMinimumDistance != 0
-                            || definition.HorkDemonSpawnChanceBase != 0
-                            || definition.HorkDemonSpawnChanceIntelligenceScale != 0
-                            || definition.HorkDemonMovementChanceBase != 0
-                            || definition.HorkDemonMovementChanceIntelligenceScale != 0)
-                        && (definition.HorkDemonAttackChanceBase <= 0
-                            || definition.HorkDemonAttackChanceIntelligenceScale <= 0
-                            || definition.HorkDemonSpawnMinimumDistance <= 0
-                            || definition.HorkDemonSpawnChanceBase <= 0
-                            || definition.HorkDemonSpawnChanceIntelligenceScale <= 0
-                            || definition.HorkDemonMovementChanceBase <= 0
-                            || definition.HorkDemonMovementChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "HorkDemon"
-                    && (definition.HorkDemonAttackChanceBase != 0
+                || ((definition.HorkDemonAttackChanceBase != 0
                         || definition.HorkDemonAttackChanceIntelligenceScale != 0
                         || definition.HorkDemonSpawnMinimumDistance != 0
                         || definition.HorkDemonSpawnChanceBase != 0
                         || definition.HorkDemonSpawnChanceIntelligenceScale != 0
                         || definition.HorkDemonMovementChanceBase != 0
-                        || definition.HorkDemonMovementChanceIntelligenceScale != 0))
+                        || definition.HorkDemonMovementChanceIntelligenceScale != 0)
+                    && (definition.HorkDemonAttackChanceBase <= 0
+                        || definition.HorkDemonAttackChanceIntelligenceScale <= 0
+                        || definition.HorkDemonSpawnMinimumDistance <= 0
+                        || definition.HorkDemonSpawnChanceBase <= 0
+                        || definition.HorkDemonSpawnChanceIntelligenceScale <= 0
+                        || definition.HorkDemonMovementChanceBase <= 0
+                        || definition.HorkDemonMovementChanceIntelligenceScale <= 0))
                 || definition.GargoyleSafeDistanceBase is < 0 or > 64
                 || definition.GargoyleSafeDistanceIntelligenceScale is < 0 or > 64
                 || (definition.NativeAi == "Gargoyle"
