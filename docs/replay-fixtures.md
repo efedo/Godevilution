@@ -96,7 +96,7 @@ fixture.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash spell-timeline
-checkpoints pass in both runners; the native replay gate reports 66/66 tests.
+checkpoints pass in both runners; the native replay gate reports 67/67 tests.
 Remaining replay work is broader fixture coverage rather than a known hash
 mismatch.
 
@@ -105,8 +105,8 @@ mismatch.
 Fixtures under `test/fixtures/replay` cover store transactions against synthetic
 and checked-in content, movement and combat, healing, portals, world-item
 pickup, status expiry, object-linked quest advancement, deterministic quest-pool
-selection, and multi-level world occupancy. The native and C# runners preserve
-the same baseline resources,
+selection, a 1,000-tick autonomous regeneration soak, and multi-level world
+occupancy. The native and C# runners preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
 world items in their canonical projections. Spell fixtures now reject unowned

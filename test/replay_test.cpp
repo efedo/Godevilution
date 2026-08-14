@@ -2152,6 +2152,38 @@ TEST(ReplayFixture, ExecutesQuestPoolSelectionAgainstCSharpCheckpoints)
 	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesAutonomousRegenerationSoakAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-autonomous-regen-soak.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1000U);
+	EXPECT_EQ(state.combatTargetHitPoints, 20);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 1280);
+	EXPECT_EQ(state.randomState, static_cast<uint32_t>(fixture.rngSeed));
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesStatusExpiryByAuthoritativeTick)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-status-expiry.json");
