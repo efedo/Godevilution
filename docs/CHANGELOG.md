@@ -39,6 +39,8 @@ All notable changes to this fork are documented below.
 - Add live Godot protocol coverage for a Charged Bolt remote-player cast using
   a validated class-loadout overlay, proving content activation and multiplayer
   impact resolution through the shared protocol.
+- Add the matching live Godot protocol coverage for Bone Spirit, completing
+  end-to-end player-target coverage for all three supported projectile spells.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
