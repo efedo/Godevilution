@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.108's optional GoatMelee movement-band tuning, moving the
+  native non-adjacent movement admission chance into validated monster content
+  while preserving legacy target behavior.
 - Add schema 1.107's optional SkeletonMelee delay-band tuning, moving the
   native movement admission chance into validated monster content while
   preserving legacy target behavior.
