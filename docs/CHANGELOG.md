@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add Godot right-click combat targeting: the client resolves visible snapshot
+  entities to `AttackRequested` intents while the server retains all combat
+  admission, timing, hit, damage, and action-state ownership.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.

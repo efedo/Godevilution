@@ -83,6 +83,18 @@ public partial class WorldPresentation : Node2D
             && item.PositionY == target.Y)?.EntityId;
     }
 
+    /** Returns the authoritative combat entity occupying a visible target tile. */
+    public uint? CombatTargetEntityIdAt(Vector2I target)
+    {
+        var currentSnapshot = snapshot;
+        var localPlayerEntityId = currentSnapshot?.Players.FirstOrDefault()?.EntityId ?? 0;
+        return AuthoritativeTargetSelector.SelectCombatTarget(
+            currentSnapshot,
+            localPlayerEntityId,
+            target.X,
+            target.Y);
+    }
+
     public override void _Draw()
     {
         DrawGrid();

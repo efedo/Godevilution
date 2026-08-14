@@ -173,9 +173,27 @@ public partial class Main : Node2D
                 CycleSpellSource(key.Keycode == Key.E ? 1 : -1);
         }
 
-        if (@event is InputEventMouseButton mouse && mouse.Pressed && mouse.ButtonIndex == MouseButton.Left && client?.IsConnected == true) {
+        if (@event is InputEventMouseButton mouse && mouse.Pressed && client?.IsConnected == true) {
             var target = world?.ScreenToTile(mouse.Position) ?? Vector2I.Zero;
             world?.SetTargetPreview(target);
+
+            if (mouse.ButtonIndex == MouseButton.Right) {
+                if (world?.CombatTargetEntityIdAt(target) is { } targetEntityId) {
+                    Queue(new Command {
+                        AttackRequested = new AttackRequested {
+                            TargetEntityId = targetEntityId,
+                        },
+                    });
+                } else {
+                    hud?.SetStatus("No authoritative combat target at that tile.");
+                }
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            if (mouse.ButtonIndex != MouseButton.Left)
+                return;
+
             var player = model.Snapshot?.Players.FirstOrDefault();
             if (player?.HeldItem is not null) {
                 Queue(new Command {
