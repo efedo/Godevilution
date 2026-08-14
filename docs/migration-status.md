@@ -134,6 +134,9 @@ Status date: 2026-08-14
 - Hellfire `DRAINLIFE` is now server-owned: eligible usable equipment applies
   native 4-Q6 damage once per active non-town tick, including Mana Shield and
   native no-item/no-ear death semantics.
+- Native `ABSHALFTRAP` is now server-owned at the armed-object boundary:
+  eligible usable equipment halves trap damage before the player damage
+  resolver, preserving exact Q6 event state.
 - Native class `CriticalStrike` is now authoritative for eligible player
   attacks: the level-based roll is consumed only after a successful hit and
   doubles physical damage before armor and later class/item effects. The shared

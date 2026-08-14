@@ -480,7 +480,9 @@ public sealed class AuthoritativeItemAffixCatalog
                 Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
             },
             "NOMANA" => state with { Flags = state.Flags | 0x08000000U },
-            "ABSHALFTRAP" => state with { Flags = state.Flags | 0x10000000U },
+            "ABSHALFTRAP" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
+            },
             "KNOCKBACK" => state with { Flags = state.Flags | 0x00000800U },
             "3XDAMVDEM" => state with { Flags = state.Flags | 0x40000000U },
             "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },

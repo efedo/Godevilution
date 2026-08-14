@@ -359,7 +359,9 @@ public sealed class AuthoritativeUniqueItemCatalog
                 Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
             },
             "3XDAMVDEM" => state with { Flags = state.Flags | 0x40000000U },
-            "ABSHALFTRAP" => state with { Flags = state.Flags | 0x10000000U },
+            "ABSHALFTRAP" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
+            },
             "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },
             "ACDEMON" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 5) },
             "ACUNDEAD" => state with { HellfireDamageArmorFlags = state.HellfireDamageArmorFlags | (1 << 6) },

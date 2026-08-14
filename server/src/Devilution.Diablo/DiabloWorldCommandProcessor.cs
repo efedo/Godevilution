@@ -744,14 +744,24 @@ public sealed class DiabloWorldCommandProcessor
                     healing))
                 : DiabloWorldIntentResult.Accepted;
         case AuthoritativeObjectEffectKind.Damage:
-            var damage = playerDamage?.Apply(player, @object.EffectAmount)
-                ?? ApplyUnshieldedDamage(player, @object.EffectAmount);
+            var damageAmountQ6 = @object.EffectAmount;
+            if (@object.TrapArmed
+                && HasUsableEquipmentFlag(
+                    player,
+                    AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag)) {
+                damageAmountQ6 /= 2;
+            }
+            var damage = playerDamage?.Apply(player, damageAmountQ6)
+                ?? ApplyUnshieldedDamage(player, damageAmountQ6);
             return damage.IncomingDamageQ6 > 0
                 ? DiabloWorldIntentResult.AcceptedWith(new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Damage,
                     @object.EntityId,
                     player.EntityId,
-                    damage.IncomingDamageQ6))
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        damage.IncomingDamageQ6)) {
+                    AmountQ6 = damage.IncomingDamageQ6,
+                })
                 : DiabloWorldIntentResult.Accepted;
         case AuthoritativeObjectEffectKind.Experience:
             DiabloPlayerProgression.GrantExperience(
@@ -799,6 +809,18 @@ public sealed class DiabloWorldCommandProcessor
             lifeDamage,
             0,
             false);
+    }
+
+    private static bool HasUsableEquipmentFlag(
+        AuthoritativePlayerState player,
+        uint flag)
+    {
+        return player.Equipment.Any(item => {
+            var state = item.State;
+            return state.StatFlag
+                && (state.Magical == 0 || state.Identified)
+                && (state.Flags & flag) != 0;
+        });
     }
 
     private DiabloWorldIntentResult AdvanceQuest(

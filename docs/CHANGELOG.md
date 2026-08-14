@@ -21,6 +21,8 @@ All notable changes to this fork are documented below.
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
   tick through the server-owned Q6 damage and death boundary.
+- Apply externalized `ABSHALFTRAP` equipment to armed-object damage through the
+  server-owned Q6 interaction path.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

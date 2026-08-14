@@ -3,6 +3,9 @@ namespace Devilution.Diablo;
 /** Native usable equipment modifiers applied to incoming physical player damage. */
 public static class AuthoritativeEquipmentIncomingDamageRules
 {
+    /** Native ItemSpecialEffect::HalfTrapDamage flag. */
+    public const uint HalfTrapDamageFlag = 1U << 28;
+
     /** Native ItemSpecialEffect::DrainLife flag. */
     public const uint DrainLifeFlag = 1U << 6;
 

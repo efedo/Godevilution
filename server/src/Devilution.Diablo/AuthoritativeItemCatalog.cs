@@ -444,7 +444,7 @@ public sealed class AuthoritativeItemCatalog
                 "KNOCKBACK" => 0x00000800U,
                 "THORNS" => AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
                 "NOMANA" => 0x08000000U,
-                "HALFTRAPDAMAGE" => 0x10000000U,
+                "HALFTRAPDAMAGE" => AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
                 "TRIPLEDEMONDAMAGE" => 0x40000000U,
                 "ZERORESISTANCE" => 0x80000000U,
                 _ => 0U,

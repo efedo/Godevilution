@@ -583,6 +583,47 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ArmedTrapUsesNativeHalfTrapDamageEquipmentAndPreservesQ6EventAmount()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.Damage,
+            effectAmount: 64,
+            trapArmed: true);
+        var world = new DiabloWorldState(objects: [@object]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(
+            life: 100,
+            lifeMaximum: 100,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
+                })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            5,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(68, player.Life);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 20, 7, 0) {
+                AmountQ6 = 32,
+            },
+            Assert.Single(result.Events));
+    }
+
+    [Fact]
     public void LinkedObjectAppliesConfiguredQuestProgressAndClampsAtRequiredAmount()
     {
         var quest = new AuthoritativeQuestState(30, 0, 5, progress: 4);
@@ -793,7 +834,8 @@ public sealed class DiabloWorldCommandProcessorTests
         IReadOnlyList<int>? inventoryGrid = null,
         uint gold = 100,
         IReadOnlyList<OwnedStoreItem>? inventory = null,
-        OwnedStoreItem? heldItem = null)
+        OwnedStoreItem? heldItem = null,
+        IReadOnlyList<EquippedStoreItem>? equipment = null)
     {
         return new AuthoritativePlayerState(
             gold,
@@ -802,7 +844,7 @@ public sealed class DiabloWorldCommandProcessorTests
             0,
             0,
             PlayerAttributesState.Zero,
-            [],
+            equipment ?? [],
             inventoryGrid ?? Enumerable.Repeat(-1, 40).ToArray(),
             [],
             positionX,
