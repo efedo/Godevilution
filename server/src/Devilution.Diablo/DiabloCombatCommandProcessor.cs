@@ -427,6 +427,11 @@ public sealed class DiabloCombatCommandProcessor
                     ranged,
                     players,
                     out var playerTarget)) {
+                if (ranged)
+                    return ResolvePlayerArrowVolley(
+                        player,
+                        playerTarget,
+                        appliedTick);
                 return ResolvePlayerAttack(
                     player,
                     playerTarget,
@@ -495,15 +500,89 @@ public sealed class DiabloCombatCommandProcessor
             : new DiabloCombatIntentResult(true, null, events);
     }
 
-    /** Resolves the initial authoritative melee path against another player. */
-    private DiabloCombatIntentResult ResolvePlayerAttack(
+    /** Emits server-owned weapon arrows targeting another player. */
+    private DiabloCombatIntentResult ResolvePlayerArrowVolley(
         AuthoritativePlayerState player,
         AuthoritativePlayerState target,
-        ulong appliedTick,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        ulong appliedTick)
     {
-        UpdateFacingToward(player, target.PositionX, target.PositionY);
-        var targetProxy = new AuthoritativeCombatTarget(
+        var targetDistance = Math.Max(
+            Math.Abs(target.PositionX - player.PositionX),
+            Math.Abs(target.PositionY - player.PositionY));
+        var direction = DiabloPlayerDirections.Toward(
+            player.PositionX,
+            player.PositionY,
+            target.PositionX,
+            target.PositionY);
+        var directionDisplacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
+        var targetProxy = CreatePlayerCombatTargetProxy(target);
+        var arrowCount = HasUsableEquipmentFlag(
+            player,
+            AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)
+            ? 3
+            : 1;
+        for (var arrowIndex = 0; arrowIndex < arrowCount; arrowIndex++) {
+            var damageQ6 = ResolvePlayerAttackDamageQ6(
+                player,
+                targetProxy,
+                ranged: true,
+                unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
+                out var perilSelfDamageQ6,
+                out var perilActive,
+                out var doppelgangerProc,
+                out var attackHit);
+            var elemental = attackHit
+                ? AuthoritativeEquipmentElementalDamageRules.Resolve(
+                    player.Equipment,
+                    random.GenerateRnd,
+                    ranged: true)
+                : default;
+            var spread = arrowCount == 1 || arrowIndex == 0
+                ? (X: 0, Y: 0)
+                : (X: checked(perpendicular.Item1 * (arrowIndex == 1 ? -1 : 1)),
+                    Y: checked(perpendicular.Item2 * (arrowIndex == 1 ? -1 : 1)));
+            var arrowPositionX = checked(player.PositionX + spread.X);
+            var arrowPositionY = checked(player.PositionY + spread.Y);
+            if (!world.ContainsPosition(player.LevelId, arrowPositionX, arrowPositionY)) {
+                arrowPositionX = player.PositionX;
+                arrowPositionY = player.PositionY;
+            }
+            var projectile = new AuthoritativeProjectile(
+                AllocateProjectileEntityId(),
+                player.EntityId == 0 ? 1U : player.EntityId,
+                target.EntityId,
+                0,
+                player.LevelId,
+                arrowPositionX,
+                arrowPositionY,
+                target.PositionX,
+                target.PositionY,
+                DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
+                AuthoritativeDamageType.Physical,
+                0,
+                checked((uint)Math.Max(1, targetDistance)),
+                allowZeroSpellId: true) {
+                Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
+                DamageQ6 = Math.Max(0, damageQ6),
+                ElementalFireDamage = elemental.Fire,
+                ElementalLightningDamage = elemental.Lightning,
+                AttackHit = attackHit,
+                PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
+                DoppelgangerProc = doppelgangerProc,
+                ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+            };
+            world.Projectiles.Add(projectile.EntityId, projectile);
+            ApplyHellfireWeaponDecay(player);
+        }
+        return DiabloCombatIntentResult.Accepted;
+    }
+
+    private AuthoritativeCombatTarget CreatePlayerCombatTargetProxy(
+        AuthoritativePlayerState target)
+    {
+        var targetClass = GetPlayerClass(target);
+        return new AuthoritativeCombatTarget(
             target.EntityId,
             target.PositionX,
             target.PositionY,
@@ -513,13 +592,24 @@ public sealed class DiabloCombatCommandProcessor
             levelId: target.LevelId,
             fireResistance: GetPlayerResistance(
                 target,
-                GetPlayerClass(target),
+                targetClass,
                 AuthoritativeDamageType.Fire),
             lightningResistance: GetPlayerResistance(
                 target,
-                GetPlayerClass(target),
+                targetClass,
                 AuthoritativeDamageType.Lightning),
             unique: true);
+    }
+
+    /** Resolves the initial authoritative melee path against another player. */
+    private DiabloCombatIntentResult ResolvePlayerAttack(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        UpdateFacingToward(player, target.PositionX, target.PositionY);
+        var targetProxy = CreatePlayerCombatTargetProxy(target);
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             targetProxy,
@@ -709,6 +799,25 @@ public sealed class DiabloCombatCommandProcessor
             player.Equipment,
             random.GenerateRnd,
             ranged: false);
+        ApplyPlayerElementalChannels(
+            player,
+            target,
+            targetProxy,
+            elemental,
+            appliedTick,
+            players,
+            events);
+    }
+
+    private void ApplyPlayerElementalChannels(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        AuthoritativeCombatTarget targetProxy,
+        AuthoritativeEquipmentElementalDamageRules.ElementalDamage elemental,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloGameplayEvent> events)
+    {
         if (elemental.Fire > 0) {
             var fireDamage = rules.ResolveDamage(
                 elemental.Fire,
@@ -1184,7 +1293,6 @@ public sealed class DiabloCombatCommandProcessor
             candidate.EntityId == targetEntityId
             && candidate.EntityId != player.EntityId)!;
         if (target is null
-            || ranged
             || target.Life <= 0
             || (target.LevelId != 0 && target.LevelId != player.LevelId)
             || (!rules.FriendlyFire && player.FriendlyMode)
@@ -1193,9 +1301,17 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        return Math.Max(
+        var distance = Math.Max(
             Math.Abs(target.PositionX - player.PositionX),
-            Math.Abs(target.PositionY - player.PositionY)) <= 1;
+            Math.Abs(target.PositionY - player.PositionY));
+        return ranged
+            ? distance > 0 && world.HasMissileLineOfSight(
+                player.LevelId,
+                player.PositionX,
+                player.PositionY,
+                target.PositionX,
+                target.PositionY)
+            : distance <= 1;
     }
 
     private DiabloCombatIntentResult Cast(
@@ -6314,6 +6430,18 @@ public sealed class DiabloCombatCommandProcessor
             && target.HitPoints > 0
             && (target.LevelId == 0 || target.LevelId == projectile.LevelId)) {
             ResolveWeaponArrowImpact(tick, projectile, target, players, events);
+        } else if (projectile.TargetEntityId != 0
+            && players.FirstOrDefault(candidate =>
+                candidate.EntityId == projectile.TargetEntityId
+                && candidate.Life > 0
+                && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId))
+                is { } playerTarget) {
+            ResolvePlayerWeaponArrowImpact(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events);
         }
         world.Projectiles.Remove(projectile.EntityId);
     }
@@ -6385,6 +6513,82 @@ public sealed class DiabloCombatCommandProcessor
                 tick,
                 players,
                 PlayerDeathReason.MonsterOrTrap);
+    }
+
+    private void ResolvePlayerWeaponArrowImpact(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(player =>
+            player.EntityId == projectile.SourceEntityId
+            || (projectile.SourceEntityId == 1 && player.EntityId == 0));
+        if (owner is null)
+            return;
+
+        var gameplayEvents = new List<DiabloGameplayEvent>();
+        if (projectile.PerilSelfDamageQ6 > 0) {
+            var selfDamageResult = playerDamage.Apply(owner, projectile.PerilSelfDamageQ6);
+            if (selfDamageResult.IncomingDamageQ6 > 0) {
+                gameplayEvents.Add(new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    owner.EntityId,
+                    owner.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        selfDamageResult.IncomingDamageQ6)) {
+                    AmountQ6 = selfDamageResult.IncomingDamageQ6,
+                });
+            }
+            if (owner.Life == 0) {
+                StartPlayerDeath(
+                    owner,
+                    owner.EntityId,
+                    tick,
+                    players,
+                    PlayerDeathReason.MonsterOrTrap);
+            }
+        }
+
+        var damageResult = playerDamage.Apply(target, Math.Max(0, projectile.DamageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            gameplayEvents.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Damage,
+                owner.EntityId,
+                target.EntityId,
+                DiabloFixedPointQ6.ToWholeTruncated(
+                    damageResult.IncomingDamageQ6)) {
+                AmountQ6 = damageResult.IncomingDamageQ6,
+            });
+        }
+        if (target.Life == 0) {
+            StartPlayerDeath(
+                target,
+                owner.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.Player);
+        } else if (projectile.AttackHit
+            && (projectile.ElementalFireDamage > 0
+                || projectile.ElementalLightningDamage > 0)) {
+            var targetProxy = CreatePlayerCombatTargetProxy(target);
+            ApplyPlayerElementalChannels(
+                owner,
+                target,
+                targetProxy,
+                new AuthoritativeEquipmentElementalDamageRules.ElementalDamage(
+                    projectile.ElementalFireDamage,
+                    projectile.ElementalLightningDamage),
+                tick,
+                players,
+                gameplayEvents);
+        }
+        ApplyPlayerKnockback(owner, target, projectile.DamageQ6, players);
+        if (projectile.DamageQ6 > 0)
+            ApplyEquipmentAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
+        foreach (var gameplayEvent in gameplayEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
     }
 
     private void ResolveWeaponArrowImpact(
