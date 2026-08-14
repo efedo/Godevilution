@@ -5628,12 +5628,15 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY);
+        var chargeProjectileTuning = ResolveMappedChargeProjectileTuning(
+            missile,
+            monster.Intelligence);
         var (velocityX, velocityY) = CalculateVelocity(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            18);
+            chargeProjectileTuning.Speed);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -5647,12 +5650,12 @@ public sealed class DiabloCombatCommandProcessor
             0,
             AuthoritativeDamageType.Physical,
             0,
-            256) {
+            checked((uint)chargeProjectileTuning.Lifetime)) {
             Behavior = AuthoritativeProjectileBehavior.SnakeCharge,
             VelocityX = velocityX,
             VelocityY = velocityY,
             OriginalDirection = direction,
-            Speed = 18,
+            Speed = chargeProjectileTuning.Speed,
             ImpactLifetime = 1,
             ResistantDamageDivisor = 1,
         };
@@ -5707,12 +5710,15 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY);
+        var chargeProjectileTuning = ResolveMappedChargeProjectileTuning(
+            missile,
+            monster.Intelligence);
         var (velocityX, velocityY) = CalculateVelocity(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            18);
+            chargeProjectileTuning.Speed);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -5726,12 +5732,12 @@ public sealed class DiabloCombatCommandProcessor
             0,
             AuthoritativeDamageType.Physical,
             0,
-            256) {
+            checked((uint)chargeProjectileTuning.Lifetime)) {
             Behavior = AuthoritativeProjectileBehavior.BatCharge,
             VelocityX = velocityX,
             VelocityY = velocityY,
             OriginalDirection = direction,
-            Speed = 18,
+            Speed = chargeProjectileTuning.Speed,
             ImpactLifetime = 1,
             ResistantDamageDivisor = 1,
         };
@@ -6004,6 +6010,24 @@ public sealed class DiabloCombatCommandProcessor
             missile?.RangedRetreatChanceIntelligenceScale > 0
                 ? missile.RangedRetreatChanceIntelligenceScale
                 : 10);
+    }
+
+    private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(
+        AuthoritativeMonsterMissileDefinition missile,
+        int intelligence)
+    {
+        var speed = missile.ProjectileSpeed > 0
+            ? missile.ProjectileSpeed
+            : 18;
+        var lifetime = missile.ProjectileLifetime > 0
+            ? missile.ProjectileLifetime
+            : missile.ProjectileLifetimeBase > 0
+                || missile.ProjectileLifetimeIntelligenceScale > 0
+                ? checked(
+                    missile.ProjectileLifetimeBase
+                    + missile.ProjectileLifetimeIntelligenceScale * intelligence)
+                : 256;
+        return (speed, Math.Max(1, lifetime));
     }
 
     private static (

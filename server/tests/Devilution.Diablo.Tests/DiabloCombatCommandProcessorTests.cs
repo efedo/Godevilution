@@ -3679,6 +3679,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeUsesValidatedChargeTrajectoryTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    ProjectileSpeed: 7,
+                    ProjectileLifetime: 12),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var charge = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
+        Assert.Equal(7, charge.Speed);
+        Assert.Equal(11U, charge.RemainingTicks);
+    }
+
+    [Fact]
     public void SnakeUsesValidatedChargeDistanceTuning()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -3811,6 +3854,53 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(world.Projectiles);
         Assert.Equal(100, player.Life);
         Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
+    public void GloomUsesValidatedChargeTrajectoryTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 100,
+                    ChargeChanceIntelligenceScale: 1,
+                    ProjectileSpeed: 7,
+                    ProjectileLifetime: 12),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var charge = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BatCharge, charge.Behavior);
+        Assert.Equal(7, charge.Speed);
+        Assert.Equal(11U, charge.RemainingTicks);
     }
 
     [Fact]
