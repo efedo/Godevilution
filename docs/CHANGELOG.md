@@ -46,6 +46,9 @@ All notable changes to this fork are documented below.
 - Add live process-restart persistence coverage: a resumed protocol session now
   restores server-owned movement and class state from the deterministic save
   identity derived from its resume token.
+- Add live Godot protocol coverage for Heal Other targeting a remote player
+  through a validated memorized-spell loadout; healing remains server-owned and
+  the client only supplies the selected entity intent.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
