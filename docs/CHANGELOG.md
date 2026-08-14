@@ -23,6 +23,11 @@ All notable changes to this fork are documented below.
   impacts receive the same target-side block boundary, and the live protocol
   suite verifies melee shield blocking through a validated content overlay
   without client-side combat simulation.
+- Admit targeted Firebolt, Charged Bolt, and Bone Spirit casts against living
+  remote players through the same authoritative target validation used by
+  ranged attacks. Friendly-fire, level, range, and missile line-of-sight rules
+  remain server-owned; existing player-impact resistance, block, damage, and
+  death handling are reused, with managed acceptance and rejection coverage.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
