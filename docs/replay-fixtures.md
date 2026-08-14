@@ -86,6 +86,16 @@ fixture.
   manifest identity or adds a non-observable catalog entry; regenerate hashes
   only when canonical state actually changes, then verify both runners.
 
+## Known parity debt
+
+The current authoritative corpse lifecycle is ahead of the compact native
+replay projection: C# checkpoints that cross ordinary monster death need a
+corpse-tile representation before their hashes can be refreshed in both
+runners. The native runner also has four outstanding spell-timeline hash
+mismatches (Firebolt, Fireball, Lightning, and Flash). These are tracked in
+`migration-status.md` and must be resolved before deterministic replay can be
+called complete.
+
 ## Current Coverage
 
 Fixtures under `test/fixtures/replay` cover store transactions against synthetic

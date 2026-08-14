@@ -1,13 +1,13 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-13
+Status date: 2026-08-14
 
 ## Current state
 
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, and protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias | Add broader reconnect/multiplayer fixtures and production-client soak coverage |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Add broader quest selection and longer soak fixtures |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Refresh C# corpse-lifecycle checkpoints, reconcile the compact native dead-target projection, resolve four native spell-timeline hash mismatches, and add broader quest-selection and longer-soak fixtures |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec and validated saved-class reconstruction for cold sessions | Add concrete migrations when formats change and broader recovery/soak testing |
@@ -42,6 +42,9 @@ Status date: 2026-08-13
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.
+- Native Stone Curse now retains a defeated petrified target through its
+  authoritative shatter phase; ordinary defeated monsters become persisted
+  corpse tiles, and snapshots preserve the distinction between the two states.
 
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.
