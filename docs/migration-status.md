@@ -146,6 +146,11 @@ Status date: 2026-08-13
   each native AI's retained missile ID and projectile behavior; unsupported
   controllers remain explicitly `Targeted` until their server-owned behavior
   is migrated, and clients never dispatch these mappings.
+- Validated ranged mappings now admit their native AI directly from the active
+  content pack; the server no longer maintains a separate allow-list for which
+  native identities may enter the migrated projectile path. Existing
+  AI-specific probability and avoidance branches remain server-owned until
+  their remaining semantics are externalized.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

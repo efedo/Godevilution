@@ -4162,10 +4162,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
-            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon" or "Storm"
-            or "Diablo" or "Magma" or "Acid" or "AcidUnique")
-            || monsterMissiles is null
+        if (monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Firebolt

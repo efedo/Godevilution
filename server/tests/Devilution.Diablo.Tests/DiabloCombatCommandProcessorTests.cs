@@ -1551,6 +1551,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ValidatedMappedRangedContentAdmitsAnOtherwiseUnroutedNativeAi()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Counselor");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
+        Assert.Equal(9U, projectile.SourceEntityId);
+        Assert.Equal(4, projectile.Damage);
+    }
+
+    [Fact]
     public void GoatRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(

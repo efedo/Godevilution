@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make validated `monster_missiles.tsv` rows authoritative for mapped ranged
+  admission, removing the server's native-AI allow-list while retaining each
+  migrated behavior's native parity branch.
 - Add schema 1.81 `monster_missiles.tsv` mappings so native monster AI missile
   identities and migrated projectile behaviors are validated by the active
   content pack; unsupported controllers remain explicitly `Targeted`.
