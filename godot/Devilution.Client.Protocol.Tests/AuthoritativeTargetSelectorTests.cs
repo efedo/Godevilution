@@ -31,7 +31,7 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
-    public void SelectsLivingRemotePlayerOnTheLocalLevel()
+    public void IgnoresRemotePlayersUntilAuthoritativePvpAttackSupportExists()
     {
         var snapshot = new Snapshot {
             Players = {
@@ -40,7 +40,7 @@ public sealed class AuthoritativeTargetSelectorTests
             },
         };
 
-        Assert.Equal(8U, AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 3, 4));
+        Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 3, 4));
         Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 3, 5));
     }
 }

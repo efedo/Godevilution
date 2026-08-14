@@ -28,13 +28,7 @@ public static class AuthoritativeTargetSelector
             && candidate.PositionY == targetY);
         if (monster is not null)
             return monster.EntityId;
-
-        return snapshot.Players.FirstOrDefault(candidate =>
-            candidate.EntityId != localPlayer.EntityId
-            && candidate.Life > 0
-            && IsVisible(candidate.LevelId, localPlayer.LevelId)
-            && candidate.PositionX == targetX
-            && candidate.PositionY == targetY)?.EntityId;
+        return null;
     }
 
     private static bool IsVisible(uint levelId, uint localLevelId)

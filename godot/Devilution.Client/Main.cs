@@ -185,7 +185,7 @@ public partial class Main : Node2D
                         },
                     });
                 } else {
-                    hud?.SetStatus("No authoritative combat target at that tile.");
+                    hud?.SetStatus("No authoritative monster target at that tile.");
                 }
                 GetViewport().SetInputAsHandled();
                 return;

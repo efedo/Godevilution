@@ -158,10 +158,11 @@ world and quest interactions, event feedback, diagnostics, and accessibility
 HUD toggles. World layout under `Devilution.Client/assets/levels` is
 presentation data and must stay consistent with server content.
 
-Right-clicking a visible monster or remote player submits an authoritative
-`AttackRequested` intent for that entity. The presentation client only resolves
-the clicked tile to a snapshot entity ID; the server owns range, timing, hit,
-damage, and action state. Left-click remains the cast or item-interaction path.
+Right-clicking a visible monster submits an authoritative `AttackRequested`
+intent for that monster. The presentation client only resolves the clicked tile
+to a snapshot entity ID; the server owns range, timing, hit, damage, and action
+state. Physical player-versus-player attacks remain a server migration task.
+Left-click remains the cast or item-interaction path.
 
 The cast cursor now exposes every source present in the authoritative snapshot.
 Memorized spells, the charged left-hand staff, inventory consumables, belt
