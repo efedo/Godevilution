@@ -11,6 +11,51 @@ namespace Devilution.Server.Tests;
 public sealed class BaseContentReplayTests
 {
     [Fact]
+    public void ElementalEquipmentAttackMatchesNativeReplayCheckpoint()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-elemental-equipment.json")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLifeMaximum: initial.Life,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                armorClass: initial.CombatTargetArmorClass,
+                maxHitPoints: initial.CombatTargetMaxHitPoints,
+                fireResistance: initial.CombatTargetFireResistance,
+                lightningResistance: initial.CombatTargetLightningResistance)],
+            startingCombatRules: new AuthoritativeCombatRules(10, 1, 100),
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(82, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void BaseStorePurchaseAndSaleUseTheCheckedInCatalog()
     {
         var fixturePath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "base-content-purchase.json");

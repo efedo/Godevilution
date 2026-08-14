@@ -39,9 +39,13 @@ runners use that ownership state when admitting casts, and include nonempty
 spell knowledge in the same tagged canonical-hash extension used by snapshots.
 An optional `equipment` array carries protocol-shaped slot, item seed, native
 item index, type/class, value, identified value, flags, and usability state.
-Both runners validate unique native slots and hash the resulting equipment.
-Attack profile, ranged admission, combat mode, and native speed flags are then
-derived from that state rather than declared as separate fixture outcomes.
+Elemental replay cases may also carry `identified`, `magical`,
+`fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
+`lightning_max_damage`; these fields are optional and default to the native
+zero/false values. Both runners validate unique native slots and hash the
+resulting equipment. Attack profile, ranged admission, combat mode, and native
+speed flags are then derived from that state rather than declared as separate
+fixture outcomes.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.

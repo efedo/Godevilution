@@ -95,6 +95,12 @@ struct ReplayFixtureEquippedItem {
 	int32_t itemIndex = -1;
 	int32_t value = 0;
 	int32_t identifiedValue = 0;
+	bool identified = false;
+	int32_t magical = 0;
+	int32_t fireMinDamage = 0;
+	int32_t fireMaxDamage = 0;
+	int32_t lightningMinDamage = 0;
+	int32_t lightningMaxDamage = 0;
 };
 
 /** Minimal protocol-shaped belt item used by consumable-cast fixtures. */

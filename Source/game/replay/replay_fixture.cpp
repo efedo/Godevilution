@@ -24,6 +24,8 @@ namespace {
 constexpr uint32_t FastAttackFlag = 1U << 18;
 constexpr uint32_t FasterAttackFlag = 1U << 19;
 constexpr uint32_t FastestAttackFlag = 1U << 20;
+constexpr uint32_t FireDamageFlag = 1U << 4;
+constexpr uint32_t LightningDamageFlag = 1U << 5;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -2408,6 +2410,33 @@ bool IsReplayEquipmentUsable(const ReplayFixtureItemState &item)
 	return item.statFlag && (item.magical == 0 || item.identified);
 }
 
+int32_t ResolveReplayElementalDamage(
+	ReplayFixtureExecutionState &state,
+	uint32_t flag,
+	int32_t ReplayFixtureItemState::*minimum,
+	int32_t ReplayFixtureItemState::*maximum)
+{
+	int32_t minimumDamage = 0;
+	int32_t maximumDamage = 0;
+	for (const auto &equippedItem : state.equipment) {
+		const auto &item = equippedItem.state;
+		if (!IsReplayEquipmentUsable(item) || (item.flags & flag) == 0)
+			continue;
+		minimumDamage += std::max(0, item.*minimum);
+		maximumDamage += std::max(0, item.*maximum);
+	}
+	if (maximumDamage < minimumDamage || maximumDamage == 0)
+		return 0;
+	return minimumDamage + GenerateRnd(state, maximumDamage - minimumDamage + 1);
+}
+
+int32_t ApplyReplayElementalResistance(int32_t damage, int32_t resistance)
+{
+	if (damage <= 0)
+		return 0;
+	return damage * (100 - std::clamp(resistance, -100, 100)) / 100;
+}
+
 bool UsesReplayRangedAttack(const ReplayFixtureExecutionState &state)
 {
 	std::vector<ReplayFixtureSlottedItem> hands;
@@ -2475,6 +2504,34 @@ bool ApplyReplayAttack(
 	const int32_t damageQ6 = damage * 64;
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	// Resolve both channels before applying either one, matching the C# rule's
+	// deterministic fire-then-lightning roll order even for a lethal fire hit.
+	const int32_t fireDamage = ApplyReplayElementalResistance(
+	    ResolveReplayElementalDamage(
+	        state,
+	        FireDamageFlag,
+	        &ReplayFixtureItemState::fireMinDamage,
+	        &ReplayFixtureItemState::fireMaxDamage),
+	    state.combatTargetFireResistance);
+	const int32_t lightningDamage = ApplyReplayElementalResistance(
+	    ResolveReplayElementalDamage(
+	        state,
+	        LightningDamageFlag,
+	        &ReplayFixtureItemState::lightningMinDamage,
+	        &ReplayFixtureItemState::lightningMaxDamage),
+	    state.combatTargetLightningResistance);
+	if (state.combatTargetHitPointsQ6 > 0) {
+		state.combatTargetHitPointsQ6 = std::max(
+		    0,
+		    state.combatTargetHitPointsQ6 - fireDamage * 64);
+		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	}
+	if (state.combatTargetHitPointsQ6 > 0) {
+		state.combatTargetHitPointsQ6 = std::max(
+		    0,
+		    state.combatTargetHitPointsQ6 - lightningDamage * 64);
+		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	}
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
 	return true;
@@ -4119,6 +4176,18 @@ private:
 					    return ParseSigned(item.value);
 				    if (key == "identified_value")
 					    return ParseSigned(item.identifiedValue);
+				    if (key == "identified")
+					    return ParseBool(item.identified);
+				    if (key == "magical")
+					    return ParseSigned(item.magical);
+				    if (key == "fire_min_damage")
+					    return ParseSigned(item.fireMinDamage);
+				    if (key == "fire_max_damage")
+					    return ParseSigned(item.fireMaxDamage);
+				    if (key == "lightning_min_damage")
+					    return ParseSigned(item.lightningMinDamage);
+				    if (key == "lightning_max_damage")
+					    return ParseSigned(item.lightningMaxDamage);
 				    return SkipValue();
 			    })) {
 				return false;
@@ -4130,6 +4199,10 @@ private:
 			    || item.itemType > std::numeric_limits<uint8_t>::max()
 			    || item.itemClass < 0
 			    || item.itemClass > 3
+			    || item.fireMinDamage < 0
+			    || item.fireMaxDamage < item.fireMinDamage
+			    || item.lightningMinDamage < 0
+			    || item.lightningMaxDamage < item.lightningMinDamage
 			    || std::any_of(fixture_.initialState.equipment.begin(), fixture_.initialState.equipment.end(), [&](const auto &candidate) {
 				    return candidate.slot == item.slot;
 			    })) {
@@ -4715,6 +4788,12 @@ bool ExecuteReplayFixture(
 			item.itemIndex = source.itemIndex;
 			item.value = source.value;
 			item.identifiedValue = source.identifiedValue;
+			item.identified = source.identified;
+			item.magical = source.magical;
+			item.fireMinDamage = source.fireMinDamage;
+			item.fireMaxDamage = source.fireMaxDamage;
+			item.lightningMinDamage = source.lightningMinDamage;
+			item.lightningMaxDamage = source.lightningMaxDamage;
 			item.flags = source.flags;
 			item.statFlag = source.statFlag;
 			state.equipment.push_back({ source.slot, source.itemSeed, item });

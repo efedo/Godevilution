@@ -420,6 +420,36 @@ TEST(ReplayFixture, ExecutesGoldTopologyStoreTransitionsAgainstCSharpCheckpoints
 	EXPECT_EQ(result.transitions.back().stateSha256, fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesElementalEquipmentAttackAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-elemental-equipment.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.initialState.equipment.size(), 2U);
+	EXPECT_EQ(fixture.initialState.equipment[0].fireMinDamage, 4);
+	EXPECT_EQ(fixture.initialState.equipment[1].lightningMaxDamage, 8);
+
+	ReplayFixtureExecutionState state;
+	state.gold = fixture.initialState.gold;
+	state.experience = fixture.initialState.experience;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.combatTargetHitPoints, 82);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/stores/base-content-purchase.json");

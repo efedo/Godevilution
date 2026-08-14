@@ -481,12 +481,22 @@ public static class ReplayFixtureLoader
                     : -1,
                 Value = GetOptionalInt(item, "value"),
                 IdentifiedValue = GetOptionalInt(item, "identified_value"),
+                Identified = GetOptionalBool(item, "identified"),
+                Magical = GetOptionalInt(item, "magical"),
+                FireMinDamage = GetOptionalInt(item, "fire_min_damage"),
+                FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
+                LightningMinDamage = GetOptionalInt(item, "lightning_min_damage"),
+                LightningMaxDamage = GetOptionalInt(item, "lightning_max_damage"),
             })
             .ToArray();
         if (result.Any(item => item.Slot >= 7
                 || item.ItemSeed == 0
                 || item.ItemType is < 0 or > byte.MaxValue
-                || item.ItemClass is < 0 or > 3)
+                || item.ItemClass is < 0 or > 3
+                || item.FireMinDamage < 0
+                || item.FireMaxDamage < item.FireMinDamage
+                || item.LightningMinDamage < 0
+                || item.LightningMaxDamage < item.LightningMinDamage)
             || result.Select(item => item.Slot).Distinct().Count() != result.Length) {
             throw new InvalidDataException(
                 "Replay fixture equipment contains invalid or duplicate item state.");

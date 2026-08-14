@@ -1,0 +1,63 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/elemental-equipment",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "a4f2d11cb54e18c5df07eae670a7ab9ab739f5efbd83dc84d5fcefe956315e97"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 10,
+    "mana_maximum": 10,
+    "position_x": 0,
+    "position_y": 0,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 1,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_fire_resistance": 50,
+    "combat_target_lightning_resistance": 25,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 1,
+        "item_class": 0,
+        "flags": 16,
+        "stat_flag": true,
+        "fire_min_damage": 4,
+        "fire_max_damage": 4
+      },
+      {
+        "slot": 5,
+        "item_seed": 101,
+        "item_type": 1,
+        "item_class": 0,
+        "flags": 32,
+        "stat_flag": true,
+        "lightning_min_damage": 8,
+        "lightning_max_damage": 8
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Attack",
+      "payload": { "target_entity_id": 9 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "69944077a4256a4342bcc40a196ab7117f45503181762c299fb6d87ac3fae493" }
+  ]
+}

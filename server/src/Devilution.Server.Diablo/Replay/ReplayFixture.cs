@@ -20,6 +20,18 @@ public sealed record ReplayEquippedItem(
 
     public int IdentifiedValue { get; init; }
 
+    public bool Identified { get; init; }
+
+    public int Magical { get; init; }
+
+    public int FireMinDamage { get; init; }
+
+    public int FireMaxDamage { get; init; }
+
+    public int LightningMinDamage { get; init; }
+
+    public int LightningMaxDamage { get; init; }
+
     public EquippedStoreItem ToEquippedStoreItem()
     {
         return new EquippedStoreItem(
@@ -31,7 +43,13 @@ public sealed record ReplayEquippedItem(
                 ItemIndex = ItemIndex,
                 Value = Value,
                 IdentifiedValue = IdentifiedValue,
+                Identified = Identified,
+                Magical = Magical,
                 Flags = Flags,
+                FireMinDamage = FireMinDamage,
+                FireMaxDamage = FireMaxDamage,
+                LightningMinDamage = LightningMinDamage,
+                LightningMaxDamage = LightningMaxDamage,
                 StatFlag = StatFlag,
             });
     }
