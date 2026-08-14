@@ -3721,7 +3721,7 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
                     "Acid",
-                    "Acid",
+                    "ConfiguredAcid",
                     AuthoritativeProjectileBehavior.Acid,
                     AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
                     50,
@@ -3732,7 +3732,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     PuddleDurationIntelligenceScale: 1,
                     PuddleDamageMinimumMonsterLevel: 1,
                     PuddleDamageLow: 3,
-                    PuddleDamageHigh: 7),
+                    PuddleDamageHigh: 7,
+                    DamageType: AuthoritativeDamageType.Acid),
             ]));
         var player = CreatePlayer(
             entityId: 7,

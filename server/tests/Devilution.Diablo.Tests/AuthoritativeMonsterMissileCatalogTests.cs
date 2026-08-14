@@ -27,14 +27,15 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\n"
-                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\n");
+                "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\tAcid\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\n");
 
         Assert.True(catalog.TryGet("Acid", out var acid));
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
         Assert.Equal(50, acid.AvoidanceProbabilityPercent);
         Assert.Equal(1U, acid.SpellId);
         Assert.Equal(117U, acid.SpawnMonsterId);
+        Assert.Equal(AuthoritativeDamageType.Acid, acid.DamageType);
         Assert.Equal(8, acid.ProjectileSpeed);
         Assert.Equal(9, acid.ProjectileLifetime);
         Assert.Equal(20, acid.ProjectileLifetimeBase);
@@ -58,6 +59,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.True(catalog.TryGet("Succubus", out var succubus));
         Assert.Equal(0U, succubus.SpellId);
         Assert.Equal(0U, succubus.SpawnMonsterId);
+        Assert.Null(succubus.DamageType);
         Assert.Equal(0, succubus.ProjectileSpeed);
         Assert.Equal(0, succubus.ProjectileLifetime);
         Assert.Equal(0, succubus.ProjectileLifetimeBase);
@@ -94,6 +96,15 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
                     0),
             ]));
+    }
+
+    [Fact]
+    public void RejectsAnUnknownDamageType()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tdamage_type\n"
+                + "Succubus\tBloodStar\tBloodStar\tNotARealDamageType\n"));
     }
 
     [Fact]

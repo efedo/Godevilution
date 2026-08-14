@@ -28,7 +28,8 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int PuddleDurationIntelligenceScale = 0,
     int PuddleDamageMinimumMonsterLevel = 0,
     int PuddleDamageLow = 0,
-    int PuddleDamageHigh = 0);
+    int PuddleDamageHigh = 0,
+    AuthoritativeDamageType? DamageType = null);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -46,6 +47,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || string.IsNullOrWhiteSpace(definition.MissileId)
                 || !Enum.IsDefined(definition.ProjectileBehavior)
                 || !Enum.IsDefined(definition.AttackMode)
+                || definition.DamageType is not null
+                    && !Enum.IsDefined(definition.DamageType.Value)
                 || definition.AvoidanceProbabilityPercent is < 1 or > 100
                 || definition.ProjectileSpeed < 0
                 || definition.ProjectileLifetime < 0
@@ -121,12 +124,29 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("puddle_duration_intelligence_scale"),
                 row.OptionalInt32("puddle_damage_minimum_monster_level"),
                 row.OptionalInt32("puddle_damage_low"),
-                row.OptionalInt32("puddle_damage_high"));
+                row.OptionalInt32("puddle_damage_high"),
+                ParseDamageType(row));
         }));
     }
 
     private static string CreateKey(string nativeAi, uint monsterId)
         => $"{nativeAi}\u001F{monsterId}";
+
+    private static AuthoritativeDamageType? ParseDamageType(TsvRow row)
+    {
+        if (!row.TryGet("damage_type", out var text)
+            || string.IsNullOrWhiteSpace(text))
+            return null;
+        if (!Enum.TryParse<AuthoritativeDamageType>(
+                text,
+                ignoreCase: false,
+                out var damageType)
+            || !Enum.IsDefined(damageType)) {
+            throw new InvalidDataException(
+                $"Monster missile row {row.LineNumber} contains unknown damage type '{text}'.");
+        }
+        return damageType;
+    }
 
     private static AuthoritativeMonsterRangedAttackMode ParseAttackMode(TsvRow row)
     {

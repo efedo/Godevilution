@@ -5515,7 +5515,8 @@ public sealed class DiabloCombatCommandProcessor
                 : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
                     ? checked(5 * (monster.Intelligence + 4))
                     : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
-        var damageType = spell?.DamageType
+        var damageType = missile.DamageType
+            ?? spell?.DamageType
             ?? (missile.MissileId == "MagmaBall"
                 ? AuthoritativeDamageType.Fire
                 : missile.MissileId == "Acid"
