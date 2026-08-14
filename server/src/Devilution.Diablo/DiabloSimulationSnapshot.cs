@@ -636,7 +636,8 @@ public sealed partial class DiabloSimulation
                     projectile.LevelId,
                     projectile.TargetX,
                     projectile.TargetY)
-                || (projectile.Behavior == AuthoritativeProjectileBehavior.ChargedBolt
+                || ((projectile.Behavior is AuthoritativeProjectileBehavior.ChargedBolt
+                        or AuthoritativeProjectileBehavior.MonsterChargedBolt)
                     && (projectile.OriginalDirection is < 0 or > 7
                         || projectile.PathIndex is < 0 or > 15
                         || projectile.PathTicks is < 0 or > 16

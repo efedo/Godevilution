@@ -67,6 +67,8 @@ public enum AuthoritativeProjectileBehavior
     SnakeCharge = 54,
     /** Native Gloom Rhino controller that moves the source monster without a hit. */
     BatCharge = 55,
+    /** Native Counselor Charged Bolt emitted by a monster-owned controller. */
+    MonsterChargedBolt = 56,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */

@@ -17,3 +17,8 @@ Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0
 Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0
 BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0
 Bat	Rhino	BatCharge	RangedAvoidance	100	42
+Counselor	Firebolt	Firebolt	Ranged	100	107
+Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108
+Counselor	LightningControl	Lightning	Ranged	100	109
+Counselor	Fireball	Fireball	Ranged	100	110
+Counselor	Fireball	Fireball	Ranged	100	113

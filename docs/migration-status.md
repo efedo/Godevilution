@@ -159,6 +159,10 @@ Status date: 2026-08-13
   (`Bat`, monster type 42) now consumes a validated `Rhino` mapping; the
   server owns its clear-lane, speed-18, movement-only charge and blocked-lane
   stop while the content row selects the controller.
+- Schema 1.84 adds validated Counselor rows for native monster IDs 107, 108,
+  109, 110, and 113. The server now owns the corresponding Firebolt, Charged
+  Bolt, Lightning, and Fireball projectile paths, including monster-owned
+  Charged Bolt player-hit resolution.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

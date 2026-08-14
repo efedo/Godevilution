@@ -11,8 +11,61 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.83.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.84.0"),
             DiabloContentSchema.Current);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsMonsterOwnedCounselorChargedBolt()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    20,
+                    monsterId: 108,
+                    nativeAi: "Counselor",
+                    intelligence: 1)],
+                Projectiles = [new AuthoritativeProjectile(
+                    50,
+                    9,
+                    7,
+                    30,
+                    0,
+                    1,
+                    0,
+                    7,
+                    0,
+                    3,
+                    AuthoritativeDamageType.Lightning,
+                    0,
+                    16) {
+                    Behavior = AuthoritativeProjectileBehavior.MonsterChargedBolt,
+                    OriginalDirection = 0,
+                    PathIndex = 2,
+                    PathTicks = 8,
+                    Speed = 8,
+                    ImpactLifetime = 1,
+                    ResistantDamageDivisor = 1,
+                }],
+            });
+
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var projectile = Assert.Single(replacement.WorldState.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
+        Assert.Equal((9U, 7U, 8), (
+            projectile.SourceEntityId,
+            projectile.TargetEntityId,
+            projectile.Speed));
+        Assert.Equal(2, projectile.PathIndex);
+        Assert.Equal(8, projectile.PathTicks);
     }
 
     [Fact]
@@ -52,7 +105,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.83.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.84.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

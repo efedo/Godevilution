@@ -4278,7 +4278,8 @@ public sealed class DiabloCombatCommandProcessor
         if (monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
             || missile.ProjectileBehavior is not (
-                AuthoritativeProjectileBehavior.Firebolt
+                AuthoritativeProjectileBehavior.MonsterChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
                 or AuthoritativeProjectileBehavior.Fireball
                 or AuthoritativeProjectileBehavior.MonsterMagic
                 or AuthoritativeProjectileBehavior.Lightning
@@ -4327,7 +4328,9 @@ public sealed class DiabloCombatCommandProcessor
             return missile.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance;
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
-            definition.ProjectileBehavior == missile.ProjectileBehavior);
+            definition.ProjectileBehavior == missile.ProjectileBehavior
+                || missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterChargedBolt
+                    && definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChargedBolt);
         var spellId = spell?.SpellId
             ?? (missile.ProjectileBehavior switch {
                 AuthoritativeProjectileBehavior.Fireball => 12U,
@@ -4339,6 +4342,7 @@ public sealed class DiabloCombatCommandProcessor
         // ThinLightningControl uses speed 32. Player spell speed remains
         // content-owned separately in spells.tsv.
         var speed = missile.ProjectileBehavior switch {
+            AuthoritativeProjectileBehavior.MonsterChargedBolt => 8,
             AuthoritativeProjectileBehavior.Lightning => 32,
             AuthoritativeProjectileBehavior.ApocalypseController => 0,
             _ => 16,
@@ -4971,6 +4975,10 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.ChargedBolt) {
+                    AdvanceChargedBolt(tick, projectile, players, events);
+                    continue;
+                }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterChargedBolt) {
                     AdvanceChargedBolt(tick, projectile, players, events);
                     continue;
                 }
@@ -8487,15 +8495,23 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
-        var hitTarget = target is not null
+        var hitTarget = projectile.Behavior != AuthoritativeProjectileBehavior.MonsterChargedBolt
+            && target is not null
             && TryResolveChargedBoltHit(projectile, target, players, events);
         if (!hitTarget && playerTarget is not null) {
-            hitTarget = TryResolveChargedBoltPlayerHit(
-                tick,
-                projectile,
-                playerTarget,
-                players,
-                events);
+            hitTarget = projectile.Behavior == AuthoritativeProjectileBehavior.MonsterChargedBolt
+                ? TryResolveMonsterMagicProjectilePlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events)
+                : TryResolveChargedBoltPlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events);
         }
         if (world.IsMissileBlocked(
                 projectile.LevelId,

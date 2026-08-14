@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.83.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.84.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -86,6 +86,26 @@ public sealed class ShippedContentTests
         Assert.Equal("Rhino", gloom.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BatCharge, gloom.ProjectileBehavior);
         Assert.Equal(42U, gloom.MonsterId);
+        Assert.True(activation.MonsterMissiles.TryGet("Counselor", 107, out var counselorFirebolt));
+        Assert.Equal(("Firebolt", AuthoritativeProjectileBehavior.Firebolt), (
+            counselorFirebolt.MissileId,
+            counselorFirebolt.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Counselor", 108, out var counselorChargedBolt));
+        Assert.Equal(("ChargedBolt", AuthoritativeProjectileBehavior.MonsterChargedBolt), (
+            counselorChargedBolt.MissileId,
+            counselorChargedBolt.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Counselor", 109, out var counselorLightning));
+        Assert.Equal(("LightningControl", AuthoritativeProjectileBehavior.Lightning), (
+            counselorLightning.MissileId,
+            counselorLightning.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Counselor", 110, out var counselorFireball));
+        Assert.Equal(("Fireball", AuthoritativeProjectileBehavior.Fireball), (
+            counselorFireball.MissileId,
+            counselorFireball.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Counselor", 113, out var counselorArchbishop));
+        Assert.Equal(("Fireball", AuthoritativeProjectileBehavior.Fireball), (
+            counselorArchbishop.MissileId,
+            counselorArchbishop.ProjectileBehavior));
     }
 
     [Fact]
@@ -108,7 +128,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.83.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.84.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);

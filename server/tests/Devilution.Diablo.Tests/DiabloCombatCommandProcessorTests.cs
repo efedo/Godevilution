@@ -1677,6 +1677,90 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorChargedBoltUsesTheMonsterOwnedProjectilePath()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 108,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 50,
+            nativeAi: "Counselor",
+            intelligence: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([CreateChargedBoltSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "ChargedBolt",
+                    AuthoritativeProjectileBehavior.MonsterChargedBolt,
+                    AuthoritativeMonsterRangedAttackMode.Ranged,
+                    100,
+                    108),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
+        Assert.Equal(30U, projectile.SpellId);
+        Assert.Equal(8, projectile.Speed);
+        Assert.Equal(100, player.Life);
+
+        // Use a stationary controller at the target tile to characterize the
+        // monster-owned collision boundary independently of path wandering.
+        world.Projectiles.Clear();
+        world.Projectiles.Add(
+            100,
+            new AuthoritativeProjectile(
+                100,
+                monster.EntityId,
+                player.EntityId,
+                30,
+                0,
+                player.PositionX,
+                player.PositionY,
+                player.PositionX,
+                player.PositionY,
+                3,
+                AuthoritativeDamageType.Lightning,
+                0,
+                16) {
+                Behavior = AuthoritativeProjectileBehavior.MonsterChargedBolt,
+                PathTicks = 16,
+                Speed = 8,
+                ImpactLifetime = 1,
+                ResistantDamageDivisor = 1,
+            });
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 128 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(player.Life < 100);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7);
+    }
+
+    [Fact]
     public void GoatRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(
