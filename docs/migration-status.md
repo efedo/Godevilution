@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Player loadout validation now uses the active item definition's `Shield`
+  subtype for off-hand eligibility and only falls back to native item type
+  when no explicit equipment subtype is declared.
+
 - Native player attack-animation selection now consumes validated equipment
   subtype tags for sword, axe, mace, bow, staff, and shield profiles; legacy
   snapshots and untagged rows retain numeric item-type fallback.

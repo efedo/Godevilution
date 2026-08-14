@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Validate loadout off-hand shield eligibility from semantic item tags, so
+  active content can override conflicting native item types while legacy rows
+  retain the numeric fallback.
 - Select native player attack-animation profiles from validated equipment
   subtype tags, including shield variants, while retaining numeric item-type
   fallback for legacy or untagged content.
