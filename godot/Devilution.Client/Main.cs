@@ -6,12 +6,6 @@ namespace Devilution.Client;
 
 public partial class Main : Node2D
 {
-    private const uint ResurrectionSpellId = 32;
-    private const uint HealOtherSpellId = 34;
-    private const uint FireboltSpellId = 1;
-    private const uint ChargedBoltSpellId = 30;
-    private const uint BoneSpiritSpellId = 38;
-
     private readonly AuthoritativeClientModel model = new();
     private readonly CancellationTokenSource lifetime = new();
     private AuthoritativeClient? client;
@@ -255,7 +249,7 @@ public partial class Main : Node2D
         var player = model.Snapshot!.Players.First();
         return new CastRequested {
             SpellId = source.SpellId,
-            TargetEntityId = ResolvePlayerTargetEntityId(source.SpellId, target, player),
+            TargetEntityId = ResolveVisiblePlayerTargetEntityId(target, player),
             TargetX = target.X,
             TargetY = target.Y,
             Source = source.Kind,
@@ -275,24 +269,16 @@ public partial class Main : Node2D
             hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast; Q/E cycles)");
     }
 
-    private uint ResolvePlayerTargetEntityId(
-        uint spellId,
+    private uint ResolveVisiblePlayerTargetEntityId(
         Vector2I target,
         PlayerSnapshot localPlayer)
     {
-        if (spellId is not (ResurrectionSpellId
-            or HealOtherSpellId
-            or FireboltSpellId
-            or ChargedBoltSpellId
-            or BoneSpiritSpellId))
-            return 0;
-        var includeDead = spellId == ResurrectionSpellId;
         return AuthoritativeTargetSelector.SelectRemotePlayerTarget(
             model.Snapshot,
             localPlayer.EntityId,
             target.X,
             target.Y,
-            includeDead) ?? 0;
+            includeDead: true) ?? 0;
     }
 
     public override async void _ExitTree()

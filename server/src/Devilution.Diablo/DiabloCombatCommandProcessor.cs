@@ -1341,6 +1341,7 @@ public sealed class DiabloCombatCommandProcessor
         ulong appliedTick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        intent = NormalizeVisiblePlayerTarget(player, intent, players);
         if (!useNativePlayerActionTiming)
             return ResolveCast(player, intent, appliedTick, players: players);
         if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
@@ -1383,6 +1384,7 @@ public sealed class DiabloCombatCommandProcessor
         bool skipSourceValidation = false)
     {
         players ??= [player];
+        intent = NormalizeVisiblePlayerTarget(player, intent, players);
         if (!spells.TryGet(intent.SpellId, out var spell))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         ResolvedCastSource source = default!;
@@ -1391,24 +1393,7 @@ public sealed class DiabloCombatCommandProcessor
             return DiabloCombatIntentResult.Rejected(sourceFailure);
         var isRuneFire = source.Kind == DiabloCastSourceKind.ConsumableItem
             && source.Item?.State.MiscId == 47;
-        var hasDamage = spell.DamageAmount > 0
-            || spell.RandomMagicDamageDivisor > 0
-            || spell.RandomDamageRange > 0
-            || spell.CharacterLevelRandomDamageDivisor > 0
-            || spell.MagicDamageDivisor > 0
-            || spell.SpellLevelDamage > 0
-            || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
-                or AuthoritativeProjectileBehavior.FireWallController
-                or AuthoritativeProjectileBehavior.LightningWallController
-                or AuthoritativeProjectileBehavior.RingOfFireController
-                or AuthoritativeProjectileBehavior.ImmolationController
-                or AuthoritativeProjectileBehavior.Jester
-                or AuthoritativeProjectileBehavior.FlameWaveController
-                or AuthoritativeProjectileBehavior.InfernoController
-                or AuthoritativeProjectileBehavior.ChainLightningController
-                or AuthoritativeProjectileBehavior.NovaController
-                or AuthoritativeProjectileBehavior.ApocalypseController
-                or AuthoritativeProjectileBehavior.GuardianController;
+        var hasDamage = HasDamage(spell);
         var isSelfCenteredFlash = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.Flash;
         var isResurrection = spell.ProjectileBehavior
@@ -1469,12 +1454,7 @@ public sealed class DiabloCombatCommandProcessor
             == AuthoritativeProjectileBehavior.Telekinesis;
         var isTownPortal = spell.ProjectileBehavior
             == AuthoritativeProjectileBehavior.TownPortal;
-        var canTargetLivingPlayer = hasDamage
-            && spell.ProjectileSpeed > 0
-            && spell.ProjectileBehavior is (AuthoritativeProjectileBehavior.Targeted
-                or AuthoritativeProjectileBehavior.ChargedBolt
-                or AuthoritativeProjectileBehavior.Firebolt
-                or AuthoritativeProjectileBehavior.BoneSpirit);
+        var canTargetLivingPlayer = CanTargetLivingPlayer(spell);
         if (isSelfCenteredFlash
             && intent.TargetEntityId != 0
             && intent.TargetEntityId != player.EntityId) {
@@ -2227,6 +2207,60 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /**
+     * Treats a visible remote-player identity as a presentation hint for
+     * spells that cannot target players, preserving the clicked tile as the
+     * authoritative target for those spells.
+     */
+    private DiabloCastIntent NormalizeVisiblePlayerTarget(
+        AuthoritativePlayerState player,
+        DiabloCastIntent intent,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (intent.TargetEntityId == 0
+            || !players.Any(candidate => candidate.EntityId == intent.TargetEntityId
+                && candidate.EntityId != player.EntityId)
+            || !spells.TryGet(intent.SpellId, out var spell)
+            || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.Resurrection
+                or AuthoritativeProjectileBehavior.HealOther
+            || CanTargetLivingPlayer(spell)) {
+            return intent;
+        }
+        return intent with { TargetEntityId = 0 };
+    }
+
+    private static bool CanTargetLivingPlayer(AuthoritativeSpellDefinition spell)
+    {
+        return HasDamage(spell)
+            && spell.ProjectileSpeed > 0
+            && spell.ProjectileBehavior is (AuthoritativeProjectileBehavior.Targeted
+                or AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.BoneSpirit);
+    }
+
+    private static bool HasDamage(AuthoritativeSpellDefinition spell)
+    {
+        return spell.DamageAmount > 0
+            || spell.RandomMagicDamageDivisor > 0
+            || spell.RandomDamageRange > 0
+            || spell.CharacterLevelRandomDamageDivisor > 0
+            || spell.MagicDamageDivisor > 0
+            || spell.SpellLevelDamage > 0
+            || spell.ProjectileBehavior is AuthoritativeProjectileBehavior.BoneSpirit
+                or AuthoritativeProjectileBehavior.FireWallController
+                or AuthoritativeProjectileBehavior.LightningWallController
+                or AuthoritativeProjectileBehavior.RingOfFireController
+                or AuthoritativeProjectileBehavior.ImmolationController
+                or AuthoritativeProjectileBehavior.Jester
+                or AuthoritativeProjectileBehavior.FlameWaveController
+                or AuthoritativeProjectileBehavior.InfernoController
+                or AuthoritativeProjectileBehavior.ChainLightningController
+                or AuthoritativeProjectileBehavior.NovaController
+                or AuthoritativeProjectileBehavior.ApocalypseController
+                or AuthoritativeProjectileBehavior.GuardianController;
     }
 
     private void ApplyImmediateSelfDamage(

@@ -6877,6 +6877,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TileTargetedSpellTreatsVisiblePlayerIdentityAsAPresentationHint()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireballSpell()]));
+        var caster = CreatePlayer(
+            entityId: 7,
+            mana: 10000,
+            manaMaximum: 10000,
+            memorizedSpells: [new MemorizedSpellState(12, 1)]);
+        var visiblePlayer = CreatePlayer(positionX: 4, entityId: 8);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                12,
+                visiblePlayer.EntityId,
+                visiblePlayer.PositionX,
+                visiblePlayer.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, visiblePlayer]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+        Assert.Equal(0U, projectile.TargetEntityId);
+        Assert.Equal((4, 0), (projectile.TargetX, projectile.TargetY));
+    }
+
+    [Fact]
     public void FriendlyModeRejectsPlayerTargetedFireboltWhenRulesDisableFriendlyFire()
     {
         var world = new DiabloWorldState();
