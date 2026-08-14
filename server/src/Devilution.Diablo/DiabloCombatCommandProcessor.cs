@@ -4691,11 +4691,15 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monster.NativeAi != "Fat" || distance <= 1)
+        var fatTuning = GetFatMovementTuning(monster);
+        if (!fatTuning.HasValue || distance <= 1)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var movementChance = Math.Min(100, 20 + (4 * monster.Intelligence));
+        var movementChance = Math.Min(
+            100,
+            fatTuning.Value.ChanceBase
+                + (fatTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)movementChance)
             return true;
 
@@ -5054,6 +5058,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "GoatMelee"
             ? (28, 2)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetFatMovementTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Fat")
+                return null;
+            if (definition.FatMovementChanceBase > 0
+                && definition.FatMovementChanceIntelligenceScale > 0) {
+                return (
+                    definition.FatMovementChanceBase,
+                    definition.FatMovementChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Fat"
+            ? (20, 4)
             : null;
     }
 

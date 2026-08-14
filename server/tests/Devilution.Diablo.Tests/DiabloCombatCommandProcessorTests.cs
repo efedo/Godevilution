@@ -2665,6 +2665,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FatAiUsesValidatedMonsterTypeMovementTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            monsterId: 1,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "Fat",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Overlord",
+                1,
+                16,
+                1,
+                1,
+                40,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Fat",
+                FatMovementChanceBase = 10,
+                FatMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void RhinoAiChargesAcrossClearTilesAndKnocksThePlayerBack()
     {
         var monster = new AuthoritativeCombatTarget(

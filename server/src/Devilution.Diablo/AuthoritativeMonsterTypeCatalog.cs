@@ -95,6 +95,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native GoatMelee movement admission chance increase per intelligence point. */
     public int GoatMeleeMovementChanceIntelligenceScale { get; init; }
+
+    /** Native Fat movement admission chance base before intelligence scaling. */
+    public int FatMovementChanceBase { get; init; }
+
+    /** Native Fat movement admission chance increase per intelligence point. */
+    public int FatMovementChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -205,6 +211,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "GoatMelee"
                     && (definition.GoatMeleeMovementChanceBase != 0
                         || definition.GoatMeleeMovementChanceIntelligenceScale != 0))
+                || definition.FatMovementChanceBase is < 0 or > 100
+                || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Fat"
+                    && ((definition.FatMovementChanceBase != 0
+                            || definition.FatMovementChanceIntelligenceScale != 0)
+                        && (definition.FatMovementChanceBase <= 0
+                            || definition.FatMovementChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Fat"
+                    && (definition.FatMovementChanceBase != 0
+                        || definition.FatMovementChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -302,6 +318,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonMeleeDelayChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_delay_chance_intelligence_scale"),
                 GoatMeleeMovementChanceBase = row.OptionalInt32("goat_melee_movement_chance_base"),
                 GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
+                FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
+                FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
             }));
     }
 
