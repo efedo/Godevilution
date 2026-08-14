@@ -396,6 +396,31 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ItemSpellSourceKindChangesTheStateHash()
+    {
+        var first = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 4,
+                            State = new ItemStateSnapshot { SpellId = 7 },
+                        },
+                    },
+                },
+            },
+        };
+        var changed = first.Clone();
+        changed.Players[0].Equipment[0].State.SpellSourceKind =
+            ItemSpellSourceKind.ChargedItem;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void MonsterProjectionChangesTheStateHashAndIgnoresInputOrder()
     {
         var first = new Snapshot {

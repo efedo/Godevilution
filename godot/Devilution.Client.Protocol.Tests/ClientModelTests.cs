@@ -23,20 +23,33 @@ public sealed class ClientModelTests
                         new EquippedItemSnapshot {
                             Slot = 4,
                             ItemSeed = 99,
-                            State = new ItemStateSnapshot { SpellId = 30, Charges = 3, MiscId = 23 },
+                            State = new ItemStateSnapshot {
+                                SpellId = 30,
+                                Charges = 3,
+                                MiscId = 23,
+                                SpellSourceKind = ItemSpellSourceKind.ChargedItem,
+                            },
                         },
                     },
                     Inventory = {
                         new ItemSnapshot {
                             ItemSeed = 100,
-                            State = new ItemStateSnapshot { SpellId = 32, MiscId = 22 },
+                            State = new ItemStateSnapshot {
+                                SpellId = 32,
+                                MiscId = 22,
+                                SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
+                            },
                         },
                     },
                     Belt = {
                         new BeltItemSnapshot {
                             Slot = 2,
                             ItemSeed = 101,
-                            State = new ItemStateSnapshot { SpellId = 33, MiscId = 22 },
+                            State = new ItemStateSnapshot {
+                                SpellId = 33,
+                                MiscId = 22,
+                                SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
+                            },
                         },
                     },
                 },

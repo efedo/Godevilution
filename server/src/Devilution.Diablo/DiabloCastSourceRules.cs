@@ -1,7 +1,15 @@
 namespace Devilution.Diablo;
 
+/** Native-compatible item-backed spell source classification. */
+public enum DiabloItemSpellSourceKind
+{
+    None,
+    ChargedItem,
+    ConsumableItem,
+}
+
 /** Native-compatible classification of item-backed spell sources. */
-internal static class DiabloCastSourceRules
+public static class DiabloCastSourceRules
 {
     public const uint LeftHandEquipmentSlot = 4;
 
@@ -11,6 +19,19 @@ internal static class DiabloCastSourceRules
     private const int UniqueMiscId = 27;
     private const int FirstRuneMiscId = 47;
     private const int LastRuneMiscId = 51;
+
+    /** Classifies an item for presentation without exposing native IDs. */
+    public static DiabloItemSpellSourceKind ClassifyItem(
+        AuthoritativeItemState state,
+        AuthoritativeSpellCatalog? spells = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (GetChargedSpellId(state.MiscId, state.SpellId, state.MaxCharges) != 0)
+            return DiabloItemSpellSourceKind.ChargedItem;
+        if (GetConsumableSpellId(state.MiscId, state.SpellId, spells) != 0)
+            return DiabloItemSpellSourceKind.ConsumableItem;
+        return DiabloItemSpellSourceKind.None;
+    }
 
     public static uint GetChargedSpellId(int miscId, int spellId, int maximumCharges)
     {

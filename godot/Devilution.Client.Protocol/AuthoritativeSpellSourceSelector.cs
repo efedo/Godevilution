@@ -40,8 +40,11 @@ public static class AuthoritativeSpellSourceSelector
 
         foreach (var staff in player.Equipment
                      .Where(item => item.Slot == 4
-                         && item.State is { SpellId: > 0, Charges: > 0 }
-                         && item.State.MiscId is 23 or 27)
+                         && item.State is {
+                             SpellId: > 0,
+                             Charges: > 0,
+                             SpellSourceKind: ItemSpellSourceKind.ChargedItem,
+                         })
                      .OrderBy(item => item.ItemSeed)
                      .ThenBy(item => item.Slot)) {
             AddItemSource(
@@ -152,9 +155,6 @@ public static class AuthoritativeSpellSourceSelector
 
     private static bool IsSpellConsumable(ItemStateSnapshot? state)
     {
-        if (state is null || state.SpellId <= 0)
-            return false;
-        return state.MiscId is 21 or 22
-            || (state.MiscId is >= 47 and <= 51 && state.MiscId == state.SpellId);
+        return state is { SpellId: > 0, SpellSourceKind: ItemSpellSourceKind.ConsumableItem };
     }
 }

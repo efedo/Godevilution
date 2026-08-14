@@ -9,7 +9,8 @@ internal static class DiabloProtocolMapper
     public static Snapshot ToProtocolSnapshot(
         DiabloSimulationSnapshot source,
         IReadOnlyList<StorePlayerSnapshot>? participants = null,
-        bool revealTraps = true)
+        bool revealTraps = true,
+        AuthoritativeSpellCatalog? spells = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         var visibleParticipants = participants?
@@ -34,7 +35,7 @@ internal static class DiabloProtocolMapper
             RandomState = source.RandomState,
         };
         foreach (var participant in projectedParticipants)
-            snapshot.Players.Add(ToProtocolPlayer(participant));
+            snapshot.Players.Add(ToProtocolPlayer(participant, spells));
 
         foreach (var monster in source.Monsters) {
             snapshot.Monsters.Add(new MonsterSnapshot {
@@ -102,7 +103,7 @@ internal static class DiabloProtocolMapper
                 PositionY = item.PositionY,
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
-                State = ToProtocolItemState(item.State),
+                State = ToProtocolItemState(item.State, spells),
             });
         }
         foreach (var @object in source.Objects) {
@@ -227,7 +228,7 @@ internal static class DiabloProtocolMapper
                     StoreSlot = item.StoreSlot,
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
-                    State = ToProtocolItemState(item.State),
+                    State = ToProtocolItemState(item.State, spells),
                 });
             }
             snapshot.ActiveStore = store;
@@ -237,7 +238,9 @@ internal static class DiabloProtocolMapper
         return snapshot;
     }
 
-    private static PlayerSnapshot ToProtocolPlayer(StorePlayerSnapshot state)
+    private static PlayerSnapshot ToProtocolPlayer(
+        StorePlayerSnapshot state,
+        AuthoritativeSpellCatalog? spells)
     {
         var player = new PlayerSnapshot {
             EntityId = state.EntityId,
@@ -294,7 +297,7 @@ internal static class DiabloProtocolMapper
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
                 PurchasedAtTick = item.PurchasedAtTick,
-                State = ToProtocolItemState(item.State),
+                State = ToProtocolItemState(item.State, spells),
             });
         }
         if (state.HeldItem is { } heldItem) {
@@ -304,21 +307,21 @@ internal static class DiabloProtocolMapper
                 ItemSeed = heldItem.ItemSeed,
                 Price = heldItem.Price,
                 PurchasedAtTick = heldItem.PurchasedAtTick,
-                State = ToProtocolItemState(heldItem.State),
+                State = ToProtocolItemState(heldItem.State, spells),
             };
         }
         foreach (var item in state.Equipment) {
             player.Equipment.Add(new EquippedItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State),
+                State = ToProtocolItemState(item.State, spells),
             });
         }
         foreach (var item in state.Belt) {
             player.Belt.Add(new BeltItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State),
+                State = ToProtocolItemState(item.State, spells),
             });
         }
         player.InventoryGrid.Add(state.InventoryGrid);
@@ -800,7 +803,9 @@ internal static class DiabloProtocolMapper
         };
     }
 
-    private static ItemStateSnapshot ToProtocolItemState(AuthoritativeItemState state)
+    private static ItemStateSnapshot ToProtocolItemState(
+        AuthoritativeItemState state,
+        AuthoritativeSpellCatalog? spells)
     {
         var snapshot = new ItemStateSnapshot {
             CreateInfo = state.CreateInfo,
@@ -865,6 +870,9 @@ internal static class DiabloProtocolMapper
             InventoryHeight = state.InventoryHeight > 1 ? (uint)state.InventoryHeight : 0,
             BaseName = state.BaseName,
             IdentifiedName = state.IdentifiedName,
+            SpellSourceKind = (ItemSpellSourceKind)DiabloCastSourceRules.ClassifyItem(
+                state,
+                spells),
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;

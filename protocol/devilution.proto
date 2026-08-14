@@ -66,6 +66,14 @@ enum PlayerAbilityKind {
 	PLAYER_ABILITY_KIND_RAGE = 6;
 }
 
+// Server-projected classification for item-backed spell sources. The client
+// must not infer this from native miscellaneous IDs.
+enum ItemSpellSourceKind {
+	ITEM_SPELL_SOURCE_KIND_UNSPECIFIED = 0;
+	ITEM_SPELL_SOURCE_KIND_CHARGED_ITEM = 1;
+	ITEM_SPELL_SOURCE_KIND_CONSUMABLE_ITEM = 2;
+}
+
 message CommandBatch {
 	repeated Command commands = 1;
 }
@@ -711,6 +719,7 @@ message ItemStateSnapshot {
 	int32 mana_to_life_percent = 62;
 	// Native Hellfire percentage of base life converted into mana on equip.
 	int32 life_to_mana_percent = 63;
+	ItemSpellSourceKind spell_source_kind = 64;
 }
 
 message PlayerAttributesSnapshot {

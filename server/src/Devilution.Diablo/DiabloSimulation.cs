@@ -170,6 +170,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.MonsterMissiles,
                 options.MonsterSpawnPlanner,
                 options.MonsterTypes),
+            spells,
             random,
             combatRules,
             options.PlayerClasses,
@@ -205,6 +206,7 @@ public sealed partial class DiabloSimulation
         DiabloStoreCommandProcessor storeCommands,
         DiabloWorldCommandProcessor worldCommands,
         DiabloCombatCommandProcessor combatCommands,
+        AuthoritativeSpellCatalog spells,
         DiabloRandom random,
         AuthoritativeCombatRules combatRules,
         AuthoritativePlayerClassCatalog? playerClasses,
@@ -219,6 +221,7 @@ public sealed partial class DiabloSimulation
         this.storeCommands = storeCommands ?? throw new ArgumentNullException(nameof(storeCommands));
         this.worldCommands = worldCommands ?? throw new ArgumentNullException(nameof(worldCommands));
         this.combatCommands = combatCommands ?? throw new ArgumentNullException(nameof(combatCommands));
+        Spells = spells ?? throw new ArgumentNullException(nameof(spells));
         this.random = random ?? throw new ArgumentNullException(nameof(random));
         CombatRules = combatRules ?? throw new ArgumentNullException(nameof(combatRules));
         PlayerClasses = playerClasses;
@@ -235,6 +238,9 @@ public sealed partial class DiabloSimulation
     public AuthoritativePlayerClassCatalog? PlayerClasses { get; }
 
     public AuthoritativePlayerAnimationCatalog? PlayerAnimations { get; }
+
+    /** Validated spell catalog used for protocol source classification. */
+    public AuthoritativeSpellCatalog Spells { get; }
 
     /** Validated content rules governing this Diablo simulation instance. */
     public AuthoritativeCombatRules CombatRules { get; }

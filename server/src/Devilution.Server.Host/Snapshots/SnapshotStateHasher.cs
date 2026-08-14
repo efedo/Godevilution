@@ -618,6 +618,10 @@ public static class SnapshotStateHasher
         hasher.AppendUInt32(state.Flags);
         hasher.AppendInt32(state.MiscId);
         hasher.AppendInt32(state.SpellId);
+        if (state.SpellSourceKind != ItemSpellSourceKind.Unspecified) {
+            hasher.AppendString("godevilution-item-spell-source-kind-v1");
+            hasher.AppendInt32((int)state.SpellSourceKind);
+        }
         hasher.AppendInt32(state.ItemIndex);
         hasher.AppendInt32(state.Charges);
         hasher.AppendInt32(state.MaxCharges);

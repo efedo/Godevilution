@@ -1261,6 +1261,7 @@ public sealed class LiveAuthoritativeServerTests
         Assert.Equal(166, staff.State.ItemIndex);
         Assert.Equal(40, staff.State.Charges);
         Assert.Equal(40, staff.State.MaxCharges);
+        Assert.Equal(ItemSpellSourceKind.ChargedItem, staff.State.SpellSourceKind);
 
         var sequence = client.Queue(new Command {
             CastRequested = new CastRequested {
