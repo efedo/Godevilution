@@ -156,12 +156,15 @@ label; rows without migrated tuning retain the native-name compatibility path.
 The optional `fat_movement_chance_base` and
 `fat_movement_chance_intelligence_scale` columns externalize the Fat/Overlord
 non-adjacent movement admission band. Legacy monster rows retain the native
-base-twenty, intelligence-scale-four compatibility values.
+base-twenty, intelligence-scale-four compatibility values. A complete positive
+tuple selects the behavior regardless of the row's `native_ai` label; rows
+without migrated tuning retain the native-name compatibility path.
 The optional `fat_attack_chance_base`, `fat_attack_chance_intelligence_scale`,
 `fat_special_chance_base`, and `fat_special_chance_intelligence_scale` columns
 externalize the Fat/Overlord adjacent attack and special lower bands. Legacy
 monster rows retain the native base-twenty/base-fifteen, intelligence-scale-four
-compatibility values.
+compatibility values. Complete positive tuples select the behavior regardless of
+the row's `native_ai` label.
 The optional `zombie_action_chance_base` and
 `zombie_action_chance_intelligence_scale` columns externalize the Zombie
 autonomous action admission band. Legacy monster rows retain the native
@@ -337,7 +340,8 @@ Hellfire rows copy the native `MonsterAIID` identity from `monstdat.tsv`; the
 server validates and persists the identity while clients do not dispatch AI.
 The first behavior using that identity is the native `Fat` Overlord normal and
 special melee bands, which consume validated admission, accuracy, and damage
-columns for the Toad Demon family. The `Rhino` identity now drives the server-owned
+columns for the Toad Demon family regardless of the row's `native_ai` label. The
+`Rhino` identity now drives the server-owned
 clear-lane charge using the same special columns; remaining AI-specific behavior
 is still incremental.
 Schema 1.80 adds the optional `intelligence` monster-type column. The checked-in
@@ -1457,7 +1461,8 @@ Schema 1.108 adds the optional GoatMelee movement-band columns to
 chance while older rows retain the compatibility formula.
 Schema 1.109 adds the optional Fat movement-band columns to `monster_types.tsv`;
 checked-in Fat rows own their movement admission chance while older rows retain
-the compatibility formula.
+the compatibility formula. Complete positive tuples are selected independently
+of the `native_ai` label.
 Schema 1.110 adds the optional Zombie action-band columns to `monster_types.tsv`;
 checked-in Zombie rows own their action admission chance while older rows retain
 the compatibility formula.
@@ -1509,7 +1514,8 @@ positive tuples are selected independently of the `native_ai` label.
 Schema 1.124 adds optional Fat/Overlord adjacent attack and special-band columns
 to `monster_types.tsv`; checked-in Fat rows own their `20 + 4 * intelligence`
 admission and `15 + 4 * intelligence` special lower bound while older rows
-retain the native compatibility values.
+retain the native compatibility values. Complete positive tuples are selected
+independently of the `native_ai` label.
 Schema 1.125 adds optional Zombie random-direction chance columns to
 `monster_types.tsv`; checked-in Zombie rows own their `20 + 2 * intelligence`
 movement-prepend chance while older rows retain the native compatibility values.

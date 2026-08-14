@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Fat/Overlord movement, adjacent attack, and special-band behavior now use
+  complete validated tuning tuples independent of the row's native-AI label;
+  rows without migrated tuning retain the native-name compatibility path.
+
 - GoatMelee movement, adjacent attack, and wounded-special behavior now use
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.

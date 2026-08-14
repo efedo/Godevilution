@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Fat/Overlord movement, adjacent attack, and special-band behavior
+  from complete validated tuning tuples rather than requiring the `Fat`
+  native-AI name; legacy rows without tuning retain native-name compatibility
+  defaults.
 - Select GoatMelee movement, adjacent attack, and wounded-special behavior from
   complete validated tuning tuples rather than requiring the `GoatMelee`
   native-AI name; legacy rows without tuning retain native-name compatibility
