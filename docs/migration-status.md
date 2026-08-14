@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.127 externalizes the Gargoyle self-heal divisor multiplier,
+  random-range modulus, and random offset through validated `monster_types.tsv`
+  rows; the active catalog feeds server-owned healing while older targets retain
+  the native compatibility formula.
+
 - Schema 1.126 activates validated missile projectile speed/lifetime fields for
   Snake and Bat mapped-charge controllers; older rows retain the native
   18-speed, 256-tick compatibility trajectory.

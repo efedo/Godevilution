@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.127's optional Gargoyle healing-formula tuning, moving the native
+  divisor multiplier, random-range modulus, and random offset into validated
+  monster type content while preserving legacy target behavior.
 - Add schema 1.121's optional monster-Inferno admission tuning, moving Mega's
   distance, intelligence bands, and adjacent choice modulo into validated
   missile content while preserving legacy target behavior.
