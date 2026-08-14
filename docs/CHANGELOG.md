@@ -6,6 +6,8 @@ All notable changes to this fork are documented below.
 
 - Add schema 1.85's validated Mega InfernoControl mapping, preserving native
   distance/intelligence admission and monster-owned persistent segments.
+- Add server-owned Fallen fear state and protocol persistence, triggering the
+  native nearby-death retreat duration and direction deterministically.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

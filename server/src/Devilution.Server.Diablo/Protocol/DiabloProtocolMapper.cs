@@ -83,6 +83,8 @@ internal static class DiabloProtocolMapper
                 NativeAi = monster.NativeAi,
                 Intelligence = monster.Intelligence,
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
+                FallenFearTicks = monster.FallenFearTicks,
+                FallenFearDirection = monster.FallenFearDirection,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -365,6 +367,8 @@ internal static class DiabloProtocolMapper
                 NativeAi = monster.NativeAi,
                 Intelligence = monster.Intelligence,
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
+                FallenFearTicks = monster.FallenFearTicks,
+                FallenFearDirection = monster.FallenFearDirection,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),

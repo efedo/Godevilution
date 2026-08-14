@@ -277,6 +277,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FallenDeathTriggersNativeFearForNearbyFallen()
+    {
+        var deceased = new AuthoritativeCombatTarget(
+            9,
+            2,
+            2,
+            8,
+            nativeAi: "Fallen",
+            monsterLevel: 1,
+            deathAnimationTicks: 3);
+        var survivor = new AuthoritativeCombatTarget(
+            10,
+            4,
+            2,
+            20,
+            nativeAi: "Fallen",
+            monsterLevel: 3,
+            aggroRange: 0);
+        var world = new DiabloWorldState(combatTargets: [deceased, survivor]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(5, survivor.FallenFearTicks);
+        Assert.Equal(7, survivor.FallenFearDirection);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(5, survivor.PositionX);
+        Assert.Equal(2, survivor.PositionY);
+        Assert.Equal(4, survivor.FallenFearTicks);
+    }
+
+    [Fact]
     public void AttackUsesValidatedMonsterExperienceReward()
     {
         var target = new AuthoritativeCombatTarget(

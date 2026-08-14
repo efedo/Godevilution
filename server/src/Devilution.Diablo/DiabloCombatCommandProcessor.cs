@@ -3720,9 +3720,11 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             }
             ApplyNativeMonsterRegeneration(target);
-            if (target.AggroRange <= 0)
-                continue;
             if (target.IsPetrified)
+                continue;
+            if (TryAdvanceFallenFear(target, players))
+                continue;
+            if (target.AggroRange <= 0)
                 continue;
 
             var victim = players
@@ -3889,6 +3891,39 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+    }
+
+    private bool TryAdvanceFallenFear(
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (target.NativeAi != "Fallen" || target.FallenFearTicks == 0)
+            return false;
+
+        var direction = target.FallenFearDirection;
+        for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+            var candidateDirection = offset == 0
+                ? direction
+                : offset % 2 == 1
+                    ? RotateDirection(direction, (offset + 1) / 2)
+                    : RotateDirection(direction, -(offset / 2));
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(target.PositionX + displacement.X);
+            var candidateY = checked(target.PositionY + displacement.Y);
+            if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
+                || world.IsOccupied(
+                    target.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    target.EntityId)) {
+                continue;
+            }
+            target.BeginMovement(candidateX, candidateY);
+            break;
+        }
+        target.AdvanceFallenFear();
+        return true;
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
@@ -9503,6 +9538,7 @@ public sealed class DiabloCombatCommandProcessor
 
         target.CancelMovement();
         target.BeginDeathAnimation();
+        TriggerFallenFear(target);
 
         AdvanceQuestForMonsterDefeat(target);
 
@@ -9517,6 +9553,29 @@ public sealed class DiabloCombatCommandProcessor
             checked((int)experienceReward)));
         if (target.Drop is not null)
             world.WorldItems[target.Drop.EntityId] = target.Drop;
+    }
+
+    private void TriggerFallenFear(AuthoritativeCombatTarget deceased)
+    {
+        if (deceased.NativeAi != "Fallen")
+            return;
+        foreach (var fallen in world.CombatTargets.Values
+                     .Where(candidate => candidate.EntityId != deceased.EntityId
+                         && candidate.NativeAi == "Fallen"
+                         && candidate.HitPointsQ6 > 0
+                         && (candidate.LevelId == 0 || candidate.LevelId == deceased.LevelId)
+                         && Math.Max(
+                             Math.Abs(candidate.PositionX - deceased.PositionX),
+                             Math.Abs(candidate.PositionY - deceased.PositionY)) <= 4)
+                     .OrderBy(candidate => candidate.EntityId)) {
+            fallen.StartFallenFear(
+                Math.Max(8 - fallen.MonsterLevel, 2),
+                GetDirection(
+                    deceased.PositionX,
+                    deceased.PositionY,
+                    fallen.PositionX,
+                    fallen.PositionY));
+        }
     }
 
     /** Applies an optional external quest kill trigger at the authoritative death boundary. */

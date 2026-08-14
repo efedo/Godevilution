@@ -376,6 +376,43 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsFallenFearState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    nativeAi: "Fallen",
+                    monsterLevel: 3,
+                    fallenFearTicks: 5,
+                    fallenFearDirection: 7)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((5, 7), (savedMonster.FallenFearTicks, savedMonster.FallenFearDirection));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    nativeAi: "Fallen",
+                    monsterLevel: 3)],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((5, 7), (restored.FallenFearTicks, restored.FallenFearDirection));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

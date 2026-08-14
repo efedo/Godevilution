@@ -460,6 +460,10 @@ message MonsterSnapshot {
 	int32 intelligence = 44;
 	// Native Gargoyle special lock held while it remains safely distant after healing.
 	bool gargoyle_special_active = 45;
+	// Native Fallen fear countdown after a nearby Fallen dies.
+	int32 fallen_fear_ticks = 46;
+	// Direction of the native Fallen fear retreat (0-7).
+	int32 fallen_fear_direction = 47;
 }
 
 message WorldItemSnapshot {

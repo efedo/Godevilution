@@ -44,6 +44,8 @@ public sealed class AuthoritativeSaveCodecTests
             restored.Player.StatusEffects.ToArray());
         Assert.Equal(source.Player.Attributes, restored.Player.Attributes);
         Assert.Equal(source.Monsters.ToArray(), restored.Monsters.ToArray());
+        Assert.Equal(5, restored.Monsters[0].FallenFearTicks);
+        Assert.Equal(7, restored.Monsters[0].FallenFearDirection);
         Assert.Equal(source.WorldItems.ToArray(), restored.WorldItems.ToArray());
         Assert.Equal(source.Objects.ToArray(), restored.Objects.ToArray());
         Assert.Equal(source.Projectiles.ToArray(), restored.Projectiles.ToArray());
@@ -201,6 +203,9 @@ public sealed class AuthoritativeSaveCodecTests
                 HasKnockback = true,
                 DeathAnimationTicks = 3,
                 DeathTicksRemaining = 2,
+                NativeAi = "Fallen",
+                FallenFearTicks = 5,
+                FallenFearDirection = 7,
                 HitPointsQ6 = 0,
             }],
             [new DiabloWorldItemState(

@@ -292,6 +292,11 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-gargoyle-special-v1");
                     hasher.AppendBool(true);
                 }
+                if (monster.FallenFearTicks != 0 || monster.FallenFearDirection != 0) {
+                    hasher.AppendString("godevilution-monster-fallen-fear-v1");
+                    hasher.AppendInt32(monster.FallenFearTicks);
+                    hasher.AppendInt32(monster.FallenFearDirection);
+                }
             }
         }
 

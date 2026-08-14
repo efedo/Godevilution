@@ -51,7 +51,9 @@ public sealed class AuthoritativeCombatTarget
         int toHitSpecial = 0,
         string nativeAi = "",
         int intelligence = 0,
-        bool gargoyleSpecialActive = false)
+        bool gargoyleSpecialActive = false,
+        int fallenFearTicks = 0,
+        int fallenFearDirection = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -71,6 +73,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(toHit));
         if (intelligence is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(intelligence));
+        if (fallenFearTicks < 0)
+            throw new ArgumentOutOfRangeException(nameof(fallenFearTicks));
+        if (fallenFearDirection is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(fallenFearDirection));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -78,6 +84,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "The Gargoyle special lock requires the Gargoyle native AI identity.",
                 nameof(gargoyleSpecialActive));
+        if (fallenFearTicks != 0 && nativeAi != "Fallen")
+            throw new ArgumentException(
+                "Fallen fear requires the Fallen native AI identity.",
+                nameof(fallenFearTicks));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -122,6 +132,8 @@ public sealed class AuthoritativeCombatTarget
         NativeAi = nativeAi;
         Intelligence = intelligence;
         GargoyleSpecialActive = gargoyleSpecialActive;
+        FallenFearTicks = fallenFearTicks;
+        FallenFearDirection = fallenFearDirection;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -220,6 +232,12 @@ public sealed class AuthoritativeCombatTarget
     /** Native Gargoyle special lock held while it remains safely distant after healing. */
     public bool GargoyleSpecialActive { get; set; }
 
+    /** Native Fallen fear countdown after a nearby Fallen dies. */
+    public int FallenFearTicks { get; private set; }
+
+    /** Direction of the native Fallen fear retreat. */
+    public int FallenFearDirection { get; private set; }
+
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
@@ -296,6 +314,34 @@ public sealed class AuthoritativeCombatTarget
         if (deathTicksRemaining < 0 || deathTicksRemaining > DeathAnimationTicks)
             throw new ArgumentOutOfRangeException(nameof(deathTicksRemaining));
         DeathTicksRemaining = deathTicksRemaining;
+    }
+
+    internal void StartFallenFear(int ticks, int direction)
+    {
+        if (NativeAi != "Fallen")
+            throw new InvalidOperationException("Only Fallen monsters can enter fear.");
+        if (ticks < 0 || direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        FallenFearTicks = ticks;
+        FallenFearDirection = direction;
+    }
+
+    internal void RestoreFallenFear(int ticks, int direction)
+    {
+        if (ticks < 0 || direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        if (ticks != 0 && NativeAi != "Fallen")
+            throw new InvalidDataException("Only Fallen monsters can restore fear.");
+        FallenFearTicks = ticks;
+        FallenFearDirection = direction;
+    }
+
+    internal bool AdvanceFallenFear()
+    {
+        if (FallenFearTicks == 0)
+            return false;
+        FallenFearTicks--;
+        return true;
     }
 
     internal void BeginMovement(int futurePositionX, int futurePositionY)

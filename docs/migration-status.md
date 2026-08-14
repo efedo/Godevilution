@@ -24,6 +24,11 @@ Status date: 2026-08-13
 
 ## Implemented authoritative systems
 
+- Fallen fear is now a server-owned monster state: nearby Fallen receive the
+  native `max(8 - level, 2)` retreat countdown and source-to-survivor direction
+  at the death boundary, with deterministic walk fallback and snapshot,
+  save, protocol, and hash coverage.
+
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.
 - Network snapshots now atomically capture every assigned participant. The

@@ -88,6 +88,12 @@ public sealed record DiabloMonsterState(
     /** Remaining terminal death-animation ticks, when the monster is dead. */
     public int DeathTicksRemaining { get; init; }
 
+    /** Native Fallen fear countdown after a nearby Fallen dies. */
+    public int FallenFearTicks { get; init; }
+
+    /** Direction of the native Fallen fear retreat. */
+    public int FallenFearDirection { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -342,6 +348,8 @@ public sealed partial class DiabloSimulation
                     Intelligence = target.Intelligence,
                     GargoyleSpecialActive = target.GargoyleSpecialActive,
                     DeathTicksRemaining = target.DeathTicksRemaining,
+                    FallenFearTicks = target.FallenFearTicks,
+                    FallenFearDirection = target.FallenFearDirection,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -579,6 +587,9 @@ public sealed partial class DiabloSimulation
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || (monster.GargoyleSpecialActive && monster.NativeAi != "Gargoyle")
+                || monster.FallenFearTicks is < 0 or > 1024
+                || monster.FallenFearDirection is < 0 or >= 8
+                || (monster.FallenFearTicks != 0 && monster.NativeAi != "Fallen")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1332,6 +1343,9 @@ public sealed partial class DiabloSimulation
                 target.MaxDamageSpecial = monster.MaxDamageSpecial;
                 target.IsBerserked = monster.IsBerserked;
                 target.GargoyleSpecialActive = monster.GargoyleSpecialActive;
+                target.RestoreFallenFear(
+                    monster.FallenFearTicks,
+                    monster.FallenFearDirection);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1385,6 +1399,9 @@ public sealed partial class DiabloSimulation
                     nativeAi: monster.NativeAi,
                     intelligence: monster.Intelligence,
                     gargoyleSpecialActive: monster.GargoyleSpecialActive);
+                restoredTarget.RestoreFallenFear(
+                    monster.FallenFearTicks,
+                    monster.FallenFearDirection);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);
