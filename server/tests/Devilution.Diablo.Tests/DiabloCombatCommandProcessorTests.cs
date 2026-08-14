@@ -1522,8 +1522,10 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
     }
 
-    [Fact]
-    public void SuccubusAiFiresAUserVisibleBloodStarMagicProjectile()
+    [Theory]
+    [InlineData("Succubus")]
+    [InlineData("LazarusSuccubus")]
+    public void SuccubusFamilyAiFiresAUserVisibleBloodStarMagicProjectile(string nativeAi)
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -1534,7 +1536,7 @@ public sealed class DiabloCombatCommandProcessorTests
             minDamage: 4,
             maxDamage: 4,
             monsterLevel: 5,
-            nativeAi: "Succubus",
+            nativeAi: nativeAi,
             intelligence: 0);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var spells = new AuthoritativeSpellCatalog([
@@ -1551,7 +1553,16 @@ public sealed class DiabloCombatCommandProcessorTests
                 ResistantDamageDivisor = 4,
             },
         ]);
-        var processor = CreateProcessor(world, spells, random: new DiabloRandom(0));
+        var processor = CreateProcessor(
+            world,
+            spells,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    nativeAi,
+                    "BloodStar",
+                    AuthoritativeProjectileBehavior.BloodStar),
+            ]));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,

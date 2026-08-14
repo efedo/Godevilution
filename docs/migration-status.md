@@ -149,6 +149,9 @@ Status date: 2026-08-13
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
+- Native `LazarusSuccubus` minions now use the same validated Blood Star path;
+  their retained `LazarusMinionAi` dispatch is represented server-side without
+  exposing AI execution to clients.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

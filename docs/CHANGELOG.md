@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
 - Route the native `FireBat` `AiRanged` behavior through its validated Firebolt
   mapping, server-owned projectile travel, and native monster-to-player magic
   hit, resistance, block, and Q6 damage rules.
+- Extend the server-owned Blood Star dispatch to native `LazarusSuccubus`
+  minions, which retain the native `LazarusMinionAi` -> `AiRanged` path.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

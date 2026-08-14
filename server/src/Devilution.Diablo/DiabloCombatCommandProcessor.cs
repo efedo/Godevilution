@@ -4151,7 +4151,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "Succubus"
+        if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus")
             || (monsterMissiles is not null
                 && (!monsterMissiles.TryGet(monster.NativeAi, out var missile)
                     || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BloodStar)))
