@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.133 externalizes the Mana spell's three native restoration ranges
+  through validated `spells.tsv` content; older definitions retain the native
+  10/4/6 compatibility values.
+
 - Schema 1.132 externalizes Gargoyle wounded-healing admission through
   validated `monster_types.tsv` rows; the active catalog feeds the native
   health threshold while older targets retain the 50-percent compatibility
