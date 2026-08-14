@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.113's optional Hork Demon admission tuning, moving its native
+  adjacent attack, Hork Spawn, and non-adjacent movement bands into validated
+  monster content while preserving legacy target behavior.
 - Add schema 1.112's optional Skeleton King summon-admission tuning, moving the
   native minimum-distance and intelligence-scaled chance into validated monster
   content while preserving legacy target behavior.
