@@ -787,6 +787,27 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedRageCarriesNativeAdmissionLifeThreshold()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(22, out var rage));
+        Assert.Equal(AuthoritativeProjectileBehavior.RageController, rage.ProjectileBehavior);
+        Assert.Equal(64, rage.RageMinimumLifeQ6PerCharacterLevel);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            rage with {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+            },
+        ]));
+    }
+
+    [Fact]
     public void ShippedStoneCurseCarriesNativeDurationAndSearchTuning()
     {
         var path = Path.Combine(

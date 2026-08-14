@@ -1751,7 +1751,10 @@ public sealed class DiabloCombatCommandProcessor
         if (isManaShield && player.ManaShieldActive)
             return DiabloCombatIntentResult.Accepted;
         if (isRage
-            && (player.Life <= checked((int)player.CharacterLevel * 64)
+            && (player.Life <= checked((int)player.CharacterLevel
+                    * (spell.RageMinimumLifeQ6PerCharacterLevel > 0
+                        ? spell.RageMinimumLifeQ6PerCharacterLevel
+                        : 64))
                 || world.Projectiles.Values.Any(projectile =>
                     projectile.Behavior == AuthoritativeProjectileBehavior.RageController
                     && IsProjectileOwner(projectile, player)))) {

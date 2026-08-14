@@ -337,6 +337,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native Rage self-damage Q6 units applied per character level on expiry. */
     public int RageSelfDamageCharacterLevel { get; init; }
 
+    /** Native Rage minimum life Q6 units required per character level to cast. */
+    public int RageMinimumLifeQ6PerCharacterLevel { get; init; }
+
     /** Native Elemental lifetime used after its first destination is reached. */
     public int ElementalRetargetLifetime { get; init; }
 
@@ -502,6 +505,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.RageControllerLifetime < 0
                 || definition.RageCharacterLevelLifetimeScale < 0
                 || definition.RageSelfDamageCharacterLevel < 0
+                || definition.RageMinimumLifeQ6PerCharacterLevel < 0
                 || definition.ElementalRetargetLifetime < 0
                 || definition.ElementalCharacterLevelDamageMultiplier < 0
                 || definition.GuardianDurationTickScale < 0
@@ -1502,7 +1506,8 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.RageController
                 && (definition.RageControllerLifetime != 0
                     || definition.RageCharacterLevelLifetimeScale != 0
-                    || definition.RageSelfDamageCharacterLevel != 0)) {
+                    || definition.RageSelfDamageCharacterLevel != 0
+                    || definition.RageMinimumLifeQ6PerCharacterLevel != 0)) {
                 throw new InvalidDataException(
                     "Rage tuning requires Rage behavior.");
             }
@@ -1789,6 +1794,8 @@ public sealed class AuthoritativeSpellCatalog
                 "rage_character_level_lifetime_scale"),
             RageSelfDamageCharacterLevel = row.OptionalInt32(
                 "rage_self_damage_character_level"),
+            RageMinimumLifeQ6PerCharacterLevel = row.OptionalInt32(
+                "rage_minimum_life_q6_per_character_level"),
             ElementalRetargetLifetime = row.OptionalInt32(
                 "elemental_retarget_lifetime"),
             ElementalCharacterLevelDamageMultiplier = row.OptionalInt32(

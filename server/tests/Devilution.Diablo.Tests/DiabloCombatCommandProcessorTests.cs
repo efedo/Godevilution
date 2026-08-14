@@ -8614,6 +8614,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RageUsesConfiguredAdmissionLifeThreshold()
+    {
+        var world = new DiabloWorldState();
+        var spell = CreateRageSpell() with {
+            RageMinimumLifeQ6PerCharacterLevel = 32,
+        };
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            life: 97,
+            lifeMaximum: 6400,
+            mana: 20000,
+            manaMaximum: 20000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(22, 1)]);
+        var intent = new DiabloCastIntent(
+            22,
+            0,
+            0,
+            0,
+            DiabloCastSourceKind.MemorizedSpell);
+
+        Assert.True(processor.Execute(player, intent, 1).Succeeded);
+        Assert.Single(world.Projectiles.Values);
+    }
+
+    [Fact]
     public void ElementalRetargetsAndAppliesPersistentNineCellFireBurst()
     {
         var target = new AuthoritativeCombatTarget(
