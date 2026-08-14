@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.137's optional Charged Bolt initial path random range, moving
+  the native projectile-state roll into validated spell content while
+  preserving the legacy 1–15 compatibility range.
 - Add schema 1.136's optional Berserk magic-resistance frequency, moving the
   native resistance admission roll into validated spell content while
   preserving the legacy 1-in-2 compatibility roll.

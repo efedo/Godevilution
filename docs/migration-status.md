@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.137 externalizes Charged Bolt's initial path random range through
+  validated `spells.tsv` content; older definitions retain the native 1–15
+  compatibility range.
+
 - Schema 1.136 externalizes Berserk's magic-resistance admission frequency
   through validated `spells.tsv` content; older definitions retain the native
   1-in-2 compatibility roll.
