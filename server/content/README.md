@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.88.0` schema in
+It declares its identity and `devilution.diablo@1.89.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1129,7 +1129,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.88.0"
+      "version": "1.89.0"
   },
   "dependencyConstraints": [
     {
@@ -1161,7 +1161,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.88.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.89.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1188,7 +1188,8 @@ externalizes the Hork Demon native AI identity and its validated Hork Spawn
 summon admission. Schema 1.87 adds the validated Hork Spawn missile mapping,
 speed-8 nine-tick trajectory, and expiry summon controller. Schema 1.88 adds
 the additive Hellfire `quest_states.tsv` catalog, merging native initial quest
-state with the shared authoritative quest catalog.
+state with the shared authoritative quest catalog. Schema 1.89 adds the
+Hellfire Defiler encounter and its validated Cathedral Map reward.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

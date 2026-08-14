@@ -278,6 +278,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void DefilerDeathCompletesItsQuestAndLeavesTheCathedralMap()
+    {
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: true,
+            completionMonsterId: 126);
+        var target = new AuthoritativeCombatTarget(
+            16,
+            1,
+            0,
+            8,
+            levelId: 17,
+            monsterId: 126,
+            dropItemEntityId: 1000016,
+            dropItemSeed: 3735928559,
+            dropItemState: AuthoritativeItemState.Empty with {
+                ItemIndex = 42,
+                MiscId = 43,
+                ItemClass = 5,
+            },
+            unique: true);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7, levelId: 17);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(16), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(1U, quest.Progress);
+        var map = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(43, map.State.MiscId);
+        Assert.Equal(42, map.State.ItemIndex);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(
