@@ -956,9 +956,9 @@ effective spell level) * 64`.
 
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `item_tags` also
-declares semantic item categories (`Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
-`Staff`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for active
-rows; combat uses these tags before the native numeric
+declares semantic item categories (`Weapon`, `Sword`, `Axe`, `Mace`, `Bow`,
+`Shield`, `Staff`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for
+active rows; combat and loadout validation use these tags before the native numeric
 fallback. `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source

@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Weapon classification now consults validated `Weapon`, `Sword`, `Axe`,
+  `Mace`, `Bow`, and `Staff` tags for attack-animation selection, Monk flexible
+  blocking, and loadout off-hand validation; metadata-free or ambiguous rows
+  retain the legacy `ItemClass` fallback.
+
 - Class Recharge admission now consults validated `Staff` item tags through the
   active catalog; direct legacy states without catalog metadata retain the
   native item-type path.
