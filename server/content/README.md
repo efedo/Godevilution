@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.80.0` schema in
+It declares its identity and `devilution.diablo@1.81.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -189,6 +189,11 @@ Hellfire rows copy native `monstdat.tsv` intelligence values; authoritative AI
 probability bands consume the validated value while clients continue to treat it
 as server-owned metadata. The Rhino charge now uses the native `43 + 2 *
 intelligence` boundary.
+Schema 1.81 adds the validated `monster_missiles.tsv` table. Each native AI
+identity maps to its retained native missile ID and authoritative projectile
+behavior. Unsupported behaviors remain declared as `Targeted` until their
+native projectile controllers are migrated; the mapping itself remains
+content-owned and validated.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
@@ -1071,6 +1076,7 @@ the complete target header even when they upsert only one row.
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch metadata. |
+| `monster_missiles.tsv` | `native_ai` | Validated native AI-to-missile identity and authoritative projectile behavior; unsupported controllers remain explicitly `Targeted` during migration. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
@@ -1105,7 +1111,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.80.0"
+      "version": "1.81.0"
   },
   "dependencyConstraints": [
     {
@@ -1137,7 +1143,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.80.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.81.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1150,6 +1156,12 @@ Pack identity, dependency metadata, overlay declarations, and table contents
 contribute to the content manifest and combined ruleset hashes. Clients must use
 the server's printed ruleset identity, not calculate an identity from an
 individual pack.
+
+Schema 1.81 adds the validated `monster_missiles.tsv` table. Each native AI
+identity maps to its retained native missile ID and authoritative projectile
+behavior. Unsupported behaviors remain declared as `Targeted` until their
+native projectile controllers are migrated; the mapping itself remains
+content-owned and validated.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

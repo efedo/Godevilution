@@ -1,0 +1,16 @@
+native_ai	missile_id	projectile_behavior
+GoatRanged	Arrow	Targeted
+Succubus	BloodStar	BloodStar
+LazarusSuccubus	BloodStar	BloodStar
+Acid	Acid	Targeted
+AcidUnique	Acid	Targeted
+FireBat	Firebolt	Firebolt
+Torchant	Fireball	Fireball
+Lich	OrangeFlare	Targeted
+ArchLich	YellowFlare	Targeted
+Psychorb	BlueFlare	Targeted
+Necromorb	RedFlare	Targeted
+Magma	MagmaBall	Targeted
+Storm	ThinLightningControl	Targeted
+Diablo	DiabloApocalypse	Targeted
+BoneDemon	BlueFlare2	Targeted

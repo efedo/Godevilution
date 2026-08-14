@@ -29,7 +29,8 @@ public sealed record DiabloContentActivation
         AuthoritativeQuestTypeCatalog? questTypes = null,
         AuthoritativeQuestPoolCatalog? questPools = null,
         AuthoritativeSetLevelNameCatalog? setLevelNames = null,
-        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -45,6 +46,7 @@ public sealed record DiabloContentActivation
         QuestPools = questPools;
         SetLevelNames = setLevelNames;
         MonsterSpawnPlanner = monsterSpawnPlanner;
+        MonsterMissiles = monsterMissiles;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -70,6 +72,9 @@ public sealed record DiabloContentActivation
 
     /** Server-owned level spawn planning from the activated content contract. */
     public AuthoritativeMonsterSpawnPlanner? MonsterSpawnPlanner { get; }
+
+    /** Validated native AI-to-missile mappings from the active content pack. */
+    public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -259,6 +264,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monsterTypesTable.SourcePath,
                 monsterTypesTable.ToCanonicalTsv())
             : null;
+        var monsterMissiles = content.TryGetTable(
+            "monster_missiles.tsv",
+            out var monsterMissilesTable)
+            ? AuthoritativeMonsterMissileCatalog.LoadTsv(
+                monsterMissilesTable.SourcePath,
+                monsterMissilesTable.ToCanonicalTsv())
+            : null;
         var monsters = content.TryGetTable("monsters.tsv", out var monstersTable)
             ? AuthoritativeMonsterCatalog.LoadTsv(
                 monstersTable.SourcePath,
@@ -359,6 +371,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
+            MonsterMissiles = monsterMissiles,
             UseNativePlayerActionTiming = true,
             RandomSeed = randomSeed,
             GameMode = gameMode,
@@ -376,7 +389,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questTypes,
             questPools,
             setLevelNames,
-            monsterSpawnPlanner);
+            monsterSpawnPlanner,
+            monsterMissiles);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

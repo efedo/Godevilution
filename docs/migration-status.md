@@ -141,6 +141,11 @@ Status date: 2026-08-13
   retained Hellfire `monstdat.tsv` rows and persists through authoritative
   targets, snapshots, saves, protocol field 44, and canonical hashes. Rhino
   charge probability now uses the native `43 + 2 * intelligence` boundary.
+- Native monster missile identities are now externalized in schema 1.81 through
+  validated `monster_missiles.tsv` mappings. The active content pack supplies
+  each native AI's retained missile ID and projectile behavior; unsupported
+  controllers remain explicitly `Targeted` until their server-owned behavior
+  is migrated, and clients never dispatch these mappings.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

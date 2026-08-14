@@ -47,6 +47,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeSpellCatalog? Spells { get; init; }
 
+    /** Validated native AI-to-missile mappings supplied by active content. */
+    public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; init; }
+
     public AuthoritativeCombatRules? CombatRules { get; init; }
 
     public AuthoritativeItemCatalog? Items { get; init; }
@@ -156,7 +159,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.GameMode,
                 options.Items,
                 playerDamage,
-                worldCommands),
+                worldCommands,
+                options.MonsterMissiles),
             random,
             combatRules,
             options.PlayerClasses,

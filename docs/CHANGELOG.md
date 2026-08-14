@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.81 `monster_missiles.tsv` mappings so native monster AI missile
+  identities and migrated projectile behaviors are validated by the active
+  content pack; unsupported controllers remain explicitly `Targeted`.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

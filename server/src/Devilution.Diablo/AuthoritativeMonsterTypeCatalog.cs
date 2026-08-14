@@ -62,11 +62,11 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 public sealed class AuthoritativeMonsterTypeCatalog
 {
     private static readonly HashSet<string> ValidNativeAis = new(StringComparer.Ordinal) {
-        "Acid", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
+        "Acid", "AcidUnique", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
         "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "GoatMelee", "GoatRanged",
         "Golem", "Lich", "Magma", "Mega", "Necromorb", "Psychorb", "Rhino", "Scavenger",
         "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Storm",
-        "Succubus", "Torchant", "Zombie",
+        "Succubus", "LazarusSuccubus", "Torchant", "Zombie",
     };
 
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitions;

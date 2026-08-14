@@ -18,6 +18,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly bool useNativePlayerActionTiming;
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private uint nextWorldItemEntityId = 0x40000000;
@@ -122,7 +123,8 @@ public sealed class DiabloCombatCommandProcessor
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
         AuthoritativePlayerDamageResolver? playerDamage = null,
-        DiabloWorldCommandProcessor? worldCommands = null)
+        DiabloWorldCommandProcessor? worldCommands = null,
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -135,6 +137,7 @@ public sealed class DiabloCombatCommandProcessor
             ? gameMode
             : throw new ArgumentOutOfRangeException(nameof(gameMode));
         this.items = items;
+        this.monsterMissiles = monsterMissiles;
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -4066,7 +4069,10 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "Succubus")
+        if (monster.NativeAi != "Succubus"
+            || (monsterMissiles is not null
+                && (!monsterMissiles.TryGet(monster.NativeAi, out var missile)
+                    || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BloodStar)))
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>

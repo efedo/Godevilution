@@ -253,7 +253,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.80.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.81.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -440,7 +440,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.80.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.81.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -843,7 +843,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.80.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.81.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -915,7 +915,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.80.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.81.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",

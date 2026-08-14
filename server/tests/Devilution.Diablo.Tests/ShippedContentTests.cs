@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.80.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.81.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -39,6 +39,10 @@ public sealed class ShippedContentTests
             target.Drop!.EntityId);
         Assert.NotEqual(0U, target.Drop.ItemSeed);
         Assert.Equal(1, target.Drop.State.ItemIndex);
+        Assert.NotNull(activation.MonsterMissiles);
+        Assert.True(activation.MonsterMissiles!.TryGet("Succubus", out var succubus));
+        Assert.Equal("BloodStar", succubus.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
     }
 
     [Fact]
@@ -61,7 +65,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.80.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.81.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
