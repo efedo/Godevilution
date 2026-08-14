@@ -41,4 +41,40 @@ public sealed class DiabloStoreRulesTests
         Assert.Equal(DiabloRuleFailure.InvalidTarget, rules.ValidateManaRefill(-1, 10, 100));
         Assert.Equal(DiabloRuleFailure.NotAllowed, rules.ValidateManaRefill(10, 10, 100));
     }
+
+    [Fact]
+    public void ExplicitChargedSourceOverridesLegacyItemTypeForRecharge()
+    {
+        var rules = new DiabloStoreRules();
+        var charged = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            SpellId = 900,
+            Charges = 1,
+            MaxCharges = 10,
+            Value = 100,
+        };
+        var consumable = charged with {
+            SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+        };
+
+        Assert.Null(rules.ValidateRecharge(charged, 100));
+        Assert.Equal(
+            DiabloRuleFailure.InvalidTarget,
+            rules.ValidateRecharge(consumable, 100));
+    }
+
+    [Fact]
+    public void LegacyRechargeFieldsRemainCompatibleWhenSourceMetadataIsAbsent()
+    {
+        var rules = new DiabloStoreRules();
+        var legacy = AuthoritativeItemState.Empty with {
+            ItemType = 10,
+            Charges = 0,
+            MaxCharges = 1,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRecharge(legacy, 100));
+    }
 }

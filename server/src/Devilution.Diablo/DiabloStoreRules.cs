@@ -90,7 +90,7 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         ArgumentNullException.ThrowIfNull(state);
         if (state.Deleted)
             return DiabloRuleFailure.InvalidTarget;
-        if (state.ItemType != 10 && state.MiscId is not (23 or 27))
+        if (!IsRechargeable(state))
             return DiabloRuleFailure.InvalidTarget;
         if (state.MaxCharges <= state.Charges)
             return DiabloRuleFailure.NotAllowed;
@@ -98,6 +98,13 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         if (price == 0)
             return DiabloRuleFailure.NotAllowed;
         return playerGold < price ? DiabloRuleFailure.InsufficientResources : null;
+    }
+
+    private static bool IsRechargeable(AuthoritativeItemState state)
+    {
+        if (state.SpellSourceKind is { } explicitKind)
+            return explicitKind == DiabloItemSpellSourceKind.ChargedItem;
+        return state.ItemType == 10 || state.MiscId is 23 or 27;
     }
 
     public DiabloRuleFailure? ValidateRecharge(OwnedStoreItem item, uint playerGold)
