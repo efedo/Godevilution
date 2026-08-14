@@ -255,6 +255,9 @@ Status date: 2026-08-14
   `puddle_damage_minimum_monster_level`, `puddle_damage_low`, and
   `puddle_damage_high`; shipped mappings now own the native threshold and
   values, while legacy rows retain compatibility defaults.
+- Schema 1.97 externalizes mapped monster-missile `damage_type`; shipped
+  damaging rows now declare their authoritative channel, while legacy rows
+  retain spell/name inference during migration.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

@@ -92,6 +92,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.96's optional Acid puddle-damage threshold and values, moving
   the native level-based damage rule into validated content while preserving
   compatibility defaults.
+- Add schema 1.97's optional monster-missile `damage_type` identity, moving
+  checked-in ranged damage channels into validated content while preserving
+  legacy spell/name inference for older rows.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
