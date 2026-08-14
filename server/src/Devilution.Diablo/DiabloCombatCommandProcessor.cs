@@ -5295,8 +5295,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Fat")
-                return null;
             if (definition.FatMovementChanceBase > 0
                 && definition.FatMovementChanceIntelligenceScale > 0) {
                 return (
@@ -5317,8 +5315,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Fat")
-                return null;
             if (definition.FatAttackChanceBase > 0
                 && definition.FatAttackChanceIntelligenceScale > 0
                 && definition.FatSpecialChanceBase > 0

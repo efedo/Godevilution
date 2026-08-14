@@ -370,32 +370,22 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.GoatMeleeSpecialChanceGroupPeriod <= 0))
                 || definition.FatMovementChanceBase is < 0 or > 100
                 || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Fat"
-                    && ((definition.FatMovementChanceBase != 0
-                            || definition.FatMovementChanceIntelligenceScale != 0)
-                        && (definition.FatMovementChanceBase <= 0
-                            || definition.FatMovementChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Fat"
-                    && (definition.FatMovementChanceBase != 0
-                        || definition.FatMovementChanceIntelligenceScale != 0))
+                || ((definition.FatMovementChanceBase != 0
+                        || definition.FatMovementChanceIntelligenceScale != 0)
+                    && (definition.FatMovementChanceBase <= 0
+                        || definition.FatMovementChanceIntelligenceScale <= 0))
                 || definition.FatAttackChanceBase is < 0 or > 100
                 || definition.FatAttackChanceIntelligenceScale is < 0 or > 100
                 || definition.FatSpecialChanceBase is < 0 or > 100
                 || definition.FatSpecialChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Fat"
-                    && ((definition.FatAttackChanceBase != 0
-                            || definition.FatAttackChanceIntelligenceScale != 0
-                            || definition.FatSpecialChanceBase != 0
-                            || definition.FatSpecialChanceIntelligenceScale != 0)
-                        && (definition.FatAttackChanceBase <= 0
-                            || definition.FatAttackChanceIntelligenceScale <= 0
-                            || definition.FatSpecialChanceBase <= 0
-                            || definition.FatSpecialChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Fat"
-                    && (definition.FatAttackChanceBase != 0
+                || ((definition.FatAttackChanceBase != 0
                         || definition.FatAttackChanceIntelligenceScale != 0
                         || definition.FatSpecialChanceBase != 0
-                        || definition.FatSpecialChanceIntelligenceScale != 0))
+                        || definition.FatSpecialChanceIntelligenceScale != 0)
+                    && (definition.FatAttackChanceBase <= 0
+                        || definition.FatAttackChanceIntelligenceScale <= 0
+                        || definition.FatSpecialChanceBase <= 0
+                        || definition.FatSpecialChanceIntelligenceScale <= 0))
                 || definition.ZombieActionChanceBase is < 0 or > 100
                 || definition.ZombieActionChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "Zombie"

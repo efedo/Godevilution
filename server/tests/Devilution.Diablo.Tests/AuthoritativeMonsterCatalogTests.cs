@@ -355,7 +355,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tfat_movement_chance_base\tfat_movement_chance_intelligence_scale\n"
-                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFat\t22\t5\n");
+                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t22\t5\n");
 
         var fat = Assert.Single(catalog.Definitions);
         Assert.Equal((22, 5), (
@@ -369,7 +369,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tfat_attack_chance_base\tfat_attack_chance_intelligence_scale\tfat_special_chance_base\tfat_special_chance_intelligence_scale\n"
-                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFat\t21\t5\t16\t5\n");
+                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t21\t5\t16\t5\n");
 
         var fat = Assert.Single(catalog.Definitions);
         Assert.Equal((21, 5, 16, 5), (

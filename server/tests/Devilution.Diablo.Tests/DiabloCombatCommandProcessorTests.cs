@@ -3041,7 +3041,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Fat",
+                NativeAi = "Fallen",
                 FatAttackChanceBase = 10,
                 FatAttackChanceIntelligenceScale = 1,
                 FatSpecialChanceBase = 5,
@@ -3100,7 +3100,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Fat",
+                NativeAi = "Fallen",
                 FatAttackChanceBase = 30,
                 FatAttackChanceIntelligenceScale = 1,
                 FatSpecialChanceBase = 20,
@@ -3189,7 +3189,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Fat",
+                NativeAi = "Fallen",
                 FatMovementChanceBase = 10,
                 FatMovementChanceIntelligenceScale = 1,
             },
