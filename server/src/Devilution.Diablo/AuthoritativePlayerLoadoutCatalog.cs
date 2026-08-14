@@ -472,8 +472,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 if (loadoutItem.Slot >= 8
                     || item.InventoryWidth != 1
                     || item.InventoryHeight != 1
-                    || item.EquipLocation != 7
-                    || item.ItemClass != 3
+                    || !AuthoritativeItemClassification.IsBelt(item)
                     || !beltSlots.Add(loadoutItem.Slot)) {
                     throw new InvalidDataException(
                         $"Player loadout {definition.ClassId} has an invalid belt item or slot.");

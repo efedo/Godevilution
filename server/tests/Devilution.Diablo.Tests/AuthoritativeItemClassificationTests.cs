@@ -108,6 +108,28 @@ public sealed class AuthoritativeItemClassificationTests
         Assert.True(AuthoritativeItemClassification.IsGold(state, rules));
     }
 
+    [Fact]
+    public void ExplicitBeltTagOverridesConflictingLegacyPlacementMetadata()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Belt"])
+            with {
+                EquipLocation = 0,
+            };
+
+        Assert.True(AuthoritativeItemClassification.IsBelt(definition));
+    }
+
+    [Fact]
+    public void BeltClassificationRetainsLegacyPlacementFallback()
+    {
+        var definition = CreateDefinition(itemClass: 3, tags: [])
+            with {
+                EquipLocation = 7,
+            };
+
+        Assert.True(AuthoritativeItemClassification.IsBelt(definition));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)

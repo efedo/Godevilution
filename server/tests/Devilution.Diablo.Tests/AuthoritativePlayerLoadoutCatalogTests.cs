@@ -311,6 +311,46 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void BeltTagAllowsBeltLoadoutDespiteConflictingLegacyPlacementMetadata()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var source = ReadBase(root, "items.tsv");
+        var conflictingItems = string.Join(
+            "\r\n",
+            source.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => {
+                    if (!line.StartsWith("105\t", StringComparison.Ordinal))
+                        return line;
+                    var fields = line.Split('\t');
+                    fields[12] = "Misc,Belt";
+                    fields[13] = "0";
+                    fields[14] = "0";
+                    return string.Join('\t', fields);
+                })) + "\r\n";
+        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", conflictingItems);
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            classes,
+            items,
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"));
+
+        var warrior = catalog.CreateTemplate(
+                "tag-belt",
+                0,
+                null,
+                null,
+                null,
+                1)
+            .CreatePlayer();
+
+        Assert.Equal([24, 24], warrior.Belt.Select(item => item.State.ItemIndex));
+    }
+
+    [Fact]
     public void LegacyLoadoutSchemaDefaultsSemanticAbilityKind()
     {
         var root = FindRepositoryRoot();

@@ -110,6 +110,24 @@ public static class AuthoritativeItemClassification
             && state.ItemIndex == rules.DeathGoldItemIndex;
     }
 
+    public static bool IsBelt(AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return definition.GenerationTags.Contains("Belt")
+            || (definition.EquipLocation == 7 && definition.ItemClass == 3);
+    }
+
+    public static bool IsBelt(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return IsBelt(definition);
+        return state.EquipLocation == 7 && state.ItemClass == 3;
+    }
+
     public static bool IsLightArmor(AuthoritativeItemDefinition definition)
         => HasArmorSubtype(definition, "LightArmor", 6);
 
