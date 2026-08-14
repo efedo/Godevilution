@@ -529,13 +529,13 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         uint slot,
         AuthoritativeItemDefinition item)
     {
-        var slotMatchesLocation = item.EquipLocation switch {
-            1 => slot is 4 or 5,
-            2 => slot == 4,
-            3 => slot == 6,
-            4 => slot == 0,
-            5 => slot is 1 or 2,
-            6 => slot == 3,
+        var slotMatchesLocation = AuthoritativeItemClassification.GetEquipmentSlotKind(item) switch {
+            DiabloEquipmentSlotKind.Hand => slot is 4 or 5,
+            DiabloEquipmentSlotKind.TwoHanded => slot == 4,
+            DiabloEquipmentSlotKind.BodyArmor => slot == 6,
+            DiabloEquipmentSlotKind.Helmet => slot == 0,
+            DiabloEquipmentSlotKind.Ring => slot is 1 or 2,
+            DiabloEquipmentSlotKind.Amulet => slot == 3,
             _ => false,
         };
         var weaponInOffHand = slot == 5

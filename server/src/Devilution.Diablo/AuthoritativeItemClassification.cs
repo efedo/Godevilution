@@ -1,5 +1,16 @@
 namespace Devilution.Diablo;
 
+public enum DiabloEquipmentSlotKind
+{
+    Unknown,
+    Hand,
+    TwoHanded,
+    BodyArmor,
+    Helmet,
+    Ring,
+    Amulet,
+}
+
 /** Shared content-first equipment classification with native compatibility fallback. */
 public static class AuthoritativeItemClassification
 {
@@ -144,6 +155,52 @@ public static class AuthoritativeItemClassification
             && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
             return IsTwoHanded(definition);
         return state.EquipLocation == 2;
+    }
+
+    public static DiabloEquipmentSlotKind GetEquipmentSlotKind(
+        AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        if (definition.GenerationTags.Contains("TwoHanded"))
+            return DiabloEquipmentSlotKind.TwoHanded;
+        if (definition.GenerationTags.Contains("OneHanded"))
+            return DiabloEquipmentSlotKind.Hand;
+        if (definition.GenerationTags.Contains("BodyArmor"))
+            return DiabloEquipmentSlotKind.BodyArmor;
+        if (definition.GenerationTags.Contains("Helmet"))
+            return DiabloEquipmentSlotKind.Helmet;
+        if (definition.GenerationTags.Contains("Ring"))
+            return DiabloEquipmentSlotKind.Ring;
+        if (definition.GenerationTags.Contains("Amulet"))
+            return DiabloEquipmentSlotKind.Amulet;
+        return definition.EquipLocation switch {
+            1 => DiabloEquipmentSlotKind.Hand,
+            2 => DiabloEquipmentSlotKind.TwoHanded,
+            3 => DiabloEquipmentSlotKind.BodyArmor,
+            4 => DiabloEquipmentSlotKind.Helmet,
+            5 => DiabloEquipmentSlotKind.Ring,
+            6 => DiabloEquipmentSlotKind.Amulet,
+            _ => DiabloEquipmentSlotKind.Unknown,
+        };
+    }
+
+    public static DiabloEquipmentSlotKind GetEquipmentSlotKind(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return GetEquipmentSlotKind(definition);
+        return state.EquipLocation switch {
+            1 => DiabloEquipmentSlotKind.Hand,
+            2 => DiabloEquipmentSlotKind.TwoHanded,
+            3 => DiabloEquipmentSlotKind.BodyArmor,
+            4 => DiabloEquipmentSlotKind.Helmet,
+            5 => DiabloEquipmentSlotKind.Ring,
+            6 => DiabloEquipmentSlotKind.Amulet,
+            _ => DiabloEquipmentSlotKind.Unknown,
+        };
     }
 
     public static bool IsLightArmor(AuthoritativeItemDefinition definition)

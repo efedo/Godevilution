@@ -157,6 +157,39 @@ public sealed class AuthoritativeItemClassificationTests
         Assert.True(AuthoritativeItemClassification.IsTwoHanded(definition));
     }
 
+    [Fact]
+    public void ExplicitEquipmentSlotTagsOverrideConflictingLegacyLocation()
+    {
+        var definition = CreateDefinition(itemClass: 2, tags: ["Armor", "BodyArmor"])
+            with {
+                EquipLocation = 4,
+                NativeItemIndex = 901,
+            };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+
+        Assert.Equal(
+            DiabloEquipmentSlotKind.BodyArmor,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
+        Assert.Equal(
+            DiabloEquipmentSlotKind.BodyArmor,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(
+                definition.Generate(42),
+                catalog));
+    }
+
+    [Fact]
+    public void EquipmentSlotClassificationRetainsLegacyLocationFallback()
+    {
+        var definition = CreateDefinition(itemClass: 2, tags: [])
+            with {
+                EquipLocation = 5,
+            };
+
+        Assert.Equal(
+            DiabloEquipmentSlotKind.Ring,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)

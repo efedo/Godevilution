@@ -382,6 +382,53 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void BodyArmorTagAdmitsChestSlotDespiteConflictingLegacyEquipmentLocation()
+    {
+        var root = FindRepositoryRoot();
+        var classes = LoadClasses(root);
+        var source = ReadBase(root, "items.tsv");
+        var customItems = string.Join(
+            "\r\n",
+            source.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => {
+                    if (!line.StartsWith("107\t", StringComparison.Ordinal))
+                        return line;
+                    var fields = line.Split('\t');
+                    fields[0] = "999";
+                    fields[1] = "7";
+                    fields[12] = "Armor,BodyArmor";
+                    fields[13] = "1";
+                    fields[14] = "2";
+                    fields[21] = "199";
+                    return string.Join('\t', fields);
+                })) + "\r\n";
+        var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", customItems);
+        var loadoutItems = ReadBase(root, "class_loadout_items.tsv").Replace(
+            "3\t0\t107\tEquipment\t4",
+            "3\t0\t999\tEquipment\t6",
+            StringComparison.Ordinal);
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            classes,
+            items,
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            loadoutItems);
+
+        var monk = catalog.CreateTemplate(
+                "tag-body-armor",
+                3,
+                null,
+                null,
+                null,
+                1)
+            .CreatePlayer();
+
+        Assert.Equal(199, Assert.Single(monk.Equipment, item => item.Slot == 6).State.ItemIndex);
+    }
+
+    [Fact]
     public void LegacyLoadoutSchemaDefaultsSemanticAbilityKind()
     {
         var root = FindRepositoryRoot();
