@@ -278,6 +278,152 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AttackCanResolveAnAdjacentPlayerThroughTheAuthoritativePath()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: true));
+        var attacker = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            life: 3200,
+            lifeMaximum: 3200);
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(640, victim.Life);
+        var damage = Assert.Single(result.Events);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 8, 10),
+            damage);
+    }
+
+    [Fact]
+    public void FriendlyModeRejectsPlayerAttackWhenRulesDisableFriendlyFire()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: false));
+        var attacker = CreatePlayer(entityId: 7);
+        var victim = CreatePlayer(positionX: 1, entityId: 8);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(50, victim.Life);
+    }
+
+    [Fact]
+    public void NativeTimedPlayerAttackResolvesAtItsAuthoritativeEffectTick()
+    {
+        var world = new DiabloWorldState();
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            playerClasses: classes,
+            useNativePlayerActionTiming: true);
+        var attacker = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            characterClassId: 2,
+            life: 3200,
+            lifeMaximum: 3200);
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.NotNull(attacker.CurrentAction);
+        var action = attacker.CurrentAction!;
+        Assert.Equal(DiabloPlayerActionKind.Attack, action.Kind);
+        Assert.Equal(victim.EntityId, action.TargetEntityId);
+        Assert.Equal(1280, victim.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 1; tick <= action.EffectTick; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [attacker, victim]));
+
+        Assert.Equal(640, victim.Life);
+        var delivery = Assert.Single(deliveries);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 8, 10),
+            delivery.Event);
+    }
+
+    [Fact]
+    public void LethalAdjacentPlayerAttackCreatesTheAuthoritativePvpEar()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            playerClasses: LoadShippedPlayerClasses(),
+            gameMode: DiabloGameMode.Multiplayer,
+            items: LoadShippedItems());
+        var attacker = CreatePlayer(entityId: 7, characterClassId: 2);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 640,
+            lifeMaximum: 640,
+            characterClassId: 1,
+            characterLevel: 3,
+            characterName: "Dead-RogueDM",
+            gold: 0);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(0, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Death, victim.CombatMode);
+        var ear = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(23, ear.State.ItemIndex);
+        Assert.Equal(44, ear.State.MiscId);
+        Assert.Equal("Dead-RogueDM", ear.State.IdentifiedName);
+    }
+
+    [Fact]
     public void NormalBowAttackUsesOneAuthoritativeMissileAndResolvesOnImpact()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
@@ -8777,7 +8923,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativeItemCatalog? items = null,
         DiabloWorldCommandProcessor? worldCommands = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
-        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null)
+        AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
+        bool useNativePlayerActionTiming = false)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -8790,6 +8937,7 @@ public sealed class DiabloCombatCommandProcessorTests
             random,
             playerClasses,
             playerAnimations,
+            useNativePlayerActionTiming,
             gameMode: gameMode,
             items: items,
             worldCommands: worldCommands,

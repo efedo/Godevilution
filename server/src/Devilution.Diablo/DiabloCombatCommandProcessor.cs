@@ -369,9 +369,19 @@ public sealed class DiabloCombatCommandProcessor
         var profile = GetAttackAnimationProfile(player);
         var timing = animation.GetAttack(profile);
         var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
-        if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target))
+        AuthoritativeCombatTarget? target = null;
+        AuthoritativePlayerState? playerTarget = null;
+        if (!TryGetAttackTarget(player, targetEntityId, ranged, out target)
+            && !TryGetPlayerAttackTarget(
+                player,
+                targetEntityId,
+                ranged,
+                players,
+                out playerTarget))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        UpdateFacingToward(player, target.PositionX, target.PositionY);
+        var targetX = target?.PositionX ?? playerTarget!.PositionX;
+        var targetY = target?.PositionY ?? playerTarget!.PositionY;
+        UpdateFacingToward(player, targetX, targetY);
         var includesFirstFrame = player.CurrentAction is not null
             && player.CurrentAction.EffectApplied
             && player.CombatMode is DiabloPlayerCombatMode.Attack
@@ -410,8 +420,21 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState>? players = null)
     {
         players ??= [player];
-        if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target))
+        if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target)) {
+            if (TryGetPlayerAttackTarget(
+                    player,
+                    targetEntityId,
+                    ranged,
+                    players,
+                    out var playerTarget)) {
+                return ResolvePlayerAttack(
+                    player,
+                    playerTarget,
+                    appliedTick,
+                    players);
+            }
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
 
         UpdateFacingToward(player, target.PositionX, target.PositionY);
         if (ranged) {
@@ -467,6 +490,82 @@ public sealed class DiabloCombatCommandProcessor
             ApplyEquipmentAttackEffects(player, damageQ6, events);
         if (ranged || attackHit)
             ApplyHellfireWeaponDecay(player);
+        return events.Count == 0
+            ? DiabloCombatIntentResult.Accepted
+            : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Resolves the initial authoritative melee path against another player. */
+    private DiabloCombatIntentResult ResolvePlayerAttack(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        UpdateFacingToward(player, target.PositionX, target.PositionY);
+        var targetProxy = new AuthoritativeCombatTarget(
+            target.EntityId,
+            target.PositionX,
+            target.PositionY,
+            target.Life,
+            armorClass: target.ArmorClass,
+            maxHitPoints: target.LifeMaximum,
+            levelId: target.LevelId,
+            unique: true);
+        var damageQ6 = ResolvePlayerAttackDamageQ6(
+            player,
+            targetProxy,
+            ranged: false,
+            unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            out var perilSelfDamageQ6,
+            out var perilActive,
+            out _,
+            out _);
+        var events = new List<DiabloGameplayEvent>();
+        if (perilActive) {
+            var selfDamageResult = playerDamage.Apply(player, perilSelfDamageQ6);
+            if (selfDamageResult.IncomingDamageQ6 > 0) {
+                events.Add(new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    player.EntityId,
+                    player.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        selfDamageResult.IncomingDamageQ6)) {
+                    AmountQ6 = selfDamageResult.IncomingDamageQ6,
+                });
+            }
+            if (player.Life == 0) {
+                StartPlayerDeath(
+                    player,
+                    player.EntityId,
+                    appliedTick,
+                    players,
+                    PlayerDeathReason.MonsterOrTrap);
+            }
+        }
+
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Damage,
+                player.EntityId,
+                target.EntityId,
+                DiabloFixedPointQ6.ToWholeTruncated(
+                    damageResult.IncomingDamageQ6)) {
+                AmountQ6 = damageResult.IncomingDamageQ6,
+            });
+        }
+        if (target.Life == 0) {
+            StartPlayerDeath(
+                target,
+                player.EntityId,
+                appliedTick,
+                players,
+                PlayerDeathReason.Player);
+        }
+        if (damageQ6 > 0)
+            ApplyEquipmentAttackEffects(player, damageQ6, events);
+        ApplyHellfireWeaponDecay(player);
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
@@ -947,6 +1046,31 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionX,
                 target.PositionY)
             : distance <= 1;
+    }
+
+    private bool TryGetPlayerAttackTarget(
+        AuthoritativePlayerState player,
+        uint targetEntityId,
+        bool ranged,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        out AuthoritativePlayerState target)
+    {
+        target = players.FirstOrDefault(candidate =>
+            candidate.EntityId == targetEntityId
+            && candidate.EntityId != player.EntityId)!;
+        if (target is null
+            || ranged
+            || target.Life <= 0
+            || (target.LevelId != 0 && target.LevelId != player.LevelId)
+            || (!rules.FriendlyFire && player.FriendlyMode)
+            || IsPlayerProtectedByFlash(target)
+            || IsPlayerEtherealized(target)) {
+            return false;
+        }
+
+        return Math.Max(
+            Math.Abs(target.PositionX - player.PositionX),
+            Math.Abs(target.PositionY - player.PositionY)) <= 1;
     }
 
     private DiabloCombatIntentResult Cast(
