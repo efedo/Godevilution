@@ -3406,6 +3406,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleUsesValidatedHealingHealthThreshold()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Gargoyle",
+                0,
+                0,
+                9,
+                60,
+                90,
+                45,
+                10,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Gargoyle",
+                GargoyleSafeDistanceBase = 2,
+                GargoyleSafeDistanceIntelligenceScale = 1,
+                GargoyleHealingHealthThresholdPercent = 75,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            60,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 1,
+            nativeAi: "Gargoyle");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var healing = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(61, monster.HitPoints);
+        Assert.Single(healing);
+    }
+
+    [Fact]
     public void GargoyleUsesValidatedHealingFormulaTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

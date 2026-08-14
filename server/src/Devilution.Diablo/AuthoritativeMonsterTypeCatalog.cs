@@ -192,6 +192,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Gargoyle safety-boundary increase per intelligence point. */
     public int GargoyleSafeDistanceIntelligenceScale { get; init; }
 
+    /** Native Gargoyle wounded-health threshold for self-healing. */
+    public int GargoyleHealingHealthThresholdPercent { get; init; }
+
     /** Native Gargoyle self-heal divisor multiplier. */
     public int GargoyleHealDivisorMultiplier { get; init; }
 
@@ -501,6 +504,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Gargoyle"
                     && (definition.GargoyleSafeDistanceBase != 0
                         || definition.GargoyleSafeDistanceIntelligenceScale != 0))
+                || definition.GargoyleHealingHealthThresholdPercent is < 0 or > 100
+                || (definition.NativeAi != "Gargoyle"
+                    && definition.GargoyleHealingHealthThresholdPercent != 0)
                 || definition.GargoyleHealDivisorMultiplier is < 0 or > 256
                 || definition.GargoyleHealDivisorRandomRange is < 0 or > 256
                 || definition.GargoyleHealDivisorRandomOffset is < 0 or > 256
@@ -704,6 +710,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 HorkDemonMovementChanceIntelligenceScale = row.OptionalInt32("hork_demon_movement_chance_intelligence_scale"),
                 GargoyleSafeDistanceBase = row.OptionalInt32("gargoyle_safe_distance_base"),
                 GargoyleSafeDistanceIntelligenceScale = row.OptionalInt32("gargoyle_safe_distance_intelligence_scale"),
+                GargoyleHealingHealthThresholdPercent = row.OptionalInt32("gargoyle_healing_health_threshold_percent"),
                 GargoyleHealDivisorMultiplier = row.OptionalInt32("gargoyle_heal_divisor_multiplier"),
                 GargoyleHealDivisorRandomRange = row.OptionalInt32("gargoyle_heal_divisor_random_range"),
                 GargoyleHealDivisorRandomOffset = row.OptionalInt32("gargoyle_heal_divisor_random_offset"),

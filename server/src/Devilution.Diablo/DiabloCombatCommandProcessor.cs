@@ -5511,7 +5511,9 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        if (monster.HitPointsQ6 >= monster.MaxHitPointsQ6 / 2)
+        if (monster.HitPointsQ6 >= monster.MaxHitPointsQ6
+                * gargoyleTuning.Value.HealingHealthThresholdPercent
+                / 100)
             return false;
 
         if (distance < safeDistance)
@@ -5545,6 +5547,7 @@ public sealed class DiabloCombatCommandProcessor
     private (
         int DistanceBase,
         int IntelligenceScale,
+        int HealingHealthThresholdPercent,
         int HealDivisorMultiplier,
         int HealDivisorRandomRange,
         int HealDivisorRandomOffset)? GetGargoyleTuning(
@@ -5558,6 +5561,9 @@ public sealed class DiabloCombatCommandProcessor
                 return (
                     definition.GargoyleSafeDistanceBase,
                     definition.GargoyleSafeDistanceIntelligenceScale,
+                    definition.GargoyleHealingHealthThresholdPercent > 0
+                        ? definition.GargoyleHealingHealthThresholdPercent
+                        : 50,
                     definition.GargoyleHealDivisorMultiplier > 0
                         ? definition.GargoyleHealDivisorMultiplier
                         : 16,
@@ -5570,7 +5576,7 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         return target.NativeAi == "Gargoyle"
-            ? (2, 1, 16, 5, 4)
+            ? (2, 1, 50, 16, 5, 4)
             : null;
     }
 
