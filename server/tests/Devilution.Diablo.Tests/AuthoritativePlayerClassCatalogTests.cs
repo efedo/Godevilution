@@ -15,6 +15,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(200, catalog.Default.SelfHealingSpellPercent);
         Assert.Equal(200, catalog.Default.HealOtherSpellPercent);
         Assert.Equal(100, catalog.Default.ManaSpellPercent);
+        Assert.Equal(0, catalog.Default.MeleeArmorReductionDivisor);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -63,6 +64,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(160, barbarian.ItemLifePerVitalityQ6);
         Assert.Equal(200, barbarian.SelfHealingSpellPercent);
         Assert.Equal(200, barbarian.HealOtherSpellPercent);
+        Assert.Equal(8, barbarian.MeleeArmorReductionDivisor);
         Assert.Equal(
             DiabloPlayerClassFlags.CriticalStrike
                 | DiabloPlayerClassFlags.IronSkin
@@ -97,15 +99,38 @@ public sealed class AuthoritativePlayerClassCatalogTests
             ReadShippedTable()
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
-                .Select(line => line.Contains('\t')
-                    ? line[..line.LastIndexOf('\t')]
-                    : line));
+                .Select(line => {
+                    if (!line.Contains('\t'))
+                        return line;
+                    var withoutCurrentColumn = line[..line.LastIndexOf('\t')];
+                    return withoutCurrentColumn[..withoutCurrentColumn.LastIndexOf('\t')];
+                }));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
             legacySource);
 
         Assert.Equal(100, catalog.Resolve("sorcerer").ManaSpellPercent);
+    }
+
+    [Fact]
+    public void ManaOnlyClassRowsDefaultMeleeArmorReductionToZero()
+    {
+        var manaOnlySource = string.Join(
+            '\n',
+            ReadShippedTable()
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.Contains('\t')
+                    ? line[..line.LastIndexOf('\t')]
+                    : line));
+
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            manaOnlySource);
+
+        Assert.Equal(200, catalog.Resolve("sorcerer").ManaSpellPercent);
+        Assert.Equal(0, catalog.Resolve("barbarian").MeleeArmorReductionDivisor);
     }
 
     [Fact]
@@ -281,7 +306,15 @@ public sealed class AuthoritativePlayerClassCatalogTests
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
                 .Select(line => line.StartsWith("2\tsorcerer\t", StringComparison.Ordinal)
-                    ? line[..line.LastIndexOf('\t')] + "\t401"
+                    ? line.Replace("\t200\t0", "\t401\t0", StringComparison.Ordinal)
+                    : line));
+        var invalidMeleeArmorReduction = string.Join(
+            '\n',
+            source
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.StartsWith("5\tbarbarian\t", StringComparison.Ordinal)
+                    ? line[..line.LastIndexOf('\t')] + "\t-1"
                     : line));
 
         Assert.Throws<InvalidDataException>(() =>
@@ -302,6 +335,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMonkArmorTuning));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidManaSpellPercentage));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMeleeArmorReduction));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()

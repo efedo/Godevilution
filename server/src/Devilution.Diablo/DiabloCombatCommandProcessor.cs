@@ -35,7 +35,6 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
     private const uint QuickAttackFlag = 1U << 17;
-    private const uint NativeBarbarianClassId = 5;
     /** Legacy Hork Spawn summon identity retained for old content/snapshots. */
     private const uint HorkSpawnNativeMonsterId = 117;
 
@@ -1132,7 +1131,9 @@ public sealed class DiabloCombatCommandProcessor
                 checked(classHitChance + hitBonus),
                 target.ArmorClass,
                 armorPiercingBonus,
-                barbarianMelee: playerClass!.ClassId == NativeBarbarianClassId && !ranged)
+                meleeArmorReductionDivisor: !ranged
+                    ? playerClass!.MeleeArmorReductionDivisor
+                    : 0)
             : Math.Clamp(
                 checked(classHitChance + hitBonus + armorPiercingBonus),
                 0,

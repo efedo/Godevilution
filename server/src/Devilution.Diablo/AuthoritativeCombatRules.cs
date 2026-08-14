@@ -256,8 +256,22 @@ public sealed class AuthoritativeCombatRules
         int targetArmorClass,
         int armorPiercingBonus = 0,
         bool barbarianMelee = false)
+        => ResolvePhysicalHitChance(
+            attackerToHit,
+            targetArmorClass,
+            armorPiercingBonus,
+            barbarianMelee ? 8 : 0);
+
+    /** Resolves physical hit chance with a content-declared melee armor divisor. */
+    public int ResolvePhysicalHitChance(
+        int attackerToHit,
+        int targetArmorClass,
+        int armorPiercingBonus,
+        int meleeArmorReductionDivisor)
     {
         var effectiveArmor = targetArmorClass;
+        if (meleeArmorReductionDivisor < 0)
+            throw new ArgumentOutOfRangeException(nameof(meleeArmorReductionDivisor));
         if (armorPiercingBonus > 0) {
             if (GameVariant == DiabloGameVariant.Hellfire) {
                 var armorPiercingShift = armorPiercingBonus - 1;
@@ -265,8 +279,8 @@ public sealed class AuthoritativeCombatRules
                     ? effectiveArmor >> armorPiercingShift
                     : effectiveArmor - effectiveArmor / 4;
             }
-            if (barbarianMelee)
-                effectiveArmor -= targetArmorClass / 8;
+            if (meleeArmorReductionDivisor > 0)
+                effectiveArmor -= targetArmorClass / meleeArmorReductionDivisor;
         }
         effectiveArmor = Math.Max(0, effectiveArmor);
         var piercing = GameVariant == DiabloGameVariant.Diablo

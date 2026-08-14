@@ -211,6 +211,26 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void PhysicalHitChanceAcceptsAContentDeclaredMeleeArmorDivisor()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+
+        Assert.Equal(
+            57,
+            rules.ResolvePhysicalHitChance(
+                70,
+                targetArmorClass: 16,
+                armorPiercingBonus: 1,
+                meleeArmorReductionDivisor: 8));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            rules.ResolvePhysicalHitChance(
+                70,
+                targetArmorClass: 16,
+                armorPiercingBonus: 1,
+                meleeArmorReductionDivisor: -1));
+    }
+
+    [Fact]
     public void HellfirePhysicalHitChanceDoesNotApplyArmorPiercingBonus()
     {
         var rules = new AuthoritativeCombatRules(

@@ -65,6 +65,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native class multiplier applied when casting the Mana spell. */
     public int ManaSpellPercent { get; init; } = 100;
 
+    /** Native melee target-armor reduction divisor; zero disables the rule. */
+    public int MeleeArmorReductionDivisor { get; init; }
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -192,9 +195,14 @@ public sealed class AuthoritativePlayerClassCatalog
         "monk_armor_level_divisor",
     ];
 
-    private static readonly IReadOnlyList<string> CurrentColumns = [
+    private static readonly IReadOnlyList<string> ManaColumns = [
         ..RequiredColumns,
         "mana_spell_percent",
+    ];
+
+    private static readonly IReadOnlyList<string> CurrentColumns = [
+        ..ManaColumns,
+        "melee_armor_reduction_divisor",
     ];
 
     private const DiabloPlayerClassFlags KnownFlags
@@ -274,7 +282,9 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var hasManaSpellPercent = table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
+        var hasMeleeArmorReduction = table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
+        var hasManaSpellPercent = hasMeleeArmorReduction
+            || table.Columns.SequenceEqual(ManaColumns, StringComparer.Ordinal);
         if (!hasManaSpellPercent
             && !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
@@ -331,6 +341,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 ManaSpellPercent = hasManaSpellPercent
                     ? row.RequiredInt32("mana_spell_percent")
                     : 100,
+                MeleeArmorReductionDivisor = hasMeleeArmorReduction
+                    ? row.RequiredInt32("melee_armor_reduction_divisor")
+                    : 0,
             }));
     }
 
@@ -376,6 +389,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.SelfHealingSpellPercent is < 1 or > 400
             || definition.HealOtherSpellPercent is < 1 or > 400
             || definition.ManaSpellPercent is < 1 or > 400
+            || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
                 $"Player class {definition.ClassId} has an invalid percentage.");
