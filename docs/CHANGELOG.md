@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
 - Add schema 1.123's optional GoatMelee adjacent attack-band tuning, moving its
   native `23 + 2 * intelligence` admission into validated monster type content
   while preserving legacy target behavior.
+- Add schema 1.124's optional Fat attack and special-band tuning, moving the
+  native `20 + 4 * intelligence` admission and `15 + 4 * intelligence` special
+  lower bound into validated monster type content while preserving legacy
+  target behavior.
 - Route the GoatRanged Arrow path through schema 1.120's validated
   ranged-retreat tuning so its dedicated dispatch shares the server-owned
   generic close-range boundary.

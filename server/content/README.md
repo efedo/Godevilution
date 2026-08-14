@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.123.0` schema in
+It declares its identity and `devilution.diablo@1.124.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -126,6 +126,11 @@ The optional `fat_movement_chance_base` and
 `fat_movement_chance_intelligence_scale` columns externalize the Fat/Overlord
 non-adjacent movement admission band. Legacy monster rows retain the native
 base-twenty, intelligence-scale-four compatibility values.
+The optional `fat_attack_chance_base`, `fat_attack_chance_intelligence_scale`,
+`fat_special_chance_base`, and `fat_special_chance_intelligence_scale` columns
+externalize the Fat/Overlord adjacent attack and special lower bands. Legacy
+monster rows retain the native base-twenty/base-fifteen, intelligence-scale-four
+compatibility values.
 The optional `zombie_action_chance_base` and
 `zombie_action_chance_intelligence_scale` columns externalize the Zombie
 autonomous action admission band. Legacy monster rows retain the native
@@ -264,8 +269,8 @@ Schema 1.79 adds the optional `native_ai` monster-type column. The checked-in
 Hellfire rows copy the native `MonsterAIID` identity from `monstdat.tsv`; the
 server validates and persists the identity while clients do not dispatch AI.
 The first behavior using that identity is the native `Fat` Overlord normal and
-special melee bands, which consume the validated normal/special accuracy and
-damage columns for the Toad Demon family. The `Rhino` identity now drives the server-owned
+special melee bands, which consume validated admission, accuracy, and damage
+columns for the Toad Demon family. The `Rhino` identity now drives the server-owned
 clear-lane charge using the same special columns; remaining AI-specific behavior
 is still incremental.
 Schema 1.80 adds the optional `intelligence` monster-type column. The checked-in
@@ -1232,7 +1237,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.123.0"
+      "version": "1.124.0"
   },
   "dependencyConstraints": [
     {
@@ -1264,7 +1269,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.123.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.124.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1395,6 +1400,10 @@ intelligence` admission while older rows retain the native compatibility values.
 Schema 1.123 adds optional GoatMelee adjacent attack-band columns to
 `monster_types.tsv`; checked-in GoatMelee rows own their `23 + 2 * intelligence`
 admission while older rows retain the native compatibility values.
+Schema 1.124 adds optional Fat/Overlord adjacent attack and special-band columns
+to `monster_types.tsv`; checked-in Fat rows own their `20 + 4 * intelligence`
+admission and `15 + 4 * intelligence` special lower bound while older rows
+retain the native compatibility values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
