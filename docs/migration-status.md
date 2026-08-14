@@ -77,9 +77,14 @@ Status date: 2026-08-14
   classification seam for loadout validation; legacy rows retain the native
   equipment-location/item-class fallback.
 
+- Two-handed equipment classification is now centralized for loadout topology
+  and dual-wield admission; active rows use `TwoHanded` tags while legacy
+  states retain the native equipment-location fallback.
+
 - Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
-  `Staff`, and `Belt` subtype tags to `items.tsv`; player and monster weapon
-  modifiers consume those tags before falling back to native item type.
+  `Staff`, `Belt`, and `TwoHanded` subtype tags to `items.tsv`; player and
+  monster weapon modifiers consume those tags before falling back to native
+  item type.
 
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;

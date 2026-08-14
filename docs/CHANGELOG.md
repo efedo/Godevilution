@@ -7,6 +7,8 @@ All notable changes to this fork are documented below.
 - Project validated level dimensions and blocked-cell geometry in additive
   live snapshots so Godot can render the active server world; legacy client
   assets remain only as a fallback and saves/hashes omit static geometry.
+- Classify two-handed equipment from normalized `TwoHanded` tags before
+  falling back to native equipment-location metadata for legacy content.
 - Validate starting belt items from the normalized `Belt` tag before falling
   back to native equipment-location/item-class metadata for legacy content.
 - Make the validated `level_generation.tsv` catalog own deterministic
