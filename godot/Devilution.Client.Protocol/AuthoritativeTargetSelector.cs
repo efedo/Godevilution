@@ -22,6 +22,7 @@ public static class AuthoritativeTargetSelector
 
         var monster = snapshot.Monsters.FirstOrDefault(candidate =>
             candidate.Alive
+            && !candidate.SneakHidden
             && IsVisible(candidate.LevelId, localPlayer.LevelId)
             && candidate.PositionX == targetX
             && candidate.PositionY == targetY);

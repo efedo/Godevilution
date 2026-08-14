@@ -110,7 +110,10 @@ public partial class WorldPresentation : Node2D
             var isLocal = player.EntityId == localPlayer.EntityId;
             DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal);
         }
-        foreach (var monster in snapshot.Monsters.Where(monster => IsVisible(monster.LevelId, currentLevel) && monster.Alive))
+        foreach (var monster in snapshot.Monsters.Where(monster =>
+                     IsVisible(monster.LevelId, currentLevel)
+                     && monster.Alive
+                     && !monster.SneakHidden))
             DrawMonster(monster);
         foreach (var item in snapshot.WorldItems.Where(item => IsVisible(item.LevelId, currentLevel)))
             DrawItem(item, searchActive);

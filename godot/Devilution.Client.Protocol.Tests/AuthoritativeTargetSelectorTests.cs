@@ -20,12 +20,14 @@ public sealed class AuthoritativeTargetSelectorTests
             Monsters = {
                 new MonsterSnapshot { EntityId = 20, LevelId = 2, PositionX = 4, PositionY = 4, Alive = true },
                 new MonsterSnapshot { EntityId = 21, LevelId = 2, PositionX = 5, PositionY = 5, Alive = false },
+                new MonsterSnapshot { EntityId = 22, LevelId = 2, PositionX = 7, PositionY = 7, Alive = true, SneakHidden = true },
             },
         };
 
         Assert.Equal(20U, AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 4, 4));
         Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 5, 5));
         Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 6, 6));
+        Assert.Null(AuthoritativeTargetSelector.SelectCombatTarget(snapshot, 7, 7, 7));
     }
 
     [Fact]
