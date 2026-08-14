@@ -39,7 +39,7 @@ public static class AuthoritativeEquipmentDamageRules
         if (minimumDamage == 0 && maximumDamage == 0) {
             minimumDamage = 1;
             maximumDamage = hasShield ? 3 : 1;
-            if (string.Equals(playerClass.Symbol, "monk", StringComparison.Ordinal)) {
+            if (playerClass.PhysicalDamageFormula == AuthoritativePhysicalDamageFormula.Monk) {
                 minimumDamage = Math.Max(minimumDamage, checked((int)characterLevel / 2));
                 maximumDamage = Math.Max(maximumDamage, checked((int)characterLevel));
             }
@@ -51,29 +51,27 @@ public static class AuthoritativeEquipmentDamageRules
         var vitality = attributes.Vitality.Current;
         var strengthModifier = checked(level * strength);
         var strengthDexterityModifier = checked(level * (strength + dexterity));
-        var damageModifier = string.Equals(playerClass.Symbol, "rogue", StringComparison.Ordinal)
-            ? strengthDexterityModifier / 200
-            : string.Equals(playerClass.Symbol, "monk", StringComparison.Ordinal)
-                ? (hasStaff || handItems.Length == 0
-                    ? strengthDexterityModifier / 150
-                    : strengthDexterityModifier / 300)
-                : string.Equals(playerClass.Symbol, "bard", StringComparison.Ordinal)
-                    ? hasSword
-                        ? strengthDexterityModifier / 150
-                        : hasBow
-                            ? strengthDexterityModifier / 250
-                            : strengthModifier / 100
-                    : string.Equals(playerClass.Symbol, "barbarian", StringComparison.Ordinal)
-                        ? CalculateBarbarianModifier(
-                            level,
-                            strengthModifier,
-                            vitality,
-                            hasAxe,
-                            hasMace,
-                            hasBow,
-                            hasShield,
-                            hasStaff)
-                        : strengthModifier / 100;
+        var damageModifier = playerClass.PhysicalDamageFormula switch {
+            AuthoritativePhysicalDamageFormula.Rogue => strengthDexterityModifier / 200,
+            AuthoritativePhysicalDamageFormula.Monk => hasStaff || handItems.Length == 0
+                ? strengthDexterityModifier / 150
+                : strengthDexterityModifier / 300,
+            AuthoritativePhysicalDamageFormula.Bard => hasSword
+                ? strengthDexterityModifier / 150
+                : hasBow
+                    ? strengthDexterityModifier / 250
+                    : strengthModifier / 100,
+            AuthoritativePhysicalDamageFormula.Barbarian => CalculateBarbarianModifier(
+                level,
+                strengthModifier,
+                vitality,
+                hasAxe,
+                hasMace,
+                hasBow,
+                hasShield,
+                hasStaff),
+            _ => strengthModifier / 100,
+        };
 
         return new AuthoritativePhysicalDamageProfile(
             minimumDamage,

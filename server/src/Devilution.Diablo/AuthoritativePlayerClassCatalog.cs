@@ -23,6 +23,16 @@ public enum DiabloPlayerClassAvailability
     HellfireHidden,
 }
 
+/** Native class formula used to resolve equipped physical damage modifiers. */
+public enum AuthoritativePhysicalDamageFormula
+{
+    Standard,
+    Rogue,
+    Monk,
+    Bard,
+    Barbarian,
+}
+
 /** Complete deterministic class metadata mirrored from the native tables. */
 public sealed record AuthoritativePlayerClassDefinition(
     uint ClassId,
@@ -69,6 +79,9 @@ public sealed record AuthoritativePlayerClassDefinition(
 
     /** Native melee target-armor reduction divisor; zero disables the rule. */
     public int MeleeArmorReductionDivisor { get; init; }
+
+    /** Validated native class formula for equipped physical damage. */
+    public AuthoritativePhysicalDamageFormula PhysicalDamageFormula { get; init; }
 
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
@@ -207,6 +220,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "melee_armor_reduction_divisor",
     ];
 
+    private static readonly IReadOnlyList<string> PhysicalDamageColumns = [
+        ..CurrentColumns,
+        "physical_damage_formula",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -286,7 +304,11 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var hasMeleeArmorReduction = table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
+        var hasPhysicalDamageFormula = table.Columns.SequenceEqual(
+            PhysicalDamageColumns,
+            StringComparer.Ordinal);
+        var hasMeleeArmorReduction = hasPhysicalDamageFormula
+            || table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
         var hasManaSpellPercent = hasMeleeArmorReduction
             || table.Columns.SequenceEqual(ManaColumns, StringComparer.Ordinal);
         if (!hasManaSpellPercent
@@ -348,6 +370,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 MeleeArmorReductionDivisor = hasMeleeArmorReduction
                     ? row.RequiredInt32("melee_armor_reduction_divisor")
                     : 0,
+                PhysicalDamageFormula = hasPhysicalDamageFormula
+                    ? ParsePhysicalDamageFormula(row)
+                    : InferLegacyPhysicalDamageFormula(row),
             }));
     }
 
@@ -393,6 +418,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.SelfHealingSpellPercent is < 1 or > 400
             || definition.HealOtherSpellPercent is < 1 or > 400
             || definition.ManaSpellPercent is < 1 or > 400
+            || !Enum.IsDefined(definition.PhysicalDamageFormula)
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
@@ -498,5 +524,31 @@ public sealed class AuthoritativePlayerClassCatalog
         if (string.Equals(symbol, "barbarian", StringComparison.Ordinal))
             result |= DiabloPlayerClassFlags.HeavyHitThreshold;
         return result;
+    }
+
+    private static AuthoritativePhysicalDamageFormula ParsePhysicalDamageFormula(TsvRow row)
+    {
+        var value = row.Required("physical_damage_formula");
+        if (Enum.TryParse<AuthoritativePhysicalDamageFormula>(
+                value,
+                ignoreCase: false,
+                out var formula)
+            && Enum.IsDefined(formula)
+            && Enum.GetName(formula) == value) {
+            return formula;
+        }
+        throw new InvalidDataException(
+            $"Player-class row {row.LineNumber} contains unknown physical damage formula '{value}'.");
+    }
+
+    private static AuthoritativePhysicalDamageFormula InferLegacyPhysicalDamageFormula(TsvRow row)
+    {
+        return row.Required("symbol") switch {
+            "rogue" => AuthoritativePhysicalDamageFormula.Rogue,
+            "monk" => AuthoritativePhysicalDamageFormula.Monk,
+            "bard" => AuthoritativePhysicalDamageFormula.Bard,
+            "barbarian" => AuthoritativePhysicalDamageFormula.Barbarian,
+            _ => AuthoritativePhysicalDamageFormula.Standard,
+        };
     }
 }

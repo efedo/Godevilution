@@ -30,6 +30,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(DiabloPlayerClassAvailability.Hellfire, monk.Availability);
         Assert.Equal(352, monk.ManaAdjustmentQ6);
         Assert.Equal(96, monk.ItemLifePerVitalityQ6);
+        Assert.Equal(AuthoritativePhysicalDamageFormula.Monk, monk.PhysicalDamageFormula);
         Assert.Equal(
             DiabloPlayerClassFlags.FlexibleBlock
                 | DiabloPlayerClassFlags.FastBlock,
@@ -69,6 +70,9 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(200, barbarian.HealOtherSpellPercent);
         Assert.Equal(8, barbarian.MeleeArmorReductionDivisor);
         Assert.Equal(
+            AuthoritativePhysicalDamageFormula.Barbarian,
+            barbarian.PhysicalDamageFormula);
+        Assert.Equal(
             DiabloPlayerClassFlags.CriticalStrike
                 | DiabloPlayerClassFlags.IronSkin
                 | DiabloPlayerClassFlags.NaturalResistance
@@ -106,8 +110,9 @@ public sealed class AuthoritativePlayerClassCatalogTests
                 .Select(line => {
                     if (!line.Contains('\t'))
                         return line;
-                    var withoutCurrentColumn = line[..line.LastIndexOf('\t')];
-                    return withoutCurrentColumn[..withoutCurrentColumn.LastIndexOf('\t')];
+                    var withoutPhysicalDamageFormula = line[..line.LastIndexOf('\t')];
+                    var withoutMeleeArmorReduction = withoutPhysicalDamageFormula[..withoutPhysicalDamageFormula.LastIndexOf('\t')];
+                    return withoutMeleeArmorReduction[..withoutMeleeArmorReduction.LastIndexOf('\t')];
                 }));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
@@ -138,6 +143,34 @@ public sealed class AuthoritativePlayerClassCatalogTests
     }
 
     [Fact]
+    public void LegacyClassRowsInferNativePhysicalDamageFormulas()
+    {
+        var legacySource = ReadShippedTable();
+        legacySource = string.Join(
+            '\n',
+            legacySource
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.Contains('\t')
+                    ? line[..line.LastIndexOf('\t')]
+                    : line));
+
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            legacySource);
+
+        Assert.Equal(
+            AuthoritativePhysicalDamageFormula.Rogue,
+            catalog.Resolve("rogue").PhysicalDamageFormula);
+        Assert.Equal(
+            AuthoritativePhysicalDamageFormula.Bard,
+            catalog.Resolve("bard").PhysicalDamageFormula);
+        Assert.Equal(
+            AuthoritativePhysicalDamageFormula.Standard,
+            catalog.Resolve("sorcerer").PhysicalDamageFormula);
+    }
+
+    [Fact]
     public void ManaOnlyClassRowsDefaultMeleeArmorReductionToZero()
     {
         var manaOnlySource = string.Join(
@@ -146,7 +179,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
                 .Select(line => line.Contains('\t')
-                    ? line[..line.LastIndexOf('\t')]
+                    ? line[..line[..line.LastIndexOf('\t')].LastIndexOf('\t')]
                     : line));
 
         var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
@@ -340,6 +373,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
                 .Select(line => line.StartsWith("5\tbarbarian\t", StringComparison.Ordinal)
                     ? line[..line.LastIndexOf('\t')] + "\t-1"
                     : line));
+        var invalidPhysicalDamageFormula = source.Replace(
+            "\tStandard",
+            "\tUnknown",
+            StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -361,6 +398,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidManaSpellPercentage));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMeleeArmorReduction));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidPhysicalDamageFormula));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()

@@ -39,7 +39,9 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
             new PlayerAttributeState(0, 0),
             new PlayerAttributeState(20, 20),
             new PlayerAttributeState(20, 20));
-        var monk = CreateClass("monk");
+        var monk = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Monk,
+        };
 
         var unarmed = AuthoritativeEquipmentDamageRules.Calculate(
             10,

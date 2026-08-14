@@ -622,7 +622,9 @@ public sealed class AuthoritativeItemCatalogTests
                 "server",
                 "content",
                 "base",
-                "classes.tsv"))).Resolve("monk");
+                "classes.tsv"))).Resolve("monk") with {
+                    Symbol = "custom",
+                };
 
         var lightArmor = new EquippedStoreItem(
             3,
