@@ -27,13 +27,14 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\n"
-                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\n");
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\n");
 
         Assert.True(catalog.TryGet("Acid", out var acid));
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
         Assert.Equal(50, acid.AvoidanceProbabilityPercent);
         Assert.Equal(1U, acid.SpellId);
+        Assert.Equal(117U, acid.SpawnMonsterId);
     }
 
     [Fact]
@@ -46,6 +47,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
 
         Assert.True(catalog.TryGet("Succubus", out var succubus));
         Assert.Equal(0U, succubus.SpellId);
+        Assert.Equal(0U, succubus.SpawnMonsterId);
     }
 
     [Fact]

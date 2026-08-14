@@ -1169,7 +1169,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "HorkDemon",
                     "HorkSpawn",
-                    AuthoritativeProjectileBehavior.HorkSpawn),
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117),
             ]),
             monsterSpawnPlanner: planner);
         var player = CreatePlayer(
@@ -1182,6 +1183,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(processor.AdvanceTick(1, [player]));
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
+        Assert.Equal(117U, projectile.SpellId);
         Assert.Equal((8, 8U), (projectile.Speed, projectile.RemainingTicks));
         Assert.DoesNotContain(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
 
