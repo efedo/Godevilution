@@ -22,6 +22,7 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(48, (int)AuthoritativeProjectileBehavior.Golem);
         Assert.Equal(49, (int)AuthoritativeProjectileBehavior.Etherealize);
         Assert.Equal(58, (int)AuthoritativeProjectileBehavior.WeaponArrow);
+        Assert.Equal(59, (int)AuthoritativeProjectileBehavior.MonsterArrow);
     }
 
     [Fact]

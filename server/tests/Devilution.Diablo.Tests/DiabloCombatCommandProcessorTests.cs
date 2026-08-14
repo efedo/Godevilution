@@ -2213,6 +2213,16 @@ public sealed class DiabloCombatCommandProcessorTests
         var deliveries = processor.AdvanceTick(14, [player]);
 
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
+        Assert.Empty(deliveries);
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
+        Assert.Equal(2, arrow.Damage);
+
+        for (ulong tick = 15; tick < 32 && world.Projectiles.Count != 0; tick++)
+            deliveries = deliveries.Concat(processor.AdvanceTick(tick, [player])).ToList();
+
+        Assert.Empty(world.Projectiles);
         Assert.Equal(98, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
@@ -2575,6 +2585,14 @@ public sealed class DiabloCombatCommandProcessorTests
         var deliveries = processor.AdvanceTick(1, [player]);
 
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
+        Assert.Empty(deliveries);
+        Assert.Single(world.Projectiles);
+
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++)
+            deliveries = deliveries.Concat(processor.AdvanceTick(tick, [player])).ToList();
+
+        Assert.Empty(world.Projectiles);
         Assert.NotEqual(100, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));

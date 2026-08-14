@@ -252,6 +252,11 @@ Windows toolchain command.
   52 retain physical Q6 damage, captured arrow elemental channels, hit state,
   deferred Hellfire proc state, and activation delay; clients render the
   volley but never resolve its damage.
+  Native GoatRanged and SkeletonRanged Arrow rows use behavior value `59` for
+  server-owned `MonsterArrow` missiles. The server captures resolved physical
+  damage, advances their travel, and applies player damage only on collision;
+  zero spell identity is valid for this monster-owned lifecycle and no new
+  wire field is required.
   Resurrection uses the existing cast `target_entity_id` for the selected
   participant and runtime projectile behavior value `11` for its stationary
   beam. The beam's target, position, and lifetime use existing projectile

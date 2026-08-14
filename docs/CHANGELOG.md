@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
+  server-owned monster-arrow projectiles with delayed collision and impact
+  resolution, including snapshot/save/protocol coverage.
 - Add schema 1.85's validated Mega InfernoControl mapping, preserving native
   distance/intelligence admission and monster-owned persistent segments.
 - Add schema 1.86's validated Hork Demon identity and server-owned Hork Spawn

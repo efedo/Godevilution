@@ -69,6 +69,54 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsMonsterArrowWithZeroSpellIdentity()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    20,
+                    nativeAi: "SkeletonRanged")],
+                Projectiles = [new AuthoritativeProjectile(
+                    51,
+                    9,
+                    7,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    2,
+                    AuthoritativeDamageType.Physical,
+                    0,
+                    1,
+                    allowZeroSpellId: true) {
+                    Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+                    Speed = 1,
+                    ImpactLifetime = 1,
+                    ResistantDamageDivisor = 1,
+                }],
+            });
+
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var projectile = Assert.Single(replacement.WorldState.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((0U, 9U, 7U, 1), (
+            projectile.SpellId,
+            projectile.SourceEntityId,
+            projectile.TargetEntityId,
+            projectile.Speed));
+    }
+
+    [Fact]
     public void ModuleRegistersRulesAndSimulationFactoryCapabilities()
     {
         var module = new DiabloModule();

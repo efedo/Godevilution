@@ -28,6 +28,11 @@ Status date: 2026-08-14
   native `max(8 - level, 2)` retreat countdown and source-to-survivor direction
   at the death boundary, with deterministic walk fallback and snapshot,
   save, protocol, and hash coverage.
+- Native GoatRanged and SkeletonRanged Arrow mappings now create explicit
+  server-owned monster-arrow projectiles. Their resolved physical damage is
+  captured at admission, travel is collision-checked per authoritative tick,
+  and impact damage, player death, snapshots, saves, and protocol projection
+  remain server-owned instead of applying ranged damage immediately.
 - Native Sneak stealth is now server-owned: its intelligence-derived visibility
   band, hidden target exclusion, and nine-tick post-hit retreat persist through
   snapshots, saves, protocol, and canonical hashes.
@@ -189,9 +194,11 @@ Status date: 2026-08-14
   charge probability now uses the native `43 + 2 * intelligence` boundary.
 - Native monster missile identities are now externalized in schema 1.81 through
   validated `monster_missiles.tsv` mappings. The active content pack supplies
-  each native AI's retained missile ID and projectile behavior; unsupported
-  controllers remain explicitly `Targeted` until their server-owned behavior
-  is migrated, and clients never dispatch these mappings.
+  each native AI's retained missile ID and projectile behavior; GoatRanged and
+  SkeletonRanged `Arrow` rows now project as server-owned `MonsterArrow`
+  behavior, while other unsupported controllers remain explicitly `Targeted`
+  until their server-owned behavior is migrated. Clients never dispatch these
+  mappings.
 - Validated ranged mappings now admit their native AI directly from the active
   content pack; the server no longer maintains a separate allow-list for which
   native identities may enter the migrated projectile path. Existing

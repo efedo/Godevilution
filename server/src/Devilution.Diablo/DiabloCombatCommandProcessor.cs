@@ -3975,11 +3975,11 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
                 continue;
-            if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
+            if (TryAdvanceGoatRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceSkeletonRangedRetreat(target, victim, players, tick, distance))
                 continue;
-            if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
+            if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (target.NativeAi == "SkeletonRanged" && distance <= 1)
                 continue;
@@ -4784,7 +4784,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players,
-        ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
         if (monster.NativeAi != "GoatRanged"
@@ -4795,6 +4794,9 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerProtectedByFlash(player)
             || IsPlayerEtherealized(player))
             return false;
+
+        if (HasActiveMonsterArrow(monster))
+            return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         if (distance < 4
@@ -4814,12 +4816,9 @@ public sealed class DiabloCombatCommandProcessor
                 player.PositionY))
             return false;
 
-        return ApplyNativeRangedAttack(
+        return CreateNativeRangedAttackProjectile(
             monster,
             player,
-            tick,
-            players,
-            events,
             distance,
             attackSeed);
     }
@@ -5291,12 +5290,10 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    private bool ApplyNativeRangedAttack(
+    /** Native Arrow missile admission captures the resolved hit before travel. */
+    private bool CreateNativeRangedAttackProjectile(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
-        ulong tick,
-        IReadOnlyList<AuthoritativePlayerState> players,
-        ICollection<DiabloDirectedGameplayEvent> events,
         int distance,
         uint attackSeed)
     {
@@ -5322,25 +5319,37 @@ public sealed class DiabloCombatCommandProcessor
             damage,
             rules.MinimumDamage,
             player.Equipment);
-        var damageResult = playerDamage.Apply(player, damage);
-        if (damageResult.IncomingDamageQ6 > 0) {
-            events.Add(new DiabloDirectedGameplayEvent(
-                player,
-                new DiabloGameplayEvent(
-                    DiabloGameplayEventKind.Damage,
-                    monster.EntityId,
-                    player.EntityId,
-                    damageResult.IncomingDamageQ6)));
-        }
-        if (player.Life == 0)
-            StartPlayerDeath(
-                player,
-                monster.EntityId,
-                tick,
-                players,
-                PlayerDeathReason.MonsterOrTrap);
+
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            spellId: 0,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            damage,
+            AuthoritativeDamageType.Physical,
+            areaRadius: 0,
+            checked((uint)Math.Max(1, distance)),
+            allowZeroSpellId: true) {
+            // The content row retains the native Targeted mapping; the module
+            // resolves it to this explicit server-owned monster lifecycle.
+            Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+            Speed = 1,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
         return true;
     }
+
+    private bool HasActiveMonsterArrow(AuthoritativeCombatTarget monster)
+        => world.Projectiles.Values.Any(projectile =>
+            projectile.SourceEntityId == monster.EntityId
+            && projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow);
 
     /** Native SkeletonBow AI retreats when close before considering its arrow. */
     private bool TryAdvanceSkeletonRangedRetreat(
@@ -5375,7 +5384,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players,
-        ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
         if (monster.NativeAi != "SkeletonRanged"
@@ -5385,6 +5393,9 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         if (IsPlayerProtectedByFlash(player) || IsPlayerEtherealized(player))
+            return true;
+
+        if (HasActiveMonsterArrow(monster))
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
@@ -5399,12 +5410,9 @@ public sealed class DiabloCombatCommandProcessor
         if (attackSeed % 100U >= (uint)attackChance)
             return true;
 
-        return ApplyNativeRangedAttack(
+        return CreateNativeRangedAttackProjectile(
             monster,
             player,
-            tick,
-            players,
-            events,
             distance,
             attackSeed);
     }
@@ -5965,6 +5973,11 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceStoneCurse(projectile);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                    && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                    AdvanceMonsterArrow(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.RemainingTicks > 1) {
                     var nextX = projectile.PositionX
                         + Math.Sign(projectile.TargetX - projectile.PositionX);
@@ -6054,6 +6067,75 @@ public sealed class DiabloCombatCommandProcessor
             ResolveWeaponArrowImpact(tick, projectile, target, players, events);
         }
         world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Advances a content-declared native Arrow from a monster to its player target. */
+    private void AdvanceMonsterArrow(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        var nextX = projectile.PositionX
+            + Math.Sign(projectile.TargetX - projectile.PositionX);
+        var nextY = projectile.PositionY
+            + Math.Sign(projectile.TargetY - projectile.PositionY);
+        if (!world.ContainsPosition(projectile.LevelId, nextX, nextY)
+            || world.IsMissileBlocked(projectile.LevelId, nextX, nextY)) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.PositionX = nextX;
+        projectile.PositionY = nextY;
+        projectile.RemainingTicks--;
+        var target = FindProjectilePlayer(
+            projectile,
+            players,
+            nextX,
+            nextY);
+        if (target is not null) {
+            ResolveMonsterArrowImpact(tick, projectile, target, players, events);
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private void ResolveMonsterArrowImpact(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (IsPlayerProtectedByFlash(target))
+            return;
+
+        var damageResult = playerDamage.Apply(target, projectile.Damage);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    projectile.SourceEntityId,
+                    target.EntityId,
+                    damageResult.IncomingDamageQ6)));
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                projectile.SourceEntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
     }
 
     private void ResolveWeaponArrowImpact(

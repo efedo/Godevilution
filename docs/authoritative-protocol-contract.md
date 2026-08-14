@@ -318,6 +318,14 @@ the resulting player position continues to use the existing player snapshot
 coordinates. Version-1 peers therefore require no new wire field, and a
 resumed save revalidates occupancy before the controller's first movement.
 
+Native `Arrow` rows for GoatRanged and SkeletonRanged retain their validated
+content mapping but are projected at runtime as behavior value `59`,
+`MonsterArrow`. The server captures the resolved physical damage and target
+coordinates, advances one authoritative tile per tick, removes blocked or
+expired missiles, and applies player damage only on collision. A zero spell ID
+is valid for this monster-owned behavior; snapshots, saves, hashes, and the
+existing `ProjectileSnapshot` shape carry the complete resumable state.
+
 A Phasing cast uses projectile behavior value `15` as the same shape of
 invisible two-tick movement controller. The server selects its random
 destination, consumes the cast source even when no candidate exists, and

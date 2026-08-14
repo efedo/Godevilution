@@ -919,6 +919,41 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void MonsterArrowRuntimeStateChangesTheHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot { EntityId = 9, Alive = true },
+            },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 9,
+                    TargetEntityId = 7,
+                    RemainingTicks = 5,
+                    Behavior = 59,
+                    Damage = 2,
+                    DamageType = 0,
+                    Speed = 1,
+                    ImpactLifetime = 1,
+                    ResistantDamageDivisor = 1,
+                },
+            },
+        };
+        var changedDamage = first.Clone();
+        changedDamage.Projectiles[0].Damage = 3;
+        var changedTarget = first.Clone();
+        changedTarget.Projectiles[0].TargetEntityId = 8;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changedDamage));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changedTarget));
+    }
+
+    [Fact]
     public void ObjectEffectProjectionChangesTheStateHash()
     {
         var first = new Snapshot {

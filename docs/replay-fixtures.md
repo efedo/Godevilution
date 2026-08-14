@@ -54,6 +54,11 @@ first shot at the attack effect boundary and two spread shots with a two-tick
 activation delay. Captured Q6 and elemental channels are part of the snapshot
 hash, allowing replay and reconnect tests to observe travel, impact, and the
 complete volley.
+Native GoatRanged and SkeletonRanged content rows retain their validated
+`Arrow`/`Targeted` identities, while the authoritative module projects them as
+`MonsterArrow` missiles with captured physical damage and per-tick player
+collision. Managed combat and snapshot tests cover this lifecycle; a compact
+cross-runner autonomous monster-arrow fixture remains future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -114,7 +119,7 @@ fixture.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash spell-timeline
-checkpoints pass in both runners; the native replay gate reports 68/68 tests.
+checkpoints pass in both runners; the native replay gate reports 71/71 tests.
 Remaining replay work is broader fixture coverage rather than a known hash
 mismatch.
 

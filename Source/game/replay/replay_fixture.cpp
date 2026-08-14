@@ -31,6 +31,7 @@ constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr int32_t WeaponArrowBehavior = 58;
+constexpr int32_t MonsterArrowBehavior = 59;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -609,6 +610,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 				hasher.AppendInt32(projectile.perilSelfDamageQ6);
 				hasher.AppendBool(projectile.doppelgangerProc);
 				hasher.AppendUint32(projectile.activationDelayTicks);
+			}
+			if (projectile.behavior == MonsterArrowBehavior) {
+				hasher.AppendString("godevilution-projectile-monster-arrow-v1");
+				hasher.AppendInt32(projectile.damage);
+				hasher.AppendUint32(projectile.sourceEntityId);
+				hasher.AppendUint32(projectile.targetEntityId);
 			}
 			if (projectile.lastCollisionTargetEntityId != 0) {
 				hasher.AppendString("godevilution-projectile-collision-v1");

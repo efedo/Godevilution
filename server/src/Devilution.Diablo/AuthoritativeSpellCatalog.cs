@@ -73,6 +73,8 @@ public enum AuthoritativeProjectileBehavior
     HorkSpawn = 57,
     /** Native player bow missile, including delayed Multiple Arrows shots. */
     WeaponArrow = 58,
+    /** Native monster Arrow missile emitted by GoatRanged and SkeletonRanged. */
+    MonsterArrow = 59,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */

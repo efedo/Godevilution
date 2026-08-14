@@ -7,6 +7,7 @@ namespace Devilution.Server.Snapshots;
 public static class SnapshotStateHasher
 {
     private const int WeaponArrowBehavior = 58;
+    private const int MonsterArrowBehavior = 59;
 
     public static string Compute(Snapshot snapshot)
     {
@@ -508,6 +509,12 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(projectile.PerilSelfDamageQ6);
                     hasher.AppendBool(projectile.DoppelgangerProc);
                     hasher.AppendUInt32(projectile.ActivationDelayTicks);
+                }
+                if (projectile.Behavior == MonsterArrowBehavior) {
+                    hasher.AppendString("godevilution-projectile-monster-arrow-v1");
+                    hasher.AppendInt32(projectile.Damage);
+                    hasher.AppendUInt32(projectile.SourceEntityId);
+                    hasher.AppendUInt32(projectile.TargetEntityId);
                 }
                 if (projectile.LastCollisionTargetEntityId != 0) {
                     hasher.AppendString("godevilution-projectile-collision-v1");

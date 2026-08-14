@@ -733,9 +733,12 @@ public sealed partial class DiabloSimulation
             return @object;
         }).ToArray();
         var restoredProjectiles = snapshot.Projectiles.Select(projectile => {
+            var isMonsterArrow = projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                && restoredMonsters.Any(monster => monster.EntityId == projectile.SourceEntityId);
             if (projectile.SourceEntityId == 0
                 || (projectile.SpellId == 0
-                    && projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow)
+                    && projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow
+                    && !isMonsterArrow)
                 || projectile.RemainingTicks == 0
                 || projectile.Damage < 0
                 || projectile.DamageQ6 < 0
@@ -783,6 +786,20 @@ public sealed partial class DiabloSimulation
                         || projectile.GuardianState != 0
                         || projectile.ElementalOriginX != 0
                         || projectile.ElementalOriginY != 0))
+                || (isMonsterArrow
+                    && (projectile.TargetEntityId == 0
+                        || projectile.DamageType != AuthoritativeDamageType.Physical
+                        || projectile.AreaRadius != 0
+                        || projectile.Speed != 1
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.ImpactLifetime != 1
+                        || projectile.ResistantDamageDivisor != 1
+                        || projectile.VelocityX != 0
+                        || projectile.VelocityY != 0
+                        || projectile.OriginalDirection != 0
+                        || projectile.PathIndex != 0
+                        || projectile.PathTicks != 0
+                        || projectile.EffectiveSpellLevel != 0))
                 || IsInvalidStoneCurseProjectile(projectile, restoredMonsters)
                 || !WorldState.ContainsPosition(
                     projectile.LevelId,
@@ -1177,7 +1194,9 @@ public sealed partial class DiabloSimulation
                 projectile.DamageType,
                 projectile.AreaRadius,
                 projectile.RemainingTicks,
-                allowZeroSpellId: projectile.Behavior == AuthoritativeProjectileBehavior.WeaponArrow) {
+                allowZeroSpellId: projectile.Behavior == AuthoritativeProjectileBehavior.WeaponArrow
+                    || (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
+                        && restoredMonsters.Any(monster => monster.EntityId == projectile.SourceEntityId))) {
                 Behavior = projectile.Behavior,
                 Phase = projectile.Phase,
                 StartX = projectile.Behavior == AuthoritativeProjectileBehavior.Targeted
