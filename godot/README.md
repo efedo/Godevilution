@@ -177,7 +177,9 @@ Memorized spells, the charged left-hand staff, inventory consumables, belt
 consumables, and the class ability appear in stable order; `Q` and `E` cycle
 the selected source, and the HUD shows the active selection. This changes only
 which explicit source the client requests. The server still validates ownership,
-targeting, timing, and resource consumption.
+targeting, timing, and resource consumption. Item source kind is projected by
+the server; Godot does not inspect native miscellaneous IDs to identify staffs,
+scrolls, or runes.
 
 See `docs/ai/godot-build.md` for local build details and
 `docs/authoritative-protocol-contract.md` for the client/server boundary.

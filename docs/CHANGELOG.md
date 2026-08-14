@@ -13,6 +13,8 @@ All notable changes to this fork are documented below.
 - Remove Godot's fixed remote-player spell-ID table; the server now resolves
   player targeting from active external spell behavior and preserves tile casts
   for non-player spells.
+- Project item-backed spell-source kind through `ItemStateSnapshot`, removing
+  Godot's native miscellaneous-ID checks for staffs, scrolls, and runes.
 - Add schema 1.142's optional Hellfire class-armor bonuses, moving the native
   demon and undead adjustments into validated combat content while preserving
   compatibility values.

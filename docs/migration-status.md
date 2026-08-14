@@ -39,6 +39,10 @@ Status date: 2026-08-14
   resolves targetability from the active external spell behavior and preserves
   tile targeting for non-player spells.
 
+- Item-backed spell-source kind is now projected by the server in
+  `ItemStateSnapshot`; Godot no longer identifies staffs, scrolls, or runes by
+  native miscellaneous-ID ranges.
+
 - Schema 1.142 externalizes native Hellfire class-armor adjustments through
   validated `combat.tsv` content; older combat definitions retain the 40/20
   demon/undead compatibility values.
