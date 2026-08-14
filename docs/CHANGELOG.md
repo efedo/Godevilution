@@ -77,6 +77,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.91's optional monster-missile `spell_id`, so mapped monster
   projectile spell identities are supplied by validated content while older
   overlays retain the compatibility inference path.
+- Add schema 1.92's optional monster-missile `spawn_monster_id`, moving the
+  Hork Spawn summon target into validated Hellfire content while preserving
+  compatibility for older rows and snapshots.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town

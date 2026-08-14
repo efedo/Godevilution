@@ -236,6 +236,9 @@ Status date: 2026-08-14
 - Schema 1.91 externalizes the mapped monster projectile `spell_id` through
   `monster_missiles.tsv`; checked-in ranged rows now supply their authoritative
   spell identity, while legacy overlays retain the prior inference fallback.
+- Schema 1.92 externalizes the Hork Spawn `spawn_monster_id` through
+  `monster_missiles.tsv`; the Hellfire row now supplies native monster ID 117,
+  while legacy rows and snapshots retain the compatibility fallback.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
