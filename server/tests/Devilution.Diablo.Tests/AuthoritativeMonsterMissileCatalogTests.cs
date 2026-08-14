@@ -36,6 +36,18 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsExplicitMonsterArrowBehavior()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\n"
+                + "GoatRanged\tArrow\tMonsterArrow\n");
+
+        Assert.True(catalog.TryGet("GoatRanged", out var goatRanged));
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, goatRanged.ProjectileBehavior);
+    }
+
+    [Fact]
     public void RejectsAnOutOfRangeAvoidanceProbability()
     {
         Assert.Throws<InvalidDataException>(() =>

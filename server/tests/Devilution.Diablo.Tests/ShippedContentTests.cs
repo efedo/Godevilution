@@ -42,7 +42,7 @@ public sealed class ShippedContentTests
         Assert.NotNull(activation.MonsterMissiles);
         Assert.True(activation.MonsterMissiles!.TryGet("GoatRanged", out var goatRanged));
         Assert.Equal("Arrow", goatRanged.MissileId);
-        Assert.Equal(AuthoritativeProjectileBehavior.Targeted, goatRanged.ProjectileBehavior);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, goatRanged.ProjectileBehavior);
         Assert.True(activation.MonsterMissiles!.TryGet("Succubus", out var succubus));
         Assert.Equal("BloodStar", succubus.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
@@ -81,7 +81,7 @@ public sealed class ShippedContentTests
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
         Assert.True(activation.MonsterMissiles.TryGet("SkeletonRanged", out var skeletonRanged));
         Assert.Equal("Arrow", skeletonRanged.MissileId);
-        Assert.Equal(AuthoritativeProjectileBehavior.Targeted, skeletonRanged.ProjectileBehavior);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, skeletonRanged.ProjectileBehavior);
         Assert.True(activation.MonsterMissiles.TryGet("Snake", out var snake));
         Assert.Equal("Rhino", snake.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, snake.ProjectileBehavior);
