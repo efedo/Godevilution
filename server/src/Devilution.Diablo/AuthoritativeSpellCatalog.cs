@@ -128,6 +128,9 @@ public sealed record AuthoritativeSpellDefinition(
 
     public AuthoritativeProjectileBehavior ProjectileBehavior { get; init; }
 
+    /** Native ten-way dispatch table consumed by the Jester behavior. */
+    public IReadOnlyList<uint> JesterSpellIds { get; init; } = [];
+
     /** Native random damage is GenerateRnd(current magic / divisor) + 1. */
     public int RandomMagicDamageDivisor { get; init; }
 
@@ -393,6 +396,12 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.StaffLevel < -1)
                 throw new InvalidDataException("Spell staff level cannot be less than the native unavailable sentinel.");
+            if (definition.JesterSpellIds is null
+                || definition.JesterSpellIds.Count is not (0 or 10)
+                || definition.JesterSpellIds.Any(spellId => spellId == 0)) {
+                throw new InvalidDataException(
+                    $"Spell {definition.SpellId} has an invalid Jester dispatch table.");
+            }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.WeaponArrow)
                 throw new InvalidDataException(
                     "WeaponArrow is a player attack projectile and cannot be declared as a spell behavior.");
@@ -1591,6 +1600,13 @@ public sealed class AuthoritativeSpellCatalog
         }
         if (spells.Count == 0)
             throw new InvalidDataException("The spell catalog cannot be empty.");
+        foreach (var jester in spells.Values.Where(definition =>
+                     definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Jester)) {
+            if (jester.JesterSpellIds.Any(spellId => !spells.ContainsKey(spellId))) {
+                throw new InvalidDataException(
+                    $"Spell {jester.SpellId} references an unknown Jester dispatch spell.");
+            }
+        }
         if (spells.Values.Count(definition =>
                 definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ManaShield) > 1) {
             throw new InvalidDataException(
@@ -1666,6 +1682,7 @@ public sealed class AuthoritativeSpellCatalog
             ProjectileCount = row.OptionalInt32("projectile_count", 1),
             ProjectileCountLevelDivisor = row.OptionalInt32("projectile_count_level_divisor"),
             ProjectileBehavior = ParseProjectileBehavior(row),
+            JesterSpellIds = ParseJesterSpellIds(row),
             RandomMagicDamageDivisor = row.OptionalInt32("random_magic_damage_divisor"),
             RandomDamageRange = row.OptionalInt32("random_damage_range"),
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
@@ -1794,6 +1811,23 @@ public sealed class AuthoritativeSpellCatalog
         if (Enum.TryParse<AuthoritativeDamageType>(value, ignoreCase: true, out var damageType))
             return damageType;
         throw new InvalidDataException($"Spell row {row.LineNumber} contains an unknown damage type '{value}'.");
+    }
+
+    private static IReadOnlyList<uint> ParseJesterSpellIds(TsvRow row)
+    {
+        if (!row.TryGet("jester_spell_ids", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || value == "0")
+            return [];
+        var entries = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var spellIds = new List<uint>(entries.Length);
+        foreach (var entry in entries) {
+            if (!uint.TryParse(entry, out var spellId) || spellId == 0)
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Jester spell ID '{entry}'.");
+            spellIds.Add(spellId);
+        }
+        return spellIds;
     }
 
     private static AuthoritativeProjectileBehavior ParseProjectileBehavior(TsvRow row)

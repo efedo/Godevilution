@@ -101,6 +101,9 @@ public sealed class AuthoritativeSpellCatalogTests
             jester.MinimumManaCost,
             jester.ManaCostScale,
             jester.StaffLevel));
+        Assert.Equal(
+            [1U, 1U, 12U, 6U, 7U, 16U, 39U, 23U, 25U, 8U],
+            jester.JesterSpellIds);
     }
 
     [Fact]

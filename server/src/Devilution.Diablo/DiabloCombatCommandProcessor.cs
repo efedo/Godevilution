@@ -1881,7 +1881,7 @@ public sealed class DiabloCombatCommandProcessor
         } else if (isBerserk && target is not null) {
             ApplyBerserk(target, spell, effectiveSpellLevel);
         } else if (isJester) {
-            var jesterSpellId = SelectJesterSpellId();
+            var jesterSpellId = SelectJesterSpellId(spell);
             var jesterResult = ResolveCast(
                 player,
                 intent with {
@@ -2306,8 +2306,10 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Mirrors native AddJester's 10-way deterministic missile dispatch. */
-    private uint SelectJesterSpellId()
+    private uint SelectJesterSpellId(AuthoritativeSpellDefinition jesterSpell)
     {
+        if (jesterSpell.JesterSpellIds.Count == 10)
+            return jesterSpell.JesterSpellIds[random.RandomIntLessThan(10)];
         return random.RandomIntLessThan(10) switch {
             0 or 1 => 1U, // Firebolt
             2 => 12U, // Fireball

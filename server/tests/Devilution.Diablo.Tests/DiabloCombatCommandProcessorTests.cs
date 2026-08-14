@@ -5827,7 +5827,13 @@ public sealed class DiabloCombatCommandProcessorTests
         var world = new DiabloWorldState();
         var processor = CreateProcessor(
             world,
-            new AuthoritativeSpellCatalog([CreateJesterSpell(), CreateFireboltSpell()]),
+            new AuthoritativeSpellCatalog([
+                CreateJesterSpell() with {
+                    JesterSpellIds = [12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U],
+                },
+                CreateFireboltSpell(),
+                CreateFireballSpell(),
+            ]),
             random: new DiabloRandom(0));
         var player = CreatePlayer(
             positionX: 10,
@@ -5845,8 +5851,8 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(cast.Succeeded, cast.Failure?.ToString());
         Assert.True(player.Mana < 5000);
         var projectile = Assert.Single(world.Projectiles.Values);
-        Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
-        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal(AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+        Assert.Equal(12U, projectile.SpellId);
     }
 
     [Fact]
