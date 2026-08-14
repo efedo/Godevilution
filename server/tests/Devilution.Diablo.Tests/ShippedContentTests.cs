@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.85.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.86.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -131,7 +131,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.85.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.86.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -223,6 +223,9 @@ public sealed class ShippedContentTests
                 .Where(definition => definition.NativeAi == "Rhino")
                 .OrderBy(definition => definition.NativeMonsterId)
                 .Select(definition => definition.Intelligence));
+        Assert.Equal(
+            "HorkDemon",
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).NativeAi);
         Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
         Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
         Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);

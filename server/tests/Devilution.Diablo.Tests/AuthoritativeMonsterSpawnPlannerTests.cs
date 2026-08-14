@@ -186,6 +186,52 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void CreatesSummonsFromValidatedNativeMonsterIdentity()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(18, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                119,
+                117,
+                "Hork Spawn",
+                18,
+                19,
+                22,
+                30,
+                30,
+                25,
+                10,
+                25,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(18, 18, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var summon = planner.CreateNativeMonsterSummon(
+            levelId: 18,
+            nativeMonsterId: 117,
+            seed: 7,
+            positionX: 2,
+            positionY: 2,
+            entityId: 99);
+
+        Assert.NotNull(summon);
+        Assert.Equal((119U, 117U), (summon!.MonsterId, types.Definitions[0].NativeMonsterId));
+        Assert.Equal("SkeletonMelee", summon.NativeAi);
+        Assert.Equal((30, 10), (summon.HitPoints, summon.MinDamage));
+    }
+
+    [Fact]
     public void CarriesValidatedStaticDropPolicyIntoGeneratedTargets()
     {
         var world = new AuthoritativeWorld();

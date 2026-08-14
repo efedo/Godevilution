@@ -130,6 +130,45 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             .ToArray();
     }
 
+    /** Creates one level-valid summon selected by its validated native table identity. */
+    public AuthoritativeCombatTarget? CreateNativeMonsterSummon(
+        uint levelId,
+        uint nativeMonsterId,
+        uint seed,
+        int positionX,
+        int positionY,
+        uint entityId)
+    {
+        if (entityId == 0)
+            throw new ArgumentOutOfRangeException(nameof(entityId));
+        if (!world.ContainsLevel(levelId) || levelId > int.MaxValue)
+            return null;
+        if (!monsterTypes.TryGetNative(nativeMonsterId, out var definition)
+            || definition.MinimumDungeonLevel > (int)levelId
+            || definition.MaximumDungeonLevel < (int)levelId)
+            return null;
+
+        var hitPointRange = checked(
+            definition.MaximumHitPoints - definition.MinimumHitPoints + 1);
+        var damageRange = checked(
+            definition.MaximumDamage - definition.MinimumDamage + 1);
+        var hitPoints = definition.MinimumHitPoints
+            + (int)(seed % (uint)hitPointRange);
+        var attackDamage = definition.MinimumDamage
+            + (int)((seed / 0x100U) % (uint)damageRange);
+        return CreateCombatTarget(
+            new AuthoritativeMonsterSpawn(
+                definition,
+                levelId,
+                positionX,
+                positionY,
+                hitPoints,
+                attackDamage),
+            0,
+            seed,
+            entityId);
+    }
+
     /** Creates one content-defined SkeletonMelee summon at an explicit cell. */
     public AuthoritativeCombatTarget? CreateSkeletonSummon(
         uint levelId,

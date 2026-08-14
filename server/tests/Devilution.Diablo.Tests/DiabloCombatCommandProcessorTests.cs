@@ -495,6 +495,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonUsesItsNativeSpawnAdmissionAndValidatedSpawnIdentity()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(18, 10, 10));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                119,
+                117,
+                "Hork Spawn",
+                18,
+                19,
+                22,
+                30,
+                30,
+                25,
+                10,
+                25,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(18, 18, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            nativeWorld,
+            monsterTypes,
+            generation);
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            120,
+            levelId: 18,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
+        var processor = CreateProcessor(world, monsterSpawnPlanner: planner);
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 1,
+            levelId: 18,
+            entityId: 7);
+
+        // 1 ^ 9 ^ 7 = 15, inside HorkDemonAi's 43% spawn admission band.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        var summoned = Assert.Single(
+            world.CombatTargets.Values,
+            target => target.EntityId != hork.EntityId);
+        Assert.Equal((119U, 117U), (summoned.MonsterId, monsterTypes.Definitions[0].NativeMonsterId));
+        Assert.Equal("SkeletonMelee", summoned.NativeAi);
+        Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
+    }
+
+    [Fact]
     public void BatUsesNativeAttackBandAndTwoStepRetreat()
     {
         var nativeWorld = new AuthoritativeWorld();

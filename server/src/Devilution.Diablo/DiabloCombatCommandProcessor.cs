@@ -34,6 +34,7 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
     private const uint NativeBarbarianClassId = 5;
+    private const uint HorkSpawnNativeMonsterId = 117;
 
     private static readonly int[] ChargedBoltPath = [
         -1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0,
@@ -3780,6 +3781,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceFatAi(target, victim, players, tick, distance))
                 continue;
+            if (TryAdvanceHorkDemonAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSkeletonKingAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
@@ -4102,6 +4105,61 @@ public sealed class DiabloCombatCommandProcessor
         if (next.HasValue)
             monster.BeginMovement(next.Value.X, next.Value.Y);
         return true;
+    }
+
+    /** Native HorkDemonAi admission with server-owned Hork Spawn creation. */
+    private bool TryAdvanceHorkDemonAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (monster.NativeAi != "HorkDemon")
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        if (distance <= 1) {
+            var attackChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+            return actionSeed % 100U >= (uint)attackChance;
+        }
+
+        if (distance >= 3
+            && actionSeed % 100U
+                < (uint)Math.Min(100, 43 + (2 * monster.Intelligence))
+            && monsterSpawnPlanner is not null
+            && world.CombatTargets.Count < 256) {
+            var direction = GetDirection(
+                monster.PositionX,
+                monster.PositionY,
+                victim.PositionX,
+                victim.PositionY);
+            var displacement = DirectionDisplacements[direction];
+            var positionX = checked(monster.PositionX + displacement.X);
+            var positionY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, positionX, positionY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    positionX,
+                    positionY,
+                    players,
+                    monster.EntityId)) {
+                var summon = monsterSpawnPlanner.CreateNativeMonsterSummon(
+                    monster.LevelId,
+                    HorkSpawnNativeMonsterId,
+                    actionSeed,
+                    positionX,
+                    positionY,
+                    AllocateMonsterEntityId(players));
+                if (summon is not null) {
+                    world.CombatTargets.Add(summon.EntityId, summon);
+                    return true;
+                }
+            }
+        }
+
+        var movementChance = Math.Min(100, 33 + (2 * monster.Intelligence));
+        return actionSeed % 100U >= (uint)movementChance;
     }
 
     private bool TryAdvanceScavengerAi(
