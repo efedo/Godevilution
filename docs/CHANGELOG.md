@@ -36,6 +36,9 @@ All notable changes to this fork are documented below.
 - Extend managed authoritative regression coverage through the Charged Bolt and
   Bone Spirit player-impact paths, including native resource consumption and
   distinct projectile collision lifecycles.
+- Add live Godot protocol coverage for a Charged Bolt remote-player cast using
+  a validated class-loadout overlay, proving content activation and multiplayer
+  impact resolution through the shared protocol.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
