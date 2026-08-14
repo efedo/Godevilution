@@ -160,6 +160,9 @@ Status date: 2026-08-13
   `Necromorb`/`RedFlare`) now use the explicit server-owned `MonsterMagic`
   projectile behavior with authoritative travel and monster-to-player magic
   hit resolution; other retained missile identities remain incremental.
+- Native `BoneDemon` `AiRangedAvoidance` now consumes its validated
+  `BlueFlare2` `MonsterMagic` mapping; the server owns the clear-lane
+  500-per-10,000 intelligence admission band and resulting magic hit.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

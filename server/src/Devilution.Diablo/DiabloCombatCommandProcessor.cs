@@ -4072,7 +4072,7 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
-            or "ArchLich" or "Psychorb" or "Necromorb")
+            or "ArchLich" or "Psychorb" or "Necromorb" or "BoneDemon")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
@@ -4087,7 +4087,18 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (distance < 4
+        if (monster.NativeAi == "BoneDemon") {
+            // Native AiRangedAvoidance admits a clear-lane special attack from
+            // distance two with 500 * (intelligence + 1) per 10,000, and uses
+            // the intelligence + 2 band at distance three or farther.
+            if (distance < 2)
+                return false;
+            var attackBand = distance >= 3
+                ? 500 * (monster.Intelligence + 2)
+                : 500 * (monster.Intelligence + 1);
+            if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
+                return false;
+        } else if (distance < 4
             && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
             var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
             if (retreat.HasValue) {
@@ -4102,7 +4113,7 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return true;
+            return monster.NativeAi != "BoneDemon";
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);

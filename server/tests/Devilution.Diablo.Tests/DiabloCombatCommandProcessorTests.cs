@@ -1739,6 +1739,7 @@ public sealed class DiabloCombatCommandProcessorTests
     [InlineData("ArchLich", "YellowFlare")]
     [InlineData("Psychorb", "BlueFlare")]
     [InlineData("Necromorb", "RedFlare")]
+    [InlineData("BoneDemon", "BlueFlare2")]
     public void FlareMonsterAiFiresTheValidatedMonsterMagicProjectile(
         string nativeAi,
         string missileId)
@@ -1789,6 +1790,45 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
         Assert.Equal(3 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
+    }
+
+    [Fact]
+    public void BoneDemonAiDefersBlueFlareOutsideItsNativeAvoidanceBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "BoneDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "BoneDemon",
+                    "BlueFlare2",
+                    AuthoritativeProjectileBehavior.MonsterMagic),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 5000 ^ 9 ^ 7 = 5006, outside the native 1,000-per-10,000 band.
+        processor.AdvanceTick(5000, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
     }
 
     [Fact]

@@ -55,6 +55,9 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Necromorb", out var necromorb));
         Assert.Equal("RedFlare", necromorb.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, necromorb.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("BoneDemon", out var boneDemon));
+        Assert.Equal("BlueFlare2", boneDemon.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, boneDemon.ProjectileBehavior);
     }
 
     [Fact]
