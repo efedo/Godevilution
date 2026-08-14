@@ -958,7 +958,7 @@ effective spell level) * 64`.
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `item_tags` also
 declares semantic item categories (`Weapon`, `Sword`, `Axe`, `Mace`, `Bow`,
-`Shield`, `Staff`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for
+`Shield`, `Staff`, `Belt`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for
 active rows; combat and loadout validation use these tags before the native numeric
 fallback. `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
@@ -1560,14 +1560,15 @@ Schema 1.145 adds the optional `consumable_behavior` column to `spells.tsv`;
 the checked-in Rune of Fire row selects `RuneFire`, while older spell tables
 retain miscellaneous-ID fallback.
 Schema 1.146 adds the normalized equipment subtype tags to `items.tsv`; the
-checked-in base and Hellfire rows declare their weapon, bow, shield, staff, Gold,
-and
-available armor categories, while older rows retain native item-type compatibility
-behavior.
+checked-in base rows declare their weapon, bow, shield, staff, Gold, and belt
+categories, plus available armor categories, while older rows retain native
+item-type compatibility behavior.
 The authoritative server centralizes these tag-first subtype decisions for
-combat, armor, loadout, and monster rules; direct legacy states still use their
-native item-type fallback. Gold identity likewise uses the validated `Gold` or
-`Currency` tag through this seam before the native type/index fallback.
+combat, armor, loadout, and monster rules; belt validation likewise uses the
+validated `Belt` tag before the legacy equipment-location/item-class fallback.
+Direct legacy states still use their native metadata fallback. Gold identity
+likewise uses the validated `Gold` or `Currency` tag through this seam before the
+native type/index fallback.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

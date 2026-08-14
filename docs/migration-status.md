@@ -73,9 +73,13 @@ Status date: 2026-08-14
   helper for wallet topology, spending, generation, and death drops; legacy
   states retain the native type/index fallback.
 
-- Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`, and
-  `Staff` subtype tags to base and Hellfire item rows; player and monster
-  weapon modifiers consume those tags before falling back to native item type.
+- Belt eligibility is now centralized in the same content-first item
+  classification seam for loadout validation; legacy rows retain the native
+  equipment-location/item-class fallback.
+
+- Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
+  `Staff`, and `Belt` subtype tags to `items.tsv`; player and monster weapon
+  modifiers consume those tags before falling back to native item type.
 
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
