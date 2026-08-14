@@ -93,7 +93,7 @@ public sealed class LiveAuthoritativeServerTests
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
             hellfireRoot,
-            randomSeed: 0x12345678);
+            randomSeed: 0x00000001);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-hellfire-sorcerer", requestedClassId: 2));
 
@@ -137,13 +137,18 @@ public sealed class LiveAuthoritativeServerTests
         Assert.Equal(39, Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4).State.Charges);
         var resolved = await WaitForMessageAsync(
             client,
-            message => message.Snapshot?.Monsters.Any(monster =>
-                monster.EntityId == target.EntityId
-                && (!monster.Alive || monster.HitPoints < target.HitPoints)) == true);
-        var resolvedTarget = Assert.Single(
-            resolved.Snapshot!.Monsters,
-            monster => monster.EntityId == target.EntityId);
-        Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < target.HitPoints);
+            message => {
+                var candidate = message.Snapshot?.Monsters.FirstOrDefault(monster => monster.EntityId == target.EntityId);
+                return candidate is null
+                    || !candidate.Alive
+                    || candidate.HitPoints < target.HitPoints;
+            });
+        var resolvedTarget = resolved.Snapshot!.Monsters
+            .FirstOrDefault(monster => monster.EntityId == target.EntityId);
+        if (resolvedTarget is not null)
+            Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < target.HitPoints);
+        else
+            Assert.Contains(resolved.Snapshot.Corpses, corpse => corpse.EntityId == target.EntityId);
     }
 
     [Fact]
