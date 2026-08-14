@@ -1577,6 +1577,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FatAiUsesItsNativeNonAdjacentMovementAdmission()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "Fat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: admitted to the native 20% movement band.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+
+        // 40 ^ 9 ^ 7 = 38: outside the movement band after completion.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.False(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void RhinoAiChargesAcrossClearTilesAndKnocksThePlayerBack()
     {
         var monster = new AuthoritativeCombatTarget(

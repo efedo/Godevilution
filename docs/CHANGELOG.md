@@ -24,6 +24,8 @@ All notable changes to this fork are documented below.
   boundary and remain ranged-only instead of falling through to melee.
 - Add the server-owned GoatMelee non-adjacent movement admission, preserving
   its native intelligence-based avoidance band before shared melee.
+- Add the server-owned Fat/Overlord non-adjacent movement admission, preserving
+  its native intelligence-based pursuit before shared melee and special attacks.
 - Preserve native Stone Curse shatter state for defeated petrified monsters and
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and
