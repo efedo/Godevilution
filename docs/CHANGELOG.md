@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.135's optional Reflect default spell level, moving the native
+  no-explicit-level charge fallback into validated spell content while
+  preserving the legacy level-2 behavior.
 - Add schema 1.134's optional Rage admission life threshold, moving the native
   cast safety boundary into validated spell content while preserving the
   legacy character-level Q6 fallback.

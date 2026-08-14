@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.135 externalizes Reflect's no-explicit-level fallback through
+  validated `spells.tsv` content; older definitions retain the native level-2
+  compatibility value.
+
 - Schema 1.134 externalizes Rage's minimum-life admission threshold through
   validated `spells.tsv` content; older definitions retain the native
   character-level 64-Q6 compatibility threshold.
