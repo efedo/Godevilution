@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.104 externalizes Fallen fear radius and countdown tuning through
+  validated `monster_types.tsv` rows; the active catalog feeds server-owned
+  combat while older targets retain the native compatibility values.
+
 - Schema 1.103 externalizes the native Monk unarmed minimum and maximum
   damage level divisors through validated class content, with compatibility
   defaults for older class schemas.
