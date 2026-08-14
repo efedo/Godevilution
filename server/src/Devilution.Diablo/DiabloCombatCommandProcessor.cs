@@ -4430,7 +4430,10 @@ public sealed class DiabloCombatCommandProcessor
                     target,
                     attackSeed,
                     fatAttackTuning)
-                    || UsesNativeGoatSpecialAttack(target, attackSeed);
+                    || UsesNativeGoatSpecialAttack(
+                        target,
+                        attackSeed,
+                        goatMeleeAttackTuning);
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
                     : target.AttackDamage;
@@ -5185,7 +5188,11 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeAttackTuning(
+    private (
+        int ChanceBase,
+        int IntelligenceScale,
+        int SpecialHealthThresholdPercent,
+        int SpecialChanceGroupPeriod)? GetGoatMeleeAttackTuning(
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
@@ -5195,11 +5202,17 @@ public sealed class DiabloCombatCommandProcessor
                 && definition.GoatMeleeAttackChanceIntelligenceScale > 0) {
                 return (
                     definition.GoatMeleeAttackChanceBase,
-                    definition.GoatMeleeAttackChanceIntelligenceScale);
+                    definition.GoatMeleeAttackChanceIntelligenceScale,
+                    definition.GoatMeleeSpecialHealthThresholdPercent > 0
+                        ? definition.GoatMeleeSpecialHealthThresholdPercent
+                        : 50,
+                    definition.GoatMeleeSpecialChanceGroupPeriod > 0
+                        ? definition.GoatMeleeSpecialChanceGroupPeriod
+                        : 2);
             }
         }
         return target.NativeAi == "GoatMelee"
-            ? (23, 2)
+            ? (23, 2, 50, 2)
             : null;
     }
 
@@ -6660,13 +6673,20 @@ public sealed class DiabloCombatCommandProcessor
     /** Native AiAvoidance selects a wounded GoatMelee special on its second 50% roll. */
     private static bool UsesNativeGoatSpecialAttack(
         AuthoritativeCombatTarget target,
-        uint attackSeed)
+        uint attackSeed,
+        (
+            int ChanceBase,
+            int IntelligenceScale,
+            int SpecialHealthThresholdPercent,
+            int SpecialChanceGroupPeriod)? tuning)
     {
-        return target.NativeAi == "GoatMelee"
-            && target.HitPointsQ6 < target.MaxHitPointsQ6 / 2
+        return tuning.HasValue
+            && target.NativeAi == "GoatMelee"
+            && (long)target.HitPointsQ6 * 100
+                < (long)target.MaxHitPointsQ6 * tuning.Value.SpecialHealthThresholdPercent
             && target.ToHitSpecial > 0
             && target.MaxDamageSpecial > 0
-            && (attackSeed / 100U) % 2U == 0U;
+            && (attackSeed / 100U) % (uint)tuning.Value.SpecialChanceGroupPeriod == 0U;
     }
 
     /** Selects the native inclusive special damage range without adding a new RNG draw. */

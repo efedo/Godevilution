@@ -111,6 +111,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native GoatMelee adjacent attack chance increase per intelligence point. */
     public int GoatMeleeAttackChanceIntelligenceScale { get; init; }
 
+    /** Native GoatMelee wounded-health threshold for its special attack. */
+    public int GoatMeleeSpecialHealthThresholdPercent { get; init; }
+
+    /** Native GoatMelee random-group period for its wounded special attack. */
+    public int GoatMeleeSpecialChanceGroupPeriod { get; init; }
+
     /** Native Fat movement admission chance base before intelligence scaling. */
     public int FatMovementChanceBase { get; init; }
 
@@ -366,6 +372,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "GoatMelee"
                     && (definition.GoatMeleeAttackChanceBase != 0
                         || definition.GoatMeleeAttackChanceIntelligenceScale != 0))
+                || definition.GoatMeleeSpecialHealthThresholdPercent is < 0 or > 100
+                || definition.GoatMeleeSpecialChanceGroupPeriod is < 0 or > 256
+                || (definition.NativeAi == "GoatMelee"
+                    && ((definition.GoatMeleeSpecialHealthThresholdPercent != 0
+                            || definition.GoatMeleeSpecialChanceGroupPeriod != 0)
+                        && (definition.GoatMeleeSpecialHealthThresholdPercent <= 0
+                            || definition.GoatMeleeSpecialChanceGroupPeriod <= 0)))
+                || (definition.NativeAi != "GoatMelee"
+                    && (definition.GoatMeleeSpecialHealthThresholdPercent != 0
+                        || definition.GoatMeleeSpecialChanceGroupPeriod != 0))
                 || definition.FatMovementChanceBase is < 0 or > 100
                 || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "Fat"
@@ -655,6 +671,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
                 GoatMeleeAttackChanceBase = row.OptionalInt32("goat_melee_attack_chance_base"),
                 GoatMeleeAttackChanceIntelligenceScale = row.OptionalInt32("goat_melee_attack_chance_intelligence_scale"),
+                GoatMeleeSpecialHealthThresholdPercent = row.OptionalInt32("goat_melee_special_health_threshold_percent"),
+                GoatMeleeSpecialChanceGroupPeriod = row.OptionalInt32("goat_melee_special_chance_group_period"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
                 FatAttackChanceBase = row.OptionalInt32("fat_attack_chance_base"),
