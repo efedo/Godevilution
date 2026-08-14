@@ -4306,6 +4306,155 @@ public sealed class DiabloCombatCommandProcessorTests
             projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
     }
 
+    [Fact]
+    public void MegaAiUsesConfiguredInfernoMaximumDistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 4,
+                    InfernoAdjacentChanceBase: 40,
+                    InfernoAdjacentChanceIntelligenceScale: 10,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 5,
+                    InfernoRangedChanceIntelligenceScale: 5,
+                    InfernoRangedFarIntelligenceOffset: 1,
+                    InfernoAdjacentChoiceModulo: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // The configured maximum distance is four, so distance four must
+        // defer even though the native compatibility maximum is five.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
+    [Fact]
+    public void MegaAiUsesConfiguredInfernoRangedChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 5,
+                    InfernoAdjacentChanceBase: 40,
+                    InfernoAdjacentChanceIntelligenceScale: 10,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 1,
+                    InfernoRangedChanceIntelligenceScale: 1,
+                    InfernoRangedFarIntelligenceOffset: 0,
+                    InfernoAdjacentChoiceModulo: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 1 ^ 14 ^ 7 = 8, outside the configured one-per-100 ranged band.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
+    [Fact]
+    public void MegaAiUsesConfiguredInfernoAdjacentChoiceModulo()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 5,
+                    InfernoAdjacentChanceBase: 100,
+                    InfernoAdjacentChanceIntelligenceScale: 1,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 5,
+                    InfernoRangedChanceIntelligenceScale: 5,
+                    InfernoRangedFarIntelligenceOffset: 1,
+                    InfernoAdjacentChoiceModulo: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // 100 ^ 14 ^ 7 = 105: the native modulo-two choice would defer the
+        // adjacent special, while the configured modulo-one choice admits it.
+        processor.AdvanceTick(100, [player]);
+
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
     [Theory]
     [InlineData("Lich", "OrangeFlare")]
     [InlineData("ArchLich", "YellowFlare")]

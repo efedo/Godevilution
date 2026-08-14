@@ -5696,21 +5696,27 @@ public sealed class DiabloCombatCommandProcessor
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
-            // Native MegaAi delegates to SkeletonAi at five or more tiles.
-            // Within its special range it uses 5 * (intelligence + 2) for
-            // distance three or farther, 5 * (intelligence + 1) otherwise,
-            // and a 50/50 ranged-versus-melee choice when adjacent.
-            if (distance >= 5)
+            var infernoTuning = ResolveMonsterInfernoTuning(missile);
+            if (distance >= infernoTuning.MaximumDistance)
                 return false;
             if (distance <= 1) {
+                var adjacentChance = checked(
+                    infernoTuning.AdjacentChanceBase
+                    + infernoTuning.AdjacentChanceIntelligenceScale
+                        * monster.Intelligence);
                 if (attackSeed % 100U
-                    >= (uint)Math.Min(100, 10 * (monster.Intelligence + 4))
-                    || (attackSeed / 100U) % 2U != 0)
+                    >= (uint)Math.Min(100, adjacentChance)
+                    || (attackSeed / 100U)
+                        % (uint)infernoTuning.AdjacentChoiceModulo != 0)
                     return false;
             } else {
-                var attackBand = distance >= 3
-                    ? 5 * (monster.Intelligence + 2)
-                    : 5 * (monster.Intelligence + 1);
+                var attackBand = checked(
+                    infernoTuning.RangedChanceBase
+                    + infernoTuning.RangedChanceIntelligenceScale
+                        * (monster.Intelligence
+                            + (distance >= infernoTuning.RangedFarDistance
+                                ? infernoTuning.RangedFarIntelligenceOffset
+                                : 0)));
                 if (attackSeed % 100U >= (uint)Math.Min(100, attackBand))
                     return false;
             }
@@ -5888,6 +5894,50 @@ public sealed class DiabloCombatCommandProcessor
             missile?.RangedRetreatChanceIntelligenceScale > 0
                 ? missile.RangedRetreatChanceIntelligenceScale
                 : 10);
+    }
+
+    private static (
+        int MaximumDistance,
+        int AdjacentChanceBase,
+        int AdjacentChanceIntelligenceScale,
+        int RangedFarDistance,
+        int RangedChanceBase,
+        int RangedChanceIntelligenceScale,
+        int RangedFarIntelligenceOffset,
+        int AdjacentChoiceModulo) ResolveMonsterInfernoTuning(
+        AuthoritativeMonsterMissileDefinition missile)
+    {
+        var legacyDefaults = missile.InfernoMaximumDistance == 0
+            && missile.InfernoAdjacentChanceBase == 0
+            && missile.InfernoAdjacentChanceIntelligenceScale == 0
+            && missile.InfernoRangedFarDistance == 0
+            && missile.InfernoRangedChanceBase == 0
+            && missile.InfernoRangedChanceIntelligenceScale == 0
+            && missile.InfernoRangedFarIntelligenceOffset == 0
+            && missile.InfernoAdjacentChoiceModulo == 0;
+        return (
+            missile.InfernoMaximumDistance > 0
+                ? missile.InfernoMaximumDistance
+                : 5,
+            missile.InfernoAdjacentChanceBase > 0
+                ? missile.InfernoAdjacentChanceBase
+                : 40,
+            missile.InfernoAdjacentChanceIntelligenceScale > 0
+                ? missile.InfernoAdjacentChanceIntelligenceScale
+                : 10,
+            missile.InfernoRangedFarDistance > 0
+                ? missile.InfernoRangedFarDistance
+                : 3,
+            missile.InfernoRangedChanceBase > 0
+                ? missile.InfernoRangedChanceBase
+                : 5,
+            missile.InfernoRangedChanceIntelligenceScale > 0
+                ? missile.InfernoRangedChanceIntelligenceScale
+                : 5,
+            legacyDefaults ? 1 : missile.InfernoRangedFarIntelligenceOffset,
+            missile.InfernoAdjacentChoiceModulo > 0
+                ? missile.InfernoAdjacentChoiceModulo
+                : 2);
     }
 
     /** Native AddInfernoControl state for a monster-owned Mega projectile. */

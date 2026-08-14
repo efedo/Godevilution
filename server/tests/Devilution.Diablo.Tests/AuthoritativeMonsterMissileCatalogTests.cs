@@ -70,6 +70,26 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedInfernoAdmissionTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tinferno_maximum_distance\tinferno_adjacent_chance_base\tinferno_adjacent_chance_intelligence_scale\tinferno_ranged_far_distance\tinferno_ranged_chance_base\tinferno_ranged_chance_intelligence_scale\tinferno_ranged_far_intelligence_offset\tinferno_adjacent_choice_modulo\n"
+                + "Mega\tInfernoControl\tInfernoController\t5\t40\t10\t3\t5\t5\t1\t2\n");
+
+        Assert.True(catalog.TryGet("Mega", out var mega));
+        Assert.Equal((5, 40, 10, 3, 5, 5, 1, 2), (
+            mega.InfernoMaximumDistance,
+            mega.InfernoAdjacentChanceBase,
+            mega.InfernoAdjacentChanceIntelligenceScale,
+            mega.InfernoRangedFarDistance,
+            mega.InfernoRangedChanceBase,
+            mega.InfernoRangedChanceIntelligenceScale,
+            mega.InfernoRangedFarIntelligenceOffset,
+            mega.InfernoAdjacentChoiceModulo));
+    }
+
+    [Fact]
     public void LegacyRowsDefaultToCompatibilitySpellIdentity()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -102,6 +122,14 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedRetreatMinimumDistance);
         Assert.Equal(0, succubus.RangedRetreatChanceBase);
         Assert.Equal(0, succubus.RangedRetreatChanceIntelligenceScale);
+        Assert.Equal(0, succubus.InfernoMaximumDistance);
+        Assert.Equal(0, succubus.InfernoAdjacentChanceBase);
+        Assert.Equal(0, succubus.InfernoAdjacentChanceIntelligenceScale);
+        Assert.Equal(0, succubus.InfernoRangedFarDistance);
+        Assert.Equal(0, succubus.InfernoRangedChanceBase);
+        Assert.Equal(0, succubus.InfernoRangedChanceIntelligenceScale);
+        Assert.Equal(0, succubus.InfernoRangedFarIntelligenceOffset);
+        Assert.Equal(0, succubus.InfernoAdjacentChoiceModulo);
     }
 
     [Fact]
@@ -227,6 +255,32 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 RangedRetreatMinimumDistance: 4,
                 RangedRetreatChanceBase: 70,
                 RangedRetreatChanceIntelligenceScale: 10),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsPartialInfernoTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Mega",
+                "InfernoControl",
+                AuthoritativeProjectileBehavior.InfernoController,
+                InfernoMaximumDistance: 5),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Magma",
+                "MagmaBall",
+                AuthoritativeProjectileBehavior.MonsterMagic,
+                InfernoMaximumDistance: 5,
+                InfernoAdjacentChanceBase: 40,
+                InfernoAdjacentChanceIntelligenceScale: 10,
+                InfernoRangedFarDistance: 3,
+                InfernoRangedChanceBase: 5,
+                InfernoRangedChanceIntelligenceScale: 5,
+                InfernoRangedFarIntelligenceOffset: 1,
+                InfernoAdjacentChoiceModulo: 2),
         ]));
     }
 

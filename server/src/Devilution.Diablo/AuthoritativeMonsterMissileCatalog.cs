@@ -40,7 +40,15 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int RangedAvoidanceFarIntelligenceOffset = 0,
     int RangedRetreatMinimumDistance = 0,
     int RangedRetreatChanceBase = 0,
-    int RangedRetreatChanceIntelligenceScale = 0);
+    int RangedRetreatChanceIntelligenceScale = 0,
+    int InfernoMaximumDistance = 0,
+    int InfernoAdjacentChanceBase = 0,
+    int InfernoAdjacentChanceIntelligenceScale = 0,
+    int InfernoRangedFarDistance = 0,
+    int InfernoRangedChanceBase = 0,
+    int InfernoRangedChanceIntelligenceScale = 0,
+    int InfernoRangedFarIntelligenceOffset = 0,
+    int InfernoAdjacentChoiceModulo = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -82,6 +90,14 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.RangedRetreatMinimumDistance is < 0 or > 64
                 || definition.RangedRetreatChanceBase is < 0 or > 100
                 || definition.RangedRetreatChanceIntelligenceScale is < 0 or > 100
+                || definition.InfernoMaximumDistance is < 0 or > 64
+                || definition.InfernoAdjacentChanceBase is < 0 or > 100
+                || definition.InfernoAdjacentChanceIntelligenceScale is < 0 or > 100
+                || definition.InfernoRangedFarDistance is < 0 or > 64
+                || definition.InfernoRangedChanceBase is < 0 or > 100
+                || definition.InfernoRangedChanceIntelligenceScale is < 0 or > 100
+                || definition.InfernoRangedFarIntelligenceOffset is < 0 or > 64
+                || definition.InfernoAdjacentChoiceModulo is < 0 or > 100
                 || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.BatCharge
                     && ((definition.ChargeMinimumDistance != 0
                             || definition.ChargeChanceBase != 0
@@ -126,6 +142,31 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && (definition.RangedRetreatMinimumDistance != 0
                         || definition.RangedRetreatChanceBase != 0
                         || definition.RangedRetreatChanceIntelligenceScale != 0))
+                || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
+                    && (definition.InfernoMaximumDistance != 0
+                        || definition.InfernoAdjacentChanceBase != 0
+                        || definition.InfernoAdjacentChanceIntelligenceScale != 0
+                        || definition.InfernoRangedFarDistance != 0
+                        || definition.InfernoRangedChanceBase != 0
+                        || definition.InfernoRangedChanceIntelligenceScale != 0
+                        || definition.InfernoRangedFarIntelligenceOffset != 0
+                        || definition.InfernoAdjacentChoiceModulo != 0)
+                    && (definition.InfernoMaximumDistance <= 0
+                        || definition.InfernoAdjacentChanceBase <= 0
+                        || definition.InfernoAdjacentChanceIntelligenceScale <= 0
+                        || definition.InfernoRangedFarDistance <= 0
+                        || definition.InfernoRangedChanceBase <= 0
+                        || definition.InfernoRangedChanceIntelligenceScale <= 0
+                        || definition.InfernoAdjacentChoiceModulo <= 0))
+                || (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController
+                    && (definition.InfernoMaximumDistance != 0
+                        || definition.InfernoAdjacentChanceBase != 0
+                        || definition.InfernoAdjacentChanceIntelligenceScale != 0
+                        || definition.InfernoRangedFarDistance != 0
+                        || definition.InfernoRangedChanceBase != 0
+                        || definition.InfernoRangedChanceIntelligenceScale != 0
+                        || definition.InfernoRangedFarIntelligenceOffset != 0
+                        || definition.InfernoAdjacentChoiceModulo != 0))
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -202,7 +243,15 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("ranged_avoidance_far_intelligence_offset"),
                 row.OptionalInt32("ranged_retreat_minimum_distance"),
                 row.OptionalInt32("ranged_retreat_chance_base"),
-                row.OptionalInt32("ranged_retreat_chance_intelligence_scale"));
+                row.OptionalInt32("ranged_retreat_chance_intelligence_scale"),
+                row.OptionalInt32("inferno_maximum_distance"),
+                row.OptionalInt32("inferno_adjacent_chance_base"),
+                row.OptionalInt32("inferno_adjacent_chance_intelligence_scale"),
+                row.OptionalInt32("inferno_ranged_far_distance"),
+                row.OptionalInt32("inferno_ranged_chance_base"),
+                row.OptionalInt32("inferno_ranged_chance_intelligence_scale"),
+                row.OptionalInt32("inferno_ranged_far_intelligence_offset"),
+                row.OptionalInt32("inferno_adjacent_choice_modulo"));
         }));
     }
 
