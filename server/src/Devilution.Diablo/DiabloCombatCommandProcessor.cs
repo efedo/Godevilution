@@ -2442,7 +2442,7 @@ public sealed class DiabloCombatCommandProcessor
         return false;
     }
 
-    private static bool TryResolveChargedItem(
+    private bool TryResolveChargedItem(
         AuthoritativePlayerState player,
         uint spellId,
         DiabloPlayerItemReference reference,
@@ -3796,14 +3796,14 @@ public sealed class DiabloCombatCommandProcessor
         return checked(damage * spell.DamageScale);
     }
 
-    private static bool IsMatchingChargedItem(AuthoritativeItemState state, uint spellId)
+    private bool IsMatchingChargedItem(AuthoritativeItemState state, uint spellId)
     {
-        return DiabloCastSourceRules.IsMatchingChargedItem(state, spellId);
+        return DiabloCastSourceRules.IsMatchingChargedItem(state, spellId, items);
     }
 
     private bool IsMatchingConsumableItem(AuthoritativeItemState state, uint spellId)
     {
-        return DiabloCastSourceRules.IsMatchingConsumableItem(state, spellId, spells);
+        return DiabloCastSourceRules.IsMatchingConsumableItem(state, spellId, spells, items);
     }
 
     private static void ConsumeCastSource(

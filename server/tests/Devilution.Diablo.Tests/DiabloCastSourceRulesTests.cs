@@ -67,4 +67,47 @@ public sealed class DiabloCastSourceRulesTests
             DiabloCastSourceRules.ClassifyItem(suppressed));
         Assert.False(DiabloCastSourceRules.IsMatchingChargedItem(suppressed, 7));
     }
+
+    [Fact]
+    public void ActiveItemSourceMetadataOverridesLegacyStateFields()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            7,
+            99,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+                NativeItemIndex = 101,
+                MiscId = 99,
+                SpellId = 7,
+                MaxCharges = 40,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var legacyState = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            ItemType = 1,
+            MiscId = 99,
+            SpellId = 7,
+            MaxCharges = 40,
+        };
+
+        Assert.Equal(
+            DiabloItemSpellSourceKind.ChargedItem,
+            DiabloCastSourceRules.ClassifyItem(legacyState, items: items));
+        Assert.Equal(
+            7U,
+            DiabloCastSourceRules.GetItemSpellId(legacyState, items: items));
+        Assert.True(DiabloCastSourceRules.IsMatchingChargedItem(
+            legacyState,
+            7,
+            items));
+    }
 }

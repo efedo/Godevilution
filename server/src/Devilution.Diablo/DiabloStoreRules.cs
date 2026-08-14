@@ -109,6 +109,10 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     {
         if (state.SpellSourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ChargedItem;
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
+            && definition.SpellSourceKind is { } contentKind)
+            return contentKind == DiabloItemSpellSourceKind.ChargedItem;
         return AuthoritativeItemClassification.IsStaff(state, items)
             || state.MiscId is 23 or 27;
     }

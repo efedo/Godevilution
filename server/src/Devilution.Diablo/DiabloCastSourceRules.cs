@@ -23,14 +23,22 @@ public static class DiabloCastSourceRules
     /** Classifies an item for presentation without exposing native IDs. */
     public static DiabloItemSpellSourceKind ClassifyItem(
         AuthoritativeItemState state,
-        AuthoritativeSpellCatalog? spells = null)
+        AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         if (state.SpellSourceKind is { } explicitKind)
             return explicitKind;
-        if (GetChargedSpellId(state.MiscId, state.SpellId, state.MaxCharges) != 0)
+        if (TryGetDefinition(state, items, out var definition)
+            && definition is not null
+            && definition.SpellSourceKind is { } contentKind)
+            return contentKind;
+        var miscId = GetEffectiveMiscId(state, definition);
+        var spellId = GetEffectiveSpellId(state, definition);
+        var maximumCharges = GetEffectiveMaximumCharges(state, definition);
+        if (GetChargedSpellId(miscId, spellId, maximumCharges) != 0)
             return DiabloItemSpellSourceKind.ChargedItem;
-        if (GetConsumableSpellId(state.MiscId, state.SpellId, spells) != 0)
+        if (GetConsumableSpellId(miscId, spellId, spells) != 0)
             return DiabloItemSpellSourceKind.ConsumableItem;
         return DiabloItemSpellSourceKind.None;
     }
@@ -47,18 +55,26 @@ public static class DiabloCastSourceRules
     /** Resolves the spell identity using explicit content metadata when present. */
     public static uint GetItemSpellId(
         AuthoritativeItemState state,
-        AuthoritativeSpellCatalog? spells = null)
+        AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (state.SpellSourceKind is { } explicitKind)
+        TryGetDefinition(state, items, out var definition);
+        var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
+        if (sourceKind is { } explicitKind)
             return explicitKind is DiabloItemSpellSourceKind.ChargedItem
                 or DiabloItemSpellSourceKind.ConsumableItem
-                ? state.SpellId > 0 ? checked((uint)state.SpellId) : 0
+                ? GetEffectiveSpellId(state, definition) > 0
+                    ? checked((uint)GetEffectiveSpellId(state, definition))
+                    : 0
                 : 0;
-        var chargedSpellId = GetChargedSpellId(state.MiscId, state.SpellId, state.MaxCharges);
+        var miscId = GetEffectiveMiscId(state, definition);
+        var spellId = GetEffectiveSpellId(state, definition);
+        var maximumCharges = GetEffectiveMaximumCharges(state, definition);
+        var chargedSpellId = GetChargedSpellId(miscId, spellId, maximumCharges);
         return chargedSpellId != 0
             ? chargedSpellId
-            : GetConsumableSpellId(state.MiscId, state.SpellId, spells);
+            : GetConsumableSpellId(miscId, spellId, spells);
     }
 
     public static uint GetConsumableSpellId(
@@ -78,26 +94,66 @@ public static class DiabloCastSourceRules
 
     public static bool IsMatchingChargedItem(
         AuthoritativeItemState state,
-        uint spellId)
+        uint spellId,
+        AuthoritativeItemCatalog? items = null)
     {
-        if (state.SpellSourceKind is { } explicitKind)
+        ArgumentNullException.ThrowIfNull(state);
+        TryGetDefinition(state, items, out var definition);
+        var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
+        if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ChargedItem
-                && state.SpellId > 0
-                && state.MaxCharges > 0
-                && (uint)state.SpellId == spellId;
-        return GetChargedSpellId(state.MiscId, state.SpellId, state.MaxCharges)
+                && GetEffectiveSpellId(state, definition) > 0
+                && GetEffectiveMaximumCharges(state, definition) > 0
+                && (uint)GetEffectiveSpellId(state, definition) == spellId;
+        return GetChargedSpellId(
+                GetEffectiveMiscId(state, definition),
+                GetEffectiveSpellId(state, definition),
+                GetEffectiveMaximumCharges(state, definition))
             == spellId;
     }
 
     public static bool IsMatchingConsumableItem(
         AuthoritativeItemState state,
         uint spellId,
-        AuthoritativeSpellCatalog? spells)
+        AuthoritativeSpellCatalog? spells,
+        AuthoritativeItemCatalog? items = null)
     {
-        if (state.SpellSourceKind is { } explicitKind)
+        ArgumentNullException.ThrowIfNull(state);
+        TryGetDefinition(state, items, out var definition);
+        var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
+        if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ConsumableItem
-                && state.SpellId > 0
-                && (uint)state.SpellId == spellId;
-        return GetConsumableSpellId(state.MiscId, state.SpellId, spells) == spellId;
+                && GetEffectiveSpellId(state, definition) > 0
+                && (uint)GetEffectiveSpellId(state, definition) == spellId;
+        return GetConsumableSpellId(
+                GetEffectiveMiscId(state, definition),
+                GetEffectiveSpellId(state, definition),
+                spells)
+            == spellId;
     }
+
+    private static bool TryGetDefinition(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items,
+        out AuthoritativeItemDefinition? definition)
+    {
+        definition = null;
+        return items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out definition);
+    }
+
+    private static int GetEffectiveMiscId(
+        AuthoritativeItemState state,
+        AuthoritativeItemDefinition? definition)
+        => state.MiscId != 0 ? state.MiscId : definition?.MiscId ?? 0;
+
+    private static int GetEffectiveSpellId(
+        AuthoritativeItemState state,
+        AuthoritativeItemDefinition? definition)
+        => state.SpellId != 0 ? state.SpellId : definition?.SpellId ?? 0;
+
+    private static int GetEffectiveMaximumCharges(
+        AuthoritativeItemState state,
+        AuthoritativeItemDefinition? definition)
+        => state.MaxCharges != 0 ? state.MaxCharges : definition?.MaxCharges ?? 0;
 }

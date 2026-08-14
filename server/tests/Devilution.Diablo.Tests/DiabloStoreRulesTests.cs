@@ -98,4 +98,29 @@ public sealed class DiabloStoreRulesTests
 
         Assert.Null(rules.ValidateRecharge(staff, 100));
     }
+
+    [Fact]
+    public void ActiveItemSourceMetadataAuthorizesRechargeWithoutNativeStaffIdentity()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 100, 100, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                SpellId = 7,
+                MaxCharges = 10,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            },
+        ]);
+        var rules = new DiabloStoreRules(items: items);
+        var charged = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            ItemType = 1,
+            MiscId = 99,
+            SpellId = 7,
+            Charges = 1,
+            MaxCharges = 10,
+            Value = 100,
+        };
+
+        Assert.Null(rules.ValidateRecharge(charged, 100));
+    }
 }

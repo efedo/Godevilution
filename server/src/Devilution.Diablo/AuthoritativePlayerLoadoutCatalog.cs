@@ -139,8 +139,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             RequireSpell(loadout.ClassId, "memorized", loadout.StartingSpellId, spells);
             foreach (var loadoutItem in loadout.Items) {
                 var item = items.GetRequired(loadoutItem.ItemId).Generate(1);
-                var spellId = DiabloCastSourceRules.GetItemSpellId(item, spells);
-                var source = DiabloCastSourceRules.ClassifyItem(item, spells)
+                var spellId = DiabloCastSourceRules.GetItemSpellId(item, spells, items);
+                var source = DiabloCastSourceRules.ClassifyItem(item, spells, items)
                     is DiabloItemSpellSourceKind.ChargedItem
                     ? "charged"
                     : "consumable";
