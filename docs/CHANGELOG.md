@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.117's optional mapped-charge admission tuning, moving the native
+  Bat-family charge distance and intelligence-scaled chance into validated
+  missile content while preserving legacy target behavior.
 - Add schema 1.116's optional Rhino charge-admission tuning, moving the native
   clear-lane charge distance and intelligence-scaled chance into validated
   monster content while preserving legacy target behavior.

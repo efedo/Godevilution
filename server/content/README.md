@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.116.0` schema in
+It declares its identity and `devilution.diablo@1.117.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1190,7 +1190,7 @@ the complete target header even when they upsert only one row.
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, and native AI-dispatch metadata. |
-| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime, intelligence-scaled lifetime terms, and optional Acid puddle-duration/damage terms; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
+| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage terms, and optional mapped-charge admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, and completion-trigger fields. |
@@ -1226,7 +1226,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.116.0"
+      "version": "1.117.0"
   },
   "dependencyConstraints": [
     {
@@ -1258,7 +1258,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.116.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.117.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1365,6 +1365,9 @@ clear-lane arrow chance bands while older rows retain the compatibility formula.
 Schema 1.116 adds the optional Rhino charge-admission columns to
 `monster_types.tsv`; checked-in Rhino rows own their clear-lane charge boundary
 while older rows retain the compatibility formula.
+Schema 1.117 adds the optional mapped-charge admission columns to
+`monster_missiles.tsv`; checked-in Bat `BatCharge` rows own their charge
+boundary while older rows retain the compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
