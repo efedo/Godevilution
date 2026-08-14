@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select the migrated Hork Spawn controller from a complete validated Hork
+  tuning tuple instead of requiring the `HorkDemon` native-AI name; legacy
+  rows without tuning retain the native-name compatibility defaults.
 - Require validated `monster_missiles.tsv` Hork Spawn mappings to declare their
   summoned native monster identity, removing the processor's remaining native
   ID fallback while preserving the checked-in Hellfire projection.

@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Hork Spawn admission is now selected by a complete validated tuning tuple,
+  independent of the row's native-AI label; rows without migrated tuning retain
+  the native-name compatibility path, while content can assign the controller
+  to another validated AI identity.
+
 - Hork Spawn now requires its summoned native monster identity in the validated
   `monster_missiles.tsv` mapping; the processor no longer embeds native ID 117,
   and malformed or stale mappings are rejected during content activation.

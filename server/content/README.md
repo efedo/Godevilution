@@ -181,6 +181,9 @@ The optional `hork_demon_attack_chance_base`,
 `hork_demon_spawn_chance_intelligence_scale`, `hork_demon_movement_chance_base`,
 and `hork_demon_movement_chance_intelligence_scale` columns externalize the
 Hork Demon adjacent attack, Hork Spawn, and non-adjacent movement admissions.
+When all seven tuning values are present and positive, the tuple selects the
+server-owned Hork Spawn controller regardless of the row's `native_ai` label;
+rows without migrated tuning retain the native-name compatibility defaults.
 Legacy monster rows retain the native base-twenty-eight, minimum-three,
 base-forty-three, and base-thirty-three compatibility values with
 intelligence-scale-two chance bands.
