@@ -41,6 +41,17 @@ struct ReplayFixtureContentManifest {
 	std::vector<std::string> packs;
 };
 
+struct ReplayFixtureQuestPool {
+	uint32_t poolId = 0;
+	std::vector<uint32_t> questIds;
+};
+
+struct ReplayFixtureQuestSelection {
+	bool defined = false;
+	uint32_t seed = 0;
+	std::vector<ReplayFixtureQuestPool> pools;
+};
+
 struct ReplayFixtureCheckpoint {
 	uint64_t tick = 0;
 	std::string stateSha256;
@@ -186,6 +197,7 @@ struct ReplayFixture {
 	std::string gameVariant = "Diablo";
 	std::string gameMode = "SinglePlayer";
 	ReplayFixtureContentManifest contentManifest;
+	ReplayFixtureQuestSelection questSelection;
 	ReplayFixtureInitialState initialState;
 	ReplayFixtureStoreState storeState;
 	ReplayFixturePlayerActionTiming playerActionTiming;

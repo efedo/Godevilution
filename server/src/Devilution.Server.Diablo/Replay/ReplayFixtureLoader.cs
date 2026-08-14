@@ -22,6 +22,7 @@ public static class ReplayFixtureLoader
             ParseCheckpoints(root.GetProperty("checkpoints"))) {
             LegacyStoreState = ParseLegacyStoreState(root),
             ContentManifest = ParseContentManifest(root),
+            QuestSelection = ParseQuestSelection(root),
             FinalStateSha256 = OptionalString(root, "final_state_sha256"),
             GameVariant = ParseGameVariant(root),
             GameMode = ParseGameMode(root),
@@ -167,6 +168,42 @@ public static class ReplayFixtureLoader
             RequiredString(value, "id"),
             RequiredString(value, "version"),
             RequiredString(value, "sha256"));
+    }
+
+    private static ReplayQuestSelection? ParseQuestSelection(JsonElement root)
+    {
+        if (!root.TryGetProperty("quest_selection", out var value))
+            return null;
+        if (value.ValueKind != JsonValueKind.Object)
+            throw new InvalidDataException("Replay fixture quest_selection must be an object.");
+        var seed = RequiredUInt(value, "seed");
+        if (!value.TryGetProperty("pools", out var poolsElement)
+            || poolsElement.ValueKind != JsonValueKind.Array
+            || poolsElement.GetArrayLength() == 0) {
+            throw new InvalidDataException("Replay fixture quest_selection must define pools.");
+        }
+        var pools = new List<ReplayQuestPool>();
+        foreach (var poolElement in poolsElement.EnumerateArray()) {
+            if (poolElement.ValueKind != JsonValueKind.Object
+                || !poolElement.TryGetProperty("quest_ids", out var questIdsElement)
+                || questIdsElement.ValueKind != JsonValueKind.Array
+                || questIdsElement.GetArrayLength() < 2) {
+                throw new InvalidDataException("Replay fixture quest_selection contains an invalid pool.");
+            }
+            var poolId = RequiredInt(poolElement, "pool_id");
+            var questIds = questIdsElement.EnumerateArray()
+                .Select(element => element.GetUInt32())
+                .OrderBy(questId => questId)
+                .ToArray();
+            if (poolId <= 0
+                || questIds.Any(questId => questId == 0)
+                || questIds.Distinct().Count() != questIds.Length
+                || pools.Any(pool => pool.PoolId == poolId)) {
+                throw new InvalidDataException("Replay fixture quest_selection contains duplicate or invalid identities.");
+            }
+            pools.Add(new ReplayQuestPool(poolId, questIds));
+        }
+        return new ReplayQuestSelection(seed, pools.OrderBy(pool => pool.PoolId).ToArray());
     }
 
     private static ReplayInitialState ParseInitialState(JsonElement value)

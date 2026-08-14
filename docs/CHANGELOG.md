@@ -20,7 +20,9 @@ All notable changes to this fork are documented below.
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and
   refresh all ordinary-death and spell-timeline replay checkpoints; the native
-  replay gate now passes all 65 tests alongside the managed checkpoints.
+  replay gate now passes all 66 tests alongside the managed checkpoints.
+- Add a shared deterministic quest-pool selection replay fixture, including
+  unavailable-quest rejection and matching native/C# checkpoint hashes.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their
@@ -153,7 +155,7 @@ All notable changes to this fork are documented below.
   a client cannot accept a server with incompatible gameplay modules.
 - Align native replay canonical hashing with the C# snapshot contract for
   projectile controller runtime state, object/quest extensions, and deferred
-  attack RNG consumption; the native replay gate now passes all 65 tests.
+  attack RNG consumption; the native replay gate now passes all 66 tests.
 - Scope armed-trap visibility to the requesting player's native `TrapSense`
   class flag; authoritative saves and internal state retain the full trap state.
 - Apply validated class base modifiers to native physical to-hit: initialized

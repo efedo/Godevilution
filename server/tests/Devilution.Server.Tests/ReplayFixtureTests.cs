@@ -1,3 +1,4 @@
+using Devilution.Diablo;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Gameplay;
@@ -923,6 +924,48 @@ public sealed class ReplayFixtureTests
         var quest = Assert.Single(result.FinalSnapshot.Quests);
         Assert.Equal(1U, quest.Progress);
         Assert.True(quest.Completed);
+    }
+
+    [Fact]
+    public void GameplayQuestSelectionFixtureRejectsUnavailableQuestTransitions()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-quest-selection.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        Assert.NotNull(fixture.QuestSelection);
+        var selection = fixture.QuestSelection!;
+        var selectedQuestIds = selection.SelectUnavailableQuestIds();
+        Assert.Contains(fixture.InitialState.QuestId, selectedQuestIds);
+        var quest = new AuthoritativeQuestState(
+            fixture.InitialState.QuestId,
+            fixture.InitialState.LevelId,
+            fixture.InitialState.QuestRequiredProgress);
+        var poolCatalog = new AuthoritativeQuestPoolCatalog(
+            selection.Pools.SelectMany(pool => pool.QuestIds.Select(questId =>
+                new AuthoritativeQuestPoolEntry(pool.PoolId, questId))));
+        AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection([quest], poolCatalog, selection.Seed);
+        Assert.True(quest.Unavailable);
+
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingQuests: [quest],
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal([CommandStatus.Rejected, CommandStatus.Rejected], result.Results.Select(command => command.Status));
+        Assert.True(Assert.Single(result.FinalSnapshot.Quests).Unavailable);
+        Assert.Equal(1U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
     [Fact]

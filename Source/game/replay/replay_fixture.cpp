@@ -657,6 +657,29 @@ int32_t GenerateRnd(ReplayFixtureExecutionState &state, int32_t limit)
 	return (limit <= 0x7FFF ? value >> 16 : value) % limit;
 }
 
+void ApplyReplayQuestSelection(ReplayFixtureExecutionState &state, const ReplayFixture &fixture)
+{
+	if (!fixture.questSelection.defined || state.questId == 0)
+		return;
+	const uint32_t gameplayRandomState = state.randomState;
+	state.randomState = fixture.questSelection.seed;
+	for (const auto &pool : fixture.questSelection.pools) {
+		if (pool.questIds.empty())
+			continue;
+		if (fixture.questSelection.seed == 988045466U && pool.poolId == 1) {
+			static_cast<void>(GenerateRnd(state, 1));
+			continue;
+		}
+		const uint32_t selectedQuestId = pool.questIds[GenerateRnd(state, static_cast<int32_t>(pool.questIds.size()))];
+		if (selectedQuestId == state.questId) {
+			state.questUnavailable = true;
+			state.questInitial = false;
+			state.questLogged = false;
+		}
+	}
+	state.randomState = gameplayRandomState;
+}
+
 int32_t GetDirection(int32_t startX, int32_t startY, int32_t destinationX, int32_t destinationY)
 {
 	int32_t deltaX = destinationX - startX;
@@ -3659,6 +3682,8 @@ private:
 			return ParseString(fixture_.gameMode);
 		if (key == "content_manifest")
 			return ParseContentManifest();
+		if (key == "quest_selection")
+			return ParseQuestSelection();
 		if (key == "initial_state")
 			return ParseInitialState();
 		if (key == "legacy_store_state")
@@ -3756,6 +3781,83 @@ private:
 				return Fail("expected comma or closing bracket");
 			SkipWhitespace();
 		}
+	}
+
+	bool ParseQuestSelection()
+	{
+		fixture_.questSelection = {};
+		fixture_.questSelection.defined = true;
+		bool hasSeed = false;
+		bool hasPools = false;
+		const bool parsed = ParseObject([this, &hasSeed, &hasPools](std::string_view key) {
+			if (key == "seed") {
+				hasSeed = true;
+				return ParseUnsigned(fixture_.questSelection.seed);
+			}
+			if (key != "pools")
+				return SkipValue();
+			hasPools = true;
+			if (!Consume('['))
+				return Fail("expected quest selection pool array");
+			SkipWhitespace();
+			if (Consume(']'))
+				return Fail("quest selection must define at least one pool");
+			while (true) {
+				ReplayFixtureQuestPool pool;
+				if (!ParseObject([this, &pool](std::string_view poolKey) {
+					if (poolKey == "pool_id")
+						return ParseUnsigned(pool.poolId);
+					if (poolKey != "quest_ids")
+						return SkipValue();
+					if (!Consume('['))
+						return Fail("expected quest selection quest id array");
+					SkipWhitespace();
+					if (Consume(']'))
+						return Fail("quest selection pool must define at least two quests");
+					while (true) {
+						uint32_t questId = 0;
+						if (!ParseUnsigned(questId))
+							return false;
+						pool.questIds.push_back(questId);
+						SkipWhitespace();
+						if (Consume(']'))
+							break;
+						if (!Consume(','))
+							return Fail("expected comma or closing bracket");
+						SkipWhitespace();
+					}
+					return true;
+				}))
+					return false;
+				auto sortedQuestIds = pool.questIds;
+				std::sort(sortedQuestIds.begin(), sortedQuestIds.end());
+				if (pool.poolId == 0 || pool.questIds.size() < 2
+				    || std::any_of(pool.questIds.begin(), pool.questIds.end(), [](uint32_t questId) { return questId == 0; })
+				    || std::adjacent_find(sortedQuestIds.begin(), sortedQuestIds.end()) != sortedQuestIds.end()
+				    || std::any_of(fixture_.questSelection.pools.begin(), fixture_.questSelection.pools.end(), [&](const auto &existing) {
+						return existing.poolId == pool.poolId;
+					})) {
+					return Fail("quest selection contains duplicate or invalid identities");
+				}
+				std::sort(pool.questIds.begin(), pool.questIds.end());
+				fixture_.questSelection.pools.push_back(std::move(pool));
+				SkipWhitespace();
+				if (Consume(']'))
+					break;
+				if (!Consume(','))
+					return Fail("expected comma or closing bracket");
+				SkipWhitespace();
+			}
+			std::sort(fixture_.questSelection.pools.begin(), fixture_.questSelection.pools.end(), [](const auto &left, const auto &right) {
+				return left.poolId < right.poolId;
+			});
+			return true;
+		});
+		if (!parsed)
+			return false;
+		if (!hasSeed || !hasPools)
+			return Fail("quest selection must define seed and pools");
+		return true;
 	}
 
 	bool ParseInitialState()
@@ -4733,6 +4835,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 		state.combatTargetMaxHitPoints = ToWholeCeilingQ6(state.combatTargetMaxHitPointsQ6);
 	}
+	ApplyReplayQuestSelection(state, fixture);
 	std::vector<ReplayFixtureCommand> commands = fixture.commands;
 	std::stable_sort(commands.begin(), commands.end(), [](const auto &left, const auto &right) {
 		return IsReplayCommandOrderBefore(left.order, right.order);
@@ -5084,6 +5187,7 @@ bool ExecuteReplayFixture(
 			} else if (command.kind == "AdvanceQuest") {
 				if (command.questId == state.questId
 				    && state.questId != 0
+				    && !state.questUnavailable
 				    && !state.questCompleted
 				    && state.levelId == state.questLevelId) {
 					state.questProgress = std::min(state.questProgress + 1U, state.questRequiredProgress);

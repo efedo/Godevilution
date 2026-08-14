@@ -1,3 +1,4 @@
+using Devilution.Diablo;
 using Devilution.Server.Stores;
 
 namespace Devilution.Server.Replay;
@@ -241,6 +242,25 @@ public sealed record ReplayFixtureCommand(
 
 public sealed record ReplayContentManifest(string Id, string Version, string Sha256);
 
+public sealed record ReplayQuestPool(int PoolId, IReadOnlyList<uint> QuestIds);
+
+public sealed record ReplayQuestSelection(uint Seed, IReadOnlyList<ReplayQuestPool> Pools)
+{
+    public IReadOnlyList<uint> SelectUnavailableQuestIds()
+    {
+        var random = new DiabloRandom(Seed);
+        var unavailable = new List<uint>();
+        foreach (var pool in Pools.OrderBy(pool => pool.PoolId)) {
+            if (Seed == 988045466U && pool.PoolId == 1) {
+                random.Discard(1);
+                continue;
+            }
+            unavailable.Add(pool.QuestIds[random.RandomIntLessThan(pool.QuestIds.Count)]);
+        }
+        return unavailable;
+    }
+}
+
 public sealed record ReplayCheckpoint(ulong Tick, string StateSha256);
 
 /** Content-derived animation boundaries needed by a native-timed replay. */
@@ -269,6 +289,9 @@ public sealed record ReplayFixture(
 
     /** Null when loading the legacy array-shaped content_manifest metadata. */
     public ReplayContentManifest? ContentManifest { get; init; }
+
+    /** Optional deterministic single-player quest-pool selection metadata. */
+    public ReplayQuestSelection? QuestSelection { get; init; }
 
     /** Optional authoritative final snapshot hash for transition fixtures. */
     public string? FinalStateSha256 { get; init; }

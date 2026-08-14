@@ -2120,6 +2120,38 @@ TEST(ReplayFixture, ExecutesObjectQuestTransitions)
 	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesQuestPoolSelectionAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-quest-selection.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.questSelection.defined);
+	ASSERT_EQ(fixture.questSelection.pools.size(), 2U);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.levelId = fixture.initialState.levelId;
+	state.questId = fixture.initialState.questId;
+	state.questLevelId = fixture.initialState.levelId;
+	state.questRequiredProgress = fixture.initialState.questRequiredProgress;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_FALSE(result.transitions[0].accepted);
+	EXPECT_FALSE(result.transitions[1].accepted);
+	EXPECT_TRUE(state.questUnavailable);
+	EXPECT_EQ(state.questProgress, 0U);
+	EXPECT_FALSE(state.questCompleted);
+	EXPECT_EQ(state.randomState, 1U);
+	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
+	EXPECT_EQ(result.transitions[1].stateSha256, fixture.checkpoints[1].stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesStatusExpiryByAuthoritativeTick)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-status-expiry.json");
