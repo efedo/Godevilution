@@ -70,6 +70,10 @@ top-level `game_mode` selects `SinglePlayer` or `Multiplayer`; legacy fixtures
 default to single-player. Initial state may mirror validated level content with
 `suppress_multiplayer_death_drops`, allowing mode-sensitive death parity without
 participant-count heuristics in either runner.
+When a deferred attack command arrives at the native ready boundary, both
+runners treat it as a chained action and apply the native first-frame skip for
+`QuickAttack`, `FastAttack`, `FasterAttack`, or `FastestAttack`; base-game
+ranged skips remain disabled for Hellfire.
 Checkpoint hashes cover the complete participant projection. Protocol snapshots
 put the receiving player first, but both runners sort every player by entity ID
 before hashing, so receiver-relative wire order cannot alter a checkpoint. A

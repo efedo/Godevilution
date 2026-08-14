@@ -611,6 +611,60 @@ TEST(ReplayFixture, ExecutesNativeTimedPlayerActionsAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, AppliesQuickAttackFirstFrameSkipToChainedMeleeAction)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-player-action-lifecycle.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	fixture.initialState.combatTargetHitPoints = 100;
+	fixture.initialState.combatTargetMaxHitPoints = 100;
+	// This probe changes the fixture state in memory; timing assertions do not
+	// claim the original shared checkpoint hashes.
+	fixture.contentManifest = {};
+	fixture.initialState.equipment.push_back({
+	    .slot = 4,
+	    .itemSeed = 100,
+	    .itemType = 1,
+	    .itemClass = 1,
+	    .flags = 1U << 17,
+	    .statFlag = true,
+	});
+	ReplayFixtureCommand chainedAttack = fixture.commands[1];
+	fixture.commands.resize(2);
+	chainedAttack.clientSequence = 4;
+	chainedAttack.order.targetTick = 28;
+	chainedAttack.order.serverReceiptSequence = 4;
+	fixture.commands.push_back(chainedAttack);
+	fixture.checkpoints.erase(
+	    std::remove_if(fixture.checkpoints.begin(), fixture.checkpoints.end(), [](const auto &checkpoint) {
+		    return checkpoint.tick != 10 && checkpoint.tick != 19 && checkpoint.tick != 28;
+	    }),
+	    fixture.checkpoints.end());
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.life;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 3U);
+	EXPECT_TRUE(std::all_of(result.transitions.begin(), result.transitions.end(), [](const auto &transition) {
+		return transition.accepted;
+	}));
+	ASSERT_TRUE(state.currentAction.defined);
+	EXPECT_EQ(state.currentAction.effectTick, 35U);
+	EXPECT_EQ(state.currentAction.readyTick, 36U);
+	EXPECT_EQ(state.currentAction.endTick, 42U);
+}
+
 void VerifyNativeTimedRangedPlayerAction(
     const char *fixturePath,
     std::string_view expectedVariant,

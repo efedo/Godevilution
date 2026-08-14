@@ -32,6 +32,9 @@ All notable changes to this fork are documented below.
 - Route ranged attacks through native `FireArrows` and `LightningArrows`
   channels, while retaining `FireDamage` and `LightningDamage` for melee;
   add a shared arrow-only replay checkpoint.
+- Preserve native first-frame attack skips when a player chains a melee or
+  base-game ranged attack, including `QuickAttack`, `FastAttack`,
+  `FasterAttack`, and `FastestAttack` timing.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

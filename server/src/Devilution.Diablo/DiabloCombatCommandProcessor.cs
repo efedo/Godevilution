@@ -34,6 +34,7 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FastAttackFlag = 1U << 18;
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
+    private const uint QuickAttackFlag = 1U << 17;
     private const uint NativeBarbarianClassId = 5;
     private const uint HorkSpawnNativeMonsterId = 117;
 
@@ -371,7 +372,14 @@ public sealed class DiabloCombatCommandProcessor
         if (!TryGetAttackTarget(player, targetEntityId, ranged, out var target))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         UpdateFacingToward(player, target.PositionX, target.PositionY);
-        var skippedFrames = GetAttackSkippedFrames(player, ranged);
+        var includesFirstFrame = player.CurrentAction is not null
+            && player.CurrentAction.EffectApplied
+            && player.CombatMode is DiabloPlayerCombatMode.Attack
+                or DiabloPlayerCombatMode.RangedAttack;
+        var skippedFrames = GetAttackSkippedFrames(
+            player,
+            ranged,
+            includesFirstFrame);
         var effectTick = checked(
             appliedTick + (ulong)(timing.ActionFrame - 1 - skippedFrames));
         var endTick = checked(appliedTick + (ulong)(timing.Frames - 1 - skippedFrames));
@@ -9922,20 +9930,31 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
-    private int GetAttackSkippedFrames(AuthoritativePlayerState player, bool ranged)
+    private int GetAttackSkippedFrames(
+        AuthoritativePlayerState player,
+        bool ranged,
+        bool includesFirstFrame)
     {
         var flags = GetUsableEquipmentFlags(player);
         if (ranged) {
-            return rules.GameVariant != DiabloGameVariant.Hellfire
-                    && (flags & FastAttackFlag) != 0
+            if (rules.GameVariant == DiabloGameVariant.Hellfire)
+                return 0;
+            var skippedFrames = includesFirstFrame
+                && (flags & (QuickAttackFlag | FastAttackFlag)) != 0
                 ? 1
                 : 0;
+            if ((flags & FastAttackFlag) != 0)
+                ++skippedFrames;
+            return skippedFrames;
         }
-        if ((flags & (FastestAttackFlag | FasterAttackFlag)) != 0)
-            return 2;
+        if ((flags & FastestAttackFlag) != 0)
+            return includesFirstFrame ? 4 : 2;
+        if ((flags & FasterAttackFlag) != 0)
+            return includesFirstFrame ? 3 : 2;
         if ((flags & FastAttackFlag) != 0)
-            return 1;
-        // Native first actions do not skip a logic frame for Quick Attack.
+            return includesFirstFrame ? 2 : 1;
+        if ((flags & QuickAttackFlag) != 0)
+            return includesFirstFrame ? 1 : 0;
         return 0;
     }
 

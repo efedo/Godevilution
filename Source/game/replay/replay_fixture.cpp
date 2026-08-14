@@ -24,6 +24,7 @@ namespace {
 constexpr uint32_t FastAttackFlag = 1U << 18;
 constexpr uint32_t FasterAttackFlag = 1U << 19;
 constexpr uint32_t FastestAttackFlag = 1U << 20;
+constexpr uint32_t QuickAttackFlag = 1U << 17;
 constexpr uint32_t FireDamageFlag = 1U << 4;
 constexpr uint32_t LightningDamageFlag = 1U << 5;
 constexpr uint32_t FireArrowsFlag = 1U << 3;
@@ -2457,7 +2458,8 @@ bool UsesReplayRangedAttack(const ReplayFixtureExecutionState &state)
 uint32_t GetReplayAttackSkippedFrames(
     const ReplayFixtureExecutionState &state,
     bool ranged,
-    std::string_view gameVariant)
+    std::string_view gameVariant,
+    bool includesFirstFrame = false)
 {
 	uint32_t flags = 0;
 	for (const auto &item : state.equipment) {
@@ -2465,13 +2467,25 @@ uint32_t GetReplayAttackSkippedFrames(
 			flags |= item.state.flags;
 	}
 	if (ranged) {
-		return gameVariant != "Hellfire" && (flags & FastAttackFlag) != 0
+		if (gameVariant == "Hellfire")
+			return 0;
+		uint32_t skippedFrames = includesFirstFrame
+		        && (flags & (QuickAttackFlag | FastAttackFlag)) != 0
 		    ? 1
 		    : 0;
+		if ((flags & FastAttackFlag) != 0)
+			++skippedFrames;
+		return skippedFrames;
 	}
-	if ((flags & (FastestAttackFlag | FasterAttackFlag)) != 0)
-		return 2;
-	return (flags & FastAttackFlag) != 0 ? 1 : 0;
+	if ((flags & FastestAttackFlag) != 0)
+		return includesFirstFrame ? 4 : 2;
+	if ((flags & FasterAttackFlag) != 0)
+		return includesFirstFrame ? 3 : 2;
+	if ((flags & FastAttackFlag) != 0)
+		return includesFirstFrame ? 2 : 1;
+	if ((flags & QuickAttackFlag) != 0)
+		return includesFirstFrame ? 1 : 0;
+	return 0;
 }
 
 bool IsReplayAttackTargetValid(
@@ -5063,10 +5077,14 @@ bool ExecuteReplayFixture(
 			} else if (command.kind == "Attack") {
 				if (fixture.playerActionTiming.defined) {
 					const bool ranged = UsesReplayRangedAttack(state);
+					const bool includesFirstFrame = state.currentAction.defined
+					    && state.currentAction.effectApplied
+					    && (state.combatMode == 4 || state.combatMode == 5);
 					const uint32_t skippedFrames = GetReplayAttackSkippedFrames(
 					    state,
 					    ranged,
-					    fixture.gameVariant);
+					    fixture.gameVariant,
+					    includesFirstFrame);
 					if (CanStartReplayPlayerAction(state, command.order.targetTick)
 					    && IsReplayAttackTargetValid(state, command.targetEntityId, ranged)
 					    && fixture.playerActionTiming.attackActionFrame > skippedFrames
@@ -5095,7 +5113,8 @@ bool ExecuteReplayFixture(
 					accepted = ApplyReplayAttack(
 					    state,
 					    command.targetEntityId,
-					    command.order.targetTick);
+					    command.order.targetTick,
+					    UsesReplayRangedAttack(state));
 				}
 			} else if (command.kind == "Cast") {
 				if (fixture.playerActionTiming.defined) {

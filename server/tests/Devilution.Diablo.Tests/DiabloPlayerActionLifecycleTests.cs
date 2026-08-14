@@ -152,6 +152,104 @@ public sealed class DiabloPlayerActionLifecycleTests
     }
 
     [Fact]
+    public void NativeQuickAttackAddsItsFirstFrameSkipOnlyToChainedMeleeAttacks()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 1000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateCombatProcessor(world, classes, animations);
+        var quickSword = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = 1U << 17,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, quickSword)]);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 10).Succeeded);
+        Assert.Equal((18UL, 19UL, 25UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+
+        processor.AdvanceTick(18, [player]);
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 19).Succeeded);
+        Assert.Equal((26UL, 27UL, 33UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+    }
+
+    [Fact]
+    public void NativeQuickAttackAddsItsFirstFrameSkipToChainedBaseGameBowAttacks()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var target = new AuthoritativeCombatTarget(9, 3, 0, 1000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateCombatProcessor(world, classes, animations);
+        var quickBow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = 1U << 17,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 1,
+            equipment: [new EquippedStoreItem(4, 100, quickBow)]);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 10).Succeeded);
+        Assert.Equal((16UL, 17UL, 21UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+
+        processor.AdvanceTick(16, [player]);
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 17).Succeeded);
+        Assert.Equal((22UL, 23UL, 27UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+
+        var hellfireTarget = new AuthoritativeCombatTarget(10, 3, 0, 1000);
+        var hellfireWorld = new DiabloWorldState(combatTargets: [hellfireTarget]);
+        var hellfireProcessor = CreateCombatProcessor(
+            hellfireWorld,
+            classes,
+            animations,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var hellfirePlayer = CreatePlayer(
+            entityId: 8,
+            characterClassId: 1,
+            equipment: [new EquippedStoreItem(4, 101, quickBow)]);
+
+        Assert.True(hellfireProcessor.Execute(
+            hellfirePlayer,
+            new DiabloAttackIntent(10),
+            10).Succeeded);
+        Assert.Equal((16UL, 17UL, 21UL), (
+            hellfirePlayer.CurrentAction!.EffectTick,
+            hellfirePlayer.CurrentAction.ReadyTick,
+            hellfirePlayer.CurrentAction.EndTick));
+
+        hellfireProcessor.AdvanceTick(16, [hellfirePlayer]);
+        Assert.True(hellfireProcessor.Execute(
+            hellfirePlayer,
+            new DiabloAttackIntent(10),
+            17).Succeeded);
+        Assert.Equal((23UL, 24UL, 28UL), (
+            hellfirePlayer.CurrentAction!.EffectTick,
+            hellfirePlayer.CurrentAction.ReadyTick,
+            hellfirePlayer.CurrentAction.EndTick));
+    }
+
+    [Fact]
     public void BowTimingUsesRangedModeAndHellfireDisablesBaseGameFrameSkipping()
     {
         var (classes, animations) = LoadShippedPlayerMetadata();
