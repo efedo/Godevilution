@@ -43,6 +43,9 @@ All notable changes to this fork are documented below.
   end-to-end player-target coverage for all three supported projectile spells.
 - Verify the same generated protocol in live single-player mode, including the
   mode handshake, single-participant snapshot, and authoritative Firebolt cast.
+- Add live process-restart persistence coverage: a resumed protocol session now
+  restores server-owned movement and class state from the deterministic save
+  identity derived from its resume token.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
