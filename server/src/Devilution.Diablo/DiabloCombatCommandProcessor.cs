@@ -11185,7 +11185,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 rules,
                 allowTruncatedWalletRemainder: false,
-                out _)) {
+                out _,
+                items)) {
             var remainingGold = DropInventoryGold(
                 player,
                 players,
@@ -11213,7 +11214,7 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 itemSeed,
                 stackValue,
-                DiabloGoldInventory.CreateState(stackValue, rules));
+                DiabloGoldInventory.CreateState(stackValue, rules, items));
             droppedGold -= stackValue;
         }
     }
@@ -11296,7 +11297,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         for (var index = 0; index < player.Inventory.Count && amount > 0; index++) {
             var item = player.Inventory[index];
-            if (!DiabloGoldInventory.IsValidStack(item, rules)
+            if (!DiabloGoldInventory.IsValidStack(item, rules, items)
                 || (skipFullStacks
                     && item.Price == checked((uint)rules.DeathGoldMaximumStack))) {
                 continue;
@@ -11309,11 +11310,12 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     itemSeed,
                     amount,
-                    DiabloGoldInventory.CreateState(amount, rules));
+                    DiabloGoldInventory.CreateState(amount, rules, items));
                 player.Inventory[index] = DiabloGoldInventory.WithValue(
                     item,
                     item.Price - amount,
-                    rules);
+                    rules,
+                    items);
                 return 0;
             }
 

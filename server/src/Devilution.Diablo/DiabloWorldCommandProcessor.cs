@@ -550,8 +550,10 @@ public sealed class DiabloWorldCommandProcessor
         if (player.HeldItem is not null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
-        if (item.State.ItemType == combatRules.DeathGoldItemType
-            && item.State.ItemIndex == combatRules.DeathGoldItemIndex) {
+        if (DiabloGoldInventory.HasGoldIdentity(
+                item.State,
+                combatRules,
+                player.Items)) {
             if (item.State.Value <= 0
                 || item.State.Value > combatRules.DeathGoldMaximumStack
                 || item.State.IdentifiedValue != item.State.Value
@@ -564,7 +566,8 @@ public sealed class DiabloWorldCommandProcessor
                     player,
                     combatRules,
                     allowTruncatedWalletRemainder: true,
-                    out var topologyTotal)) {
+                    out var topologyTotal,
+                    player.Items)) {
                 if (uint.MaxValue - topologyTotal < item.Price)
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
                 if (!applyEffects)
@@ -576,7 +579,8 @@ public sealed class DiabloWorldCommandProcessor
                         AllocateGoldStackSeed,
                         allowTruncatedWalletRemainder: true,
                         recalculateWalletFromTopology: true,
-                        out var remainder)) {
+                        out var remainder,
+                        player.Items)) {
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
                 }
                 if (remainder > 0) {

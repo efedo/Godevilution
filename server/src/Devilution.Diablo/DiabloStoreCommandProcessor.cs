@@ -141,7 +141,7 @@ public sealed class DiabloStoreCommandProcessor
 
         if (!TryResolveGoldTopology(player, out var hasGoldTopology))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
-        if (hasGoldTopology && DiabloGoldInventory.HasGoldIdentity(item.State, combatRules))
+        if (hasGoldTopology && DiabloGoldInventory.HasGoldIdentity(item.State, combatRules, items))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
         var salePrice = rules.GetSalePrice(item);
@@ -157,7 +157,8 @@ public sealed class DiabloStoreCommandProcessor
                     combatRules,
                     AllocateGoldStackSeed,
                     allowTruncatedWalletRemainder: true,
-                    recalculateWalletFromTopology: false)) {
+                    recalculateWalletFromTopology: false,
+                    items)) {
                 RestoreItemTopology(player, topology);
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
@@ -464,7 +465,7 @@ public sealed class DiabloStoreCommandProcessor
     {
         if (!TryGetTransfer(player, intent.Item, out var source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (DiabloGoldInventory.HasGoldIdentity(source.State, combatRules)
+        if (DiabloGoldInventory.HasGoldIdentity(source.State, combatRules, items)
             && intent.Destination.Location != DiabloPlayerItemLocation.Inventory) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
@@ -483,7 +484,7 @@ public sealed class DiabloStoreCommandProcessor
             };
             if (!TryGetTransfer(player, destinationReference, out var destination))
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-            if (DiabloGoldInventory.HasGoldIdentity(destination.State, combatRules)
+            if (DiabloGoldInventory.HasGoldIdentity(destination.State, combatRules, items)
                 && intent.Item.Location != DiabloPlayerItemLocation.Inventory) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
@@ -500,7 +501,7 @@ public sealed class DiabloStoreCommandProcessor
             && DestinationSlotOccupied(player, intent.Destination)) {
             if (!TryGetTransfer(player, intent.Destination, out var destination))
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-            if (DiabloGoldInventory.HasGoldIdentity(destination.State, combatRules)
+            if (DiabloGoldInventory.HasGoldIdentity(destination.State, combatRules, items)
                 && intent.Item.Location != DiabloPlayerItemLocation.Inventory) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
@@ -884,9 +885,10 @@ public sealed class DiabloStoreCommandProcessor
             player,
             combatRules,
             allowTruncatedWalletRemainder: true,
-            out _);
+            out _,
+            items);
         return hasGoldTopology || !player.Inventory.Any(
-            item => DiabloGoldInventory.HasGoldIdentity(item.State, combatRules));
+            item => DiabloGoldInventory.HasGoldIdentity(item.State, combatRules, items));
     }
 
     private bool SpendGold(
@@ -899,7 +901,8 @@ public sealed class DiabloStoreCommandProcessor
                 player,
                 value,
                 combatRules,
-                allowTruncatedWalletRemainder: true);
+                allowTruncatedWalletRemainder: true,
+                items);
         if (value > player.Gold)
             return false;
         player.Gold -= value;

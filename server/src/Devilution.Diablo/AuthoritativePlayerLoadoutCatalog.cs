@@ -377,7 +377,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             inventory.Add(DiabloGoldInventory.CreateStack(
                 itemSeed,
                 stackValue,
-                combatRules));
+                combatRules,
+                items));
             InventoryGridLayout.Fill(
                 inventoryGrid,
                 cell,

@@ -1339,8 +1339,7 @@ public sealed partial class DiabloSimulation
     private bool IsMalformedGoldWorldItem(DiabloWorldItemState item)
     {
         var state = item.State;
-        if (state.ItemType != CombatRules.DeathGoldItemType
-            || state.ItemIndex != CombatRules.DeathGoldItemIndex) {
+        if (!DiabloGoldInventory.HasGoldIdentity(state, CombatRules, Items)) {
             return false;
         }
         return state.Value <= 0
@@ -1964,8 +1963,8 @@ public sealed partial class DiabloSimulation
                     heldItem.ItemSeed,
                     heldItem.State.CreateInfo,
                     heldItem.State.ItemIndex))
-                || (DiabloGoldInventory.HasGoldIdentity(heldItem.State, CombatRules)
-                    && !DiabloGoldInventory.IsValidStack(heldItem, CombatRules)))) {
+                || (DiabloGoldInventory.HasGoldIdentity(heldItem.State, CombatRules, Items)
+                    && !DiabloGoldInventory.IsValidStack(heldItem, CombatRules, Items)))) {
             throw new InvalidDataException(
                 "The authoritative save contains an invalid or duplicate held item.");
         }

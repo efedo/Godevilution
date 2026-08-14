@@ -9,18 +9,20 @@ internal static class DiabloGoldInventory
         AuthoritativePlayerState player,
         AuthoritativeCombatRules rules,
         bool allowTruncatedWalletRemainder,
-        out uint total)
+        out uint total,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(rules);
 
         var found = false;
         var sum = 0U;
+        items ??= player.Items;
         for (var index = 0; index < player.Inventory.Count; index++) {
             var item = player.Inventory[index];
-            if (!HasGoldIdentity(item.State, rules))
+            if (!HasGoldIdentity(item.State, rules, items))
                 continue;
-            if (!IsValidStack(item, rules)
+            if (!IsValidStack(item, rules, items)
                 || InventoryGridLayout.FindAnchor(player.InventoryGrid, index) < 0) {
                 total = 0;
                 return false;
@@ -48,10 +50,17 @@ internal static class DiabloGoldInventory
 
     public static bool HasGoldIdentity(
         AuthoritativeItemState state,
-        AuthoritativeCombatRules rules)
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(rules);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
+            && (definition.GenerationTags.Contains("Gold")
+                || definition.GenerationTags.Contains("Currency"))) {
+            return true;
+        }
         return state.ItemType == rules.DeathGoldItemType
             && state.ItemIndex == rules.DeathGoldItemIndex;
     }
@@ -61,7 +70,8 @@ internal static class DiabloGoldInventory
         AuthoritativePlayerState player,
         uint value,
         AuthoritativeCombatRules rules,
-        bool allowTruncatedWalletRemainder = false)
+        bool allowTruncatedWalletRemainder = false,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(rules);
@@ -70,13 +80,14 @@ internal static class DiabloGoldInventory
                 player,
                 rules,
                 allowTruncatedWalletRemainder,
-                out _)) {
+                out _,
+                items)) {
             return false;
         }
 
         var remaining = value;
-        SpendPass(player, rules, skipMaximumPiles: true, ref remaining);
-        SpendPass(player, rules, skipMaximumPiles: false, ref remaining);
+        SpendPass(player, rules, skipMaximumPiles: true, ref remaining, items);
+        SpendPass(player, rules, skipMaximumPiles: false, ref remaining, items);
         if (remaining != 0)
             throw new InvalidOperationException("Validated Gold topology could not satisfy the spend.");
         player.Gold -= value;
@@ -93,7 +104,8 @@ internal static class DiabloGoldInventory
         AuthoritativeCombatRules rules,
         Func<uint> allocateItemSeed,
         bool allowTruncatedWalletRemainder,
-        bool recalculateWalletFromTopology)
+        bool recalculateWalletFromTopology,
+        AuthoritativeItemCatalog? items = null)
     {
         return TryAddCore(
                 player,
@@ -102,6 +114,7 @@ internal static class DiabloGoldInventory
                 allocateItemSeed,
                 allowTruncatedWalletRemainder,
                 recalculateWalletFromTopology,
+                items,
                 requireFullCapacity: true,
                 out var remainder)
             && remainder == 0;
@@ -118,7 +131,8 @@ internal static class DiabloGoldInventory
         Func<uint> allocateItemSeed,
         bool allowTruncatedWalletRemainder,
         bool recalculateWalletFromTopology,
-        out uint remainder)
+        out uint remainder,
+        AuthoritativeItemCatalog? items = null)
     {
         return TryAddCore(
             player,
@@ -127,6 +141,7 @@ internal static class DiabloGoldInventory
             allocateItemSeed,
             allowTruncatedWalletRemainder,
             recalculateWalletFromTopology,
+            items,
             requireFullCapacity: false,
             out remainder);
     }
@@ -138,6 +153,7 @@ internal static class DiabloGoldInventory
         Func<uint> allocateItemSeed,
         bool allowTruncatedWalletRemainder,
         bool recalculateWalletFromTopology,
+        AuthoritativeItemCatalog? items,
         bool requireFullCapacity,
         out uint remainder)
     {
@@ -149,7 +165,8 @@ internal static class DiabloGoldInventory
                 player,
                 rules,
                 allowTruncatedWalletRemainder,
-                out var topologyTotal)
+                out var topologyTotal,
+                items)
             || uint.MaxValue - topologyTotal < value) {
             return false;
         }
@@ -157,7 +174,7 @@ internal static class DiabloGoldInventory
         var maximumStack = checked((uint)rules.DeathGoldMaximumStack);
         var capacity = 0UL;
         foreach (var candidate in player.Inventory) {
-            if (IsValidStack(candidate, rules))
+            if (IsValidStack(candidate, rules, items ?? player.Items))
                 capacity += maximumStack - candidate.Price;
         }
         var emptyCells = EnumerateNativePlacementCells(player.InventoryGrid)
@@ -172,13 +189,15 @@ internal static class DiabloGoldInventory
         var remainingToPlace = accepted;
         for (var index = 0; index < player.Inventory.Count && remainingToPlace > 0; index++) {
             var candidate = player.Inventory[index];
-            if (!IsValidStack(candidate, rules) || candidate.Price == maximumStack)
+            if (!IsValidStack(candidate, rules, items ?? player.Items)
+                || candidate.Price == maximumStack)
                 continue;
             var added = Math.Min(remainingToPlace, maximumStack - candidate.Price);
             player.Inventory[index] = WithValue(
                 candidate,
                 candidate.Price + added,
-                rules);
+                rules,
+                items ?? player.Items);
             remainingToPlace -= added;
         }
 
@@ -190,7 +209,8 @@ internal static class DiabloGoldInventory
             player.Inventory.Add(CreateStack(
                 AllocateNonzeroSeed(allocateItemSeed),
                 stackValue,
-                rules));
+                rules,
+                items ?? player.Items));
             InventoryGridLayout.Fill(
                 player.InventoryGrid,
                 cell,
@@ -211,12 +231,13 @@ internal static class DiabloGoldInventory
 
     public static bool IsValidStack(
         OwnedStoreItem item,
-        AuthoritativeCombatRules rules)
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(rules);
         return item.ItemSeed != 0
-            && HasGoldIdentity(item.State, rules)
+            && HasGoldIdentity(item.State, rules, items)
             && item.State.Value > 0
             && item.State.Value <= rules.DeathGoldMaximumStack
             && item.State.IdentifiedValue == item.State.Value
@@ -229,7 +250,8 @@ internal static class DiabloGoldInventory
     public static OwnedStoreItem CreateStack(
         uint itemSeed,
         uint value,
-        AuthoritativeCombatRules rules)
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
     {
         if (itemSeed == 0)
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
@@ -241,15 +263,16 @@ internal static class DiabloGoldInventory
             itemSeed,
             value,
             0,
-            CreateState(value, rules));
+            CreateState(value, rules, items));
     }
 
     public static OwnedStoreItem WithValue(
         OwnedStoreItem item,
         uint value,
-        AuthoritativeCombatRules rules)
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
     {
-        if (!IsValidStack(item, rules))
+        if (!IsValidStack(item, rules, items))
             throw new ArgumentException("The item is not a valid Gold stack.", nameof(item));
         if (value == 0 || value > rules.DeathGoldMaximumStack)
             throw new ArgumentOutOfRangeException(nameof(value));
@@ -264,15 +287,27 @@ internal static class DiabloGoldInventory
 
     public static AuthoritativeItemState CreateState(
         uint value,
-        AuthoritativeCombatRules rules)
+        AuthoritativeCombatRules rules,
+        AuthoritativeItemCatalog? items = null)
     {
         if (value == 0 || value > rules.DeathGoldMaximumStack)
             throw new ArgumentOutOfRangeException(nameof(value));
+        var itemType = rules.DeathGoldItemType;
+        var itemIndex = rules.DeathGoldItemIndex;
+        if (items is not null) {
+            var definition = items.Definitions.FirstOrDefault(item =>
+                item.GenerationTags.Contains("Gold")
+                || item.GenerationTags.Contains("Currency"));
+            if (definition is not null) {
+                itemType = definition.ItemType;
+                itemIndex = definition.NativeItemIndex;
+            }
+        }
         return AuthoritativeItemState.Empty with {
-            ItemType = rules.DeathGoldItemType,
+            ItemType = itemType,
             Value = checked((int)value),
             IdentifiedValue = checked((int)value),
-            ItemIndex = rules.DeathGoldItemIndex,
+            ItemIndex = itemIndex,
             StatFlag = true,
         };
     }
@@ -281,12 +316,13 @@ internal static class DiabloGoldInventory
         AuthoritativePlayerState player,
         AuthoritativeCombatRules rules,
         bool skipMaximumPiles,
-        ref uint remaining)
+        ref uint remaining,
+        AuthoritativeItemCatalog? items)
     {
         var maximumStack = checked((uint)rules.DeathGoldMaximumStack);
         for (var index = 0; index < player.Inventory.Count && remaining > 0;) {
             var candidate = player.Inventory[index];
-            if (!IsValidStack(candidate, rules)
+            if (!IsValidStack(candidate, rules, items ?? player.Items)
                 || (skipMaximumPiles && candidate.Price == maximumStack)) {
                 index++;
                 continue;
@@ -295,7 +331,8 @@ internal static class DiabloGoldInventory
                 player.Inventory[index] = WithValue(
                     candidate,
                     candidate.Price - remaining,
-                    rules);
+                    rules,
+                    items ?? player.Items);
                 remaining = 0;
                 return;
             }

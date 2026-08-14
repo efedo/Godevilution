@@ -1031,6 +1031,42 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.Empty(player.Equipment);
     }
 
+    [Fact]
+    public void SemanticGoldTagGuardsAStackFromStoreTransfer()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100);
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\n"
+                + "25\t99\t0\t0\tGold\t0\n");
+        var state = AuthoritativeItemState.Empty with {
+            ItemType = 99,
+            ItemIndex = 0,
+            Value = 100,
+            IdentifiedValue = 100,
+            StatFlag = true,
+        };
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[39] = 0;
+        var player = CreatePlayer(
+            gold: 100,
+            inventory: [new OwnedStoreItem(0, 0, 101, 100, 0, state)],
+            inventoryGrid: grid,
+            items: items);
+        var processor = new DiabloStoreCommandProcessor(
+            CreateCatalog(),
+            combatRules: rules,
+            items: items);
+
+        Assert.True(processor.Execute(player, new DiabloOpenStoreIntent(1), 0).Succeeded);
+        var result = processor.Execute(player, new DiabloSellItemIntent(null, 0), 1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Equal(100U, player.Gold);
+        Assert.Single(player.Inventory);
+    }
+
     private static StoreCatalog CreateCatalog(params StoreItem[] items)
     {
         var catalog = new StoreCatalog();
@@ -1048,7 +1084,8 @@ public sealed class DiabloStoreCommandProcessorTests
         IReadOnlyList<BeltStoreItem>? belt = null,
         PlayerAttributesState? attributes = null,
         AuthoritativePlayerClassDefinition? playerClass = null,
-        DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None)
+        DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
+        AuthoritativeItemCatalog? items = null)
     {
         return new AuthoritativePlayerState(
             gold,
@@ -1068,7 +1105,8 @@ public sealed class DiabloStoreCommandProcessorTests
             0,
             inventory: inventory,
             playerClass: playerClass,
-            abilityKind: abilityKind);
+            abilityKind: abilityKind,
+            items: items);
     }
 
     private static AuthoritativePlayerClassDefinition LoadWarriorClass()

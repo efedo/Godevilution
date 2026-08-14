@@ -179,7 +179,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.MonsterSpawnPlanner,
             options.ProceduralMonsterSpawns,
             options.RandomSeed,
-            options.GameMode);
+            options.GameMode,
+            options.Items);
     }
 }
 
@@ -215,7 +216,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns = null,
         uint proceduralMonsterSeed = 0,
-        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        AuthoritativeItemCatalog? items = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -231,6 +233,7 @@ public sealed partial class DiabloSimulation
         this.proceduralMonsterSpawns = proceduralMonsterSpawns?.Validate();
         this.proceduralMonsterSeed = proceduralMonsterSeed;
         this.gameMode = gameMode;
+        Items = items;
         ReconcileProceduralSpawnState();
     }
 
@@ -245,6 +248,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated content rules governing this Diablo simulation instance. */
     public AuthoritativeCombatRules CombatRules { get; }
+
+    /** Validated item definitions used by snapshot and world identity checks. */
+    public AuthoritativeItemCatalog? Items { get; }
 
     public uint RandomState => random.State;
 
