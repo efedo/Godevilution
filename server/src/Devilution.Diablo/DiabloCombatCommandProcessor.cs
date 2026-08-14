@@ -5488,11 +5488,16 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi != "Snake"
-            || distance != 2
             || monsterMissiles is null
             || !monsterMissiles.TryGet("Snake", out var missile)
             || missile.MissileId != "Rhino"
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge)
+            return false;
+
+        var chargeDistance = missile.ChargeMinimumDistance > 0
+            ? missile.ChargeMinimumDistance
+            : 2;
+        if (distance != chargeDistance)
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>

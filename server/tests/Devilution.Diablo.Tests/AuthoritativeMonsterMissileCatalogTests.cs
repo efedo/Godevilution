@@ -103,6 +103,20 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedSnakeChargeDistance()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tcharge_minimum_distance\n"
+                + "Snake\tRhino\tSnakeCharge\t3\n");
+
+        Assert.True(catalog.TryGet("Snake", out var snakeCharge));
+        Assert.Equal(3, snakeCharge.ChargeMinimumDistance);
+        Assert.Equal(0, snakeCharge.ChargeChanceBase);
+        Assert.Equal(0, snakeCharge.ChargeChanceIntelligenceScale);
+    }
+
+    [Fact]
     public void RejectsAnOutOfRangeAvoidanceProbability()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -135,6 +149,13 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 "BloodStar",
                 AuthoritativeProjectileBehavior.BloodStar,
                 ChargeMinimumDistance: 5),
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Snake",
+                "Rhino",
+                AuthoritativeProjectileBehavior.SnakeCharge,
+                ChargeChanceBase: 33),
         ]));
     }
 

@@ -73,7 +73,12 @@ public sealed class AuthoritativeMonsterMissileCatalog
                         && (definition.ChargeMinimumDistance <= 0
                             || definition.ChargeChanceBase <= 0
                             || definition.ChargeChanceIntelligenceScale <= 0)))
-                || (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge
+                || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
+                    && (definition.ChargeChanceBase != 0
+                        || definition.ChargeChanceIntelligenceScale != 0))
+                || (definition.ProjectileBehavior is not (
+                        AuthoritativeProjectileBehavior.BatCharge
+                        or AuthoritativeProjectileBehavior.SnakeCharge)
                     && (definition.ChargeMinimumDistance != 0
                         || definition.ChargeChanceBase != 0
                         || definition.ChargeChanceIntelligenceScale != 0))

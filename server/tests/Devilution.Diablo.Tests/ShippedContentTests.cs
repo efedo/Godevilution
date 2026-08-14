@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.117.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.118.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -113,6 +113,7 @@ public sealed class ShippedContentTests
         Assert.Equal("Rhino", snake.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, snake.ProjectileBehavior);
         Assert.Null(snake.DamageType);
+        Assert.Equal(2, snake.ChargeMinimumDistance);
         Assert.True(activation.MonsterMissiles.TryGet("Bat", 42, out var gloom));
         Assert.Equal("Rhino", gloom.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BatCharge, gloom.ProjectileBehavior);
@@ -164,7 +165,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.117.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.118.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);

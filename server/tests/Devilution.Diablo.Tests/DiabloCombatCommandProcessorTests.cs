@@ -3563,6 +3563,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeUsesValidatedChargeDistanceTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    ChargeMinimumDistance: 3),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void GloomUsesItsMonsterSpecificRhinoMappingForMovementOnlyCharge()
     {
         var monster = new AuthoritativeCombatTarget(
