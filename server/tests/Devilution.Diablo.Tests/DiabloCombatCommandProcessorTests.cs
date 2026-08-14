@@ -4833,6 +4833,115 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ChargedBoltCastAdmitsAndResolvesAnAuthoritativePlayerTarget()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateChargedBoltSpell()]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(30, 2)]);
+        var target = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                30,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(994, caster.Mana);
+        Assert.Equal(5, world.Projectiles.Count);
+        Assert.Equal(6400, target.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 1; tick <= 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [caster, target]));
+
+        Assert.True(target.Life < 6400);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == caster.EntityId
+                && delivery.Event.TargetEntityId == target.EntityId);
+    }
+
+    [Fact]
+    public void BoneSpiritCastAdmitsAndResolvesAnAuthoritativePlayerTarget()
+    {
+        var world = new DiabloWorldState();
+        var spell = CreateBoneSpiritSpell();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            entityId: 7,
+            life: 1280,
+            lifeMaximum: 1280,
+            mana: 2000,
+            manaMaximum: 2000,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(38, 2)]);
+        var target = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                38,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Single(result.Events);
+        Assert.Single(world.Projectiles);
+        Assert.Equal(528, caster.Mana);
+        Assert.Equal(896, caster.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 1; tick <= 64 && target.Life == 6400; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [caster, target]));
+
+        Assert.True(target.Life < 6400);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == caster.EntityId
+                && delivery.Event.TargetEntityId == target.EntityId);
+    }
+
+    [Fact]
     public void AbilityCastRequiresOwnedAbilityAndConsumesNoMana()
     {
         var spells = new AuthoritativeSpellCatalog([
@@ -9425,6 +9534,24 @@ public sealed class DiabloCombatCommandProcessorTests
             RandomMagicDamageDivisor = 4,
             ResistantDamageDivisor = 4,
             ProjectileImpactLifetime = 8,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateBoneSpiritSpell()
+    {
+        return new AuthoritativeSpellDefinition(38, 24, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileSpeed = 16,
+            ProjectileLifetime = 256,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.BoneSpirit,
+            ManaAdjustment = 1,
+            ManaAdjustmentDivisor = 1,
+            MinimumManaCost = 12,
+            ManaCostScale = 64,
+            ResistantDamageDivisor = 4,
+            ProjectileImpactLifetime = 7,
+            SelfDamage = 6,
         };
     }
 
