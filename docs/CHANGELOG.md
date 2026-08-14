@@ -89,6 +89,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.95's optional Acid puddle-duration terms, moving the native
   random-plus-intelligence puddle lifetime into validated content while
   preserving the legacy formula fallback.
+- Add schema 1.96's optional Acid puddle-damage threshold and values, moving
+  the native level-based damage rule into validated content while preserving
+  compatibility defaults.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
