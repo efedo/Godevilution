@@ -20,6 +20,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.125's optional Zombie random-direction chance tuning, moving its
   native `20 + 2 * intelligence` movement-prepend chance into validated monster
   type content while preserving legacy target behavior.
+- Add schema 1.126's mapped-charge trajectory activation, routing Snake and Bat
+  through validated missile projectile speed/lifetime fields while preserving
+  legacy 18-speed/256-tick defaults for older rows.
 - Route the GoatRanged Arrow path through schema 1.120's validated
   ranged-retreat tuning so its dedicated dispatch shares the server-owned
   generic close-range boundary.

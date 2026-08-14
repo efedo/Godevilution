@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.125.0` schema in
+It declares its identity and `devilution.diablo@1.126.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1242,7 +1242,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.125.0"
+      "version": "1.126.0"
   },
   "dependencyConstraints": [
     {
@@ -1274,7 +1274,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.125.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.126.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1412,6 +1412,11 @@ retain the native compatibility values.
 Schema 1.125 adds optional Zombie random-direction chance columns to
 `monster_types.tsv`; checked-in Zombie rows own their `20 + 2 * intelligence`
 movement-prepend chance while older rows retain the native compatibility values.
+The active Snake `Rhino` and Bat `Rhino` missile rows also supply the mapped
+charge projectile speed and lifetime through the existing validated projectile
+columns; older rows retain the native speed-18, lifetime-256 defaults.
+Schema 1.126 records this activation of the existing projectile columns for
+mapped charges.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
