@@ -5473,7 +5473,9 @@ public sealed class DiabloCombatCommandProcessor
             definition.ProjectileBehavior == missile.ProjectileBehavior
                 || missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterChargedBolt
                     && definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChargedBolt);
-        var spellId = spell?.SpellId
+        var spellId = missile.SpellId != 0
+            ? missile.SpellId
+            : spell?.SpellId
             ?? (missile.ProjectileBehavior switch {
                 AuthoritativeProjectileBehavior.Fireball => 12U,
                 AuthoritativeProjectileBehavior.Lightning => 3U,
@@ -5735,8 +5737,9 @@ public sealed class DiabloCombatCommandProcessor
             areaRadius: 0,
             checked((uint)Math.Max(1, distance)),
             allowZeroSpellId: true) {
-            // The content row retains the native Targeted mapping; the module
-            // resolves it to this explicit server-owned monster lifecycle.
+            // The content row selects the native Arrow identity; the module
+            // resolves both explicit MonsterArrow rows and legacy Targeted
+            // overlays to this server-owned monster lifecycle.
             Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
             Speed = 1,
             ImpactLifetime = 1,

@@ -3209,7 +3209,8 @@ public sealed class DiabloCombatCommandProcessorTests
             new AuthoritativeMonsterMissileDefinition(
                 "FireBat",
                 "Firebolt",
-                AuthoritativeProjectileBehavior.Firebolt),
+                AuthoritativeProjectileBehavior.Firebolt,
+                SpellId: 52),
         ]);
         var processor = CreateProcessor(
             world,
@@ -3229,7 +3230,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
         Assert.Equal(9U, projectile.SourceEntityId);
-        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal(52U, projectile.SpellId);
         Assert.Equal(100, player.Life);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();

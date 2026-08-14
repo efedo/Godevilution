@@ -16,7 +16,8 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     AuthoritativeProjectileBehavior ProjectileBehavior,
     AuthoritativeMonsterRangedAttackMode AttackMode = AuthoritativeMonsterRangedAttackMode.Ranged,
     int AvoidanceProbabilityPercent = 100,
-    uint MonsterId = 0);
+    uint MonsterId = 0,
+    uint SpellId = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -87,7 +88,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 behavior,
                 ParseAttackMode(row),
                 row.OptionalInt32("avoidance_probability_percent", 100),
-                row.OptionalUInt32("monster_id"));
+                row.OptionalUInt32("monster_id"),
+                row.OptionalUInt32("spell_id"));
         }));
     }
 

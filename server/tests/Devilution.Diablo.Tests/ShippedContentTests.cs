@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.90.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.91.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -46,6 +46,7 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles!.TryGet("Succubus", out var succubus));
         Assert.Equal("BloodStar", succubus.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
+        Assert.Equal(36U, succubus.SpellId);
         Assert.True(activation.MonsterMissiles.TryGet("Lich", out var lich));
         Assert.Equal("OrangeFlare", lich.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, lich.ProjectileBehavior);
@@ -64,15 +65,18 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Storm", out var storm));
         Assert.Equal("ThinLightningControl", storm.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Lightning, storm.ProjectileBehavior);
+        Assert.Equal(3U, storm.SpellId);
         Assert.True(activation.MonsterMissiles.TryGet("Diablo", out var diablo));
         Assert.Equal("DiabloApocalypse", diablo.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, diablo.ProjectileBehavior);
+        Assert.Equal(25U, diablo.SpellId);
         Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magma));
         Assert.Equal("MagmaBall", magma.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, magma.ProjectileBehavior);
         Assert.True(activation.MonsterMissiles.TryGet("Mega", out var mega));
         Assert.Equal("InfernoControl", mega.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.InfernoController, mega.ProjectileBehavior);
+        Assert.Equal(21U, mega.SpellId);
         Assert.True(activation.MonsterMissiles.TryGet("Acid", out var acid));
         Assert.Equal("Acid", acid.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.ProjectileBehavior);
@@ -97,6 +101,7 @@ public sealed class ShippedContentTests
         Assert.Equal(("ChargedBolt", AuthoritativeProjectileBehavior.MonsterChargedBolt), (
             counselorChargedBolt.MissileId,
             counselorChargedBolt.ProjectileBehavior));
+        Assert.Equal(30U, counselorChargedBolt.SpellId);
         Assert.True(activation.MonsterMissiles.TryGet("Counselor", 109, out var counselorLightning));
         Assert.Equal(("LightningControl", AuthoritativeProjectileBehavior.Lightning), (
             counselorLightning.MissileId,
@@ -131,7 +136,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.90.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.91.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
