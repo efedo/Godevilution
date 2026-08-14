@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select SkeletonMelee movement-delay and adjacent attack admission from
+  complete validated tuning tuples rather than requiring the `SkeletonMelee`
+  native-AI name; legacy rows without tuning retain native-name compatibility
+  defaults.
 - Select Rhino charge admission from a complete validated tuning tuple rather
   than requiring the `Rhino` native-AI name; legacy rows without tuning retain
   the native-name compatibility defaults.

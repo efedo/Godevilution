@@ -143,7 +143,9 @@ native 1–15 compatibility range.
 The optional `skeleton_melee_delay_chance_base` and
 `skeleton_melee_delay_chance_intelligence_scale` columns externalize the
 SkeletonMelee movement-delay band. Legacy monster rows retain the native
-base-thirty-five, intelligence-scale-four compatibility values.
+base-thirty-five, intelligence-scale-four compatibility values. A complete
+positive tuple selects the behavior regardless of the row's `native_ai` label;
+rows without migrated tuning retain the native-name compatibility path.
 The optional `goat_melee_movement_chance_base` and
 `goat_melee_movement_chance_intelligence_scale` columns externalize the
 GoatMelee non-adjacent movement admission band. Legacy monster rows retain the
@@ -369,7 +371,8 @@ attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
 The `SkeletonMelee` identity now consumes the validated adjacent attack band
 (`20 + 2 * intelligence` in the checked-in rows) while older rows retain the
-native compatibility formula.
+native compatibility formula. A complete positive attack tuple selects the
+behavior regardless of the row's `native_ai` label.
 The `Gargoyle` identity now owns the native wounded self-heal boundary: once the
 monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 `max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
@@ -1494,6 +1497,7 @@ choice modulo while older rows retain the native compatibility values.
 Schema 1.122 adds optional SkeletonMelee adjacent attack-band columns to
 `monster_types.tsv`; checked-in SkeletonMelee rows own their `20 + 2 *
 intelligence` admission while older rows retain the native compatibility values.
+Complete positive tuples are selected independently of the `native_ai` label.
 Schema 1.123 adds optional GoatMelee adjacent attack-band columns to
 `monster_types.tsv`; checked-in GoatMelee rows own their `23 + 2 * intelligence`
 admission while older rows retain the native compatibility values.

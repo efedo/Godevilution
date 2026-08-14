@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- SkeletonMelee movement-delay and adjacent attack admission now use complete
+  validated tuning tuples independent of the row's native-AI label; rows
+  without migrated tuning retain the native-name compatibility path.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
