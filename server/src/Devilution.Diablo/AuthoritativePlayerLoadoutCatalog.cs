@@ -553,21 +553,7 @@ public sealed class AuthoritativePlayerLoadoutCatalog
     }
 
     private static bool IsShield(AuthoritativeItemDefinition item)
-    {
-        if (item.GenerationTags.Contains("Shield"))
-            return true;
-        if (HasExplicitEquipmentSubtype(item.GenerationTags))
-            return false;
-        return item.ItemType == 5;
-    }
-
-    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Shield")
-            || tags.Contains("Staff");
+        => AuthoritativeItemClassification.IsShield(item);
 
     private static DiabloPlayerLoadoutItemLocation ParseLocation(TsvRow row)
     {

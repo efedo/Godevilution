@@ -73,22 +73,13 @@ public static class AuthoritativeEquipmentStatRules
         AuthoritativeItemState state,
         AuthoritativeItemCatalog? items)
     {
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
-            if (definition.GenerationTags.Contains("LightArmor"))
-                return ArmorSubtype.Light;
-            if (definition.GenerationTags.Contains("MediumArmor"))
-                return ArmorSubtype.Medium;
-            if (definition.GenerationTags.Contains("HeavyArmor"))
-                return ArmorSubtype.Heavy;
-        }
-
-        return state.ItemType switch {
-            6 => ArmorSubtype.Light,
-            8 => ArmorSubtype.Medium,
-            9 => ArmorSubtype.Heavy,
-            _ => ArmorSubtype.None,
-        };
+        if (AuthoritativeItemClassification.IsLightArmor(state, items))
+            return ArmorSubtype.Light;
+        if (AuthoritativeItemClassification.IsMediumArmor(state, items))
+            return ArmorSubtype.Medium;
+        if (AuthoritativeItemClassification.IsHeavyArmor(state, items))
+            return ArmorSubtype.Heavy;
+        return ArmorSubtype.None;
     }
 
     private enum ArmorSubtype

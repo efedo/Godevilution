@@ -1039,7 +1039,7 @@ public sealed class DiabloCombatCommandProcessor
             var state = equippedItem.State;
             if (!IsUsable(state)
                 || (state.Magical != 0 && !state.Identified)
-                || state.ItemClass != 1
+                || !AuthoritativeItemClassification.IsWeapon(state, items)
                 || (state.HellfireDamageArmorFlags
                     & AuthoritativeEquipmentIncomingDamageRules.DecayFlag) == 0) {
                 continue;
@@ -11529,56 +11529,33 @@ public sealed class DiabloCombatCommandProcessor
             .Where(item => item.Slot is 4 or 5 && IsUsable(item.State))
             .OrderBy(item => item.Slot)
             .ToArray();
-        var hasShield = hands.Any(item => HasEquipmentTag(item.State, "Shield", 5));
+        var hasShield = hands.Any(item => AuthoritativeItemClassification.IsShield(item.State, items));
         var weapon = hands.FirstOrDefault(item => AuthoritativeItemClassification.IsWeapon(item.State, items)
-            && !HasEquipmentTag(item.State, "Shield", 5));
+            && !AuthoritativeItemClassification.IsShield(item.State, items));
         if (weapon is null)
             return hasShield
                 ? DiabloPlayerAttackAnimationProfile.UnarmedShield
                 : DiabloPlayerAttackAnimationProfile.Unarmed;
 
         var state = weapon.State;
-        if (HasEquipmentTag(state, "Sword", 1))
+        if (AuthoritativeItemClassification.IsSword(state, items))
             return hasShield
                 ? DiabloPlayerAttackAnimationProfile.SwordShield
                 : DiabloPlayerAttackAnimationProfile.Sword;
-        if (HasEquipmentTag(state, "Axe", 2))
+        if (AuthoritativeItemClassification.IsAxe(state, items))
             return DiabloPlayerAttackAnimationProfile.Axe;
-        if (HasEquipmentTag(state, "Bow", 3))
+        if (AuthoritativeItemClassification.IsBow(state, items))
             return DiabloPlayerAttackAnimationProfile.Bow;
-        if (HasEquipmentTag(state, "Mace", 4))
+        if (AuthoritativeItemClassification.IsMace(state, items))
             return hasShield
                 ? DiabloPlayerAttackAnimationProfile.MaceShield
                 : DiabloPlayerAttackAnimationProfile.Mace;
-        if (HasEquipmentTag(state, "Staff", 10))
+        if (AuthoritativeItemClassification.IsStaff(state, items))
             return DiabloPlayerAttackAnimationProfile.Staff;
         return hasShield
             ? DiabloPlayerAttackAnimationProfile.UnarmedShield
             : DiabloPlayerAttackAnimationProfile.Unarmed;
     }
-
-    private bool HasEquipmentTag(
-        AuthoritativeItemState state,
-        string tag,
-        int legacyItemType)
-    {
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
-            if (definition.GenerationTags.Contains(tag))
-                return true;
-            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-                return false;
-        }
-        return state.ItemType == legacyItemType;
-    }
-
-    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Shield")
-            || tags.Contains("Staff");
 
     private int GetAttackSkippedFrames(
         AuthoritativePlayerState player,
@@ -11637,13 +11614,13 @@ public sealed class DiabloCombatCommandProcessor
     {
         var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
         var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
-        if (IsUsableType(left, "Shield", 5) || IsUsableType(right, "Shield", 5))
+        if (IsUsableShield(left) || IsUsableShield(right))
             return true;
 
         var playerClass = GetPlayerClass(player);
         if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.FlexibleBlock) != true)
             return false;
-        if (IsUsableType(left, "Staff", 10) || IsUsableType(right, "Staff", 10))
+        if (IsUsableStaff(left) || IsUsableStaff(right))
             return true;
         if (left is null && right is null)
             return true;
@@ -11717,16 +11694,20 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
         var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
-        return IsUsableType(left, "Staff", 10) || IsUsableType(right, "Staff", 10);
+        return IsUsableStaff(left) || IsUsableStaff(right);
     }
 
-    private bool IsUsableType(
-        EquippedStoreItem? item,
-        string tag,
-        int legacyItemType)
+    private bool IsUsableShield(EquippedStoreItem? item)
     {
         return item is not null
-            && HasEquipmentTag(item.State, tag, legacyItemType)
+            && AuthoritativeItemClassification.IsShield(item.State, items)
+            && IsUsable(item.State);
+    }
+
+    private bool IsUsableStaff(EquippedStoreItem? item)
+    {
+        return item is not null
+            && AuthoritativeItemClassification.IsStaff(item.State, items)
             && IsUsable(item.State);
     }
 

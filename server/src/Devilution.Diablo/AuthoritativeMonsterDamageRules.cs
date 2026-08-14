@@ -22,38 +22,14 @@ public static class AuthoritativeMonsterDamageRules
                 && item.State.StatFlag
                 && item.Slot is 4 or 5)
             .ToArray();
-        if (handItems.Any(item => HasItemTag(item.State, items, "Mace", 4)))
+        if (handItems.Any(item => AuthoritativeItemClassification.IsMace(item.State, items)))
             return undead
                 ? checked(damage + damage / 2)
                 : damage - damage / 2;
-        if (handItems.Any(item => HasItemTag(item.State, items, "Sword", 1)))
+        if (handItems.Any(item => AuthoritativeItemClassification.IsSword(item.State, items)))
             return undead
                 ? damage - damage / 2
                 : checked(damage + damage / 2);
         return damage;
     }
-
-    private static bool HasItemTag(
-        AuthoritativeItemState state,
-        AuthoritativeItemCatalog? items,
-        string tag,
-        int legacyItemType)
-    {
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
-            if (definition.GenerationTags.Contains(tag))
-                return true;
-            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-                return false;
-        }
-        return state.ItemType == legacyItemType;
-    }
-
-    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Shield")
-            || tags.Contains("Staff");
 }

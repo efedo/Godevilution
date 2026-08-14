@@ -47,6 +47,122 @@ public static class AuthoritativeItemClassification
         return state.ItemType == 10;
     }
 
+    public static bool IsShield(AuthoritativeItemDefinition definition)
+        => HasSubtype(definition, "Shield", 5);
+
+    public static bool IsShield(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasSubtype(state, items, "Shield", 5);
+
+    public static bool IsSword(AuthoritativeItemDefinition definition)
+        => HasSubtype(definition, "Sword", 1);
+
+    public static bool IsSword(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasSubtype(state, items, "Sword", 1);
+
+    public static bool IsAxe(AuthoritativeItemDefinition definition)
+        => HasSubtype(definition, "Axe", 2);
+
+    public static bool IsAxe(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasSubtype(state, items, "Axe", 2);
+
+    public static bool IsMace(AuthoritativeItemDefinition definition)
+        => HasSubtype(definition, "Mace", 4);
+
+    public static bool IsMace(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasSubtype(state, items, "Mace", 4);
+
+    public static bool IsBow(AuthoritativeItemDefinition definition)
+        => HasSubtype(definition, "Bow", 3);
+
+    public static bool IsBow(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasSubtype(state, items, "Bow", 3);
+
+    public static bool IsLightArmor(AuthoritativeItemDefinition definition)
+        => HasArmorSubtype(definition, "LightArmor", 6);
+
+    public static bool IsLightArmor(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasArmorSubtype(state, items, "LightArmor", 6);
+
+    public static bool IsMediumArmor(AuthoritativeItemDefinition definition)
+        => HasArmorSubtype(definition, "MediumArmor", 8);
+
+    public static bool IsMediumArmor(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasArmorSubtype(state, items, "MediumArmor", 8);
+
+    public static bool IsHeavyArmor(AuthoritativeItemDefinition definition)
+        => HasArmorSubtype(definition, "HeavyArmor", 9);
+
+    public static bool IsHeavyArmor(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items = null)
+        => HasArmorSubtype(state, items, "HeavyArmor", 9);
+
+    private static bool HasSubtype(
+        AuthoritativeItemDefinition definition,
+        string tag,
+        int legacyItemType)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        if (definition.GenerationTags.Contains(tag))
+            return true;
+        if (HasExplicitEquipmentSubtype(definition.GenerationTags))
+            return false;
+        return definition.ItemType == legacyItemType;
+    }
+
+    private static bool HasSubtype(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items,
+        string tag,
+        int legacyItemType)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return HasSubtype(definition, tag, legacyItemType);
+        return state.ItemType == legacyItemType;
+    }
+
+    private static bool HasArmorSubtype(
+        AuthoritativeItemDefinition definition,
+        string tag,
+        int legacyItemType)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        if (definition.GenerationTags.Contains(tag))
+            return true;
+        if (HasExplicitArmorSubtype(definition.GenerationTags))
+            return false;
+        return definition.ItemType == legacyItemType;
+    }
+
+    private static bool HasArmorSubtype(
+        AuthoritativeItemState state,
+        AuthoritativeItemCatalog? items,
+        string tag,
+        int legacyItemType)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (items is not null
+            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            return HasArmorSubtype(definition, tag, legacyItemType);
+        return state.ItemType == legacyItemType;
+    }
+
     private static bool HasWeaponSubtype(IReadOnlySet<string> tags)
         => tags.Contains("Weapon")
             || tags.Contains("Sword")
@@ -58,4 +174,9 @@ public static class AuthoritativeItemClassification
     private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
         => HasWeaponSubtype(tags)
             || tags.Contains("Shield");
+
+    private static bool HasExplicitArmorSubtype(IReadOnlySet<string> tags)
+        => tags.Contains("LightArmor")
+            || tags.Contains("MediumArmor")
+            || tags.Contains("HeavyArmor");
 }

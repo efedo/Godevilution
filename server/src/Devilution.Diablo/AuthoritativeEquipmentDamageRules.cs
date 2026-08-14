@@ -30,12 +30,12 @@ public static class AuthoritativeEquipmentDamageRules
             .Where(item => item.Slot is 4 or 5)
             .Select(item => item.State)
             .ToArray();
-        var hasShield = handItems.Any(item => HasItemTag(item, items, "Shield", 5));
-        var hasStaff = handItems.Any(item => HasItemTag(item, items, "Staff", 10));
-        var hasBow = handItems.Any(item => HasItemTag(item, items, "Bow", 3));
-        var hasSword = handItems.Any(item => HasItemTag(item, items, "Sword", 1));
-        var hasAxe = handItems.Any(item => HasItemTag(item, items, "Axe", 2));
-        var hasMace = handItems.Any(item => HasItemTag(item, items, "Mace", 4));
+        var hasShield = handItems.Any(item => AuthoritativeItemClassification.IsShield(item, items));
+        var hasStaff = handItems.Any(item => AuthoritativeItemClassification.IsStaff(item, items));
+        var hasBow = handItems.Any(item => AuthoritativeItemClassification.IsBow(item, items));
+        var hasSword = handItems.Any(item => AuthoritativeItemClassification.IsSword(item, items));
+        var hasAxe = handItems.Any(item => AuthoritativeItemClassification.IsAxe(item, items));
+        var hasMace = handItems.Any(item => AuthoritativeItemClassification.IsMace(item, items));
 
         if (minimumDamage == 0 && maximumDamage == 0) {
             minimumDamage = 1;
@@ -85,30 +85,6 @@ public static class AuthoritativeEquipmentDamageRules
             maximumDamage,
             damageModifier);
     }
-
-    private static bool HasItemTag(
-        AuthoritativeItemState state,
-        AuthoritativeItemCatalog? items,
-        string tag,
-        int legacyItemType)
-    {
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)) {
-            if (definition.GenerationTags.Contains(tag))
-                return true;
-            if (HasExplicitEquipmentSubtype(definition.GenerationTags))
-                return false;
-        }
-        return state.ItemType == legacyItemType;
-    }
-
-    private static bool HasExplicitEquipmentSubtype(IReadOnlySet<string> tags)
-        => tags.Contains("Sword")
-            || tags.Contains("Axe")
-            || tags.Contains("Mace")
-            || tags.Contains("Bow")
-            || tags.Contains("Shield")
-            || tags.Contains("Staff");
 
     private static int CalculateBarbarianModifier(
         int level,
