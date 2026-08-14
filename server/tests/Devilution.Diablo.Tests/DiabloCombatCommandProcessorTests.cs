@@ -4289,6 +4289,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesValidatedMonsterTypeMovementTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            monsterId: 1,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "GoatMelee",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Goat",
+                1,
+                16,
+                1,
+                1,
+                40,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "GoatMelee",
+                GoatMeleeMovementChanceBase = 10,
+                GoatMeleeMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void SkeletonMeleeAiUsesItsNativeAdjacentAttackBand()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -215,6 +215,37 @@ public sealed class AuthoritativeMonsterCatalogTests
             skeleton.SkeletonMeleeDelayChanceIntelligenceScale));
     }
 
+    [Fact]
+    public void RejectsInvalidGoatMeleeTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "GoatMelee",
+                GoatMeleeMovementChanceBase = 28,
+                GoatMeleeMovementChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                GoatMeleeMovementChanceBase = 28,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsGoatMeleeTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tgoat_melee_movement_chance_base\tgoat_melee_movement_chance_intelligence_scale\n"
+                + "2\t0\tGoat\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tGoatMelee\t31\t3\n");
+
+        var goat = Assert.Single(catalog.Definitions);
+        Assert.Equal((31, 3), (
+            goat.GoatMeleeMovementChanceBase,
+            goat.GoatMeleeMovementChanceIntelligenceScale));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

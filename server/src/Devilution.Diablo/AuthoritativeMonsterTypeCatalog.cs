@@ -89,6 +89,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native SkeletonMelee movement-delay chance reduction per intelligence point. */
     public int SkeletonMeleeDelayChanceIntelligenceScale { get; init; }
+
+    /** Native GoatMelee movement admission chance base before intelligence scaling. */
+    public int GoatMeleeMovementChanceBase { get; init; }
+
+    /** Native GoatMelee movement admission chance increase per intelligence point. */
+    public int GoatMeleeMovementChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -189,6 +195,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "SkeletonMelee"
                     && (definition.SkeletonMeleeDelayChanceBase != 0
                         || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0))
+                || definition.GoatMeleeMovementChanceBase is < 0 or > 100
+                || definition.GoatMeleeMovementChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "GoatMelee"
+                    && ((definition.GoatMeleeMovementChanceBase != 0
+                            || definition.GoatMeleeMovementChanceIntelligenceScale != 0)
+                        && (definition.GoatMeleeMovementChanceBase <= 0
+                            || definition.GoatMeleeMovementChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "GoatMelee"
+                    && (definition.GoatMeleeMovementChanceBase != 0
+                        || definition.GoatMeleeMovementChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -284,6 +300,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 BatAttackChanceIntelligenceScale = row.OptionalInt32("bat_attack_chance_intelligence_scale"),
                 SkeletonMeleeDelayChanceBase = row.OptionalInt32("skeleton_melee_delay_chance_base"),
                 SkeletonMeleeDelayChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_delay_chance_intelligence_scale"),
+                GoatMeleeMovementChanceBase = row.OptionalInt32("goat_melee_movement_chance_base"),
+                GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
             }));
     }
 

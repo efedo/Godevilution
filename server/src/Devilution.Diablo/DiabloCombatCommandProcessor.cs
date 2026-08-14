@@ -4661,11 +4661,15 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monster.NativeAi != "GoatMelee" || distance <= 1)
+        var goatTuning = GetGoatMeleeMovementTuning(monster);
+        if (!goatTuning.HasValue || distance <= 1)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+        var movementChance = Math.Min(
+            100,
+            goatTuning.Value.ChanceBase
+                + (goatTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)movementChance)
             return true;
 
@@ -5032,6 +5036,24 @@ public sealed class DiabloCombatCommandProcessor
         }
         return target.NativeAi == "SkeletonMelee"
             ? (35, 4)
+            : null;
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeMovementTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "GoatMelee")
+                return null;
+            if (definition.GoatMeleeMovementChanceBase > 0
+                && definition.GoatMeleeMovementChanceIntelligenceScale > 0) {
+                return (
+                    definition.GoatMeleeMovementChanceBase,
+                    definition.GoatMeleeMovementChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "GoatMelee"
+            ? (28, 2)
             : null;
     }
 
