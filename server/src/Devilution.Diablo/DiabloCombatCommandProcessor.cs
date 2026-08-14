@@ -3794,7 +3794,11 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceSkeletonRangedRetreat(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
+                continue;
+            if (target.NativeAi == "SkeletonRanged" && distance <= 1)
                 continue;
             if (distance <= 1) {
                 if (IsPlayerProtectedByFlash(victim)
@@ -5005,7 +5009,34 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native SkeletonBow AI: fire an arrow when its deterministic attack band and lane are clear. */
+    /** Native SkeletonBow AI retreats when close before considering its arrow. */
+    private bool TryAdvanceSkeletonRangedRetreat(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (monster.NativeAi != "SkeletonRanged" || distance >= 4)
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var retreatChance = Math.Min(100, 13 + (2 * monster.Intelligence));
+        if ((actionSeed / 100U) % 100U >= (uint)retreatChance)
+            return false;
+
+        var retreat = FindGoatRangedRetreatDestination(
+            monster,
+            player,
+            players,
+            distance);
+        if (!retreat.HasValue)
+            return false;
+        monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+        return true;
+    }
+
+    /** Native SkeletonBow AI keeps a clear-lane monster ranged-only. */
     private bool TryAdvanceSkeletonRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -5016,23 +5047,24 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monster.NativeAi != "SkeletonRanged"
             || !HasValidatedArrowMapping(monster.NativeAi)
-            || distance < 2
             || monster.ToHit <= 0
-            || monster.MaxDamage <= 0
-            || IsPlayerProtectedByFlash(player)
-            || IsPlayerEtherealized(player))
+            || monster.MaxDamage <= 0)
             return false;
+
+        if (IsPlayerProtectedByFlash(player) || IsPlayerEtherealized(player))
+            return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var attackChance = Math.Min(100, 3 + (2 * monster.Intelligence));
-        if (attackSeed % 100U >= (uint)attackChance
-            || !world.HasLineOfSight(
+        if (!world.HasLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
             return false;
+        if (attackSeed % 100U >= (uint)attackChance)
+            return true;
 
         return ApplyNativeRangedAttack(
             monster,

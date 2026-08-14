@@ -1870,6 +1870,71 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonRangedAiRetreatsInsideItsNativeFourTileBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 2 ^ 9 ^ 7 = 12; the native retreat admission uses the second draw.
+        Assert.Empty(processor.AdvanceTick(2, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.True(monster.FuturePositionX < monster.PositionX);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void SkeletonRangedAiNeverFallsThroughToAdjacentMelee()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1400 ^ 9 ^ 7 = 1418: no retreat and no 3% ranged admission.
+        Assert.Empty(processor.AdvanceTick(1400, [player]));
+        Assert.Equal(100, player.Life);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void SnakeAiCreatesAValidatedRhinoChargeAndResolvesSpecialDamage()
     {
         var monster = new AuthoritativeCombatTarget(

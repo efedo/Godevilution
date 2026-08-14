@@ -47,6 +47,8 @@ Status date: 2026-08-14
   authoritative melee path.
 - Native SkeletonMelee movement now uses the server-owned `35 - 4 * intelligence`
   admission band, delaying or navigating deterministically before shared melee.
+- Native SkeletonRanged now has a server-owned four-tile retreat boundary and
+  ranged-only idle path; generic melee is no longer admitted for validated bows.
 - Native Stone Curse now retains a defeated petrified target through its
   authoritative shatter phase; ordinary defeated monsters become persisted
   corpse tiles, and snapshots preserve the distinction between the two states.
