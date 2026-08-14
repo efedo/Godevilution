@@ -2567,7 +2567,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "SkeletonMelee",
+                NativeAi = "Fallen",
                 SkeletonMeleeDelayChanceBase = 10,
                 SkeletonMeleeDelayChanceIntelligenceScale = 1,
             },
@@ -6036,7 +6036,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "SkeletonMelee",
+                NativeAi = "Fallen",
                 SkeletonMeleeAttackChanceBase = 10,
                 SkeletonMeleeAttackChanceIntelligenceScale = 1,
             },

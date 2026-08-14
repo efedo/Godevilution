@@ -5221,8 +5221,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "SkeletonMelee")
-                return null;
             if (definition.SkeletonMeleeDelayChanceBase > 0
                 && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0) {
                 return (
@@ -5239,8 +5237,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "SkeletonMelee")
-                return null;
             if (definition.SkeletonMeleeAttackChanceBase > 0
                 && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0) {
                 return (

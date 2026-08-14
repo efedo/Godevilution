@@ -340,24 +340,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && definition.BatRetreatDurationTicks != 0)
                 || definition.SkeletonMeleeDelayChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeDelayChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "SkeletonMelee"
-                    && ((definition.SkeletonMeleeDelayChanceBase != 0
-                            || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0)
-                        && (definition.SkeletonMeleeDelayChanceBase <= 0
-                            || definition.SkeletonMeleeDelayChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "SkeletonMelee"
-                    && (definition.SkeletonMeleeDelayChanceBase != 0
-                        || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0))
+                || ((definition.SkeletonMeleeDelayChanceBase != 0
+                        || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0)
+                    && (definition.SkeletonMeleeDelayChanceBase <= 0
+                        || definition.SkeletonMeleeDelayChanceIntelligenceScale <= 0))
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "SkeletonMelee"
-                    && ((definition.SkeletonMeleeAttackChanceBase != 0
-                            || definition.SkeletonMeleeAttackChanceIntelligenceScale != 0)
-                        && (definition.SkeletonMeleeAttackChanceBase <= 0
-                            || definition.SkeletonMeleeAttackChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "SkeletonMelee"
-                    && (definition.SkeletonMeleeAttackChanceBase != 0
-                        || definition.SkeletonMeleeAttackChanceIntelligenceScale != 0))
+                || ((definition.SkeletonMeleeAttackChanceBase != 0
+                        || definition.SkeletonMeleeAttackChanceIntelligenceScale != 0)
+                    && (definition.SkeletonMeleeAttackChanceBase <= 0
+                        || definition.SkeletonMeleeAttackChanceIntelligenceScale <= 0))
                 || definition.GoatMeleeMovementChanceBase is < 0 or > 100
                 || definition.GoatMeleeMovementChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "GoatMelee"
