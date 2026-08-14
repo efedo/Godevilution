@@ -1417,6 +1417,46 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterAttackAppliesNativeThornsAfterThePlayerHit()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            1,
+            100,
+            levelId: 0,
+            maxHitPoints: 100,
+            attackDamage: 20,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(1));
+        var player = CreatePlayer(
+            positionY: 0,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
+                })]);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(30, player.Life);
+        Assert.InRange(monster.HitPoints, 97, 99);
+        Assert.Equal(2, deliveries.Count);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 9, 7, 20),
+            deliveries[0].Event);
+        Assert.Equal(7U, deliveries[1].Event.SourceEntityId);
+        Assert.Equal(9U, deliveries[1].Event.TargetEntityId);
+        Assert.InRange(deliveries[1].Event.Amount, 1, 3);
+    }
+
+    [Fact]
     public void LethalMonsterAttackDropsAndClearsTheAuthoritativeHeldItem()
     {
         var monster = new AuthoritativeCombatTarget(

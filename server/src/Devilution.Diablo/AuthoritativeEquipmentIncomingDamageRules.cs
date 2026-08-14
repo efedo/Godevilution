@@ -3,6 +3,9 @@ namespace Devilution.Diablo;
 /** Native usable equipment modifiers applied to incoming physical player damage. */
 public static class AuthoritativeEquipmentIncomingDamageRules
 {
+    /** Native ItemSpecialEffect::Thorns flag. */
+    public const uint ThornsFlag = 1U << 26;
+
     /** Native Hellfire ItemSpecialEffectHf::Devastation flag. */
     public const int DevastationFlag = 1 << 0;
 

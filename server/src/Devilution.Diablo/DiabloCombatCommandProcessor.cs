@@ -3889,6 +3889,22 @@ public sealed class DiabloCombatCommandProcessor
                             victim.EntityId,
                             damageResult.IncomingDamageQ6)));
                 }
+                // Native thorns retaliates after a successful monster hit,
+                // before the player death check, and uses one 1..3 Q6 roll.
+                if (damage > 0
+                    && target.HitPointsQ6 > 0
+                    && HasUsableEquipmentFlag(
+                        victim,
+                        AuthoritativeEquipmentIncomingDamageRules.ThornsFlag)) {
+                    var thornsEvents = new List<DiabloGameplayEvent>();
+                    ApplyResolvedDamageQ6(
+                        victim,
+                        target,
+                        DiabloFixedPointQ6.FromWhole(random.RandomIntBetween(1, 3)),
+                        thornsEvents);
+                    foreach (var thornsEvent in thornsEvents)
+                        events.Add(new DiabloDirectedGameplayEvent(victim, thornsEvent));
+                }
                 if (victim.Life == 0)
                     StartPlayerDeath(
                         victim,
@@ -3896,9 +3912,9 @@ public sealed class DiabloCombatCommandProcessor
                         tick,
                         players,
                         PlayerDeathReason.MonsterOrTrap);
-                else if (damage > 0)
+                else if (damage > 0 && target.HitPointsQ6 > 0)
                     ApplyMonsterKnockback(target, victim, players);
-                if (target.NativeAi == "Bat")
+                if (target.NativeAi == "Bat" && target.HitPointsQ6 > 0)
                     target.StartBatRetreat(GetDirection(
                         target.PositionX,
                         target.PositionY,

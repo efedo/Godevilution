@@ -260,6 +260,9 @@ Hellfire `Decay` reduces eligible hand weapons' damage bonus by five in native
 order after an authoritative attack and removes a weapon at the native -100
 threshold; the server preserves the separate hit roll even when post-armor
 damage is zero.
+Hellfire `THORNS` retaliates after a successful autonomous monster hit with a
+server-owned native 1-3 physical damage roll against the surviving monster;
+the reaction occurs before player death handling and blocked knockback.
 The `CriticalStrike` class flag enables the native class rule for eligible
 player attacks: after a successful hit, the server consumes one level-based
 roll and doubles physical damage before armor and downstream class/item

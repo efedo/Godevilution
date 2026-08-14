@@ -128,6 +128,9 @@ Status date: 2026-08-14
   weapons in native order, subtracting five damage-bonus points and removing a
   weapon at -100; hit resolution is kept separate from post-armor damage so
   zero-damage hits still preserve native decay behavior.
+- Hellfire `THORNS` is now server-owned: eligible usable equipment retaliates
+  against a surviving monster after a successful autonomous hit using the
+  native 1-3 Q6 roll, before player death handling and knockback.
 - Native class `CriticalStrike` is now authoritative for eligible player
   attacks: the level-based roll is consumed only after a successful hit and
   doubles physical damage before armor and later class/item effects. The shared

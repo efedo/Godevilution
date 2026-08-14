@@ -476,7 +476,9 @@ public sealed class AuthoritativeItemAffixCatalog
                 FireMaxDamage = 0,
             },
             "MULT_ARROWS" => state with { Flags = state.Flags | 0x00000200U },
-            "THORNS" => state with { Flags = state.Flags | 0x04000000U },
+            "THORNS" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
+            },
             "NOMANA" => state with { Flags = state.Flags | 0x08000000U },
             "ABSHALFTRAP" => state with { Flags = state.Flags | 0x10000000U },
             "KNOCKBACK" => state with { Flags = state.Flags | 0x00000800U },

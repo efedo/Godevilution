@@ -17,6 +17,8 @@ All notable changes to this fork are documented below.
   and quest completion trigger through validated monster and item content.
 - Add schema 1.90's validated unique-monster catalog and opaque protocol/save
   identity, binding Defiler quest completion to the native unique identity.
+- Apply externalized Hellfire `THORNS` equipment through the authoritative
+  monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

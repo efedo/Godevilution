@@ -353,7 +353,9 @@ public sealed class AuthoritativeUniqueItemCatalog
             "FASTRECOVER" => state with { Flags = state.Flags | (power.Value1 switch { 1 => 0x00200000U, 2 => 0x00400000U, _ => 0x00800000U }) },
             "FASTBLOCK" => state with { Flags = state.Flags | 0x01000000U },
             "KNOCKBACK" => state with { Flags = state.Flags | 0x00000800U },
-            "THORNS" => state with { Flags = state.Flags | 0x04000000U },
+            "THORNS" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
+            },
             "3XDAMVDEM" => state with { Flags = state.Flags | 0x40000000U },
             "ABSHALFTRAP" => state with { Flags = state.Flags | 0x10000000U },
             "ALLRESZERO" => state with { Flags = state.Flags | 0x80000000U },
