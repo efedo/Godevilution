@@ -1613,6 +1613,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireBatAiFiresTheValidatedFireboltProjectile()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "FireBat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var spells = new AuthoritativeSpellCatalog([CreateFireboltSpell()]);
+        var monsterMissiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "FireBat",
+                "Firebolt",
+                AuthoritativeProjectileBehavior.Firebolt),
+        ]);
+        var processor = CreateProcessor(
+            world,
+            spells,
+            random: new DiabloRandom(0),
+            monsterMissiles: monsterMissiles);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
+        Assert.Equal(9U, projectile.SourceEntityId);
+        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal(100, player.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(player.Life < 100);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
+        Assert.Equal(3 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
+    }
+
+    [Fact]
     public void GoatRangedAiAvoidsAPlayerInsideItsNativeFourTileBoundary()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -6944,7 +6999,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativePlayerAnimationCatalog? playerAnimations = null,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
-        DiabloWorldCommandProcessor? worldCommands = null)
+        DiabloWorldCommandProcessor? worldCommands = null,
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -6959,7 +7015,8 @@ public sealed class DiabloCombatCommandProcessorTests
             playerAnimations,
             gameMode: gameMode,
             items: items,
-            worldCommands: worldCommands);
+            worldCommands: worldCommands,
+            monsterMissiles: monsterMissiles);
     }
 
     private static AuthoritativeSpellDefinition CreateTelekinesisSpell()

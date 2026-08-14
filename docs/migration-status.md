@@ -146,6 +146,9 @@ Status date: 2026-08-13
   each native AI's retained missile ID and projectile behavior; unsupported
   controllers remain explicitly `Targeted` until their server-owned behavior
   is migrated, and clients never dispatch these mappings.
+- The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
+  mapping and resolves server-owned projectile travel plus native
+  monster-to-player magic hit, resistance, block, and Q6 damage rules.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

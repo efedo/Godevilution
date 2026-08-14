@@ -3728,6 +3728,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
+            if (TryAdvanceFireBatRangedAttack(target, victim, tick, players, distance))
+                continue;
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, events, distance))
                 continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, events, distance))
@@ -4059,6 +4061,86 @@ public sealed class DiabloCombatCommandProcessor
             .ThenBy(candidate => candidate.X)
             .ToArray();
         return candidates.Length == 0 ? null : candidates[0];
+    }
+
+    /** Native AiRanged Firebolt dispatch for Fire Bat monsters. */
+    private bool TryAdvanceFireBatRangedAttack(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance)
+    {
+        if (monster.NativeAi != "FireBat"
+            || monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.Firebolt)
+            return false;
+
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt))
+            return true;
+
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < 4
+            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
+            var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
+            if (retreat.HasValue) {
+                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+                return true;
+            }
+        }
+
+        if (!world.HasMissileLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return true;
+
+        var spell = spells.Definitions.FirstOrDefault(definition =>
+            definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Firebolt);
+        var spellId = spell?.SpellId ?? 1U;
+        var speed = spell?.ProjectileSpeed > 0 ? spell.ProjectileSpeed : 26;
+        var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+        var damageType = spell?.DamageType ?? AuthoritativeDamageType.Fire;
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            speed);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            spellId,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            damageType,
+            0,
+            checked((uint)lifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
     }
 
     /** Native AiRanged Blood Star dispatch for Succubus-family monsters. */
@@ -6955,7 +7037,14 @@ public sealed class DiabloCombatCommandProcessor
             if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar
                 && projectile.TargetEntityId != 0
                 && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
-                playerStopsProjectile = TryResolveMonsterBloodStarPlayerHit(
+                playerStopsProjectile = TryResolveMonsterMagicProjectilePlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events);
+            } else if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                playerStopsProjectile = TryResolveMonsterMagicProjectilePlayerHit(
                     tick,
                     projectile,
                     playerTarget,
@@ -7051,8 +7140,8 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native PlayerMHit magic branch for a monster-owned Blood Star. */
-    private bool TryResolveMonsterBloodStarPlayerHit(
+    /** Native PlayerMHit magic branch for a monster-owned non-arrow missile. */
+    private bool TryResolveMonsterMagicProjectilePlayerHit(
         ulong tick,
         AuthoritativeProjectile projectile,
         AuthoritativePlayerState target,
