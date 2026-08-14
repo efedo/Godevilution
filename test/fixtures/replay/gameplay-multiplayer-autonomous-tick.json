@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/multiplayer-autonomous-tick",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "multiplayer-autonomous-tick-fixture"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 2,
+    "secondary_player": {
+      "player": "B",
+      "character_name": "Second",
+      "entity_id": 8,
+      "life": 80,
+      "life_maximum": 80,
+      "position_x": 5,
+      "position_y": 5,
+      "level_id": 1,
+      "character_level": 3,
+      "character_class": 1,
+      "magic": 10,
+      "dexterity": 10
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 3,
+    "combat_target_aggro_range": 2,
+    "combat_target_monster_level": 4
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 10,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "579fbd99fb7c372baf433e211d0f1aaee0b13197d338135e7718a47c4151d8a8" },
+    { "tick": 2, "state_sha256": "68cc9999d9ffe2c73dd93c6e7ed79887021b272f1b38c6418e20f37dd647853b" },
+    { "tick": 10, "state_sha256": "fa9d41f97c69d2b40d9e4c5149b5bd50b8b04c3f6447074290bf051265ca9604" }
+  ]
+}

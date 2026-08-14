@@ -991,6 +991,7 @@ public sealed class ReplayFixtureTests
             startingPositionX: fixture.InitialState.PositionX,
             startingPositionY: fixture.InitialState.PositionY,
             startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
             startingCombatTargets: [target],
             startingRandomSeed: checked((uint)fixture.RngSeed));
 
@@ -1006,6 +1007,52 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
         Assert.Equal(fixture.Checkpoints[^1].StateSha256, result.FinalSnapshot.StateSha256);
         Assert.Equal(305419896U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void GameplayMultiplayerAutonomousTickMatchesNativeParticipantHashes()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-multiplayer-autonomous-tick.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            attackDamage: fixture.InitialState.CombatTargetAttackDamage,
+            aggroRange: fixture.InitialState.CombatTargetAggroRange,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(DiabloGameMode.Multiplayer, fixture.GameMode);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, 8U], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(73, result.FinalSnapshot.Players[0].Life);
+        Assert.Equal(80, result.FinalSnapshot.Players[1].Life);
+        Assert.Equal(10UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
     [Fact]
