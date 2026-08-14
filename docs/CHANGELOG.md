@@ -29,6 +29,9 @@ All notable changes to this fork are documented below.
 - Add a shared elemental-equipment replay fixture, carrying native fire and
   lightning item fields through both runners and matching the post-hit
   resistance and RNG checkpoint.
+- Route ranged attacks through native `FireArrows` and `LightningArrows`
+  channels, while retaining `FireDamage` and `LightningDamage` for melee;
+  add a shared arrow-only replay checkpoint.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

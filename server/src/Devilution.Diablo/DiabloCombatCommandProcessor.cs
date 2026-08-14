@@ -354,7 +354,13 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         if (!useNativePlayerActionTiming)
-            return ResolveAttack(player, targetEntityId, appliedTick, players: players);
+            return ResolveAttack(
+                player,
+                targetEntityId,
+                appliedTick,
+                ranged: GetAttackAnimationProfile(player)
+                    == DiabloPlayerAttackAnimationProfile.Bow,
+                players: players);
         if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
@@ -435,7 +441,7 @@ public sealed class DiabloCombatCommandProcessor
         }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
         if (attackHit && target.HitPointsQ6 > 0)
-            ApplyEquipmentElementalDamage(player, target, events);
+            ApplyEquipmentElementalDamage(player, target, events, ranged);
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
@@ -450,11 +456,13 @@ public sealed class DiabloCombatCommandProcessor
     private void ApplyEquipmentElementalDamage(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
-        ICollection<DiabloGameplayEvent> events)
+        ICollection<DiabloGameplayEvent> events,
+        bool ranged)
     {
         var elemental = AuthoritativeEquipmentElementalDamageRules.Resolve(
             player.Equipment,
-            random.GenerateRnd);
+            random.GenerateRnd,
+            ranged);
         if (elemental.Fire > 0) {
             var fireDamage = rules.ResolveDamage(
                 elemental.Fire,

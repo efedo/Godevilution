@@ -25,7 +25,8 @@ public static class AuthoritativeEquipmentElementalDamageRules
      */
     public static ElementalDamage Resolve(
         IEnumerable<EquippedStoreItem> equipment,
-        Func<int, int> generateRnd)
+        Func<int, int> generateRnd,
+        bool ranged = false)
     {
         ArgumentNullException.ThrowIfNull(equipment);
         ArgumentNullException.ThrowIfNull(generateRnd);
@@ -34,17 +35,19 @@ public static class AuthoritativeEquipmentElementalDamageRules
         var fireMaximum = 0;
         var lightningMinimum = 0;
         var lightningMaximum = 0;
+        var fireFlag = ranged ? FireArrowsFlag : FireDamageFlag;
+        var lightningFlag = ranged ? LightningArrowsFlag : LightningDamageFlag;
         foreach (var equippedItem in equipment) {
             ArgumentNullException.ThrowIfNull(equippedItem);
             var state = equippedItem.State;
             if (!state.StatFlag || (state.Magical != 0 && !state.Identified))
                 continue;
 
-            if ((state.Flags & FireDamageFlag) != 0) {
+            if ((state.Flags & fireFlag) != 0) {
                 fireMinimum = checked(fireMinimum + Math.Max(0, state.FireMinDamage));
                 fireMaximum = checked(fireMaximum + Math.Max(0, state.FireMaxDamage));
             }
-            if ((state.Flags & LightningDamageFlag) != 0) {
+            if ((state.Flags & lightningFlag) != 0) {
                 lightningMinimum = checked(
                     lightningMinimum + Math.Max(0, state.LightningMinDamage));
                 lightningMaximum = checked(

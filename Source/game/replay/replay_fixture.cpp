@@ -26,6 +26,8 @@ constexpr uint32_t FasterAttackFlag = 1U << 19;
 constexpr uint32_t FastestAttackFlag = 1U << 20;
 constexpr uint32_t FireDamageFlag = 1U << 4;
 constexpr uint32_t LightningDamageFlag = 1U << 5;
+constexpr uint32_t FireArrowsFlag = 1U << 3;
+constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr std::pair<int32_t, int32_t> DirectionDisplacements[] = {
 	{ 1, 1 },
 	{ 0, 1 },
@@ -2509,14 +2511,14 @@ bool ApplyReplayAttack(
 	const int32_t fireDamage = ApplyReplayElementalResistance(
 	    ResolveReplayElementalDamage(
 	        state,
-	        FireDamageFlag,
+	        ranged ? FireArrowsFlag : FireDamageFlag,
 	        &ReplayFixtureItemState::fireMinDamage,
 	        &ReplayFixtureItemState::fireMaxDamage),
 	    state.combatTargetFireResistance);
 	const int32_t lightningDamage = ApplyReplayElementalResistance(
 	    ResolveReplayElementalDamage(
 	        state,
-	        LightningDamageFlag,
+	        ranged ? LightningArrowsFlag : LightningDamageFlag,
 	        &ReplayFixtureItemState::lightningMinDamage,
 	        &ReplayFixtureItemState::lightningMaxDamage),
 	    state.combatTargetLightningResistance);
