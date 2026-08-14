@@ -262,6 +262,9 @@ Status date: 2026-08-14
   `mana_spell_percent`; shipped classes now own Sorcerer 200-percent and
   Rogue/Bard 150-percent scaling, while legacy class rows default to 100
   percent.
+- Schema 1.99 externalizes the Hellfire melee armor reduction through
+  `melee_armor_reduction_divisor`; shipped classes now own the Barbarian
+  divisor of 8, while legacy class rows retain the disabled-rule default.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

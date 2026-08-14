@@ -98,6 +98,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.98's optional `mana_spell_percent` class tuning, moving the
   native Mana spell class multiplier into validated content while preserving
   the 100-percent compatibility default.
+- Add schema 1.99's optional `melee_armor_reduction_divisor` class tuning,
+  moving the native Hellfire Barbarian melee armor rule into validated content
+  while preserving the disabled-rule compatibility default.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
