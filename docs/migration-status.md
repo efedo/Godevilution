@@ -64,6 +64,11 @@ Status date: 2026-08-14
   retained native item index; conflicting duplicate mappings are rejected and
   legacy item-type classification remains the compatibility fallback.
 
+- Equipment subtype classification is now centralized in one content-first
+  helper used by player attack profiles, block eligibility, Hellfire weapon
+  decay, loadout validation, equipment damage, armor scaling, and monster
+  weapon modifiers; metadata-free states retain their native item-type fallback.
+
 - Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`, and
   `Staff` subtype tags to base and Hellfire item rows; player and monster
   weapon modifiers consume those tags before falling back to native item type.

@@ -965,8 +965,10 @@ classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
 matching uses the normalized `spell_id` and no longer depends on native
 miscellaneous-ID ranges for current packs. The content ID remains the key for
 catalog references and overlays; native row/index values must not become
-authoritative identities. Loadout validation, native player attack timing, and
-weapon-class damage consume these subtype tags at the server boundary. The
+authoritative identities. Loadout validation, native player attack timing,
+weapon-class damage, armor subtype scaling, and block eligibility consume these
+subtype tags through the shared authoritative item-classification seam at the
+server boundary. The
 base pack assigns stable ID `24` to the native
 ear definition. Its victim-derived name and cursor are runtime state carried by
 the generic item snapshot rather than localized catalog text.
@@ -1561,6 +1563,9 @@ checked-in base and Hellfire rows declare their weapon, bow, shield, staff, Gold
 and
 available armor categories, while older rows retain native item-type compatibility
 behavior.
+The authoritative server centralizes these tag-first subtype decisions for
+combat, armor, loadout, and monster rules; direct legacy states still use their
+native item-type fallback.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

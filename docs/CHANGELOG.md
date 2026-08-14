@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
 
 - Make general store recharge validation consult validated `Staff` tags from
   the active item catalog before legacy item-type/miscellaneous-ID fallback.
+- Centralize content-first equipment subtype classification for player combat,
+  block eligibility, Hellfire weapon decay, loadouts, armor scaling, and monster
+  weapon modifiers while retaining native item-type fallback for legacy state.
 - Centralize content-first weapon classification for attack-animation selection,
   Monk flexible blocking, and loadout off-hand validation; conflicting legacy
   item classes now follow validated `Weapon`/subtype tags with numeric fallback.
