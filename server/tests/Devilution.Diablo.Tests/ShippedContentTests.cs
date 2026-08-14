@@ -79,6 +79,9 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("SkeletonRanged", out var skeletonRanged));
         Assert.Equal("Arrow", skeletonRanged.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Targeted, skeletonRanged.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Snake", out var snake));
+        Assert.Equal("Rhino", snake.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, snake.ProjectileBehavior);
     }
 
     [Fact]

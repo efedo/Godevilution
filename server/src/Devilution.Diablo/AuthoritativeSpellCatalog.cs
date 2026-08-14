@@ -63,6 +63,8 @@ public enum AuthoritativeProjectileBehavior
     AcidSplat = 52,
     /** Native persistent Acid puddle that checks players every active tick. */
     AcidPuddle = 53,
+    /** Native Snake Rhino charge controller that moves the source monster. */
+    SnakeCharge = 54,
 }
 
 /** Declarative spell tuning consumed by authoritative cast resolution. */

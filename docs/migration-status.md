@@ -178,6 +178,9 @@ Status date: 2026-08-13
 - Native `GoatRanged` and `SkeletonRanged` now require validated `Arrow`
   identities from `monster_missiles.tsv` before their server-owned clear-lane
   ranged boundaries execute.
+- Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
+  clear two-tile charge controller, monster movement, special physical damage,
+  blocking, and Q6 event resolution.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

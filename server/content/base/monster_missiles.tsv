@@ -1,6 +1,7 @@
 native_ai	missile_id	projectile_behavior
 GoatRanged	Arrow	Targeted
 SkeletonRanged	Arrow	Targeted
+Snake	Rhino	SnakeCharge
 Succubus	BloodStar	BloodStar
 LazarusSuccubus	BloodStar	BloodStar
 Acid	Acid	Acid

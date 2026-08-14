@@ -34,6 +34,8 @@ All notable changes to this fork are documented below.
 - Validate native `Arrow` identities for `GoatRanged` and `SkeletonRanged`
   through the active server monster-missile catalog before their authoritative
   ranged attack boundaries execute.
+- Route native `Snake` Rhino charges through a validated server-owned charge
+  controller with native movement, special damage, blocking, and Q6 hit rules.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

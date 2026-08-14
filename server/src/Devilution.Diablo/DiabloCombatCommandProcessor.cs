@@ -3750,6 +3750,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceSnakeAi(target, victim, distance))
+                continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
@@ -4051,6 +4053,70 @@ public sealed class DiabloCombatCommandProcessor
             events,
             distance,
             attackSeed);
+    }
+
+    /** Native SnakeAi starts a Rhino controller only from a clear two-tile lane. */
+    private bool TryAdvanceSnakeAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        int distance)
+    {
+        if (monster.NativeAi != "Snake"
+            || distance != 2
+            || monsterMissiles is null
+            || !monsterMissiles.TryGet("Snake", out var missile)
+            || missile.MissileId != "Rhino"
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge)
+            return false;
+
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge))
+            return true;
+
+        if (!world.HasMissileLineOfSight(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY))
+            return false;
+
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            18);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            1,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            256) {
+            Behavior = AuthoritativeProjectileBehavior.SnakeCharge,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = 18,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
     }
 
     private (int X, int Y)? FindGoatRangedRetreatDestination(
@@ -4828,6 +4894,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceAcidPuddle(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge) {
+                    AdvanceSnakeCharge(tick, projectile, players, events);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.BoneSpirit) {
                     AdvanceBoneSpirit(tick, projectile, players, events);
                     continue;
@@ -5315,6 +5385,169 @@ public sealed class DiabloCombatCommandProcessor
             projectile.Phase = AuthoritativeProjectilePhase.Impact;
             projectile.RemainingTicks = 2;
         }
+    }
+
+    /** Native ProcessRhino movement for a Snake-owned charging controller. */
+    private void AdvanceSnakeCharge(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.CombatTargets.TryGetValue(
+                projectile.SourceEntityId,
+                out var monster)
+            || monster.HitPoints <= 0) {
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        projectile.RemainingTicks--;
+        var previousX = projectile.PositionX;
+        var previousY = projectile.PositionY;
+        var visitedTiles = MoveNativeProjectile(projectile);
+        foreach (var tile in visitedTiles) {
+            if (!world.ContainsPosition(projectile.LevelId, tile.X, tile.Y)
+                || world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y)) {
+                projectile.PositionX = previousX;
+                projectile.PositionY = previousY;
+                _ = TryResolveSnakeChargePlayerHit(
+                    tick,
+                    projectile,
+                    monster,
+                    players,
+                    previousX,
+                    previousY,
+                    events);
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            monster.ApplyKnockback(tile.X, tile.Y);
+            if (TryResolveSnakeChargePlayerHit(
+                    tick,
+                    projectile,
+                    monster,
+                    players,
+                    tile.X,
+                    tile.Y,
+                    events)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+
+            previousX = tile.X;
+            previousY = tile.Y;
+        }
+
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native MonsterAttackPlayer(500, special damage) at a Snake charge collision. */
+    private bool TryResolveSnakeChargePlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget monster,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int positionX,
+        int positionY,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var target = players.FirstOrDefault(player =>
+            player.Life > 0
+            && player.CombatMode is not (DiabloPlayerCombatMode.NewLevel
+                or DiabloPlayerCombatMode.Quit)
+            && player.LevelId == projectile.LevelId
+            && player.PositionX == positionX
+            && player.PositionY == positionY);
+        if (target is null
+            || IsPlayerProtectedByFlash(target)
+            || IsPlayerEtherealized(target))
+            return false;
+
+        var distance = Math.Max(
+            Math.Abs(target.PositionX - monster.PositionX),
+            Math.Abs(target.PositionY - monster.PositionY));
+        if (distance >= 2)
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var armorClass = target.ArmorClass;
+        if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+            armorClass = AuthoritativeEquipmentIncomingDamageRules
+                .ApplyHellfireMonsterClassArmor(
+                    armorClass,
+                    monster.IsDemon,
+                    monster.IsUndead,
+                    target.Equipment);
+        }
+        var minimumHitChance = target.LevelId switch {
+            14 => 20,
+            15 => 25,
+            16 => 30,
+            _ => 15,
+        };
+        var hitChance = Math.Max(
+            minimumHitChance,
+            500
+                + (2 * monster.MonsterLevel)
+                - (2 * checked((int)target.CharacterLevel))
+                + 30
+                - armorClass);
+        if (random.RandomIntLessThan(100) >= Math.Clamp(hitChance, 0, 100))
+            return false;
+
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * 2)
+                - (2 * monster.MonsterLevel),
+            0,
+            100);
+        if (blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            return true;
+        }
+
+        var damageQ6 = checked(
+            Math.Max(
+                random.RandomIntBetween(
+                    checked(monster.MinDamageSpecial * DiabloFixedPointQ6.Scale),
+                    checked(monster.MaxDamageSpecial * DiabloFixedPointQ6.Scale))
+                    + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
+                        * DiabloFixedPointQ6.Scale,
+                DiabloFixedPointQ6.Scale));
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    monster.EntityId,
+                    target.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        else if (ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
+            StartHit(target, targetClass, tick);
+        return true;
     }
 
     private void AdvanceBoneSpirit(

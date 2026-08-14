@@ -1495,6 +1495,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiCreatesAValidatedRhinoChargeAndResolvesSpecialDamage()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var charge = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
+        Assert.Equal(18, charge.Speed);
+        Assert.Equal(AuthoritativeDamageType.Physical, charge.DamageType);
+        Assert.Equal(100, player.Life);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(player.Life < 100);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.AmountQ6 == 4 * DiabloFixedPointQ6.Scale);
+    }
+
+    [Fact]
     public void GoatRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(
