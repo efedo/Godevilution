@@ -5445,7 +5445,12 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi != "GoatRanged"
-            || !HasValidatedArrowMapping(monster.NativeAi)
+            || monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
+            || missile.MissileId != "Arrow"
+            || missile.ProjectileBehavior is not (
+                AuthoritativeProjectileBehavior.MonsterArrow
+                or AuthoritativeProjectileBehavior.Targeted)
             || distance < 2
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0
@@ -5457,8 +5462,12 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (distance < 4
-            && attackSeed % 100U < (uint)Math.Min(100, 10 * (monster.Intelligence + 7))) {
+        var retreatTuning = ResolveRangedRetreatTuning(missile);
+        var retreatChance = checked(
+            retreatTuning.ChanceBase
+            + retreatTuning.IntelligenceScale * monster.Intelligence);
+        if (distance < retreatTuning.MinimumDistance
+            && attackSeed % 100U < (uint)Math.Min(100, retreatChance)) {
             var retreat = FindGoatRangedRetreatDestination(monster, player, players, distance);
             if (retreat.HasValue) {
                 monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
