@@ -40,7 +40,10 @@ public sealed class AuthoritativeCombatRules
         int monsterRangedMinimumHitChance = 10,
         int monsterMinimumHitChanceLevel14 = 20,
         int monsterMinimumHitChanceLevel15 = 25,
-        int monsterMinimumHitChanceLevel16 = 30)
+        int monsterMinimumHitChanceLevel16 = 30,
+        int monsterToHitLevelScale = 2,
+        int monsterToHitBaseBonus = 30,
+        int monsterRangedDistancePenalty = 2)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -51,6 +54,11 @@ public sealed class AuthoritativeCombatRules
             || monsterMinimumHitChanceLevel15 is < 0 or > 100
             || monsterMinimumHitChanceLevel16 is < 0 or > 100) {
             throw new InvalidDataException("Monster hit-chance floors are invalid.");
+        }
+        if (monsterToHitLevelScale is < 0 or > 64
+            || monsterToHitBaseBonus is < 0 or > 255
+            || monsterRangedDistancePenalty is < 0 or > 64) {
+            throw new InvalidDataException("Monster accuracy formula tuning is invalid.");
         }
         if (!Enum.IsDefined(gameVariant))
             throw new InvalidDataException("Combat game variant is invalid.");
@@ -93,6 +101,9 @@ public sealed class AuthoritativeCombatRules
         MonsterMinimumHitChanceLevel14 = monsterMinimumHitChanceLevel14;
         MonsterMinimumHitChanceLevel15 = monsterMinimumHitChanceLevel15;
         MonsterMinimumHitChanceLevel16 = monsterMinimumHitChanceLevel16;
+        MonsterToHitLevelScale = monsterToHitLevelScale;
+        MonsterToHitBaseBonus = monsterToHitBaseBonus;
+        MonsterRangedDistancePenalty = monsterRangedDistancePenalty;
     }
 
     public int BaseAttackDamage { get; }
@@ -155,6 +166,15 @@ public sealed class AuthoritativeCombatRules
 
     /** Native minimum hit chance on level 16, regardless of attack type. */
     public int MonsterMinimumHitChanceLevel16 { get; }
+
+    /** Native level-difference multiplier in monster accuracy formulas. */
+    public int MonsterToHitLevelScale { get; }
+
+    /** Native flat accuracy bonus in monster accuracy formulas. */
+    public int MonsterToHitBaseBonus { get; }
+
+    /** Native per-tile accuracy penalty for monster ranged attacks. */
+    public int MonsterRangedDistancePenalty { get; }
 
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
@@ -222,13 +242,14 @@ public sealed class AuthoritativeCombatRules
             throw new ArgumentOutOfRangeException(nameof(monsterToHit));
 
         // DevilutionX's MonsterAttackPlayer computes to-hit as the content
-        // baseline plus level delta and 30, then subtracts player armor. The
-        // level-specific floor is the native GetMinHit() rule.
+        // baseline plus configured level delta and base bonus, then subtracts
+        // player armor. The level-specific floor is the native GetMinHit() rule.
         var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: false);
-        var levelDelta = checked(2 * (monsterLevel - checked((int)targetCharacterLevel)));
+        var levelDelta = checked(
+            MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
             minimumHitChance,
-            checked(monsterToHit + levelDelta + 30 - targetArmorClass));
+            checked(monsterToHit + levelDelta + MonsterToHitBaseBonus - targetArmorClass));
         if (!ResolveAttackHit(Math.Clamp(hitChance, 0, 100), seed))
             return 0;
         return Math.Max(1, baseDamage);
@@ -254,10 +275,15 @@ public sealed class AuthoritativeCombatRules
             throw new ArgumentOutOfRangeException(nameof(monsterToHit));
 
         var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: true);
-        var levelDelta = checked(2 * (monsterLevel - checked((int)targetCharacterLevel)));
+        var levelDelta = checked(
+            MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
             minimumHitChance,
-            checked(monsterToHit + levelDelta + 30 - (2 * distance) - targetArmorClass));
+            checked(monsterToHit
+                + levelDelta
+                + MonsterToHitBaseBonus
+                - (MonsterRangedDistancePenalty * distance)
+                - targetArmorClass));
         if (!ResolveAttackHit(Math.Clamp(hitChance, 0, 100), seed))
             return 0;
         return Math.Max(1, baseDamage);
@@ -370,7 +396,10 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_ranged_minimum_hit_chance", 10),
             row.OptionalInt32("monster_minimum_hit_chance_level_14", 20),
             row.OptionalInt32("monster_minimum_hit_chance_level_15", 25),
-            row.OptionalInt32("monster_minimum_hit_chance_level_16", 30));
+            row.OptionalInt32("monster_minimum_hit_chance_level_16", 30),
+            row.OptionalInt32("monster_to_hit_level_scale", 2),
+            row.OptionalInt32("monster_to_hit_base_bonus", 30),
+            row.OptionalInt32("monster_ranged_distance_penalty", 2));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
