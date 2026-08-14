@@ -8,7 +8,8 @@ All notable changes to this fork are documented below.
   entities to `AttackRequested` intents while the server retains all combat
   admission, timing, hit, damage, and action-state ownership; live protocol
   coverage verifies the entity-targeted action state. Server-owned SneakHidden
-  monsters are excluded from Godot rendering and target selection.
+  monsters are excluded from Godot rendering and target selection, and Godot
+  renders authoritative player action indicators without simulating them.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.

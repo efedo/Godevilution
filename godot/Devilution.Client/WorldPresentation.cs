@@ -108,7 +108,7 @@ public partial class WorldPresentation : Node2D
         DrawTargetPreview();
         foreach (var player in snapshot.Players.Where(player => IsVisible(player.LevelId, currentLevel))) {
             var isLocal = player.EntityId == localPlayer.EntityId;
-            DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal);
+            DrawPlayer(player, isLocal ? predictedPlayerPosition : null, isLocal, currentLevel);
         }
         foreach (var monster in snapshot.Monsters.Where(monster =>
                      IsVisible(monster.LevelId, currentLevel)
@@ -163,7 +163,7 @@ public partial class WorldPresentation : Node2D
         DrawLine(rectangle.Position + new Vector2(TileSize / 2, 6), rectangle.Position + new Vector2(TileSize / 2, TileSize - 6), color, 2);
     }
 
-    private void DrawPlayer(PlayerSnapshot player, ClientPosition? predicted, bool isLocal)
+    private void DrawPlayer(PlayerSnapshot player, ClientPosition? predicted, bool isLocal, uint currentLevel)
     {
         var center = predicted is { } position
             ? ToScreen(position.X, position.Y)
@@ -180,6 +180,46 @@ public partial class WorldPresentation : Node2D
         }
         if (!isLocal)
             DrawArc(center, 14, 0, Mathf.Tau, 24, color, 2);
+        DrawActionIndicator(player, center, currentLevel);
+    }
+
+    /** Renders server-owned action timing without advancing or predicting it. */
+    private void DrawActionIndicator(PlayerSnapshot player, Vector2 center, uint currentLevel)
+    {
+        var action = player.CurrentAction;
+        if (action is null || action.Kind == PlayerActionKind.Unspecified)
+            return;
+
+        var color = action.Kind switch {
+            PlayerActionKind.Attack => new Color("ff9f43"),
+            PlayerActionKind.Cast => new Color("b388ff"),
+            PlayerActionKind.Move => new Color("6dd47e"),
+            PlayerActionKind.Death => new Color("d95151"),
+            _ => new Color("f4d35e"),
+        };
+        DrawArc(center, 24, 0, Mathf.Tau, 24, color, 2);
+
+        if (action.TargetEntityId == 0 || snapshot is null)
+            return;
+        var targetMonster = snapshot.Monsters.FirstOrDefault(monster =>
+            monster.EntityId == action.TargetEntityId && monster.Alive);
+        var targetPlayer = targetMonster is null
+            ? snapshot.Players.FirstOrDefault(candidate =>
+                candidate.EntityId == action.TargetEntityId && candidate.Life > 0)
+            : null;
+        var targetLevel = targetMonster?.LevelId ?? targetPlayer?.LevelId;
+        var targetX = targetMonster?.PositionX ?? targetPlayer?.PositionX;
+        var targetY = targetMonster?.PositionY ?? targetPlayer?.PositionY;
+        if (targetLevel is not { } levelId
+            || targetX is not { } positionX
+            || targetY is not { } positionY
+            || !IsVisible(levelId, currentLevel))
+            return;
+        DrawLine(
+            center,
+            PositionFor(action.TargetEntityId, positionX, positionY),
+            new Color(color, 0.55f),
+            2);
     }
 
     private void DrawMonster(MonsterSnapshot monster)
