@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.85's validated Mega InfernoControl mapping, preserving native
+  distance/intelligence admission and monster-owned persistent segments.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

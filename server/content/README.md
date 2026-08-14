@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.84.0` schema in
+It declares its identity and `devilution.diablo@1.85.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -207,6 +207,10 @@ Schema 1.84 adds five native Counselor missile rows for monster IDs 107, 108,
 109, 110, and 113. They select Firebolt, Charged Bolt, Lightning, or Fireball
 from validated content; the server owns the monster-specific Charged Bolt
 controller and its player hit boundary.
+Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserves
+Mega's distance- and intelligence-based special-attack admission, speed-32
+Inferno controller, three-segment limit, and monster damage roll through the
+same server-owned persistent collision path used by player Inferno.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback.
@@ -1124,7 +1128,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.84.0"
+      "version": "1.85.0"
   },
   "dependencyConstraints": [
     {
@@ -1156,7 +1160,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.84.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.85.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1177,7 +1181,8 @@ native projectile controllers are migrated; the mapping itself remains
 content-owned and validated. Schema 1.82 additionally externalizes the
 native ranged-AI branch and avoidance probability columns. Schema 1.83 adds
 monster-specific mapping rows. Schema 1.84 adds the Counselor missile rows
-and the monster-owned Charged Bolt behavior.
+and the monster-owned Charged Bolt behavior. Schema 1.85 adds Mega's
+monster-owned Inferno controller and persistent segment path.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects

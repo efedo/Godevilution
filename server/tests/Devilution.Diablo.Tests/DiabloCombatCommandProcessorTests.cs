@@ -2006,6 +2006,149 @@ public sealed class DiabloCombatCommandProcessorTests
                 && delivery.Event.TargetEntityId == 7);
     }
 
+    [Fact]
+    public void MegaAiFiresValidatedInfernoAndOwnsPersistentSegments()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        // Tick ^ monster entity ^ player entity = 8, inside Mega's native
+        // distance-three 5 * (intelligence + 2) admission band.
+        var firstEvents = processor.AdvanceTick(1, [player]);
+
+        Assert.Contains(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController
+                && projectile.SourceEntityId == monster.EntityId);
+        var firstSegment = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment);
+        Assert.Equal(monster.EntityId, firstSegment.SourceEntityId);
+        Assert.Equal(3, firstSegment.Damage);
+        Assert.Equal(34U, firstSegment.RemainingTicks);
+        Assert.Empty(firstEvents);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == monster.EntityId
+                && delivery.Event.TargetEntityId == player.EntityId);
+        Assert.True(player.Life < 100);
+    }
+
+    [Fact]
+    public void MegaAiDefersInfernoAtNativeSkeletonFallbackDistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 6,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
+    [Fact]
+    public void MegaAiFallsBackWhenItsInfernoLaneIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackMissileBlockedCells: [2],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
     [Theory]
     [InlineData("Lich", "OrangeFlare")]
     [InlineData("ArchLich", "YellowFlare")]

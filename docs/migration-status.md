@@ -163,6 +163,10 @@ Status date: 2026-08-13
   109, 110, and 113. The server now owns the corresponding Firebolt, Charged
   Bolt, Lightning, and Fireball projectile paths, including monster-owned
   Charged Bolt player-hit resolution.
+- Schema 1.85 adds a validated `Mega` `InfernoControl` mapping. The server now owns
+  Mega's native distance/intelligence admission, speed-32 controller, three
+  persistent segment emissions, and monster damage rolls through the existing
+  authoritative fire collision path.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.

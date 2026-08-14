@@ -16,6 +16,7 @@ Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0
 Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0
 Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0
 BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0
+Mega	InfernoControl	InfernoController	Ranged	100	0
 Bat	Rhino	BatCharge	RangedAvoidance	100	42
 Counselor	Firebolt	Firebolt	Ranged	100	107
 Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108

@@ -4283,6 +4283,7 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.Fireball
                 or AuthoritativeProjectileBehavior.MonsterMagic
                 or AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ApocalypseController
                 or AuthoritativeProjectileBehavior.Acid))
             return false;
@@ -4297,7 +4298,26 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
+        if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
+            // Native MegaAi delegates to SkeletonAi at five or more tiles.
+            // Within its special range it uses 5 * (intelligence + 2) for
+            // distance three or farther, 5 * (intelligence + 1) otherwise,
+            // and a 50/50 ranged-versus-melee choice when adjacent.
+            if (distance >= 5)
+                return false;
+            if (distance <= 1) {
+                if (attackSeed % 100U
+                    >= (uint)Math.Min(100, 10 * (monster.Intelligence + 4))
+                    || (attackSeed / 100U) % 2U != 0)
+                    return false;
+            } else {
+                var attackBand = distance >= 3
+                    ? 5 * (monster.Intelligence + 2)
+                    : 5 * (monster.Intelligence + 1);
+                if (attackSeed % 100U >= (uint)Math.Min(100, attackBand))
+                    return false;
+            }
+        } else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4325,7 +4345,8 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return missile.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance;
+            return missile.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+                && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior
@@ -4339,11 +4360,14 @@ public sealed class DiabloCombatCommandProcessor
                 _ => 1U,
             });
         // Native monster Firebolt/Fireball use speed 16; Storm's
-        // ThinLightningControl uses speed 32. Player spell speed remains
-        // content-owned separately in spells.tsv.
+        // ThinLightningControl and Mega's InfernoControl use speed 32.
+        // Player spell speed remains content-owned separately in spells.tsv.
         var speed = missile.ProjectileBehavior switch {
             AuthoritativeProjectileBehavior.MonsterChargedBolt => 8,
             AuthoritativeProjectileBehavior.Lightning => 32,
+            AuthoritativeProjectileBehavior.InfernoController => spell?.ProjectileSpeed > 0
+                ? spell.ProjectileSpeed
+                : 32,
             AuthoritativeProjectileBehavior.ApocalypseController => 0,
             _ => 16,
         };
@@ -4369,24 +4393,33 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             speed);
-        var projectile = new AuthoritativeProjectile(
-            AllocateProjectileEntityId(),
-            monster.EntityId,
-            player.EntityId,
-            spellId,
-            monster.LevelId,
-            monster.PositionX,
-            monster.PositionY,
-            player.PositionX,
-            player.PositionY,
-            missile.ProjectileBehavior switch {
-                AuthoritativeProjectileBehavior.Lightning => 0,
-                AuthoritativeProjectileBehavior.ApocalypseController => 40,
-                _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
-            },
-            damageType,
-            0,
-            checked((uint)lifetime)) {
+        var projectile = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
+            ? CreateMonsterInfernoController(
+                AllocateProjectileEntityId(),
+                monster,
+                player,
+                spellId,
+                speed,
+                lifetime,
+                damageType)
+            : new AuthoritativeProjectile(
+                AllocateProjectileEntityId(),
+                monster.EntityId,
+                player.EntityId,
+                spellId,
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY,
+                missile.ProjectileBehavior switch {
+                    AuthoritativeProjectileBehavior.Lightning => 0,
+                    AuthoritativeProjectileBehavior.ApocalypseController => 40,
+                    _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+                },
+                damageType,
+                0,
+                checked((uint)lifetime)) {
             Behavior = missile.ProjectileBehavior,
             VelocityX = velocityX,
             VelocityY = velocityY,
@@ -4395,8 +4428,64 @@ public sealed class DiabloCombatCommandProcessor
             ImpactLifetime = 1,
             ResistantDamageDivisor = 1,
         };
+        if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
+            projectile.VelocityX = velocityX;
+            projectile.VelocityY = velocityY;
+        }
         world.Projectiles.Add(projectile.EntityId, projectile);
         return true;
+    }
+
+    /** Native AddInfernoControl state for a monster-owned Mega projectile. */
+    private AuthoritativeProjectile CreateMonsterInfernoController(
+        uint projectileEntityId,
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        uint spellId,
+        int speed,
+        int lifetime,
+        AuthoritativeDamageType damageType)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var targetX = player.PositionX;
+        var targetY = player.PositionY;
+        if (targetX == monster.PositionX && targetY == monster.PositionY) {
+            var displacement = DirectionDisplacements[direction];
+            targetX += displacement.X;
+            targetY += displacement.Y;
+        }
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            targetX,
+            targetY,
+            speed);
+        return new AuthoritativeProjectile(
+            projectileEntityId,
+            monster.EntityId,
+            player.EntityId,
+            spellId,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            0,
+            damageType,
+            0,
+            checked((uint)lifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.InfernoController,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 1,
+        };
     }
 
     /** Native AiRanged Blood Star dispatch for Succubus-family monsters. */
@@ -6164,6 +6253,11 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeProjectile controller,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        if (world.CombatTargets.TryGetValue(controller.SourceEntityId, out var monster)) {
+            AdvanceMonsterInfernoController(controller, monster);
+            return;
+        }
+
         controller.RemainingTicks--;
         if (controller.RemainingTicks == 0) {
             world.Projectiles.Remove(controller.EntityId);
@@ -6195,6 +6289,66 @@ public sealed class DiabloCombatCommandProcessor
         world.Projectiles.Add(
             segmentEntityId,
             CreateInfernoSegment(segmentEntityId, controller, spell, owner));
+        controller.PathIndex++;
+        if (controller.PathIndex >= 3)
+            world.Projectiles.Remove(controller.EntityId);
+    }
+
+    /** Native ProcessInfernoControl/Inferno lifecycle for a Mega-owned missile. */
+    private void AdvanceMonsterInfernoController(
+        AuthoritativeProjectile controller,
+        AuthoritativeCombatTarget monster)
+    {
+        if (monster.HitPoints <= 0
+            || !spells.TryGet(controller.SpellId, out var spell)
+            || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        controller.RemainingTicks--;
+        if (controller.RemainingTicks == 0) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var visitedTiles = MoveNativeProjectile(controller);
+        if (visitedTiles.Count == 0)
+            return;
+
+        var tile = visitedTiles[^1];
+        controller.PositionX = tile.X;
+        controller.PositionY = tile.Y;
+        controller.TraveledX = tile.TraveledX;
+        controller.TraveledY = tile.TraveledY;
+        if (world.IsMissileBlocked(controller.LevelId, tile.X, tile.Y)) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+
+        var damage = random.RandomIntBetween(monster.MinDamage, monster.MaxDamage);
+        var segmentLifetime = checked(
+            5 * damage + spell.SecondaryProjectileLifetime);
+        var segmentEntityId = AllocateProjectileEntityId();
+        world.Projectiles.Add(
+            segmentEntityId,
+            new AuthoritativeProjectile(
+                segmentEntityId,
+                controller.SourceEntityId,
+                0,
+                controller.SpellId,
+                controller.LevelId,
+                controller.PositionX,
+                controller.PositionY,
+                controller.PositionX,
+                controller.PositionY,
+                damage,
+                controller.DamageType,
+                0,
+                checked((uint)segmentLifetime)) {
+                Behavior = AuthoritativeProjectileBehavior.InfernoSegment,
+                ResistantDamageDivisor = controller.ResistantDamageDivisor,
+            });
         controller.PathIndex++;
         if (controller.PathIndex >= 3)
             world.Projectiles.Remove(controller.EntityId);
