@@ -7,9 +7,9 @@ AcidUnique	Acid	Targeted
 FireBat	Firebolt	Firebolt
 Torchant	Fireball	Fireball
 Lich	OrangeFlare	MonsterMagic
-ArchLich	YellowFlare	Targeted
-Psychorb	BlueFlare	Targeted
-Necromorb	RedFlare	Targeted
+ArchLich	YellowFlare	MonsterMagic
+Psychorb	BlueFlare	MonsterMagic
+Necromorb	RedFlare	MonsterMagic
 Magma	MagmaBall	Targeted
 Storm	ThinLightningControl	Targeted
 Diablo	DiabloApocalypse	Targeted

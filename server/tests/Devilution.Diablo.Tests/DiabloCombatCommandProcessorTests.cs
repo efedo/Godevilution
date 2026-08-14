@@ -1734,8 +1734,14 @@ public sealed class DiabloCombatCommandProcessorTests
                 && delivery.Event.TargetEntityId == 7);
     }
 
-    [Fact]
-    public void LichAiFiresTheValidatedOrangeFlareMonsterMagicProjectile()
+    [Theory]
+    [InlineData("Lich", "OrangeFlare")]
+    [InlineData("ArchLich", "YellowFlare")]
+    [InlineData("Psychorb", "BlueFlare")]
+    [InlineData("Necromorb", "RedFlare")]
+    public void FlareMonsterAiFiresTheValidatedMonsterMagicProjectile(
+        string nativeAi,
+        string missileId)
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -1746,7 +1752,7 @@ public sealed class DiabloCombatCommandProcessorTests
             minDamage: 3,
             maxDamage: 3,
             monsterLevel: 5,
-            nativeAi: "Lich",
+            nativeAi: nativeAi,
             intelligence: 0);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
@@ -1754,8 +1760,8 @@ public sealed class DiabloCombatCommandProcessorTests
             random: new DiabloRandom(0),
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
-                    "Lich",
-                    "OrangeFlare",
+                    nativeAi,
+                    missileId,
                     AuthoritativeProjectileBehavior.MonsterMagic),
             ]));
         var player = CreatePlayer(

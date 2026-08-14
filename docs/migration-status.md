@@ -155,9 +155,11 @@ Status date: 2026-08-13
 - The native `Torchant` `AiRanged` boundary now consumes its validated Fireball
   mapping and resolves server-owned travel, impact crawl, and
   monster-to-player explosion damage.
-- Native `Lich` `OrangeFlare` now uses an explicit server-owned `MonsterMagic`
+- Native Lich-family flare identities (`Lich`/`OrangeFlare`,
+  `ArchLich`/`YellowFlare`, `Psychorb`/`BlueFlare`, and
+  `Necromorb`/`RedFlare`) now use the explicit server-owned `MonsterMagic`
   projectile behavior with authoritative travel and monster-to-player magic
-  hit resolution; remaining flare identities remain incremental.
+  hit resolution; other retained missile identities remain incremental.
 - The native `SkeletonRanged` AI clear-lane arrow boundary is now server-owned:
   its `3 + 2 * intelligence` attack band, distance-aware accuracy, damage, and
   blocked-lane fallback resolve through the authoritative directed event path.

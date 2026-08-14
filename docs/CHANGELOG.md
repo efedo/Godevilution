@@ -15,8 +15,9 @@ All notable changes to this fork are documented below.
 - Route the native `Torchant` `AiRanged` behavior through its validated
   Fireball mapping, including server-owned travel, impact crawl, and
   monster-to-player explosion damage.
-- Add the explicit `MonsterMagic` projectile behavior and route native `Lich`
-  `OrangeFlare` through server-owned travel and magic hit resolution.
+- Add the explicit `MonsterMagic` projectile behavior and route the native Lich
+  family (`Lich`, `ArchLich`, `Psychorb`, and `Necromorb`) through their
+  retained flare identities with server-owned travel and magic hit resolution.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

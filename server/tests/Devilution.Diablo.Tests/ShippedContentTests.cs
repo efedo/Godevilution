@@ -46,6 +46,15 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("Lich", out var lich));
         Assert.Equal("OrangeFlare", lich.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, lich.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("ArchLich", out var archLich));
+        Assert.Equal("YellowFlare", archLich.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, archLich.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Psychorb", out var psychorb));
+        Assert.Equal("BlueFlare", psychorb.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, psychorb.ProjectileBehavior);
+        Assert.True(activation.MonsterMissiles.TryGet("Necromorb", out var necromorb));
+        Assert.Equal("RedFlare", necromorb.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, necromorb.ProjectileBehavior);
     }
 
     [Fact]

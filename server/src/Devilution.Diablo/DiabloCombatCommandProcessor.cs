@@ -4063,7 +4063,7 @@ public sealed class DiabloCombatCommandProcessor
         return candidates.Length == 0 ? null : candidates[0];
     }
 
-    /** Native AiRanged projectile dispatch for validated Fire Bat/Torchant mappings. */
+    /** Native AiRanged projectile dispatch for validated ranged missile mappings. */
     private bool TryAdvanceMappedRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -4071,7 +4071,8 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich")
+        if (monster.NativeAi is not ("FireBat" or "Torchant" or "Lich"
+            or "ArchLich" or "Psychorb" or "Necromorb")
             || monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
             || missile.ProjectileBehavior is not (
