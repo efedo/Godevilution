@@ -25,7 +25,10 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int ProjectileLifetimeIntelligenceScale = 0,
     int PuddleDurationRandomRange = 0,
     int PuddleDurationBase = 0,
-    int PuddleDurationIntelligenceScale = 0);
+    int PuddleDurationIntelligenceScale = 0,
+    int PuddleDamageMinimumMonsterLevel = 0,
+    int PuddleDamageLow = 0,
+    int PuddleDamageHigh = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -51,6 +54,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.PuddleDurationRandomRange < 0
                 || definition.PuddleDurationBase < 0
                 || definition.PuddleDurationIntelligenceScale < 0
+                || definition.PuddleDamageMinimumMonsterLevel < 0
+                || definition.PuddleDamageLow < 0
+                || definition.PuddleDamageHigh < definition.PuddleDamageLow
                 || !this.definitions.TryAdd(
                     CreateKey(definition.NativeAi, definition.MonsterId),
                     definition)) {
@@ -112,7 +118,10 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("projectile_lifetime_intelligence_scale"),
                 row.OptionalInt32("puddle_duration_random_range"),
                 row.OptionalInt32("puddle_duration_base"),
-                row.OptionalInt32("puddle_duration_intelligence_scale"));
+                row.OptionalInt32("puddle_duration_intelligence_scale"),
+                row.OptionalInt32("puddle_damage_minimum_monster_level"),
+                row.OptionalInt32("puddle_damage_low"),
+                row.OptionalInt32("puddle_damage_high"));
         }));
     }
 

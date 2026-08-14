@@ -3729,7 +3729,10 @@ public sealed class DiabloCombatCommandProcessorTests
                     ProjectileLifetimeIntelligenceScale: 4,
                     PuddleDurationRandomRange: 1,
                     PuddleDurationBase: 100,
-                    PuddleDurationIntelligenceScale: 1),
+                    PuddleDurationIntelligenceScale: 1,
+                    PuddleDamageMinimumMonsterLevel: 1,
+                    PuddleDamageLow: 3,
+                    PuddleDamageHigh: 7),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -3769,13 +3772,13 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.NotNull(puddle);
         Assert.Equal((8, 1), (puddle!.PositionX, puddle.PositionY));
         Assert.Equal(98U, puddle.RemainingTicks);
-        Assert.Equal(2, puddle.Damage);
+        Assert.Equal(7, puddle.Damage);
         Assert.Contains(
             deliveries,
             delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
                 && delivery.Event.SourceEntityId == 9
                 && delivery.Event.TargetEntityId == 8
-                && delivery.Event.AmountQ6 == 2 * DiabloFixedPointQ6.Scale);
+                && delivery.Event.AmountQ6 == 7 * DiabloFixedPointQ6.Scale);
     }
 
     [Fact]

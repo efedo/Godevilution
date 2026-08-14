@@ -7097,7 +7097,18 @@ public sealed class DiabloCombatCommandProcessor
             random.GenerateRnd(puddleRandomRange)
             + puddleDurationBase
             + puddleDurationIntelligenceScale * monster.Intelligence);
-        var puddleDamage = monster.MonsterLevel >= 2 ? 2 : 1;
+        var puddleDamageMinimumLevel = puddleMapping?.PuddleDamageMinimumMonsterLevel > 0
+            ? puddleMapping.PuddleDamageMinimumMonsterLevel
+            : 2;
+        var puddleDamageLow = puddleMapping?.PuddleDamageLow > 0
+            ? puddleMapping.PuddleDamageLow
+            : 1;
+        var puddleDamageHigh = puddleMapping?.PuddleDamageHigh > 0
+            ? puddleMapping.PuddleDamageHigh
+            : 2;
+        var puddleDamage = monster.MonsterLevel >= puddleDamageMinimumLevel
+            ? puddleDamageHigh
+            : puddleDamageLow;
         var entityId = AllocateProjectileEntityId();
         world.Projectiles.Add(
             entityId,

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.95.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.96.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -91,6 +91,9 @@ public sealed class ShippedContentTests
         Assert.Equal(15, acid.PuddleDurationRandomRange);
         Assert.Equal(40, acid.PuddleDurationBase);
         Assert.Equal(40, acid.PuddleDurationIntelligenceScale);
+        Assert.Equal(2, acid.PuddleDamageMinimumMonsterLevel);
+        Assert.Equal(1, acid.PuddleDamageLow);
+        Assert.Equal(2, acid.PuddleDamageHigh);
         Assert.True(activation.MonsterMissiles.TryGet("AcidUnique", out var acidUnique));
         Assert.Equal("Acid", acidUnique.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
@@ -99,6 +102,9 @@ public sealed class ShippedContentTests
         Assert.Equal(15, acidUnique.PuddleDurationRandomRange);
         Assert.Equal(40, acidUnique.PuddleDurationBase);
         Assert.Equal(40, acidUnique.PuddleDurationIntelligenceScale);
+        Assert.Equal(2, acidUnique.PuddleDamageMinimumMonsterLevel);
+        Assert.Equal(1, acidUnique.PuddleDamageLow);
+        Assert.Equal(2, acidUnique.PuddleDamageHigh);
         Assert.True(activation.MonsterMissiles.TryGet("SkeletonRanged", out var skeletonRanged));
         Assert.Equal("Arrow", skeletonRanged.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, skeletonRanged.ProjectileBehavior);
@@ -152,7 +158,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.95.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.96.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
