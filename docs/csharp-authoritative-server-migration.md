@@ -101,6 +101,10 @@ authoritative results.
 - Snapshots are canonical state. Events are transient presentation deltas.
 - Every network snapshot includes all assigned participants, with the receiver
   first on the wire and every player sorted by entity ID for canonical hashing.
+- Live snapshots may include additive authoritative level geometry from the
+  active content pack. Godot uses that projection for rendering and retains its
+  asset catalog only as a legacy fallback; static geometry is omitted from
+  saves and canonical state hashes.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.

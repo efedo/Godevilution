@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project validated level dimensions and blocked-cell geometry in additive
+  live snapshots so Godot can render the active server world; legacy client
+  assets remain only as a fallback and saves/hashes omit static geometry.
 - Make the validated `level_generation.tsv` catalog own deterministic
   encounter-count calculation and reject active worlds with uncovered levels;
   preserve static map geometry while procedural synthesis remains future work.
