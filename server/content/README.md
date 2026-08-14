@@ -977,13 +977,15 @@ the generic item snapshot rather than localized catalog text.
 Normalized unique-item and magic-affix `SPELL` powers also preserve this
 classification when they add a charged spell after base-item generation.
 
-Spell casting uses the validated source kind and spell identity. A charged cast
-must name the matching source equipped in native left-hand slot `4`; an
+Spell casting uses the validated source kind and spell identity from the item
+state or, for legacy states, the active item catalog. A charged cast must name
+the matching source equipped in native left-hand slot `4`; an
 accepted cast decrements `charges`. A consumable cast must name the matching
 source in inventory or belt; an accepted cast removes that exact item. Legacy
 tables without `spell_source_kind` retain the native miscellaneous-ID fallback
 until they are normalized. Store recharge likewise honors explicit
-`ChargedItem`/non-charged source metadata before applying legacy fallback, and
+`ChargedItem`/non-charged source metadata from state or active item content
+before applying legacy fallback, and
 uses the active item's validated `Staff` tag before the native type and
 miscellaneous-ID fallback when source metadata is absent.
 The Sorcerer Recharge class ability additionally requires the validated `Staff`

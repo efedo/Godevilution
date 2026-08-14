@@ -103,6 +103,10 @@ Status date: 2026-08-14
   kind and spell identity, including charged `SPELL` powers applied by unique
   items and magic affixes, while legacy item tables retain native-ID fallback.
 
+- Cast-source resolution now consults explicit source metadata from the active
+  item catalog when a legacy state lacks the projected field; native
+  miscellaneous-ID inference remains the final compatibility fallback.
+
 - Schema 1.143 externalizes semantic class-skill roles through validated
   `class_loadouts.tsv` content and carries them through authoritative snapshots
   and protocol projections, so Godot service presentation no longer infers

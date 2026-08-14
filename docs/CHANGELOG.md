@@ -11,6 +11,8 @@ All notable changes to this fork are documented below.
   falling back to native equipment-location metadata for legacy content.
 - Validate loadout equipment slots from semantic hand, body-armor, helmet,
   ring, and amulet tags before falling back to native location values.
+- Resolve cast-source kind and spell identity from active item catalog metadata
+  before reading legacy state fields or native miscellaneous IDs.
 - Validate starting belt items from the normalized `Belt` tag before falling
   back to native equipment-location/item-class metadata for legacy content.
 - Make the validated `level_generation.tsv` catalog own deterministic
