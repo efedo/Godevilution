@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Class Recharge admission now consults validated `Staff` item tags through the
+  active catalog; direct legacy states without catalog metadata retain the
+  native item-type path.
+
 - Store recharge validation now accepts only explicit `ChargedItem` sources
   when source metadata is present; metadata-free legacy rows retain the native
   staff and miscellaneous-ID fallback.

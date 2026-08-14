@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make the Sorcerer Recharge class ability resolve Staff eligibility from the
+  active item catalog, with numeric item-type fallback for legacy callers.
 - Make store recharge validation honor explicit item spell-source metadata,
   while preserving native type/miscellaneous fallback for legacy rows.
 - Validate loadout off-hand shield eligibility from semantic item tags, so

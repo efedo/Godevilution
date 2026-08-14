@@ -979,8 +979,9 @@ source in inventory or belt; an accepted cast removes that exact item. Legacy
 tables without `spell_source_kind` retain the native miscellaneous-ID fallback
 until they are normalized. Store recharge likewise honors explicit
 `ChargedItem`/non-charged source metadata before applying legacy fallback.
-These values are validated and consumed by the Diablo module rather than
-trusted from a client.
+The Sorcerer Recharge class ability additionally requires the validated `Staff`
+subtype when an item catalog is active. These values are validated and consumed
+by the Diablo module rather than trusted from a client.
 
 `monsters.tsv` keeps encounter state and immutable gameplay capabilities outside
 the engine. Its optional `stone_curse_immune`, `undead`, `animal`, `knockback`, `player_minion`,
