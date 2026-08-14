@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Schema 1.144 externalizes normalized item spell-source classification through
+  `items.tsv`; generated state and protocol matching use the validated source
+  kind and spell identity, while legacy item tables retain native-ID fallback.
+
 - Schema 1.143 externalizes semantic class-skill roles through validated
   `class_loadouts.tsv` content and carries them through authoritative snapshots
   and protocol projections, so Godot service presentation no longer infers

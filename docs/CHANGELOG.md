@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.144's explicit normalized item spell-source kind, so current
+  content no longer derives charged or consumable source identity from native
+  miscellaneous IDs while legacy tables retain their compatibility fallback.
 - Add schema 1.143's semantic class-skill roles, carrying validated loadout
   capability identities through authoritative snapshots and the protocol so
   Godot no longer hard-codes class-service spell IDs.
