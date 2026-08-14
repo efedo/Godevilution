@@ -88,7 +88,7 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
         if (scavengerHealingTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(scavengerHealingTicks));
-        if (batRetreatTicks is < 0 or > 2)
+        if (batRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
         if (batRetreatDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
