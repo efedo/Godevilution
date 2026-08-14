@@ -12,9 +12,9 @@ All notable changes to this fork are documented below.
   renders authoritative player action indicators without simulating them.
 - Add the initial server-owned adjacent melee player-versus-player path:
   friendly-mode admission, native animation timing, deterministic physical Q6
-  damage, lethal player death/PvP-ear handling, and managed plus live
-  multiplayer regression coverage. Ranged player-target presentation remains
-  a follow-up.
+  damage, equipment knockback, lethal player death/PvP-ear handling, and
+  managed plus live multiplayer regression coverage. Ranged player-target
+  presentation remains a follow-up.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.

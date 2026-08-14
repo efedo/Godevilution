@@ -424,6 +424,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void KnockbackEquipmentDisplacesALiveAdjacentPlayerTarget()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(world);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.KnockbackFlag,
+                })]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(640, victim.Life);
+        Assert.Equal((2, 0), (victim.PositionX, victim.PositionY));
+    }
+
+    [Fact]
     public void NormalBowAttackUsesOneAuthoritativeMissileAndResolvesOnImpact()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);

@@ -563,6 +563,7 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 PlayerDeathReason.Player);
         }
+        ApplyPlayerKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
         ApplyHellfireWeaponDecay(player);
@@ -709,6 +710,41 @@ public sealed class DiabloCombatCommandProcessor
                 target.EntityId)) {
             target.ApplyKnockback(destinationX, destinationY);
         }
+    }
+
+    /** Applies native knockback equipment to a live adjacent player target. */
+    private void ApplyPlayerKnockback(
+        AuthoritativePlayerState player,
+        AuthoritativePlayerState target,
+        int damageQ6,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (damageQ6 <= 0
+            || target.Life <= 0
+            || (GetUsableEquipmentFlags(player)
+                & AuthoritativeEquipmentAttackEffectRules.KnockbackFlag) == 0) {
+            return;
+        }
+
+        var directionX = Math.Sign(target.PositionX - player.PositionX);
+        var directionY = Math.Sign(target.PositionY - player.PositionY);
+        if (directionX == 0 && directionY == 0)
+            return;
+        var destinationX = checked(target.PositionX + directionX);
+        var destinationY = checked(target.PositionY + directionY);
+        if (!world.IsWalkable(target.LevelId, destinationX, destinationY)
+            || world.IsOccupied(
+                target.LevelId,
+                destinationX,
+                destinationY,
+                players,
+                target.EntityId)) {
+            return;
+        }
+
+        DiabloPlayerActionLifecycle.Cancel(target);
+        target.PositionX = destinationX;
+        target.PositionY = destinationY;
     }
 
     /** Applies native monster MFLAG_KNOCKBACK after a successful player hit. */
