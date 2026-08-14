@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Store recharge validation now accepts only explicit `ChargedItem` sources
+  when source metadata is present; metadata-free legacy rows retain the native
+  staff and miscellaneous-ID fallback.
+
 - Player loadout validation now uses the active item definition's `Shield`
   subtype for off-hand eligibility and only falls back to native item type
   when no explicit equipment subtype is declared.

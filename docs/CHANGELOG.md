@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make store recharge validation honor explicit item spell-source metadata,
+  while preserving native type/miscellaneous fallback for legacy rows.
 - Validate loadout off-hand shield eligibility from semantic item tags, so
   active content can override conflicting native item types while legacy rows
   retain the numeric fallback.
