@@ -1,3 +1,4 @@
+using Devilution.Protocol.V1;
 using System.Text.Json;
 
 namespace Devilution.Client;
@@ -17,6 +18,25 @@ public sealed class LevelLayoutCatalog
         if (layouts.TryGetValue(levelId, out var layout))
             return layout;
         return layouts.TryGetValue(0, out var fallback) ? fallback : LevelLayout.Empty;
+    }
+
+    /** Replaces presentation geometry with the active server's validated projection. */
+    public void ApplyAuthoritative(IEnumerable<LevelGeometrySnapshot> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+        foreach (var definition in definitions) {
+            if (definition.Width <= 0 || definition.Height <= 0)
+                continue;
+            var cells = definition.BlockedCells
+                .Where(cell => cell >= 0 && cell < definition.Width * definition.Height)
+                .ToHashSet();
+            layouts[definition.LevelId] = new LevelLayout(
+                definition.LevelId,
+                $"Level {definition.LevelId}",
+                definition.Width,
+                definition.Height,
+                cells);
+        }
     }
 
     private void Load()

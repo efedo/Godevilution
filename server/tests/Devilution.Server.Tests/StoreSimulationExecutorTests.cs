@@ -1512,6 +1512,45 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void LiveSnapshotsProjectAuthoritativeLevelGeometry()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            2,
+            4,
+            4,
+            blockedCells: [6],
+            missileBlockedCells: [5]));
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingLevelId: 2,
+            startingWorld: world);
+        var server = new AuthoritativeCommandServer(executor);
+        server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            MoveRequested = new MoveRequested { DirectionX = 1, DirectionY = 0 },
+        }, 1);
+
+        var snapshot = executor.CreateSnapshot("player-a", 1, 1);
+        var geometry = Assert.Single(snapshot.LevelGeometry);
+
+        Assert.Equal(2U, geometry.LevelId);
+        Assert.Equal(4, geometry.Width);
+        Assert.Equal(4, geometry.Height);
+        Assert.Equal([6], geometry.BlockedCells);
+        Assert.Equal([5], geometry.MissileBlockedCells);
+        Assert.Equal(SnapshotStateHasher.Compute(snapshot), snapshot.StateSha256);
+
+        var saveDocument = System.Text.Json.JsonSerializer.Deserialize<AuthoritativeSaveDocument>(
+            executor.ExportPlayerSave("player-a"));
+        var savedSnapshot = Snapshot.Parser.ParseFrom(
+            Convert.FromBase64String(saveDocument!.SnapshotBase64));
+        Assert.Empty(savedSnapshot.LevelGeometry);
+    }
+
+    [Fact]
     public void MovementRejectsOccupiedMonsterCells()
     {
         var executor = new StoreSimulationExecutor(

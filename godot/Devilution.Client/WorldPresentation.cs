@@ -32,6 +32,7 @@ public partial class WorldPresentation : Node2D
             return;
 
         var localPlayer = snapshot.Players.FirstOrDefault();
+        levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
 
         foreach (var player in snapshot.Players) {

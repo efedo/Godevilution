@@ -152,6 +152,8 @@ public sealed class AuthoritativeLevel
 {
     private readonly HashSet<int> blockedCells;
     private readonly HashSet<int> missileBlockedCells;
+    private readonly IReadOnlyList<int> blockedCellList;
+    private readonly IReadOnlyList<int> missileBlockedCellList;
 
     public AuthoritativeLevel(
         uint levelId,
@@ -177,6 +179,8 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains an out-of-range missile-blocked cell.");
         }
+        blockedCellList = this.blockedCells.OrderBy(cell => cell).ToArray();
+        missileBlockedCellList = this.missileBlockedCells.OrderBy(cell => cell).ToArray();
     }
 
     public uint LevelId { get; }
@@ -184,6 +188,12 @@ public sealed class AuthoritativeLevel
     public int Width { get; }
 
     public int Height { get; }
+
+    /** Stable row-major movement geometry for protocol and presentation projections. */
+    public IReadOnlyList<int> BlockedCells => blockedCellList;
+
+    /** Stable row-major missile geometry for protocol and presentation projections. */
+    public IReadOnlyList<int> MissileBlockedCells => missileBlockedCellList;
 
     public bool IsDefaultStart { get; }
 

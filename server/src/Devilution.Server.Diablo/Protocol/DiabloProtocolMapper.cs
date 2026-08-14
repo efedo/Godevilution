@@ -10,7 +10,8 @@ internal static class DiabloProtocolMapper
         DiabloSimulationSnapshot source,
         IReadOnlyList<StorePlayerSnapshot>? participants = null,
         bool revealTraps = true,
-        AuthoritativeSpellCatalog? spells = null)
+        AuthoritativeSpellCatalog? spells = null,
+        IReadOnlyList<AuthoritativeLevel>? levelGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         var visibleParticipants = participants?
@@ -220,6 +221,16 @@ internal static class DiabloProtocolMapper
                 PositionX = corpse.PositionX,
                 PositionY = corpse.PositionY,
             });
+        }
+        foreach (var level in levelGeometry ?? []) {
+            var geometry = new LevelGeometrySnapshot {
+                LevelId = level.LevelId,
+                Width = level.Width,
+                Height = level.Height,
+            };
+            geometry.BlockedCells.Add(level.BlockedCells);
+            geometry.MissileBlockedCells.Add(level.MissileBlockedCells);
+            snapshot.LevelGeometry.Add(geometry);
         }
         if (source.ActiveStore is not null) {
             var store = new StoreSnapshot { StoreId = source.ActiveStore.StoreId };

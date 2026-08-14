@@ -284,6 +284,16 @@ message Snapshot {
 	repeated PortalSnapshot portals = 11;
 	// Defeated non-minion monster tiles used by corpse-consuming AI.
 	repeated CorpseSnapshot corpses = 12;
+	// Static authoritative geometry for presentation clients; omitted by saves.
+	repeated LevelGeometrySnapshot level_geometry = 13;
+}
+
+message LevelGeometrySnapshot {
+	uint32 level_id = 1;
+	int32 width = 2;
+	int32 height = 3;
+	repeated int32 blocked_cells = 4;
+	repeated int32 missile_blocked_cells = 5;
 }
 
 message CorpseSnapshot {

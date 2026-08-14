@@ -342,7 +342,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 simulation.CaptureSnapshot(state, tick),
                 participantSnapshots,
                 state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true,
-                simulation.Spells);
+                simulation.Spells,
+                simulation.WorldState.World?.Levels);
         });
     }
 
