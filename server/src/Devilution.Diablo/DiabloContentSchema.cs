@@ -7,5 +7,5 @@ public static class DiabloContentSchema
 {
     public static ContentSchemaIdentity Current { get; } = new(
         "devilution.diablo",
-        "1.81.0");
+        "1.82.0");
 }

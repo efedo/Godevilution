@@ -2,11 +2,20 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Native ranged-AI branch selected by a validated monster missile mapping. */
+public enum AuthoritativeMonsterRangedAttackMode
+{
+    Ranged,
+    RangedAvoidance,
+}
+
 /** Validated native AI-to-missile mappings supplied by the active content pack. */
 public sealed record AuthoritativeMonsterMissileDefinition(
     string NativeAi,
     string MissileId,
-    AuthoritativeProjectileBehavior ProjectileBehavior);
+    AuthoritativeProjectileBehavior ProjectileBehavior,
+    AuthoritativeMonsterRangedAttackMode AttackMode = AuthoritativeMonsterRangedAttackMode.Ranged,
+    int AvoidanceProbabilityPercent = 100);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -23,6 +32,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
             if (!AuthoritativeMonsterTypeCatalog.IsValidNativeAi(definition.NativeAi)
                 || string.IsNullOrWhiteSpace(definition.MissileId)
                 || !Enum.IsDefined(definition.ProjectileBehavior)
+                || !Enum.IsDefined(definition.AttackMode)
+                || definition.AvoidanceProbabilityPercent is < 1 or > 100
                 || !this.definitions.TryAdd(definition.NativeAi, definition)) {
                 throw new InvalidDataException(
                     "Monster missile definitions contain invalid or duplicate identities.");
@@ -59,7 +70,25 @@ public sealed class AuthoritativeMonsterMissileCatalog
             return new AuthoritativeMonsterMissileDefinition(
                 row.Required("native_ai"),
                 row.Required("missile_id"),
-                behavior);
+                behavior,
+                ParseAttackMode(row),
+                row.OptionalInt32("avoidance_probability_percent", 100));
         }));
+    }
+
+    private static AuthoritativeMonsterRangedAttackMode ParseAttackMode(TsvRow row)
+    {
+        if (!row.TryGet("attack_mode", out var text)
+            || string.IsNullOrWhiteSpace(text))
+            return AuthoritativeMonsterRangedAttackMode.Ranged;
+        if (!Enum.TryParse<AuthoritativeMonsterRangedAttackMode>(
+                text,
+                ignoreCase: false,
+                out var mode)
+            || !Enum.IsDefined(mode)) {
+            throw new InvalidDataException(
+                $"Monster missile row {row.LineNumber} contains unknown attack mode '{text}'.");
+        }
+        return mode;
     }
 }

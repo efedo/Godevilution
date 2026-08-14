@@ -4183,8 +4183,7 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (monster.NativeAi is "BoneDemon" or "Storm" or "Diablo" or "Magma"
-            or "Acid") {
+        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
             // Native AiRangedAvoidance admits a clear-lane special attack from
             // distance two with 500 * (intelligence + 1) per 10,000, and uses
             // the intelligence + 2 band at distance three or farther.
@@ -4193,8 +4192,8 @@ public sealed class DiabloCombatCommandProcessor
             var attackBand = distance >= 3
                 ? 500 * (monster.Intelligence + 2)
                 : 500 * (monster.Intelligence + 1);
-            if (monster.NativeAi == "Acid")
-                attackBand >>= 1;
+            attackBand = checked(
+                attackBand * missile.AvoidanceProbabilityPercent / 100);
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
                 return false;
         } else if (distance < 4
@@ -4212,8 +4211,7 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return monster.NativeAi is not ("BoneDemon" or "Storm" or "Diablo" or "Magma"
-                or "Acid");
+            return missile.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance;
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior);

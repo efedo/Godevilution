@@ -18,6 +18,35 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.True(catalog.TryGet("Succubus", out var succubus));
         Assert.Equal("BloodStar", succubus.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
+        Assert.Equal(AuthoritativeMonsterRangedAttackMode.Ranged, succubus.AttackMode);
+        Assert.Equal(100, succubus.AvoidanceProbabilityPercent);
+    }
+
+    [Fact]
+    public void LoadsValidatedAvoidanceModeAndProbability()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\n");
+
+        Assert.True(catalog.TryGet("Acid", out var acid));
+        Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
+        Assert.Equal(50, acid.AvoidanceProbabilityPercent);
+    }
+
+    [Fact]
+    public void RejectsAnOutOfRangeAvoidanceProbability()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "Acid",
+                    AuthoritativeProjectileBehavior.Acid,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    0),
+            ]));
     }
 
     [Fact]

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.82 ranged-AI mode and avoidance-probability fields to
+  `monster_missiles.tsv`, moving the remaining mapped `AiRanged` versus
+  `AiRangedAvoidance` selection into validated content.
 - Make validated `monster_missiles.tsv` rows authoritative for mapped ranged
   admission, removing the server's native-AI allow-list while retaining each
   migrated behavior's native parity branch.

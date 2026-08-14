@@ -1913,7 +1913,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "BoneDemon",
                     "BlueFlare2",
-                    AuthoritativeProjectileBehavior.MonsterMagic),
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -1953,7 +1954,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Storm",
                     "ThinLightningControl",
-                    AuthoritativeProjectileBehavior.Lightning),
+                    AuthoritativeProjectileBehavior.Lightning,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -2005,7 +2007,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Magma",
                     "MagmaBall",
-                    AuthoritativeProjectileBehavior.MonsterMagic),
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -2060,7 +2063,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Magma",
                     "MagmaBall",
-                    AuthoritativeProjectileBehavior.MonsterMagic),
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -2099,7 +2103,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Acid",
                     "Acid",
-                    AuthoritativeProjectileBehavior.Acid),
+                    AuthoritativeProjectileBehavior.Acid,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    50),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -2169,7 +2175,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Acid",
                     "Acid",
-                    AuthoritativeProjectileBehavior.Acid),
+                    AuthoritativeProjectileBehavior.Acid,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    50),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -2247,7 +2255,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "Diablo",
                     "DiabloApocalypse",
-                    AuthoritativeProjectileBehavior.ApocalypseController),
+                    AuthoritativeProjectileBehavior.ApocalypseController,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
             ]));
         var player = CreatePlayer(
             entityId: 7,

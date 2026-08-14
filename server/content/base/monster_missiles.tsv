@@ -1,18 +1,18 @@
-native_ai	missile_id	projectile_behavior
-GoatRanged	Arrow	Targeted
-SkeletonRanged	Arrow	Targeted
-Snake	Rhino	SnakeCharge
-Succubus	BloodStar	BloodStar
-LazarusSuccubus	BloodStar	BloodStar
-Acid	Acid	Acid
-AcidUnique	Acid	Acid
-FireBat	Firebolt	Firebolt
-Torchant	Fireball	Fireball
-Lich	OrangeFlare	MonsterMagic
-ArchLich	YellowFlare	MonsterMagic
-Psychorb	BlueFlare	MonsterMagic
-Necromorb	RedFlare	MonsterMagic
-Magma	MagmaBall	MonsterMagic
-Storm	ThinLightningControl	Lightning
-Diablo	DiabloApocalypse	ApocalypseController
-BoneDemon	BlueFlare2	MonsterMagic
+native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent
+GoatRanged	Arrow	Targeted	Ranged	100
+SkeletonRanged	Arrow	Targeted	Ranged	100
+Snake	Rhino	SnakeCharge	Ranged	100
+Succubus	BloodStar	BloodStar	Ranged	100
+LazarusSuccubus	BloodStar	BloodStar	Ranged	100
+Acid	Acid	Acid	RangedAvoidance	50
+AcidUnique	Acid	Acid	Ranged	100
+FireBat	Firebolt	Firebolt	Ranged	100
+Torchant	Fireball	Fireball	Ranged	100
+Lich	OrangeFlare	MonsterMagic	Ranged	100
+ArchLich	YellowFlare	MonsterMagic	Ranged	100
+Psychorb	BlueFlare	MonsterMagic	Ranged	100
+Necromorb	RedFlare	MonsterMagic	Ranged	100
+Magma	MagmaBall	MonsterMagic	RangedAvoidance	100
+Storm	ThinLightningControl	Lightning	RangedAvoidance	100
+Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100
+BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100

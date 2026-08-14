@@ -151,6 +151,10 @@ Status date: 2026-08-13
   native identities may enter the migrated projectile path. Existing
   AI-specific probability and avoidance branches remain server-owned until
   their remaining semantics are externalized.
+- Schema 1.82 now carries the mapped ranged-AI mode and avoidance probability;
+  the migrated projectile path consumes those fields instead of identifying
+  the `AiRangedAvoidance` identities in code. Native behavior remains
+  server-owned, while its selection is content-owned and validated.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
