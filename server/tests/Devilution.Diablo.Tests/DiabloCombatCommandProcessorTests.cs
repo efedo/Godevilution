@@ -6145,7 +6145,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "Zombie",
+                NativeAi = "Fallen",
                 ZombieActionChanceBase = 5,
                 ZombieActionChanceIntelligenceScale = 1,
             },
@@ -6196,7 +6196,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "Zombie",
+                NativeAi = "Fallen",
                 ZombieActionChanceBase = 100,
                 ZombieActionChanceIntelligenceScale = 1,
                 ZombieRandomDirectionChanceBase = 10,
@@ -6255,7 +6255,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "Zombie",
+                NativeAi = "Fallen",
                 ZombieActionChanceBase = 100,
                 ZombieActionChanceIntelligenceScale = 1,
                 ZombieMovementDistanceMinimum = 8,

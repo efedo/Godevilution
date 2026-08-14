@@ -5335,8 +5335,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Zombie")
-                return null;
             if (definition.ZombieActionChanceBase > 0
                 && definition.ZombieActionChanceIntelligenceScale > 0) {
                 return (
@@ -5353,8 +5351,6 @@ public sealed class DiabloCombatCommandProcessor
         GetZombieMovementTuning(AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Zombie")
-                return null;
             if (definition.ZombieMovementDistanceMinimum > 0
                 && definition.ZombieMovementDistanceBase > 0
                 && definition.ZombieMovementDistanceIntelligenceScale > 0) {
@@ -5373,8 +5369,6 @@ public sealed class DiabloCombatCommandProcessor
         GetZombieRandomDirectionTuning(AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Zombie")
-                return null;
             if (definition.ZombieRandomDirectionChanceBase > 0
                 && definition.ZombieRandomDirectionChanceIntelligenceScale > 0) {
                 return (

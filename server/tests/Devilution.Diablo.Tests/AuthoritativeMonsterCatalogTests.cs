@@ -414,7 +414,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tzombie_action_chance_base\tzombie_action_chance_intelligence_scale\n"
-                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tZombie\t12\t3\n");
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tFallen\t12\t3\n");
 
         var zombie = Assert.Single(catalog.Definitions);
         Assert.Equal((12, 3), (
@@ -428,7 +428,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tzombie_random_direction_chance_base\tzombie_random_direction_chance_intelligence_scale\n"
-                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tZombie\t21\t3\n");
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tFallen\t21\t3\n");
 
         var zombie = Assert.Single(catalog.Definitions);
         Assert.Equal((21, 3), (
@@ -460,7 +460,7 @@ public sealed class AuthoritativeMonsterCatalogTests
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tzombie_movement_distance_minimum\tzombie_movement_distance_base\tzombie_movement_distance_intelligence_scale\n"
-                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tZombie\t3\t5\t2\n");
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tFallen\t3\t5\t2\n");
 
         var zombie = Assert.Single(catalog.Definitions);
         Assert.Equal((3, 5, 2), (

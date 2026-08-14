@@ -388,38 +388,25 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.FatSpecialChanceIntelligenceScale <= 0))
                 || definition.ZombieActionChanceBase is < 0 or > 100
                 || definition.ZombieActionChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Zombie"
-                    && ((definition.ZombieActionChanceBase != 0
-                            || definition.ZombieActionChanceIntelligenceScale != 0)
-                        && (definition.ZombieActionChanceBase <= 0
-                            || definition.ZombieActionChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Zombie"
-                    && (definition.ZombieActionChanceBase != 0
-                        || definition.ZombieActionChanceIntelligenceScale != 0))
+                || ((definition.ZombieActionChanceBase != 0
+                        || definition.ZombieActionChanceIntelligenceScale != 0)
+                    && (definition.ZombieActionChanceBase <= 0
+                        || definition.ZombieActionChanceIntelligenceScale <= 0))
                 || definition.ZombieRandomDirectionChanceBase is < 0 or > 100
                 || definition.ZombieRandomDirectionChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Zombie"
-                    && ((definition.ZombieRandomDirectionChanceBase != 0
-                            || definition.ZombieRandomDirectionChanceIntelligenceScale != 0)
-                        && (definition.ZombieRandomDirectionChanceBase <= 0
-                            || definition.ZombieRandomDirectionChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Zombie"
-                    && (definition.ZombieRandomDirectionChanceBase != 0
-                        || definition.ZombieRandomDirectionChanceIntelligenceScale != 0))
+                || ((definition.ZombieRandomDirectionChanceBase != 0
+                        || definition.ZombieRandomDirectionChanceIntelligenceScale != 0)
+                    && (definition.ZombieRandomDirectionChanceBase <= 0
+                        || definition.ZombieRandomDirectionChanceIntelligenceScale <= 0))
                 || definition.ZombieMovementDistanceMinimum is < 0 or > 64
                 || definition.ZombieMovementDistanceBase is < 0 or > 64
                 || definition.ZombieMovementDistanceIntelligenceScale is < 0 or > 64
-                || (definition.NativeAi == "Zombie"
-                    && ((definition.ZombieMovementDistanceMinimum != 0
-                            || definition.ZombieMovementDistanceBase != 0
-                            || definition.ZombieMovementDistanceIntelligenceScale != 0)
-                        && (definition.ZombieMovementDistanceMinimum <= 0
-                            || definition.ZombieMovementDistanceBase <= 0
-                            || definition.ZombieMovementDistanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Zombie"
-                    && (definition.ZombieMovementDistanceMinimum != 0
+                || ((definition.ZombieMovementDistanceMinimum != 0
                         || definition.ZombieMovementDistanceBase != 0
-                        || definition.ZombieMovementDistanceIntelligenceScale != 0))
+                        || definition.ZombieMovementDistanceIntelligenceScale != 0)
+                    && (definition.ZombieMovementDistanceMinimum <= 0
+                        || definition.ZombieMovementDistanceBase <= 0
+                        || definition.ZombieMovementDistanceIntelligenceScale <= 0))
                 || definition.SkeletonKingSummonMinimumDistance is < 0 or > 64
                 || definition.SkeletonKingSummonChanceBase is < 0 or > 100
                 || definition.SkeletonKingSummonChanceIntelligenceScale is < 0 or > 100
