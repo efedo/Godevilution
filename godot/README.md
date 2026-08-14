@@ -168,6 +168,11 @@ resistance, shield/class blocking, equipment knockback, death, and PvP-ear
 creation.
 Left-click remains the cast or item-interaction path.
 
+Targeted Firebolt, Charged Bolt, and Bone Spirit casts can also name a living
+same-level remote player. Godot sends the snapshot entity ID and coordinates;
+the server validates friendly-fire, range, and missile line of sight, then
+owns projectile impact, resistance, blocking, damage, and death handling.
+
 The cast cursor now exposes every source present in the authoritative snapshot.
 Memorized spells, the charged left-hand staff, inventory consumables, belt
 consumables, and the class ability appear in stable order; `Q` and `E` cycle

@@ -204,6 +204,10 @@ Windows toolchain command.
   damage, impact phase, and deterministic resume point. Lightning uses field 29
   with the other runtime fields to resume its invisible controller and
   level-scaled persistent segments without consulting mutable player state.
+  Targeted Firebolt, Charged Bolt, and Bone Spirit casts may name a living
+  remote player; the server validates the participant target before creating
+  the same projectile lifecycle, and player impact resolution remains
+  authoritative.
   Teleport uses behavior value `9` with the same existing position and lifetime
   fields for an invisible two-tick controller; authoritative movement appears
   through the existing player coordinates, so no new protocol field is needed.

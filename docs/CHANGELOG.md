@@ -27,7 +27,8 @@ All notable changes to this fork are documented below.
   remote players through the same authoritative target validation used by
   ranged attacks. Friendly-fire, level, range, and missile line-of-sight rules
   remain server-owned; existing player-impact resistance, block, damage, and
-  death handling are reused, with managed acceptance and rejection coverage.
+  death handling are reused, with managed acceptance/rejection and live Godot
+  protocol coverage.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
