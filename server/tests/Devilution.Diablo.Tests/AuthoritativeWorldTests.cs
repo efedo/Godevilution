@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Devilution.Diablo;
 using Xunit;
 
@@ -16,6 +17,8 @@ public sealed class AuthoritativeWorldTests
         Assert.False(world.IsWalkable(1, 1, 1));
         Assert.False(world.IsWalkable(2, 0, 0));
         Assert.False(world.IsWalkable(2, 2, 0));
+        Assert.IsType<ReadOnlyCollection<int>>(world.Levels[0].BlockedCells);
+        Assert.IsType<ReadOnlyCollection<int>>(world.Levels[0].MissileBlockedCells);
     }
 
     [Fact]

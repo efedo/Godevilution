@@ -179,8 +179,9 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains an out-of-range missile-blocked cell.");
         }
-        blockedCellList = this.blockedCells.OrderBy(cell => cell).ToArray();
-        missileBlockedCellList = this.missileBlockedCells.OrderBy(cell => cell).ToArray();
+        blockedCellList = Array.AsReadOnly(this.blockedCells.OrderBy(cell => cell).ToArray());
+        missileBlockedCellList = Array.AsReadOnly(
+            this.missileBlockedCells.OrderBy(cell => cell).ToArray());
     }
 
     public uint LevelId { get; }
