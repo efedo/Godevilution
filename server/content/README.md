@@ -305,9 +305,10 @@ monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 `max_hp / (16 * (roll + 4))` heal and persists the special lock until the player
 closes that boundary. Clients do not execute this behavior.
 The `GoatRanged` identity now uses the shared native `AiRanged` boundary: clear
-missile lanes produce authoritative arrow damage, while targets inside four
-tiles use the native `10 * (intelligence + 7)` avoidance band and deterministic
-retreat-cell selection.
+missile lanes produce authoritative arrow damage, while the validated `Arrow`
+row supplies the native close-range retreat distance and
+`10 * (intelligence + 7)` avoidance band for deterministic retreat-cell
+selection.
 The `GoatMelee` identity now uses the native adjacent `23 + 2 * intelligence`
 attack admission boundary and wounded special branch, with special accuracy and
 damage resolved by the server.

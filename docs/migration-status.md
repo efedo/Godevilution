@@ -28,6 +28,9 @@ Status date: 2026-08-14
   and ranged intelligence bands, far-distance offset, and adjacent choice
   modulo through validated `monster_missiles.tsv` content; older mappings retain
   native compatibility values.
+- The native GoatRanged Arrow path now consumes schema 1.120's validated
+  ranged-retreat distance and chance fields, keeping its dedicated dispatch
+  aligned with the shared server-owned close-range boundary.
 
 - Schema 1.120 externalizes generic `Ranged` close-range retreat distance and
   chance tuning through validated `monster_missiles.tsv` rows; the active
