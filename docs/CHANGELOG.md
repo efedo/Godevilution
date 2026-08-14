@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.120's optional ranged-retreat distance/chance tuning, moving the
+  generic native close-range retreat boundary into validated missile content
+  while preserving legacy target behavior.
 - Add schema 1.119's optional ranged-avoidance distance/chance tuning, moving
   generic native distance and 10,000-scale intelligence chance into validated
   missile content while preserving legacy target behavior.
