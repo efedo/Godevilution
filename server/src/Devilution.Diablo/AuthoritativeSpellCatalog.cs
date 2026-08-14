@@ -109,6 +109,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Converts content mana points into the simulation resource unit. */
     public int ManaCostScale { get; init; } = 1;
 
+    /** Inclusive upper bound for Mana's initial native random restoration roll. */
+    public int ManaRandomRange { get; init; }
+
+    /** Inclusive upper bound for Mana's character-level restoration rolls. */
+    public int ManaCharacterLevelRandomRange { get; init; }
+
+    /** Inclusive upper bound for Mana's learned-spell-level restoration rolls. */
+    public int ManaSpellLevelRandomRange { get; init; }
+
     public int Range { get; init; } = 1;
 
     public int AreaRadius { get; init; }
@@ -393,6 +402,27 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.ManaCostScale <= 0
                 || definition.ManaCostScale > 64) {
                 throw new InvalidDataException("Spell mana scaling is invalid.");
+            }
+            if (definition.ManaRandomRange is < 0 or > short.MaxValue
+                || definition.ManaCharacterLevelRandomRange is < 0 or > short.MaxValue
+                || definition.ManaSpellLevelRandomRange is < 0 or > short.MaxValue) {
+                throw new InvalidDataException("Mana restoration random ranges are invalid.");
+            }
+            var hasManaRestorationTuning = definition.ManaRandomRange != 0
+                || definition.ManaCharacterLevelRandomRange != 0
+                || definition.ManaSpellLevelRandomRange != 0;
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Mana
+                && hasManaRestorationTuning
+                && (definition.ManaRandomRange <= 0
+                    || definition.ManaCharacterLevelRandomRange <= 0
+                    || definition.ManaSpellLevelRandomRange <= 0)) {
+                throw new InvalidDataException(
+                    "Mana behavior requires all native restoration random ranges when tuning is declared.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Mana
+                && hasManaRestorationTuning) {
+                throw new InvalidDataException(
+                    "Mana restoration tuning requires Mana projectile behavior.");
             }
             if (definition.StaffLevel < -1)
                 throw new InvalidDataException("Spell staff level cannot be less than the native unavailable sentinel.");
@@ -1674,6 +1704,11 @@ public sealed class AuthoritativeSpellCatalog
             CharacterLevelManaCost = row.OptionalInt32("character_level_mana_cost"),
             MinimumManaCost = row.OptionalInt32("minimum_mana_cost"),
             ManaCostScale = row.OptionalInt32("mana_cost_scale", 1),
+            ManaRandomRange = row.OptionalInt32("mana_random_range"),
+            ManaCharacterLevelRandomRange = row.OptionalInt32(
+                "mana_character_level_random_range"),
+            ManaSpellLevelRandomRange = row.OptionalInt32(
+                "mana_spell_level_random_range"),
             Range = row.OptionalInt32("range", 1),
             AreaRadius = row.OptionalInt32("area_radius"),
             DamageType = ParseDamageType(row),

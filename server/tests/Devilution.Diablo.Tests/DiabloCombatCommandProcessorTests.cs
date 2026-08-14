@@ -11474,7 +11474,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 : definition));
         var processor = CreateProcessor(
             new DiabloWorldState(),
-            new AuthoritativeSpellCatalog([CreateManaSpell()]),
+            new AuthoritativeSpellCatalog([CreateManaSpell(2, 3, 5)]),
             random: random,
             playerClasses: playerClasses);
         var player = CreatePlayer(
@@ -11486,11 +11486,11 @@ public sealed class DiabloCombatCommandProcessorTests
             abilitySpellId: 41,
             memorizedSpells: [new MemorizedSpellState(41, 2)]);
 
-        var expectedManaQ6 = random.RandomIntBetween(1, 10);
+        var expectedManaQ6 = random.RandomIntBetween(1, 2);
         for (var level = 0; level < player.CharacterLevel; level++)
-            expectedManaQ6 += random.RandomIntBetween(1, 4);
+            expectedManaQ6 += random.RandomIntBetween(1, 3);
         for (var level = 0; level < 2; level++)
-            expectedManaQ6 += random.RandomIntBetween(1, 6);
+            expectedManaQ6 += random.RandomIntBetween(1, 5);
         expectedManaQ6 = expectedManaQ6 * 64 * 125 / 100;
         var expectedRandomState = random.State;
         random.Restore(seed);
@@ -11896,7 +11896,10 @@ public sealed class DiabloCombatCommandProcessorTests
         };
     }
 
-    private static AuthoritativeSpellDefinition CreateManaSpell()
+    private static AuthoritativeSpellDefinition CreateManaSpell(
+        int manaRandomRange = 0,
+        int manaCharacterLevelRandomRange = 0,
+        int manaSpellLevelRandomRange = 0)
     {
         return new AuthoritativeSpellDefinition(41, 255, 0, 0, 0, 0) {
             NativeSpellId = 37,
@@ -11906,6 +11909,9 @@ public sealed class DiabloCombatCommandProcessorTests
             ProjectileBehavior = AuthoritativeProjectileBehavior.Mana,
             ManaAdjustmentDivisor = 1,
             ManaCostScale = 64,
+            ManaRandomRange = manaRandomRange,
+            ManaCharacterLevelRandomRange = manaCharacterLevelRandomRange,
+            ManaSpellLevelRandomRange = manaSpellLevelRandomRange,
             StaffLevel = -1,
         };
     }

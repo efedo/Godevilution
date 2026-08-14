@@ -760,6 +760,33 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedManaCarriesNativeRestorationRanges()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(41, out var mana));
+        Assert.Equal(AuthoritativeProjectileBehavior.Mana, mana.ProjectileBehavior);
+        Assert.Equal((10, 4, 6), (
+            mana.ManaRandomRange,
+            mana.ManaCharacterLevelRandomRange,
+            mana.ManaSpellLevelRandomRange));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                mana with { ManaCharacterLevelRandomRange = 0 },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                mana with { ProjectileBehavior = AuthoritativeProjectileBehavior.Magi },
+            ]));
+    }
+
+    [Fact]
     public void ShippedStoneCurseCarriesNativeDurationAndSearchTuning()
     {
         var path = Path.Combine(

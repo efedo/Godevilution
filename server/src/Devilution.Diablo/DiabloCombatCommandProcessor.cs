@@ -1874,7 +1874,10 @@ public sealed class DiabloCombatCommandProcessor
         } else if (isMana) {
             player.Mana = Math.Min(
                 player.ManaMaximum,
-                checked(player.Mana + ResolveManaRestorationQ6(player, effectiveSpellLevel)));
+                checked(player.Mana + ResolveManaRestorationQ6(
+                    player,
+                    spell,
+                    effectiveSpellLevel)));
         } else if (isGolem) {
             SpawnGolem(
                 player,
@@ -2473,13 +2476,25 @@ public sealed class DiabloCombatCommandProcessor
     /** Native AddMana Q6 restoration, including Hellfire class multipliers. */
     private int ResolveManaRestorationQ6(
         AuthoritativePlayerState player,
+        AuthoritativeSpellDefinition spell,
         int effectiveSpellLevel)
     {
-        var manaQ6 = checked(random.RandomIntBetween(1, 10) * 64);
+        var initialRange = spell.ManaRandomRange > 0
+            ? spell.ManaRandomRange
+            : 10;
+        var characterLevelRange = spell.ManaCharacterLevelRandomRange > 0
+            ? spell.ManaCharacterLevelRandomRange
+            : 4;
+        var spellLevelRange = spell.ManaSpellLevelRandomRange > 0
+            ? spell.ManaSpellLevelRandomRange
+            : 6;
+        var manaQ6 = checked(random.RandomIntBetween(1, initialRange) * 64);
         for (var level = 0; level < player.CharacterLevel; level++)
-            manaQ6 = checked(manaQ6 + random.RandomIntBetween(1, 4) * 64);
+            manaQ6 = checked(
+                manaQ6 + random.RandomIntBetween(1, characterLevelRange) * 64);
         for (var level = 0; level < effectiveSpellLevel; level++)
-            manaQ6 = checked(manaQ6 + random.RandomIntBetween(1, 6) * 64);
+            manaQ6 = checked(
+                manaQ6 + random.RandomIntBetween(1, spellLevelRange) * 64);
 
         var playerClass = GetPlayerClass(player);
         var classPercent = playerClass?.ManaSpellPercent ?? 100;
