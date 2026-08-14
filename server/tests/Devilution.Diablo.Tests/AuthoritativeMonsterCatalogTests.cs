@@ -277,6 +277,37 @@ public sealed class AuthoritativeMonsterCatalogTests
             fat.FatMovementChanceIntelligenceScale));
     }
 
+    [Fact]
+    public void RejectsInvalidZombieTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                ZombieActionChanceBase = 10,
+                ZombieActionChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                ZombieActionChanceBase = 10,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void LoadsZombieTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tzombie_action_chance_base\tzombie_action_chance_intelligence_scale\n"
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tZombie\t12\t3\n");
+
+        var zombie = Assert.Single(catalog.Definitions);
+        Assert.Equal((12, 3), (
+            zombie.ZombieActionChanceBase,
+            zombie.ZombieActionChanceIntelligenceScale));
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

@@ -101,6 +101,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Fat movement admission chance increase per intelligence point. */
     public int FatMovementChanceIntelligenceScale { get; init; }
+
+    /** Native Zombie action admission chance base before intelligence scaling. */
+    public int ZombieActionChanceBase { get; init; }
+
+    /** Native Zombie action admission chance increase per intelligence point. */
+    public int ZombieActionChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -221,6 +227,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Fat"
                     && (definition.FatMovementChanceBase != 0
                         || definition.FatMovementChanceIntelligenceScale != 0))
+                || definition.ZombieActionChanceBase is < 0 or > 100
+                || definition.ZombieActionChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Zombie"
+                    && ((definition.ZombieActionChanceBase != 0
+                            || definition.ZombieActionChanceIntelligenceScale != 0)
+                        && (definition.ZombieActionChanceBase <= 0
+                            || definition.ZombieActionChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Zombie"
+                    && (definition.ZombieActionChanceBase != 0
+                        || definition.ZombieActionChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -320,6 +336,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GoatMeleeMovementChanceIntelligenceScale = row.OptionalInt32("goat_melee_movement_chance_intelligence_scale"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
+                ZombieActionChanceBase = row.OptionalInt32("zombie_action_chance_base"),
+                ZombieActionChanceIntelligenceScale = row.OptionalInt32("zombie_action_chance_intelligence_scale"),
             }));
     }
 

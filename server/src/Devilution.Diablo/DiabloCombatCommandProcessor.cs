@@ -5079,6 +5079,24 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
+    private (int ChanceBase, int IntelligenceScale)? GetZombieActionTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Zombie")
+                return null;
+            if (definition.ZombieActionChanceBase > 0
+                && definition.ZombieActionChanceIntelligenceScale > 0) {
+                return (
+                    definition.ZombieActionChanceBase,
+                    definition.ZombieActionChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Zombie"
+            ? (10, 2)
+            : null;
+    }
+
     private bool TryAdvanceSkeletonKingAi(
         AuthoritativeCombatTarget target,
         AuthoritativePlayerState victim,
@@ -5154,11 +5172,15 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "Zombie")
+        var zombieTuning = GetZombieActionTuning(monster);
+        if (!zombieTuning.HasValue)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var actionChance = Math.Min(100, 10 + (2 * monster.Intelligence));
+        var actionChance = Math.Min(
+            100,
+            zombieTuning.Value.ChanceBase
+                + (zombieTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)actionChance)
             return true;
         if (distance < Math.Max(2, 2 * monster.Intelligence + 4))
