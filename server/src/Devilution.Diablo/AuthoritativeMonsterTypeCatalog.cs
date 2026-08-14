@@ -132,6 +132,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Zombie action admission chance increase per intelligence point. */
     public int ZombieActionChanceIntelligenceScale { get; init; }
 
+    /** Native Zombie random-direction prepend chance base before intelligence scaling. */
+    public int ZombieRandomDirectionChanceBase { get; init; }
+
+    /** Native Zombie random-direction prepend chance increase per intelligence point. */
+    public int ZombieRandomDirectionChanceIntelligenceScale { get; init; }
+
     /** Native minimum Zombie long-range movement distance. */
     public int ZombieMovementDistanceMinimum { get; init; }
 
@@ -368,6 +374,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Zombie"
                     && (definition.ZombieActionChanceBase != 0
                         || definition.ZombieActionChanceIntelligenceScale != 0))
+                || definition.ZombieRandomDirectionChanceBase is < 0 or > 100
+                || definition.ZombieRandomDirectionChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "Zombie"
+                    && ((definition.ZombieRandomDirectionChanceBase != 0
+                            || definition.ZombieRandomDirectionChanceIntelligenceScale != 0)
+                        && (definition.ZombieRandomDirectionChanceBase <= 0
+                            || definition.ZombieRandomDirectionChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Zombie"
+                    && (definition.ZombieRandomDirectionChanceBase != 0
+                        || definition.ZombieRandomDirectionChanceIntelligenceScale != 0))
                 || definition.ZombieMovementDistanceMinimum is < 0 or > 64
                 || definition.ZombieMovementDistanceBase is < 0 or > 64
                 || definition.ZombieMovementDistanceIntelligenceScale is < 0 or > 64
@@ -581,6 +597,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 FatSpecialChanceIntelligenceScale = row.OptionalInt32("fat_special_chance_intelligence_scale"),
                 ZombieActionChanceBase = row.OptionalInt32("zombie_action_chance_base"),
                 ZombieActionChanceIntelligenceScale = row.OptionalInt32("zombie_action_chance_intelligence_scale"),
+                ZombieRandomDirectionChanceBase = row.OptionalInt32("zombie_random_direction_chance_base"),
+                ZombieRandomDirectionChanceIntelligenceScale = row.OptionalInt32("zombie_random_direction_chance_intelligence_scale"),
                 ZombieMovementDistanceMinimum = row.OptionalInt32("zombie_movement_distance_minimum"),
                 ZombieMovementDistanceBase = row.OptionalInt32("zombie_movement_distance_base"),
                 ZombieMovementDistanceIntelligenceScale = row.OptionalInt32("zombie_movement_distance_intelligence_scale"),

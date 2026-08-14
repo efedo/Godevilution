@@ -5242,6 +5242,24 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
+    private (int ChanceBase, int IntelligenceScale)?
+        GetZombieRandomDirectionTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Zombie")
+                return null;
+            if (definition.ZombieRandomDirectionChanceBase > 0
+                && definition.ZombieRandomDirectionChanceIntelligenceScale > 0) {
+                return (
+                    definition.ZombieRandomDirectionChanceBase,
+                    definition.ZombieRandomDirectionChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Zombie"
+            ? (20, 2)
+            : null;
+    }
+
     private bool TryAdvanceSkeletonKingAi(
         AuthoritativeCombatTarget target,
         AuthoritativePlayerState victim,
@@ -5380,7 +5398,13 @@ public sealed class DiabloCombatCommandProcessor
             (X: deltaX, Y: 0),
             (X: 0, Y: deltaY),
         };
-        if (seed % 100U < (uint)Math.Min(100, 20 + (2 * monster.Intelligence))) {
+        var randomDirectionTuning = GetZombieRandomDirectionTuning(monster);
+        if (randomDirectionTuning.HasValue
+            && seed % 100U < (uint)Math.Min(
+                100,
+                randomDirectionTuning.Value.ChanceBase
+                    + (randomDirectionTuning.Value.IntelligenceScale
+                        * monster.Intelligence))) {
             var randomDirection = (int)((seed / 100U) % 8U);
             directions = new[] {
                 (X: randomDirection switch { 0 or 1 or 7 => 1, 2 or 6 => 0, _ => -1 },
