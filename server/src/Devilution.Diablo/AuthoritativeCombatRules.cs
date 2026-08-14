@@ -12,9 +12,6 @@ public enum DiabloGameVariant
 /** Externalized constants for the initial authoritative combat boundary. */
 public sealed class AuthoritativeCombatRules
 {
-    private const int NativeEarItemIndex = 23;
-    private const int NativeEarMiscId = 44;
-
     public AuthoritativeCombatRules(
         int baseAttackDamage,
         int minimumDamage,
@@ -50,7 +47,9 @@ public sealed class AuthoritativeCombatRules
         int stealMana3Percent = 3,
         int stealMana5Percent = 5,
         int hellfireArmorBonusAgainstDemons = 40,
-        int hellfireArmorBonusAgainstUndead = 20)
+        int hellfireArmorBonusAgainstUndead = 20,
+        int pvpEarNativeItemIndex = 23,
+        int pvpEarMiscId = 44)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -91,7 +90,9 @@ public sealed class AuthoritativeCombatRules
             || deathGoldItemType < 0
             || deathGoldItemIndex < 0
             || deathDropSearchRadius is < 1 or > DiabloCrawl.MaximumSupportedRadius
-            || pvpEarItemId == 0) {
+            || pvpEarItemId == 0
+            || pvpEarNativeItemIndex < 0
+            || pvpEarMiscId < 0) {
             throw new InvalidDataException("Combat player-death drop rules are invalid.");
         }
         BaseAttackDamage = baseAttackDamage;
@@ -114,6 +115,8 @@ public sealed class AuthoritativeCombatRules
         DeathGoldItemIndex = deathGoldItemIndex;
         DeathDropSearchRadius = deathDropSearchRadius;
         PvpEarItemId = pvpEarItemId;
+        PvpEarNativeItemIndex = pvpEarNativeItemIndex;
+        PvpEarMiscId = pvpEarMiscId;
         MonsterMeleeMinimumHitChance = monsterMeleeMinimumHitChance;
         MonsterRangedMinimumHitChance = monsterRangedMinimumHitChance;
         MonsterMinimumHitChanceLevel14 = monsterMinimumHitChanceLevel14;
@@ -177,6 +180,12 @@ public sealed class AuthoritativeCombatRules
     /** Stable content item ID for the native `IDI_EAR` definition. */
     public uint PvpEarItemId { get; }
 
+    /** Native item-index projection required for compatibility PvP ears. */
+    public int PvpEarNativeItemIndex { get; }
+
+    /** Native miscellaneous-ID projection required for compatibility PvP ears. */
+    public int PvpEarMiscId { get; }
+
     /** Native minimum hit chance for ordinary monster melee attacks. */
     public int MonsterMeleeMinimumHitChance { get; }
 
@@ -226,8 +235,8 @@ public sealed class AuthoritativeCombatRules
     {
         ArgumentNullException.ThrowIfNull(items);
         var ear = items.GetRequired(PvpEarItemId);
-        if (ear.NativeItemIndex != NativeEarItemIndex
-            || ear.MiscId != NativeEarMiscId) {
+        if (ear.NativeItemIndex != PvpEarNativeItemIndex
+            || ear.MiscId != PvpEarMiscId) {
             throw new InvalidDataException(
                 "Combat PvP-ear content must project native IDI_EAR identity.");
         }
@@ -452,7 +461,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("steal_mana_3_percent", 3),
             row.OptionalInt32("steal_mana_5_percent", 5),
             row.OptionalInt32("hellfire_armor_bonus_against_demons", 40),
-            row.OptionalInt32("hellfire_armor_bonus_against_undead", 20));
+            row.OptionalInt32("hellfire_armor_bonus_against_undead", 20),
+            row.OptionalInt32("pvp_ear_native_item_index", 23),
+            row.OptionalInt32("pvp_ear_misc_id", 44));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

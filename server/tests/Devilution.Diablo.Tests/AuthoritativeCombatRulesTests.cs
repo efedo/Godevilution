@@ -251,6 +251,21 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsPvpEarNativeProjectionFromCombatContent()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_ear_native_item_index\tpvp_ear_misc_id\r\n"
+                + "10\t1\t100\t99\t77\r\n");
+
+        Assert.Equal(99, rules.PvpEarNativeItemIndex);
+        Assert.Equal(77, rules.PvpEarMiscId);
+        rules.ValidateItems(new AuthoritativeItemCatalog([
+            CreateEarDefinition(nativeItemIndex: 99, miscId: 77),
+        ]));
+    }
+
+    [Fact]
     public void ResolvesArmorAndElementalResistanceDeterministically()
     {
         var rules = new AuthoritativeCombatRules(10, 1, 100);
