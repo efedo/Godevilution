@@ -5760,7 +5760,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "GoatMelee",
+                NativeAi = "Fallen",
                 GoatMeleeAttackChanceBase = 100,
                 GoatMeleeAttackChanceIntelligenceScale = 1,
                 GoatMeleeSpecialHealthThresholdPercent = 60,
@@ -5844,7 +5844,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "GoatMelee",
+                NativeAi = "Fallen",
                 GoatMeleeAttackChanceBase = 10,
                 GoatMeleeAttackChanceIntelligenceScale = 1,
             },
@@ -5930,7 +5930,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "GoatMelee",
+                NativeAi = "Fallen",
                 GoatMeleeMovementChanceBase = 10,
                 GoatMeleeMovementChanceIntelligenceScale = 1,
             },

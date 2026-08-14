@@ -352,34 +352,22 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.SkeletonMeleeAttackChanceIntelligenceScale <= 0))
                 || definition.GoatMeleeMovementChanceBase is < 0 or > 100
                 || definition.GoatMeleeMovementChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "GoatMelee"
-                    && ((definition.GoatMeleeMovementChanceBase != 0
-                            || definition.GoatMeleeMovementChanceIntelligenceScale != 0)
-                        && (definition.GoatMeleeMovementChanceBase <= 0
-                            || definition.GoatMeleeMovementChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "GoatMelee"
-                    && (definition.GoatMeleeMovementChanceBase != 0
-                        || definition.GoatMeleeMovementChanceIntelligenceScale != 0))
+                || ((definition.GoatMeleeMovementChanceBase != 0
+                        || definition.GoatMeleeMovementChanceIntelligenceScale != 0)
+                    && (definition.GoatMeleeMovementChanceBase <= 0
+                        || definition.GoatMeleeMovementChanceIntelligenceScale <= 0))
                 || definition.GoatMeleeAttackChanceBase is < 0 or > 100
                 || definition.GoatMeleeAttackChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "GoatMelee"
-                    && ((definition.GoatMeleeAttackChanceBase != 0
-                            || definition.GoatMeleeAttackChanceIntelligenceScale != 0)
-                        && (definition.GoatMeleeAttackChanceBase <= 0
-                            || definition.GoatMeleeAttackChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "GoatMelee"
-                    && (definition.GoatMeleeAttackChanceBase != 0
-                        || definition.GoatMeleeAttackChanceIntelligenceScale != 0))
+                || ((definition.GoatMeleeAttackChanceBase != 0
+                        || definition.GoatMeleeAttackChanceIntelligenceScale != 0)
+                    && (definition.GoatMeleeAttackChanceBase <= 0
+                        || definition.GoatMeleeAttackChanceIntelligenceScale <= 0))
                 || definition.GoatMeleeSpecialHealthThresholdPercent is < 0 or > 100
                 || definition.GoatMeleeSpecialChanceGroupPeriod is < 0 or > 256
-                || (definition.NativeAi == "GoatMelee"
-                    && ((definition.GoatMeleeSpecialHealthThresholdPercent != 0
-                            || definition.GoatMeleeSpecialChanceGroupPeriod != 0)
-                        && (definition.GoatMeleeSpecialHealthThresholdPercent <= 0
-                            || definition.GoatMeleeSpecialChanceGroupPeriod <= 0)))
-                || (definition.NativeAi != "GoatMelee"
-                    && (definition.GoatMeleeSpecialHealthThresholdPercent != 0
-                        || definition.GoatMeleeSpecialChanceGroupPeriod != 0))
+                || ((definition.GoatMeleeSpecialHealthThresholdPercent != 0
+                        || definition.GoatMeleeSpecialChanceGroupPeriod != 0)
+                    && (definition.GoatMeleeSpecialHealthThresholdPercent <= 0
+                        || definition.GoatMeleeSpecialChanceGroupPeriod <= 0))
                 || definition.FatMovementChanceBase is < 0 or > 100
                 || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
                 || (definition.NativeAi == "Fat"

@@ -5253,8 +5253,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "GoatMelee")
-                return null;
             if (definition.GoatMeleeMovementChanceBase > 0
                 && definition.GoatMeleeMovementChanceIntelligenceScale > 0) {
                 return (
@@ -5275,8 +5273,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "GoatMelee")
-                return null;
             if (definition.GoatMeleeAttackChanceBase > 0
                 && definition.GoatMeleeAttackChanceIntelligenceScale > 0) {
                 return (
