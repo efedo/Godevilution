@@ -808,6 +808,27 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedReflectCarriesNativeDefaultSpellLevel()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(43, out var reflect));
+        Assert.Equal(AuthoritativeProjectileBehavior.Reflect, reflect.ProjectileBehavior);
+        Assert.Equal(2, reflect.ReflectDefaultSpellLevel);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            reflect with {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+            },
+        ]));
+    }
+
+    [Fact]
     public void ShippedStoneCurseCarriesNativeDurationAndSearchTuning()
     {
         var path = Path.Combine(

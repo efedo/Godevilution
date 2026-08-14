@@ -236,6 +236,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Maximum learned spell level used by Mana Shield damage conversion. */
     public int ManaShieldDamageReductionMaximumLevel { get; init; }
 
+    /** Native Reflect spell level used when a cast has no explicit level. */
+    public int ReflectDefaultSpellLevel { get; init; }
+
     /** Constant added to effective spell level before Stone Curse duration is capped. */
     public int StoneCurseBaseDuration { get; init; }
 
@@ -517,6 +520,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.GuardianFireInterval < 0
                 || definition.GuardianProjectileSpeedLevelStep < 0
                 || definition.GuardianProjectileSpeedMaximumBonus < 0
+                || definition.ReflectDefaultSpellLevel < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
                 throw new InvalidDataException(
@@ -1511,6 +1515,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Rage tuning requires Rage behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Reflect
+                && definition.ReflectDefaultSpellLevel != 0) {
+                throw new InvalidDataException(
+                    "Reflect default-level tuning requires Reflect behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Elemental
                 && (definition.ElementalRetargetLifetime != 0
                     || definition.ElementalCharacterLevelDamageMultiplier != 0)) {
@@ -1796,6 +1805,8 @@ public sealed class AuthoritativeSpellCatalog
                 "rage_self_damage_character_level"),
             RageMinimumLifeQ6PerCharacterLevel = row.OptionalInt32(
                 "rage_minimum_life_q6_per_character_level"),
+            ReflectDefaultSpellLevel = row.OptionalInt32(
+                "reflect_default_spell_level"),
             ElementalRetargetLifetime = row.OptionalInt32(
                 "elemental_retarget_lifetime"),
             ElementalCharacterLevelDamageMultiplier = row.OptionalInt32(

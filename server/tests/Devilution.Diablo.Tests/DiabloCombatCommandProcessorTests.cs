@@ -11467,6 +11467,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ReflectUsesConfiguredDefaultSpellLevelForAbilityCasts()
+    {
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            new AuthoritativeSpellCatalog([
+                CreateReflectSpell() with { ReflectDefaultSpellLevel = 4 },
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterLevel: 3,
+            mana: 10000,
+            manaMaximum: 10000,
+            abilitySpellId: 43);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                43,
+                0,
+                player.PositionX,
+                player.PositionY,
+                DiabloCastSourceKind.Ability),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(12U, player.ReflectCharges);
+        Assert.Equal(10000, player.Mana);
+    }
+
+    [Fact]
     public void MagiCastRestoresCurrentManaToTheNativeMaximum()
     {
         var processor = CreateProcessor(

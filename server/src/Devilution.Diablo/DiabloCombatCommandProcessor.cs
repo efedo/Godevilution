@@ -1868,7 +1868,11 @@ public sealed class DiabloCombatCommandProcessor
             // Native AddReflect uses spell level 2 when the cast does not carry
             // an explicit level, then adds level * character level to uint16
             // charges. Overflow intentionally fizzles the charge increment.
-            var reflectSpellLevel = effectiveSpellLevel == 0 ? 2 : effectiveSpellLevel;
+            var reflectSpellLevel = effectiveSpellLevel == 0
+                ? (spell.ReflectDefaultSpellLevel > 0
+                    ? spell.ReflectDefaultSpellLevel
+                    : 2)
+                : effectiveSpellLevel;
             var chargeIncrement = checked((uint)reflectSpellLevel * player.CharacterLevel);
             if (chargeIncrement <= ushort.MaxValue - player.ReflectCharges)
                 player.ReflectCharges += chargeIncrement;
