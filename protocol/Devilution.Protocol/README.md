@@ -10,4 +10,5 @@ and one runtime type identity.
 
 Monster snapshots include server-owned Fallen fear countdown and retreat
 direction fields (46-47). Clients render these values but never execute the
-native AI behavior.
+native AI behavior. Sneak hidden state and retreat countdown are likewise
+server-owned fields 48-49.

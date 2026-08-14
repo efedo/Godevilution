@@ -8,6 +8,8 @@ All notable changes to this fork are documented below.
   distance/intelligence admission and monster-owned persistent segments.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
+- Add server-owned Sneak visibility and post-hit retreat state, preserving
+  native distance bands and preventing hidden monsters from being targeted.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

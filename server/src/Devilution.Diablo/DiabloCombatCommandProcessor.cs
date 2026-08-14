@@ -751,6 +751,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (!world.CombatTargets.TryGetValue(targetEntityId, out target!)
             || target.HitPoints <= 0
+            || target.SneakHidden
             || (target.LevelId != 0 && target.LevelId != player.LevelId)) {
             return false;
         }
@@ -973,6 +974,7 @@ public sealed class DiabloCombatCommandProcessor
             } else {
                 target = world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
+                        && !candidate.SneakHidden
                         && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
                         && candidate.PositionX == intent.TargetX
                         && candidate.PositionY == intent.TargetY)
@@ -992,6 +994,7 @@ public sealed class DiabloCombatCommandProcessor
                 || (isBerserk && target is null)
                 || (target is not null
                     && (target.HitPoints <= 0
+                        || target.SneakHidden
                         || (target.LevelId != 0 && target.LevelId != player.LevelId)))
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
@@ -1022,6 +1025,7 @@ public sealed class DiabloCombatCommandProcessor
                 ? []
                 : world.CombatTargets.Values
                     .Where(candidate => candidate.HitPoints > 0
+                        && !candidate.SneakHidden
                         && (candidate.LevelId == 0 || candidate.LevelId == player.LevelId)
                         && Math.Max(
                             Math.Abs(candidate.PositionX - centerX),
@@ -3626,6 +3630,7 @@ public sealed class DiabloCombatCommandProcessor
         uint levelId)
     {
         return target.HitPointsQ6 > 0
+            && !target.SneakHidden
             && (target.LevelId == 0 || target.LevelId == levelId)
             && !target.IsPlayerMinion
             && !target.IsBerserked
@@ -3687,6 +3692,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         return world.CombatTargets.Values
             .Where(candidate => candidate.HitPointsQ6 > 0
+                && !candidate.SneakHidden
                 && !candidate.StoneCurseImmune
                 && (candidate.LevelId == 0 || candidate.LevelId == levelId)
                 && ((candidate.PositionX == positionX
@@ -3746,6 +3752,8 @@ public sealed class DiabloCombatCommandProcessor
             var distance = Math.Max(
                 Math.Abs(victim.PositionX - target.PositionX),
                 Math.Abs(victim.PositionY - target.PositionY));
+            if (TryAdvanceSneakAi(target, victim, players, distance))
+                continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceGargoyleHealing(target, victim, tick, players, events, distance))
@@ -3924,6 +3932,65 @@ public sealed class DiabloCombatCommandProcessor
         }
         target.AdvanceFallenFear();
         return true;
+    }
+
+    private bool TryAdvanceSneakAi(
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance)
+    {
+        if (target.NativeAi != "Sneak")
+            return false;
+
+        var preferredDistance = Math.Max(1, 5 - target.Intelligence);
+        if (target.SneakRetreatTicks != 0) {
+            if (distance >= preferredDistance + 3) {
+                target.StartSneakRetreat(0);
+                return false;
+            }
+
+            var direction = GetDirection(
+                victim.PositionX,
+                victim.PositionY,
+                target.PositionX,
+                target.PositionY);
+            for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+                var candidateDirection = offset == 0
+                    ? direction
+                    : offset % 2 == 1
+                        ? RotateDirection(direction, (offset + 1) / 2)
+                        : RotateDirection(direction, -(offset / 2));
+                var displacement = DirectionDisplacements[candidateDirection];
+                var candidateX = checked(target.PositionX + displacement.X);
+                var candidateY = checked(target.PositionY + displacement.Y);
+                if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
+                    || world.IsOccupied(
+                        target.LevelId,
+                        candidateX,
+                        candidateY,
+                        players,
+                        target.EntityId)) {
+                    continue;
+                }
+                target.BeginMovement(candidateX, candidateY);
+                break;
+            }
+            target.AdvanceSneakRetreat();
+            return true;
+        }
+
+        if (target.SneakHidden) {
+            if (distance < preferredDistance)
+                target.SetSneakHidden(false);
+            return true;
+        }
+
+        if (distance >= preferredDistance + 1) {
+            target.SetSneakHidden(true);
+            return true;
+        }
+        return false;
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
@@ -7981,6 +8048,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         return world.CombatTargets.Values
             .Where(candidate => candidate.HitPointsQ6 > 0
+                && !candidate.SneakHidden
                 && (candidate.LevelId == 0 || candidate.LevelId == levelId)
                 && ((candidate.PositionX == positionX
                         && candidate.PositionY == positionY)
@@ -9532,6 +9600,12 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloFixedPointQ6.ToWholeTruncated(damageQ6)) {
                 AmountQ6 = damageQ6,
             });
+        }
+        if (wasAlive
+            && target.HitPointsQ6 > 0
+            && damageQ6 > 0
+            && target.NativeAi == "Sneak") {
+            target.StartSneakRetreat(9);
         }
         if (!wasAlive || target.HitPointsQ6 != 0)
             return;

@@ -85,6 +85,8 @@ internal static class DiabloProtocolMapper
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
                 FallenFearTicks = monster.FallenFearTicks,
                 FallenFearDirection = monster.FallenFearDirection,
+                SneakHidden = monster.SneakHidden,
+                SneakRetreatTicks = monster.SneakRetreatTicks,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -369,6 +371,8 @@ internal static class DiabloProtocolMapper
                 GargoyleSpecialActive = monster.GargoyleSpecialActive,
                 FallenFearTicks = monster.FallenFearTicks,
                 FallenFearDirection = monster.FallenFearDirection,
+                SneakHidden = monster.SneakHidden,
+                SneakRetreatTicks = monster.SneakRetreatTicks,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),

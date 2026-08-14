@@ -297,6 +297,11 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.FallenFearTicks);
                     hasher.AppendInt32(monster.FallenFearDirection);
                 }
+                if (monster.SneakHidden || monster.SneakRetreatTicks != 0) {
+                    hasher.AppendString("godevilution-monster-sneak-v1");
+                    hasher.AppendBool(monster.SneakHidden);
+                    hasher.AppendInt32(monster.SneakRetreatTicks);
+                }
             }
         }
 

@@ -315,6 +315,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SneakUsesIntelligenceVisibilityBandAndUnhidesWhenApproached()
+    {
+        var sneak = new AuthoritativeCombatTarget(
+            9,
+            5,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Sneak",
+            intelligence: 2);
+        var world = new DiabloWorldState(combatTargets: [sneak]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.True(sneak.SneakHidden);
+
+        player.PositionX = 4;
+        var hiddenAttack = processor.Execute(player, new DiabloAttackIntent(9), 2);
+        AssertRejected(hiddenAttack, DiabloRuleFailure.InvalidTarget);
+
+        player.PositionX = 3;
+        processor.AdvanceTick(3, [player]);
+
+        Assert.False(sneak.SneakHidden);
+    }
+
+    [Fact]
+    public void SneakRetreatsForNineTicksAfterAHit()
+    {
+        var sneak = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Sneak",
+            intelligence: 2);
+        var world = new DiabloWorldState(combatTargets: [sneak]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(9, sneak.SneakRetreatTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal((2, 0), (sneak.PositionX, sneak.PositionY));
+        Assert.Equal(8, sneak.SneakRetreatTicks);
+    }
+
+    [Fact]
     public void AttackUsesValidatedMonsterExperienceReward()
     {
         var target = new AuthoritativeCombatTarget(

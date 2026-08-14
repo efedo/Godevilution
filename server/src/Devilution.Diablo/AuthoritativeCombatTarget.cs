@@ -53,7 +53,9 @@ public sealed class AuthoritativeCombatTarget
         int intelligence = 0,
         bool gargoyleSpecialActive = false,
         int fallenFearTicks = 0,
-        int fallenFearDirection = 0)
+        int fallenFearDirection = 0,
+        bool sneakHidden = false,
+        int sneakRetreatTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -77,6 +79,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(fallenFearTicks));
         if (fallenFearDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(fallenFearDirection));
+        if (sneakRetreatTicks < 0)
+            throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -88,6 +92,14 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "Fallen fear requires the Fallen native AI identity.",
                 nameof(fallenFearTicks));
+        if (sneakHidden && nativeAi != "Sneak")
+            throw new ArgumentException(
+                "Sneak visibility requires the Sneak native AI identity.",
+                nameof(sneakHidden));
+        if (sneakRetreatTicks != 0 && nativeAi != "Sneak")
+            throw new ArgumentException(
+                "Sneak retreat requires the Sneak native AI identity.",
+                nameof(sneakRetreatTicks));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -134,6 +146,8 @@ public sealed class AuthoritativeCombatTarget
         GargoyleSpecialActive = gargoyleSpecialActive;
         FallenFearTicks = fallenFearTicks;
         FallenFearDirection = fallenFearDirection;
+        SneakHidden = sneakHidden;
+        SneakRetreatTicks = sneakRetreatTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -238,6 +252,12 @@ public sealed class AuthoritativeCombatTarget
     /** Direction of the native Fallen fear retreat. */
     public int FallenFearDirection { get; private set; }
 
+    /** Native Sneak visibility state; hidden monsters are not targetable. */
+    public bool SneakHidden { get; private set; }
+
+    /** Remaining native Sneak retreat ticks after a successful hit. */
+    public int SneakRetreatTicks { get; private set; }
+
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
     /** Whole-point compatibility projection; exact authoritative state is HitPointsQ6. */
@@ -341,6 +361,41 @@ public sealed class AuthoritativeCombatTarget
         if (FallenFearTicks == 0)
             return false;
         FallenFearTicks--;
+        return true;
+    }
+
+    internal void SetSneakHidden(bool hidden)
+    {
+        if (NativeAi != "Sneak")
+            throw new InvalidOperationException("Only Sneak monsters can change visibility.");
+        SneakHidden = hidden;
+    }
+
+    internal void StartSneakRetreat(int ticks)
+    {
+        if (NativeAi != "Sneak")
+            throw new InvalidOperationException("Only Sneak monsters can retreat.");
+        if (ticks < 0)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        SneakHidden = false;
+        SneakRetreatTicks = ticks;
+    }
+
+    internal void RestoreSneakState(bool hidden, int retreatTicks)
+    {
+        if (retreatTicks < 0)
+            throw new ArgumentOutOfRangeException(nameof(retreatTicks));
+        if ((hidden || retreatTicks != 0) && NativeAi != "Sneak")
+            throw new InvalidDataException("Only Sneak monsters can restore stealth state.");
+        SneakHidden = hidden;
+        SneakRetreatTicks = retreatTicks;
+    }
+
+    internal bool AdvanceSneakRetreat()
+    {
+        if (SneakRetreatTicks == 0)
+            return false;
+        SneakRetreatTicks--;
         return true;
     }
 

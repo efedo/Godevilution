@@ -464,6 +464,10 @@ message MonsterSnapshot {
 	int32 fallen_fear_ticks = 46;
 	// Direction of the native Fallen fear retreat (0-7).
 	int32 fallen_fear_direction = 47;
+	// Native Sneak visibility state; hidden monsters are not targetable.
+	bool sneak_hidden = 48;
+	// Remaining native Sneak retreat ticks after a successful hit.
+	int32 sneak_retreat_ticks = 49;
 }
 
 message WorldItemSnapshot {

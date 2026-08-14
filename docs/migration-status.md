@@ -28,6 +28,9 @@ Status date: 2026-08-13
   native `max(8 - level, 2)` retreat countdown and source-to-survivor direction
   at the death boundary, with deterministic walk fallback and snapshot,
   save, protocol, and hash coverage.
+- Native Sneak stealth is now server-owned: its intelligence-derived visibility
+  band, hidden target exclusion, and nine-tick post-hit retreat persist through
+  snapshots, saves, protocol, and canonical hashes.
 
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.

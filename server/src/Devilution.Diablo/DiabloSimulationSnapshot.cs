@@ -94,6 +94,12 @@ public sealed record DiabloMonsterState(
     /** Direction of the native Fallen fear retreat. */
     public int FallenFearDirection { get; init; }
 
+    /** Native Sneak visibility state; hidden monsters are not targetable. */
+    public bool SneakHidden { get; init; }
+
+    /** Remaining native Sneak retreat ticks after a successful hit. */
+    public int SneakRetreatTicks { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -350,6 +356,8 @@ public sealed partial class DiabloSimulation
                     DeathTicksRemaining = target.DeathTicksRemaining,
                     FallenFearTicks = target.FallenFearTicks,
                     FallenFearDirection = target.FallenFearDirection,
+                    SneakHidden = target.SneakHidden,
+                    SneakRetreatTicks = target.SneakRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -590,6 +598,9 @@ public sealed partial class DiabloSimulation
                 || monster.FallenFearTicks is < 0 or > 1024
                 || monster.FallenFearDirection is < 0 or >= 8
                 || (monster.FallenFearTicks != 0 && monster.NativeAi != "Fallen")
+                || monster.SneakRetreatTicks is < 0 or > 64
+                || (monster.SneakHidden && monster.NativeAi != "Sneak")
+                || (monster.SneakRetreatTicks != 0 && monster.NativeAi != "Sneak")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1346,6 +1357,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
+                target.RestoreSneakState(
+                    monster.SneakHidden,
+                    monster.SneakRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1402,6 +1416,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
+                restoredTarget.RestoreSneakState(
+                    monster.SneakHidden,
+                    monster.SneakRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

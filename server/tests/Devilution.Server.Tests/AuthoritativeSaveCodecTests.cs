@@ -73,6 +73,28 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Contains("format 2", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void VersionOneRoundTripsSneakStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Sneak",
+                FallenFearTicks = 0,
+                FallenFearDirection = 0,
+                SneakHidden = true,
+                SneakRetreatTicks = 5,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.True(monster.SneakHidden);
+        Assert.Equal(5, monster.SneakRetreatTicks);
+    }
+
     [Theory]
     [InlineData(
         DiabloPlayerActionKind.Death,
