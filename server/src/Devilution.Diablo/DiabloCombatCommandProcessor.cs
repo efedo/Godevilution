@@ -5335,10 +5335,12 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloDirectedGameplayEvent> events,
         int distance)
     {
-        if (monster.NativeAi != "Gargoyle")
+        var gargoyleTuning = GetGargoyleTuning(monster);
+        if (!gargoyleTuning.HasValue)
             return false;
 
-        var safeDistance = monster.Intelligence + 2;
+        var safeDistance = gargoyleTuning.Value.DistanceBase
+            + (gargoyleTuning.Value.IntelligenceScale * monster.Intelligence);
         if (monster.GargoyleSpecialActive) {
             if (distance < safeDistance)
                 monster.GargoyleSpecialActive = false;
@@ -5372,6 +5374,24 @@ public sealed class DiabloCombatCommandProcessor
         // intelligence+2 boundary, unless this heal reached full life.
         monster.GargoyleSpecialActive = monster.HitPointsQ6 < monster.MaxHitPointsQ6;
         return true;
+    }
+
+    private (int DistanceBase, int IntelligenceScale)? GetGargoyleTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Gargoyle")
+                return null;
+            if (definition.GargoyleSafeDistanceBase > 0
+                && definition.GargoyleSafeDistanceIntelligenceScale > 0) {
+                return (
+                    definition.GargoyleSafeDistanceBase,
+                    definition.GargoyleSafeDistanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Gargoyle"
+            ? (2, 1)
+            : null;
     }
 
     /** Native GargoyleAi retreats from a wounded player before healing. */

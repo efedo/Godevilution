@@ -146,6 +146,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native HorkDemon non-adjacent movement chance increase per intelligence point. */
     public int HorkDemonMovementChanceIntelligenceScale { get; init; }
+
+    /** Native Gargoyle safety-boundary base before intelligence scaling. */
+    public int GargoyleSafeDistanceBase { get; init; }
+
+    /** Native Gargoyle safety-boundary increase per intelligence point. */
+    public int GargoyleSafeDistanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -334,6 +340,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.HorkDemonSpawnChanceIntelligenceScale != 0
                         || definition.HorkDemonMovementChanceBase != 0
                         || definition.HorkDemonMovementChanceIntelligenceScale != 0))
+                || definition.GargoyleSafeDistanceBase is < 0 or > 64
+                || definition.GargoyleSafeDistanceIntelligenceScale is < 0 or > 64
+                || (definition.NativeAi == "Gargoyle"
+                    && ((definition.GargoyleSafeDistanceBase != 0
+                            || definition.GargoyleSafeDistanceIntelligenceScale != 0)
+                        && (definition.GargoyleSafeDistanceBase <= 0
+                            || definition.GargoyleSafeDistanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Gargoyle"
+                    && (definition.GargoyleSafeDistanceBase != 0
+                        || definition.GargoyleSafeDistanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -448,6 +464,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 HorkDemonSpawnChanceIntelligenceScale = row.OptionalInt32("hork_demon_spawn_chance_intelligence_scale"),
                 HorkDemonMovementChanceBase = row.OptionalInt32("hork_demon_movement_chance_base"),
                 HorkDemonMovementChanceIntelligenceScale = row.OptionalInt32("hork_demon_movement_chance_intelligence_scale"),
+                GargoyleSafeDistanceBase = row.OptionalInt32("gargoyle_safe_distance_base"),
+                GargoyleSafeDistanceIntelligenceScale = row.OptionalInt32("gargoyle_safe_distance_intelligence_scale"),
             }));
     }
 
