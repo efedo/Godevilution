@@ -4548,6 +4548,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ZombieAiUsesValidatedMonsterTypeMovementThreshold()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            monsterId: 1,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Zombie",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "Zombie",
+                ZombieActionChanceBase = 100,
+                ZombieActionChanceIntelligenceScale = 1,
+                ZombieMovementDistanceMinimum = 8,
+                ZombieMovementDistanceBase = 8,
+                ZombieMovementDistanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(100, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void NativeMonsterRegenerationUsesTheExternalizedMonsterLevel()
     {
         var monster = new AuthoritativeCombatTarget(

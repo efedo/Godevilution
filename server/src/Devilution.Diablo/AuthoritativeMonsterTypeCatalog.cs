@@ -107,6 +107,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Zombie action admission chance increase per intelligence point. */
     public int ZombieActionChanceIntelligenceScale { get; init; }
+
+    /** Native minimum Zombie long-range movement distance. */
+    public int ZombieMovementDistanceMinimum { get; init; }
+
+    /** Native Zombie long-range movement distance base before intelligence scaling. */
+    public int ZombieMovementDistanceBase { get; init; }
+
+    /** Native Zombie long-range movement distance increase per intelligence point. */
+    public int ZombieMovementDistanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -237,6 +246,20 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || (definition.NativeAi != "Zombie"
                     && (definition.ZombieActionChanceBase != 0
                         || definition.ZombieActionChanceIntelligenceScale != 0))
+                || definition.ZombieMovementDistanceMinimum is < 0 or > 64
+                || definition.ZombieMovementDistanceBase is < 0 or > 64
+                || definition.ZombieMovementDistanceIntelligenceScale is < 0 or > 64
+                || (definition.NativeAi == "Zombie"
+                    && ((definition.ZombieMovementDistanceMinimum != 0
+                            || definition.ZombieMovementDistanceBase != 0
+                            || definition.ZombieMovementDistanceIntelligenceScale != 0)
+                        && (definition.ZombieMovementDistanceMinimum <= 0
+                            || definition.ZombieMovementDistanceBase <= 0
+                            || definition.ZombieMovementDistanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "Zombie"
+                    && (definition.ZombieMovementDistanceMinimum != 0
+                        || definition.ZombieMovementDistanceBase != 0
+                        || definition.ZombieMovementDistanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -338,6 +361,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
                 ZombieActionChanceBase = row.OptionalInt32("zombie_action_chance_base"),
                 ZombieActionChanceIntelligenceScale = row.OptionalInt32("zombie_action_chance_intelligence_scale"),
+                ZombieMovementDistanceMinimum = row.OptionalInt32("zombie_movement_distance_minimum"),
+                ZombieMovementDistanceBase = row.OptionalInt32("zombie_movement_distance_base"),
+                ZombieMovementDistanceIntelligenceScale = row.OptionalInt32("zombie_movement_distance_intelligence_scale"),
             }));
     }
 

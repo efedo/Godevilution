@@ -5097,6 +5097,26 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
+    private (int MinimumDistance, int DistanceBase, int IntelligenceScale)?
+        GetZombieMovementTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "Zombie")
+                return null;
+            if (definition.ZombieMovementDistanceMinimum > 0
+                && definition.ZombieMovementDistanceBase > 0
+                && definition.ZombieMovementDistanceIntelligenceScale > 0) {
+                return (
+                    definition.ZombieMovementDistanceMinimum,
+                    definition.ZombieMovementDistanceBase,
+                    definition.ZombieMovementDistanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "Zombie"
+            ? (2, 4, 2)
+            : null;
+    }
+
     private bool TryAdvanceSkeletonKingAi(
         AuthoritativeCombatTarget target,
         AuthoritativePlayerState victim,
@@ -5172,18 +5192,22 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        var zombieTuning = GetZombieActionTuning(monster);
-        if (!zombieTuning.HasValue)
+        var zombieActionTuning = GetZombieActionTuning(monster);
+        var zombieMovementTuning = GetZombieMovementTuning(monster);
+        if (!zombieActionTuning.HasValue || !zombieMovementTuning.HasValue)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var actionChance = Math.Min(
             100,
-            zombieTuning.Value.ChanceBase
-                + (zombieTuning.Value.IntelligenceScale * monster.Intelligence));
+            zombieActionTuning.Value.ChanceBase
+                + (zombieActionTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)actionChance)
             return true;
-        if (distance < Math.Max(2, 2 * monster.Intelligence + 4))
+        if (distance < Math.Max(
+                zombieMovementTuning.Value.MinimumDistance,
+                zombieMovementTuning.Value.DistanceBase
+                    + (zombieMovementTuning.Value.IntelligenceScale * monster.Intelligence)))
             return false;
 
         var step = FindZombieStep(monster, player, players, actionSeed);
