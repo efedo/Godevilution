@@ -9402,11 +9402,16 @@ public sealed class DiabloCombatCommandProcessorTests
     {
         const uint seed = 0x12345678;
         var random = new DiabloRandom(seed);
+        var shippedClasses = LoadShippedPlayerClasses();
+        var playerClasses = new AuthoritativePlayerClassCatalog(
+            shippedClasses.Definitions.Select(definition => definition.ClassId == 2
+                ? definition with { ManaSpellPercent = 125 }
+                : definition));
         var processor = CreateProcessor(
             new DiabloWorldState(),
             new AuthoritativeSpellCatalog([CreateManaSpell()]),
             random: random,
-            playerClasses: LoadShippedPlayerClasses());
+            playerClasses: playerClasses);
         var player = CreatePlayer(
             entityId: 7,
             characterClassId: 2,
@@ -9421,7 +9426,7 @@ public sealed class DiabloCombatCommandProcessorTests
             expectedManaQ6 += random.RandomIntBetween(1, 4);
         for (var level = 0; level < 2; level++)
             expectedManaQ6 += random.RandomIntBetween(1, 6);
-        expectedManaQ6 *= 64 * 2;
+        expectedManaQ6 = expectedManaQ6 * 64 * 125 / 100;
         var expectedRandomState = random.State;
         random.Restore(seed);
 

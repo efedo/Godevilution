@@ -62,6 +62,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native class multiplier applied when casting Heal Other. */
     public int HealOtherSpellPercent { get; init; } = 100;
 
+    /** Native class multiplier applied when casting the Mana spell. */
+    public int ManaSpellPercent { get; init; } = 100;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -189,6 +192,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "monk_armor_level_divisor",
     ];
 
+    private static readonly IReadOnlyList<string> CurrentColumns = [
+        ..RequiredColumns,
+        "mana_spell_percent",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -266,7 +274,9 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        if (!table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
+        var hasManaSpellPercent = table.Columns.SequenceEqual(CurrentColumns, StringComparer.Ordinal);
+        if (!hasManaSpellPercent
+            && !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
                 $"Player-class table '{sourcePath}' does not match the required ordered schema.");
         }
@@ -318,6 +328,9 @@ public sealed class AuthoritativePlayerClassCatalog
                     "monk_unique_heavy_armor_level_multiplier"),
                 MonkArmorLevelDivisor = row.RequiredInt32(
                     "monk_armor_level_divisor"),
+                ManaSpellPercent = hasManaSpellPercent
+                    ? row.RequiredInt32("mana_spell_percent")
+                    : 100,
             }));
     }
 
@@ -362,6 +375,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.HellfireSpellManaReductionPercent is < 0 or > 100
             || definition.SelfHealingSpellPercent is < 1 or > 400
             || definition.HealOtherSpellPercent is < 1 or > 400
+            || definition.ManaSpellPercent is < 1 or > 400
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
                 $"Player class {definition.ClassId} has an invalid percentage.");

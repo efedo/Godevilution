@@ -2475,19 +2475,9 @@ public sealed class DiabloCombatCommandProcessor
         for (var level = 0; level < effectiveSpellLevel; level++)
             manaQ6 = checked(manaQ6 + random.RandomIntBetween(1, 6) * 64);
 
-        var classSymbol = playerClasses?.TryGet(player.CharacterClassId, out var playerClass) == true
-            ? playerClass.Symbol
-            : string.Empty;
-        if (classSymbol.Equals("sorcerer", StringComparison.OrdinalIgnoreCase)
-            || player.CharacterClassId == 2) {
-            return checked(manaQ6 * 2);
-        }
-        if (classSymbol.Equals("rogue", StringComparison.OrdinalIgnoreCase)
-            || classSymbol.Equals("bard", StringComparison.OrdinalIgnoreCase)
-            || player.CharacterClassId is 1 or 4) {
-            return checked(manaQ6 + manaQ6 / 2);
-        }
-        return manaQ6;
+        var playerClass = GetPlayerClass(player);
+        var classPercent = playerClass?.ManaSpellPercent ?? 100;
+        return checked(manaQ6 * classPercent) / 100;
     }
 
     private static uint ResolveSearchDuration(

@@ -14,6 +14,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(0U, catalog.Default.ClassId);
         Assert.Equal(200, catalog.Default.SelfHealingSpellPercent);
         Assert.Equal(200, catalog.Default.HealOtherSpellPercent);
+        Assert.Equal(100, catalog.Default.ManaSpellPercent);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -44,6 +45,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(50, sorcerer.HellfireSpellManaReductionPercent);
         Assert.Equal(100, sorcerer.SelfHealingSpellPercent);
         Assert.Equal(100, sorcerer.HealOtherSpellPercent);
+        Assert.Equal(200, sorcerer.ManaSpellPercent);
         Assert.Equal(19, sorcerer.PvpEarCursorGraphic);
 
         var bard = catalog.Resolve("bard");
@@ -52,6 +54,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(112, bard.ItemManaPerMagicQ6);
         Assert.Equal(150, bard.SelfHealingSpellPercent);
         Assert.Equal(150, bard.HealOtherSpellPercent);
+        Assert.Equal(150, bard.ManaSpellPercent);
         Assert.Equal(21, bard.PvpEarCursorGraphic);
 
         var barbarian = catalog.Resolve("barbarian");
@@ -84,6 +87,25 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", withoutDefault));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", withTwoDefaults));
+    }
+
+    [Fact]
+    public void LegacyClassRowsDefaultManaSpellMultiplierToOneHundredPercent()
+    {
+        var legacySource = string.Join(
+            '\n',
+            ReadShippedTable()
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.Contains('\t')
+                    ? line[..line.LastIndexOf('\t')]
+                    : line));
+
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            legacySource);
+
+        Assert.Equal(100, catalog.Resolve("sorcerer").ManaSpellPercent);
     }
 
     [Fact]
@@ -253,6 +275,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\t2\t1\t2\t1\t2",
             "\t-1\t1\t2\t1\t2",
             StringComparison.Ordinal);
+        var invalidManaSpellPercentage = string.Join(
+            '\n',
+            source
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => line.StartsWith("2\tsorcerer\t", StringComparison.Ordinal)
+                    ? line[..line.LastIndexOf('\t')] + "\t401"
+                    : line));
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -270,6 +300,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidEarCursor));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMonkArmorTuning));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidManaSpellPercentage));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()
