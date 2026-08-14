@@ -495,7 +495,9 @@ public sealed class AuthoritativeItemAffixCatalog
             "SETDUR" => state with { Durability = affix.Value1, MaxDurability = affix.Value1 },
             "NOMINSTR" => state with { MinimumStrength = 0 },
             "ONEHAND" => state with { EquipLocation = 1 },
-            "DRAINLIFE" => state with { Flags = state.Flags | 0x00000040U },
+            "DRAINLIFE" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag,
+            },
             "RNDSTEALLIFE" => state with { Flags = state.Flags | 0x00000002U },
             "ADDACLIFE" => state with {
                 Flags = state.Flags | 0x02000000U | 0x00000008U,

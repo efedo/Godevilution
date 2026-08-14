@@ -347,7 +347,9 @@ public sealed class AuthoritativeUniqueItemCatalog
             "RNDSTEALLIFE" => state with { Flags = state.Flags | 0x00000002U },
             "STEALMANA" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00002000U : 0x00004000U) },
             "STEALLIFE" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00008000U : 0x00010000U) },
-            "DRAINLIFE" => state with { Flags = state.Flags | 0x00000040U },
+            "DRAINLIFE" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag,
+            },
             "NOMANA" => state with { Flags = state.Flags | 0x08000000U },
             "FASTATTACK" => state with { Flags = state.Flags | (power.Value1 switch { 1 => 0x00020000U, 2 => 0x00040000U, 3 => 0x00080000U, _ => 0x00100000U }) },
             "FASTRECOVER" => state with { Flags = state.Flags | (power.Value1 switch { 1 => 0x00200000U, 2 => 0x00400000U, _ => 0x00800000U }) },

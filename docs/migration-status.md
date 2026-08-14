@@ -131,6 +131,9 @@ Status date: 2026-08-14
 - Hellfire `THORNS` is now server-owned: eligible usable equipment retaliates
   against a surviving monster after a successful autonomous hit using the
   native 1-3 Q6 roll, before player death handling and knockback.
+- Hellfire `DRAINLIFE` is now server-owned: eligible usable equipment applies
+  native 4-Q6 damage once per active non-town tick, including Mana Shield and
+  native no-item/no-ear death semantics.
 - Native class `CriticalStrike` is now authoritative for eligible player
   attacks: the level-based roll is consumed only after a successful hit and
   doubles physical damage before armor and later class/item effects. The shared

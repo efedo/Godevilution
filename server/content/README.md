@@ -263,6 +263,9 @@ damage is zero.
 Hellfire `THORNS` retaliates after a successful autonomous monster hit with a
 server-owned native 1-3 physical damage roll against the surviving monster;
 the reaction occurs before player death handling and blocked knockback.
+Hellfire `DRAINLIFE` applies native 4-Q6 physical damage once per active
+non-town tick; the server routes it through Mana Shield and the environment
+death boundary, which does not drop equipment or a PvP ear.
 The `CriticalStrike` class flag enables the native class rule for eligible
 player attacks: after a successful hit, the server consumes one level-based
 roll and doubles physical damage before armor and downstream class/item

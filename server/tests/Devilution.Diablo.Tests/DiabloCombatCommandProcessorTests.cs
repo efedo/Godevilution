@@ -1457,6 +1457,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void DrainLifeAppliesFourQ6PerActiveTickButNotInTown()
+    {
+        var equipment = new[] {
+            new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag,
+                }),
+        };
+        var activePlayer = CreatePlayer(
+            levelId: 1,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7,
+            equipment: equipment);
+        var activeProcessor = CreateProcessor(new DiabloWorldState());
+
+        var activeEvents = activeProcessor.AdvanceTick(1, [activePlayer]);
+
+        Assert.Equal(46, activePlayer.Life);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 7, 0) {
+                AmountQ6 = 4,
+            },
+            Assert.Single(activeEvents).Event);
+
+        var townPlayer = CreatePlayer(
+            levelId: 0,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 8,
+            equipment: equipment);
+        var townProcessor = CreateProcessor(new DiabloWorldState());
+
+        Assert.Empty(townProcessor.AdvanceTick(1, [townPlayer]));
+        Assert.Equal(50, townPlayer.Life);
+    }
+
+    [Fact]
     public void LethalMonsterAttackDropsAndClearsTheAuthoritativeHeldItem()
     {
         var monster = new AuthoritativeCombatTarget(

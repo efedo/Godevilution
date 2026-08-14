@@ -7,6 +7,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         MonsterOrTrap,
         Player,
+        Environment,
     }
 
     private readonly DiabloWorldState world;
@@ -232,13 +233,52 @@ public sealed class DiabloCombatCommandProcessor
 
         world.AdvancePortals(tick);
         var events = new List<DiabloDirectedGameplayEvent>();
-        foreach (var player in players)
+        foreach (var player in players) {
+            AdvancePlayerEquipmentDamage(player, tick, players, events);
             AdvancePlayerAction(player, tick, players, events);
+        }
         foreach (var player in players)
             AdvanceCombatMode(player, tick);
         AdvanceMonsters(tick, players, events);
         AdvanceProjectiles(tick, players, events);
         return events;
+    }
+
+    /** Applies native item damage that occurs once per active non-town tick. */
+    private void AdvancePlayerEquipmentDamage(
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (player.Life <= 0
+            || player.LevelId == 0
+            || !HasUsableEquipmentFlag(
+                player,
+                AuthoritativeEquipmentIncomingDamageRules.DrainLifeFlag)) {
+            return;
+        }
+
+        var damageResult = playerDamage.Apply(player, 4);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                player,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    player.EntityId,
+                    player.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(
+                        damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (player.Life == 0)
+            StartPlayerDeath(
+                player,
+                player.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.Environment);
     }
 
     private void AdvancePlayerAction(
@@ -9422,7 +9462,7 @@ public sealed class DiabloCombatCommandProcessor
             DropDeathGold(player, players);
             if (deathReason == PlayerDeathReason.MonsterOrTrap)
                 DropEquippedItemsOnDeath(player, players);
-            else
+            else if (deathReason == PlayerDeathReason.Player)
                 DropPvpEarOnDeath(player, players);
         }
         player.CombatMode = DiabloPlayerCombatMode.Death;
