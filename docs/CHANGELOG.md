@@ -29,6 +29,10 @@ All notable changes to this fork are documented below.
   remain server-owned; existing player-impact resistance, block, damage, and
   death handling are reused, with managed acceptance/rejection and live Godot
   protocol coverage.
+- Extend the Godot cast cursor to attach visible same-level remote-player IDs
+  for Firebolt, Charged Bolt, and Bone Spirit, while retaining the existing
+  Resurrection and Heal Other target rules; the presentation client still
+  performs no gameplay admission.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
