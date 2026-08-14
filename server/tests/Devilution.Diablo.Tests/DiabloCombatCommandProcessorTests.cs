@@ -7966,6 +7966,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BerserkUsesConfiguredMagicResistanceFrequency()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            12,
+            10,
+            100,
+            magicResistance: 50,
+            minDamage: 10,
+            maxDamage: 20,
+            minDamageSpecial: 30,
+            maxDamageSpecial: 40);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            new AuthoritativeSpellCatalog([
+                CreateBerserkSpell() with { BerserkResistanceFrequency = 1 },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(48, 2)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                48,
+                9,
+                12,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(target.IsBerserked);
+    }
+
+    [Fact]
     public void GolemCastSpawnsAndReplacesOwnedMinionWithNativeStats()
     {
         var world = new DiabloWorldState();

@@ -829,6 +829,27 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedBerserkCarriesNativeResistanceFrequency()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(48, out var berserk));
+        Assert.Equal(AuthoritativeProjectileBehavior.Berserk, berserk.ProjectileBehavior);
+        Assert.Equal(2, berserk.BerserkResistanceFrequency);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            berserk with {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+            },
+        ]));
+    }
+
+    [Fact]
     public void ShippedStoneCurseCarriesNativeDurationAndSearchTuning()
     {
         var path = Path.Combine(

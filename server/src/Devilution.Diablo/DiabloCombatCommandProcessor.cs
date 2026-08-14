@@ -1537,6 +1537,7 @@ public sealed class DiabloCombatCommandProcessor
                     intent.TargetX,
                     intent.TargetY,
                     spell.BerserkSearchRadius,
+                    spell.BerserkResistanceFrequency,
                     respectMagicResistance: false);
             } else if (intent.TargetEntityId != 0) {
                 world.CombatTargets.TryGetValue(intent.TargetEntityId, out target);
@@ -1799,6 +1800,7 @@ public sealed class DiabloCombatCommandProcessor
                 intent.TargetX,
                 intent.TargetY,
                 spell.BerserkSearchRadius,
+                spell.BerserkResistanceFrequency,
                 respectMagicResistance: true);
         }
         if (isTelekinesis) {
@@ -4196,12 +4198,14 @@ public sealed class DiabloCombatCommandProcessor
         int targetX,
         int targetY,
         int searchRadius,
+        int resistanceFrequency,
         bool respectMagicResistance)
     {
         if (targetEntityId != 0) {
             if (!world.CombatTargets.TryGetValue(targetEntityId, out var explicitTarget)
                 || !IsBerserkTargetEligible(explicitTarget, levelId)
-                || (respectMagicResistance && !PassesBerserkResistance(explicitTarget))) {
+                || (respectMagicResistance
+                    && !PassesBerserkResistance(explicitTarget, resistanceFrequency))) {
                 return null;
             }
             return explicitTarget;
@@ -4219,7 +4223,8 @@ public sealed class DiabloCombatCommandProcessor
                     && candidate.PositionY == candidateY
                     && IsBerserkTargetEligible(candidate, levelId))
                 .OrderBy(candidate => candidate.EntityId)
-                .FirstOrDefault(candidate => !respectMagicResistance || PassesBerserkResistance(candidate));
+                .FirstOrDefault(candidate => !respectMagicResistance
+                    || PassesBerserkResistance(candidate, resistanceFrequency));
                 return selectedTarget is not null;
             });
         return position.HasValue ? selectedTarget : null;
@@ -4240,11 +4245,14 @@ public sealed class DiabloCombatCommandProcessor
             && !target.IsPetrified;
     }
 
-    private bool PassesBerserkResistance(AuthoritativeCombatTarget target)
+    private bool PassesBerserkResistance(
+        AuthoritativeCombatTarget target,
+        int resistanceFrequency)
     {
         if (target.MagicResistance >= 100)
             return false;
-        return target.MagicResistance <= 0 || random.FlipCoin(2);
+        return target.MagicResistance <= 0
+            || random.FlipCoin((uint)(resistanceFrequency > 0 ? resistanceFrequency : 2));
     }
 
     private void ApplyBerserk(

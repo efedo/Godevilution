@@ -179,6 +179,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Adds a fixed number of repeated random-damage rolls. */
     public int RandomDamageIterationsBonus { get; init; }
 
+    /** Native Berserk magic-resistance success frequency; zero keeps legacy 2. */
+    public int BerserkResistanceFrequency { get; init; }
+
     /** Divides character level before adding it to generated damage. */
     public int CharacterLevelDamageDivisor { get; init; }
 
@@ -521,6 +524,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.GuardianProjectileSpeedLevelStep < 0
                 || definition.GuardianProjectileSpeedMaximumBonus < 0
                 || definition.ReflectDefaultSpellLevel < 0
+                || definition.BerserkResistanceFrequency < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
                 throw new InvalidDataException(
@@ -1579,7 +1583,8 @@ public sealed class AuthoritativeSpellCatalog
                 && (definition.BerserkSearchRadius != 0
                     || definition.BerserkDamagePercentBase != 0
                     || definition.BerserkDamagePercentRandomRange != 0
-                    || definition.BerserkSpellLevelBonus != 0)) {
+                    || definition.BerserkSpellLevelBonus != 0
+                    || definition.BerserkResistanceFrequency != 0)) {
                 throw new InvalidDataException(
                     "Berserk tuning requires Berserk behavior.");
             }
@@ -1827,6 +1832,8 @@ public sealed class AuthoritativeSpellCatalog
             BerserkDamagePercentBase = row.OptionalInt32("berserk_damage_percent_base"),
             BerserkDamagePercentRandomRange = row.OptionalInt32("berserk_damage_percent_random_range"),
             BerserkSpellLevelBonus = row.OptionalInt32("berserk_spell_level_bonus"),
+            BerserkResistanceFrequency = row.OptionalInt32(
+                "berserk_resistance_frequency"),
             GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
