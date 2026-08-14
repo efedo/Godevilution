@@ -956,9 +956,9 @@ effective spell level) * 64`.
 
 Normalized `items.tsv` includes a stable content `item_id` and an explicit
 `native_item_index` used only for compatibility projection. `item_tags` also
-declares semantic equipment subtypes (`Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
-`Staff`, `LightArmor`, `MediumArmor`, and `HeavyArmor`) for active rows; combat
-uses these tags before the native numeric
+declares semantic item categories (`Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
+`Staff`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for active
+rows; combat uses these tags before the native numeric
 fallback. `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
@@ -1555,7 +1555,8 @@ Schema 1.145 adds the optional `consumable_behavior` column to `spells.tsv`;
 the checked-in Rune of Fire row selects `RuneFire`, while older spell tables
 retain miscellaneous-ID fallback.
 Schema 1.146 adds the normalized equipment subtype tags to `items.tsv`; the
-checked-in base and Hellfire rows declare their weapon, bow, shield, staff, and
+checked-in base and Hellfire rows declare their weapon, bow, shield, staff, Gold,
+and
 available armor categories, while older rows retain native item-type compatibility
 behavior.
 

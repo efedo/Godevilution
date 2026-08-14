@@ -4,6 +4,8 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use the validated `Gold` item tag for canonical Gold recognition and stack
+  generation, while preserving numeric type/index fallback for legacy content.
 - Use validated `LightArmor`, `MediumArmor`, and `HeavyArmor` item tags for Monk
   chest-armor scaling, with native item-type fallback for legacy states.
 - Make the Sorcerer Recharge class ability resolve Staff eligibility from the

@@ -32,6 +32,10 @@ Status date: 2026-08-14
   and `HeavyArmor` item tags through the active catalog; direct legacy states
   retain the native item-type path.
 
+- Canonical Gold recognition and generated stack identity now consult the
+  validated `Gold` item tag through the active catalog; metadata-free states
+  retain the native type/index fallback.
+
 - Store recharge validation now accepts only explicit `ChargedItem` sources
   when source metadata is present; metadata-free legacy rows retain the native
   staff and miscellaneous-ID fallback.
