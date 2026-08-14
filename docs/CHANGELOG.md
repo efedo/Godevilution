@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
   after adjacent attacks, including protocol, save, and canonical-hash state.
 - Add the server-owned Butcher pursuit boundary, routing its native close-range
   chase through deterministic navigation before shared melee resolution.
+- Add the server-owned SkeletonMelee movement admission band, preserving the
+  native intelligence-based delay before deterministic navigation.
 - Preserve native Stone Curse shatter state for defeated petrified monsters and
   expose corpse conversion consistently in authoritative snapshots.
 - Align the compact native replay projection with server-owned corpse tiles and

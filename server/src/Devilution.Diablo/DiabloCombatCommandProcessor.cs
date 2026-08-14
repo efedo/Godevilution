@@ -3774,6 +3774,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceButcherAi(target, victim, players, distance))
                 continue;
+            if (TryAdvanceSkeletonMeleeAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSkeletonKingAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceZombieAi(target, victim, tick, players, distance))
@@ -4005,6 +4007,32 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monster.NativeAi != "Butcher" || distance <= 1)
             return false;
+
+        var next = AuthoritativeMonsterNavigation.FindStep(
+            world,
+            monster,
+            victim,
+            players);
+        if (next.HasValue)
+            monster.BeginMovement(next.Value.X, next.Value.Y);
+        return true;
+    }
+
+    /** Native SkeletonAi admits movement through its 35 - 4 * intelligence band. */
+    private bool TryAdvanceSkeletonMeleeAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (monster.NativeAi != "SkeletonMelee" || distance <= 1)
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
+        if (actionSeed % 100U < (uint)delayBand)
+            return true;
 
         var next = AuthoritativeMonsterNavigation.FindStep(
             world,

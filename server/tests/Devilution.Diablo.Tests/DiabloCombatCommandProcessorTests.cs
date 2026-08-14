@@ -1204,6 +1204,33 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonMeleeAiUsesItsNativeMovementAdmissionBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "SkeletonMelee",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        // 1 ^ 9 ^ 7 = 15, inside SkeletonAi's native delay band.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.False(monster.IsMoving);
+
+        // 40 ^ 9 ^ 7 = 38, outside the delay band and admitted to movement.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void AutonomousMonsterRoutesAroundBlockedCorridor()
     {
         var geometry = new AuthoritativeWorld();

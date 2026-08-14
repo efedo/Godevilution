@@ -45,6 +45,8 @@ Status date: 2026-08-14
 - Native Butcher pursuit now has an explicit server-owned AI boundary: the
   monster follows deterministic navigation until adjacent, then uses the shared
   authoritative melee path.
+- Native SkeletonMelee movement now uses the server-owned `35 - 4 * intelligence`
+  admission band, delaying or navigating deterministically before shared melee.
 - Native Stone Curse now retains a defeated petrified target through its
   authoritative shatter phase; ordinary defeated monsters become persisted
   corpse tiles, and snapshots preserve the distinction between the two states.
