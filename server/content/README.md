@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.135.0` schema in
+It declares its identity and `devilution.diablo@1.136.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -130,6 +130,9 @@ Rage's native minimum-life admission threshold. Legacy Rage rows retain the
 native 64-Q6-per-character-level compatibility threshold.
 The optional `reflect_default_spell_level` column externalizes Reflect's
 no-explicit-level charge fallback. Legacy Reflect rows retain native level 2.
+The optional `berserk_resistance_frequency` column externalizes Berserk's
+magic-resistance admission roll. Legacy Berserk rows retain the native
+1-in-2 compatibility roll.
 The optional `skeleton_melee_delay_chance_base` and
 `skeleton_melee_delay_chance_intelligence_scale` columns externalize the
 SkeletonMelee movement-delay band. Legacy monster rows retain the native
@@ -1261,7 +1264,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.135.0"
+      "version": "1.136.0"
   },
   "dependencyConstraints": [
     {
@@ -1293,7 +1296,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.135.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.136.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1467,6 +1470,9 @@ while older rows retain the compatibility value.
 Schema 1.135 adds the optional Reflect default spell level to `spells.tsv`; the
 checked-in Reflect row owns the native level-2 fallback while older rows retain
 the compatibility value.
+Schema 1.136 adds the optional Berserk magic-resistance frequency to
+`spells.tsv`; the checked-in Berserk row owns the native 1-in-2 roll while older
+rows retain the compatibility value.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
