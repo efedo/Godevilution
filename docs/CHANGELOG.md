@@ -86,6 +86,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.94's optional intelligence-scaled missile lifetime terms, moving
   Acid's native lifetime formula into validated content while preserving the
   compatibility formula for older rows.
+- Add schema 1.95's optional Acid puddle-duration terms, moving the native
+  random-plus-intelligence puddle lifetime into validated content while
+  preserving the legacy formula fallback.
 - Apply externalized Hellfire `THORNS` equipment through the authoritative
   monster-hit boundary, preserving the native 1-3 damage retaliation order.
 - Apply externalized Hellfire `DRAINLIFE` equipment once per active non-town
