@@ -34,6 +34,9 @@ Windows toolchain command.
   reserved, and breaking changes require a new package and schema version.
 - Additive fields and `oneof` alternatives must be safe for older peers to
   ignore. Required behavior is negotiated during the handshake.
+- Protocol fields 54 (monster `unique_identity`) and 13 (quest
+  `completion_unique_identity`) are additive opaque server-owned identities;
+  clients may ignore them while preserving them through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
 - The server assigns `server_receipt_sequence` and `applied_tick`; command

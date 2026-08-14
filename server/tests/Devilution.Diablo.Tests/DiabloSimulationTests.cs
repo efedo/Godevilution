@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.89.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.90.0"),
             DiabloContentSchema.Current);
     }
 
@@ -105,7 +105,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.89.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.90.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -732,6 +732,64 @@ public sealed class DiabloSimulationTests
         var quest = Assert.Single(replacement.WorldState.Quests.Values);
         Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
         Assert.Equal(12U, quest.CompletionMonsterId);
+    }
+
+    [Fact]
+    public void SnapshotRoundTripsUniqueMonsterIdentityAndQuestTrigger()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    16,
+                    1,
+                    0,
+                    20,
+                    monsterId: 126,
+                    unique: true,
+                    uniqueIdentity: "Defiler")],
+                Quests = [new AuthoritativeQuestState(
+                    3021,
+                    0,
+                    1,
+                    completionUniqueIdentity: "Defiler")],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Equal("Defiler", Assert.Single(replacement.WorldState.CombatTargets.Values).UniqueIdentity);
+        Assert.Equal("Defiler", Assert.Single(replacement.WorldState.Quests.Values).CompletionUniqueIdentity);
+
+        var legacySnapshot = snapshot with {
+            Monsters = snapshot.Monsters
+                .Select(monster => monster with { UniqueIdentity = string.Empty })
+                .ToArray(),
+            Quests = snapshot.Quests
+                .Select(quest => quest with { CompletionUniqueIdentity = string.Empty })
+                .ToArray(),
+        };
+        var contentInitialized = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    16,
+                    1,
+                    0,
+                    20,
+                    monsterId: 126,
+                    unique: true,
+                    uniqueIdentity: "Defiler")],
+                Quests = [new AuthoritativeQuestState(
+                    3021,
+                    0,
+                    1,
+                    completionUniqueIdentity: "Defiler")],
+            });
+        contentInitialized.RestoreSnapshot(CreatePlayer(), legacySnapshot);
+
+        Assert.Equal("Defiler", Assert.Single(contentInitialized.WorldState.CombatTargets.Values).UniqueIdentity);
+        Assert.Equal("Defiler", Assert.Single(contentInitialized.WorldState.Quests.Values).CompletionUniqueIdentity);
     }
 
     [Fact]

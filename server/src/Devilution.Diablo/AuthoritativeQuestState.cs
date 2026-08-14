@@ -17,7 +17,8 @@ public sealed class AuthoritativeQuestState
         int variable1 = 0,
         int variable2 = 0,
         int messageId = 0,
-        uint completionMonsterId = 0)
+        uint completionMonsterId = 0,
+        string completionUniqueIdentity = "")
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -29,6 +30,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(variable2));
         if (messageId < 0 || messageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(messageId));
+        if (completionUniqueIdentity.Length > 128)
+            throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
         LevelId = levelId;
         RequiredProgress = requiredProgress;
@@ -41,6 +44,7 @@ public sealed class AuthoritativeQuestState
         Variable2 = variable2;
         MessageId = messageId;
         CompletionMonsterId = completionMonsterId;
+        CompletionUniqueIdentity = completionUniqueIdentity;
     }
 
     public uint QuestId { get; }
@@ -62,6 +66,8 @@ public sealed class AuthoritativeQuestState
     public int MessageId { get; set; }
     /** Optional native monster identity whose defeat advances this quest. */
     public uint CompletionMonsterId { get; set; }
+    /** Optional native unique-monster identity whose defeat advances this quest. */
+    public string CompletionUniqueIdentity { get; set; }
 }
 
 /** External quest definitions and initial progress. */
@@ -90,7 +96,11 @@ public static class AuthoritativeQuestCatalog
                 variable1: row.OptionalInt32("variable1"),
                 variable2: row.OptionalInt32("variable2"),
                 messageId: row.OptionalInt32("message_id"),
-                completionMonsterId: row.OptionalUInt32("completion_monster_id"));
+                completionMonsterId: row.OptionalUInt32("completion_monster_id"),
+                completionUniqueIdentity: row.TryGet("completion_unique_identity", out var uniqueIdentity)
+                    && !string.Equals(uniqueIdentity, "NONE", StringComparison.OrdinalIgnoreCase)
+                    ? uniqueIdentity
+                    : string.Empty);
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");

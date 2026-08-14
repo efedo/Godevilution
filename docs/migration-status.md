@@ -210,6 +210,10 @@ Status date: 2026-08-14
   quest identities are rejected during activation.
 - Schema 1.89 externalizes the Hellfire Defiler encounter, its Cathedral Map
   reward, and its quest completion trigger through validated content rows.
+- Schema 1.90 externalizes unique-monster identities through
+  `unique_monsters.tsv`; the identity is persisted in snapshots/saves and
+  projected through additive protocol fields so unique quest triggers remain
+  exact rather than matching every base monster of the same type.
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
@@ -328,7 +332,7 @@ Status date: 2026-08-14
   authoritative advancement; Hellfire initial quest-state rows are now
   externalized through `quest_states.tsv` and merged additively with base
   state; the Hellfire Defiler completion trigger and Cathedral Map reward now
-  use validated encounter/item rows; remaining quest behavior and state
+  use validated encounter/item rows and its exact unique identity; remaining quest behavior and state
   variables remain incremental.
 - Native level-range generation rules are now externalized through validated
   `level_generation.tsv` metadata and exposed by Diablo activation; procedural

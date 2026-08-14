@@ -285,7 +285,7 @@ public sealed class DiabloCombatCommandProcessorTests
             17,
             1,
             active: true,
-            completionMonsterId: 126);
+            completionUniqueIdentity: "Defiler");
         var target = new AuthoritativeCombatTarget(
             16,
             1,
@@ -300,7 +300,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 MiscId = 43,
                 ItemClass = 5,
             },
-            unique: true);
+            unique: true,
+            uniqueIdentity: "Defiler");
         var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
         var processor = CreateProcessor(
             world,

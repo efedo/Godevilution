@@ -279,6 +279,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 uniqueItems,
                 monsterTypes)
             : null;
+        var uniqueMonsters = content.TryGetTable(
+            "unique_monsters.tsv",
+            out var uniqueMonstersTable)
+            ? AuthoritativeUniqueMonsterCatalog.LoadTsv(
+                uniqueMonstersTable.SourcePath,
+                uniqueMonstersTable.ToCanonicalTsv())
+            : null;
+        if (uniqueMonsters is not null) {
+            if (monsters is null)
+                throw new InvalidDataException(
+                    "Unique monster identities require a monsters.tsv table.");
+            uniqueMonsters.ApplyTo(monsters.Targets);
+        }
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
             ? AuthoritativePortalCatalog.LoadTsv(
                 portalsTable.SourcePath,

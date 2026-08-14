@@ -258,6 +258,10 @@ public static class SnapshotStateHasher
                     || monster.MaxDamageSpecial != monster.AttackDamage) {
                     hasher.AppendString("godevilution-monster-berserk-v1");
                     hasher.AppendBool(monster.IsUnique);
+                    if (!string.IsNullOrEmpty(monster.UniqueIdentity)) {
+                        hasher.AppendString("godevilution-monster-unique-identity-v1");
+                        hasher.AppendString(monster.UniqueIdentity);
+                    }
                     hasher.AppendBool(monster.IsDiablo);
                     hasher.AppendBool(monster.BerserkImmune);
                     hasher.AppendInt32(monster.MinDamage);
@@ -393,12 +397,18 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-quest-logged-v1");
                     hasher.AppendBool(true);
                 }
-                if (quest.Variable1 != 0 || quest.Variable2 != 0 || quest.MessageId != 0 || quest.CompletionMonsterId != 0) {
+                if (quest.Variable1 != 0 || quest.Variable2 != 0 || quest.MessageId != 0
+                    || quest.CompletionMonsterId != 0
+                    || !string.IsNullOrEmpty(quest.CompletionUniqueIdentity)) {
                     hasher.AppendString("godevilution-quest-native-state-v1");
                     hasher.AppendInt32(quest.Variable1);
                     hasher.AppendInt32(quest.Variable2);
                     hasher.AppendInt32(quest.MessageId);
                     hasher.AppendUInt32(quest.CompletionMonsterId);
+                    if (!string.IsNullOrEmpty(quest.CompletionUniqueIdentity)) {
+                        hasher.AppendString("godevilution-quest-unique-identity-v1");
+                        hasher.AppendString(quest.CompletionUniqueIdentity);
+                    }
                 }
             }
         }

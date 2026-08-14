@@ -15,6 +15,8 @@ All notable changes to this fork are documented below.
   native initial quest lifecycle into the shared authoritative quest state.
 - Add schema 1.89's external Hellfire Defiler encounter, Cathedral Map reward,
   and quest completion trigger through validated monster and item content.
+- Add schema 1.90's validated unique-monster catalog and opaque protocol/save
+  identity, binding Defiler quest completion to the native unique identity.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

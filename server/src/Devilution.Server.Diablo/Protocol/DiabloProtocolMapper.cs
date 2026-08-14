@@ -68,6 +68,7 @@ internal static class DiabloProtocolMapper
                 IsPlayerMinion = monster.IsPlayerMinion,
                 OwnerPlayerId = monster.OwnerPlayerId,
                 IsUnique = monster.IsUnique,
+                UniqueIdentity = monster.UniqueIdentity,
                 IsDiablo = monster.IsDiablo,
                 BerserkImmune = monster.BerserkImmune,
                 MinDamage = monster.MinDamage,
@@ -138,6 +139,7 @@ internal static class DiabloProtocolMapper
                 Variable2 = quest.Variable2,
                 MessageId = quest.MessageId,
                 CompletionMonsterId = quest.CompletionMonsterId,
+                CompletionUniqueIdentity = quest.CompletionUniqueIdentity,
             });
         }
         foreach (var projectile in source.Projectiles) {
@@ -366,6 +368,7 @@ internal static class DiabloProtocolMapper
                 IsPlayerMinion = monster.IsPlayerMinion,
                 OwnerPlayerId = monster.OwnerPlayerId,
                 IsUnique = monster.IsUnique,
+                UniqueIdentity = monster.UniqueIdentity,
                 IsDiablo = monster.IsDiablo,
                 BerserkImmune = monster.BerserkImmune,
                 MinDamage = monster.MinDamage,
@@ -430,7 +433,8 @@ internal static class DiabloProtocolMapper
                 quest.Variable1,
                 quest.Variable2,
                 quest.MessageId,
-                quest.CompletionMonsterId)).ToArray(),
+                quest.CompletionMonsterId,
+                quest.CompletionUniqueIdentity)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

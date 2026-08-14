@@ -121,4 +121,15 @@ public sealed class AuthoritativeQuestCatalogTests
                     + "3001\t17\t1\t0\t0\n"),
             "hellfire/quest_states.tsv"));
     }
+
+    [Fact]
+    public void QuestStateCanLoadAUniqueMonsterCompletionTrigger()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_unique_identity\n"
+                + "3021\t17\t1\tDefiler\n");
+
+        Assert.Equal("Defiler", Assert.Single(quests).CompletionUniqueIdentity);
+    }
 }

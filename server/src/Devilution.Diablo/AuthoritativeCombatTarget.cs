@@ -59,7 +59,8 @@ public sealed class AuthoritativeCombatTarget
         int scavengerHealingTicks = 0,
         uint scavengerCorpseEntityId = 0,
         int batRetreatTicks = 0,
-        int batRetreatDirection = 0)
+        int batRetreatDirection = 0,
+        string uniqueIdentity = "")
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -91,6 +92,12 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
         if (batRetreatDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
+        if (uniqueIdentity.Length > 128)
+            throw new ArgumentOutOfRangeException(nameof(uniqueIdentity));
+        if (!string.IsNullOrWhiteSpace(uniqueIdentity) && !unique)
+            throw new ArgumentException(
+                "A unique monster identity requires the unique monster flag.",
+                nameof(uniqueIdentity));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -154,6 +161,7 @@ public sealed class AuthoritativeCombatTarget
         IsPlayerMinion = playerMinion;
         OwnerPlayerId = ownerPlayerId;
         IsUnique = unique;
+        UniqueIdentity = uniqueIdentity;
         IsDiablo = diablo;
         BerserkImmune = berserkImmune;
         DeathAnimationTicks = deathAnimationTicks;
@@ -231,6 +239,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Immutable native eligibility markers used by Berserk targeting. */
     public bool IsUnique { get; set; }
+
+    /** Validated native unique-monster identity, distinct from the base monster type. */
+    public string UniqueIdentity { get; set; }
 
     public bool IsDiablo { get; set; }
 

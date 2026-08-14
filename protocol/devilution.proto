@@ -485,6 +485,8 @@ message MonsterSnapshot {
 	int32 bat_retreat_ticks = 52;
 	// Direction toward the victim when the native Bat retreat started (0-7).
 	int32 bat_retreat_direction = 53;
+	// Server-owned native unique-monster identity; clients treat it as opaque.
+	string unique_identity = 54;
 }
 
 message WorldItemSnapshot {
@@ -535,6 +537,8 @@ message QuestSnapshot {
 	int32 message_id = 11;
 	// Optional native monster identity whose defeat advances this quest.
 	uint32 completion_monster_id = 12;
+	// Optional native unique-monster identity whose defeat advances this quest.
+	string completion_unique_identity = 13;
 }
 
 message ProjectileSnapshot {

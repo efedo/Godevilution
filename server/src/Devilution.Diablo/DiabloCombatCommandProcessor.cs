@@ -10188,7 +10188,14 @@ public sealed class DiabloCombatCommandProcessor
                      .Where(quest => quest.Active
                          && !quest.Unavailable
                          && !quest.Completed
-                         && quest.CompletionMonsterId == target.MonsterId
+                         && ((quest.CompletionMonsterId != 0
+                                 && quest.CompletionMonsterId == target.MonsterId)
+                             || (!string.IsNullOrWhiteSpace(quest.CompletionUniqueIdentity)
+                                 && target.IsUnique
+                                 && string.Equals(
+                                     quest.CompletionUniqueIdentity,
+                                     target.UniqueIdentity,
+                                     StringComparison.Ordinal)))
                          && (quest.LevelId == 0 || quest.LevelId == target.LevelId))) {
             quest.Progress = Math.Min(
                 quest.RequiredProgress,

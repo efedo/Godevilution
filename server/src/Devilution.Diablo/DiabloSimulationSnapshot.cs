@@ -50,6 +50,9 @@ public sealed record DiabloMonsterState(
 
     public bool IsUnique { get; init; }
 
+    /** Native unique-monster identity retained by the authoritative save boundary. */
+    public string UniqueIdentity { get; init; } = string.Empty;
+
     public bool IsDiablo { get; init; }
 
     public bool BerserkImmune { get; init; }
@@ -170,7 +173,8 @@ public sealed record DiabloQuestState(
     int Variable1 = 0,
     int Variable2 = 0,
     int MessageId = 0,
-    uint CompletionMonsterId = 0);
+    uint CompletionMonsterId = 0,
+    string CompletionUniqueIdentity = "");
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -361,6 +365,7 @@ public sealed partial class DiabloSimulation
                     IsPlayerMinion = target.IsPlayerMinion,
                     OwnerPlayerId = target.OwnerPlayerId,
                     IsUnique = target.IsUnique,
+                    UniqueIdentity = target.UniqueIdentity,
                     IsDiablo = target.IsDiablo,
                     BerserkImmune = target.BerserkImmune,
                     MinDamage = target.MinDamage,
@@ -432,7 +437,8 @@ public sealed partial class DiabloSimulation
                     quest.Variable1,
                     quest.Variable2,
                     quest.MessageId,
-                    quest.CompletionMonsterId))
+                    quest.CompletionMonsterId,
+                    quest.CompletionUniqueIdentity))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -643,6 +649,8 @@ public sealed partial class DiabloSimulation
                 || monster.ToHit is < 0 or > 255
                 || monster.ToHitSpecial is < 0 or > 255
                 || monster.Intelligence is < 0 or > 255
+                || monster.UniqueIdentity.Length > 128
+                || (!string.IsNullOrWhiteSpace(monster.UniqueIdentity) && !monster.IsUnique)
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || (monster.GargoyleSpecialActive && monster.NativeAi != "Gargoyle")
@@ -1170,6 +1178,10 @@ public sealed partial class DiabloSimulation
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
+            if (quest.CompletionUniqueIdentity.Length > 128) {
+                throw new InvalidDataException(
+                    "The authoritative save contains an invalid quest unique-monster identity.");
+            }
             return quest;
         }).ToArray();
         var restoredStore = ValidateSavedStore(source, snapshot.ActiveStore);
@@ -1388,6 +1400,11 @@ public sealed partial class DiabloSimulation
                     throw new InvalidDataException(
                         "The authoritative save contains incompatible monster AI data.");
                 }
+                if (!string.IsNullOrEmpty(monster.UniqueIdentity)
+                    && target.UniqueIdentity != monster.UniqueIdentity) {
+                    throw new InvalidDataException(
+                        "The authoritative save contains incompatible unique monster identity data.");
+                }
                 if (target.Intelligence != monster.Intelligence) {
                     throw new InvalidDataException(
                         "The authoritative save contains incompatible monster intelligence data.");
@@ -1415,6 +1432,8 @@ public sealed partial class DiabloSimulation
                 target.IsPlayerMinion = monster.IsPlayerMinion;
                 target.OwnerPlayerId = monster.OwnerPlayerId;
                 target.IsUnique = monster.IsUnique;
+                if (!string.IsNullOrEmpty(monster.UniqueIdentity))
+                    target.UniqueIdentity = monster.UniqueIdentity;
                 target.IsDiablo = monster.IsDiablo;
                 target.BerserkImmune = monster.BerserkImmune;
                 target.MinDamage = monster.MinDamage;
@@ -1479,6 +1498,7 @@ public sealed partial class DiabloSimulation
                     minDamageSpecial: monster.MinDamageSpecial,
                     maxDamageSpecial: monster.MaxDamageSpecial,
                     unique: monster.IsUnique,
+                    uniqueIdentity: monster.UniqueIdentity,
                     diablo: monster.IsDiablo,
                     berserkImmune: monster.BerserkImmune,
                     deathAnimationTicks: monster.DeathAnimationTicks,
@@ -1576,6 +1596,8 @@ public sealed partial class DiabloSimulation
                 target.Variable2 = quest.Variable2;
                 target.MessageId = quest.MessageId;
                 target.CompletionMonsterId = quest.CompletionMonsterId;
+                if (!string.IsNullOrEmpty(quest.CompletionUniqueIdentity))
+                    target.CompletionUniqueIdentity = quest.CompletionUniqueIdentity;
             } else {
                 WorldState.Quests.Add(quest.QuestId, new AuthoritativeQuestState(
                     quest.QuestId,
@@ -1589,7 +1611,8 @@ public sealed partial class DiabloSimulation
                     quest.Variable1,
                     quest.Variable2,
                     quest.MessageId,
-                    quest.CompletionMonsterId));
+                    quest.CompletionMonsterId,
+                    quest.CompletionUniqueIdentity));
             }
         }
     }
