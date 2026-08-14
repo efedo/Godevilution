@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.115.0` schema in
+It declares its identity and `devilution.diablo@1.116.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -161,6 +161,11 @@ The optional `skeleton_ranged_retreat_minimum_distance`,
 SkeletonRanged retreat and clear-lane arrow admission bands. Legacy monster
 rows retain the native minimum-four, retreat base-thirteen, and attack
 base-three compatibility values with intelligence-scale-two chance bands.
+The optional `rhino_charge_minimum_distance`,
+`rhino_charge_chance_base`, and
+`rhino_charge_chance_intelligence_scale` columns externalize the Rhino clear-
+lane charge admission boundary. Legacy monster rows retain the native
+minimum-five, base-forty-three, intelligence-scale-two compatibility values.
 
 `combat.tsv` declares the shared deterministic combat constants, the native
 `Diablo` or `Hellfire` game variant, the global `friendly_fire` switch, and the
@@ -1221,7 +1226,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.115.0"
+      "version": "1.116.0"
   },
   "dependencyConstraints": [
     {
@@ -1253,7 +1258,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.115.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.116.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1357,6 +1362,9 @@ self-heal boundary while older rows retain the compatibility formula.
 Schema 1.115 adds the optional SkeletonRanged admission columns to
 `monster_types.tsv`; checked-in SkeletonRanged rows own their retreat and
 clear-lane arrow chance bands while older rows retain the compatibility formula.
+Schema 1.116 adds the optional Rhino charge-admission columns to
+`monster_types.tsv`; checked-in Rhino rows own their clear-lane charge boundary
+while older rows retain the compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
