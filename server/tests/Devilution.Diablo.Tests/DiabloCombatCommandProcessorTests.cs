@@ -1438,7 +1438,9 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "SkeletonRanged",
             intelligence: 3);
         var world = new DiabloWorldState(combatTargets: [monster]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -1474,7 +1476,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var world = new DiabloWorldState(
             fallbackBlockedCells: [4],
             combatTargets: [monster]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -1505,7 +1509,9 @@ public sealed class DiabloCombatCommandProcessorTests
             toHit: 100,
             nativeAi: "GoatRanged");
         var world = new DiabloWorldState(combatTargets: [monster]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("GoatRanged"));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -2193,7 +2199,9 @@ public sealed class DiabloCombatCommandProcessorTests
             toHit: 100,
             nativeAi: "GoatRanged");
         var world = new DiabloWorldState(combatTargets: [monster]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("GoatRanged"));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -2226,7 +2234,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var world = new DiabloWorldState(
             fallbackMissileBlockedCells: [4],
             combatTargets: [monster]);
-        var processor = CreateProcessor(world);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("GoatRanged"));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -7528,6 +7538,17 @@ public sealed class DiabloCombatCommandProcessorTests
             items: items,
             worldCommands: worldCommands,
             monsterMissiles: monsterMissiles);
+    }
+
+    private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(
+        string nativeAi)
+    {
+        return new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                nativeAi,
+                "Arrow",
+                AuthoritativeProjectileBehavior.Targeted),
+        ]);
     }
 
     private static AuthoritativeSpellDefinition CreateTelekinesisSpell()

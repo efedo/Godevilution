@@ -31,6 +31,9 @@ All notable changes to this fork are documented below.
   projectile path, preserving its avoidance admission, speed, and hit rules.
 - Route native `Acid`/`AcidUnique` `Acid` through server-owned Acid, splat,
   and persistent puddle stages with native resistance and hit rules.
+- Validate native `Arrow` identities for `GoatRanged` and `SkeletonRanged`
+  through the active server monster-missile catalog before their authoritative
+  ranged attack boundaries execute.
 - Add schema 1.79 native monster AI identities, validated from the native
   `monstdat.tsv` catalog and carried through authoritative state, snapshots,
   protocol field 43, replay fixtures, and canonical hashes.

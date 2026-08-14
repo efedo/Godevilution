@@ -4017,6 +4017,7 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi != "GoatRanged"
+            || !HasValidatedArrowMapping(monster.NativeAi)
             || distance < 2
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0
@@ -4362,6 +4363,7 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monster.NativeAi != "SkeletonRanged"
+            || !HasValidatedArrowMapping(monster.NativeAi)
             || distance < 2
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0
@@ -4388,6 +4390,15 @@ public sealed class DiabloCombatCommandProcessor
             events,
             distance,
             attackSeed);
+    }
+
+    /** Native ranged bows retain the Arrow missile identity in validated content. */
+    private bool HasValidatedArrowMapping(string nativeAi)
+    {
+        return monsterMissiles is not null
+            && monsterMissiles.TryGet(nativeAi, out var missile)
+            && missile.MissileId == "Arrow"
+            && missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Targeted;
     }
 
     /** Native Rhino AI charge: clear long-range lanes end in a special melee hit. */
