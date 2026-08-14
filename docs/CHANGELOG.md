@@ -41,6 +41,8 @@ All notable changes to this fork are documented below.
   impact resolution through the shared protocol.
 - Add the matching live Godot protocol coverage for Bone Spirit, completing
   end-to-end player-target coverage for all three supported projectile spells.
+- Verify the same generated protocol in live single-player mode, including the
+  mode handshake, single-participant snapshot, and authoritative Firebolt cast.
 - Native GoatRanged and SkeletonRanged Arrow mappings now use explicit
   server-owned monster-arrow projectiles with delayed collision and impact
   resolution, including snapshot/save/protocol coverage.
