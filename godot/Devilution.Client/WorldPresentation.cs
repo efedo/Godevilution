@@ -83,7 +83,7 @@ public partial class WorldPresentation : Node2D
             && item.PositionY == target.Y)?.EntityId;
     }
 
-    /** Returns the authoritative monster occupying a visible target tile. */
+    /** Returns the authoritative combat entity occupying a visible target tile. */
     public uint? CombatTargetEntityIdAt(Vector2I target)
     {
         var currentSnapshot = snapshot;
