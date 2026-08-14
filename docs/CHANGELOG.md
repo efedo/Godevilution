@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.141's optional equipment attack-effect tuning, moving the
+  native random life-steal divisor and 3/5-percent life/mana channels into
+  validated combat content while preserving compatibility values.
 - Add schema 1.140's optional monster accuracy formula tuning, moving the
   native level scale, base bonus, and ranged distance penalty into validated
   combat content while preserving compatibility values for older definitions.
