@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.110's optional Zombie action-band tuning, moving the native
+  autonomous action admission chance into validated monster content while
+  preserving legacy target behavior.
 - Add schema 1.109's optional Fat movement-band tuning, moving the native
   Fat/Overlord non-adjacent movement admission chance into validated monster
   content while preserving legacy target behavior.
