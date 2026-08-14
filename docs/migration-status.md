@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Equipment damage profiles now consult active item content tags through the
+  retained native item index; conflicting duplicate mappings are rejected and
+  legacy item-type classification remains the compatibility fallback.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
