@@ -538,7 +538,15 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "HorkDemon",
             intelligence: 0);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
-        var processor = CreateProcessor(world, monsterSpawnPlanner: planner);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn),
+            ]),
+            monsterSpawnPlanner: planner);
         var player = CreatePlayer(
             positionX: 5,
             positionY: 1,
@@ -547,10 +555,16 @@ public sealed class DiabloCombatCommandProcessorTests
 
         // 1 ^ 9 ^ 7 = 15, inside HorkDemonAi's 43% spawn admission band.
         Assert.Empty(processor.AdvanceTick(1, [player]));
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
+        Assert.Equal((8, 8U), (projectile.Speed, projectile.RemainingTicks));
+        Assert.DoesNotContain(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
 
-        var summoned = Assert.Single(
-            world.CombatTargets.Values,
-            target => target.EntityId != hork.EntityId);
+        for (ulong tick = 2; tick <= 9; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        var summoned = Assert.Single(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
         Assert.Equal((119U, 117U), (summoned.MonsterId, monsterTypes.Definitions[0].NativeMonsterId));
         Assert.Equal("SkeletonMelee", summoned.NativeAi);
         Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));

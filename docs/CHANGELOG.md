@@ -9,6 +9,8 @@ All notable changes to this fork are documented below.
 - Add schema 1.86's validated Hork Demon identity and server-owned Hork Spawn
   admission through native monster-table identity; missile trajectory remains
   an explicit follow-up controller migration.
+- Add schema 1.87's validated Hork Spawn missile mapping, native speed-8
+  nine-tick trajectory, and expiry summon controller.
 - Add server-owned Fallen fear state and protocol persistence, triggering the
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving

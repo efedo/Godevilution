@@ -4107,7 +4107,7 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native HorkDemonAi admission with server-owned Hork Spawn creation. */
+    /** Native HorkDemonAi admission with server-owned Hork Spawn trajectory. */
     private bool TryAdvanceHorkDemonAi(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState victim,
@@ -4117,6 +4117,14 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (monster.NativeAi != "HorkDemon")
             return false;
+        if (monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.HorkSpawn)
+            return true;
+        if (world.Projectiles.Values.Any(projectile =>
+                projectile.SourceEntityId == monster.EntityId
+                && projectile.Behavior == missile.ProjectileBehavior))
+            return true;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (distance <= 1) {
@@ -4144,17 +4152,36 @@ public sealed class DiabloCombatCommandProcessor
                     positionY,
                     players,
                     monster.EntityId)) {
-                var summon = monsterSpawnPlanner.CreateNativeMonsterSummon(
-                    monster.LevelId,
+                var velocity = CalculateVelocity(
+                    monster.PositionX,
+                    monster.PositionY,
+                    victim.PositionX,
+                    victim.PositionY,
+                    8);
+                var projectile = new AuthoritativeProjectile(
+                    AllocateProjectileEntityId(),
+                    monster.EntityId,
+                    victim.EntityId,
                     HorkSpawnNativeMonsterId,
-                    actionSeed,
-                    positionX,
-                    positionY,
-                    AllocateMonsterEntityId(players));
-                if (summon is not null) {
-                    world.CombatTargets.Add(summon.EntityId, summon);
-                    return true;
-                }
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    victim.PositionX,
+                    victim.PositionY,
+                    0,
+                    AuthoritativeDamageType.Physical,
+                    0,
+                    9) {
+                    Behavior = missile.ProjectileBehavior,
+                    VelocityX = velocity.X,
+                    VelocityY = velocity.Y,
+                    OriginalDirection = direction,
+                    Speed = 8,
+                    ImpactLifetime = 1,
+                    ResistantDamageDivisor = 1,
+                };
+                world.Projectiles.Add(projectile.EntityId, projectile);
+                return true;
             }
         }
 
@@ -5602,6 +5629,10 @@ public sealed class DiabloCombatCommandProcessor
                     AdvanceChargedBolt(tick, projectile, players, events);
                     continue;
                 }
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.HorkSpawn) {
+                    AdvanceHorkSpawn(projectile, players);
+                    continue;
+                }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt) {
                     AdvanceFirebolt(tick, projectile, players, events);
                     continue;
@@ -5942,6 +5973,71 @@ public sealed class DiabloCombatCommandProcessor
             previousTraveledX = tile.TraveledX;
             previousTraveledY = tile.TraveledY;
         }
+    }
+
+    /** Native ProcessHorkSpawn travel and expiry summon admission. */
+    private void AdvanceHorkSpawn(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        projectile.RemainingTicks--;
+        if (projectile.RemainingTicks != 0) {
+            foreach (var tile in MoveNativeProjectile(projectile)) {
+                projectile.PositionX = tile.X;
+                projectile.PositionY = tile.Y;
+                projectile.TraveledX = tile.TraveledX;
+                projectile.TraveledY = tile.TraveledY;
+                if (world.IsMissileBlocked(
+                        projectile.LevelId,
+                        tile.X,
+                        tile.Y)) {
+                    if (world.TryGetMissileBlockingObject(
+                            projectile.LevelId,
+                            tile.X,
+                            tile.Y,
+                            out var @object)
+                        && @object!.Breakable) {
+                        @object.Destroyed = true;
+                    }
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
+            }
+            return;
+        }
+
+        world.Projectiles.Remove(projectile.EntityId);
+        if (monsterSpawnPlanner is null
+            || world.CombatTargets.Count >= 256)
+            return;
+
+        var spawnPosition = DiabloCrawl.FindClosestValidPosition(
+            projectile.PositionX,
+            projectile.PositionY,
+            0,
+            1,
+            (candidateX, candidateY) =>
+                world.IsWalkable(projectile.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    projectile.LevelId,
+                    candidateX,
+                    candidateY,
+                    players));
+        if (!spawnPosition.HasValue)
+            return;
+
+        var summon = monsterSpawnPlanner.CreateNativeMonsterSummon(
+            projectile.LevelId,
+            HorkSpawnNativeMonsterId,
+            unchecked(
+                projectile.EntityId
+                ^ projectile.SourceEntityId
+                ^ projectile.TargetEntityId),
+            spawnPosition.Value.X,
+            spawnPosition.Value.Y,
+            AllocateMonsterEntityId(players));
+        if (summon is not null)
+            world.CombatTargets.Add(summon.EntityId, summon);
     }
 
     /** Native AddAcid/ProcessGenericProjectile travel and expiry transition. */
