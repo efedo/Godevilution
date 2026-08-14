@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Bat post-hit retreat now uses the validated duration to identify its native
+  initial retreat step, so external overlays can safely tune the duration
+  without changing the deterministic phase order.
+
 - Schema 1.131 externalizes Scavenger wounded-healing admission through
   validated `monster_types.tsv` rows; the active catalog feeds the native
   health threshold while older targets retain the 50-percent compatibility
