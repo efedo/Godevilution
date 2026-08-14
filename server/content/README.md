@@ -1211,7 +1211,8 @@ validated content while preserving legacy inference for older overlays. Schema
 now selects its summoned native monster from the Hellfire row, with `117`
 retained as the compatibility fallback. Schema 1.93 adds optional
 `projectile_speed` and `projectile_lifetime` columns; the Hellfire Hork Spawn
-row now supplies its native speed `8` and nine-tick lifetime.
+row supplies its native speed `8` and nine-tick lifetime, and migrated ranged
+rows may override their server-compatible movement and lifetime values.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
