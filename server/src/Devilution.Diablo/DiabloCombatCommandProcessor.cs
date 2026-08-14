@@ -4721,7 +4721,8 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monster.NativeAi != "HorkDemon")
+        var horkDemonTuning = GetHorkDemonTuning(monster);
+        if (!horkDemonTuning.HasValue)
             return false;
         if (monsterMissiles is null
             || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
@@ -4734,13 +4735,21 @@ public sealed class DiabloCombatCommandProcessor
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (distance <= 1) {
-            var attackChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+            var attackChance = Math.Min(
+                100,
+                horkDemonTuning.Value.AttackChanceBase
+                    + (horkDemonTuning.Value.AttackChanceIntelligenceScale
+                        * monster.Intelligence));
             return actionSeed % 100U >= (uint)attackChance;
         }
 
-        if (distance >= 3
+        if (distance >= horkDemonTuning.Value.SpawnMinimumDistance
             && actionSeed % 100U
-                < (uint)Math.Min(100, 43 + (2 * monster.Intelligence))
+                < (uint)Math.Min(
+                    100,
+                    horkDemonTuning.Value.SpawnChanceBase
+                        + (horkDemonTuning.Value.SpawnChanceIntelligenceScale
+                            * monster.Intelligence))
             && monsterSpawnPlanner is not null
             && world.CombatTargets.Count < 256) {
             var direction = GetDirection(
@@ -4799,8 +4808,47 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        var movementChance = Math.Min(100, 33 + (2 * monster.Intelligence));
+        var movementChance = Math.Min(
+            100,
+            horkDemonTuning.Value.MovementChanceBase
+                + (horkDemonTuning.Value.MovementChanceIntelligenceScale
+                    * monster.Intelligence));
         return actionSeed % 100U >= (uint)movementChance;
+    }
+
+    private (
+        int AttackChanceBase,
+        int AttackChanceIntelligenceScale,
+        int SpawnMinimumDistance,
+        int SpawnChanceBase,
+        int SpawnChanceIntelligenceScale,
+        int MovementChanceBase,
+        int MovementChanceIntelligenceScale)? GetHorkDemonTuning(
+            AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            if (definition.NativeAi != "HorkDemon")
+                return null;
+            if (definition.HorkDemonAttackChanceBase > 0
+                && definition.HorkDemonAttackChanceIntelligenceScale > 0
+                && definition.HorkDemonSpawnMinimumDistance > 0
+                && definition.HorkDemonSpawnChanceBase > 0
+                && definition.HorkDemonSpawnChanceIntelligenceScale > 0
+                && definition.HorkDemonMovementChanceBase > 0
+                && definition.HorkDemonMovementChanceIntelligenceScale > 0) {
+                return (
+                    definition.HorkDemonAttackChanceBase,
+                    definition.HorkDemonAttackChanceIntelligenceScale,
+                    definition.HorkDemonSpawnMinimumDistance,
+                    definition.HorkDemonSpawnChanceBase,
+                    definition.HorkDemonSpawnChanceIntelligenceScale,
+                    definition.HorkDemonMovementChanceBase,
+                    definition.HorkDemonMovementChanceIntelligenceScale);
+            }
+        }
+        return target.NativeAi == "HorkDemon"
+            ? (28, 2, 3, 43, 2, 33, 2)
+            : null;
     }
 
     private bool TryAdvanceScavengerAi(

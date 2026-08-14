@@ -1472,6 +1472,103 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonUsesValidatedSpawnAdmissionTuning()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(18, 10, 10));
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                119,
+                117,
+                "Hork Spawn",
+                18,
+                19,
+                22,
+                30,
+                30,
+                25,
+                10,
+                25,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 6,
+            },
+            new AuthoritativeMonsterTypeDefinition(
+                125,
+                123,
+                "Hork Demon",
+                19,
+                19,
+                27,
+                120,
+                160,
+                80,
+                20,
+                35,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "HorkDemon",
+                HorkDemonAttackChanceBase = 1,
+                HorkDemonAttackChanceIntelligenceScale = 1,
+                HorkDemonSpawnMinimumDistance = 3,
+                HorkDemonSpawnChanceBase = 1,
+                HorkDemonSpawnChanceIntelligenceScale = 1,
+                HorkDemonMovementChanceBase = 100,
+                HorkDemonMovementChanceIntelligenceScale = 1,
+                AggroRange = 8,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(18, 18, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            nativeWorld,
+            monsterTypes,
+            generation);
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            120,
+            levelId: 18,
+            monsterId: 125,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117,
+                    ProjectileSpeed: 8,
+                    ProjectileLifetime: 9),
+            ]),
+            monsterSpawnPlanner: planner,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 1,
+            levelId: 18,
+            entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal((2, 1), (hork.FuturePositionX, hork.FuturePositionY));
+    }
+
+    [Fact]
     public void BatUsesNativeAttackBandAndTwoStepRetreat()
     {
         var nativeWorld = new AuthoritativeWorld();

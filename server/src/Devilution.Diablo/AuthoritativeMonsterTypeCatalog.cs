@@ -125,6 +125,27 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native SkeletonKing summon chance increase per intelligence point. */
     public int SkeletonKingSummonChanceIntelligenceScale { get; init; }
+
+    /** Native HorkDemon adjacent attack chance base before intelligence scaling. */
+    public int HorkDemonAttackChanceBase { get; init; }
+
+    /** Native HorkDemon adjacent attack chance increase per intelligence point. */
+    public int HorkDemonAttackChanceIntelligenceScale { get; init; }
+
+    /** Native HorkDemon minimum distance required for Hork Spawn admission. */
+    public int HorkDemonSpawnMinimumDistance { get; init; }
+
+    /** Native HorkDemon Hork Spawn chance base before intelligence scaling. */
+    public int HorkDemonSpawnChanceBase { get; init; }
+
+    /** Native HorkDemon Hork Spawn chance increase per intelligence point. */
+    public int HorkDemonSpawnChanceIntelligenceScale { get; init; }
+
+    /** Native HorkDemon non-adjacent movement chance base before intelligence scaling. */
+    public int HorkDemonMovementChanceBase { get; init; }
+
+    /** Native HorkDemon non-adjacent movement chance increase per intelligence point. */
+    public int HorkDemonMovementChanceIntelligenceScale { get; init; }
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -283,6 +304,36 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.SkeletonKingSummonMinimumDistance != 0
                         || definition.SkeletonKingSummonChanceBase != 0
                         || definition.SkeletonKingSummonChanceIntelligenceScale != 0))
+                || definition.HorkDemonAttackChanceBase is < 0 or > 100
+                || definition.HorkDemonAttackChanceIntelligenceScale is < 0 or > 100
+                || definition.HorkDemonSpawnMinimumDistance is < 0 or > 64
+                || definition.HorkDemonSpawnChanceBase is < 0 or > 100
+                || definition.HorkDemonSpawnChanceIntelligenceScale is < 0 or > 100
+                || definition.HorkDemonMovementChanceBase is < 0 or > 100
+                || definition.HorkDemonMovementChanceIntelligenceScale is < 0 or > 100
+                || (definition.NativeAi == "HorkDemon"
+                    && ((definition.HorkDemonAttackChanceBase != 0
+                            || definition.HorkDemonAttackChanceIntelligenceScale != 0
+                            || definition.HorkDemonSpawnMinimumDistance != 0
+                            || definition.HorkDemonSpawnChanceBase != 0
+                            || definition.HorkDemonSpawnChanceIntelligenceScale != 0
+                            || definition.HorkDemonMovementChanceBase != 0
+                            || definition.HorkDemonMovementChanceIntelligenceScale != 0)
+                        && (definition.HorkDemonAttackChanceBase <= 0
+                            || definition.HorkDemonAttackChanceIntelligenceScale <= 0
+                            || definition.HorkDemonSpawnMinimumDistance <= 0
+                            || definition.HorkDemonSpawnChanceBase <= 0
+                            || definition.HorkDemonSpawnChanceIntelligenceScale <= 0
+                            || definition.HorkDemonMovementChanceBase <= 0
+                            || definition.HorkDemonMovementChanceIntelligenceScale <= 0)))
+                || (definition.NativeAi != "HorkDemon"
+                    && (definition.HorkDemonAttackChanceBase != 0
+                        || definition.HorkDemonAttackChanceIntelligenceScale != 0
+                        || definition.HorkDemonSpawnMinimumDistance != 0
+                        || definition.HorkDemonSpawnChanceBase != 0
+                        || definition.HorkDemonSpawnChanceIntelligenceScale != 0
+                        || definition.HorkDemonMovementChanceBase != 0
+                        || definition.HorkDemonMovementChanceIntelligenceScale != 0))
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -390,6 +441,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonKingSummonMinimumDistance = row.OptionalInt32("skeleton_king_summon_minimum_distance"),
                 SkeletonKingSummonChanceBase = row.OptionalInt32("skeleton_king_summon_chance_base"),
                 SkeletonKingSummonChanceIntelligenceScale = row.OptionalInt32("skeleton_king_summon_chance_intelligence_scale"),
+                HorkDemonAttackChanceBase = row.OptionalInt32("hork_demon_attack_chance_base"),
+                HorkDemonAttackChanceIntelligenceScale = row.OptionalInt32("hork_demon_attack_chance_intelligence_scale"),
+                HorkDemonSpawnMinimumDistance = row.OptionalInt32("hork_demon_spawn_minimum_distance"),
+                HorkDemonSpawnChanceBase = row.OptionalInt32("hork_demon_spawn_chance_base"),
+                HorkDemonSpawnChanceIntelligenceScale = row.OptionalInt32("hork_demon_spawn_chance_intelligence_scale"),
+                HorkDemonMovementChanceBase = row.OptionalInt32("hork_demon_movement_chance_base"),
+                HorkDemonMovementChanceIntelligenceScale = row.OptionalInt32("hork_demon_movement_chance_intelligence_scale"),
             }));
     }
 

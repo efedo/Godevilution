@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.112.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.113.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -160,7 +160,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.112.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.113.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
@@ -342,6 +342,14 @@ public sealed class ShippedContentTests
         Assert.Equal(
             "HorkDemon",
             monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).NativeAi);
+        Assert.Equal((28, 2, 3, 43, 2, 33, 2), (
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonAttackChanceBase,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonAttackChanceIntelligenceScale,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonSpawnMinimumDistance,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonSpawnChanceBase,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonSpawnChanceIntelligenceScale,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonMovementChanceBase,
+            monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 123).HorkDemonMovementChanceIntelligenceScale));
         Assert.True(activation.MonsterMissiles!.TryGet("HorkDemon", out var horkDemonMissile));
         Assert.Equal(("HorkSpawn", AuthoritativeProjectileBehavior.HorkSpawn), (
             horkDemonMissile!.MissileId,
