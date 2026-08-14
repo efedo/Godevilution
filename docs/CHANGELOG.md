@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route the Succubus-family Blood Star path through schema 1.120's validated
+  ranged-retreat tuning so its dedicated dispatch shares the server-owned
+  generic close-range boundary.
 - Add schema 1.120's optional ranged-retreat distance/chance tuning, moving the
   generic native close-range retreat boundary into validated missile content
   while preserving legacy target behavior.

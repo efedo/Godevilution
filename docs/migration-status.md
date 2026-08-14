@@ -26,7 +26,8 @@ Status date: 2026-08-14
 
 - Schema 1.120 externalizes generic `Ranged` close-range retreat distance and
   chance tuning through validated `monster_missiles.tsv` rows; the active
-  catalog feeds server-owned AI while older mappings retain native values.
+  catalog feeds server-owned AI, including the dedicated Succubus-family Blood
+  Star path, while older mappings retain native values.
 
 - Schema 1.119 externalizes generic `RangedAvoidance` distance and chance
   tuning through validated `monster_missiles.tsv` rows; the active catalog feeds
