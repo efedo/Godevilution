@@ -24,6 +24,10 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Monster missile `spell_id` mappings are now authoritative for the Succubus
+  Blood Star path and are cross-validated against the active spell catalog;
+  older rows without a mapping retain the native inference fallback.
+
 - Schema 1.145 externalizes special consumable spell behavior through
   `spells.tsv`; the checked-in Rune of Fire row declares `RuneFire`, while
   legacy spell tables retain miscellaneous-ID fallback.

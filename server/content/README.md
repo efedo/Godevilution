@@ -383,7 +383,9 @@ at maximum life and preserved in exact Q6 state.
 The native `Succubus` identity now dispatches Blood Star through the existing
 authoritative magic-projectile path and consumes the validated ranged-retreat
 tuning; player hit, block, resistance, and damage resolution remain
-server-owned.
+server-owned. Its optional `spell_id` mapping is now used directly for the
+projectile identity and is cross-validated against the active spell catalog;
+legacy rows without the mapping retain the native stable-ID fallback.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
