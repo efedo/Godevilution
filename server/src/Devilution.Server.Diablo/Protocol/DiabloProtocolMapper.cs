@@ -87,6 +87,8 @@ internal static class DiabloProtocolMapper
                 FallenFearDirection = monster.FallenFearDirection,
                 SneakHidden = monster.SneakHidden,
                 SneakRetreatTicks = monster.SneakRetreatTicks,
+                ScavengerHealingTicks = monster.ScavengerHealingTicks,
+                ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
             });
         }
         foreach (var item in source.WorldItems) {
@@ -197,6 +199,14 @@ internal static class DiabloProtocolMapper
                 RemainingTicks = portal.RemainingTicks,
                 OwnerEntityId = portal.OwnerEntityId,
                 Bidirectional = portal.Bidirectional,
+            });
+        }
+        foreach (var corpse in source.Corpses.OrderBy(corpse => corpse.EntityId)) {
+            snapshot.Corpses.Add(new CorpseSnapshot {
+                EntityId = corpse.EntityId,
+                LevelId = corpse.LevelId,
+                PositionX = corpse.PositionX,
+                PositionY = corpse.PositionY,
             });
         }
         if (source.ActiveStore is not null) {
@@ -373,6 +383,8 @@ internal static class DiabloProtocolMapper
                 FallenFearDirection = monster.FallenFearDirection,
                 SneakHidden = monster.SneakHidden,
                 SneakRetreatTicks = monster.SneakRetreatTicks,
+                ScavengerHealingTicks = monster.ScavengerHealingTicks,
+                ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
             }).ToArray(),
@@ -480,6 +492,11 @@ internal static class DiabloProtocolMapper
                 OwnerEntityId = portal.OwnerEntityId,
                 Bidirectional = portal.Bidirectional,
             }).ToArray(),
+            Corpses = source.Corpses.Select(corpse => new DiabloCorpseState(
+                corpse.EntityId,
+                corpse.LevelId,
+                corpse.PositionX,
+                corpse.PositionY)).ToArray(),
         };
     }
 

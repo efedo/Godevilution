@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   native nearby-death retreat duration and direction deterministically.
 - Add server-owned Sneak visibility and post-hit retreat state, preserving
   native distance bands and preventing hidden monsters from being targeted.
+- Add server-owned corpse tiles and Scavenger healing/navigation, with native
+  Hellfire corpse consumption and persisted healing goals.
 - Add schema 1.84 Counselor missile mappings for all native intelligence
   variants, including the server-owned monster Charged Bolt controller.
 - Route wounded Gargoyles through the native retreat boundary before their

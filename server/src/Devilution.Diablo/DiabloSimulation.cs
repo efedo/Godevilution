@@ -45,6 +45,9 @@ public sealed class DiabloSimulationOptions
 
     public IReadOnlyList<AuthoritativeProjectile>? Projectiles { get; init; }
 
+    /** Server-owned corpse tiles available to corpse-consuming monster AI. */
+    public IReadOnlyList<AuthoritativeCorpse>? Corpses { get; init; }
+
     public AuthoritativeSpellCatalog? Spells { get; init; }
 
     /** Validated native AI-to-missile mappings supplied by active content. */
@@ -115,7 +118,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Objects,
             options.Quests,
             options.Projectiles,
-            options.FallbackMissileBlockedCells);
+            options.FallbackMissileBlockedCells,
+            options.Corpses);
         var spells = options.Spells ?? new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
             new AuthoritativeSpellDefinition(2, 3, 0, 1, 10, 1),
@@ -304,6 +308,7 @@ public sealed partial class DiabloSimulation
             || WorldState.Objects.ContainsKey(entityId)
             || WorldState.Projectiles.ContainsKey(entityId)
             || WorldState.Portals.ContainsKey(entityId)
+            || WorldState.Corpses.ContainsKey(entityId)
             || participants.Any(player => player.EntityId == entityId);
     }
 
@@ -321,6 +326,8 @@ public sealed partial class DiabloSimulation
         }
         foreach (var item in WorldState.WorldItems.Values.Where(item => item.LevelId == levelId))
             reserved.Add((item.PositionX, item.PositionY));
+        foreach (var corpse in WorldState.Corpses.Values.Where(corpse => corpse.LevelId == levelId))
+            reserved.Add((corpse.PositionX, corpse.PositionY));
         foreach (var @object in WorldState.Objects.Values.Where(@object =>
                      !@object.Activated
                      && !@object.Destroyed

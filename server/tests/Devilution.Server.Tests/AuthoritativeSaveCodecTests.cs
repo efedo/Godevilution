@@ -95,6 +95,47 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(5, monster.SneakRetreatTicks);
     }
 
+    [Fact]
+    public void VersionOneRoundTripsCorpseStateThroughTheProtocolSave()
+    {
+        var source = CreateSnapshot() with {
+            Corpses = [new DiabloCorpseState(30, 0, 3, 3)],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var corpse = Assert.Single(restored.Corpses);
+        Assert.Equal((30U, 0U, 3, 3), (
+            corpse.EntityId,
+            corpse.LevelId,
+            corpse.PositionX,
+            corpse.PositionY));
+    }
+
+    [Fact]
+    public void VersionOneRoundTripsScavengerHealingStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Scavenger",
+                FallenFearTicks = 0,
+                FallenFearDirection = 0,
+                ScavengerHealingTicks = 7,
+                ScavengerCorpseEntityId = 30,
+            }],
+            Corpses = [new DiabloCorpseState(30, 0, 3, 3)],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((7, 30U), (monster.ScavengerHealingTicks, monster.ScavengerCorpseEntityId));
+        Assert.Equal(30U, Assert.Single(restored.Corpses).EntityId);
+    }
+
     [Theory]
     [InlineData(
         DiabloPlayerActionKind.Death,

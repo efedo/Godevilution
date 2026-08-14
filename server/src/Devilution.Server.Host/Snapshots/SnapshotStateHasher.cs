@@ -302,6 +302,23 @@ public static class SnapshotStateHasher
                     hasher.AppendBool(monster.SneakHidden);
                     hasher.AppendInt32(monster.SneakRetreatTicks);
                 }
+                if (monster.ScavengerHealingTicks != 0 || monster.ScavengerCorpseEntityId != 0) {
+                    hasher.AppendString("godevilution-monster-scavenger-v1");
+                    hasher.AppendInt32(monster.ScavengerHealingTicks);
+                    hasher.AppendUInt32(monster.ScavengerCorpseEntityId);
+                }
+            }
+        }
+
+        var corpses = snapshot.Corpses.OrderBy(corpse => corpse.EntityId).ToArray();
+        if (corpses.Length > 0) {
+            hasher.AppendString("godevilution-corpses-v1");
+            hasher.AppendUInt64((ulong)corpses.Length);
+            foreach (var corpse in corpses) {
+                hasher.AppendUInt32(corpse.EntityId);
+                hasher.AppendUInt32(corpse.LevelId);
+                hasher.AppendInt32(corpse.PositionX);
+                hasher.AppendInt32(corpse.PositionY);
             }
         }
 

@@ -336,6 +336,13 @@ Windows toolchain command.
 - `MonsterSnapshot.gargoyle_special_active` field 45 carries the server-owned
   Gargoyle distance-based special lock. Clients render the resulting Healing
   event and snapshot state; they do not execute Gargoyle healing or unlock it.
+- `MonsterSnapshot` fields 46-47 carry server-owned Fallen fear countdown and
+  retreat direction. Fields 48-49 carry Sneak hidden state and retreat ticks;
+  hidden monsters are excluded from authoritative targeting. Fields 50-51
+  carry Scavenger healing ticks and its selected corpse identity. These values
+  are state metadata only; clients never execute the AI.
+- `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
+  identity and position are server-owned and included in canonical hashing.
 - GoatRanged attack and avoidance outcomes use ordinary authoritative monster
   snapshots and directed Damage events; no client-side AI or hit roll is needed.
 - GoatMelee admission and special attacks likewise resolve on the server and

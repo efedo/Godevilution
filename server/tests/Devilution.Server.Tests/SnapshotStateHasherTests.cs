@@ -680,6 +680,45 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void CorpseStateExtendsTheStateHash()
+    {
+        var first = new Snapshot();
+        var second = first.Clone();
+        second.Corpses.Add(new CorpseSnapshot {
+            EntityId = 30,
+            LevelId = 0,
+            PositionX = 3,
+            PositionY = 3,
+        });
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
+    public void ScavengerHealingStateExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var second = first.Clone();
+        second.Monsters[0].ScavengerHealingTicks = 7;
+        second.Monsters[0].ScavengerCorpseEntityId = 30;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
     public void WorldItemProjectionChangesTheStateHash()
     {
         var first = new Snapshot {

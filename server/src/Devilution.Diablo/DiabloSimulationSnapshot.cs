@@ -100,6 +100,12 @@ public sealed record DiabloMonsterState(
     /** Remaining native Sneak retreat ticks after a successful hit. */
     public int SneakRetreatTicks { get; init; }
 
+    /** Remaining native Scavenger corpse-eating ticks. */
+    public int ScavengerHealingTicks { get; init; }
+
+    /** Selected corpse identity for the native Scavenger healing goal. */
+    public uint ScavengerCorpseEntityId { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -114,6 +120,13 @@ public sealed record DiabloWorldItemState(
     uint ItemSeed,
     uint Price,
     AuthoritativeItemState State);
+
+/** Immutable server-owned corpse projection. */
+public sealed record DiabloCorpseState(
+    uint EntityId,
+    uint LevelId,
+    int PositionX,
+    int PositionY);
 
 /** Immutable protocol-neutral world-object projection. */
 public sealed record DiabloObjectState(
@@ -255,6 +268,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Dynamic and external portal routes owned by the authoritative world. */
     public IReadOnlyList<DiabloPortalState> Portals { get; init; } = [];
+
+    /** Defeated non-minion monster tiles used by corpse-consuming AI. */
+    public IReadOnlyList<DiabloCorpseState> Corpses { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -358,6 +374,8 @@ public sealed partial class DiabloSimulation
                     FallenFearDirection = target.FallenFearDirection,
                     SneakHidden = target.SneakHidden,
                     SneakRetreatTicks = target.SneakRetreatTicks,
+                    ScavengerHealingTicks = target.ScavengerHealingTicks,
+                    ScavengerCorpseEntityId = target.ScavengerCorpseEntityId,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -475,6 +493,14 @@ public sealed partial class DiabloSimulation
                     Bidirectional = portal.Bidirectional,
                 })
                 .ToArray(),
+            Corpses = WorldState.Corpses.Values
+                .OrderBy(corpse => corpse.EntityId)
+                .Select(corpse => new DiabloCorpseState(
+                    corpse.EntityId,
+                    corpse.LevelId,
+                    corpse.PositionX,
+                    corpse.PositionY))
+                .ToArray(),
         };
     }
 
@@ -492,7 +518,8 @@ public sealed partial class DiabloSimulation
             || snapshot.Objects is null
             || snapshot.Quests is null
             || snapshot.Projectiles is null
-            || snapshot.Portals is null) {
+            || snapshot.Portals is null
+            || snapshot.Corpses is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
@@ -502,25 +529,30 @@ public sealed partial class DiabloSimulation
         var worldItemEntityIds = snapshot.WorldItems.Select(item => item.EntityId).ToArray();
         var objectEntityIds = snapshot.Objects.Select(@object => @object.EntityId).ToArray();
         var projectileEntityIds = snapshot.Projectiles.Select(projectile => projectile.EntityId).ToArray();
+        var corpseEntityIds = snapshot.Corpses.Select(corpse => corpse.EntityId).ToArray();
         var allWorldEntityIds = monsterEntityIds
             .Concat(worldItemEntityIds)
             .Concat(objectEntityIds)
             .Concat(projectileEntityIds)
+            .Concat(corpseEntityIds)
             .ToArray();
         if (monsterEntityIds.Any(entityId => entityId == 0)
             || worldItemEntityIds.Any(entityId => entityId == 0)
             || objectEntityIds.Any(entityId => entityId == 0)
             || projectileEntityIds.Any(entityId => entityId == 0)
+            || corpseEntityIds.Any(entityId => entityId == 0)
             || monsterEntityIds.Distinct().Count() != monsterEntityIds.Length
             || worldItemEntityIds.Distinct().Count() != worldItemEntityIds.Length
             || objectEntityIds.Distinct().Count() != objectEntityIds.Length
             || projectileEntityIds.Distinct().Count() != projectileEntityIds.Length
+            || corpseEntityIds.Distinct().Count() != corpseEntityIds.Length
             || allWorldEntityIds.Distinct().Count() != allWorldEntityIds.Length
             || allWorldEntityIds.Contains(source.EntityId)
             || snapshot.Monsters.Count > 4096
             || snapshot.WorldItems.Count > 4096
             || snapshot.Objects.Count > 4096
-            || snapshot.Projectiles.Count > 4096) {
+            || snapshot.Projectiles.Count > 4096
+            || snapshot.Corpses.Count > 4096) {
             throw new InvalidDataException(
                 "The authoritative save contains invalid world entity identity.");
         }
@@ -551,6 +583,17 @@ public sealed partial class DiabloSimulation
             throw new InvalidDataException(
                 "The authoritative save contains invalid portal identity.");
         }
+
+        var restoredCorpses = snapshot.Corpses.Select(corpse => {
+            if (!WorldState.IsWalkable(corpse.LevelId, corpse.PositionX, corpse.PositionY))
+                throw new InvalidDataException(
+                    "The authoritative save contains an invalid corpse.");
+            return new AuthoritativeCorpse(
+                corpse.EntityId,
+                corpse.LevelId,
+                corpse.PositionX,
+                corpse.PositionY);
+        }).ToArray();
 
         var restoredWorldItems = snapshot.WorldItems.Select(item => {
             if (item.State is null
@@ -601,6 +644,10 @@ public sealed partial class DiabloSimulation
                 || monster.SneakRetreatTicks is < 0 or > 64
                 || (monster.SneakHidden && monster.NativeAi != "Sneak")
                 || (monster.SneakRetreatTicks != 0 && monster.NativeAi != "Sneak")
+                || monster.ScavengerHealingTicks is < 0 or > 10
+                || (monster.ScavengerHealingTicks != 0 && monster.NativeAi != "Scavenger")
+                || (monster.ScavengerCorpseEntityId != 0
+                    && monster.NativeAi != "Scavenger")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -625,6 +672,14 @@ public sealed partial class DiabloSimulation
             }
             return monster;
         }).ToArray();
+        var restoredCorpseIds = restoredCorpses
+            .Select(corpse => corpse.EntityId)
+            .ToHashSet();
+        if (restoredMonsters.Any(monster => monster.ScavengerCorpseEntityId != 0
+                && !restoredCorpseIds.Contains(monster.ScavengerCorpseEntityId))) {
+            throw new InvalidDataException(
+                "The authoritative save contains an unknown Scavenger corpse.");
+        }
         var restoredObjects = snapshot.Objects.Select(@object => {
             if (!WorldState.IsWalkable(@object.LevelId, @object.PositionX, @object.PositionY)
                 || @object.ObjectId == 0
@@ -1139,6 +1194,9 @@ public sealed partial class DiabloSimulation
         WorldState.WorldItems.Clear();
         foreach (var item in restoredWorldItems)
             WorldState.WorldItems.Add(item.EntityId, item);
+        WorldState.Corpses.Clear();
+        foreach (var corpse in restoredCorpses)
+            WorldState.Corpses.Add(corpse.EntityId, corpse);
         RestoreObjects(restoredObjects);
         WorldState.Portals.Clear();
         foreach (var portal in savedPortals) {
@@ -1360,6 +1418,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreSneakState(
                     monster.SneakHidden,
                     monster.SneakRetreatTicks);
+                target.RestoreScavengerHealing(
+                    monster.ScavengerHealingTicks,
+                    monster.ScavengerCorpseEntityId);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1419,6 +1480,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreSneakState(
                     monster.SneakHidden,
                     monster.SneakRetreatTicks);
+                restoredTarget.RestoreScavengerHealing(
+                    monster.ScavengerHealingTicks,
+                    monster.ScavengerCorpseEntityId);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

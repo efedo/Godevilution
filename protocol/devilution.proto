@@ -262,6 +262,15 @@ message Snapshot {
 	uint32 random_state = 10;
 	// Dynamic and external authoritative portal routes.
 	repeated PortalSnapshot portals = 11;
+	// Defeated non-minion monster tiles used by corpse-consuming AI.
+	repeated CorpseSnapshot corpses = 12;
+}
+
+message CorpseSnapshot {
+	uint32 entity_id = 1;
+	uint32 level_id = 2;
+	int32 position_x = 3;
+	int32 position_y = 4;
 }
 
 message PortalSnapshot {
@@ -468,6 +477,10 @@ message MonsterSnapshot {
 	bool sneak_hidden = 48;
 	// Remaining native Sneak retreat ticks after a successful hit.
 	int32 sneak_retreat_ticks = 49;
+	// Remaining native Scavenger corpse-eating ticks.
+	int32 scavenger_healing_ticks = 50;
+	// Selected corpse identity for the native Scavenger healing goal.
+	uint32 scavenger_corpse_entity_id = 51;
 }
 
 message WorldItemSnapshot {

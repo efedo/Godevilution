@@ -448,6 +448,51 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsScavengerHealingAndCorpses()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    2,
+                    0,
+                    4,
+                    maxHitPoints: 20,
+                    nativeAi: "Scavenger",
+                    scavengerHealingTicks: 7,
+                    scavengerCorpseEntityId: 10)],
+                Corpses = [new AuthoritativeCorpse(10, 0, 4, 0)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((7, 10U), (savedMonster.ScavengerHealingTicks, savedMonster.ScavengerCorpseEntityId));
+        Assert.Equal((10U, 4, 0), (
+            Assert.Single(snapshot.Corpses).EntityId,
+            Assert.Single(snapshot.Corpses).PositionX,
+            Assert.Single(snapshot.Corpses).PositionY));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    2,
+                    0,
+                    4,
+                    maxHitPoints: 20,
+                    nativeAi: "Scavenger")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((7, 10U), (restored.ScavengerHealingTicks, restored.ScavengerCorpseEntityId));
+        Assert.Equal((4, 0), (
+            Assert.Single(replacement.WorldState.Corpses.Values).PositionX,
+            Assert.Single(replacement.WorldState.Corpses.Values).PositionY));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

@@ -20,7 +20,8 @@ public sealed class DiabloWorldState
         IReadOnlyList<AuthoritativeWorldObject>? objects = null,
         IReadOnlyList<AuthoritativeQuestState>? quests = null,
         IReadOnlyList<AuthoritativeProjectile>? projectiles = null,
-        IEnumerable<int>? fallbackMissileBlockedCells = null)
+        IEnumerable<int>? fallbackMissileBlockedCells = null,
+        IReadOnlyList<AuthoritativeCorpse>? corpses = null)
     {
         World = world;
         this.fallbackWidth = fallbackWidth > 0
@@ -61,6 +62,8 @@ public sealed class DiabloWorldState
         }
         foreach (var projectile in projectiles ?? [])
             Projectiles.Add(projectile.EntityId, projectile);
+        foreach (var corpse in corpses ?? [])
+            Corpses.Add(corpse.EntityId, corpse);
     }
 
     public AuthoritativeWorld? World { get; }
@@ -105,6 +108,9 @@ public sealed class DiabloWorldState
     public Dictionary<uint, AuthoritativeQuestState> Quests { get; } = [];
 
     public Dictionary<uint, AuthoritativeProjectile> Projectiles { get; } = [];
+
+    /** Defeated non-minion monster tiles used by corpse-consuming AI. */
+    public Dictionary<uint, AuthoritativeCorpse> Corpses { get; } = [];
 
     public bool IsWalkable(uint levelId, int positionX, int positionY)
     {
@@ -302,6 +308,11 @@ public sealed class DiabloWorldState
             ValidatePosition(item.LevelId, item.PositionX, item.PositionY, "world item");
             if (!entityIds.Add(item.EntityId))
                 throw new InvalidDataException($"Entity {item.EntityId} is registered more than once.");
+        }
+        foreach (var corpse in Corpses.Values) {
+            ValidatePosition(corpse.LevelId, corpse.PositionX, corpse.PositionY, "corpse");
+            if (!entityIds.Add(corpse.EntityId))
+                throw new InvalidDataException($"Entity {corpse.EntityId} is registered more than once.");
         }
         foreach (var @object in Objects.Values) {
             ValidatePosition(@object.LevelId, @object.PositionX, @object.PositionY, "object");

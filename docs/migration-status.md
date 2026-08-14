@@ -31,6 +31,10 @@ Status date: 2026-08-13
 - Native Sneak stealth is now server-owned: its intelligence-derived visibility
   band, hidden target exclusion, and nine-tick post-hit retreat persist through
   snapshots, saves, protocol, and canonical hashes.
+- Native Scavenger corpse seeking and healing are now server-owned. Defeated
+  non-minion monsters become persisted corpse tiles; Scavenger healing goals,
+  deterministic navigation, native base/Hellfire healing, and Hellfire corpse
+  consumption cross snapshots, saves, protocol, and canonical hashes.
 
 - Handshake validation, bounded framing, retry/deduplication, reconnect tokens,
   acknowledgements, snapshots, events, and state hashes.

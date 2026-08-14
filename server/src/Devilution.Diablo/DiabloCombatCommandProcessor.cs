@@ -737,6 +737,7 @@ public sealed class DiabloCombatCommandProcessor
             || world.Objects.ContainsKey(nextMonsterEntityId)
             || world.Projectiles.ContainsKey(nextMonsterEntityId)
             || world.Portals.ContainsKey(nextMonsterEntityId)
+            || world.Corpses.ContainsKey(nextMonsterEntityId)
             || players.Any(player => player.EntityId == nextMonsterEntityId)) {
             nextMonsterEntityId = checked(nextMonsterEntityId + 1);
         }
@@ -3721,12 +3722,20 @@ public sealed class DiabloCombatCommandProcessor
             if (target.HitPoints <= 0) {
                 if (target.DeathAnimationTicks != 0
                     && target.AdvanceDeathAnimation()) {
-                    world.CombatTargets.Remove(target.EntityId);
+                    if (target.IsPlayerMinion)
+                        world.CombatTargets.Remove(target.EntityId);
+                    else
+                        ReplaceDeadMonsterWithCorpse(target);
+                } else if (!target.IsPlayerMinion
+                    && target.DeathAnimationTicks == 0) {
+                    ReplaceDeadMonsterWithCorpse(target);
                 }
                 continue;
             }
             ApplyNativeMonsterRegeneration(target);
             if (target.IsPetrified)
+                continue;
+            if (TryAdvanceScavengerAi(target, players))
                 continue;
             if (TryAdvanceFallenFear(target, players))
                 continue;
@@ -3932,6 +3941,125 @@ public sealed class DiabloCombatCommandProcessor
         }
         target.AdvanceFallenFear();
         return true;
+    }
+
+    private bool TryAdvanceScavengerAi(
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (target.NativeAi != "Scavenger")
+            return false;
+        if (target.HitPointsQ6 >= target.MaxHitPointsQ6 / 2
+            && target.ScavengerHealingTicks == 0) {
+            return false;
+        }
+        if (target.ScavengerHealingTicks == 0)
+            target.StartScavengerHealing(10);
+
+        AuthoritativeCorpse? corpse = null;
+        if (target.ScavengerCorpseEntityId != 0)
+            world.Corpses.TryGetValue(target.ScavengerCorpseEntityId, out corpse);
+        if (corpse is null
+            || (corpse.LevelId != 0 && corpse.LevelId != target.LevelId)
+            || Math.Max(
+                Math.Abs(corpse.PositionX - target.PositionX),
+                Math.Abs(corpse.PositionY - target.PositionY)) > 4
+            || !world.HasLineOfSight(
+                target.LevelId,
+                target.PositionX,
+                target.PositionY,
+                corpse.PositionX,
+                corpse.PositionY)) {
+            corpse = world.Corpses.Values
+                .Where(candidate => (candidate.LevelId == 0 || candidate.LevelId == target.LevelId)
+                    && Math.Max(
+                        Math.Abs(candidate.PositionX - target.PositionX),
+                        Math.Abs(candidate.PositionY - target.PositionY)) <= 4
+                    && world.HasLineOfSight(
+                        target.LevelId,
+                        target.PositionX,
+                        target.PositionY,
+                        candidate.PositionX,
+                        candidate.PositionY))
+                .OrderBy(candidate => Math.Max(
+                    Math.Abs(candidate.PositionX - target.PositionX),
+                    Math.Abs(candidate.PositionY - target.PositionY)))
+                .ThenBy(candidate => candidate.EntityId)
+                .FirstOrDefault();
+            target.SelectScavengerCorpse(corpse?.EntityId ?? 0);
+        }
+
+        if (corpse is null) {
+            target.AdvanceScavengerHealing();
+            if (target.ScavengerHealingTicks == 0)
+                target.ClearScavengerHealing();
+            return false;
+        }
+
+        if (target.PositionX == corpse.PositionX
+            && target.PositionY == corpse.PositionY) {
+            var healingQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
+                ? target.MaxHitPointsQ6 / 8
+                : DiabloFixedPointQ6.FromWhole(1);
+            if (rules.GameVariant != DiabloGameVariant.Hellfire)
+                healingQ6 = DiabloFixedPointQ6.FromWhole(1);
+            target.ApplyHealingQ6(healingQ6);
+            target.AdvanceScavengerHealing();
+            var targetHealthQ6 = rules.GameVariant == DiabloGameVariant.Hellfire
+                ? target.MaxHitPointsQ6
+                : target.MaxHitPointsQ6 * 3 / 4;
+            if (rules.GameVariant == DiabloGameVariant.Hellfire
+                && (target.HitPointsQ6 == target.MaxHitPointsQ6
+                    || target.ScavengerHealingTicks == 0)) {
+                world.Corpses.Remove(corpse.EntityId);
+            }
+            if (target.HitPointsQ6 >= targetHealthQ6
+                || target.ScavengerHealingTicks == 0)
+                target.ClearScavengerHealing();
+            return true;
+        }
+
+        var direction = GetDirection(
+            target.PositionX,
+            target.PositionY,
+            corpse.PositionX,
+            corpse.PositionY);
+        for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
+            var candidateDirection = offset == 0
+                ? direction
+                : offset % 2 == 1
+                    ? RotateDirection(direction, (offset + 1) / 2)
+                    : RotateDirection(direction, -(offset / 2));
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(target.PositionX + displacement.X);
+            var candidateY = checked(target.PositionY + displacement.Y);
+            if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
+                || world.IsOccupied(
+                    target.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    target.EntityId)) {
+                continue;
+            }
+            target.BeginMovement(candidateX, candidateY);
+            break;
+        }
+        target.AdvanceScavengerHealing();
+        if (target.ScavengerHealingTicks == 0)
+            target.ClearScavengerHealing();
+        return true;
+    }
+
+    private void ReplaceDeadMonsterWithCorpse(AuthoritativeCombatTarget target)
+    {
+        if (!world.CombatTargets.Remove(target.EntityId))
+            return;
+        world.Corpses[target.EntityId] = new AuthoritativeCorpse(
+            target.EntityId,
+            target.LevelId,
+            target.PositionX,
+            target.PositionY);
     }
 
     private bool TryAdvanceSneakAi(
@@ -9627,6 +9755,8 @@ public sealed class DiabloCombatCommandProcessor
             checked((int)experienceReward)));
         if (target.Drop is not null)
             world.WorldItems[target.Drop.EntityId] = target.Drop;
+        if (!target.IsPlayerMinion && target.DeathAnimationTicks == 0)
+            ReplaceDeadMonsterWithCorpse(target);
     }
 
     private void TriggerFallenFear(AuthoritativeCombatTarget deceased)
@@ -9680,7 +9810,8 @@ public sealed class DiabloCombatCommandProcessor
             || world.CombatTargets.ContainsKey(nextProjectileEntityId)
             || world.WorldItems.ContainsKey(nextProjectileEntityId)
             || world.Objects.ContainsKey(nextProjectileEntityId)
-            || world.Projectiles.ContainsKey(nextProjectileEntityId)) {
+            || world.Projectiles.ContainsKey(nextProjectileEntityId)
+            || world.Corpses.ContainsKey(nextProjectileEntityId)) {
             nextProjectileEntityId = checked(nextProjectileEntityId + 1);
         }
         return nextProjectileEntityId++;

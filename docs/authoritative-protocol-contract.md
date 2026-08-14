@@ -237,6 +237,15 @@ Gargoyle special lock. When a wounded Gargoyle heals beyond its native
 self-heal and holds this lock until the player closes that boundary; clients
 only render the resulting Healing event and snapshot state.
 
+`MonsterSnapshot` fields 46-47 carry server-owned Fallen fear countdown and
+retreat direction. Fields 48-49 carry Sneak hidden state and retreat ticks;
+hidden monsters are excluded from authoritative targeting. Fields 50-51 carry
+Scavenger healing ticks and its selected corpse identity. Clients render these
+values but never execute the corresponding AI.
+
+`Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
+identity and position are server-owned and included in canonical hashing.
+
 The server currently uses the `Fat` identity for the native Overlord normal
 (`15 + 4 * intelligence`) and special (`20 + 4 * intelligence`) melee bands;
 the resulting damage event and snapshot remain authoritative. Other AI-specific

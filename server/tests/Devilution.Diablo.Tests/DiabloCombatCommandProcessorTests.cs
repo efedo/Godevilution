@@ -274,6 +274,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var drop = Assert.Single(world.WorldItems.Values);
         Assert.Equal(1009U, drop.EntityId);
         Assert.Equal(6001U, drop.ItemSeed);
+        Assert.Contains(9U, world.Corpses.Keys);
     }
 
     [Fact]
@@ -368,6 +369,63 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Equal((2, 0), (sneak.PositionX, sneak.PositionY));
         Assert.Equal(8, sneak.SneakRetreatTicks);
+    }
+
+    [Fact]
+    public void ScavengerSeeksAndEatsACorpseWithNativeHealingTiming()
+    {
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            4,
+            maxHitPoints: 20,
+            nativeAi: "Scavenger");
+        var corpse = new AuthoritativeCorpse(10, 0, 4, 0);
+        var world = new DiabloWorldState(
+            combatTargets: [scavenger],
+            corpses: [corpse]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Equal((3, 0), (scavenger.FuturePositionX, scavenger.FuturePositionY));
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal((4, 0), (scavenger.FuturePositionX, scavenger.FuturePositionY));
+        processor.AdvanceTick(3, [player]);
+
+        Assert.Equal(5, scavenger.HitPoints);
+        Assert.Equal(7, scavenger.ScavengerHealingTicks);
+        Assert.Contains(10U, world.Corpses.Keys);
+    }
+
+    [Fact]
+    public void HellfireScavengerConsumesItsCorpseWhenFullyHealed()
+    {
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            4,
+            maxHitPoints: 20,
+            nativeAi: "Scavenger");
+        var world = new DiabloWorldState(
+            combatTargets: [scavenger],
+            corpses: [new AuthoritativeCorpse(10, 0, 2, 0)]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(entityId: 7);
+
+        for (ulong tick = 1; tick <= 7; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(20, scavenger.HitPoints);
+        Assert.DoesNotContain(10U, world.Corpses.Keys);
     }
 
     [Fact]

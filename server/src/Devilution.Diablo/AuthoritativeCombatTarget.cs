@@ -55,7 +55,9 @@ public sealed class AuthoritativeCombatTarget
         int fallenFearTicks = 0,
         int fallenFearDirection = 0,
         bool sneakHidden = false,
-        int sneakRetreatTicks = 0)
+        int sneakRetreatTicks = 0,
+        int scavengerHealingTicks = 0,
+        uint scavengerCorpseEntityId = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -81,6 +83,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(fallenFearDirection));
         if (sneakRetreatTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
+        if (scavengerHealingTicks < 0)
+            throw new ArgumentOutOfRangeException(nameof(scavengerHealingTicks));
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
@@ -100,6 +104,11 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "Sneak retreat requires the Sneak native AI identity.",
                 nameof(sneakRetreatTicks));
+        if ((scavengerHealingTicks != 0 || scavengerCorpseEntityId != 0)
+            && nativeAi != "Scavenger")
+            throw new ArgumentException(
+                "Scavenger healing requires the Scavenger native AI identity.",
+                nameof(scavengerHealingTicks));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -148,6 +157,8 @@ public sealed class AuthoritativeCombatTarget
         FallenFearDirection = fallenFearDirection;
         SneakHidden = sneakHidden;
         SneakRetreatTicks = sneakRetreatTicks;
+        ScavengerHealingTicks = scavengerHealingTicks;
+        ScavengerCorpseEntityId = scavengerCorpseEntityId;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -257,6 +268,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native Sneak retreat ticks after a successful hit. */
     public int SneakRetreatTicks { get; private set; }
+
+    /** Remaining native Scavenger corpse-eating ticks. */
+    public int ScavengerHealingTicks { get; private set; }
+
+    /** Selected corpse identity for the native Scavenger healing goal. */
+    public uint ScavengerCorpseEntityId { get; private set; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
@@ -397,6 +414,47 @@ public sealed class AuthoritativeCombatTarget
             return false;
         SneakRetreatTicks--;
         return true;
+    }
+
+    internal void StartScavengerHealing(int ticks)
+    {
+        if (NativeAi != "Scavenger")
+            throw new InvalidOperationException("Only Scavengers can enter healing.");
+        if (ticks < 0)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        ScavengerHealingTicks = ticks;
+        ScavengerCorpseEntityId = 0;
+    }
+
+    internal void SelectScavengerCorpse(uint corpseEntityId)
+    {
+        if (NativeAi != "Scavenger")
+            throw new InvalidOperationException("Only Scavengers can select corpses.");
+        ScavengerCorpseEntityId = corpseEntityId;
+    }
+
+    internal bool AdvanceScavengerHealing()
+    {
+        if (ScavengerHealingTicks == 0)
+            return false;
+        ScavengerHealingTicks--;
+        return true;
+    }
+
+    internal void ClearScavengerHealing()
+    {
+        ScavengerHealingTicks = 0;
+        ScavengerCorpseEntityId = 0;
+    }
+
+    internal void RestoreScavengerHealing(int ticks, uint corpseEntityId)
+    {
+        if (ticks < 0)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        if ((ticks != 0 || corpseEntityId != 0) && NativeAi != "Scavenger")
+            throw new InvalidDataException("Only Scavengers can restore healing state.");
+        ScavengerHealingTicks = ticks;
+        ScavengerCorpseEntityId = corpseEntityId;
     }
 
     internal void BeginMovement(int futurePositionX, int futurePositionY)
