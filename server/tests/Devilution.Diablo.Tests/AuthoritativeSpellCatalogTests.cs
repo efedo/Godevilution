@@ -850,6 +850,27 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedChargedBoltCarriesNativePathRandomRange()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(30, out var chargedBolt));
+        Assert.Equal(AuthoritativeProjectileBehavior.ChargedBolt, chargedBolt.ProjectileBehavior);
+        Assert.Equal(15, chargedBolt.ChargedBoltPathRandomRange);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            chargedBolt with {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Firebolt,
+            },
+        ]));
+    }
+
+    [Fact]
     public void ShippedStoneCurseCarriesNativeDurationAndSearchTuning()
     {
         var path = Path.Combine(

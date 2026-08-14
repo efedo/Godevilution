@@ -7263,6 +7263,39 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(1, Assert.Single(player.Equipment).State.Charges);
     }
 
+    [Fact]
+    public void ChargedBoltUsesConfiguredInitialPathRandomRange()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateChargedBoltSpell() with { ChargedBoltPathRandomRange = 1 },
+            ]),
+            random: new DiabloRandom(0x12345678));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(30, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(
+                30,
+                0,
+                14,
+                10,
+                DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.NotEmpty(world.Projectiles);
+        Assert.All(world.Projectiles.Values, projectile => Assert.Equal(1, projectile.PathIndex));
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 680)]
     [InlineData(DiabloGameVariant.Hellfire, 808)]

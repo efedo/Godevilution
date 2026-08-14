@@ -2612,7 +2612,10 @@ public sealed class DiabloCombatCommandProcessor
             velocityTargetX,
             velocityTargetY,
             spell.ProjectileSpeed);
-        var pathIndex = random.GenerateRnd(15) + 1;
+        var pathIndex = random.GenerateRnd(
+            spell.ChargedBoltPathRandomRange > 0
+                ? spell.ChargedBoltPathRandomRange
+                : 15) + 1;
         var damage = random.GenerateRnd(
             player.Attributes.Magic.Current / spell.RandomMagicDamageDivisor) + 1;
         _ = random.RandomIntBetween(1, 8);

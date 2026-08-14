@@ -149,6 +149,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Divides current magic before it contributes to projectile damage. */
     public int MagicDamageDivisor { get; init; }
 
+    /** Exclusive upper bound for Charged Bolt's native initial path roll. */
+    public int ChargedBoltPathRandomRange { get; init; }
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -498,6 +501,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.CharacterLevelRandomDamageDivisor < 0
                 || definition.DamageScale <= 0
                 || definition.DamageScale > 64
+                || definition.ChargedBoltPathRandomRange < 0
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -1250,7 +1254,8 @@ public sealed class AuthoritativeSpellCatalog
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.ChargedBolt
                 && (definition.ProjectileCountLevelDivisor != 0
-                    || definition.RandomMagicDamageDivisor != 0)) {
+                    || definition.RandomMagicDamageDivisor != 0
+                    || definition.ChargedBoltPathRandomRange != 0)) {
                 throw new InvalidDataException(
                     "Charged Bolt tuning columns require ChargedBolt projectile behavior.");
             }
@@ -1740,6 +1745,8 @@ public sealed class AuthoritativeSpellCatalog
             RandomMagicDamageDivisor = row.OptionalInt32("random_magic_damage_divisor"),
             RandomDamageRange = row.OptionalInt32("random_damage_range"),
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
+            ChargedBoltPathRandomRange = row.OptionalInt32(
+                "charged_bolt_path_random_range"),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),
