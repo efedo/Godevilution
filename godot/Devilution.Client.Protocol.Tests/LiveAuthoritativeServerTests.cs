@@ -56,6 +56,48 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerAdmitsEntityTargetedAttackAndPublishesActionState()
+    {
+        using var server = await StartedServer.StartAsync(TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-attack", requestedClassId: 0));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        var target = Assert.Single(
+            model.Snapshot.Monsters,
+            monster => monster.Alive);
+
+        var sequence = client.Queue(new Command {
+            AttackRequested = new AttackRequested {
+                TargetEntityId = target.EntityId,
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.True(
+            acknowledgement.Status == CommandStatus.Accepted,
+            $"Attack was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; player was ({player.PositionX},{player.PositionY}), target was ({target.PositionX},{target.PositionY}).");
+
+        var action = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().CurrentAction is {
+                Kind: PlayerActionKind.Attack,
+                TargetEntityId: var targetEntityId,
+            } && targetEntityId == target.EntityId);
+        var actionSnapshot = action.Snapshot!.Players.Single().CurrentAction!;
+        Assert.Equal(PlayerActionKind.Attack, actionSnapshot.Kind);
+        Assert.Equal(target.EntityId, actionSnapshot.TargetEntityId);
+        Assert.True(actionSnapshot.EffectTick >= actionSnapshot.StartedAtTick);
+        Assert.True(actionSnapshot.EndTick >= actionSnapshot.EffectTick);
+    }
+
+    [Fact]
     public async Task LiveServerProjectsTheCheckedInHellfireOverlayEncounter()
     {
         var hellfireRoot = Path.Combine(
