@@ -163,6 +163,10 @@ Status date: 2026-08-15
   content can change identity without moving projectile ownership into the
   engine.
 
+- Native `AiRangedAvoidance` adjacent melee now uses its server-owned
+  `1000 * (intelligence + 6)` admission band (halved for Acid) before shared
+  melee resolution, preserving the native failed-roll defer path.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

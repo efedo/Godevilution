@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
+  half-rate branch, instead of allowing every adjacent tick through shared
+  melee resolution.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
