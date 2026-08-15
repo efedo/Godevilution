@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.188.0` schema in
+It declares its identity and `devilution.diablo@1.189.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -45,6 +45,8 @@ native HeavyHitThreshold stun threshold bonus; omitted values retain the native
 chance level-difference scale; omitted values retain the native scale of two.
 `fast_block_frame_skip` externalizes the native FastBlock staff timing value;
 omitted values retain the native two-frame compatibility default.
+`equipment_fast_block_frame_skip` externalizes the native equipment FastBlock
+timing value; omitted values retain the native two-frame compatibility default.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -1370,7 +1372,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, and PvP block tuning, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
+| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, and equipment FastBlock timing, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1416,7 +1418,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.188.0"
+      "version": "1.189.0"
   },
   "dependencyConstraints": [
     {
@@ -1448,7 +1450,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.188.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.189.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1869,6 +1871,10 @@ values retain the native scale of two.
 Schema 1.188 adds the optional `fast_block_frame_skip` column to `classes.tsv`.
 Active FastBlock staff timing now uses the validated class value; omitted values
 retain the native two-frame behavior.
+
+Schema 1.189 adds the optional `equipment_fast_block_frame_skip` column to
+`combat.tsv`. Equipment FastBlock timing now uses the validated combat value;
+omitted values retain the native two-frame behavior.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

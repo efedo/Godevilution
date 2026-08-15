@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.189 optional `combat.tsv`
+  `equipment_fast_block_frame_skip` metadata. Equipment FastBlock timing now
+  uses the validated combat value, while omitted values retain the native
+  two-frame compatibility default.
+
 - Add schema 1.188 optional `classes.tsv` `fast_block_frame_skip` metadata.
   Active FastBlock staff timing now uses the validated class skip value, while
   omitted values retain the native two-frame compatibility default.

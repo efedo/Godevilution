@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Equipment-driven FastBlock timing now consumes validated
+  `equipment_fast_block_frame_skip` combat metadata; older combat schemas
+  retain the native two-frame compatibility default.
+
 - Class FastBlock staff timing now consumes validated
   `fast_block_frame_skip` metadata from `classes.tsv`; older class schemas
   retain the native two-frame compatibility default.
@@ -384,6 +388,10 @@ Status date: 2026-08-15
 - Schema 1.188 adds optional `fast_block_frame_skip` metadata to `classes.tsv`.
   Active FastBlock staff timing now uses the validated class value; omitted
   values retain the native two-frame behavior.
+
+- Schema 1.189 adds optional `equipment_fast_block_frame_skip` metadata to
+  `combat.tsv`. Equipment FastBlock timing now uses the validated combat value;
+  omitted values retain the native two-frame behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
