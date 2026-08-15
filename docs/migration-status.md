@@ -332,6 +332,12 @@ Status date: 2026-08-14
   `hellfire_devastation_damage_multiplier` metadata to `combat.tsv`. Active
   Hellfire Devastation now uses the validated proc chance and multiplier; omitted values retain the native 5%/3× behavior for compatibility callers.
 
+- Schema 1.180 adds optional `hellfire_jesters_roll_maximum`,
+  `hellfire_jesters_expansion_threshold`, and
+  `hellfire_jesters_expansion_multiplier` metadata to `combat.tsv`. Active
+  Hellfire Jesters now uses the validated roll and upper-half expansion terms;
+  omitted values retain the native 0–200/100/5 behavior for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

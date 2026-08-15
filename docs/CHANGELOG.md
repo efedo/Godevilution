@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.180 optional `combat.tsv`
+  `hellfire_jesters_roll_maximum`, `hellfire_jesters_expansion_threshold`,
+  and `hellfire_jesters_expansion_multiplier` metadata. Active Hellfire
+  Jesters now uses the validated roll and upper-half expansion terms, while
+  direct legacy combat rules retain the native 0–200/100/5 behavior.
+
 - Add schema 1.179 optional `combat.tsv`
   `hellfire_devastation_chance_percent` and
   `hellfire_devastation_damage_multiplier` metadata. Active Hellfire

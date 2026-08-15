@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.179.0` schema in
+It declares its identity and `devilution.diablo@1.180.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1352,7 +1352,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay and Devastation tuning, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
+| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, and Jesters tuning, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1398,7 +1398,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.179.0"
+      "version": "1.180.0"
   },
   "dependencyConstraints": [
     {
@@ -1430,7 +1430,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.179.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.180.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1829,6 +1829,12 @@ Decay now uses the validated decrement and removal threshold; omitted values ret
 Schema 1.179 adds the optional `hellfire_devastation_chance_percent` and
 `hellfire_devastation_damage_multiplier` columns to `combat.tsv`. Active
 Hellfire Devastation now uses the validated proc chance and multiplier; omitted values retain the native 5%/3× behavior for compatibility callers.
+
+Schema 1.180 adds the optional `hellfire_jesters_roll_maximum`,
+`hellfire_jesters_expansion_threshold`, and
+`hellfire_jesters_expansion_multiplier` columns to `combat.tsv`. Active
+Hellfire Jesters now uses the validated roll and upper-half expansion terms;
+omitted values retain the native 0–200/100/5 behavior for compatibility callers.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
