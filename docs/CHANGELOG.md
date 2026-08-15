@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.156 optional normalized item `hellfire_effects` metadata. The
+  validated symbolic effects project native Hellfire damage/armor flags into
+  generated item state while preserving legacy unique and affix compatibility.
 - Add schema 1.147 optional item presentation metadata. Normalized and legacy
   item definitions now project validated base and identified names through the
   authoritative item state and existing protocol fields, with legacy tables

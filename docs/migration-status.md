@@ -228,6 +228,10 @@ Status date: 2026-08-14
   legacy `specialEffects`; numeric `flags` remain additive, and legacy unknown
   effect names retain their compatibility behavior.
 
+- Schema 1.156 adds optional normalized item `hellfire_effects` metadata.
+  Validated symbolic Hellfire damage/armor effects now project directly into
+  generated item state; legacy unique and affix effect paths remain available.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
