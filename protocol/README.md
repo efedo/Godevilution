@@ -402,6 +402,9 @@ Windows toolchain command.
 - Optional `MonsterSnapshot` fields 69-70 carry the server-owned native
   `SkeletonBowAi` `var2`-compatible idle counter and `var1`-compatible movement
   value. Older peers may omit them; clients never execute close-range retreat.
+- Optional `MonsterSnapshot` fields 71-72 carry the server-owned native
+  Fat/Overlord `var2`-compatible idle counter and `var1`-compatible movement
+  value. Older peers may omit them; clients never execute Fat movement policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

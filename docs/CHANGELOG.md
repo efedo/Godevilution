@@ -57,6 +57,11 @@ All notable changes to this fork are documented below.
   close-range retreat bands, and persists that state through optional protocol
   fields 69-70, snapshots, saves, and the canonical state hash.
 
+- Preserve native Fat/Overlord movement admissions: the server now carries the
+  `var1`/`var2`-compatible counter, applies the long-idle `20 + 4*intelligence`
+  and fresh-mode `70 + 4*intelligence` bands, and persists that state through
+  optional protocol fields 71-72, snapshots, saves, and the canonical hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

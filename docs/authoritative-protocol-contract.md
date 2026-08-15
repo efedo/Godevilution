@@ -305,6 +305,11 @@ Optional `MonsterSnapshot` fields 69-70 carry the native `SkeletonBowAi`
 server applies the long-idle and fresh-mode close-range retreat admissions;
 older peers may omit these fields and clients never execute the AI.
 
+Optional `MonsterSnapshot` fields 71-72 carry the native Fat/Overlord
+`var2`-compatible idle counter and `var1`-compatible movement value. The
+server applies the `20 + 4*intelligence` long-idle and `70 + 4*intelligence`
+fresh-mode `RandomWalk` admissions; older peers may omit these fields.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.
