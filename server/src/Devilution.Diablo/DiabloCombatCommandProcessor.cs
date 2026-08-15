@@ -6835,12 +6835,14 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var isCounselor = UsesNativeAi(monster, "Counselor");
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
             && monster.AdvanceMegaDelay())
             return true;
         if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController
+            && !isCounselor
             && monster.AdvanceRangedDelay())
             return true;
         if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
@@ -7145,7 +7147,9 @@ public sealed class DiabloCombatCommandProcessor
             projectile.VelocityY = velocityY;
         }
         world.Projectiles.Add(projectile.EntityId, projectile);
-        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
+        if (isCounselor)
+            monster.StartCounselorDelay(5 + (int)((attackSeed / 200U) % 10U));
+        else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
             monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
         else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController

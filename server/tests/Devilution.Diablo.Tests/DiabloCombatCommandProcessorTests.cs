@@ -6572,6 +6572,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
         Assert.Equal(30U, projectile.SpellId);
         Assert.Equal(8, projectile.Speed);
+        Assert.Equal(5, monster.CounselorDelayTicks);
         Assert.Equal(100, player.Life);
 
         // Use a stationary controller at the target tile to characterize the
