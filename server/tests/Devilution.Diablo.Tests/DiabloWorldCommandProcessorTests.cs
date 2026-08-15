@@ -762,7 +762,10 @@ public sealed class DiabloWorldCommandProcessorTests
             3022,
             0,
             1,
-            completionVariable1: 3);
+            completionVariable1: 3,
+            completionVariable2: 4,
+            completionActivateQuestId: 3023);
+        var nextQuest = new AuthoritativeQuestState(3023, 0, 1, active: false);
         var objects = new[] {
             new AuthoritativeWorldObject(
                 2401,
@@ -792,7 +795,7 @@ public sealed class DiabloWorldCommandProcessorTests
                 effectKind: AuthoritativeObjectEffectKind.QuestSequence,
                 effectAmount: 3),
         };
-        var world = new DiabloWorldState(objects: objects, quests: [quest]);
+        var world = new DiabloWorldState(objects: objects, quests: [quest, nextQuest]);
         var processor = new DiabloWorldCommandProcessor(world);
         var player = CreatePlayer();
 
@@ -826,6 +829,8 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.False(quest.Active);
         Assert.Equal(1U, quest.Progress);
         Assert.Equal(3, quest.Variable1);
+        Assert.Equal(4, quest.Variable2);
+        Assert.True(nextQuest.Active);
         Assert.All(objects, @object => Assert.False(@object.Activated));
     }
 

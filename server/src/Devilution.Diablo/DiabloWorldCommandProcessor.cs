@@ -834,6 +834,15 @@ public sealed class DiabloWorldCommandProcessor
             quest.Completed = true;
             quest.Active = false;
             quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+            quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
+            if (quest.CompletionActivateQuestId != 0
+                && world.Quests.TryGetValue(
+                    quest.CompletionActivateQuestId,
+                    out var nextQuest)
+                && !nextQuest.Unavailable
+                && !nextQuest.Completed) {
+                nextQuest.Active = true;
+            }
         }
         return DiabloWorldIntentResult.Accepted;
     }
