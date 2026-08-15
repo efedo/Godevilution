@@ -4568,6 +4568,70 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesNativeRoundWalkAfterAChargeMiss()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            4,
+            4,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 10,
+            positionY: 4,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 144 ^ 9 ^ 7 = 158: the 43-percent charge roll misses, while the
+        // native far-distance RoundWalk branch is admitted.
+        processor.AdvanceTick(144, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((4, 3), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void RhinoAiDefersAfterChargeAndMovementAdmissionsMiss()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 3632 ^ 9 ^ 7 = 3646: charge misses, the far RoundWalk branch is
+        // skipped, and the native 33-percent movement roll also misses.
+        processor.AdvanceTick(3632, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void SkeletonRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -7253,13 +7253,20 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         var rhinoTuning = GetRhinoTuning(monster);
-        if (!rhinoTuning.HasValue
-            || distance < rhinoTuning.Value.MinimumDistance
-            || monster.ToHitSpecial <= 0
-            || monster.MaxDamageSpecial <= 0)
+        if (!rhinoTuning.HasValue || distance < 2)
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < rhinoTuning.Value.MinimumDistance
+            || monster.ToHitSpecial <= 0
+            || monster.MaxDamageSpecial <= 0)
+            return TryAdvanceRhinoMovementFallback(
+                monster,
+                player,
+                players,
+                attackSeed,
+                distance);
+
         var chargeChance = Math.Min(
             100,
             rhinoTuning.Value.ChanceBase
@@ -7271,11 +7278,21 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return false;
+            return TryAdvanceRhinoMovementFallback(
+                monster,
+                player,
+                players,
+                attackSeed,
+                distance);
 
         var destination = FindRhinoChargeDestination(monster, player, players);
         if (!destination.HasValue)
-            return false;
+            return TryAdvanceRhinoMovementFallback(
+                monster,
+                player,
+                players,
+                attackSeed,
+                distance);
 
         monster.ApplyKnockback(destination.Value.X, destination.Value.Y);
         var armorClass = player.ArmorClass;
@@ -7321,6 +7338,40 @@ public sealed class DiabloCombatCommandProcessor
                 PlayerDeathReason.MonsterOrTrap);
         else if (damage > 0)
             ApplyRhinoChargeKnockback(monster, player, players);
+        return true;
+    }
+
+    /** Native Rhino movement after charge admission fails or its lane is blocked. */
+    private bool TryAdvanceRhinoMovementFallback(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed,
+        int distance)
+    {
+        if (distance >= 5 && (seed / 100U) % 4U != 0U) {
+            var roundWalk = FindNativeRoundWalkStep(
+                monster,
+                player,
+                players,
+                seed);
+            if (roundWalk.HasValue)
+                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+            return true;
+        }
+
+        var movementChance = Math.Min(
+            100,
+            33 + (2 * monster.Intelligence));
+        if ((seed / 100U) % 100U < (uint)movementChance) {
+            var randomWalk = FindNativeRandomWalkStep(
+                monster,
+                player,
+                players,
+                seed);
+            if (randomWalk.HasValue)
+                monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+        }
         return true;
     }
 
