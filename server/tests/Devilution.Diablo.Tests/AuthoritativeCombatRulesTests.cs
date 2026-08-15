@@ -35,6 +35,7 @@ public sealed class AuthoritativeCombatRulesTests
             rules.DeathGoldItemIndex,
             rules.DeathDropSearchRadius));
         Assert.Equal(24U, rules.PvpEarItemId);
+        Assert.Equal(2, rules.PvpBlockLevelScale);
     }
 
     [Fact]
@@ -639,6 +640,23 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 tripleDemonDamageMultiplier: 101));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesPvpBlockLevelScale()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_block_level_scale\n"
+            + "10\t1\t100\t4\n");
+
+        Assert.Equal(4, rules.PvpBlockLevelScale);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                pvpBlockLevelScale: 65));
     }
 
     [Fact]

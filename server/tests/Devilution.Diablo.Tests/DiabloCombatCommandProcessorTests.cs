@@ -410,6 +410,76 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerBlockUsesConfiguredLevelDifferenceScale()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+
+        var defaultVictim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            characterClassId: 2,
+            characterLevel: 1,
+            life: 1280,
+            lifeMaximum: 1280,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(40, 40),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+        var defaultAttacker = CreatePlayer(
+            entityId: 7,
+            characterLevel: 10);
+        var defaultProcessor = CreateProcessor(
+            new DiabloWorldState(),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+        var defaultResult = defaultProcessor.Execute(
+            defaultAttacker,
+            new DiabloAttackIntent(defaultVictim.EntityId),
+            1,
+            [defaultAttacker, defaultVictim]);
+
+        Assert.True(defaultResult.Succeeded, defaultResult.Failure?.ToString());
+        Assert.NotEmpty(defaultResult.Events);
+
+        var tunedVictim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            characterClassId: 2,
+            characterLevel: 1,
+            life: 1280,
+            lifeMaximum: 1280,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(40, 40),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+        var tunedAttacker = CreatePlayer(
+            entityId: 7,
+            characterLevel: 10);
+        var tunedProcessor = CreateProcessor(
+            new DiabloWorldState(),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                pvpBlockLevelScale: 0),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+        var tunedResult = tunedProcessor.Execute(
+            tunedAttacker,
+            new DiabloAttackIntent(tunedVictim.EntityId),
+            1,
+            [tunedAttacker, tunedVictim]);
+
+        Assert.True(tunedResult.Succeeded, tunedResult.Failure?.ToString());
+        Assert.Empty(tunedResult.Events);
+        Assert.Equal(DiabloPlayerCombatMode.Block, tunedVictim.CombatMode);
+    }
+
+    [Fact]
     public void FriendlyModeRejectsPlayerAttackWhenRulesDisableFriendlyFire()
     {
         var world = new DiabloWorldState();
