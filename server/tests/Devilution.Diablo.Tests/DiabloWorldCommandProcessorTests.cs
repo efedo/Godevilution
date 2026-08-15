@@ -756,6 +756,80 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestSequenceObjectsRequireNativeOrderAndPersistCompletion()
+    {
+        var quest = new AuthoritativeQuestState(
+            3022,
+            0,
+            1,
+            completionVariable1: 3);
+        var objects = new[] {
+            new AuthoritativeWorldObject(
+                2401,
+                6001,
+                0,
+                1,
+                0,
+                questId: 3022,
+                effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+                effectAmount: 1),
+            new AuthoritativeWorldObject(
+                2402,
+                6002,
+                0,
+                1,
+                0,
+                questId: 3022,
+                effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+                effectAmount: 2),
+            new AuthoritativeWorldObject(
+                2403,
+                6003,
+                0,
+                1,
+                0,
+                questId: 3022,
+                effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+                effectAmount: 3),
+        };
+        var world = new DiabloWorldState(objects: objects, quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer();
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2402),
+            1,
+            [player]).Succeeded);
+        Assert.Equal(0, quest.Variable1);
+        Assert.False(quest.Completed);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2401),
+            2,
+            [player]).Succeeded);
+        Assert.Equal(1, quest.Variable1);
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2402),
+            3,
+            [player]).Succeeded);
+        Assert.Equal(2, quest.Variable1);
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2403),
+            4,
+            [player]).Succeeded);
+
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(1U, quest.Progress);
+        Assert.Equal(3, quest.Variable1);
+        Assert.All(objects, @object => Assert.False(@object.Activated));
+    }
+
+    [Fact]
     public void QuestDialogueValidatesUniqueIdentityActivatesQuestAndEmitsMessage()
     {
         var quest = new AuthoritativeQuestState(

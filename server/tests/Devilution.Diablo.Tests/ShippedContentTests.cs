@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.215.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.216.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.215.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.216.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
@@ -274,6 +274,15 @@ public sealed class ShippedContentTests
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
         Assert.Equal(14, activation.Simulation.WorldState.Quests.Count);
+        var nakrulTomes = activation.Simulation.WorldState.Objects.Values
+            .Where(@object => @object.QuestId == 3022)
+            .OrderBy(@object => @object.EffectAmount)
+            .ToArray();
+        Assert.Equal(3, nakrulTomes.Length);
+        Assert.Equal(
+            [1, 2, 3],
+            nakrulTomes.Select(@object => @object.EffectAmount).ToArray());
+        Assert.Equal(3, activation.Simulation.WorldState.Quests[3022].CompletionVariable1);
         var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),

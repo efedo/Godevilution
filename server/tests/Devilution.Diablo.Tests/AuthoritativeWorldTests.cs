@@ -204,6 +204,20 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsExternalQuestSequenceObjectSteps()
+    {
+        var objects = AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tquest_id\teffect_kind\teffect_amount\n"
+                + "2401\t6001\t24\t20\t20\t3022\tQuestSequence\t1\n");
+
+        var @object = Assert.Single(objects);
+        Assert.Equal(AuthoritativeObjectEffectKind.QuestSequence, @object.EffectKind);
+        Assert.Equal(1, @object.EffectAmount);
+        Assert.Equal(3022U, @object.QuestId);
+    }
+
+    [Fact]
     public void MissileLineOfSightUsesGeometryWhileMovingCollisionIncludesObjects()
     {
         var @object = new AuthoritativeWorldObject(20, 4, 0, 1, 0);
