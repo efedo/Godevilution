@@ -10,8 +10,8 @@ public sealed class AuthoritativeItemCatalogTests
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
-            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\tmin_monster_level\tdrop_rate\tusable\n"
-                + "7\t1\t75\t100\t3\t9\t2\t1\t1\t12\t3\ttrue\n");
+            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\tmin_armor_class\tmax_armor_class\tmin_monster_level\tdrop_rate\tusable\n"
+                + "7\t1\t75\t100\t3\t9\t2\t1\t1\t10\t20\t12\t3\ttrue\n");
 
         var state = catalog.Generate(7, 42);
         Assert.Equal(42U, state.CreateInfo);
@@ -19,6 +19,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(100, state.IdentifiedValue);
         Assert.Equal(2, state.InventoryWidth);
         Assert.Equal(1, state.InventoryHeight);
+        Assert.Equal(12, state.ArmorClass);
         Assert.Equal(12, catalog.GetRequired(7).MinimumMonsterLevel);
         Assert.Equal(3, catalog.GetRequired(7).DropRate);
         Assert.True(catalog.GetRequired(7).Usable);
@@ -102,6 +103,11 @@ public sealed class AuthoritativeItemCatalogTests
                 DropRate = 256,
             },
         ]));
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tmin_armor_class\n"
+                + "7\t1\t1\t1\t3\n"));
     }
 
     [Fact]

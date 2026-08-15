@@ -148,6 +148,11 @@ public sealed class AuthoritativeItemCatalog
                 || !IsValidCursorSymbol(definition.CursorGraphic)
                 || definition.MinimumMonsterLevel < 0
                 || definition.DropRate is < 0 or > byte.MaxValue
+                || definition.MinArmorClass < -1
+                || definition.MaxArmorClass < -1
+                || (definition.MinArmorClass == -1) != (definition.MaxArmorClass == -1)
+                || (definition.MinArmorClass >= 0
+                    && definition.MaxArmorClass < definition.MinArmorClass)
                 || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
@@ -331,6 +336,8 @@ public sealed class AuthoritativeItemCatalog
                 SpellId = row.OptionalInt32("spell_id"),
                 SpellSourceKind = ParseSpellSourceKind(row),
                 Flags = row.OptionalUInt32("flags"),
+                MinArmorClass = row.OptionalInt32("min_armor_class", -1),
+                MaxArmorClass = row.OptionalInt32("max_armor_class", -1),
                 MinimumStrength = row.OptionalInt32("min_strength"),
                 MinimumMagic = row.OptionalInt32("min_magic"),
                 MinimumDexterity = row.OptionalInt32("min_dexterity"),

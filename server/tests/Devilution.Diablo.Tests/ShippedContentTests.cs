@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.153.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.154.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.153.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.154.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 8, 3, 5, 3, 5, 40, 20), (
@@ -2042,6 +2042,8 @@ public sealed class ShippedContentTests
         Assert.Equal(43U, secondStoreItem.ItemSeed);
         Assert.Equal(2, secondStoreItem.State.ItemIndex);
         Assert.Equal(5, secondStoreItem.State.ArmorClass);
+        Assert.Equal(5, activated.Simulation.Items!.GetRequired(2).MinArmorClass);
+        Assert.Equal(5, activated.Simulation.Items.GetRequired(2).MaxArmorClass);
         var legacyItems = AuthoritativeItemCatalog.LoadLegacyTsv("itemdat.tsv", File.ReadAllText(Path.Combine(contentRoot, "itemdat.tsv")));
         Assert.NotEqual(0U, legacyItems.ResolveLegacySymbol("IDI_WARRIOR"));
         Assert.Equal(6, legacyItems.Generate(legacyItems.ResolveLegacySymbol("IDI_WARRIOR"), 0x12345678).MaxDamage);
