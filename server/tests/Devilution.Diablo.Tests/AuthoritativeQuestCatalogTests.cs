@@ -195,4 +195,34 @@ public sealed class AuthoritativeQuestCatalogTests
 
         Assert.Equal((43U, 7), (quest.CompletionRewardItemId, quest.CompletionRewardItemLevel));
     }
+
+    [Fact]
+    public void CompletionRewardItemsMustResolveInTheActiveItemCatalog()
+    {
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            completionRewardItemId: 43);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                true),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.ValidateRewardItems([quest], items));
+
+        Assert.Contains("unknown completion reward item 43", exception.Message, StringComparison.Ordinal);
+    }
 }

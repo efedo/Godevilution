@@ -359,8 +359,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     additionalQuests,
                     questStatesTable.SourcePath);
         }
-        if (quests is not null && itemCatalog is not null)
-            AuthoritativeQuestCatalog.ValidateRewardItems(quests, itemCatalog);
+        if (quests is not null) {
+            var rewardQuests = quests
+                .Where(quest => quest.CompletionRewardItemId != 0)
+                .ToArray();
+            if (rewardQuests.Length != 0) {
+                if (itemCatalog is null)
+                    throw new InvalidDataException(
+                        "Quest completion rewards require an active item catalog.");
+                AuthoritativeQuestCatalog.ValidateRewardItems(quests, itemCatalog);
+            }
+        }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null
             && questPools is not null) {
