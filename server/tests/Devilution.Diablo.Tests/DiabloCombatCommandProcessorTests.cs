@@ -11962,6 +11962,30 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(monkProcessor.AdvanceTick(1, [owner, monk]));
         Assert.Equal(5UL, monk.CombatModeEndTick);
 
+        var tunedClasses = new AuthoritativePlayerClassCatalog(
+            classes.Definitions.Select(definition => definition.ClassId == 3
+                ? definition with { FastBlockFrameSkip = 3 }
+                : definition));
+        var tunedMonk = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 12,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(4, 101, staff)],
+            characterClassId: 3);
+        var tunedMonkProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            random: new DiabloRandom(0),
+            playerClasses: tunedClasses,
+            items: items);
+
+        Assert.Empty(tunedMonkProcessor.AdvanceTick(1, [owner, tunedMonk]));
+        Assert.Equal(monk.CombatModeEndTick + 3, tunedMonk.CombatModeEndTick);
+
         var recoveryItem = AuthoritativeItemState.Empty with {
             StatFlag = true,
             Flags = 1U << 23,

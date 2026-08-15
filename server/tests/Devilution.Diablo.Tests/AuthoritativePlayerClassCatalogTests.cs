@@ -22,6 +22,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(4, catalog.Resolve("barbarian").IronSkinLevelDivisor);
         Assert.Equal(100, catalog.Resolve("barbarian").NaturalResistancePerLevelPercent);
         Assert.Equal(25, catalog.Resolve("barbarian").HeavyHitThresholdBonusPercent);
+        Assert.Equal(2, catalog.Resolve("monk").FastBlockFrameSkip);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -119,7 +120,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 11; remove++)
+                    for (var remove = 0; remove < 12; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -163,7 +164,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 2; remove++)
+                    for (var remove = 0; remove < 3; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -175,6 +176,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
 
         Assert.Equal(100, barbarian.NaturalResistancePerLevelPercent);
         Assert.Equal(25, barbarian.HeavyHitThresholdBonusPercent);
+        Assert.Equal(2, catalog.Resolve("monk").FastBlockFrameSkip);
     }
 
     [Fact]
@@ -190,7 +192,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 9; remove++)
+                    for (var remove = 0; remove < 10; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -244,7 +246,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 10; remove++)
+                    for (var remove = 0; remove < 11; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -468,6 +470,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\t4\t100\t25",
             "\t4\t100\t101",
             StringComparison.Ordinal);
+        var invalidFastBlockFrameSkip = source.Replace(
+            "\t4\t100\t25\t2",
+            "\t4\t100\t25\t11",
+            StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -507,6 +513,10 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv(
                 "classes.tsv",
                 invalidHeavyHitThresholdPercent));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv(
+                "classes.tsv",
+                invalidFastBlockFrameSkip));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()
