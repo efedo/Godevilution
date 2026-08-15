@@ -4477,7 +4477,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceButcherAi(target, victim, players, distance))
                 continue;
-            if (TryAdvanceSkeletonMeleeAi(target, victim, players, tick, distance))
+            if (TryAdvanceSkeletonAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceGoatMeleeAi(target, victim, players, tick, distance))
                 continue;
@@ -4802,7 +4802,7 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Native SkeletonAi admits movement through its 35 - 4 * intelligence band. */
-    private bool TryAdvanceSkeletonMeleeAi(
+    private bool TryAdvanceSkeletonAi(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState victim,
         IReadOnlyList<AuthoritativePlayerState> players,
@@ -5376,7 +5376,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonMeleeDelayChanceIntelligenceScale);
             }
         }
-        return UsesNativeAi(target, "SkeletonMelee")
+        return UsesNativeSkeletonAi(target)
             ? (35, 4)
             : null;
     }
@@ -5392,9 +5392,45 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonMeleeAttackChanceIntelligenceScale);
             }
         }
-        return UsesNativeAi(target, "SkeletonMelee")
+        return UsesNativeSkeletonAi(target)
             ? (20, 2)
             : null;
+    }
+
+    /** FallenAi delegates its normal state to the native SkeletonAi controller. */
+    private bool UsesNativeSkeletonAi(AuthoritativeCombatTarget target)
+    {
+        if (target.NativeAi == "SkeletonMelee")
+            return true;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
+            var hasSkeletonTuning = definition.SkeletonMeleeDelayChanceBase > 0
+                && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
+                || definition.SkeletonMeleeAttackChanceBase > 0
+                && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0;
+            if (hasSkeletonTuning)
+                return true;
+            if (target.NativeAi == definition.NativeAi
+                && (GetSneakTuning(target).HasValue
+                    || GetBatAttackTuning(target).HasValue
+                    || GetGoatMeleeMovementTuning(target).HasValue
+                    || GetGoatMeleeAttackTuning(target).HasValue
+                    || GetFatMovementTuning(target).HasValue
+                    || GetFatAttackTuning(target).HasValue
+                    || GetZombieActionTuning(target).HasValue
+                    || GetZombieMovementTuning(target).HasValue
+                    || GetZombieRandomDirectionTuning(target).HasValue
+                    || GetSkeletonKingSummonTuning(target).HasValue
+                    || GetHorkDemonTuning(target).HasValue
+                    || GetScavengerTuning(target).HasValue
+                    || GetGargoyleTuning(target).HasValue
+                    || GetSkeletonRangedTuning(target).HasValue
+                    || GetRhinoTuning(target).HasValue))
+                return false;
+            if (definition.HasCompleteAiTuning)
+                return false;
+            return definition.NativeAi is "SkeletonMelee" or "Fallen";
+        }
+        return target.NativeAi == "Fallen";
     }
 
     private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeMovementTuning(

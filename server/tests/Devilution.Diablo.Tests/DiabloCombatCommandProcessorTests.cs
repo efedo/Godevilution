@@ -3124,6 +3124,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FallenAiUsesItsNativeSkeletonMovementAndAttackBands()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "Fallen",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: the native SkeletonAi delay branch holds Fallen.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.False(monster.IsMoving);
+
+        // 40 ^ 9 ^ 7 = 38: the normal SkeletonAi branch uses RandomWalk.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+
+        player.PositionX = 3;
+        player.PositionY = 0;
+        player.Life = 100;
+
+        // 41 ^ 9 ^ 7 = 45: outside the native 20% adjacent attack band.
+        Assert.Empty(processor.AdvanceTick(41, [player]));
+        Assert.Equal(100, player.Life);
+
+        // 1 ^ 9 ^ 7 = 15: inside the native 20% adjacent attack band.
+        Assert.Single(processor.AdvanceTick(1, [player]));
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void SkeletonMeleeAiUsesValidatedMonsterTypeDelayTuning()
     {
         var monster = new AuthoritativeCombatTarget(
