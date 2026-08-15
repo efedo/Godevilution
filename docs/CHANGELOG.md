@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.185 optional `classes.tsv` `iron_skin_level_divisor` metadata.
+  Active IronSkin armor now uses the validated class divisor, while omitted
+  values retain the native level-divided-by-four behavior.
+
 - Add schema 1.184 optional `classes.tsv`
   `critical_strike_chance_per_level_percent` metadata. Active class Critical
   Strike now uses the validated per-level proc chance; omitted values retain

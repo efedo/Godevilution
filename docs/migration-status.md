@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Class IronSkin now consumes validated armor-divisor metadata from
+  `classes.tsv`; older class schemas retain the native level-divided-by-four
+  compatibility default.
+
 - Class Critical Strike now consumes validated per-level chance and damage
   multiplier metadata from `classes.tsv`; older class schemas retain the native
   1% per character level and 2× compatibility defaults.
@@ -351,6 +355,10 @@ Status date: 2026-08-15
   metadata to `classes.tsv`. Active class Critical Strike now uses the
   validated per-level proc chance; omitted values retain the native 1% per
   character level behavior.
+
+- Schema 1.185 adds optional `iron_skin_level_divisor` metadata to
+  `classes.tsv`. Active IronSkin armor now uses the validated class divisor;
+  omitted values retain the native level-divided-by-four behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
@@ -712,8 +720,9 @@ Status date: 2026-08-15
   doubles physical damage before armor and later class/item effects. The shared
   action replay checkpoint was refreshed to this native result.
 - Native class `IronSkin` is now authoritative in effective armor: the
-  validated class flag adds character level divided by four after dexterity and
-  usable equipment armor are applied, across creation, transfers, and restore.
+  validated class flag adds character level divided by its validated divisor
+  (legacy rows default to four) after dexterity and usable equipment armor are
+  applied, across creation, transfers, and restore.
 - Native Monk chest-armor bonuses are now content-owned in schema 1.74 and
   applied after dexterity and usable equipment armor: light armor adds two
   levels, ordinary medium armor adds one-half level, unique medium armor adds

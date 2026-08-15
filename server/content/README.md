@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.184.0` schema in
+It declares its identity and `devilution.diablo@1.185.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -34,6 +34,8 @@ damage multiplier; omitted values retain the native 2× behavior.
 `critical_strike_chance_per_level_percent` externalizes the native Critical
 Strike chance added per character level; omitted values retain the native 1%
 per-level behavior.
+`iron_skin_level_divisor` externalizes the native IronSkin armor bonus divisor;
+omitted values retain the native divisor of four.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -55,8 +57,9 @@ classes use zero. Legacy class rows retain the disabled-rule default.
 The five `monk_*_armor_*` columns externalize the native Monk chest-armor
 bonuses: light armor, ordinary medium armor, unique medium armor, and unique
 heavy armor use their declared level multipliers over the shared divisor.
-The `IronSkin` class flag adds the native character-level-divided-by-four armor
-bonus after dexterity and usable equipment armor are calculated. The
+The `IronSkin` class flag adds the native character-level armor bonus using
+`iron_skin_level_divisor` after dexterity and usable equipment armor are
+calculated; legacy rows retain the divisor of four. The
 `CriticalStrike` flag likewise selects its native combat rule; both behaviors
 remain server-owned after content activation.
 The `TrapSense` class flag controls recipient-scoped armed-object visibility:
@@ -1353,7 +1356,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, and Critical Strike chance/multiplier. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, and IronSkin armor divisor. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1403,7 +1406,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.184.0"
+      "version": "1.185.0"
   },
   "dependencyConstraints": [
     {
@@ -1435,7 +1438,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.184.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.185.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1839,6 +1842,10 @@ Schema 1.184 adds the optional `critical_strike_chance_per_level_percent`
 column to `classes.tsv`. Active class Critical Strike now uses the validated
 per-level proc chance; omitted values retain the native 1% per character level
 behavior.
+
+Schema 1.185 adds the optional `iron_skin_level_divisor` column to
+`classes.tsv`. Active IronSkin armor now uses the validated class divisor;
+omitted values retain the native level-divided-by-four behavior.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
