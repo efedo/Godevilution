@@ -28,6 +28,11 @@ Status date: 2026-08-15
   metadata from `monster_missiles.tsv`; omitted values retain the native
   two-tick impact phase.
 
+- Mapped monster projectile impact duration now consumes validated
+  `projectile_impact_lifetime` metadata from `monster_missiles.tsv`; omitted
+  values retain the native one-tick impact phase across arrows, charges, magic
+  missiles, and Hork Spawn.
+
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain
   the native 20–30% compatibility roll.
@@ -454,6 +459,10 @@ Status date: 2026-08-15
 
 - Schema 1.207 adds an optional Acid puddle impact lifetime to
   `monster_missiles.tsv`; omitted values retain the native two-tick impact
+  phase.
+
+- Schema 1.208 adds an optional mapped monster projectile impact lifetime to
+  `monster_missiles.tsv`; omitted values retain the native one-tick impact
   phase.
 
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to

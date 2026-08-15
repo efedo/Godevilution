@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.208 optional mapped monster projectile impact lifetime to
+  `monster_missiles.tsv`; monster arrows, charges, magic missiles, and Hork
+  Spawn now use validated impact timing, retaining the native one-tick default.
+
 - Add schema 1.207 optional Acid puddle impact lifetime to
   `monster_missiles.tsv`; validated Acid mappings now own the persistent
   puddle impact phase, retaining the native two-tick lifetime when omitted.
