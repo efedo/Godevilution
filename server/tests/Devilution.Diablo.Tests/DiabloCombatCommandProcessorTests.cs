@@ -5070,6 +5070,73 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesItsNativeFreshMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            intelligence: 0,
+            rhinoMovementIdleTicks: 0,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 3,296 ^ 9 ^ 7 = 3,310: movement roll 33 is outside the long-idle
+        // 33% band but inside the fresh-mode 83% band.
+        processor.AdvanceTick(3_296, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.RhinoMovementIdleTicks);
+    }
+
+    [Fact]
+    public void RhinoAiStartsItsNativeDelayInsideTheMiddleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            intelligence: 0,
+            rhinoMovementIdleTicks: 10,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(3_296, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.RhinoMovementIdleTicks);
+        Assert.Equal(16, monster.RhinoDelayTicks);
+    }
+
+    [Fact]
     public void SkeletonRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(

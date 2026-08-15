@@ -78,7 +78,10 @@ public sealed class AuthoritativeCombatTarget
         int skeletonRangedMovementIdleTicks = -1,
         int skeletonRangedMovementMode = 0,
         int fatMovementIdleTicks = -1,
-        int fatMovementMode = 0)
+        int fatMovementMode = 0,
+        int rhinoMovementIdleTicks = -1,
+        int rhinoMovementMode = 0,
+        int rhinoDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -144,6 +147,12 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(fatMovementIdleTicks));
         if (fatMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(fatMovementMode));
+        if (rhinoMovementIdleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(rhinoMovementIdleTicks));
+        if (rhinoMovementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(rhinoMovementMode));
+        if (rhinoDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(rhinoDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -226,6 +235,9 @@ public sealed class AuthoritativeCombatTarget
         SkeletonRangedMovementMode = skeletonRangedMovementMode;
         FatMovementIdleTicks = fatMovementIdleTicks;
         FatMovementMode = fatMovementMode;
+        RhinoMovementIdleTicks = rhinoMovementIdleTicks;
+        RhinoMovementMode = rhinoMovementMode;
+        RhinoDelayTicks = rhinoDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -401,6 +413,15 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native OverlordAi var1-compatible movement value. */
     public int FatMovementMode { get; private set; }
+
+    /** Native Rhino var2-compatible movement counter. */
+    public int RhinoMovementIdleTicks { get; private set; }
+
+    /** Native Rhino var1-compatible movement value. */
+    public int RhinoMovementMode { get; private set; }
+
+    /** Remaining native Rhino AiDelay ticks before the next decision. */
+    public int RhinoDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -905,6 +926,55 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         FatMovementIdleTicks = idleTicks;
         FatMovementMode = movementMode;
+    }
+
+    internal void RecordRhinoMovement(int displacementX, int displacementY)
+    {
+        if (displacementX is < -1 or > 1
+            || displacementY is < -1 or > 1
+            || (displacementX == 0 && displacementY == 0)) {
+            throw new ArgumentOutOfRangeException(nameof(displacementX));
+        }
+        RhinoMovementMode = displacementX;
+        RhinoMovementIdleTicks = displacementY;
+    }
+
+    internal void AdvanceRhinoMovementIdle()
+    {
+        if (RhinoMovementIdleTicks < 1024)
+            RhinoMovementIdleTicks++;
+    }
+
+    internal void RestoreRhinoMovementState(int idleTicks, int movementMode)
+    {
+        if (idleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(idleTicks));
+        if (movementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(movementMode));
+        RhinoMovementIdleTicks = idleTicks;
+        RhinoMovementMode = movementMode;
+    }
+
+    internal void StartRhinoDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RhinoDelayTicks = ticks;
+    }
+
+    internal bool AdvanceRhinoDelay()
+    {
+        if (RhinoDelayTicks == 0)
+            return false;
+        RhinoDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreRhinoDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RhinoDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)

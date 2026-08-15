@@ -932,6 +932,50 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsRhinoMovementAndDelayState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Rhino",
+                    rhinoMovementIdleTicks: 10,
+                    rhinoMovementMode: 1,
+                    rhinoDelayTicks: 7)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((10, 1, 7), (
+            savedMonster.RhinoMovementIdleTicks,
+            savedMonster.RhinoMovementMode,
+            savedMonster.RhinoDelayTicks));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Rhino")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((10, 1, 7), (
+            restored.RhinoMovementIdleTicks,
+            restored.RhinoMovementMode,
+            restored.RhinoDelayTicks));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsCounselorRetreatState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

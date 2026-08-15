@@ -555,6 +555,12 @@ message MonsterSnapshot {
 	optional int32 fat_movement_idle_ticks = 71;
 	// Native OverlordAi var1-compatible movement value.
 	optional int32 fat_movement_mode = 72;
+	// Native Rhino var2-compatible movement counter.
+	optional int32 rhino_movement_idle_ticks = 73;
+	// Native Rhino var1-compatible movement value.
+	optional int32 rhino_movement_mode = 74;
+	// Remaining native Rhino AiDelay ticks before the next decision.
+	optional int32 rhino_delay_ticks = 75;
 }
 
 message WorldItemSnapshot {

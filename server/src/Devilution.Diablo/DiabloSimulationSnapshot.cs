@@ -166,6 +166,15 @@ public sealed record DiabloMonsterState(
     /** Native OverlordAi var1-compatible movement value. */
     public int FatMovementMode { get; init; }
 
+    /** Native Rhino var2-compatible movement counter. */
+    public int RhinoMovementIdleTicks { get; init; } = -1;
+
+    /** Native Rhino var1-compatible movement value. */
+    public int RhinoMovementMode { get; init; }
+
+    /** Remaining native Rhino AiDelay ticks before the next decision. */
+    public int RhinoDelayTicks { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -475,6 +484,9 @@ public sealed partial class DiabloSimulation
                     SkeletonRangedMovementMode = target.SkeletonRangedMovementMode,
                     FatMovementIdleTicks = target.FatMovementIdleTicks,
                     FatMovementMode = target.FatMovementMode,
+                    RhinoMovementIdleTicks = target.RhinoMovementIdleTicks,
+                    RhinoMovementMode = target.RhinoMovementMode,
+                    RhinoDelayTicks = target.RhinoDelayTicks,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -770,6 +782,9 @@ public sealed partial class DiabloSimulation
                 || monster.SkeletonRangedMovementMode is < -1 or > 3
                 || monster.FatMovementIdleTicks is < -1 or > 1024
                 || monster.FatMovementMode is < -1 or > 3
+                || monster.RhinoMovementIdleTicks is < -1 or > 1024
+                || monster.RhinoMovementMode is < -1 or > 3
+                || monster.RhinoDelayTicks is < 0 or > 1024
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1650,6 +1665,10 @@ public sealed partial class DiabloSimulation
                 target.RestoreFatMovementState(
                     monster.FatMovementIdleTicks,
                     monster.FatMovementMode);
+                target.RestoreRhinoMovementState(
+                    monster.RhinoMovementIdleTicks,
+                    monster.RhinoMovementMode);
+                target.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1724,6 +1743,10 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreFatMovementState(
                     monster.FatMovementIdleTicks,
                     monster.FatMovementMode);
+                restoredTarget.RestoreRhinoMovementState(
+                    monster.RhinoMovementIdleTicks,
+                    monster.RhinoMovementMode);
+                restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1761,6 +1784,10 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreFatMovementState(
                     monster.FatMovementIdleTicks,
                     monster.FatMovementMode);
+                restoredTarget.RestoreRhinoMovementState(
+                    monster.RhinoMovementIdleTicks,
+                    monster.RhinoMovementMode);
+                restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

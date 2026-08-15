@@ -7723,6 +7723,9 @@ public sealed class DiabloCombatCommandProcessor
         if (!rhinoTuning.HasValue)
             return false;
 
+        if (monster.AdvanceRhinoDelay())
+            return true;
+
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         if (distance < 2) {
             monster.ClearRhinoMovement();
@@ -7750,8 +7753,12 @@ public sealed class DiabloCombatCommandProcessor
                     monster.RhinoMovementTurn,
                     out var nextTurn);
                 monster.UpdateRhinoMovementTurn(nextTurn);
-                if (roundWalk.HasValue)
+                if (roundWalk.HasValue) {
                     monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                    monster.RecordRhinoMovement(
+                        roundWalk.Value.X - monster.PositionX,
+                        roundWalk.Value.Y - monster.PositionY);
+                }
                 return true;
             }
         }
@@ -7854,24 +7861,49 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 players,
                 seed);
-            if (roundWalk.HasValue)
+            if (roundWalk.HasValue) {
                 monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                monster.RecordRhinoMovement(
+                    roundWalk.Value.X - monster.PositionX,
+                    roundWalk.Value.Y - monster.PositionY);
+            }
             return true;
         }
 
-        var movementChance = Math.Min(
-            100,
-            33 + (2 * monster.Intelligence));
+        var movementChance = GetRhinoMovementChance(monster);
         if ((seed / 100U) % 100U < (uint)movementChance) {
             var randomWalk = FindNativeRandomWalkStep(
                 monster,
                 player,
                 players,
                 seed);
-            if (randomWalk.HasValue)
+            if (randomWalk.HasValue) {
                 monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+                monster.RecordRhinoMovement(
+                    randomWalk.Value.X - monster.PositionX,
+                    randomWalk.Value.Y - monster.PositionY);
+            } else {
+                monster.AdvanceRhinoMovementIdle();
+            }
+        } else {
+            monster.AdvanceRhinoMovementIdle();
+            monster.StartRhinoDelay(10 + (int)((seed / 200U) % 10U));
         }
         return true;
+    }
+
+    /** Native Rhino ordinary movement admission across var2 bands. */
+    private static int GetRhinoMovementChance(AuthoritativeCombatTarget monster)
+    {
+        var movementChance = monster.RhinoMovementIdleTicks == -1
+            ? 33 + (2 * monster.Intelligence)
+            : monster.RhinoMovementIdleTicks > 20
+                ? 33 + (2 * monster.Intelligence)
+                : monster.RhinoMovementIdleTicks == 0
+                    && monster.RhinoMovementMode is >= 1 and <= 3
+                    ? 83 + (2 * monster.Intelligence)
+                    : 0;
+        return Math.Min(100, movementChance);
     }
 
     private (int MinimumDistance, int ChanceBase, int IntelligenceScale)? GetRhinoTuning(
