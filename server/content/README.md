@@ -407,11 +407,16 @@ monster is beyond `intelligence + 2` tiles, the server applies the deterministic
 closes that boundary. Validated safety, threshold, and healing-formula tuning
 is selected independently of the row's `native_ai` label; clients do not
 execute this behavior.
-The `GoatRanged` identity now uses the shared native `AiRanged` boundary: clear
-missile lanes produce authoritative arrow damage, while the validated `Arrow`
-row supplies the native close-range retreat distance and
+Validated `MonsterArrow` missile mappings use the shared native `AiRanged`
+boundary: clear missile lanes produce authoritative arrow damage, while the
+mapping row supplies the native close-range retreat distance and
 `10 * (intelligence + 7)` avoidance band for deterministic retreat-cell
-selection.
+selection. The controller is selected by projectile behavior, so valid content
+may use a different `native_ai` label or missile name; legacy `Targeted` rows
+remain compatible.
+Validated `SnakeCharge` missile mappings select the native two-tile charge
+controller and server-owned collision path independently of the `Snake` label
+or `Rhino` missile name.
 The `GoatMelee` identity now consumes the validated adjacent attack band
 (`23 + 2 * intelligence` in the checked-in rows) and wounded special branch,
 with special accuracy and damage resolved by the server. Complete positive

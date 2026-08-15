@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select monster arrow and snake-charge controllers from validated missile
+  projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
+  `Arrow`/`Rhino` missile names; legacy `Targeted` arrow rows remain accepted.
 - Select Fallen fear radius and countdown behavior from complete validated
   tuning tuples rather than requiring the `Fallen` native-AI name; legacy rows
   without tuning retain native-name compatibility defaults.
