@@ -257,6 +257,12 @@ Status date: 2026-08-14
   value with shared monster accuracy terms; omitted values retain the native
   500 compatibility value.
 
+- Schema 1.162 adds optional Acid Puddle player-hit accuracy metadata to
+  `combat.tsv`: `monster_acid_puddle_minimum_hit_chance` and
+  `monster_acid_puddle_base_hit_chance`. Persistent puddle admission now uses
+  validated level floors and base-hit terms; omitted values retain native
+  10/40 compatibility values.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

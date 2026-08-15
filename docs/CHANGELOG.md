@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.162 optional `combat.tsv` Acid Puddle player-hit accuracy
+  metadata. Persistent puddles now use validated level-floor and base-hit
+  terms while older definitions retain the native 10/40 compatibility values.
 - Add schema 1.161 optional `combat.tsv` Snake charge special-hit accuracy
   metadata. Charge admission now uses validated content for its native base
   to-hit value while older definitions retain the 500 compatibility value.
