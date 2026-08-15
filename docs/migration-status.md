@@ -320,6 +320,10 @@ Status date: 2026-08-14
   `combat.tsv`. Active Barbarian weaponless physical damage scaling now uses
   the validated divisor; omitted values retain the native 100 divisor for compatibility callers.
 
+- Schema 1.177 adds optional `thorns_damage_minimum` and
+  `thorns_damage_maximum` metadata to `combat.tsv`. Active Thorns retaliation
+  now uses the validated damage range; omitted values retain the native 1–3 range for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.177 optional `combat.tsv` `thorns_damage_minimum` and
+  `thorns_damage_maximum` metadata. Active Thorns retaliation now uses the
+  validated damage range, while direct legacy combat rules retain the native 1–3 range.
+
 - Add schema 1.176 optional `combat.tsv`
   `barbarian_vitality_damage_divisor` metadata. Active Barbarian weaponless
   physical damage scaling now uses the validated divisor, while direct legacy
