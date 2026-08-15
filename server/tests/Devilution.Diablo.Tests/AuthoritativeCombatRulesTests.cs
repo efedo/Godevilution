@@ -249,6 +249,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredMonkStaffUnarmedDivisor()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonk_staff_unarmed_damage_divisor\n"
+            + "10\t1\t100\t151\n");
+
+        Assert.Equal(151, rules.MonkStaffUnarmedDamageDivisor);
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -277,6 +288,16 @@ public sealed class AuthoritativeCombatRulesTests
             AuthoritativeCombatRules.LoadTsv(
                 "combat.tsv",
                 "base_attack_damage\tminimum_damage\tdefeat_experience\trogue_strength_dexterity_damage_divisor\n"
+                + "10\t1\t100\t0\n"));
+    }
+
+    [Fact]
+    public void RejectsInvalidMonkStaffUnarmedDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\tmonk_staff_unarmed_damage_divisor\n"
                 + "10\t1\t100\t0\n"));
     }
 
