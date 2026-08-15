@@ -432,6 +432,10 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.200 adds optional persistent-projectile magic-hit tuning to
+  `spells.tsv`; shared Fire Wall, Fireball, Elemental, Nova, Apocalypse, and
+  Lightning-segment monster hits retain native 2/5/95 defaults when omitted.
+
 - Schema 1.199 adds optional Bone Spirit magic-hit and current-life damage
   tuning to `spells.tsv`; omitted values retain the native 2/5/95 hit terms
   and one-third current-life damage rule.

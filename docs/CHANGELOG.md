@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.200 optional persistent-projectile magic-hit tuning to
+  `spells.tsv`. Shared Fire Wall, Fireball, Elemental, Nova, Apocalypse, and
+  Lightning-segment monster hits now use validated terms; omitted values retain
+  the native 2/5/95 compatibility bounds.
+
 - Add schema 1.199 optional Bone Spirit magic-hit and current-life damage
   tuning to `spells.tsv`; omitted values retain the native 2/5/95 hit terms
   and one-third current-life damage rule.
