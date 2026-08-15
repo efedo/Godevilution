@@ -300,6 +300,10 @@ tiles it first applies the native `10 * (intelligence + 7)` avoidance band and
 selects a deterministic retreat cell when one is available. At long range, a
 blocked lane preserves the native defer rather than generic pursuit.
 
+The validated Snake charge mapping preserves the native non-charge boundary:
+an `AiDelay` admission remains an unchanged authoritative snapshot, while an
+admitted lateral drift is applied by the server before any generic navigation.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive

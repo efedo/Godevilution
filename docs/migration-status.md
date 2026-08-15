@@ -266,6 +266,10 @@ Status date: 2026-08-15
   range. Its validated close-range avoidance branch remains evaluated first;
   a missing clear lane no longer delegates movement to generic navigation.
 
+- Snake non-charge `AiDelay` ticks now remain server-owned no-ops. The
+  validated lateral drift branch still runs when its native delay admission is
+  cleared, and generic pursuit no longer replaces the delayed tick.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

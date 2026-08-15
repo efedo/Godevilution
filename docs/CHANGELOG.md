@@ -68,6 +68,10 @@ All notable changes to this fork are documented below.
   close-range avoidance branch, a long-range arrow with no clear missile lane
   now leaves the monster stationary instead of entering generic pursuit.
 
+- Preserve the native Snake `AiDelay` branch: failed non-charge movement
+  admissions now consume the authoritative tick without falling through to
+  generic pursuit, while admitted lateral drift remains server-owned.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
