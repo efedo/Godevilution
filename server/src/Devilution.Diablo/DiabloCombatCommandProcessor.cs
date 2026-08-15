@@ -4497,6 +4497,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceMappedChargeAi(target, victim, tick, distance))
                 continue;
+            if (TryAdvanceMegaAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
@@ -5103,6 +5105,54 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         return false;
+    }
+
+    /** Native MegaAi delegates to SkeletonAi beyond its Inferno range. */
+    private bool TryAdvanceMegaAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (!UsesNativeAi(monster, "Mega"))
+            return false;
+        if (monsterMissiles is not null) {
+            if (!TryGetMonsterMissile(monster, out var missile)
+                || missile.ProjectileBehavior
+                    != AuthoritativeProjectileBehavior.InfernoController)
+                return false;
+            if (distance < ResolveMonsterInfernoTuning(missile).MaximumDistance)
+                return false;
+        } else if (distance < 5) {
+            return false;
+        }
+
+        if (distance <= 1)
+            return false;
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
+        if (actionSeed % 100U < (uint)delayBand)
+            return true;
+
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            victim,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue) {
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            return true;
+        }
+
+        var next = AuthoritativeMonsterNavigation.FindStep(
+            world,
+            monster,
+            victim,
+            players);
+        if (next.HasValue)
+            monster.BeginMovement(next.Value.X, next.Value.Y);
+        return true;
     }
 
     private (

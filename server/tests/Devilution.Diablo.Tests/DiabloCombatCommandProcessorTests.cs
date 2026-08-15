@@ -6104,6 +6104,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiUsesSkeletonMovementBeyondItsInfernoRange()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 12, 12));
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            6,
+            6,
+            20,
+            levelId: 0,
+            aggroRange: 8,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            levelId: 0,
+            entityId: 7);
+
+        // 44 ^ 14 ^ 7 = 37: outside SkeletonAi's native 35-point delay band.
+        processor.AdvanceTick(44, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((5, 6), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+    }
+
+    [Fact]
     public void MegaAiFallsBackWhenItsInfernoLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
