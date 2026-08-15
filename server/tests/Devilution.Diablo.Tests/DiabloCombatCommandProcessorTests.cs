@@ -8700,6 +8700,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PersistentFireballPlayerHitUsesConfiguredMagicHitBounds()
+    {
+        var directTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [directTarget]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateFireballSpell() with {
+                    PersistentProjectilePlayerMinimumHitChance = 0,
+                    PersistentProjectilePlayerMaximumHitChance = 0,
+                },
+            ]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0));
+        var caster = CreatePlayer(
+            entityId: 7,
+            mana: 10000,
+            manaMaximum: 10000,
+            memorizedSpells: [new MemorizedSpellState(12, 1)]);
+        var target = CreatePlayer(
+            entityId: 8,
+            positionX: 2,
+            positionY: 0,
+            characterLevel: 10,
+            life: 100,
+            lifeMaximum: 100);
+
+        var cast = processor.Execute(
+            caster,
+            new DiabloCastIntent(12, 0, 4, 0, DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+        Assert.True(cast.Succeeded, cast.Failure?.ToString());
+
+        processor.AdvanceTick(1, [caster, target]);
+        processor.AdvanceTick(2, [caster, target]);
+
+        Assert.Equal(100, target.Life);
+    }
+
+    [Fact]
     public void BloodStarUsesNativeMagicDamageAndAppliesItsPhysicalSelfDamage()
     {
         var target = new AuthoritativeCombatTarget(
