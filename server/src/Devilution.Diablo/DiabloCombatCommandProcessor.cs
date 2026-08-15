@@ -10750,6 +10750,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
+        var damageHitPointsDivisor = 3;
+        if (spells.TryGet(projectile.SpellId, out var boneSpiritSpell)
+            && boneSpiritSpell.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit) {
+            damageHitPointsDivisor = boneSpiritSpell.BoneSpiritPlayerDamageHitPointsDivisor;
+        }
         var ownerClass = GetPlayerClass(owner);
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
@@ -10776,7 +10781,7 @@ public sealed class DiabloCombatCommandProcessor
                 - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
-        var damageQ6 = target.Life / 3;
+        var damageQ6 = target.Life / damageHitPointsDivisor;
         if (resistance > 0) {
             damageQ6 -= damageQ6 * resistance / 100;
         } else if (blockRoll < blockChance) {

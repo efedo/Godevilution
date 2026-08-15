@@ -201,6 +201,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Divisor applied to a monster's current life when Bone Spirit hits. */
     public int BoneSpiritDamageHitPointsDivisor { get; init; } = 3;
 
+    /** Divisor applied to a player's current life when Bone Spirit hits. */
+    public int BoneSpiritPlayerDamageHitPointsDivisor { get; init; } = 3;
+
     /** Monster-level penalty for shared persistent-projectile magic-hit rolls. */
     public int PersistentProjectileHitMonsterLevelScale { get; init; } = 2;
 
@@ -633,6 +636,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.BoneSpiritMinimumHitChance is < 0 or > 100
                 || definition.BoneSpiritMaximumHitChance is < 0 or > 100
                 || definition.BoneSpiritDamageHitPointsDivisor <= 0
+                || definition.BoneSpiritPlayerDamageHitPointsDivisor <= 0
                 || definition.PersistentProjectileHitMonsterLevelScale < 0
                 || definition.PersistentProjectileMinimumHitChance is < 0 or > 100
                 || definition.PersistentProjectileMaximumHitChance is < 0 or > 100
@@ -1458,7 +1462,8 @@ public sealed class AuthoritativeSpellCatalog
                 && (definition.BoneSpiritHitMonsterLevelScale != 2
                     || definition.BoneSpiritMinimumHitChance != 5
                     || definition.BoneSpiritMaximumHitChance != 95
-                    || definition.BoneSpiritDamageHitPointsDivisor != 3)) {
+                    || definition.BoneSpiritDamageHitPointsDivisor != 3
+                    || definition.BoneSpiritPlayerDamageHitPointsDivisor != 3)) {
                 throw new InvalidDataException(
                     "Bone Spirit hit tuning columns require BoneSpirit projectile behavior.");
             }
@@ -2010,6 +2015,9 @@ public sealed class AuthoritativeSpellCatalog
                 95),
             BoneSpiritDamageHitPointsDivisor = row.OptionalInt32(
                 "bone_spirit_damage_hit_points_divisor",
+                3),
+            BoneSpiritPlayerDamageHitPointsDivisor = row.OptionalInt32(
+                "bone_spirit_player_damage_hit_points_divisor",
                 3),
             PersistentProjectileHitMonsterLevelScale = row.OptionalInt32(
                 "persistent_projectile_hit_monster_level_scale",
