@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.182 optional `combat.tsv`
+  `triple_demon_damage_multiplier` metadata. Active Triple Demon Damage now
+  uses the validated multiplier, while direct legacy combat rules retain the
+  native 3× behavior.
+
 - Add schema 1.181 optional `combat.tsv`
   `hellfire_peril_damage_multiplier` and
   `hellfire_doppelganger_chance_percent` metadata. Active Hellfire Peril and

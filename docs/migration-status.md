@@ -343,6 +343,10 @@ Status date: 2026-08-14
   Hellfire Peril and Doppelganger now use validated native terms; omitted
   values retain the native 2× and 10% behavior for compatibility callers.
 
+- Schema 1.182 adds optional `triple_demon_damage_multiplier` metadata to
+  `combat.tsv`. Active Triple Demon Damage now uses the validated multiplier;
+  omitted values retain the native 3× behavior for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
@@ -648,9 +652,9 @@ Status date: 2026-08-14
   identities in schema 1.79; identity crosses authoritative targets,
   snapshots, saves, protocol field 43, and canonical hashes while behavior
   dispatch remains server-owned and incremental.
-- Usable, identified equipment with native `TripleDemonDamage` now triples
-  authoritative physical damage only against externally classified demons;
-  the demon capability persists through snapshots, saves, hashes, and protocol
+- Usable, identified equipment with native `TripleDemonDamage` now applies the
+  validated combat multiplier only against externally classified demons; the
+  demon capability persists through snapshots, saves, hashes, and protocol
   field 37.
 - Usable, identified equipment with native `Knockback` now moves a surviving,
   non-petrified physical target one valid unoccupied cell away from the
