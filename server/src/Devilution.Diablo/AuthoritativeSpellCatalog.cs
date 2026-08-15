@@ -171,6 +171,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Inclusive upper bound for Charged Bolt's native magic-hit roll. */
     public int ChargedBoltMaximumHitChance { get; init; } = 95;
 
+    /** Monster-level penalty applied by Holy Bolt's native magic-hit roll. */
+    public int HolyBoltHitMonsterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for Holy Bolt's native magic-hit roll. */
+    public int HolyBoltMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for Holy Bolt's native magic-hit roll. */
+    public int HolyBoltMaximumHitChance { get; init; } = 95;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -572,6 +581,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.ChargedBoltHitMonsterLevelScale < 0
                 || definition.ChargedBoltMinimumHitChance is < 0 or > 100
                 || definition.ChargedBoltMaximumHitChance is < 0 or > 100
+                || definition.HolyBoltHitMonsterLevelScale < 0
+                || definition.HolyBoltMinimumHitChance is < 0 or > 100
+                || definition.HolyBoltMaximumHitChance is < 0 or > 100
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -640,6 +652,11 @@ public sealed class AuthoritativeSpellCatalog
                         < definition.ChargedBoltMinimumHitChance)) {
                 throw new InvalidDataException(
                     "Charged Bolt behavior requires movement, random magic damage, and no area radius.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
+                && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
+                throw new InvalidDataException(
+                    "Holy Bolt hit chance bounds must be ordered.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Firebolt
                 && (definition.ProjectileSpeed == 0
@@ -1360,6 +1377,13 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Charged Bolt tuning columns require ChargedBolt projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.HolyBolt
+                && (definition.HolyBoltHitMonsterLevelScale != 2
+                    || definition.HolyBoltMinimumHitChance != 5
+                    || definition.HolyBoltMaximumHitChance != 95)) {
+                throw new InvalidDataException(
+                    "Holy Bolt hit tuning columns require HolyBolt projectile behavior.");
+            }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
@@ -1868,6 +1892,15 @@ public sealed class AuthoritativeSpellCatalog
                 5),
             ChargedBoltMaximumHitChance = row.OptionalInt32(
                 "charged_bolt_maximum_hit_chance",
+                95),
+            HolyBoltHitMonsterLevelScale = row.OptionalInt32(
+                "holy_bolt_hit_monster_level_scale",
+                2),
+            HolyBoltMinimumHitChance = row.OptionalInt32(
+                "holy_bolt_minimum_hit_chance",
+                5),
+            HolyBoltMaximumHitChance = row.OptionalInt32(
+                "holy_bolt_maximum_hit_chance",
                 95),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
