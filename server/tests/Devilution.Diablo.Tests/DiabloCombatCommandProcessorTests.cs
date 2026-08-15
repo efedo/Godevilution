@@ -4453,6 +4453,66 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MappedMonsterArrowPrefersValidatedMonsterIdentityOverRuntimeLabel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 1,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "Acid");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Skeleton Bow",
+                0,
+                0,
+                1,
+                4,
+                4,
+                10,
+                2,
+                9,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonRanged",
+                AggroRange = 8,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "SkeletonRanged",
+                    "CustomArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow),
+            ]),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
+    }
+
+    [Fact]
     public void MappedMonsterArrowDoesNotFallThroughToAdjacentMelee()
     {
         var monster = new AuthoritativeCombatTarget(

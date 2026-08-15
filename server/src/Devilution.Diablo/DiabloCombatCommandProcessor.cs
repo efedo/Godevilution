@@ -4458,7 +4458,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (distance <= 1
                 && (GetSkeletonRangedTuning(target).HasValue
-                    || HasValidatedArrowMapping(target.NativeAi, target.MonsterId)))
+                    || HasValidatedArrowMapping(target)))
                 continue;
             if (distance <= 1) {
                 if (IsPlayerProtectedByFlash(victim)
@@ -4837,8 +4837,7 @@ public sealed class DiabloCombatCommandProcessor
         var horkDemonTuning = GetHorkDemonTuning(monster);
         if (!horkDemonTuning.HasValue)
             return false;
-        if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+        if (!TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.HorkSpawn)
             return true;
         if (world.Projectiles.Values.Any(projectile =>
@@ -5689,8 +5688,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+        if (!TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted)
@@ -5740,7 +5738,7 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+            || !TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge)
             return false;
 
@@ -5810,8 +5808,7 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+        if (!TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge)
             return false;
 
@@ -5928,8 +5925,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
+        if (!TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.MonsterChargedBolt
                 or AuthoritativeProjectileBehavior.Firebolt
@@ -6276,7 +6272,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         AuthoritativeMonsterMissileDefinition? missile = null;
         if (monsterMissiles is not null) {
-            if (!monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var mappedMissile)
+            if (!TryGetMonsterMissile(monster, out var mappedMissile)
                 || mappedMissile.ProjectileBehavior
                     != AuthoritativeProjectileBehavior.BloodStar)
                 return false;
@@ -6465,7 +6461,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         var skeletonRangedTuning = GetSkeletonRangedTuning(monster);
         if (!skeletonRangedTuning.HasValue
-            || !HasValidatedArrowMapping(monster.NativeAi, monster.MonsterId)
+            || !HasValidatedArrowMapping(monster)
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0)
             return false;
@@ -6526,11 +6522,28 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    /** Validated arrow mappings keep ranged-only monsters out of adjacent melee. */
-    private bool HasValidatedArrowMapping(string nativeAi, uint monsterId)
+    /** Resolves mapped missiles through active content before the runtime-label fallback. */
+    private bool TryGetMonsterMissile(
+        AuthoritativeCombatTarget monster,
+        out AuthoritativeMonsterMissileDefinition missile)
     {
-        return monsterMissiles is not null
-            && monsterMissiles.TryGet(nativeAi, monsterId, out var missile)
+        if (monsterMissiles is null) {
+            missile = null!;
+            return false;
+        }
+        if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true
+            && monsterMissiles.TryGet(
+                definition.NativeAi,
+                monster.MonsterId,
+                out missile))
+            return true;
+        return monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out missile);
+    }
+
+    /** Validated arrow mappings keep ranged-only monsters out of adjacent melee. */
+    private bool HasValidatedArrowMapping(AuthoritativeCombatTarget monster)
+    {
+        return TryGetMonsterMissile(monster, out var missile)
             && missile.ProjectileBehavior is AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted;
     }
@@ -7817,8 +7830,7 @@ public sealed class DiabloCombatCommandProcessor
 
         var puddlePositionX = checked(projectile.PositionX + 1);
         var puddlePositionY = checked(projectile.PositionY + 1);
-        var puddleMapping = monsterMissiles is not null
-            && monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var mappedMissile)
+        var puddleMapping = TryGetMonsterMissile(monster, out var mappedMissile)
             && mappedMissile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
             ? mappedMissile
             : null;
