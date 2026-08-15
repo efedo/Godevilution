@@ -786,6 +786,10 @@ Status date: 2026-08-15
   now activates Grave Matters and sets its native first quest variable when
   picked up by the authoritative player.
 
+- Schema 1.219 adds the `QuestItemCompletion` object effect. The Hellfire grave
+  object now consumes the Cathedral Map and completes Grave Matters through
+  the server-owned object interaction boundary.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell

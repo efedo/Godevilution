@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.218.0` schema in
+It declares its identity and `devilution.diablo@1.219.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1484,7 +1484,7 @@ the complete target header even when they upsert only one row.
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
-| `objects.tsv` | `entity_id` | World-object placement, effects (including ordered `QuestSequence` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
+| `objects.tsv` | `entity_id` | World-object placement, effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. `QuestItemCompletion` stores the required normalized item ID in `effect_amount`. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation, optional `completion_monster_id` or Diablo-boss completion, and optional single-player pool exclusion state. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
@@ -1521,7 +1521,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.218.0"
+      "version": "1.219.0"
   },
   "dependencyConstraints": [
     {
@@ -1553,7 +1553,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.218.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.219.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2104,3 +2104,6 @@ authoritative pickup and never depend on client-side inventory logic.
 Schema 1.218 adds `item_quest_effects.tsv`, a validated server-owned mapping
 from normalized item identities to quest transitions at pickup. The Hellfire
 Cathedral Map activates Grave Matters and sets its native first quest variable.
+Schema 1.219 adds the `QuestItemCompletion` object effect. The Hellfire grave
+object consumes the server-owned Cathedral Map and completes Grave Matters
+through the existing authoritative object-interaction path.

@@ -28,6 +28,10 @@ All notable changes to this fork are documented below.
   item quest-effect table. Picking up the map now activates Grave Matters and
   preserves the native first quest variable on the authoritative server.
 
+- Externalize Cathedral Map use at the Hellfire grave object. The existing
+  authoritative object command now consumes the required map and completes
+  Grave Matters server-side.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
