@@ -105,10 +105,6 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "The Gargoyle special lock requires the Gargoyle native AI identity.",
                 nameof(gargoyleSpecialActive));
-        if (batRetreatTicks != 0 && nativeAi != "Bat")
-            throw new ArgumentException(
-                "Bat retreat requires the Bat native AI identity.",
-                nameof(batRetreatTicks));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
@@ -455,8 +451,6 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartBatRetreat(int direction, int retreatTicks)
     {
-        if (NativeAi != "Bat")
-            throw new InvalidOperationException("Only Bats can enter retreat.");
         if (direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(direction));
         if (retreatTicks is < 1 or > 64)
@@ -469,8 +463,6 @@ public sealed class AuthoritativeCombatTarget
     {
         if (ticks is < 0 or > 64 || direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(ticks));
-        if (ticks != 0 && NativeAi != "Bat")
-            throw new InvalidDataException("Only Bats can restore retreat state.");
         BatRetreatTicks = ticks;
         BatRetreatDirection = direction;
     }

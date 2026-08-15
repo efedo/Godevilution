@@ -552,7 +552,7 @@ public sealed class DiabloSimulationTests
                     2,
                     20,
                     levelId: 0,
-                    nativeAi: "Bat",
+                    nativeAi: "Zombie",
                     batRetreatTicks: 1,
                     batRetreatDirection: 7)],
             });
@@ -570,7 +570,7 @@ public sealed class DiabloSimulationTests
                     2,
                     20,
                     levelId: 0,
-                    nativeAi: "Bat")],
+                    nativeAi: "Zombie")],
             });
         replacement.RestoreSnapshot(CreatePlayer(), snapshot);
 

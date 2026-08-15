@@ -1763,7 +1763,7 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterId: 1,
             aggroRange: 6,
             levelId: 0,
-            nativeAi: "Bat",
+            nativeAi: "Butcher",
             intelligence: 0);
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(

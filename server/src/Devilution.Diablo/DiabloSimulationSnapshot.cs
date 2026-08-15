@@ -682,7 +682,6 @@ public sealed partial class DiabloSimulation
                 || monster.ScavengerHealingTicks is < 0 or > 64
                 || monster.BatRetreatTicks is < 0 or > 64
                 || monster.BatRetreatDirection is < 0 or >= 8
-                || (monster.BatRetreatTicks != 0 && monster.NativeAi != "Bat")
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
