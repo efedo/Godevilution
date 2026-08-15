@@ -11,8 +11,34 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.164.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.165.0"),
             DiabloContentSchema.Current);
+    }
+
+    [Fact]
+    public void SimulationAppliesContentMaximumAttributeToLivePlayers()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatRules = new AuthoritativeCombatRules(
+                    10,
+                    1,
+                    100,
+                    maximumAttribute: 125),
+            });
+        var player = CreatePlayer();
+        player.Equipment.Add(new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusStrength = 200,
+            }));
+
+        simulation.AdvanceStatusEffects(player, 1);
+
+        Assert.Equal(125, player.Attributes.Strength.Current);
+        Assert.Equal(125, player.MaximumAttribute);
     }
 
     [Fact]
@@ -153,7 +179,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.164.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.165.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

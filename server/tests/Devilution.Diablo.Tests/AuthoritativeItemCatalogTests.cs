@@ -1059,6 +1059,31 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void EquippedAttributesUseConfiguredMaximum()
+    {
+        var item = new EquippedStoreItem(
+            4,
+            42,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                PlusStrength = 100,
+                PlusMagic = 200,
+                PlusDexterity = 300,
+                PlusVitality = 400,
+            });
+        var attributes = AuthoritativeEquipmentAttributeRules.Apply(
+            PlayerAttributesState.Zero,
+            [item],
+            maximumAttribute: 125);
+
+        Assert.Equal((100, 125, 125, 125), (
+            attributes.Strength.Current,
+            attributes.Magic.Current,
+            attributes.Dexterity.Current,
+            attributes.Vitality.Current));
+    }
+
+    [Fact]
     public void HellfireResourceConversionsRejectOutOfRangePercentages()
     {
         var invalid = new EquippedStoreItem(

@@ -216,6 +216,29 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredMaximumPrimaryAttribute()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmaximum_attribute\n"
+            + "10\t1\t100\t321\n");
+
+        Assert.Equal(321, rules.MaximumAttribute);
+    }
+
+    [Fact]
+    public void RejectsInvalidMaximumPrimaryAttribute()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(10, 1, 100, maximumAttribute: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\tmaximum_attribute\n"
+                + "10\t1\t100\t10001\n"));
+    }
+
+    [Fact]
     public void UsesConfiguredMonsterMagicAccuracyFormulaTerms()
     {
         var rules = new AuthoritativeCombatRules(
