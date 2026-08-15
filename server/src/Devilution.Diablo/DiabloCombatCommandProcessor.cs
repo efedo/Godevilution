@@ -4495,7 +4495,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSnakeAi(target, victim, tick, players, distance))
                 continue;
-            if (TryAdvanceMappedChargeAi(target, victim, tick, distance))
+            if (TryAdvanceMappedChargeAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceMegaAi(target, victim, players, tick, distance))
                 continue;
@@ -6361,6 +6361,7 @@ public sealed class DiabloCombatCommandProcessor
     private bool TryAdvanceMappedChargeAi(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
         ulong tick,
         int distance)
     {
@@ -6381,10 +6382,15 @@ public sealed class DiabloCombatCommandProcessor
                 ChanceBase: missile.ChargeChanceBase,
                 IntelligenceScale: missile.ChargeChanceIntelligenceScale)
             : (MinimumDistance: 5, ChanceBase: 33, IntelligenceScale: 4);
-        if (distance < chargeTuning.MinimumDistance)
-            return false;
-
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < chargeTuning.MinimumDistance)
+            return TryAdvanceBatMovementFallback(
+                monster,
+                player,
+                players,
+                attackSeed,
+                distance);
+
         var chargeChance = Math.Min(
             100,
             chargeTuning.ChanceBase
@@ -6395,8 +6401,14 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionX,
                 monster.PositionY,
                 player.PositionX,
-                player.PositionY))
-            return false;
+                player.PositionY)) {
+            return TryAdvanceBatMovementFallback(
+                monster,
+                player,
+                players,
+                attackSeed,
+                distance);
+        }
 
         var direction = GetDirection(
             monster.PositionX,
@@ -6435,6 +6447,35 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
+    }
+
+    /** Native BatAi movement after its Gloom charge branch does not fire. */
+    private bool TryAdvanceBatMovementFallback(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed,
+        int distance)
+    {
+        if (distance < 2)
+            return false;
+
+        // The native controller has two movement-mode branches (intelligence
+        // + 13 and intelligence + 63). The server target does not yet carry
+        // animation var1/var2, so the standing-tick compatibility path uses
+        // the move-mode boundary while keeping the native RandomWalk order.
+        var movementChance = Math.Min(100, monster.Intelligence + 63);
+        if (seed % 100U >= (uint)movementChance)
+            return true;
+
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            player,
+            players,
+            seed);
+        if (randomWalk.HasValue)
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
         return true;
     }
 

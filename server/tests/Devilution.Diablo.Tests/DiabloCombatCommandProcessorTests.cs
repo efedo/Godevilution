@@ -5339,6 +5339,96 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GloomUsesNativeRandomWalkAfterAChargeRollMiss()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.True(monster.IsMoving);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void GloomSuppressesGenericNavigationWhenNativeMovementRollDefers()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    100,
+                    42,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(49, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void GloomUsesValidatedChargeTrajectoryTuning()
     {
         var monster = new AuthoritativeCombatTarget(
