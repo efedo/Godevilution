@@ -11,7 +11,8 @@ public static class AuthoritativeEquipmentDamageRules
         AuthoritativeItemCatalog? items = null,
         int barbarianWeaponStrengthDamageDivisor = 75,
         int rogueStrengthDexterityDamageDivisor = 200,
-        int monkStaffUnarmedDamageDivisor = 150)
+        int monkStaffUnarmedDamageDivisor = 150,
+        int monkWeaponDamageDivisor = 300)
     {
         if (characterLevel == 0)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
@@ -23,6 +24,8 @@ public static class AuthoritativeEquipmentDamageRules
         if (rogueStrengthDexterityDamageDivisor is < 1 or > 10_000)
             throw new InvalidDataException("Rogue weapon damage tuning is invalid.");
         if (monkStaffUnarmedDamageDivisor is < 1 or > 10_000)
+            throw new InvalidDataException("Monk staff/unarmed damage tuning is invalid.");
+        if (monkWeaponDamageDivisor is < 1 or > 10_000)
             throw new InvalidDataException("Monk weapon damage tuning is invalid.");
 
         var usableEquipment = equipment
@@ -72,7 +75,7 @@ public static class AuthoritativeEquipmentDamageRules
                 strengthDexterityModifier / rogueStrengthDexterityDamageDivisor,
             AuthoritativePhysicalDamageFormula.Monk => hasStaff || handItems.Length == 0
                 ? strengthDexterityModifier / monkStaffUnarmedDamageDivisor
-                : strengthDexterityModifier / 300,
+                : strengthDexterityModifier / monkWeaponDamageDivisor,
             AuthoritativePhysicalDamageFormula.Bard => hasSword
                 ? strengthDexterityModifier / 150
                 : hasBow
