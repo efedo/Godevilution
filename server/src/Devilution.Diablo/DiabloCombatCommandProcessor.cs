@@ -7220,7 +7220,10 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return false;
+            // Native SkeletonBowAi does not pursue through a blocked arrow
+            // lane. Its close-range retreat branch has already run above;
+            // preserve the remaining no-op instead of generic navigation.
+            return true;
         if (attackSeed % 100U >= (uint)attackChance)
             return true;
 

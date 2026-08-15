@@ -4734,7 +4734,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void SkeletonRangedAiFallsBackToMovementWhenTheArrowLaneIsBlocked()
+    public void SkeletonRangedAiDefersWhenTheArrowLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -4765,8 +4765,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Empty(deliveries);
         Assert.Equal(100, player.Life);
-        Assert.True(monster.IsMoving);
-        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
     }
 
     [Fact]
