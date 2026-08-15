@@ -44,6 +44,9 @@ All notable changes to this fork are documented below.
 - Resolve mapped monster missiles through the active monster-type identity
   before falling back to the runtime label, preserving legacy mappings while
   allowing content-owned identity changes.
+- Resolve SkeletonMelee legacy delay and attack defaults through the active
+  monster-type identity before consulting the runtime label, preserving direct
+  target behavior.
 - Select Zombie action, random-direction, and movement-distance behavior from
   complete validated tuning tuples rather than requiring the `Zombie` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.

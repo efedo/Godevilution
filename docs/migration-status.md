@@ -73,6 +73,10 @@ Status date: 2026-08-14
   content can change identity without moving projectile ownership into the
   engine.
 
+- SkeletonMelee legacy delay and attack defaults now consult the active
+  validated monster-type identity before the runtime-label compatibility path,
+  keeping that fallback data-owned when optional tuning is absent.
+
 - SkeletonRanged retreat and clear-lane arrow admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
   without migrated tuning retain the native-name compatibility path, and the
