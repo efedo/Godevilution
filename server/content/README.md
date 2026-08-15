@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.204.0` schema in
+It declares its identity and `devilution.diablo@1.205.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -229,6 +229,9 @@ Spirit player-hit roll; legacy combat rows retain the native 2/5/95 terms.
 The optional `bone_spirit_player_damage_hit_points_divisor` column externalizes
 Bone Spirit's current-life player damage divisor; legacy rows retain the native
 one-third damage rule.
+The optional `monster_regeneration_level_divisor` column externalizes the
+higher-level native monster regeneration divisor; legacy combat rows retain
+the native `level / 2` recovery rule.
 The optional `berserk_resistance_frequency` column externalizes Berserk's
 magic-resistance admission roll. Legacy Berserk rows retain the native
 1-in-2 compatibility roll.
@@ -1478,7 +1481,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.204.0"
+      "version": "1.205.0"
   },
   "dependencyConstraints": [
     {
@@ -1510,7 +1513,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.204.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.205.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1993,6 +1996,9 @@ bounds.
 
 Schema 1.204 adds the optional Bone Spirit player damage divisor to `spells.tsv`;
 omitted values retain the native one-third current-life rule.
+
+Schema 1.205 adds the optional monster regeneration level divisor to
+`combat.tsv`; omitted values retain the native `level / 2` recovery rule.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

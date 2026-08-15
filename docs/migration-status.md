@@ -442,6 +442,9 @@ Status date: 2026-08-15
 - Schema 1.204 adds an optional Bone Spirit player damage divisor to
   `spells.tsv`; omitted values retain the native one-third current-life rule.
 
+- Schema 1.205 adds an optional monster regeneration level divisor to
+  `combat.tsv`; omitted values retain the native `level / 2` recovery rule.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.

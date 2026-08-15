@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.205 optional monster regeneration level divisor to `combat.tsv`;
+  higher-level per-tick recovery now uses validated content, retaining the
+  native `level / 2` rule when omitted.
+
 - Add schema 1.204 optional Bone Spirit player damage divisor to `spells.tsv`;
   direct player damage now uses validated content, retaining the native
   one-third current-life rule when omitted.
