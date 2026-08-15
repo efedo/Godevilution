@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.158 optional `spells.tsv` `warp_search_radius` metadata.
+  Authoritative Warp resolution now consumes the validated destination crawl
+  radius while direct legacy world-command callers retain the five-tile default.
 - Add schema 1.157 optional `spells.tsv` `teleport_search_radius` metadata.
   Authoritative Teleport resolution now consumes the validated native crawl
   radius while direct legacy spell definitions retain the five-tile default.
