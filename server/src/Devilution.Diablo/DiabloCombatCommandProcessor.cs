@@ -6416,6 +6416,9 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             speed);
+        var damage = missile?.ProjectileDamage > 0
+            ? missile.ProjectileDamage
+            : SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -6426,7 +6429,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            damage,
             damageType,
             0,
             checked((uint)lifetime)) {
