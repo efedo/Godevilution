@@ -84,6 +84,10 @@ All notable changes to this fork are documented below.
   candidates are blocked: the admitted tick now defers instead of invoking
   bounded generic navigation.
 
+- Preserve Skeleton King's native `LeoricAi` movement when its admitted
+  `RandomWalk` candidates are blocked: the tick now defers instead of invoking
+  bounded generic navigation.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state

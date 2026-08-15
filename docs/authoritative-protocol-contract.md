@@ -316,6 +316,10 @@ For Mega beyond the Inferno boundary, the delegated Skeleton movement likewise
 consumes the tick when its native `RandomWalk` candidates are blocked; clients
 receive no navigation-generated replacement move.
 
+For Skeleton King, an admitted native `LeoricAi` `RandomWalk` also consumes the
+tick when all of its candidates are blocked; clients receive no generic
+navigation replacement.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive
