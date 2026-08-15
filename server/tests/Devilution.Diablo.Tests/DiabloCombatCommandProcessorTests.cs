@@ -8738,6 +8738,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HolyBoltUsesConfiguredMonsterMagicHitBounds()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            40,
+            monsterLevel: 10,
+            undead: true);
+        var projectile = new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            0,
+            5,
+            0,
+            1,
+            0,
+            1,
+            0,
+            4,
+            AuthoritativeDamageType.Physical,
+            0,
+            32) {
+            Behavior = AuthoritativeProjectileBehavior.HolyBolt,
+            OriginalDirection = 0,
+            PathTicks = 1,
+            Speed = 16,
+            ImpactLifetime = 1,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(5, 1, 0, 0, 0, 0) {
+                    DamageType = AuthoritativeDamageType.Physical,
+                    Range = 4,
+                    ProjectileSpeed = 16,
+                    ProjectileLifetime = 256,
+                    ProjectileBehavior = AuthoritativeProjectileBehavior.HolyBolt,
+                    RandomDamageRange = 10,
+                    DamageBonus = 9,
+                    CharacterLevelDamageDivisor = 1,
+                    ProjectileSpeedSpellLevelStep = 2,
+                    ProjectileSpeedMaximumBonus = 47,
+                    HolyBoltHitMonsterLevelScale = 0,
+                    HolyBoltMinimumHitChance = 0,
+                    HolyBoltMaximumHitChance = 0,
+                },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(40, target.HitPoints);
+    }
+
+    [Fact]
     public void BoneSpiritUsesCurrentLifeDamageHomingAndPhysicalSelfDamage()
     {
         var target = new AuthoritativeCombatTarget(

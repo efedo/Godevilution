@@ -360,6 +360,19 @@ public sealed class AuthoritativeSpellCatalogTests
             holyBolt.ProjectileSpeedSpellLevelStep,
             holyBolt.ProjectileSpeedMaximumBonus,
             holyBolt.ProjectileLifetime));
+        Assert.Equal((2, 5, 95), (
+            holyBolt.HolyBoltHitMonsterLevelScale,
+            holyBolt.HolyBoltMinimumHitChance,
+            holyBolt.HolyBoltMaximumHitChance));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            holyBolt with { HolyBoltMinimumHitChance = 96 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            holyBolt with {
+                HolyBoltMinimumHitChance = 80,
+                HolyBoltMaximumHitChance = 79,
+            },
+        ]));
     }
 
     [Fact]
