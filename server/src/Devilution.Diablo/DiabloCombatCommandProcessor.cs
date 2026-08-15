@@ -5342,15 +5342,22 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.GoatMeleeAttackChanceBase > 0
-                && definition.GoatMeleeAttackChanceIntelligenceScale > 0) {
+            var hasAttackTuning = definition.GoatMeleeAttackChanceBase > 0
+                && definition.GoatMeleeAttackChanceIntelligenceScale > 0;
+            var hasSpecialTuning = definition.GoatMeleeSpecialHealthThresholdPercent > 0
+                && definition.GoatMeleeSpecialChanceGroupPeriod > 0;
+            if (hasAttackTuning || hasSpecialTuning) {
                 return (
-                    definition.GoatMeleeAttackChanceBase,
-                    definition.GoatMeleeAttackChanceIntelligenceScale,
-                    definition.GoatMeleeSpecialHealthThresholdPercent > 0
+                    hasAttackTuning
+                        ? definition.GoatMeleeAttackChanceBase
+                        : 23,
+                    hasAttackTuning
+                        ? definition.GoatMeleeAttackChanceIntelligenceScale
+                        : 2,
+                    hasSpecialTuning
                         ? definition.GoatMeleeSpecialHealthThresholdPercent
                         : 50,
-                    definition.GoatMeleeSpecialChanceGroupPeriod > 0
+                    hasSpecialTuning
                         ? definition.GoatMeleeSpecialChanceGroupPeriod
                         : 2);
             }

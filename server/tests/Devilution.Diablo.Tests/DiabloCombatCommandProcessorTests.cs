@@ -7018,6 +7018,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesStandaloneSpecialTuningWithNativeAttackDefaults()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            70,
+            maxHitPoints: 100,
+            monsterId: 1,
+            attackDamage: 3,
+            aggroRange: 5,
+            minDamage: 3,
+            maxDamage: 3,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            toHit: 100,
+            toHitSpecial: 100,
+            nativeAi: "Fallen");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Goat",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                8,
+                20,
+                false,
+                false,
+                false) {
+                NativeAi = "Fallen",
+                GoatMeleeSpecialHealthThresholdPercent = 80,
+                GoatMeleeSpecialChanceGroupPeriod = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: native 23 + 2 attack defaults admit the hit, and
+        // the standalone validated special tuple selects the wounded branch.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(90, player.Life);
+    }
+
+    [Fact]
     public void GoatMeleeAiCanDeclineAnAdjacentAttackOutsideItsNativeBand()
     {
         var monster = new AuthoritativeCombatTarget(
