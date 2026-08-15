@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared client-side projectile presentation classifier for authoritative
+  behavior IDs; Godot now renders distinct Fire, Lightning, Holy, Blood Star,
+  Bone Spirit, Acid, arrow, beam, and impact families with a generic fallback.
+
 - Use validated `nova_projectile_count` and `immolation_projectile_count`
   metadata for the deterministic radial fan-out prefix; checked-in content
   retains the native 36-projectile Nova and Immolation behavior.
