@@ -88,8 +88,9 @@ All notable changes to this fork are documented below.
   state hash.
 
 - Preserve native Counselor `AiDelay` state: failed non-adjacent ranged and
-  movement admissions now start a server-owned countdown, persisted through
-  optional protocol field 80, snapshots, saves, and the canonical state hash.
+  movement admissions and successful mapped ranged actions now start the
+  server-owned countdown, persisted through optional protocol field 80,
+  snapshots, saves, and the canonical state hash.
 
 - Preserve shared native `AiAvoidance` `AiDelay` state: failed GoatMelee and
   Gargoyle `RoundWalk` admissions now start the native

@@ -396,8 +396,8 @@ native SnakeAi delay. Older peers may omit it; clients never execute SnakeAi or
 its delay policy.
 
 Optional `MonsterSnapshot.counselor_delay_ticks` field 80 carries the remaining
-native CounselorAi delay after failed non-adjacent ranged and movement
-admissions. It is server-owned, validated, persisted by version-1 saves, and
+native CounselorAi delay after failed admissions or a successful mapped ranged
+action. It is server-owned, validated, persisted by version-1 saves, and
 included in the canonical hash; older peers may omit it and clients never
 execute CounselorAi delay policy.
 

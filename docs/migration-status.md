@@ -261,9 +261,10 @@ Status date: 2026-08-15
   lateral drift and admitted adjacent attacks remain server-owned.
 
 - Native Counselor non-adjacent failed ranged/movement admissions now preserve
-  the native `AiDelay` countdown. The server-owned delay persists through
-  snapshots, optional protocol field 80, saves, and canonical hashes; successful
-  ranged attacks, movement, and wounded retreat remain server-owned.
+  the native `AiDelay` countdown, and successful mapped ranged actions now start
+  the native post-action `GenerateRnd(10) + 5` delay. The server-owned delay
+  persists through snapshots, optional protocol field 80, saves, and canonical
+  hashes; movement and wounded retreat remain server-owned.
 
 - Shared native `AiAvoidance` failed `RoundWalk` admissions now preserve the
   native `AiDelay(GenerateRnd(10) + 10)` countdown for GoatMelee and Gargoyle.
