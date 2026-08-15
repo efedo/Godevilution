@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.178 optional `combat.tsv`
+  `hellfire_decay_damage_reduction` and `hellfire_decay_removal_threshold`
+  metadata. Active Hellfire Decay now uses the validated decrement and removal
+  threshold, while direct legacy combat rules retain the native 5/-100 behavior.
+
 - Add schema 1.177 optional `combat.tsv` `thorns_damage_minimum` and
   `thorns_damage_maximum` metadata. Active Thorns retaliation now uses the
   validated damage range, while direct legacy combat rules retain the native 1–3 range.

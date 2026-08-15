@@ -324,6 +324,10 @@ Status date: 2026-08-14
   `thorns_damage_maximum` metadata to `combat.tsv`. Active Thorns retaliation
   now uses the validated damage range; omitted values retain the native 1–3 range for compatibility callers.
 
+- Schema 1.178 adds optional `hellfire_decay_damage_reduction` and
+  `hellfire_decay_removal_threshold` metadata to `combat.tsv`. Active Hellfire
+  Decay now uses the validated decrement and removal threshold; omitted values retain the native 5/-100 behavior for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
