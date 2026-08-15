@@ -6257,7 +6257,7 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
-    /** Native AiRanged Blood Star dispatch for Succubus-family monsters. */
+    /** Native Blood Star dispatch selected by a validated missile mapping. */
     private bool TryAdvanceSuccubusRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -6265,16 +6265,15 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus"))
-            return false;
-
         AuthoritativeMonsterMissileDefinition? missile = null;
         if (monsterMissiles is not null) {
-            if (!monsterMissiles.TryGet(monster.NativeAi, out var mappedMissile)
+            if (!monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var mappedMissile)
                 || mappedMissile.ProjectileBehavior
                     != AuthoritativeProjectileBehavior.BloodStar)
                 return false;
             missile = mappedMissile;
+        } else if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus")) {
+            return false;
         }
 
         if (world.Projectiles.Values.Any(projectile =>

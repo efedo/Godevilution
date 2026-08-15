@@ -4410,7 +4410,8 @@ public sealed class DiabloCombatCommandProcessorTests
     [Theory]
     [InlineData("Succubus")]
     [InlineData("LazarusSuccubus")]
-    public void SuccubusFamilyAiFiresAUserVisibleBloodStarMagicProjectile(string nativeAi)
+    [InlineData("Acid")]
+    public void BloodStarMappingFiresAUserVisibleMagicProjectile(string nativeAi)
     {
         var monster = new AuthoritativeCombatTarget(
             9,
