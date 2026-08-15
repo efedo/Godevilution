@@ -788,7 +788,8 @@ Status date: 2026-08-15
 
 - Schema 1.219 adds the `QuestItemCompletion` object effect. The Hellfire grave
   object now consumes the Cathedral Map and completes Grave Matters through
-  the server-owned object interaction boundary.
+  the server-owned object interaction boundary; object completions also honor
+  the quest catalog's completion variables and follow-on activation metadata.
 
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;

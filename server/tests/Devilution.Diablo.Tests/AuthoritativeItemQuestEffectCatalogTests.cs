@@ -92,7 +92,16 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
         var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
         // Grave Matters is scoped to the crypt (level 17), but its offering
         // object is placed in town (level 0), matching the native OpenGrave flow.
-        var quest = new AuthoritativeQuestState(3017, 17, 1, active: true, logged: true);
+        var quest = new AuthoritativeQuestState(
+            3017,
+            17,
+            1,
+            active: true,
+            logged: true,
+            completionVariable1: 7,
+            completionVariable2: 3,
+            completionActivateQuestId: 3018);
+        var followOnQuest = new AuthoritativeQuestState(3018, 17, 1, active: false);
         var mapState = AuthoritativeItemState.Empty with {
             ItemIndex = 22,
             InventoryWidth = 1,
@@ -108,7 +117,9 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
             questId: 3017,
             effectKind: AuthoritativeObjectEffectKind.QuestItemCompletion,
             effectAmount: 43);
-        var world = new DiabloWorldState(objects: [worldObject], quests: [quest]);
+        var world = new DiabloWorldState(
+            objects: [worldObject],
+            quests: [quest, followOnQuest]);
         var processor = new DiabloWorldCommandProcessor(world, items: items);
         var player = CreatePlayerWithInventory(inventory);
 
@@ -122,6 +133,9 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
         Assert.True(worldObject.Activated);
         Assert.True(quest.Completed);
         Assert.False(quest.Active);
+        Assert.Equal(7, quest.Variable1);
+        Assert.Equal(3, quest.Variable2);
+        Assert.True(followOnQuest.Active);
         Assert.Empty(player.Inventory);
         Assert.All(player.InventoryGrid, cell => Assert.Equal(-1, cell));
     }

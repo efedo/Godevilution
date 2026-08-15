@@ -30,7 +30,8 @@ All notable changes to this fork are documented below.
 
 - Externalize Cathedral Map use at the Hellfire grave object. The existing
   authoritative object command now consumes the required map and completes
-  Grave Matters server-side.
+  Grave Matters server-side, including content-defined completion variables and
+  follow-on quest activation.
 
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
