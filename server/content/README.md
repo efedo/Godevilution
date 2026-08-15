@@ -1582,7 +1582,9 @@ externalizes the Hork Demon native AI identity and its validated Hork Spawn
 summon admission. Schema 1.87 adds the validated Hork Spawn missile mapping,
 speed-8 nine-tick trajectory, and expiry summon controller. Schema 1.88 adds
 the additive Hellfire `quest_states.tsv` catalog, merging native initial quest
-state with the shared authoritative quest catalog. Schema 1.89 adds the
+state with the shared authoritative quest catalog. The same table contract
+now carries four base unique-defeat rows for Gharbad, Zhar, Warlord, and
+Lazarus. Schema 1.89 adds the
 Hellfire Defiler encounter and its validated Cathedral Map reward. Schema 1.90
 adds `unique_monsters.tsv` and preserves unique identities across the protocol
 and server-owned save boundary. Schema 1.91 adds the optional `spell_id` to

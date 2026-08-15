@@ -30,6 +30,11 @@ All notable changes to this fork are documented below.
   server-owned CounselorAi controller; dialogue-driven quest and map
   transitions remain incremental.
 
+- Externalize four native unique defeat quest states through the base
+  `quest_states.tsv` catalog: Gharbad, Zhar, Warlord, and Lazarus now carry
+  exact unique-identity completion triggers; encounter placement, dialogue,
+  and rewards remain incremental.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 

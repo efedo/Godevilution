@@ -1294,6 +1294,10 @@ Status date: 2026-08-15
   identities, use validated Fireball mappings, and delegate normal combat to
   the server-owned `CounselorAi` boundary. Their dialogue-driven quest and map
   transitions remain incremental.
+- The base pack now supplies additive `quest_states.tsv` rows for the native
+  Gharbad, Zhar, Warlord, and Lazarus defeat quests. Server-owned completion
+  uses exact unique identities; encounter placement, dialogue, and rewards
+  remain incremental.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.
