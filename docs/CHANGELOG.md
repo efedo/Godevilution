@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.175 optional `combat.tsv`
+  `barbarian_default_strength_damage_divisor` metadata. Active Barbarian
+  fallback physical damage scaling now uses the validated divisor, while
+  direct legacy damage callers retain the native 100 divisor.
 - Add schema 1.174 optional `combat.tsv`
   `barbarian_bow_strength_damage_divisor` metadata. Active Barbarian bow
   physical damage scaling now uses the validated divisor, while direct legacy
