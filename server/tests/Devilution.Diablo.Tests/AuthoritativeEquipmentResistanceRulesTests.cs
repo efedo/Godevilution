@@ -109,6 +109,37 @@ public sealed class AuthoritativeEquipmentResistanceRulesTests
             35,
             AuthoritativeEquipmentResistanceRules.Calculate(
                 equipment,
-                AuthoritativeDamageType.Acid));
+            AuthoritativeDamageType.Acid));
+    }
+
+    [Fact]
+    public void AppliesConfiguredMaximumResistance()
+    {
+        var equipment = new[] {
+            new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusFireResistance = 80,
+                }),
+        };
+
+        Assert.Equal(
+            60,
+            AuthoritativeEquipmentResistanceRules.Calculate(
+                equipment,
+                AuthoritativeDamageType.Fire,
+                maximumResistance: 60));
+    }
+
+    [Fact]
+    public void RejectsInvalidMaximumResistance()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AuthoritativeEquipmentResistanceRules.Calculate(
+                [],
+                AuthoritativeDamageType.Fire,
+                maximumResistance: 101));
     }
 }

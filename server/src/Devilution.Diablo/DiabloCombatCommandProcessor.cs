@@ -11573,7 +11573,7 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeDamageType.Lightning);
     }
 
-    private static int GetPlayerResistance(
+    private int GetPlayerResistance(
         AuthoritativePlayerState player,
         AuthoritativePlayerClassDefinition? playerClass,
         AuthoritativeDamageType damageType)
@@ -11585,7 +11585,8 @@ public sealed class DiabloCombatCommandProcessor
         return AuthoritativeEquipmentResistanceRules.Calculate(
             player.Equipment,
             damageType,
-            naturalResistanceBonus);
+            naturalResistanceBonus,
+            rules.MaximumResistance);
     }
 
     private bool CanBlock(AuthoritativePlayerState player)

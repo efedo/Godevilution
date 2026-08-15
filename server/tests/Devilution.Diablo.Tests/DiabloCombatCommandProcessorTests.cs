@@ -11582,6 +11582,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void LightningResistanceUsesConfiguredMaximumResistance()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                maximumResistance: 10));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var resistantShield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+            PlusLightningResistance = 25,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            equipment: [new EquippedStoreItem(5, 99, resistantShield)]);
+
+        var damage = Assert.Single(processor.AdvanceTick(1, [owner, victim])).Event;
+
+        Assert.Equal(582, victim.Life);
+        Assert.Equal(58, damage.AmountQ6);
+    }
+
+    [Fact]
     public void ExhaustedOrNonLeftHandChargedItemIsRejectedWithoutMutation()
     {
         var staffState = AuthoritativeItemState.Empty with {

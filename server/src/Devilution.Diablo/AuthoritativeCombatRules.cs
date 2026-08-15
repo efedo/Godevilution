@@ -57,7 +57,8 @@ public sealed class AuthoritativeCombatRules
         int monsterMagicDistancePenalty = 2,
         int monsterChargeBaseToHit = 500,
         int monsterAcidPuddleMinimumHitChance = 10,
-        int monsterAcidPuddleBaseHitChance = 40)
+        int monsterAcidPuddleBaseHitChance = 40,
+        int maximumResistance = 75)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -87,6 +88,9 @@ public sealed class AuthoritativeCombatRules
         if (monsterAcidPuddleMinimumHitChance is < 0 or > 100
             || monsterAcidPuddleBaseHitChance is < 0 or > 100) {
             throw new InvalidDataException("Acid puddle accuracy tuning is invalid.");
+        }
+        if (maximumResistance is < 0 or > 100) {
+            throw new InvalidDataException("Maximum resistance tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -162,6 +166,7 @@ public sealed class AuthoritativeCombatRules
         MonsterChargeBaseToHit = monsterChargeBaseToHit;
         MonsterAcidPuddleMinimumHitChance = monsterAcidPuddleMinimumHitChance;
         MonsterAcidPuddleBaseHitChance = monsterAcidPuddleBaseHitChance;
+        MaximumResistance = maximumResistance;
     }
 
     public int BaseAttackDamage { get; }
@@ -263,6 +268,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native fixed hit chance used by persistent Acid Puddle damage. */
     public int MonsterAcidPuddleBaseHitChance { get; }
+
+    /** Native maximum elemental resistance percentage. */
+    public int MaximumResistance { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -584,7 +592,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_magic_distance_penalty", 2),
             row.OptionalInt32("monster_charge_base_to_hit", 500),
             row.OptionalInt32("monster_acid_puddle_minimum_hit_chance", 10),
-            row.OptionalInt32("monster_acid_puddle_base_hit_chance", 40));
+            row.OptionalInt32("monster_acid_puddle_base_hit_chance", 40),
+            row.OptionalInt32("maximum_resistance", 75));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
