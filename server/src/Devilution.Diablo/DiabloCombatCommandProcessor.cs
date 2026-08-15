@@ -5164,9 +5164,17 @@ public sealed class DiabloCombatCommandProcessor
         if (distance <= 1)
             return false;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand)
+        if (monster.AdvanceSkeletonMeleeDelay())
             return true;
+        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
+        if (actionSeed % 100U < (uint)delayBand) {
+            monster.StartSkeletonMeleeDelay(
+                Math.Max(
+                    0,
+                    15 - (2 * monster.Intelligence)
+                        + (int)((actionSeed / 100U) % 10U)));
+            return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,

@@ -7449,6 +7449,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiPersistsTheDelegatedSkeletonDelayBeyondItsInfernoRange()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            6,
+            6,
+            20,
+            aggroRange: 8,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 6,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 14 ^ 7 = 8: the delegated SkeletonAi delay band admits AiDelay.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(15, monster.SkeletonMeleeDelayTicks);
+        Assert.False(monster.IsMoving);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(14, monster.SkeletonMeleeDelayTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void MegaAiDefersWhenItsSkeletonMovementCandidatesAreBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
