@@ -67,7 +67,8 @@ Status date: 2026-08-14
 
 - SkeletonRanged retreat and clear-lane arrow admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
-  without migrated tuning retain the native-name compatibility path.
+  without migrated tuning retain the native-name compatibility path, and the
+  validated tuple suppresses adjacent melee fallback.
 
 - Zombie action, random-direction, and movement-distance behavior now use
   complete validated tuning tuples independent of the row's native-AI label;

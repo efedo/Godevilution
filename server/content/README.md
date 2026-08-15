@@ -237,7 +237,8 @@ rows retain the native minimum-four, retreat base-thirteen, and attack
 base-three compatibility values with intelligence-scale-two chance bands. A
 complete positive tuple selects the behavior regardless of the row's
 `native_ai` label; rows without migrated tuning retain the native-name
-compatibility path.
+compatibility path. The validated tuple also preserves ranged-only admission
+when no projectile is created, preventing adjacent melee fallback.
 The optional `rhino_charge_minimum_distance`,
 `rhino_charge_chance_base`, and
 `rhino_charge_chance_intelligence_scale` columns externalize the Rhino clear-

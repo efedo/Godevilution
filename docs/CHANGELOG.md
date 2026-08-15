@@ -37,7 +37,8 @@ All notable changes to this fork are documented below.
   tuple.
 - Select SkeletonRanged retreat and clear-lane arrow admission from complete
   validated tuning tuples rather than requiring the `SkeletonRanged` native-AI
-  name; legacy rows without tuning retain native-name compatibility defaults.
+  name; legacy rows without tuning retain native-name compatibility defaults,
+  and validated ranged tuples suppress adjacent melee fallback.
 - Select Zombie action, random-direction, and movement-distance behavior from
   complete validated tuning tuples rather than requiring the `Zombie` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.
