@@ -20,6 +20,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(2, catalog.Default.CriticalDamageMultiplier);
         Assert.Equal(1, catalog.Default.CriticalStrikeChancePerLevelPercent);
         Assert.Equal(4, catalog.Resolve("barbarian").IronSkinLevelDivisor);
+        Assert.Equal(100, catalog.Resolve("barbarian").NaturalResistancePerLevelPercent);
+        Assert.Equal(25, catalog.Resolve("barbarian").HeavyHitThresholdBonusPercent);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -117,7 +119,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 9; remove++)
+                    for (var remove = 0; remove < 11; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -150,6 +152,32 @@ public sealed class AuthoritativePlayerClassCatalogTests
     }
 
     [Fact]
+    public void LegacyClassRowsRetainNativeDefenseScalarDefaults()
+    {
+        var legacySource = string.Join(
+            '\n',
+            ReadShippedTable()
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Split('\n')
+                .Select(line => {
+                    if (!line.Contains('\t'))
+                        return line;
+                    var legacyLine = line;
+                    for (var remove = 0; remove < 2; remove++)
+                        legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
+                    return legacyLine;
+                }));
+
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            legacySource);
+        var barbarian = catalog.Resolve("barbarian");
+
+        Assert.Equal(100, barbarian.NaturalResistancePerLevelPercent);
+        Assert.Equal(25, barbarian.HeavyHitThresholdBonusPercent);
+    }
+
+    [Fact]
     public void LegacyClassRowsInferNativePhysicalDamageFormulas()
     {
         var legacySource = ReadShippedTable();
@@ -162,7 +190,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 7; remove++)
+                    for (var remove = 0; remove < 9; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -185,6 +213,26 @@ public sealed class AuthoritativePlayerClassCatalogTests
     }
 
     [Fact]
+    public void ClassDefenseTuningCalculatesNativeLevelContributions()
+    {
+        var barbarian = LoadShippedCatalog().Resolve("barbarian");
+
+        Assert.Equal(12, barbarian.CalculateNaturalResistanceBonus(12));
+        Assert.Equal(15, barbarian.CalculateHeavyHitThreshold(12));
+
+        var tuned = barbarian with {
+            NaturalResistancePerLevelPercent = 50,
+            HeavyHitThresholdBonusPercent = 50,
+        };
+        Assert.Equal(6, tuned.CalculateNaturalResistanceBonus(12));
+        Assert.Equal(18, tuned.CalculateHeavyHitThreshold(12));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            barbarian.CalculateNaturalResistanceBonus(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            barbarian.CalculateHeavyHitThreshold(0));
+    }
+
+    [Fact]
     public void ManaOnlyClassRowsDefaultMeleeArmorReductionToZero()
     {
         var manaOnlySource = string.Join(
@@ -196,7 +244,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 8; remove++)
+                    for (var remove = 0; remove < 10; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -412,6 +460,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\t2\t1\t4",
             "\t2\t1\t0",
             StringComparison.Ordinal);
+        var invalidNaturalResistancePercent = source.Replace(
+            "\t4\t100\t25",
+            "\t4\t101\t25",
+            StringComparison.Ordinal);
+        var invalidHeavyHitThresholdPercent = source.Replace(
+            "\t4\t100\t25",
+            "\t4\t100\t101",
+            StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -443,6 +499,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidCriticalChance));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidIronSkinDivisor));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv(
+                "classes.tsv",
+                invalidNaturalResistancePercent));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv(
+                "classes.tsv",
+                invalidHeavyHitThresholdPercent));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()

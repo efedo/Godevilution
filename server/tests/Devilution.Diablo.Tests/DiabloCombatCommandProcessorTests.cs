@@ -731,6 +731,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NaturalResistanceUsesConfiguredClassPercentage()
+    {
+        var shippedClasses = LoadShippedPlayerClasses();
+        var classes = new AuthoritativePlayerClassCatalog(
+            shippedClasses.Definitions.Select(definition => definition.ClassId == 5
+                ? definition with { NaturalResistancePerLevelPercent = 50 }
+                : definition));
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
+                    FireMinDamage = 100,
+                    FireMaxDamage = 100,
+                })]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            characterClassId: 5,
+            characterLevel: 50,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Damage
+                && gameplayEvent.Amount == 75);
+    }
+
+    [Fact]
     public void BowAttackCanResolveAPlayerTargetAtAuthoritativeArrowImpact()
     {
         var bow = AuthoritativeItemState.Empty with {
