@@ -35,7 +35,9 @@ Status date: 2026-08-15
 
 - Validated MonsterArrow mappings now consume their existing `projectile_speed`
   metadata for travel and `projectile_lifetime` when present; omitted values
-  retain the native speed-one and distance-based lifetime fallbacks.
+  retain the native speed-one and distance-based lifetime fallbacks. Their
+  optional `damage_type` selects the matching player-resistance channel, while
+  omitted values retain physical arrows.
 
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain

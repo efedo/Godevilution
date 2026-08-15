@@ -526,8 +526,11 @@ may use a different `native_ai` label or missile name; legacy `Targeted` rows
 remain compatible. Their validated `projectile_speed` now controls arrow travel;
 their validated `projectile_lifetime` controls the server-owned lifetime when
 present, and omitted values retain the native speed-one and distance-based
-lifetime fallbacks. Mapped arrow rows also keep ranged-only monsters from
-falling through to adjacent melee when the content label is changed.
+lifetime fallbacks. The optional validated `damage_type` is carried into the
+impact path and applies the target's matching resistance; omitted values retain
+the native physical arrow behavior. Mapped arrow rows also keep ranged-only
+monsters from falling through to adjacent melee when the content label is
+changed.
 Validated `SnakeCharge` missile mappings select the native two-tile charge
 controller and server-owned collision path independently of the `Snake` label
 or `Rhino` missile name.
