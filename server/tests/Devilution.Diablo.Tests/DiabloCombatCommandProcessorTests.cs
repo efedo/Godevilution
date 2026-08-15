@@ -5425,6 +5425,82 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorUsesNativeRangedAdmissionBeforeItsMappedMissile()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 60 ^ 9 ^ 7 = 50: the native 50-percent attack roll misses, while
+        // the second deterministic roll admits the native 30-percent move.
+        processor.AdvanceTick(60, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((1, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void CounselorDefersAfterFailedRangedAndMovementAdmissions()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5100 ^ 9 ^ 7 = 5090: both the 50-percent attack and 30-percent
+        // movement bands miss, so generic pursuit must not take over.
+        processor.AdvanceTick(5100, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void CounselorChargedBoltUsesTheMonsterOwnedProjectilePath()
     {
         var monster = new AuthoritativeCombatTarget(

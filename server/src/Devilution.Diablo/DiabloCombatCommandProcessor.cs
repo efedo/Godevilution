@@ -5208,6 +5208,41 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
+        if (distance >= 2
+            && TryGetMonsterMissile(monster, out var missile)
+            && missile.ProjectileBehavior is (
+                AuthoritativeProjectileBehavior.MonsterChargedBolt
+                or AuthoritativeProjectileBehavior.Firebolt
+                or AuthoritativeProjectileBehavior.Fireball
+                or AuthoritativeProjectileBehavior.MonsterMagic
+                or AuthoritativeProjectileBehavior.Lightning)) {
+            var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+            var attackChance = Math.Min(
+                100,
+                5 * (monster.Intelligence + 10));
+            if (attackSeed % 100U >= (uint)attackChance
+                || !world.HasMissileLineOfSight(
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    victim.PositionX,
+                    victim.PositionY)) {
+                // Native CounselorAi delays after a missed ranged admission,
+                // then uses a 30-percent Move/ RoundWalk branch instead of
+                // falling through to generic pursuit.
+                if ((attackSeed / 100U) % 100U < 30U) {
+                    var roundWalk = FindNativeRoundWalkStep(
+                        monster,
+                        victim,
+                        players,
+                        attackSeed);
+                    if (roundWalk.HasValue)
+                        monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                }
+                return true;
+            }
+        }
+
         // CounselorAi compares whole native hit points against the integer
         // half-health threshold before entering MonsterGoal::Retreat.
         if (distance > 1 || monster.HitPoints >= monster.MaxHitPoints / 2)
