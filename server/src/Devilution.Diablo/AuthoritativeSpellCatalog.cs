@@ -162,6 +162,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Exclusive upper bound for Charged Bolt's native initial path roll. */
     public int ChargedBoltPathRandomRange { get; init; }
 
+    /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
+    public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for Charged Bolt's native magic-hit roll. */
+    public int ChargedBoltMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for Charged Bolt's native magic-hit roll. */
+    public int ChargedBoltMaximumHitChance { get; init; } = 95;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -560,6 +569,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.DamageScale <= 0
                 || definition.DamageScale > 64
                 || definition.ChargedBoltPathRandomRange < 0
+                || definition.ChargedBoltHitMonsterLevelScale < 0
+                || definition.ChargedBoltMinimumHitChance is < 0 or > 100
+                || definition.ChargedBoltMaximumHitChance is < 0 or > 100
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -623,7 +635,9 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChargedBolt
                 && (definition.ProjectileSpeed == 0
                     || definition.RandomMagicDamageDivisor == 0
-                    || definition.AreaRadius != 0)) {
+                    || definition.AreaRadius != 0
+                    || definition.ChargedBoltMaximumHitChance
+                        < definition.ChargedBoltMinimumHitChance)) {
                 throw new InvalidDataException(
                     "Charged Bolt behavior requires movement, random magic damage, and no area radius.");
             }
@@ -1339,7 +1353,10 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.ChargedBolt
                 && (definition.ProjectileCountLevelDivisor != 0
                     || definition.RandomMagicDamageDivisor != 0
-                    || definition.ChargedBoltPathRandomRange != 0)) {
+                    || definition.ChargedBoltPathRandomRange != 0
+                    || definition.ChargedBoltHitMonsterLevelScale != 2
+                    || definition.ChargedBoltMinimumHitChance != 5
+                    || definition.ChargedBoltMaximumHitChance != 95)) {
                 throw new InvalidDataException(
                     "Charged Bolt tuning columns require ChargedBolt projectile behavior.");
             }
@@ -1843,6 +1860,15 @@ public sealed class AuthoritativeSpellCatalog
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
             ChargedBoltPathRandomRange = row.OptionalInt32(
                 "charged_bolt_path_random_range"),
+            ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
+                "charged_bolt_hit_monster_level_scale",
+                2),
+            ChargedBoltMinimumHitChance = row.OptionalInt32(
+                "charged_bolt_minimum_hit_chance",
+                5),
+            ChargedBoltMaximumHitChance = row.OptionalInt32(
+                "charged_bolt_maximum_hit_chance",
+                95),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),
