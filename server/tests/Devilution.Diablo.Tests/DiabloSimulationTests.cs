@@ -507,7 +507,7 @@ public sealed class DiabloSimulationTests
                     0,
                     4,
                     maxHitPoints: 20,
-                    nativeAi: "Scavenger",
+                    nativeAi: "Zombie",
                     scavengerHealingTicks: 7,
                     scavengerCorpseEntityId: 10)],
                 Corpses = [new AuthoritativeCorpse(10, 0, 4, 0)],
@@ -530,7 +530,7 @@ public sealed class DiabloSimulationTests
                     0,
                     4,
                     maxHitPoints: 20,
-                    nativeAi: "Scavenger")],
+                    nativeAi: "Zombie")],
             });
         replacement.RestoreSnapshot(CreatePlayer(), snapshot);
 

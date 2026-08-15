@@ -1221,7 +1221,7 @@ public sealed class DiabloCombatCommandProcessorTests
             4,
             maxHitPoints: 20,
             monsterId: 1,
-            nativeAi: "Scavenger");
+            nativeAi: "Zombie");
         var world = new DiabloWorldState(
             combatTargets: [scavenger],
             corpses: [new AuthoritativeCorpse(10, 0, 7, 0)]);
@@ -1273,7 +1273,7 @@ public sealed class DiabloCombatCommandProcessorTests
             14,
             maxHitPoints: 20,
             monsterId: 1,
-            nativeAi: "Scavenger");
+            nativeAi: "Zombie");
         var world = new DiabloWorldState(
             combatTargets: [scavenger],
             corpses: [new AuthoritativeCorpse(10, 0, 2, 0)]);

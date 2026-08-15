@@ -105,11 +105,6 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "The Gargoyle special lock requires the Gargoyle native AI identity.",
                 nameof(gargoyleSpecialActive));
-        if ((scavengerHealingTicks != 0 || scavengerCorpseEntityId != 0)
-            && nativeAi != "Scavenger")
-            throw new ArgumentException(
-                "Scavenger healing requires the Scavenger native AI identity.",
-                nameof(scavengerHealingTicks));
         if (batRetreatTicks != 0 && nativeAi != "Bat")
             throw new ArgumentException(
                 "Bat retreat requires the Bat native AI identity.",
@@ -425,8 +420,6 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartScavengerHealing(int ticks)
     {
-        if (NativeAi != "Scavenger")
-            throw new InvalidOperationException("Only Scavengers can enter healing.");
         if (ticks < 0)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         ScavengerHealingTicks = ticks;
@@ -435,8 +428,6 @@ public sealed class AuthoritativeCombatTarget
 
     internal void SelectScavengerCorpse(uint corpseEntityId)
     {
-        if (NativeAi != "Scavenger")
-            throw new InvalidOperationException("Only Scavengers can select corpses.");
         ScavengerCorpseEntityId = corpseEntityId;
     }
 
@@ -458,8 +449,6 @@ public sealed class AuthoritativeCombatTarget
     {
         if (ticks < 0)
             throw new ArgumentOutOfRangeException(nameof(ticks));
-        if ((ticks != 0 || corpseEntityId != 0) && NativeAi != "Scavenger")
-            throw new InvalidDataException("Only Scavengers can restore healing state.");
         ScavengerHealingTicks = ticks;
         ScavengerCorpseEntityId = corpseEntityId;
     }
