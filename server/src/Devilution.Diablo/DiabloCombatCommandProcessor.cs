@@ -5736,11 +5736,16 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.GargoyleSafeDistanceBase > 0
-                && definition.GargoyleSafeDistanceIntelligenceScale > 0) {
+            var hasSafetyTuning = definition.GargoyleSafeDistanceBase > 0
+                && definition.GargoyleSafeDistanceIntelligenceScale > 0;
+            var hasHealingTuning = definition.GargoyleHealingHealthThresholdPercent > 0
+                || definition.GargoyleHealDivisorMultiplier > 0
+                || definition.GargoyleHealDivisorRandomRange > 0
+                || definition.GargoyleHealDivisorRandomOffset > 0;
+            if (hasSafetyTuning || hasHealingTuning) {
                 return (
-                    definition.GargoyleSafeDistanceBase,
-                    definition.GargoyleSafeDistanceIntelligenceScale,
+                    hasSafetyTuning ? definition.GargoyleSafeDistanceBase : 2,
+                    hasSafetyTuning ? definition.GargoyleSafeDistanceIntelligenceScale : 1,
                     definition.GargoyleHealingHealthThresholdPercent > 0
                         ? definition.GargoyleHealingHealthThresholdPercent
                         : 50,
