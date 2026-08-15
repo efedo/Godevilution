@@ -698,8 +698,11 @@ public sealed class AuthoritativeSpellCatalogTests
             teleport.ProjectileLifetime,
             teleport.ProjectileCount,
             teleport.AreaRadius));
+        Assert.Equal(5, teleport.TeleportSearchRadius);
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([teleport with { ProjectileLifetime = 3 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([teleport with { TeleportSearchRadius = 0 }]));
     }
 
     [Fact]

@@ -243,6 +243,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Maximum native crawl radius used when a revived player must be relocated. */
     public int ResurrectionSearchRadius { get; init; }
 
+    /** Maximum native crawl radius used to find Teleport's destination. */
+    public int TeleportSearchRadius { get; init; } = 5;
+
     /** Reciprocal base used by native Mana Shield damage conversion. */
     public int ManaShieldBaseDamageReductionDivisor { get; init; }
 
@@ -1092,7 +1095,9 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileLifetime != 2
                     || definition.ProjectileCount != 1
                     || definition.ProjectileCountLevelDivisor != 0
-                    || definition.AreaRadius != 0)) {
+                    || definition.AreaRadius != 0
+                    || definition.TeleportSearchRadius <= 0
+                    || definition.TeleportSearchRadius > DiabloCrawl.MaximumSupportedRadius)) {
                 throw new InvalidDataException(
                     "Teleport behavior requires one stationary two-tick movement controller without gameplay effects.");
             }
@@ -1862,6 +1867,7 @@ public sealed class AuthoritativeSpellCatalog
             ResurrectionLife = row.OptionalInt32("resurrection_life"),
             ResurrectionLifeScale = row.OptionalInt32("resurrection_life_scale", 1),
             ResurrectionSearchRadius = row.OptionalInt32("resurrection_search_radius"),
+            TeleportSearchRadius = row.OptionalInt32("teleport_search_radius", 5),
             ManaShieldBaseDamageReductionDivisor = row.OptionalInt32(
                 "mana_shield_base_damage_reduction_divisor"),
             ManaShieldDamageReductionLevelStep = row.OptionalInt32(

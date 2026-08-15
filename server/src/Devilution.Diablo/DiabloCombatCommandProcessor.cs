@@ -1753,7 +1753,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 intent.TargetX,
                 intent.TargetY,
-                players);
+                players,
+                spell.TeleportSearchRadius);
             if (!teleportDestination.HasValue)
                 return DiabloCombatIntentResult.Accepted;
         }
@@ -4010,13 +4011,14 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         int targetX,
         int targetY,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int searchRadius)
     {
         return DiabloCrawl.FindClosestValidPosition(
             targetX,
             targetY,
             0,
-            5,
+            searchRadius,
             (candidateX, candidateY) =>
                 world.IsWalkable(player.LevelId, candidateX, candidateY)
                 && !world.IsOccupied(
@@ -7513,7 +7515,11 @@ public sealed class DiabloCombatCommandProcessor
             player,
             projectile.PositionX,
             projectile.PositionY,
-            players);
+            players,
+            projectile.Behavior == AuthoritativeProjectileBehavior.Teleport
+                && spells.TryGet(projectile.SpellId, out var teleportSpell)
+                ? teleportSpell.TeleportSearchRadius
+                : 5);
         if (!destination.HasValue)
             return;
         player.PositionX = destination.Value.X;
