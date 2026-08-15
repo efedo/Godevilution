@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   validated movement admissions now use a deterministic lateral turn order for
   one-in-four rolls at distance four or greater before bounded navigation.
 
+- Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
+  intelligence` admissions now use the shared deterministic `RandomWalk`
+  candidate order before bounded navigation fallback.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.

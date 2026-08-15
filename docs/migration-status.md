@@ -193,6 +193,8 @@ Status date: 2026-08-15
 - Fat/Overlord movement, adjacent attack, and special-band behavior now use
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.
+  Admitted non-adjacent movement now uses the native `RandomWalk` candidate
+  order before bounded navigation fallback.
 
 - GoatMelee movement, adjacent attack, and wounded-special behavior now use
   complete validated tuning tuples independent of the row's native-AI label;
@@ -815,7 +817,8 @@ Status date: 2026-08-15
   distance-four-or-greater admissions retain the native one-in-four
   RoundWalk branch through deterministic lateral movement.
 - Native Fat/Overlord non-adjacent movement now uses a server-owned
-  `20 + 4 * intelligence` admission before shared melee resolution.
+  `20 + 4 * intelligence` admission and deterministic `RandomWalk` candidate
+  order before shared melee resolution.
 - Native Stone Curse now retains a defeated petrified target through its
   authoritative shatter phase; ordinary defeated monsters become persisted
   corpse tiles, and snapshots preserve the distinction between the two states.
