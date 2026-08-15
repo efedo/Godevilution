@@ -4881,6 +4881,10 @@ public sealed class DiabloCombatCommandProcessor
                 monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 return true;
             }
+
+            // Native AiAvoidance consumes an admitted RoundWalk tick when
+            // every candidate is blocked; do not replace it with pursuit.
+            return true;
         }
 
         var next = AuthoritativeMonsterNavigation.FindStep(
