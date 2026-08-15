@@ -536,7 +536,9 @@ monsters from falling through to adjacent melee when the content label is
 changed.
 Validated `SnakeCharge` missile mappings select the native two-tile charge
 controller and server-owned collision path independently of the `Snake` label
-or `Rhino` missile name.
+or `Rhino` missile name. Outside the charge boundary, the same mapping now
+selects the server-owned deterministic Snake drift branch; native delay ticks
+retain the shared generic navigation fallback for compatibility.
 The `GoatMelee` identity now consumes the validated adjacent attack band
 (`23 + 2 * intelligence` in the checked-in rows) and wounded special branch,
 with special accuracy and damage resolved by the server. Complete positive

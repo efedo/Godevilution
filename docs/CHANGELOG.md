@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore native Snake non-charge movement: mapped Snake controllers now use a
+  deterministic drift branch outside the charge boundary while preserving the
+  existing generic navigation fallback for native delay ticks.
+
 - Restore native Zombie intermediate-range movement: successful action rolls
   at distances outside melee but below the long-range pursuit boundary now use
   a deterministic server-owned random walk instead of idling.

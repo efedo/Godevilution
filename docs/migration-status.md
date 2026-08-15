@@ -175,6 +175,11 @@ Status date: 2026-08-15
   Successful action rolls in the intermediate distance band now also perform
   the native random walk instead of leaving the authoritative target idle.
 
+- Snake charge mappings now retain the native non-charge drift branch: targets
+  outside the charge boundary use deterministic lateral movement, while the
+  existing generic navigation fallback remains available during native delay
+  ticks.
+
 - Fat/Overlord movement, adjacent attack, and special-band behavior now use
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.
