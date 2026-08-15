@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Sneak visibility and hit-retreat behavior from complete validated
+  tuning tuples rather than requiring the `Sneak` native-AI name; legacy rows
+  without tuning retain native-name compatibility defaults.
 - Select Bat adjacent attack and retreat-duration behavior from validated
   tuning regardless of the row's `Bat` native-AI name; legacy rows without
   migrated tuning retain native-name compatibility defaults.

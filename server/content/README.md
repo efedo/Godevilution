@@ -114,6 +114,9 @@ The optional `sneak_distance_base`, `sneak_distance_intelligence_scale`,
 `sneak_retreat_release_distance`, and `sneak_retreat_ticks` columns externalize
 the Sneak visibility band and hit-retreat timing. Legacy monster rows retain
 the native base-five, intelligence-scale-one, release-three, nine-tick values.
+A complete positive tuple selects the behavior regardless of the row's
+`native_ai` label; rows without migrated tuning retain the native-name
+compatibility path.
 The optional `bat_attack_chance_base` and
 `bat_attack_chance_intelligence_scale` columns externalize the Bat adjacent
 attack admission band. Legacy monster rows retain the native base-eight,
@@ -1466,7 +1469,8 @@ checked-in Fallen rows own their radius and countdown values while older rows
 retain the compatibility formula.
 Schema 1.105 adds the optional Sneak tuning columns to `monster_types.tsv`;
 checked-in Sneak rows own their visibility and retreat values while older rows
-retain the compatibility formula.
+retain the compatibility formula. Complete positive tuples are selected
+independently of the `native_ai` label.
 Schema 1.106 adds the optional Bat attack-band columns to `monster_types.tsv`;
 checked-in Bat rows own their adjacent attack chance while older rows retain
 the compatibility formula. Complete positive tuples are selected independently

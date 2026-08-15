@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Sneak visibility and hit-retreat behavior now use complete validated tuning
+  tuples independent of the row's native-AI label; rows without migrated tuning
+  retain the native-name compatibility path, while hidden/retreat state remains
+  snapshot/save compatible.
+
 - Bat adjacent attack and retreat-duration behavior now use validated tuning
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path, while retreat ticks/direction remain
