@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.202.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.203.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -189,9 +189,13 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.202.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.203.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
+        Assert.Equal((2, 5, 95), (
+            combat.PlayerMagicHitCharacterLevelScale,
+            combat.PlayerMagicMinimumHitChance,
+            combat.PlayerMagicMaximumHitChance));
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 10, 2, 2, 40, 2, 500, 10, 40, 75, 8, 3, 5, 3, 5, 40, 20), (
             combat.MonsterMeleeMinimumHitChance,
             combat.MonsterRangedMinimumHitChance,

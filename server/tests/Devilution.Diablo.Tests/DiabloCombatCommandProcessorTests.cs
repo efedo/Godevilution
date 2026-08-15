@@ -8055,6 +8055,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireboltPlayerHitUsesConfiguredDirectMagicAccuracyBounds()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireboltSpell()]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: true,
+                playerMagicMinimumHitChance: 0,
+                playerMagicMaximumHitChance: 0),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses(),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            positionX: 0,
+            entityId: 7,
+            mana: 1000,
+            manaMaximum: 1000,
+            memorizedSpells: [new MemorizedSpellState(1, 1)]);
+        var target = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                1,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        for (ulong tick = 1; tick <= 256 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [caster, target]);
+
+        Assert.Equal(6400, target.Life);
+    }
+
+    [Fact]
     public void TileTargetedSpellTreatsVisiblePlayerIdentityAsAPresentationHint()
     {
         var world = new DiabloWorldState();

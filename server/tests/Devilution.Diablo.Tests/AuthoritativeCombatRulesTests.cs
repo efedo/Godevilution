@@ -41,6 +41,10 @@ public sealed class AuthoritativeCombatRulesTests
             rules.FastHitRecoveryFrameSkip,
             rules.FasterHitRecoveryFrameSkip,
             rules.FastestHitRecoveryFrameSkip));
+        Assert.Equal((2, 5, 95), (
+            rules.PlayerMagicHitCharacterLevelScale,
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance));
     }
 
     [Fact]
@@ -662,6 +666,35 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 pvpBlockLevelScale: 65));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesPlayerMagicAccuracyTuning()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\t"
+            + "player_magic_hit_character_level_scale\tplayer_magic_minimum_hit_chance\t"
+            + "player_magic_maximum_hit_chance\n"
+            + "10\t1\t100\t4\t17\t88\n");
+
+        Assert.Equal((4, 17, 88), (
+            rules.PlayerMagicHitCharacterLevelScale,
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                playerMagicHitCharacterLevelScale: 65));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                playerMagicMinimumHitChance: 90,
+                playerMagicMaximumHitChance: 89));
     }
 
     [Fact]
