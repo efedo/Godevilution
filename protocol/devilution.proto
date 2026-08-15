@@ -573,6 +573,8 @@ message MonsterSnapshot {
 	optional int32 counselor_delay_ticks = 80;
 	// Remaining native AiAvoidance delay ticks before the next decision.
 	optional int32 avoidance_delay_ticks = 81;
+	// Remaining native AiRanged delay ticks after a ranged attack.
+	optional int32 ranged_delay_ticks = 82;
 }
 
 message WorldItemSnapshot {

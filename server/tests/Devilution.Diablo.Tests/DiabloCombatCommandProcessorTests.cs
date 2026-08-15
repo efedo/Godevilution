@@ -6656,6 +6656,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatRangedAiPreservesItsNativePostAttackDelay()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("GoatRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 214 ^ 9 ^ 7 = 216: native GenerateRnd(20) maps to one delay tick.
+        processor.AdvanceTick(214, [player]);
+
+        Assert.Single(world.Projectiles);
+        Assert.Equal(1, monster.RangedDelayTicks);
+
+        processor.AdvanceTick(215, [player]);
+
+        Assert.Equal(0, monster.RangedDelayTicks);
+        Assert.Single(world.Projectiles);
+    }
+
+    [Fact]
     public void MonsterArrowDispatchUsesMappedProjectileBehaviorInsteadOfNativeAiLabel()
     {
         var monster = new AuthoritativeCombatTarget(

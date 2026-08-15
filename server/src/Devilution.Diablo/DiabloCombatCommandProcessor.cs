@@ -6334,6 +6334,9 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerEtherealized(player))
             return false;
 
+        if (monster.AdvanceRangedDelay())
+            return true;
+
         if (HasActiveMonsterArrow(monster))
             return true;
 
@@ -6363,12 +6366,15 @@ public sealed class DiabloCombatCommandProcessor
             // navigation.
             return true;
 
-        return CreateNativeRangedAttackProjectile(
+        var created = CreateNativeRangedAttackProjectile(
             monster,
             player,
             distance,
             attackSeed,
             missile);
+        if (created)
+            monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
+        return created;
     }
 
     /** Native Snake charge behavior selected by a validated SnakeCharge mapping. */
@@ -6820,6 +6826,14 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.Acid))
             return false;
 
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
+            && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController
+            && monster.AdvanceRangedDelay())
+            return true;
+        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+            && monster.AdvanceRangedAvoidanceDelay())
+            return true;
         if (world.Projectiles.Values.Any(projectile =>
                 projectile.SourceEntityId == monster.EntityId
                 && (projectile.Behavior == missile.ProjectileBehavior
@@ -6827,11 +6841,6 @@ public sealed class DiabloCombatCommandProcessor
                             == AuthoritativeProjectileBehavior.ApocalypseController
                         && projectile.Behavior
                         == AuthoritativeProjectileBehavior.ApocalypseBoom))))
-            return true;
-
-        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
-            && monster.AdvanceRangedAvoidanceDelay())
             return true;
         var rangedAvoidanceUsesRoundWalk = false;
         var rangedAvoidanceRoundWalkTurn = -1;
@@ -7122,6 +7131,9 @@ public sealed class DiabloCombatCommandProcessor
             projectile.VelocityY = velocityY;
         }
         world.Projectiles.Add(projectile.EntityId, projectile);
+        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
+            && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
+            monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
         return true;
     }
 
@@ -7448,12 +7460,13 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
+        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (monster.AdvanceRangedDelay())
+            return true;
         if (world.Projectiles.Values.Any(projectile =>
                 projectile.SourceEntityId == monster.EntityId
                 && projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar))
             return true;
-
-        var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
@@ -7531,6 +7544,7 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
+        monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
         return true;
     }
 

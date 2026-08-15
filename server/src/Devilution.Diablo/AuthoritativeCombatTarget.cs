@@ -87,7 +87,8 @@ public sealed class AuthoritativeCombatTarget
         int rangedAvoidanceDelayTicks = 0,
         int snakeDelayTicks = 0,
         int counselorDelayTicks = 0,
-        int avoidanceDelayTicks = 0)
+        int avoidanceDelayTicks = 0,
+        int rangedDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -171,6 +172,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(counselorDelayTicks));
         if (avoidanceDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(avoidanceDelayTicks));
+        if (rangedDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(rangedDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -262,6 +265,7 @@ public sealed class AuthoritativeCombatTarget
         SnakeDelayTicks = snakeDelayTicks;
         CounselorDelayTicks = counselorDelayTicks;
         AvoidanceDelayTicks = avoidanceDelayTicks;
+        RangedDelayTicks = rangedDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -464,6 +468,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native AiAvoidance delay ticks before the next decision. */
     public int AvoidanceDelayTicks { get; private set; }
+
+    /** Remaining native AiRanged delay ticks after a ranged attack. */
+    public int RangedDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -1149,6 +1156,28 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         AvoidanceDelayTicks = ticks;
+    }
+
+    internal void StartRangedDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RangedDelayTicks = ticks;
+    }
+
+    internal bool AdvanceRangedDelay()
+    {
+        if (RangedDelayTicks == 0)
+            return false;
+        RangedDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreRangedDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RangedDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)
