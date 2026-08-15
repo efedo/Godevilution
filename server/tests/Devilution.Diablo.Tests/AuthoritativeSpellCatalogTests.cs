@@ -469,16 +469,20 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(AuthoritativeDamageType.Magic, boneSpirit.DamageType);
         Assert.Equal(4, boneSpirit.ResistantDamageDivisor);
         Assert.Equal(6, boneSpirit.SelfDamage);
-        Assert.Equal((2, 5, 95, 3), (
+        Assert.Equal((2, 5, 95, 3, 3), (
             boneSpirit.BoneSpiritHitMonsterLevelScale,
             boneSpirit.BoneSpiritMinimumHitChance,
             boneSpirit.BoneSpiritMaximumHitChance,
-            boneSpirit.BoneSpiritDamageHitPointsDivisor));
+            boneSpirit.BoneSpiritDamageHitPointsDivisor,
+            boneSpirit.BoneSpiritPlayerDamageHitPointsDivisor));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             boneSpirit with { BoneSpiritMinimumHitChance = 96 },
         ]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             boneSpirit with { BoneSpiritDamageHitPointsDivisor = 0 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            boneSpirit with { BoneSpiritPlayerDamageHitPointsDivisor = 0 },
         ]));
     }
 

@@ -8277,6 +8277,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BoneSpiritPlayerHitUsesConfiguredCurrentLifeDamageDivisor()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateBoneSpiritSpell() with {
+                    BoneSpiritPlayerDamageHitPointsDivisor = 1000,
+                },
+            ]),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            random: new DiabloRandom(0),
+            gameMode: DiabloGameMode.Multiplayer);
+        var caster = CreatePlayer(
+            entityId: 7,
+            life: 1280,
+            lifeMaximum: 1280,
+            mana: 2000,
+            manaMaximum: 2000,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(35, 35),
+            },
+            memorizedSpells: [new MemorizedSpellState(38, 2)]);
+        var target = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 600,
+            lifeMaximum: 600);
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                38,
+                target.EntityId,
+                target.PositionX,
+                target.PositionY,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        for (ulong tick = 1; tick <= 64 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [caster, target]);
+
+        Assert.Equal(600, target.Life);
+    }
+
+    [Fact]
     public void AbilityCastRequiresOwnedAbilityAndConsumesNoMana()
     {
         var spells = new AuthoritativeSpellCatalog([
