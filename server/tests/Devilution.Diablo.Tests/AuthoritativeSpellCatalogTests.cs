@@ -881,9 +881,17 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.True(catalog.TryGet(43, out var reflect));
         Assert.Equal(AuthoritativeProjectileBehavior.Reflect, reflect.ProjectileBehavior);
         Assert.Equal(2, reflect.ReflectDefaultSpellLevel);
+        Assert.Equal(20, reflect.ReflectDamagePercentMinimum);
+        Assert.Equal(30, reflect.ReflectDamagePercentMaximum);
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             reflect with {
                 ProjectileBehavior = AuthoritativeProjectileBehavior.Magi,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            reflect with {
+                ReflectDamagePercentMinimum = 40,
+                ReflectDamagePercentMaximum = 30,
             },
         ]));
     }

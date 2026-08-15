@@ -2841,6 +2841,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AutonomousMonsterUsesConfiguredReflectDamageRange()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            10,
+            levelId: 0,
+            attackDamage: 10,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([
+                CreateReflectSpell() with {
+                    ReflectDamagePercentMinimum = 50,
+                    ReflectDamagePercentMaximum = 50,
+                },
+            ]));
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+        player.ReflectCharges = 1;
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        var deliveries = processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(15, player.Life);
+        Assert.Equal(5, monster.HitPoints);
+        Assert.Equal(0U, player.ReflectCharges);
+        Assert.Equal(2, deliveries.Count);
+    }
+
+    [Fact]
     public void ButcherAiUsesDedicatedPursuitBeforeTheSharedMeleeAttack()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -13349,6 +13381,8 @@ public sealed class DiabloCombatCommandProcessorTests
             ProjectileLifetime = 1,
             ProjectileCount = 1,
             ProjectileBehavior = AuthoritativeProjectileBehavior.Reflect,
+            ReflectDamagePercentMinimum = 20,
+            ReflectDamagePercentMaximum = 30,
             ManaAdjustmentDivisor = 1,
             ManaCostScale = 64,
             StaffLevel = -1,
