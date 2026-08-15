@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.149 unique-item presentation projection. Names already declared
   by normalized `unique_items.tsv` and legacy `unique_itemdat.tsv` now become
   the generated item's authoritative base and identified names.
+- Add schema 1.150 optional unique-item `cursor_graphic` metadata. Normalized
+  and legacy unique rows now resolve shared cursor symbols through the active
+  catalog, while omitted symbols preserve the base item's cursor.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
