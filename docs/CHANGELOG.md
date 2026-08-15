@@ -55,6 +55,10 @@ All notable changes to this fork are documented below.
   later player intents are rejected server-side and autonomous simulation ticks
   no longer advance gameplay state.
 
+- Externalize native Normal/Nightmare/Hell difficulty through authoritative
+  start configuration, protocol snapshots, version-1 saves, and canonical
+  hashes; the Diablo defeat rank now records difficulty + 1 for single-player.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a
