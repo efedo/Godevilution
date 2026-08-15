@@ -1778,7 +1778,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Bat",
+                NativeAi = "Fallen",
                 BatAttackChanceBase = 20,
                 BatAttackChanceIntelligenceScale = 1,
                 BatRetreatDurationTicks = 5,

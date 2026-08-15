@@ -5200,8 +5200,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Bat")
-                return null;
             if (definition.BatAttackChanceBase > 0
                 && definition.BatAttackChanceIntelligenceScale > 0) {
                 return (

@@ -327,17 +327,11 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.SneakRetreatTicks != 0))
                 || definition.BatAttackChanceBase is < 0 or > 100
                 || definition.BatAttackChanceIntelligenceScale is < 0 or > 100
-                || (definition.NativeAi == "Bat"
-                    && ((definition.BatAttackChanceBase != 0
-                            || definition.BatAttackChanceIntelligenceScale != 0)
-                        && (definition.BatAttackChanceBase <= 0
-                            || definition.BatAttackChanceIntelligenceScale <= 0)))
-                || (definition.NativeAi != "Bat"
-                    && (definition.BatAttackChanceBase != 0
-                        || definition.BatAttackChanceIntelligenceScale != 0))
+                || ((definition.BatAttackChanceBase != 0
+                        || definition.BatAttackChanceIntelligenceScale != 0)
+                    && (definition.BatAttackChanceBase <= 0
+                        || definition.BatAttackChanceIntelligenceScale <= 0))
                 || definition.BatRetreatDurationTicks is < 0 or > 64
-                || (definition.NativeAi != "Bat"
-                    && definition.BatRetreatDurationTicks != 0)
                 || definition.SkeletonMeleeDelayChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeDelayChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeDelayChanceBase != 0
