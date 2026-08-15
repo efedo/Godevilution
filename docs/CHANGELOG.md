@@ -23,6 +23,10 @@ All notable changes to this fork are documented below.
   authoritative snapshots, optional protocol fields 58-59, saves, and the
   canonical state hash; resumed Move goals continue server-side.
 
+- Preserve the native `AiRangedAvoidance` `goalVar2` mutation when all primary
+  `RoundWalk` candidates are blocked; the server flips the turn state before
+  its opposite-side `RandomWalk` fallback.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

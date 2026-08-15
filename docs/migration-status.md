@@ -196,6 +196,10 @@ Status date: 2026-08-15
   server-owned and persisted through snapshots, optional protocol fields
   58-59, saves, and the canonical state hash.
 
+- Native `AiRangedAvoidance` now flips persisted `goalVar2` when its primary
+  `RoundWalk` candidates are blocked, matching the native opposite-side
+  `RandomWalk` fallback on the next authoritative state.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

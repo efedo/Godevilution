@@ -271,7 +271,8 @@ the 90-degree turn, 45-degree turn, and straight candidate before the
 opposite-side random-walk fallback.
 Optional `MonsterSnapshot` fields 58-59 carry the persisted native `goalVar1`
 movement counter and `goalVar2` turn state so a resumed server continues the
-same Move goal; older peers may omit them.
+same Move goal; a blocked primary `RoundWalk` flips `goalVar2` before the
+opposite-side fallback, and older peers may omit these fields.
 
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
