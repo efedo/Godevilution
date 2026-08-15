@@ -4868,9 +4868,9 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         // Native AiAvoidance gives far-away targets a one-in-four RoundWalk
-        // branch before its ordinary movement path. Keep that lateral bias
-        // deterministic while retaining bounded navigation if every turn is
-        // blocked.
+        // branch before its ordinary movement path. Keep both native
+        // candidate orders deterministic and do not replace a blocked native
+        // movement tick with bounded pursuit.
         if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
             var roundWalk = FindNativeRoundWalkStep(
                 monster,
@@ -4887,13 +4887,13 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var next = AuthoritativeMonsterNavigation.FindStep(
-            world,
+        var randomWalk = FindNativeRandomWalkStep(
             monster,
             victim,
-            players);
-        if (next.HasValue)
-            monster.BeginMovement(next.Value.X, next.Value.Y);
+            players,
+            actionSeed);
+        if (randomWalk.HasValue)
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
         return true;
     }
 
