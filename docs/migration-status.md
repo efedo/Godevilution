@@ -278,6 +278,10 @@ Status date: 2026-08-15
   no-op. When both deterministic `RoundWalk` and `RandomWalk` orders are
   unavailable, the server leaves the monster stationary rather than navigating.
 
+- Mega's validated far-distance Skeleton fallback now preserves its native
+  blocked-`RandomWalk` no-op; no bounded generic path replaces an admitted but
+  unavailable movement candidate.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

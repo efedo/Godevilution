@@ -80,6 +80,10 @@ All notable changes to this fork are documented below.
   `RoundWalk`/`RandomWalk` branches now consume the tick when every native
   candidate is blocked instead of invoking generic navigation.
 
+- Preserve Mega's native Skeleton fallback when its far-distance `RandomWalk`
+  candidates are blocked: the admitted tick now defers instead of invoking
+  bounded generic navigation.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
