@@ -6433,6 +6433,48 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(4, projectile.Damage);
     }
 
+    [Theory]
+    [InlineData("Zhar", 107)]
+    [InlineData("Lazarus", 113)]
+    public void NativeCounselorAliasesUseTheServerOwnedRangedBranch(
+        string nativeAi,
+        int monsterId)
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: (uint)monsterId,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: nativeAi,
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    nativeAi,
+                    "Fireball",
+                    AuthoritativeProjectileBehavior.Fireball),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+        Assert.Equal(9U, projectile.SourceEntityId);
+        Assert.Equal(4, projectile.Damage);
+    }
+
     [Fact]
     public void WoundedCounselorStartsItsFourAttemptRetreatBeforeRangedDispatch()
     {

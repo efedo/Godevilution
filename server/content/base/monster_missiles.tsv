@@ -24,3 +24,5 @@ Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	0	Lightning	8	256	0	0
 Counselor	LightningControl	Lightning	Ranged	100	109	3	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
 Counselor	Fireball	Fireball	Ranged	100	110	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
 Counselor	Fireball	Fireball	Ranged	100	113	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Zhar	Fireball	Fireball	Ranged	100	107	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Lazarus	Fireball	Fireball	Ranged	100	113	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1

@@ -4822,6 +4822,12 @@ public sealed class DiabloCombatCommandProcessor
     private bool UsesButcherPursuit(AuthoritativeCombatTarget monster)
         => UsesNativeAi(monster, "Butcher");
 
+    /** Zhar and Lazarus retain the native CounselorAi controller after quest dialogue. */
+    private bool UsesNativeCounselorAi(AuthoritativeCombatTarget monster)
+        => UsesNativeAi(monster, "Counselor")
+            || UsesNativeAi(monster, "Zhar")
+            || UsesNativeAi(monster, "Lazarus");
+
     /** Active monster content owns fallback native-AI identity; direct targets retain the label path. */
     private bool UsesNativeAi(AuthoritativeCombatTarget monster, string nativeAi)
     {
@@ -5233,7 +5239,7 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (!UsesNativeAi(monster, "Counselor"))
+        if (!UsesNativeCounselorAi(monster))
             return false;
         if (monster.AdvanceCounselorDelay())
             return true;
@@ -7871,7 +7877,14 @@ public sealed class DiabloCombatCommandProcessor
                 monster.MonsterId,
                 out missile))
             return true;
-        return monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out missile);
+        if (monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out missile))
+            return true;
+        // Native Zhar and Lazarus use CounselorAi's intelligence-selected
+        // missile family; legacy aliases retain the validated Counselor row
+        // when an older target has no alias-specific mapping.
+        if (monster.NativeAi is "Zhar" or "Lazarus")
+            return monsterMissiles.TryGet("Counselor", monster.MonsterId, out missile);
+        return false;
     }
 
     /** Validated arrow mappings keep ranged-only monsters out of adjacent melee. */

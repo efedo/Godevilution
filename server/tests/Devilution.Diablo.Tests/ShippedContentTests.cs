@@ -172,6 +172,14 @@ public sealed class ShippedContentTests
         Assert.Equal(("Fireball", AuthoritativeProjectileBehavior.Fireball), (
             counselorArchbishop.MissileId,
             counselorArchbishop.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Zhar", 107, out var zhar));
+        Assert.Equal(("Fireball", AuthoritativeProjectileBehavior.Fireball), (
+            zhar.MissileId,
+            zhar.ProjectileBehavior));
+        Assert.True(activation.MonsterMissiles.TryGet("Lazarus", 113, out var lazarus));
+        Assert.Equal(("Fireball", AuthoritativeProjectileBehavior.Fireball), (
+            lazarus.MissileId,
+            lazarus.ProjectileBehavior));
     }
 
     [Fact]
