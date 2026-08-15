@@ -6473,6 +6473,7 @@ public sealed class DiabloCombatCommandProcessor
         var projectileLifetime = missile?.ProjectileLifetime > 0
             ? missile.ProjectileLifetime
             : Math.Max(1, distance);
+        var damageType = missile?.DamageType ?? AuthoritativeDamageType.Physical;
 
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
@@ -6485,7 +6486,7 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             damage,
-            AuthoritativeDamageType.Physical,
+            damageType,
             areaRadius: 0,
             checked((uint)projectileLifetime),
             allowZeroSpellId: true) {
@@ -7391,7 +7392,12 @@ public sealed class DiabloCombatCommandProcessor
         if (IsPlayerProtectedByFlash(target))
             return;
 
-        var damageResult = playerDamage.Apply(target, projectile.Damage);
+        var targetClass = GetPlayerClass(target);
+        var resistance = GetPlayerResistance(target, targetClass, projectile.DamageType);
+        var damage = projectile.Damage;
+        if (resistance > 0)
+            damage -= damage * resistance / 100;
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damage));
         if (damageResult.IncomingDamageQ6 > 0) {
             events.Add(new DiabloDirectedGameplayEvent(
                 target,
