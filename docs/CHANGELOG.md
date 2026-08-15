@@ -43,6 +43,11 @@ All notable changes to this fork are documented below.
   server-owned Skeleton movement boundary when Inferno is outside its validated
   maximum range.
 
+- Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
+  server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
+  with retreat state preserved through snapshots, protocol saves, and state
+  hashing.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.

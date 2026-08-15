@@ -251,6 +251,11 @@ the victim captured when the retreat began. The server applies the native
 `4 * intelligence + 8` adjacent-attack admission and performs the two-step
 retreat; clients render only the authoritative state.
 
+`MonsterSnapshot.counselor_retreat_ticks` field 55 carries the remaining native
+Counselor wounded-adjacent retreat attempts. The server applies the four
+opposite-direction `RandomWalk` attempts before resuming mapped ranged
+dispatch; clients render only the resulting movement and snapshot state.
+
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid
 `SkeletonMelee` definition, creates the summon on an available adjacent cell,

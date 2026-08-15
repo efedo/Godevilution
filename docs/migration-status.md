@@ -230,6 +230,11 @@ Status date: 2026-08-15
   `35 - 4 * intelligence` delay and deterministic `RandomWalk` boundary when
   Inferno is outside its validated maximum range.
 
+- Counselor wounded-adjacent retreat now enters a persisted four-attempt native
+  `RandomWalk` state in the server before mapped ranged dispatch; retreat state
+  is carried through snapshots, protocol saves, and the authoritative state
+  hash, while the Godot client remains behavior-blind.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
