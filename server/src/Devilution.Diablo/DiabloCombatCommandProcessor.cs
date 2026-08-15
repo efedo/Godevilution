@@ -4973,7 +4973,7 @@ public sealed class DiabloCombatCommandProcessor
                     VelocityY = velocity.Y,
                     OriginalDirection = direction,
                     Speed = projectileSpeed,
-                    ImpactLifetime = 1,
+                    ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
                     ResistantDamageDivisor = 1,
                 };
                 world.Projectiles.Add(projectile.EntityId, projectile);
@@ -5792,7 +5792,8 @@ public sealed class DiabloCombatCommandProcessor
             monster,
             player,
             distance,
-            attackSeed);
+            attackSeed,
+            missile);
     }
 
     /** Native Snake charge behavior selected by a validated SnakeCharge mapping. */
@@ -5858,7 +5859,7 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = chargeProjectileTuning.Speed,
-            ImpactLifetime = 1,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
@@ -5939,7 +5940,7 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = chargeProjectileTuning.Speed,
-            ImpactLifetime = 1,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
@@ -6132,6 +6133,7 @@ public sealed class DiabloCombatCommandProcessor
                 : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
                     ? checked(5 * (monster.Intelligence + 4))
                     : spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
+        var impactLifetime = ResolveMonsterProjectileImpactLifetime(missile);
         var damageType = missile.DamageType
             ?? spell?.DamageType
             ?? (missile.MissileId == "MagmaBall"
@@ -6160,6 +6162,7 @@ public sealed class DiabloCombatCommandProcessor
                 spellId,
                 speed,
                 lifetime,
+                impactLifetime,
                 damageType)
             : new AuthoritativeProjectile(
                 AllocateProjectileEntityId(),
@@ -6185,7 +6188,7 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = speed,
-            ImpactLifetime = 1,
+            ImpactLifetime = impactLifetime,
             ResistantDamageDivisor = 1,
         };
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
@@ -6229,6 +6232,14 @@ public sealed class DiabloCombatCommandProcessor
                     + missile.ProjectileLifetimeIntelligenceScale * intelligence)
                 : 256;
         return (speed, Math.Max(1, lifetime));
+    }
+
+    private static int ResolveMonsterProjectileImpactLifetime(
+        AuthoritativeMonsterMissileDefinition? missile)
+    {
+        return missile?.ProjectileImpactLifetime > 0
+            ? missile.ProjectileImpactLifetime
+            : 1;
     }
 
     private static (
@@ -6283,6 +6294,7 @@ public sealed class DiabloCombatCommandProcessor
         uint spellId,
         int speed,
         int lifetime,
+        int impactLifetime,
         AuthoritativeDamageType damageType)
     {
         var direction = GetDirection(
@@ -6322,7 +6334,7 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = speed,
-            ImpactLifetime = 1,
+            ImpactLifetime = impactLifetime,
             ResistantDamageDivisor = 1,
         };
     }
@@ -6413,7 +6425,7 @@ public sealed class DiabloCombatCommandProcessor
             VelocityY = velocityY,
             OriginalDirection = direction,
             Speed = speed,
-            ImpactLifetime = 1,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
@@ -6425,8 +6437,12 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         int distance,
-        uint attackSeed)
+        uint attackSeed,
+        AuthoritativeMonsterMissileDefinition? missile = null)
     {
+        missile ??= TryGetMonsterMissile(monster, out var mappedMissile)
+            ? mappedMissile
+            : null;
         var armorClass = player.ArmorClass;
         if (rules.GameVariant == DiabloGameVariant.Hellfire) {
             armorClass = AuthoritativeEquipmentIncomingDamageRules
@@ -6472,7 +6488,7 @@ public sealed class DiabloCombatCommandProcessor
             // overlays to this server-owned monster lifecycle.
             Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
             Speed = 1,
-            ImpactLifetime = 1,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
