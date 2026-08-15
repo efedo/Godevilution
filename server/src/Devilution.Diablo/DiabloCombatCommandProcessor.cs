@@ -7009,7 +7009,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         (int X, int Y)? movement;
         if (useRoundWalk && roundWalkTurn is 0 or 1) {
-            movement = FindNativeRangedAvoidanceRoundWalkStep(
+            movement = FindNativeStatefulRoundWalkStep(
                 monster,
                 player,
                 players,
@@ -7027,8 +7027,8 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native AiRangedAvoidance RoundWalk, including its goalVar2 flip. */
-    private (int X, int Y)? FindNativeRangedAvoidanceRoundWalkStep(
+    /** Native RoundWalk with persisted goalVar2 mutation. */
+    private (int X, int Y)? FindNativeStatefulRoundWalkStep(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
@@ -7533,10 +7533,42 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         var rhinoTuning = GetRhinoTuning(monster);
-        if (!rhinoTuning.HasValue || distance < 2)
+        if (!rhinoTuning.HasValue)
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < 2) {
+            monster.ClearRhinoMovement();
+            return false;
+        }
+
+        var hasMoveGoal = monster.RhinoMovementTicks >= 0;
+        var startsMoveGoal = distance >= 5 && (attackSeed / 100U) % 4U != 0U;
+        if (hasMoveGoal || startsMoveGoal) {
+            if (!hasMoveGoal)
+                monster.StartRhinoMovement((int)((attackSeed / 100U) % 2U));
+            if (monster.AdvanceRhinoMovement(
+                    distance,
+                    world.HasLineOfSight(
+                        monster.LevelId,
+                        monster.PositionX,
+                        monster.PositionY,
+                        player.PositionX,
+                        player.PositionY))) {
+                var roundWalk = FindNativeStatefulRoundWalkStep(
+                    monster,
+                    player,
+                    players,
+                    attackSeed,
+                    monster.RhinoMovementTurn,
+                    out var nextTurn);
+                monster.UpdateRhinoMovementTurn(nextTurn);
+                if (roundWalk.HasValue)
+                    monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                return true;
+            }
+        }
+
         if (distance < rhinoTuning.Value.MinimumDistance
             || monster.ToHitSpecial <= 0
             || monster.MaxDamageSpecial <= 0)

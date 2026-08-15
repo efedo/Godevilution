@@ -529,6 +529,10 @@ message MonsterSnapshot {
 	optional int32 ranged_avoidance_move_ticks = 58;
 	// Native AiRangedAvoidance goalVar2 turn state (0 or 1).
 	optional int32 ranged_avoidance_turn = 59;
+	// Native Rhino goalVar1 movement counter; -1 means the Normal goal is active.
+	optional int32 rhino_movement_ticks = 60;
+	// Native Rhino goalVar2 turn state (0 or 1).
+	optional int32 rhino_movement_turn = 61;
 }
 
 message WorldItemSnapshot {

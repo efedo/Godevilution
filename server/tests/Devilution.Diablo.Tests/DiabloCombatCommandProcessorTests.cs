@@ -4928,6 +4928,38 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiCarriesItsNativeMoveGoalAcrossTicks()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            4,
+            4,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 10,
+            positionY: 4,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(144, [player]);
+        Assert.Equal(1, monster.RhinoMovementTicks);
+        Assert.Equal(1, monster.RhinoMovementTurn);
+
+        processor.AdvanceTick(145, [player]);
+        Assert.Equal(2, monster.RhinoMovementTicks);
+        Assert.Equal((4, 3), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void RhinoAiDefersAfterChargeAndMovementAdmissionsMiss()
     {
         var monster = new AuthoritativeCombatTarget(

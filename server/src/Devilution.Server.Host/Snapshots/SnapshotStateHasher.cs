@@ -334,6 +334,12 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.RangedAvoidanceMoveTicks);
                     hasher.AppendInt32(monster.RangedAvoidanceTurn);
                 }
+                if (monster.RhinoMovementTicks != -1
+                    || monster.RhinoMovementTurn != 0) {
+                    hasher.AppendString("godevilution-monster-rhino-movement-v1");
+                    hasher.AppendInt32(monster.RhinoMovementTicks);
+                    hasher.AppendInt32(monster.RhinoMovementTurn);
+                }
                 if (monster.CounselorRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-counselor-retreat-v1");
                     hasher.AppendInt32(monster.CounselorRetreatTicks);

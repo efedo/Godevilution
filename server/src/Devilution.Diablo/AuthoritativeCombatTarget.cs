@@ -65,7 +65,9 @@ public sealed class AuthoritativeCombatTarget
         int batMovementIdleTicks = -1,
         int batMovementMode = 0,
         int rangedAvoidanceMoveTicks = -1,
-        int rangedAvoidanceTurn = 0)
+        int rangedAvoidanceTurn = 0,
+        int rhinoMovementTicks = -1,
+        int rhinoMovementTurn = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -105,6 +107,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMoveTicks));
         if (rangedAvoidanceTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceTurn));
+        if (rhinoMovementTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(rhinoMovementTicks));
+        if (rhinoMovementTurn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(rhinoMovementTurn));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -174,6 +180,8 @@ public sealed class AuthoritativeCombatTarget
         BatMovementMode = batMovementMode;
         RangedAvoidanceMoveTicks = rangedAvoidanceMoveTicks;
         RangedAvoidanceTurn = rangedAvoidanceTurn;
+        RhinoMovementTicks = rhinoMovementTicks;
+        RhinoMovementTurn = rhinoMovementTurn;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -310,6 +318,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native AiRangedAvoidance goalVar2 turn state (0 or 1). */
     public int RangedAvoidanceTurn { get; private set; }
+
+    /** Native Rhino goalVar1 movement counter; -1 means the Normal goal. */
+    public int RhinoMovementTicks { get; private set; }
+
+    /** Native Rhino goalVar2 turn state (0 or 1). */
+    public int RhinoMovementTurn { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -582,6 +596,55 @@ public sealed class AuthoritativeCombatTarget
         if (turn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RangedAvoidanceTurn = turn;
+    }
+
+    internal void StartRhinoMovement(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RhinoMovementTicks = 0;
+        RhinoMovementTurn = turn;
+    }
+
+    internal bool AdvanceRhinoMovement(int distance, bool sameTransparencyRegion)
+    {
+        if (distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(distance));
+        if (RhinoMovementTicks < 0)
+            return false;
+
+        var completes = RhinoMovementTicks >= checked(2 * distance)
+            || !sameTransparencyRegion;
+        if (RhinoMovementTicks < 255)
+            RhinoMovementTicks++;
+        if (completes) {
+            RhinoMovementTicks = -1;
+            RhinoMovementTurn = 0;
+        }
+        return !completes;
+    }
+
+    internal void RestoreRhinoMovement(int movementTicks, int turn)
+    {
+        if (movementTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(movementTicks));
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RhinoMovementTicks = movementTicks;
+        RhinoMovementTurn = turn;
+    }
+
+    internal void ClearRhinoMovement()
+    {
+        RhinoMovementTicks = -1;
+        RhinoMovementTurn = 0;
+    }
+
+    internal void UpdateRhinoMovementTurn(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RhinoMovementTurn = turn;
     }
 
     internal void StartCounselorRetreat(int ticks)
