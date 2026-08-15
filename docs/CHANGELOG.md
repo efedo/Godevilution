@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.203 optional direct player-magic hit tuning to `combat.tsv`;
+  Charged Bolt, Firebolt, and Bone Spirit player-hit rolls now use validated
+  character-level penalty and chance bounds, retaining native 2/5/95 defaults
+  when omitted.
+
 - Add schema 1.202 optional persistent-projectile player damage divisor to
   `spells.tsv`; shared player damage now uses validated content, retaining the
   native divisor of two when omitted.
