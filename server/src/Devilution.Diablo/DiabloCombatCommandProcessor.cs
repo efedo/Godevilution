@@ -6392,9 +6392,19 @@ public sealed class DiabloCombatCommandProcessor
         var spellId = missile is { SpellId: > 0 }
             ? missile.SpellId
             : spell?.SpellId ?? 36U;
-        var speed = spell?.ProjectileSpeed > 0 ? spell.ProjectileSpeed : 16;
-        var lifetime = spell?.ProjectileLifetime > 0 ? spell.ProjectileLifetime : 256;
-        var damageType = spell?.DamageType ?? AuthoritativeDamageType.Magic;
+        var speed = missile?.ProjectileSpeed > 0
+            ? missile.ProjectileSpeed
+            : spell?.ProjectileSpeed > 0
+                ? spell.ProjectileSpeed
+                : 16;
+        var lifetime = missile?.ProjectileLifetime > 0
+            ? missile.ProjectileLifetime
+            : spell?.ProjectileLifetime > 0
+                ? spell.ProjectileLifetime
+                : 256;
+        var damageType = missile?.DamageType
+            ?? spell?.DamageType
+            ?? AuthoritativeDamageType.Magic;
         var direction = GetDirection(
             monster.PositionX,
             monster.PositionY,
