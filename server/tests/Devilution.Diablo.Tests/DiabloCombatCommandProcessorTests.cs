@@ -4548,6 +4548,59 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeChargeUsesConfiguredMonsterPlayerBlockLevelScale()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 1,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterChargeBaseToHit: 1000,
+                monsterPlayerBlockLevelScale: 0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 5,
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        processor.AdvanceTick(1, [player]);
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.True(player.Life < 100);
+        Assert.NotEqual(DiabloPlayerCombatMode.Block, player.CombatMode);
+    }
+
+    [Fact]
     public void SnakeChargeUsesConfiguredSpecialHitAdmissionFormula()
     {
         var monster = new AuthoritativeCombatTarget(

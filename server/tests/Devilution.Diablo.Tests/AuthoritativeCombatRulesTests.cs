@@ -46,6 +46,7 @@ public sealed class AuthoritativeCombatRulesTests
             rules.PlayerMagicMinimumHitChance,
             rules.PlayerMagicMaximumHitChance));
         Assert.Equal(2, rules.MonsterRegenerationLevelDivisor);
+        Assert.Equal(2, rules.MonsterPlayerBlockLevelScale);
     }
 
     [Fact]
@@ -714,6 +715,24 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 monsterRegenerationLevelDivisor: 0));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesMonsterPlayerBlockLevelScale()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\t"
+            + "monster_player_block_level_scale\n"
+            + "10\t1\t100\t4\n");
+
+        Assert.Equal(4, rules.MonsterPlayerBlockLevelScale);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterPlayerBlockLevelScale: 65));
     }
 
     [Fact]
