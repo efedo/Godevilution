@@ -170,6 +170,34 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void BarbarianBowModifierUsesConfiguredDivisor()
+    {
+        var barbarian = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Barbarian,
+        };
+        var bow = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemType = 3,
+                ItemClass = 1,
+                StatFlag = true,
+            });
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(20, 20)),
+            [bow],
+            barbarian,
+            barbarianBowStrengthDamageDivisor: 100);
+
+        Assert.Equal(10, profile.DamageModifier);
+    }
+
+    [Fact]
     public void RogueStrengthDexterityModifierUsesConfiguredDivisor()
     {
         var rogue = CreateClass("custom") with {
@@ -340,12 +368,25 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
                 100,
                 barbarianWeaponStrengthDamageDivisor: 0));
         Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                barbarianBowStrengthDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
             AuthoritativeEquipmentDamageRules.Calculate(
                 1,
                 PlayerAttributesState.Zero,
                 [],
                 CreateClass("custom"),
                 barbarianWeaponStrengthDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEquipmentDamageRules.Calculate(
+                1,
+                PlayerAttributesState.Zero,
+                [],
+                CreateClass("custom"),
+                barbarianBowStrengthDamageDivisor: 0));
             Assert.Throws<InvalidDataException>(() =>
             AuthoritativeEquipmentDamageRules.Calculate(
                 1,
