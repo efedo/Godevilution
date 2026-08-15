@@ -337,6 +337,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredBarbarianVitalityDivisor()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tbarbarian_vitality_damage_divisor\n"
+            + "10\t1\t100\t101\n");
+
+        Assert.Equal(101, rules.BarbarianVitalityDamageDivisor);
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -445,6 +456,16 @@ public sealed class AuthoritativeCombatRulesTests
             AuthoritativeCombatRules.LoadTsv(
                 "combat.tsv",
                 "base_attack_damage\tminimum_damage\tdefeat_experience\tbarbarian_default_strength_damage_divisor\n"
+                + "10\t1\t100\t0\n"));
+    }
+
+    [Fact]
+    public void RejectsInvalidBarbarianVitalityDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\tbarbarian_vitality_damage_divisor\n"
                 + "10\t1\t100\t0\n"));
     }
 
