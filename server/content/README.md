@@ -1520,7 +1520,9 @@ formula.
 Schema 1.114 adds the optional Gargoyle safety-boundary columns to
 `monster_types.tsv`; checked-in Gargoyle rows own their wounded retreat and
 self-heal boundary while older rows retain the compatibility formula. Complete
-positive tuples are selected independently of the `native_ai` label.
+positive tuples are selected independently of the `native_ai` label. Persisted
+special-lock state is likewise accepted and advanced for any validated label
+carrying the complete tuple.
 Schema 1.115 adds the optional SkeletonRanged admission columns to
 `monster_types.tsv`; checked-in SkeletonRanged rows own their retreat and
 clear-lane arrow chance bands while older rows retain the compatibility formula.
@@ -1572,7 +1574,8 @@ Schema 1.127 adds optional Gargoyle healing-formula columns to
 `monster_types.tsv`; checked-in Gargoyle rows own the native divisor multiplier,
 random-range modulus, and random offset (`16 * (seed % 5 + 4)`) while older rows
 retain the compatibility formula. Complete positive tuples are selected
-independently of the `native_ai` label.
+independently of the `native_ai` label; persisted special-lock state is
+accepted for any validated label carrying the tuple.
 Schema 1.128 adds optional Scavenger healing/search columns to
 `monster_types.tsv`; checked-in Scavenger rows own the corpse-eating duration,
 search radius, Hellfire maximum-health divisor, base-game healing amount, and

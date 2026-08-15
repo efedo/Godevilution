@@ -32,7 +32,9 @@ All notable changes to this fork are documented below.
   retreat ticks/direction advance for any validated label carrying the tuple.
 - Select Gargoyle safety, wounded-health, and healing-formula behavior from
   validated tuning regardless of the row's `Gargoyle` native-AI name; legacy
-  rows without migrated tuning retain native-name compatibility defaults.
+  rows without migrated tuning retain native-name compatibility defaults, and
+  the persisted special lock is accepted for any validated label carrying the
+  tuple.
 - Select SkeletonRanged retreat and clear-lane arrow admission from complete
   validated tuning tuples rather than requiring the `SkeletonRanged` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.
