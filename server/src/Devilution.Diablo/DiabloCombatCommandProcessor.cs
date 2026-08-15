@@ -180,6 +180,13 @@ public sealed class DiabloCombatCommandProcessor
             _ => 0,
         };
 
+    private int GetDifficultyArmorClassBonus()
+        => difficulty switch {
+            DiabloDifficulty.Nightmare => 50,
+            DiabloDifficulty.Hell => 80,
+            _ => 0,
+        };
+
     /** Resolves native Monster::level without changing persisted base content. */
     private int GetEffectiveMonsterLevel(AuthoritativeCombatTarget monster)
     {
@@ -199,6 +206,42 @@ public sealed class DiabloCombatCommandProcessor
         if (!special && monster.IsPlayerMinion)
             return baseToHit;
         return checked(baseToHit + GetDifficultyToHitBonus());
+    }
+
+    /** Resolves native monster armor without changing persisted base content. */
+    private int GetEffectiveMonsterArmorClass(AuthoritativeCombatTarget monster)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        return checked(monster.ArmorClass + GetDifficultyArmorClassBonus());
+    }
+
+    /** Resolves native difficulty damage scaling for one monster channel. */
+    private (int Minimum, int Maximum) GetEffectiveMonsterDamageRange(
+        AuthoritativeCombatTarget monster,
+        bool special)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        var minimum = special ? monster.MinDamageSpecial : monster.MinDamage;
+        var maximum = special ? monster.MaxDamageSpecial : monster.MaxDamage;
+        return difficulty switch {
+            DiabloDifficulty.Nightmare => (
+                checked(2 * (minimum + 2)),
+                checked(2 * (maximum + 2))),
+            DiabloDifficulty.Hell => (
+                checked(4 * minimum + 6),
+                checked(4 * maximum + 6)),
+            _ => (minimum, maximum),
+        };
+    }
+
+    /** Selects the native random monster damage after difficulty scaling. */
+    private int SelectEffectiveMonsterDamage(
+        AuthoritativeCombatTarget monster,
+        bool special,
+        uint seed)
+    {
+        var range = GetEffectiveMonsterDamageRange(monster, special);
+        return SelectNativeDamage(range.Minimum, range.Maximum, seed);
     }
 
     /** Resolves native Monster::exp for the active difficulty and uniqueness. */
@@ -526,7 +569,8 @@ public sealed class DiabloCombatCommandProcessor
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
-            ranged,
+            monsterTarget: true,
+            ranged: ranged,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
@@ -595,6 +639,7 @@ public sealed class DiabloCombatCommandProcessor
             var damageQ6 = ResolvePlayerAttackDamageQ6(
                 player,
                 targetProxy,
+                monsterTarget: false,
                 ranged: true,
                 unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
@@ -683,6 +728,7 @@ public sealed class DiabloCombatCommandProcessor
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             targetProxy,
+            monsterTarget: false,
             ranged: false,
             unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
@@ -782,6 +828,7 @@ public sealed class DiabloCombatCommandProcessor
             var damageQ6 = ResolvePlayerAttackDamageQ6(
                 player,
                 target,
+                monsterTarget: true,
                 ranged: true,
                 unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
@@ -848,7 +895,7 @@ public sealed class DiabloCombatCommandProcessor
         if (elemental.Fire > 0) {
             var fireDamage = rules.ResolveDamage(
                 elemental.Fire,
-                target.ArmorClass,
+                GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Fire,
                 target);
             ApplyResolvedDamage(player, target, fireDamage, events);
@@ -856,7 +903,7 @@ public sealed class DiabloCombatCommandProcessor
         if (elemental.Lightning > 0 && target.HitPointsQ6 > 0) {
             var lightningDamage = rules.ResolveDamage(
                 elemental.Lightning,
-                target.ArmorClass,
+                GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Lightning,
                 target);
             ApplyResolvedDamage(player, target, lightningDamage, events);
@@ -1127,6 +1174,7 @@ public sealed class DiabloCombatCommandProcessor
     private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
+        bool monsterTarget,
         bool ranged,
         uint seed,
         out int perilSelfDamageQ6,
@@ -1209,10 +1257,13 @@ public sealed class DiabloCombatCommandProcessor
                 player.CharacterLevel,
                 player.Attributes.Dexterity.Current,
                 ranged);
+        var targetArmorClass = monsterTarget
+            ? GetEffectiveMonsterArmorClass(target)
+            : target.ArmorClass;
         var effectiveHitChance = usesNativeClassToHit
             ? rules.ResolvePhysicalHitChance(
                 checked(classHitChance + hitBonus),
-                target.ArmorClass,
+                targetArmorClass,
                 armorPiercingBonus,
                 meleeArmorReductionDivisor: !ranged
                     ? playerClass!.MeleeArmorReductionDivisor
@@ -1241,7 +1292,7 @@ public sealed class DiabloCombatCommandProcessor
             items);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
-            target.ArmorClass,
+            targetArmorClass,
             effectiveHitChance,
             seed);
         if (target.IsDemon
@@ -4648,7 +4699,12 @@ public sealed class DiabloCombatCommandProcessor
                         goatMeleeAttackTuning);
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
-                    : target.AttackDamage;
+                    : difficulty == DiabloDifficulty.Normal
+                        ? target.AttackDamage
+                        : SelectEffectiveMonsterDamage(
+                            target,
+                            special: false,
+                            seed: attackSeed);
                 var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
                 var damage = attackToHit == 0
                     ? rules.ResolveAttackDamage(
@@ -6408,7 +6464,7 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.Targeted)
             || distance < 2
             || GetEffectiveMonsterToHit(monster, special: false) <= 0
-            || monster.MaxDamage <= 0
+            || GetEffectiveMonsterDamageRange(monster, special: false).Maximum <= 0
             || IsPlayerProtectedByFlash(player)
             || IsPlayerEtherealized(player))
             return false;
@@ -7273,7 +7329,10 @@ public sealed class DiabloCombatCommandProcessor
                     ? missile.ProjectileDamage
                     : missile.ProjectileBehavior switch {
                         AuthoritativeProjectileBehavior.Lightning => 0,
-                        _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+                        _ => SelectEffectiveMonsterDamage(
+                            monster,
+                            special: false,
+                            seed: attackSeed),
                     },
                 damageType,
                 0,
@@ -7685,7 +7744,10 @@ public sealed class DiabloCombatCommandProcessor
             speed);
         var damage = missile?.ProjectileDamage > 0
             ? missile.ProjectileDamage
-            : SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed);
+            : SelectEffectiveMonsterDamage(
+                monster,
+                special: false,
+                seed: attackSeed);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -7736,7 +7798,10 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstUndead);
         }
         var damage = rules.ResolveMonsterRangedAttackDamage(
-            SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+            SelectEffectiveMonsterDamage(
+                monster,
+                special: false,
+                seed: attackSeed),
             GetEffectiveMonsterToHit(monster, special: false),
             GetEffectiveMonsterLevel(monster),
             player.CharacterLevel,
@@ -7857,7 +7922,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!skeletonRangedTuning.HasValue
             || !HasValidatedArrowMapping(monster)
             || GetEffectiveMonsterToHit(monster, special: false) <= 0
-            || monster.MaxDamage <= 0)
+            || GetEffectiveMonsterDamageRange(monster, special: false).Maximum <= 0)
             return false;
 
         if (IsPlayerProtectedByFlash(player) || IsPlayerEtherealized(player))
@@ -8007,7 +8072,7 @@ public sealed class DiabloCombatCommandProcessor
 
         if (distance < rhinoTuning.Value.MinimumDistance
             || GetEffectiveMonsterToHit(monster, special: true) <= 0
-            || monster.MaxDamageSpecial <= 0)
+            || GetEffectiveMonsterDamageRange(monster, special: true).Maximum <= 0)
             return TryAdvanceRhinoMovementFallback(
                 monster,
                 player,
@@ -8241,7 +8306,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         return tuning.HasValue
             && GetEffectiveMonsterToHit(target, special: true) > 0
-            && target.MaxDamageSpecial > 0
+            && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0
             && attackSeed % 100U >= (uint)Math.Min(
                 100,
                 tuning.Value.SpecialChanceBase
@@ -8283,16 +8348,16 @@ public sealed class DiabloCombatCommandProcessor
             && (long)target.HitPointsQ6 * 100
                 < (long)target.MaxHitPointsQ6 * tuning.Value.SpecialHealthThresholdPercent
             && GetEffectiveMonsterToHit(target, special: true) > 0
-            && target.MaxDamageSpecial > 0
+            && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0
             && (attackSeed / 100U) % (uint)tuning.Value.SpecialChanceGroupPeriod == 0U;
     }
 
     /** Selects the native inclusive special damage range without adding a new RNG draw. */
-    private static int SelectNativeSpecialDamage(
+    private int SelectNativeSpecialDamage(
         AuthoritativeCombatTarget target,
         uint attackSeed)
     {
-        return SelectNativeDamage(target.MinDamageSpecial, target.MaxDamageSpecial, attackSeed);
+        return SelectEffectiveMonsterDamage(target, special: true, seed: attackSeed);
     }
 
     private static int SelectNativeDamage(int minimum, int maximum, uint attackSeed)
@@ -8994,7 +9059,7 @@ public sealed class DiabloCombatCommandProcessor
         if (projectile.ElementalFireDamage > 0) {
             var fireDamage = rules.ResolveDamage(
                 projectile.ElementalFireDamage,
-                target.ArmorClass,
+                GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Fire,
                 target);
             ApplyResolvedDamage(player, target, fireDamage, events);
@@ -9002,7 +9067,7 @@ public sealed class DiabloCombatCommandProcessor
         if (projectile.ElementalLightningDamage > 0 && target.HitPointsQ6 > 0) {
             var lightningDamage = rules.ResolveDamage(
                 projectile.ElementalLightningDamage,
-                target.ArmorClass,
+                GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Lightning,
                 target);
             ApplyResolvedDamage(player, target, lightningDamage, events);
@@ -9621,11 +9686,12 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
+        var specialDamageRange = GetEffectiveMonsterDamageRange(monster, special: true);
         var damageQ6 = checked(
             Math.Max(
                 random.RandomIntBetween(
-                    checked(monster.MinDamageSpecial * DiabloFixedPointQ6.Scale),
-                    checked(monster.MaxDamageSpecial * DiabloFixedPointQ6.Scale))
+                    checked(specialDamageRange.Minimum * DiabloFixedPointQ6.Scale),
+                    checked(specialDamageRange.Maximum * DiabloFixedPointQ6.Scale))
                     + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
                         * DiabloFixedPointQ6.Scale,
                 DiabloFixedPointQ6.Scale));
@@ -10177,7 +10243,10 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var damage = random.RandomIntBetween(monster.MinDamage, monster.MaxDamage);
+        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
+        var damage = random.RandomIntBetween(
+            damageRange.Minimum,
+            damageRange.Maximum);
         var segmentLifetime = checked(
             5 * damage + spell.SecondaryProjectileLifetime);
         var segmentEntityId = AllocateProjectileEntityId();
@@ -10730,10 +10799,10 @@ public sealed class DiabloCombatCommandProcessor
     {
         projectile.RemainingTicks--;
         var damage = checked(
-            2 * SelectNativeDamage(
-                monster.MinDamage,
-                monster.MaxDamage,
-                projectile.EntityId ^ monster.EntityId));
+            2 * SelectEffectiveMonsterDamage(
+                monster,
+                special: false,
+                seed: projectile.EntityId ^ monster.EntityId));
         projectile.RemainingTicks--;
 
         var previousX = projectile.PositionX;
@@ -13445,7 +13514,11 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeDamageType damageType,
         ICollection<DiabloGameplayEvent> events)
     {
-        var damage = rules.ResolveDamage(baseDamage, target.ArmorClass, damageType, target);
+        var damage = rules.ResolveDamage(
+            baseDamage,
+            GetEffectiveMonsterArmorClass(target),
+            damageType,
+            target);
         ApplyResolvedDamage(player, target, damage, events);
     }
 

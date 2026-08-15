@@ -1297,7 +1297,7 @@ public sealed class DiabloCombatCommandProcessorTests
             9,
             1,
             0,
-            5,
+            1,
             levelId: 15,
             monsterId: 112,
             diablo: true);
@@ -1389,6 +1389,59 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.NotEmpty(deliveries);
         Assert.True(player.Life < 20);
+    }
+
+    [Theory]
+    [InlineData(DiabloDifficulty.Normal, 3)]
+    [InlineData(DiabloDifficulty.Nightmare, 10)]
+    [InlineData(DiabloDifficulty.Hell, 18)]
+    public void MonsterPhysicalDamageUsesNativeDifficultyScaling(
+        DiabloDifficulty difficulty,
+        int expectedDamage)
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 3,
+            aggroRange: 5,
+            monsterLevel: 1,
+            toHit: 255);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, difficulty: difficulty);
+        var player = CreatePlayer(life: 100, lifeMaximum: 100, entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(100 - expectedDamage, player.Life);
+        Assert.Equal(expectedDamage, Assert.Single(deliveries).Event.Amount);
+    }
+
+    [Theory]
+    [InlineData(DiabloDifficulty.Normal, 10)]
+    [InlineData(DiabloDifficulty.Hell, 90)]
+    public void MonsterArmorUsesNativeDifficultyBonus(
+        DiabloDifficulty difficulty,
+        int expectedHitPoints)
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 10);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(100, 1, 100),
+            difficulty: difficulty);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(expectedHitPoints, target.HitPoints);
     }
 
     [Fact]
