@@ -234,6 +234,12 @@ Status date: 2026-08-15
   and persist through snapshots, optional protocol fields 71-72, saves, and
   canonical hashes.
 
+- Native Rhino ordinary movement now preserves its `var1`/`var2`-compatible
+  counter and `AiDelay` countdown. Long-idle/fresh-mode movement and failed
+  admissions remain server-owned through snapshots, optional protocol fields
+  73-75, saves, and canonical hashes; far-distance Move goals remain in
+  fields 60-61.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

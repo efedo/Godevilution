@@ -310,6 +310,12 @@ Optional `MonsterSnapshot` fields 71-72 carry the native Fat/Overlord
 server applies the `20 + 4*intelligence` long-idle and `70 + 4*intelligence`
 fresh-mode `RandomWalk` admissions; older peers may omit these fields.
 
+Optional `MonsterSnapshot` fields 73-74 carry the native Rhino
+`var2`-compatible idle counter and `var1`-compatible movement value. Field 75
+carries the remaining native Rhino `AiDelay` countdown. The server owns these
+ordinary movement and delay decisions; older peers may omit the fields while
+Rhino far-distance Move goal state remains in fields 60-61.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

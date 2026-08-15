@@ -62,6 +62,11 @@ All notable changes to this fork are documented below.
   and fresh-mode `70 + 4*intelligence` bands, and persists that state through
   optional protocol fields 71-72, snapshots, saves, and the canonical hash.
 
+- Preserve native Rhino ordinary movement state: the server now carries its
+  `var1`/`var2`-compatible counter, applies the long-idle 33% and fresh-mode
+  83% bands, starts the native delay countdown on failed admissions, and
+  persists movement and delay state through optional protocol fields 73-75.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
