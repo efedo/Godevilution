@@ -12,6 +12,7 @@ public sealed class DiabloCombatCommandProcessor
 
     private readonly DiabloWorldState world;
     private readonly AuthoritativeSpellCatalog spells;
+    private readonly AuthoritativeSpellDefinition? reflectSpell;
     private readonly AuthoritativeCombatRules rules;
     private readonly DiabloRandom random;
     private readonly AuthoritativePlayerClassCatalog? playerClasses;
@@ -36,6 +37,8 @@ public sealed class DiabloCombatCommandProcessor
     private const uint FasterAttackFlag = 1U << 19;
     private const uint FastestAttackFlag = 1U << 20;
     private const uint QuickAttackFlag = 1U << 17;
+    private const int NativeReflectDamagePercentMinimum = 20;
+    private const int NativeReflectDamagePercentMaximum = 30;
 
     private static readonly int[] ChargedBoltPath = [
         -1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0,
@@ -133,6 +136,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
+        this.reflectSpell = spells.Definitions.FirstOrDefault(definition =>
+            definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Reflect);
         this.rules = rules ?? throw new ArgumentNullException(nameof(rules));
         this.random = random ?? new DiabloRandom(0);
         this.playerClasses = playerClasses;
@@ -4578,8 +4583,14 @@ public sealed class DiabloCombatCommandProcessor
                 var reflectedDamage = 0;
                 if (damage > 0 && victim.ReflectCharges > 0) {
                     victim.ReflectCharges--;
+                    var reflectMinimum = reflectSpell?.ReflectDamagePercentMinimum > 0
+                        ? reflectSpell.ReflectDamagePercentMinimum
+                        : NativeReflectDamagePercentMinimum;
+                    var reflectMaximum = reflectSpell?.ReflectDamagePercentMaximum > 0
+                        ? reflectSpell.ReflectDamagePercentMaximum
+                        : NativeReflectDamagePercentMaximum;
                     reflectedDamage = checked(
-                        damage * random.RandomIntBetween(20, 30) / 100);
+                        damage * random.RandomIntBetween(reflectMinimum, reflectMaximum) / 100);
                     if (reflectedDamage > 0) {
                         var reflectedEvents = new List<DiabloGameplayEvent>();
                         ApplyResolvedDamageQ6(

@@ -267,6 +267,11 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native Reflect spell level used when a cast has no explicit level. */
     public int ReflectDefaultSpellLevel { get; init; }
 
+    /** Optional inclusive reflected-damage percentage bounds. */
+    public int ReflectDamagePercentMinimum { get; init; }
+
+    public int ReflectDamagePercentMaximum { get; init; }
+
     /** Constant added to effective spell level before Stone Curse duration is capped. */
     public int StoneCurseBaseDuration { get; init; }
 
@@ -569,6 +574,8 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.GuardianProjectileSpeedLevelStep < 0
                 || definition.GuardianProjectileSpeedMaximumBonus < 0
                 || definition.ReflectDefaultSpellLevel < 0
+                || definition.ReflectDamagePercentMinimum is < 0 or > 100
+                || definition.ReflectDamagePercentMaximum is < 0 or > 100
                 || definition.BerserkResistanceFrequency < 0
                 || definition.ResistantDamageDivisor <= 0
                 || definition.ProjectileImpactLifetime <= 0) {
@@ -1578,9 +1585,18 @@ public sealed class AuthoritativeSpellCatalog
                     "Rage tuning requires Rage behavior.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Reflect
-                && definition.ReflectDefaultSpellLevel != 0) {
+                && (definition.ReflectDefaultSpellLevel != 0
+                    || definition.ReflectDamagePercentMinimum != 0
+                    || definition.ReflectDamagePercentMaximum != 0)) {
                 throw new InvalidDataException(
-                    "Reflect default-level tuning requires Reflect behavior.");
+                    "Reflect tuning requires Reflect behavior.");
+            }
+            if ((definition.ReflectDamagePercentMinimum != 0
+                    || definition.ReflectDamagePercentMaximum != 0)
+                && (definition.ReflectDamagePercentMinimum <= 0
+                    || definition.ReflectDamagePercentMaximum < definition.ReflectDamagePercentMinimum)) {
+                throw new InvalidDataException(
+                    "Reflect damage percentage bounds are invalid.");
             }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Elemental
                 && (definition.ElementalRetargetLifetime != 0
@@ -1875,6 +1891,10 @@ public sealed class AuthoritativeSpellCatalog
                 "rage_minimum_life_q6_per_character_level"),
             ReflectDefaultSpellLevel = row.OptionalInt32(
                 "reflect_default_spell_level"),
+            ReflectDamagePercentMinimum = row.OptionalInt32(
+                "reflect_damage_percent_minimum"),
+            ReflectDamagePercentMaximum = row.OptionalInt32(
+                "reflect_damage_percent_maximum"),
             ElementalRetargetLifetime = row.OptionalInt32(
                 "elemental_retarget_lifetime"),
             ElementalCharacterLevelDamageMultiplier = row.OptionalInt32(
