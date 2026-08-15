@@ -3495,6 +3495,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ChargedBoltUsesConfiguredMonsterMagicHitBounds()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            2,
+            0,
+            20,
+            petrified: false);
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [CreateStationaryChargedBolt(1, 0)]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateChargedBoltSpell() with {
+                    ChargedBoltHitMonsterLevelScale = 0,
+                    ChargedBoltMinimumHitChance = 0,
+                    ChargedBoltMaximumHitChance = 0,
+                },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(20, monster.HitPoints);
+    }
+
+    [Fact]
     public void MonsterChoosesNearestPlayerThenStableEntityId()
     {
         var monster = new AuthoritativeCombatTarget(
