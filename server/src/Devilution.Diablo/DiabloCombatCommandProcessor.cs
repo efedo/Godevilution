@@ -6178,8 +6178,25 @@ public sealed class DiabloCombatCommandProcessor
                 && missile.RangedAvoidanceChanceIntelligenceScale == 0
                 && missile.RangedAvoidanceFarIntelligenceOffset == 0)
                 farIntelligenceOffset = 1;
-            if (distance < minimumDistance)
+            if (distance < minimumDistance) {
+                // Native AiRangedAvoidance falls back to a probabilistic
+                // adjacent melee attack instead of admitting every shared
+                // melee tick. Keep failed native rolls out of that fallback;
+                // successful rolls continue into the authoritative melee
+                // resolver below.
+                if (distance <= 1) {
+                    var lessMissiles = missile.ProjectileBehavior
+                        == AuthoritativeProjectileBehavior.Acid
+                        ? 1
+                        : 0;
+                    var adjacentAttackBand =
+                        (1000 * (monster.Intelligence + 6)) >> lessMissiles;
+                    if (attackSeed % 10_000U
+                        >= (uint)Math.Min(10_000, adjacentAttackBand))
+                        return true;
+                }
                 return false;
+            }
             var attackBand = checked(
                 chanceBase + chanceIntelligenceScale * (monster.Intelligence
                     + (distance >= farDistance ? farIntelligenceOffset : 0)));

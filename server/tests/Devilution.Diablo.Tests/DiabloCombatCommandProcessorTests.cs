@@ -6478,6 +6478,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesNativeAdjacentAttackBandBeforeMeleeFallback()
+    {
+        (AuthoritativeCombatTarget Monster, AuthoritativePlayerState Player,
+            DiabloCombatCommandProcessor Processor) CreateScenario()
+        {
+            var monster = new AuthoritativeCombatTarget(
+                9,
+                0,
+                0,
+                20,
+                aggroRange: 8,
+                attackDamage: 5,
+                nativeAi: "Magma",
+                intelligence: 0);
+            var world = new DiabloWorldState(combatTargets: [monster]);
+            var processor = CreateProcessor(
+                world,
+                monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                    new AuthoritativeMonsterMissileDefinition(
+                        "Magma",
+                        "MagmaBall",
+                        AuthoritativeProjectileBehavior.MonsterMagic,
+                        AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+                ]));
+            var player = CreatePlayer(
+                entityId: 7,
+                positionX: 1,
+                positionY: 0,
+                life: 100,
+                lifeMaximum: 100);
+            return (monster, player, processor);
+        }
+
+        var admitted = CreateScenario();
+        admitted.Processor.AdvanceTick(5_000, [admitted.Player]);
+
+        // 5,000 ^ 9 ^ 7 = 5,006, inside the native 6,000-per-10,000 band.
+        Assert.Equal(95, admitted.Player.Life);
+
+        var deferred = CreateScenario();
+        deferred.Processor.AdvanceTick(7_000, [deferred.Player]);
+
+        Assert.Equal(100, deferred.Player.Life);
+    }
+
+    [Fact]
     public void RangedAvoidanceUsesConfiguredDistanceBoundary()
     {
         var monster = new AuthoritativeCombatTarget(
