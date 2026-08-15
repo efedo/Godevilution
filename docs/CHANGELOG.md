@@ -20,6 +20,11 @@ All notable changes to this fork are documented below.
   the server-owned SkeletonAi timing and movement boundary; quest activation
   and unique encounter state remain incremental.
 
+- Restore SnotSpil's native post-banner combat boundary: the authoritative
+  server now accepts the `Snotspill` AI identity and delegates combat and Fallen
+  fear state through the server-owned FallenAi/SkeletonAi boundary; banner
+  activation and map transition behavior remain incremental.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 
