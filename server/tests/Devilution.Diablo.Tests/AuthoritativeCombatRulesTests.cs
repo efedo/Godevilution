@@ -56,9 +56,9 @@ public sealed class AuthoritativeCombatRulesTests
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
-            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\thellfire_armor_bonus_against_demons\thellfire_armor_bonus_against_undead\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t10\t7\t9\t11\t13\t17\t19\n");
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\tmonster_magic_minimum_hit_chance\tmonster_magic_to_hit_monster_level_scale\tmonster_magic_to_hit_player_level_scale\tmonster_magic_to_hit_base_bonus\tmonster_magic_distance_penalty\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\thellfire_armor_bonus_against_demons\thellfire_armor_bonus_against_undead\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t55\t6\t7\t45\t8\t10\t7\t9\t11\t13\t17\t19\n");
 
-        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 10, 7, 9, 11, 13, 17, 19), (
+        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 55, 6, 7, 45, 8, 10, 7, 9, 11, 13, 17, 19), (
             rules.MonsterMeleeMinimumHitChance,
             rules.MonsterRangedMinimumHitChance,
             rules.MonsterMinimumHitChanceLevel14,
@@ -67,6 +67,11 @@ public sealed class AuthoritativeCombatRulesTests
             rules.MonsterToHitLevelScale,
             rules.MonsterToHitBaseBonus,
             rules.MonsterRangedDistancePenalty,
+            rules.MonsterMagicMinimumHitChance,
+            rules.MonsterMagicToHitMonsterLevelScale,
+            rules.MonsterMagicToHitPlayerLevelScale,
+            rules.MonsterMagicToHitBaseBonus,
+            rules.MonsterMagicDistancePenalty,
             rules.RandomStealLifeDivisor,
             rules.StealLife3Percent,
             rules.StealLife5Percent,
@@ -105,6 +110,20 @@ public sealed class AuthoritativeCombatRulesTests
                 targetArmorClass: 30,
                 distance: 0,
                 seed: 0));
+        Assert.Equal(
+            55,
+            rules.ResolveMonsterMagicProjectileHitChance(
+                monsterLevel: 3,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                distance: 2));
+        Assert.Equal(
+            70,
+            rules.ResolveMonsterMagicProjectileHitChance(
+                monsterLevel: 0,
+                targetCharacterLevel: 1,
+                targetLevelId: 14,
+                distance: 100));
     }
 
     [Fact]
@@ -180,6 +199,42 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void UsesConfiguredMonsterMagicAccuracyFormulaTerms()
+    {
+        var rules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            monsterMagicMinimumHitChance: 0,
+            monsterMagicToHitMonsterLevelScale: 10,
+            monsterMagicToHitPlayerLevelScale: 3,
+            monsterMagicToHitBaseBonus: 4,
+            monsterMagicDistancePenalty: 5);
+
+        Assert.Equal(
+            21,
+            rules.ResolveMonsterMagicProjectileHitChance(
+                monsterLevel: 3,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                distance: 2));
+        Assert.Equal(
+            0,
+            rules.ResolveMonsterMagicProjectileHitChance(
+                monsterLevel: 0,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                distance: 2));
+        Assert.Equal(
+            20,
+            rules.ResolveMonsterMagicProjectileHitChance(
+                monsterLevel: 0,
+                targetCharacterLevel: 1,
+                targetLevelId: 14,
+                distance: 100));
+    }
+
+    [Fact]
     public void RejectsInvalidDamageBounds()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(1, 2, 0));
@@ -193,6 +248,11 @@ public sealed class AuthoritativeCombatRulesTests
             1,
             100,
             monsterToHitLevelScale: 65));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            monsterMagicToHitBaseBonus: 256));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
             10,
             1,

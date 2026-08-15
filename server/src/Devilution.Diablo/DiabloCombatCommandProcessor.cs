@@ -10485,18 +10485,12 @@ public sealed class DiabloCombatCommandProcessor
         var distance = Math.Max(
             Math.Abs(target.PositionX - monster.PositionX),
             Math.Abs(target.PositionY - monster.PositionY));
-        var minimumHitChance = target.LevelId switch {
-            14 => 20,
-            15 => 25,
-            16 => 30,
-            _ => 10,
-        };
-        var hitChance = Math.Max(
-            minimumHitChance,
-            40 + (2 * monster.MonsterLevel)
-                - (2 * checked((int)target.CharacterLevel))
-                - (2 * distance));
-        if (random.RandomIntLessThan(100) >= Math.Clamp(hitChance, 0, 100))
+        var hitChance = rules.ResolveMonsterMagicProjectileHitChance(
+            monster.MonsterLevel,
+            target.CharacterLevel,
+            target.LevelId,
+            distance);
+        if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
         var targetClass = GetPlayerClass(target);

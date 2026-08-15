@@ -5319,6 +5319,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterMagicProjectileUsesConfiguredHitAdmissionFormula()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Lich",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 0,
+                monsterMagicToHitMonsterLevelScale: 0,
+                monsterMagicToHitPlayerLevelScale: 0,
+                monsterMagicToHitBaseBonus: 0,
+                monsterMagicDistancePenalty: 0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Lich",
+                    "OrangeFlare",
+                    AuthoritativeProjectileBehavior.MonsterMagic),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void BoneDemonAiDefersBlueFlareOutsideItsNativeAvoidanceBand()
     {
         var monster = new AuthoritativeCombatTarget(

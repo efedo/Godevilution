@@ -49,7 +49,12 @@ public sealed class AuthoritativeCombatRules
         int hellfireArmorBonusAgainstDemons = 40,
         int hellfireArmorBonusAgainstUndead = 20,
         int pvpEarNativeItemIndex = 23,
-        int pvpEarMiscId = 44)
+        int pvpEarMiscId = 44,
+        int monsterMagicMinimumHitChance = 10,
+        int monsterMagicToHitMonsterLevelScale = 2,
+        int monsterMagicToHitPlayerLevelScale = 2,
+        int monsterMagicToHitBaseBonus = 40,
+        int monsterMagicDistancePenalty = 2)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -65,6 +70,13 @@ public sealed class AuthoritativeCombatRules
             || monsterToHitBaseBonus is < 0 or > 255
             || monsterRangedDistancePenalty is < 0 or > 64) {
             throw new InvalidDataException("Monster accuracy formula tuning is invalid.");
+        }
+        if (monsterMagicMinimumHitChance is < 0 or > 100
+            || monsterMagicToHitMonsterLevelScale is < 0 or > 64
+            || monsterMagicToHitPlayerLevelScale is < 0 or > 64
+            || monsterMagicToHitBaseBonus is < 0 or > 255
+            || monsterMagicDistancePenalty is < 0 or > 64) {
+            throw new InvalidDataException("Monster magic accuracy formula tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -132,6 +144,11 @@ public sealed class AuthoritativeCombatRules
         StealMana5Percent = stealMana5Percent;
         HellfireArmorBonusAgainstDemons = hellfireArmorBonusAgainstDemons;
         HellfireArmorBonusAgainstUndead = hellfireArmorBonusAgainstUndead;
+        MonsterMagicMinimumHitChance = monsterMagicMinimumHitChance;
+        MonsterMagicToHitMonsterLevelScale = monsterMagicToHitMonsterLevelScale;
+        MonsterMagicToHitPlayerLevelScale = monsterMagicToHitPlayerLevelScale;
+        MonsterMagicToHitBaseBonus = monsterMagicToHitBaseBonus;
+        MonsterMagicDistancePenalty = monsterMagicDistancePenalty;
     }
 
     public int BaseAttackDamage { get; }
@@ -209,6 +226,21 @@ public sealed class AuthoritativeCombatRules
 
     /** Native per-tile accuracy penalty for monster ranged attacks. */
     public int MonsterRangedDistancePenalty { get; }
+
+    /** Native minimum hit chance for ordinary monster magic projectiles. */
+    public int MonsterMagicMinimumHitChance { get; }
+
+    /** Native monster-level multiplier in monster magic projectile accuracy. */
+    public int MonsterMagicToHitMonsterLevelScale { get; }
+
+    /** Native player-level multiplier in monster magic projectile accuracy. */
+    public int MonsterMagicToHitPlayerLevelScale { get; }
+
+    /** Native flat accuracy bonus in monster magic projectile accuracy. */
+    public int MonsterMagicToHitBaseBonus { get; }
+
+    /** Native per-tile accuracy penalty for monster magic projectiles. */
+    public int MonsterMagicDistancePenalty { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -299,7 +331,9 @@ public sealed class AuthoritativeCombatRules
         // DevilutionX's MonsterAttackPlayer computes to-hit as the content
         // baseline plus configured level delta and base bonus, then subtracts
         // player armor. The level-specific floor is the native GetMinHit() rule.
-        var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: false);
+        var minimumHitChance = ResolveMonsterMinimumHitChance(
+            targetLevelId,
+            MonsterMeleeMinimumHitChance);
         var levelDelta = checked(
             MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
@@ -329,7 +363,9 @@ public sealed class AuthoritativeCombatRules
             || distance < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterToHit));
 
-        var minimumHitChance = ResolveMonsterMinimumHitChance(targetLevelId, ranged: true);
+        var minimumHitChance = ResolveMonsterMinimumHitChance(
+            targetLevelId,
+            MonsterRangedMinimumHitChance);
         var levelDelta = checked(
             MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
         var hitChance = Math.Max(
@@ -344,6 +380,27 @@ public sealed class AuthoritativeCombatRules
         return Math.Max(1, baseDamage);
     }
 
+    /** Resolves the native admission chance for a monster-owned magic projectile. */
+    public int ResolveMonsterMagicProjectileHitChance(
+        int monsterLevel,
+        uint targetCharacterLevel,
+        uint targetLevelId,
+        int distance)
+    {
+        if (monsterLevel < 0 || distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(monsterLevel));
+
+        var levelDelta = checked(
+            MonsterMagicToHitMonsterLevelScale * monsterLevel
+            - MonsterMagicToHitPlayerLevelScale * checked((int)targetCharacterLevel));
+        var hitChance = Math.Max(
+            ResolveMonsterMinimumHitChance(targetLevelId, MonsterMagicMinimumHitChance),
+            checked(MonsterMagicToHitBaseBonus
+                + levelDelta
+                - (MonsterMagicDistancePenalty * distance)));
+        return Math.Clamp(hitChance, 0, 100);
+    }
+
     /** Resolves the native hit roll independently from post-armor damage. */
     public bool ResolveAttackHit(int hitChancePercent, uint seed)
     {
@@ -353,13 +410,13 @@ public sealed class AuthoritativeCombatRules
         return hitRoll < hitChancePercent;
     }
 
-    private int ResolveMonsterMinimumHitChance(uint targetLevelId, bool ranged)
+    private int ResolveMonsterMinimumHitChance(uint targetLevelId, int fallback)
     {
         return targetLevelId switch {
             14 => MonsterMinimumHitChanceLevel14,
             15 => MonsterMinimumHitChanceLevel15,
             16 => MonsterMinimumHitChanceLevel16,
-            _ => ranged ? MonsterRangedMinimumHitChance : MonsterMeleeMinimumHitChance,
+            _ => fallback,
         };
     }
 
@@ -463,7 +520,12 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hellfire_armor_bonus_against_demons", 40),
             row.OptionalInt32("hellfire_armor_bonus_against_undead", 20),
             row.OptionalInt32("pvp_ear_native_item_index", 23),
-            row.OptionalInt32("pvp_ear_misc_id", 44));
+            row.OptionalInt32("pvp_ear_misc_id", 44),
+            row.OptionalInt32("monster_magic_minimum_hit_chance", 10),
+            row.OptionalInt32("monster_magic_to_hit_monster_level_scale", 2),
+            row.OptionalInt32("monster_magic_to_hit_player_level_scale", 2),
+            row.OptionalInt32("monster_magic_to_hit_base_bonus", 40),
+            row.OptionalInt32("monster_magic_distance_penalty", 2));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
