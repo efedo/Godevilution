@@ -105,10 +105,6 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "The Gargoyle special lock requires the Gargoyle native AI identity.",
                 nameof(gargoyleSpecialActive));
-        if (fallenFearTicks != 0 && nativeAi != "Fallen")
-            throw new ArgumentException(
-                "Fallen fear requires the Fallen native AI identity.",
-                nameof(fallenFearTicks));
         if (sneakHidden && nativeAi != "Sneak")
             throw new ArgumentException(
                 "Sneak visibility requires the Sneak native AI identity.",
@@ -384,8 +380,6 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartFallenFear(int ticks, int direction)
     {
-        if (NativeAi != "Fallen")
-            throw new InvalidOperationException("Only Fallen monsters can enter fear.");
         if (ticks < 0 || direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         FallenFearTicks = ticks;
@@ -396,8 +390,6 @@ public sealed class AuthoritativeCombatTarget
     {
         if (ticks < 0 || direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(ticks));
-        if (ticks != 0 && NativeAi != "Fallen")
-            throw new InvalidDataException("Only Fallen monsters can restore fear.");
         FallenFearTicks = ticks;
         FallenFearDirection = direction;
     }

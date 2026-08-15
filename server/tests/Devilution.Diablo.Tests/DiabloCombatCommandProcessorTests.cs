@@ -960,7 +960,7 @@ public sealed class DiabloCombatCommandProcessorTests
             2,
             8,
             monsterId: 1,
-            nativeAi: "Fallen",
+            nativeAi: "Zombie",
             monsterLevel: 1,
             deathAnimationTicks: 3);
         var survivor = new AuthoritativeCombatTarget(
@@ -969,7 +969,7 @@ public sealed class DiabloCombatCommandProcessorTests
             2,
             20,
             monsterId: 1,
-            nativeAi: "Fallen",
+            nativeAi: "Zombie",
             monsterLevel: 3,
             aggroRange: 0);
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
@@ -1009,6 +1009,11 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
         Assert.Equal(1, survivor.FallenFearTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(survivor.IsMoving);
+        Assert.Equal(0, survivor.FallenFearTicks);
     }
 
     [Fact]

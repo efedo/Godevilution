@@ -4647,7 +4647,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        if (target.NativeAi != "Fallen" || target.FallenFearTicks == 0)
+        if (target.FallenFearTicks == 0
+            || !GetFallenFearTuning(target).HasValue)
             return false;
 
         var direction = target.FallenFearDirection;

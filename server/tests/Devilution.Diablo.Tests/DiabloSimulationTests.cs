@@ -434,7 +434,7 @@ public sealed class DiabloSimulationTests
                     4,
                     2,
                     20,
-                    nativeAi: "Fallen",
+                    nativeAi: "Zombie",
                     monsterLevel: 3,
                     fallenFearTicks: 5,
                     fallenFearDirection: 7)],
@@ -452,7 +452,7 @@ public sealed class DiabloSimulationTests
                     4,
                     2,
                     20,
-                    nativeAi: "Fallen",
+                    nativeAi: "Zombie",
                     monsterLevel: 3)],
             });
         replacement.RestoreSnapshot(CreatePlayer(), snapshot);
