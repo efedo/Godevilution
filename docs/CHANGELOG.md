@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   player snapshots, protocol, version-1 saves, and canonical state hashes;
   multiplayer quest completion leaves this single-player hero state unchanged.
 
+- Add the server-owned Diablo victory boundary: a defeated Diablo now sets
+  terminal simulation state and emits a typed `VictoryEvent` with the boss
+  identity and single-player hero rank for protocol clients.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a
