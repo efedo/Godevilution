@@ -95,7 +95,10 @@ public sealed class AuthoritativeCombatRules
         int fasterAttackFrameSkipWithFirstFrame = 3,
         int fasterAttackFrameSkipWithoutFirstFrame = 2,
         int fastestAttackFrameSkipWithFirstFrame = 4,
-        int fastestAttackFrameSkipWithoutFirstFrame = 2)
+        int fastestAttackFrameSkipWithoutFirstFrame = 2,
+        int playerMagicHitCharacterLevelScale = 2,
+        int playerMagicMinimumHitChance = 5,
+        int playerMagicMaximumHitChance = 95)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -194,6 +197,12 @@ public sealed class AuthoritativeCombatRules
         }
         if (pvpBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("PvP block level tuning is invalid.");
+        }
+        if (playerMagicHitCharacterLevelScale is < 0 or > 64
+            || playerMagicMinimumHitChance is < 0 or > 100
+            || playerMagicMaximumHitChance is < 0 or > 100
+            || playerMagicMinimumHitChance > playerMagicMaximumHitChance) {
+            throw new InvalidDataException("Player magic accuracy tuning is invalid.");
         }
         if (equipmentFastBlockFrameSkip is < 0 or > 10) {
             throw new InvalidDataException("Equipment FastBlock tuning is invalid.");
@@ -330,6 +339,9 @@ public sealed class AuthoritativeCombatRules
         FasterAttackFrameSkipWithoutFirstFrame = fasterAttackFrameSkipWithoutFirstFrame;
         FastestAttackFrameSkipWithFirstFrame = fastestAttackFrameSkipWithFirstFrame;
         FastestAttackFrameSkipWithoutFirstFrame = fastestAttackFrameSkipWithoutFirstFrame;
+        PlayerMagicHitCharacterLevelScale = playerMagicHitCharacterLevelScale;
+        PlayerMagicMinimumHitChance = playerMagicMinimumHitChance;
+        PlayerMagicMaximumHitChance = playerMagicMaximumHitChance;
     }
 
     public int BaseAttackDamage { get; }
@@ -539,6 +551,15 @@ public sealed class AuthoritativeCombatRules
     public int FasterAttackFrameSkipWithoutFirstFrame { get; }
 
     public int FastestAttackFrameSkipWithoutFirstFrame { get; }
+
+    /** Native character-level penalty in direct player spell magic-hit rolls. */
+    public int PlayerMagicHitCharacterLevelScale { get; }
+
+    /** Native lower bound in direct player spell magic-hit rolls. */
+    public int PlayerMagicMinimumHitChance { get; }
+
+    /** Native upper bound in direct player spell magic-hit rolls. */
+    public int PlayerMagicMaximumHitChance { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -898,7 +919,10 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("faster_attack_frame_skip_with_first_frame", 3),
             row.OptionalInt32("faster_attack_frame_skip_without_first_frame", 2),
             row.OptionalInt32("fastest_attack_frame_skip_with_first_frame", 4),
-            row.OptionalInt32("fastest_attack_frame_skip_without_first_frame", 2));
+            row.OptionalInt32("fastest_attack_frame_skip_without_first_frame", 2),
+            row.OptionalInt32("player_magic_hit_character_level_scale", 2),
+            row.OptionalInt32("player_magic_minimum_hit_chance", 5),
+            row.OptionalInt32("player_magic_maximum_hit_chance", 95));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

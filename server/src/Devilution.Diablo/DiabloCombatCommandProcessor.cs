@@ -10754,9 +10754,9 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - checked((int)target.CharacterLevel * 2),
-            5,
-            95);
+                - checked((int)target.CharacterLevel * rules.PlayerMagicHitCharacterLevelScale),
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance);
         if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
@@ -10772,8 +10772,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
-                + checked((int)target.CharacterLevel * 2)
-                - checked((int)owner.CharacterLevel * 2),
+                + checked((int)target.CharacterLevel * rules.PvpBlockLevelScale)
+                - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
         var damageQ6 = target.Life / 3;
@@ -10871,21 +10871,13 @@ public sealed class DiabloCombatCommandProcessor
             || (!rules.FriendlyFire && owner.FriendlyMode))
             return false;
 
-        var hitCharacterLevelScale = 2;
-        var minimumHitChance = 5;
-        var maximumHitChance = 95;
-        if (spells.TryGet(projectile.SpellId, out var persistentSpell)) {
-            hitCharacterLevelScale = persistentSpell.PersistentProjectileHitCharacterLevelScale;
-            minimumHitChance = persistentSpell.PersistentProjectilePlayerMinimumHitChance;
-            maximumHitChance = persistentSpell.PersistentProjectilePlayerMaximumHitChance;
-        }
         var ownerClass = GetPlayerClass(owner);
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - checked((int)target.CharacterLevel * hitCharacterLevelScale),
-            minimumHitChance,
-            maximumHitChance);
+                - checked((int)target.CharacterLevel * rules.PlayerMagicHitCharacterLevelScale),
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance);
         if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
@@ -10897,8 +10889,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
             + (targetClass?.BaseBlockChance ?? 0)
-            + checked((int)target.CharacterLevel * 2)
-            - checked((int)owner.CharacterLevel * 2),
+            + checked((int)target.CharacterLevel * rules.PvpBlockLevelScale)
+            - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
         var damageQ6 = checked(
@@ -11136,9 +11128,9 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
             + (ownerClass?.BaseMagicToHit ?? 50)
-            - checked((int)target.CharacterLevel * 2),
-            5,
-            95);
+            - checked((int)target.CharacterLevel * rules.PlayerMagicHitCharacterLevelScale),
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance);
         if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
@@ -11150,8 +11142,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
             + (targetClass?.BaseBlockChance ?? 0)
-            + checked((int)target.CharacterLevel * 2)
-            - checked((int)owner.CharacterLevel * 2),
+            + checked((int)target.CharacterLevel * rules.PvpBlockLevelScale)
+            - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
         var damageQ6 = checked(
