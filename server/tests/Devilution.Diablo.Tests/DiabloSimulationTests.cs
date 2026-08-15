@@ -650,6 +650,47 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsRangedAvoidanceMovementCounterState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Magma",
+                    rangedAvoidanceMovementIdleTicks: 10,
+                    rangedAvoidanceMovementMode: 1)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((10, 1), (
+            savedMonster.RangedAvoidanceMovementIdleTicks,
+            savedMonster.RangedAvoidanceMovementMode));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Magma")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((10, 1), (
+            restored.RangedAvoidanceMovementIdleTicks,
+            restored.RangedAvoidanceMovementMode));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsRhinoMoveGoalState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

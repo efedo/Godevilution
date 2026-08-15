@@ -7101,6 +7101,15 @@ public sealed class DiabloCombatCommandProcessor
         bool useRoundWalk,
         int roundWalkTurn = -1)
     {
+        if (!useRoundWalk) {
+            var movementChance = GetRangedAvoidanceMovementChance(monster);
+            var movementRoll = (seed / 100U) % 100U;
+            if (movementRoll >= (uint)movementChance) {
+                monster.AdvanceRangedAvoidanceMovementIdle();
+                return false;
+            }
+        }
+
         (int X, int Y)? movement;
         if (useRoundWalk && roundWalkTurn is 0 or 1) {
             movement = FindNativeStatefulRoundWalkStep(
@@ -7114,11 +7123,33 @@ public sealed class DiabloCombatCommandProcessor
         } else {
             movement = FindNativeRandomWalkStep(monster, player, players, seed);
         }
-        if (!movement.HasValue)
+        if (!movement.HasValue) {
+            if (!useRoundWalk)
+                monster.AdvanceRangedAvoidanceMovementIdle();
             return false;
+        }
 
         monster.BeginMovement(movement.Value.X, movement.Value.Y);
+        monster.RecordRangedAvoidanceMovement(
+            movement.Value.X - monster.PositionX,
+            movement.Value.Y - monster.PositionY);
         return true;
+    }
+
+    /** Native AiRangedAvoidance ordinary movement admission across var2 bands. */
+    private static int GetRangedAvoidanceMovementChance(
+        AuthoritativeCombatTarget monster)
+    {
+        var longIdleChance = 10 * (monster.Intelligence + 5);
+        var movementChance = monster.RangedAvoidanceMovementIdleTicks == -1
+            ? longIdleChance
+            : monster.RangedAvoidanceMovementIdleTicks > 20
+                ? longIdleChance
+                : monster.RangedAvoidanceMovementIdleTicks == 0
+                    && monster.RangedAvoidanceMovementMode is >= 1 and <= 3
+                    ? longIdleChance + 30
+                    : 0;
+        return Math.Min(100, movementChance);
     }
 
     /** Native RoundWalk with persisted goalVar2 mutation. */

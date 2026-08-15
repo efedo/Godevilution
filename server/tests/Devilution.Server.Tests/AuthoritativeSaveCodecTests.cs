@@ -180,6 +180,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsRangedAvoidanceMovementCounterStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Magma",
+                RangedAvoidanceMovementIdleTicks = 10,
+                RangedAvoidanceMovementMode = 1,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((10, 1), (
+            monster.RangedAvoidanceMovementIdleTicks,
+            monster.RangedAvoidanceMovementMode));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsRhinoMoveGoalStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

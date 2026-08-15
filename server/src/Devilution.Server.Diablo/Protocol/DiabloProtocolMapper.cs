@@ -98,6 +98,8 @@ internal static class DiabloProtocolMapper
                 BatMovementMode = monster.BatMovementMode,
                 RangedAvoidanceMoveTicks = monster.RangedAvoidanceMoveTicks,
                 RangedAvoidanceTurn = monster.RangedAvoidanceTurn,
+                RangedAvoidanceMovementIdleTicks = monster.RangedAvoidanceMovementIdleTicks,
+                RangedAvoidanceMovementMode = monster.RangedAvoidanceMovementMode,
                 RhinoMovementTicks = monster.RhinoMovementTicks,
                 RhinoMovementTurn = monster.RhinoMovementTurn,
                 AvoidanceMovementTicks = monster.AvoidanceMovementTicks,
@@ -432,6 +434,12 @@ internal static class DiabloProtocolMapper
                     : -1,
                 RangedAvoidanceTurn = monster.HasRangedAvoidanceTurn
                     ? monster.RangedAvoidanceTurn
+                    : 0,
+                RangedAvoidanceMovementIdleTicks = monster.HasRangedAvoidanceMovementIdleTicks
+                    ? monster.RangedAvoidanceMovementIdleTicks
+                    : -1,
+                RangedAvoidanceMovementMode = monster.HasRangedAvoidanceMovementMode
+                    ? monster.RangedAvoidanceMovementMode
                     : 0,
                 RhinoMovementTicks = monster.HasRhinoMovementTicks
                     ? monster.RhinoMovementTicks

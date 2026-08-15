@@ -127,6 +127,12 @@ public sealed record DiabloMonsterState(
     /** Native AiRangedAvoidance goalVar2 turn state (0 or 1). */
     public int RangedAvoidanceTurn { get; init; }
 
+    /** Native AiRangedAvoidance var2-compatible movement counter. */
+    public int RangedAvoidanceMovementIdleTicks { get; init; } = -1;
+
+    /** Native AiRangedAvoidance var1-compatible movement value. */
+    public int RangedAvoidanceMovementMode { get; init; }
+
     /** Native Rhino goalVar1 movement counter; -1 means the Normal goal. */
     public int RhinoMovementTicks { get; init; } = -1;
 
@@ -441,6 +447,8 @@ public sealed partial class DiabloSimulation
                     BatMovementMode = target.BatMovementMode,
                     RangedAvoidanceMoveTicks = target.RangedAvoidanceMoveTicks,
                     RangedAvoidanceTurn = target.RangedAvoidanceTurn,
+                    RangedAvoidanceMovementIdleTicks = target.RangedAvoidanceMovementIdleTicks,
+                    RangedAvoidanceMovementMode = target.RangedAvoidanceMovementMode,
                     RhinoMovementTicks = target.RhinoMovementTicks,
                     RhinoMovementTurn = target.RhinoMovementTurn,
                     AvoidanceMovementTicks = target.AvoidanceMovementTicks,
@@ -729,6 +737,8 @@ public sealed partial class DiabloSimulation
                 || monster.BatMovementMode is < -1 or > 3
                 || monster.RangedAvoidanceMoveTicks is < -1 or > 255
                 || monster.RangedAvoidanceTurn is < 0 or > 1
+                || monster.RangedAvoidanceMovementIdleTicks is < -1 or > 1024
+                || monster.RangedAvoidanceMovementMode is < -1 or > 3
                 || monster.RhinoMovementTicks is < -1 or > 255
                 || monster.RhinoMovementTurn is < 0 or > 1
                 || monster.AvoidanceMovementTicks is < -1 or > 255
@@ -1596,6 +1606,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreRangedAvoidanceMovement(
                     monster.RangedAvoidanceMoveTicks,
                     monster.RangedAvoidanceTurn);
+                target.RestoreRangedAvoidanceMovementState(
+                    monster.RangedAvoidanceMovementIdleTicks,
+                    monster.RangedAvoidanceMovementMode);
                 target.RestoreRhinoMovement(
                     monster.RhinoMovementTicks,
                     monster.RhinoMovementTurn);
@@ -1664,6 +1677,8 @@ public sealed partial class DiabloSimulation
                     batMovementMode: monster.BatMovementMode,
                     rangedAvoidanceMoveTicks: monster.RangedAvoidanceMoveTicks,
                     rangedAvoidanceTurn: monster.RangedAvoidanceTurn,
+                    rangedAvoidanceMovementIdleTicks: monster.RangedAvoidanceMovementIdleTicks,
+                    rangedAvoidanceMovementMode: monster.RangedAvoidanceMovementMode,
                     rhinoMovementTicks: monster.RhinoMovementTicks,
                     rhinoMovementTurn: monster.RhinoMovementTurn,
                     avoidanceMovementTicks: monster.AvoidanceMovementTicks,
@@ -1688,6 +1703,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreRangedAvoidanceMovement(
                     monster.RangedAvoidanceMoveTicks,
                     monster.RangedAvoidanceTurn);
+                restoredTarget.RestoreRangedAvoidanceMovementState(
+                    monster.RangedAvoidanceMovementIdleTicks,
+                    monster.RangedAvoidanceMovementMode);
                 restoredTarget.RestoreRhinoMovement(
                     monster.RhinoMovementTicks,
                     monster.RhinoMovementTurn);

@@ -66,6 +66,8 @@ public sealed class AuthoritativeCombatTarget
         int batMovementMode = 0,
         int rangedAvoidanceMoveTicks = -1,
         int rangedAvoidanceTurn = 0,
+        int rangedAvoidanceMovementIdleTicks = -1,
+        int rangedAvoidanceMovementMode = 0,
         int rhinoMovementTicks = -1,
         int rhinoMovementTurn = 0,
         int avoidanceMovementTicks = -1,
@@ -111,6 +113,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMoveTicks));
         if (rangedAvoidanceTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceTurn));
+        if (rangedAvoidanceMovementIdleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementIdleTicks));
+        if (rangedAvoidanceMovementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementMode));
         if (rhinoMovementTicks is < -1 or > 255)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementTicks));
         if (rhinoMovementTurn is < 0 or > 1)
@@ -192,6 +198,8 @@ public sealed class AuthoritativeCombatTarget
         BatMovementMode = batMovementMode;
         RangedAvoidanceMoveTicks = rangedAvoidanceMoveTicks;
         RangedAvoidanceTurn = rangedAvoidanceTurn;
+        RangedAvoidanceMovementIdleTicks = rangedAvoidanceMovementIdleTicks;
+        RangedAvoidanceMovementMode = rangedAvoidanceMovementMode;
         RhinoMovementTicks = rhinoMovementTicks;
         RhinoMovementTurn = rhinoMovementTurn;
         AvoidanceMovementTicks = avoidanceMovementTicks;
@@ -334,6 +342,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native AiRangedAvoidance goalVar2 turn state (0 or 1). */
     public int RangedAvoidanceTurn { get; private set; }
+
+    /** Native AiRangedAvoidance var2-compatible movement counter. */
+    public int RangedAvoidanceMovementIdleTicks { get; private set; }
+
+    /** Native AiRangedAvoidance var1-compatible movement value. */
+    public int RangedAvoidanceMovementMode { get; private set; }
 
     /** Native Rhino goalVar1 movement counter; -1 means the Normal goal. */
     public int RhinoMovementTicks { get; private set; }
@@ -624,6 +638,33 @@ public sealed class AuthoritativeCombatTarget
         if (turn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RangedAvoidanceTurn = turn;
+    }
+
+    internal void RecordRangedAvoidanceMovement(int displacementX, int displacementY)
+    {
+        if (displacementX is < -1 or > 1
+            || displacementY is < -1 or > 1
+            || (displacementX == 0 && displacementY == 0)) {
+            throw new ArgumentOutOfRangeException(nameof(displacementX));
+        }
+        RangedAvoidanceMovementMode = displacementX;
+        RangedAvoidanceMovementIdleTicks = displacementY;
+    }
+
+    internal void AdvanceRangedAvoidanceMovementIdle()
+    {
+        if (RangedAvoidanceMovementIdleTicks < 1024)
+            RangedAvoidanceMovementIdleTicks++;
+    }
+
+    internal void RestoreRangedAvoidanceMovementState(int idleTicks, int movementMode)
+    {
+        if (idleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(idleTicks));
+        if (movementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(movementMode));
+        RangedAvoidanceMovementIdleTicks = idleTicks;
+        RangedAvoidanceMovementMode = movementMode;
     }
 
     internal void StartRhinoMovement(int turn)

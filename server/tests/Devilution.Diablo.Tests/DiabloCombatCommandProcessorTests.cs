@@ -7729,6 +7729,128 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesItsNativeFreshMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0,
+            rangedAvoidanceMovementIdleTicks: 0,
+            rangedAvoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 4,944 ^ 9 ^ 7 = 4,958: the ordinary ranged roll fails, while
+        // movement roll 50 is admitted only by the fresh 80% band.
+        processor.AdvanceTick(4_944, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.RangedAvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
+    public void RangedAvoidanceUsesItsNativeLongIdleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0,
+            rangedAvoidanceMovementIdleTicks: 21,
+            rangedAvoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 4,992 ^ 9 ^ 7 = 5,006: the movement roll is exactly 50, outside
+        // the native long-idle 50% band.
+        processor.AdvanceTick(4_992, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(22, monster.RangedAvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
+    public void RangedAvoidanceDefersInsideItsNativeMiddleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0,
+            rangedAvoidanceMovementIdleTicks: 10,
+            rangedAvoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // var2 values 1..20 do not admit ordinary RandomWalk movement.
+        processor.AdvanceTick(4_944, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.RangedAvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
     public void RangedAvoidanceCarriesItsNativeMoveGoalAcrossTicks()
     {
         var monster = new AuthoritativeCombatTarget(
