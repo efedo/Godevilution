@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-14
+Status date: 2026-08-15
 
 ## Current state
 
@@ -23,6 +23,10 @@ Status date: 2026-08-14
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
 
 ## Implemented authoritative systems
+
+- Class Critical Strike now consumes validated per-level chance and damage
+  multiplier metadata from `classes.tsv`; older class schemas retain the native
+  1% per character level and 2× compatibility defaults.
 
 - Monster arrow and snake-charge controllers now dispatch from validated
   missile projectile behavior rather than requiring `GoatRanged`/`Snake`
@@ -342,6 +346,11 @@ Status date: 2026-08-14
   `hellfire_doppelganger_chance_percent` metadata to `combat.tsv`. Active
   Hellfire Peril and Doppelganger now use validated native terms; omitted
   values retain the native 2× and 10% behavior for compatibility callers.
+
+- Schema 1.184 adds optional `critical_strike_chance_per_level_percent`
+  metadata to `classes.tsv`. Active class Critical Strike now uses the
+  validated per-level proc chance; omitted values retain the native 1% per
+  character level behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

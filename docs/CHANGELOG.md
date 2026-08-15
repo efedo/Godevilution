@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.184 optional `classes.tsv`
+  `critical_strike_chance_per_level_percent` metadata. Active class Critical
+  Strike now uses the validated per-level proc chance; omitted values retain
+  the native 1% per character level behavior.
+
 - Add schema 1.183 optional `classes.tsv` `critical_damage_multiplier`
   metadata. Active class Critical Strike now uses the validated multiplier,
   while omitted values retain the native 2× behavior for compatibility callers.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.183.0` schema in
+It declares its identity and `devilution.diablo@1.184.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -31,6 +31,9 @@ scalars. `spell_mana_reduction_percent` and its Hellfire counterpart externalize
 the native class adjustment applied before each spell's minimum mana cost.
 `critical_damage_multiplier` externalizes the native class Critical Strike
 damage multiplier; omitted values retain the native 2× behavior.
+`critical_strike_chance_per_level_percent` externalizes the native Critical
+Strike chance added per character level; omitted values retain the native 1%
+per-level behavior.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -1350,7 +1353,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, and Critical Strike multiplier. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, and Critical Strike chance/multiplier. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1400,7 +1403,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.183.0"
+      "version": "1.184.0"
   },
   "dependencyConstraints": [
     {
@@ -1432,7 +1435,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.183.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.184.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1831,6 +1834,11 @@ Decay now uses the validated decrement and removal threshold; omitted values ret
 Schema 1.179 adds the optional `hellfire_devastation_chance_percent` and
 `hellfire_devastation_damage_multiplier` columns to `combat.tsv`. Active
 Hellfire Devastation now uses the validated proc chance and multiplier; omitted values retain the native 5%/3× behavior for compatibility callers.
+
+Schema 1.184 adds the optional `critical_strike_chance_per_level_percent`
+column to `classes.tsv`. Active class Critical Strike now uses the validated
+per-level proc chance; omitted values retain the native 1% per character level
+behavior.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
