@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.187 optional `combat.tsv` `pvp_block_level_scale` metadata.
+  Player-versus-player block chance now uses the validated level-difference
+  scale, while omitted values retain the native scale of two.
+
 - Add schema 1.186 optional `classes.tsv` natural-resistance and Heavy Hit
   threshold tuning metadata. Active class defense now uses validated per-level
   resistance and threshold bonus percentages, while omitted values retain the

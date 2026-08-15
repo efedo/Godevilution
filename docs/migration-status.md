@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Player-versus-player block chance now consumes validated
+  `pvp_block_level_scale` combat metadata; older combat schemas retain the
+  native level-difference scale of two.
+
 - Class NaturalResistance and HeavyHitThreshold now consume validated
   per-level resistance and threshold-bonus percentages from `classes.tsv`;
   older class schemas retain the native 100% and 25% compatibility defaults.
@@ -368,6 +372,10 @@ Status date: 2026-08-15
   `heavy_hit_threshold_bonus_percent` metadata to `classes.tsv`. Active class
   defense now uses the validated percentages; omitted values retain the native
   100% and 25% behavior.
+
+- Schema 1.187 adds optional `pvp_block_level_scale` metadata to `combat.tsv`.
+  Active player-versus-player block chance now uses the validated scale;
+  omitted values retain the native scale of two.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
