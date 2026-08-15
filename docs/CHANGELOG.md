@@ -164,6 +164,11 @@ All notable changes to this fork are documented below.
   server-owned Skeleton movement boundary when Inferno is outside its validated
   maximum range.
 
+- Preserve Mega's delegated SkeletonAi delay: far-distance delay-band misses
+  now retain the native `15 - 2 * intelligence + GenerateRnd(10)` countdown
+  through the existing Skeleton delay state, snapshots, saves, and canonical
+  hashes.
+
 - Preserve the native Mega intermediate-distance fallback: a missed or
   blocked mapped Inferno admission now consumes the native
   `2 * (5 * intelligence + 25)` RandomWalk band before generic pursuit.

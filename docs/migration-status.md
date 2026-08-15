@@ -338,6 +338,10 @@ Status date: 2026-08-15
   `35 - 4 * intelligence` delay and deterministic `RandomWalk` boundary when
   Inferno is outside its validated maximum range.
 
+- Mega's far-distance SkeletonAi delegation now persists the native
+  `AiDelay(15 - 2 * intelligence + GenerateRnd(10))` countdown through the
+  existing Skeleton delay state, snapshots, saves, and canonical hashes.
+
 - Mega intermediate-distance Inferno misses now consume the native
   `2 * (5 * intelligence + 25)` RandomWalk fallback before generic pursuit;
   clear-lane and blocked-lane outcomes remain server-owned.
