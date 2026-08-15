@@ -186,6 +186,37 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void CreatesSkeletonMeleeSummonsFromCompleteTuningUnderAnAlternateLabel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(5, 1, 1, 4, 4, 2, 2) with {
+                NativeAi = "Fallen",
+                SkeletonMeleeDelayChanceBase = 35,
+                SkeletonMeleeDelayChanceIntelligenceScale = 4,
+                SkeletonMeleeAttackChanceBase = 20,
+                SkeletonMeleeAttackChanceIntelligenceScale = 2,
+            },
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(world, types, generation);
+
+        var summon = planner.CreateSkeletonSummon(
+            levelId: 1,
+            seed: 7,
+            positionX: 2,
+            positionY: 2,
+            entityId: 99);
+
+        Assert.NotNull(summon);
+        Assert.Equal(5U, summon!.MonsterId);
+        Assert.Equal("Fallen", summon.NativeAi);
+    }
+
+    [Fact]
     public void CreatesSummonsFromValidatedNativeMonsterIdentity()
     {
         var world = new AuthoritativeWorld();
