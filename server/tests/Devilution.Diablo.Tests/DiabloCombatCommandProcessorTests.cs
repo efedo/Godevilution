@@ -9683,6 +9683,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ImmolationUsesConfiguredProjectileCount()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateImmolationSpell() with { ImmolationProjectileCount = 7 },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(45, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(45, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(
+            7,
+            world.Projectiles.Values.Count(projectile =>
+                projectile.Behavior == AuthoritativeProjectileBehavior.Fireball));
+    }
+
+    [Fact]
+    public void RadialProjectileCountsRejectValuesOutsideTheSupportedFanOut()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            CreateNovaSpell() with { NovaProjectileCount = 0 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            CreateNovaSpell() with { NovaProjectileCount = 37 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            CreateImmolationSpell() with { ImmolationProjectileCount = 0 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            CreateImmolationSpell() with { ImmolationProjectileCount = 37 },
+        ]));
+    }
+
+    [Fact]
     public void JesterDispatchesThroughTheNativeDeterministicSpellTable()
     {
         var world = new DiabloWorldState();
@@ -10335,6 +10382,37 @@ public sealed class DiabloCombatCommandProcessorTests
             Assert.Equal(controller.Damage, ball.Damage);
             Assert.Equal(254U, ball.RemainingTicks);
         });
+    }
+
+    [Fact]
+    public void NovaControllerUsesConfiguredProjectileCount()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateNovaSpell() with { NovaProjectileCount = 5 },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 5000,
+            manaMaximum: 5000,
+            entityId: 7,
+            characterLevel: 1,
+            memorizedSpells: [new MemorizedSpellState(18, 1)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(18, 0, 14, 10, DiabloCastSourceKind.MemorizedSpell),
+            1).Succeeded);
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(
+            5,
+            world.Projectiles.Values.Count(projectile =>
+                projectile.Behavior == AuthoritativeProjectileBehavior.NovaBall));
     }
 
     [Fact]
