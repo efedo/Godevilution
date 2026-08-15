@@ -5781,6 +5781,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AcidPuddleUsesConfiguredHitAdmissionFormula()
+    {
+        var world = new DiabloWorldState();
+        world.Projectiles.Add(
+            100,
+            new AuthoritativeProjectile(
+                100,
+                9,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                1,
+                AuthoritativeDamageType.Acid,
+                0,
+                10U,
+                allowZeroSpellId: true) {
+                Behavior = AuthoritativeProjectileBehavior.AcidPuddle,
+            });
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterAcidPuddleMinimumHitChance: 0,
+                monsterAcidPuddleBaseHitChance: 0));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 1,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void AcidAiDefersItsProjectileOutsideTheNativeHalfRateAvoidanceBand()
     {
         var monster = new AuthoritativeCombatTarget(

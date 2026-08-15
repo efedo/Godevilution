@@ -55,7 +55,9 @@ public sealed class AuthoritativeCombatRules
         int monsterMagicToHitPlayerLevelScale = 2,
         int monsterMagicToHitBaseBonus = 40,
         int monsterMagicDistancePenalty = 2,
-        int monsterChargeBaseToHit = 500)
+        int monsterChargeBaseToHit = 500,
+        int monsterAcidPuddleMinimumHitChance = 10,
+        int monsterAcidPuddleBaseHitChance = 40)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -81,6 +83,10 @@ public sealed class AuthoritativeCombatRules
         }
         if (monsterChargeBaseToHit is < 0 or > 1000) {
             throw new InvalidDataException("Monster charge accuracy tuning is invalid.");
+        }
+        if (monsterAcidPuddleMinimumHitChance is < 0 or > 100
+            || monsterAcidPuddleBaseHitChance is < 0 or > 100) {
+            throw new InvalidDataException("Acid puddle accuracy tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -154,6 +160,8 @@ public sealed class AuthoritativeCombatRules
         MonsterMagicToHitBaseBonus = monsterMagicToHitBaseBonus;
         MonsterMagicDistancePenalty = monsterMagicDistancePenalty;
         MonsterChargeBaseToHit = monsterChargeBaseToHit;
+        MonsterAcidPuddleMinimumHitChance = monsterAcidPuddleMinimumHitChance;
+        MonsterAcidPuddleBaseHitChance = monsterAcidPuddleBaseHitChance;
     }
 
     public int BaseAttackDamage { get; }
@@ -249,6 +257,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Native base to-hit value passed to a monster Snake charge attack. */
     public int MonsterChargeBaseToHit { get; }
+
+    /** Native minimum hit chance for persistent Acid Puddle damage. */
+    public int MonsterAcidPuddleMinimumHitChance { get; }
+
+    /** Native fixed hit chance used by persistent Acid Puddle damage. */
+    public int MonsterAcidPuddleBaseHitChance { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -430,6 +444,19 @@ public sealed class AuthoritativeCombatRules
         return Math.Clamp(hitChance, 0, 100);
     }
 
+    /** Resolves the native persistent Acid Puddle player-hit admission chance. */
+    public int ResolveMonsterAcidPuddleHitChance(uint targetLevelId)
+    {
+        return Math.Clamp(
+            Math.Max(
+                ResolveMonsterMinimumHitChance(
+                    targetLevelId,
+                    MonsterAcidPuddleMinimumHitChance),
+                MonsterAcidPuddleBaseHitChance),
+            0,
+            100);
+    }
+
     /** Resolves the native hit roll independently from post-armor damage. */
     public bool ResolveAttackHit(int hitChancePercent, uint seed)
     {
@@ -555,7 +582,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_magic_to_hit_player_level_scale", 2),
             row.OptionalInt32("monster_magic_to_hit_base_bonus", 40),
             row.OptionalInt32("monster_magic_distance_penalty", 2),
-            row.OptionalInt32("monster_charge_base_to_hit", 500));
+            row.OptionalInt32("monster_charge_base_to_hit", 500),
+            row.OptionalInt32("monster_acid_puddle_minimum_hit_chance", 10),
+            row.OptionalInt32("monster_acid_puddle_base_hit_chance", 40));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

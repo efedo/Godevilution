@@ -10557,14 +10557,8 @@ public sealed class DiabloCombatCommandProcessor
         if (IsPlayerProtectedByFlash(target))
             return false;
 
-        var minimumHitChance = target.LevelId switch {
-            14 => 20,
-            15 => 25,
-            16 => 30,
-            _ => 10,
-        };
         if (random.RandomIntLessThan(100)
-            >= Math.Clamp(Math.Max(minimumHitChance, 40), 0, 100))
+            >= rules.ResolveMonsterAcidPuddleHitChance(target.LevelId))
             return false;
 
         var targetClass = GetPlayerClass(target);
