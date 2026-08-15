@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
 
+- Restore the native `AiAvoidance` far-distance GoatMelee RoundWalk branch:
+  validated movement admissions now use a deterministic lateral turn order for
+  one-in-four rolls at distance four or greater before bounded navigation.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.

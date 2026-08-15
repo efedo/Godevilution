@@ -198,7 +198,9 @@ Status date: 2026-08-15
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.
   A standalone complete wounded-special tuple now composes the native 23/2
-  attack-band defaults instead of being ignored.
+  attack-band defaults instead of being ignored. Far-distance movement also
+  preserves the native one-in-four RoundWalk branch through deterministic
+  lateral turn order before bounded navigation.
 
 - SkeletonMelee movement-delay and adjacent attack admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
@@ -809,7 +811,9 @@ Status date: 2026-08-15
 - Native SkeletonRanged now has a server-owned four-tile retreat boundary and
   ranged-only idle path; generic melee is no longer admitted for validated bows.
 - Native GoatMelee non-adjacent movement now uses a server-owned
-  `28 + 2 * intelligence` avoidance admission before shared melee resolution.
+  `28 + 2 * intelligence` avoidance admission before shared melee resolution;
+  distance-four-or-greater admissions retain the native one-in-four
+  RoundWalk branch through deterministic lateral movement.
 - Native Fat/Overlord non-adjacent movement now uses a server-owned
   `20 + 4 * intelligence` admission before shared melee resolution.
 - Native Stone Curse now retains a defeated petrified target through its
