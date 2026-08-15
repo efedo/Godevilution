@@ -189,6 +189,18 @@ public sealed record AuthoritativeSpellDefinition(
     /** Inclusive upper bound for Firebolt's native magic-hit roll. */
     public int FireboltMaximumHitChance { get; init; } = 95;
 
+    /** Monster-level penalty applied by Bone Spirit's native magic-hit roll. */
+    public int BoneSpiritHitMonsterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for Bone Spirit's native magic-hit roll. */
+    public int BoneSpiritMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for Bone Spirit's native magic-hit roll. */
+    public int BoneSpiritMaximumHitChance { get; init; } = 95;
+
+    /** Divisor applied to a monster's current life when Bone Spirit hits. */
+    public int BoneSpiritDamageHitPointsDivisor { get; init; } = 3;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -596,6 +608,10 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.FireboltHitMonsterLevelScale < 0
                 || definition.FireboltMinimumHitChance is < 0 or > 100
                 || definition.FireboltMaximumHitChance is < 0 or > 100
+                || definition.BoneSpiritHitMonsterLevelScale < 0
+                || definition.BoneSpiritMinimumHitChance is < 0 or > 100
+                || definition.BoneSpiritMaximumHitChance is < 0 or > 100
+                || definition.BoneSpiritDamageHitPointsDivisor <= 0
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -720,7 +736,9 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.DamageType != AuthoritativeDamageType.Magic
                     || definition.ResistantDamageDivisor != 4
                     || definition.ProjectileImpactLifetime != 7
-                    || definition.SelfDamage != 6)) {
+                    || definition.SelfDamage != 6
+                    || definition.BoneSpiritMaximumHitChance
+                        < definition.BoneSpiritMinimumHitChance)) {
                 throw new InvalidDataException(
                     "Bone Spirit behavior requires the native homing magic projectile and self-damage tuning.");
             }
@@ -1408,6 +1426,14 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Firebolt hit tuning columns require Firebolt projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.BoneSpirit
+                && (definition.BoneSpiritHitMonsterLevelScale != 2
+                    || definition.BoneSpiritMinimumHitChance != 5
+                    || definition.BoneSpiritMaximumHitChance != 95
+                    || definition.BoneSpiritDamageHitPointsDivisor != 3)) {
+                throw new InvalidDataException(
+                    "Bone Spirit hit tuning columns require BoneSpirit projectile behavior.");
+            }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
@@ -1935,6 +1961,18 @@ public sealed class AuthoritativeSpellCatalog
             FireboltMaximumHitChance = row.OptionalInt32(
                 "firebolt_maximum_hit_chance",
                 95),
+            BoneSpiritHitMonsterLevelScale = row.OptionalInt32(
+                "bone_spirit_hit_monster_level_scale",
+                2),
+            BoneSpiritMinimumHitChance = row.OptionalInt32(
+                "bone_spirit_minimum_hit_chance",
+                5),
+            BoneSpiritMaximumHitChance = row.OptionalInt32(
+                "bone_spirit_maximum_hit_chance",
+                95),
+            BoneSpiritDamageHitPointsDivisor = row.OptionalInt32(
+                "bone_spirit_damage_hit_points_divisor",
+                3),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),

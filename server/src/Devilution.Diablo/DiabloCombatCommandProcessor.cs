@@ -10704,17 +10704,28 @@ public sealed class DiabloCombatCommandProcessor
         if (owner is null)
             return false;
 
+        var hitMonsterLevelScale = 2;
+        var minimumHitChance = 5;
+        var maximumHitChance = 95;
+        var damageHitPointsDivisor = 3;
+        if (spells.TryGet(projectile.SpellId, out var boneSpiritSpell)
+            && boneSpiritSpell.ProjectileBehavior == AuthoritativeProjectileBehavior.BoneSpirit) {
+            hitMonsterLevelScale = boneSpiritSpell.BoneSpiritHitMonsterLevelScale;
+            minimumHitChance = boneSpiritSpell.BoneSpiritMinimumHitChance;
+            maximumHitChance = boneSpiritSpell.BoneSpiritMaximumHitChance;
+            damageHitPointsDivisor = boneSpiritSpell.BoneSpiritDamageHitPointsDivisor;
+        }
         var ownerClass = GetPlayerClass(owner);
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - target.MonsterLevel * 2,
-            5,
-            95);
+                - target.MonsterLevel * hitMonsterLevelScale,
+            minimumHitChance,
+            maximumHitChance);
         if (!target.IsPetrified && random.RandomIntLessThan(100) >= hitChance)
             return false;
 
-        var damageQ6 = target.HitPointsQ6 / 3 / DiabloFixedPointQ6.Scale
+        var damageQ6 = target.HitPointsQ6 / damageHitPointsDivisor / DiabloFixedPointQ6.Scale
             * DiabloFixedPointQ6.Scale;
         if (resistance > 0)
             damageQ6 /= projectile.ResistantDamageDivisor;
