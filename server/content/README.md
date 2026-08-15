@@ -163,9 +163,12 @@ The optional `bat_attack_chance_base` and
 attack admission band. Legacy monster rows retain the native base-eight,
 intelligence-scale-four compatibility values. A complete positive tuple selects
 the behavior regardless of the row's `native_ai` label; rows without migrated
-tuning retain the native-name compatibility path. Persisted retreat ticks and
-direction are likewise accepted and advanced for any validated label carrying
-the complete tuple.
+tuning retain the native-name compatibility path. The optional
+`bat_retreat_duration_ticks` column may be supplied independently; when it is
+present without the attack pair, the runtime composes the native 8/4 attack
+defaults and applies the configured retreat duration. Persisted retreat ticks
+and direction are likewise accepted and advanced for any validated label
+carrying migrated Bat tuning.
 The optional `goat_melee_special_health_threshold_percent` and
 `goat_melee_special_chance_group_period` columns externalize the GoatMelee
 wounded-special health threshold and deterministic random-group period.

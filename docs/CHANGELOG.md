@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Honor standalone validated Bat retreat-duration tuning by composing omitted
+  attack-band terms from the native 8/4 defaults.
+
 - Honor standalone validated GoatMelee wounded-special tuning by composing
   omitted attack-band terms from the native 23/2 defaults.
 
