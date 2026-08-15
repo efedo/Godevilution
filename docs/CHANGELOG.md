@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore native Zombie intermediate-range movement: successful action rolls
+  at distances outside melee but below the long-range pursuit boundary now use
+  a deterministic server-owned random walk instead of idling.
+
 - Fix partial external Gargoyle healing tuning to retain the native random
   divisor offset of 4 when `gargoyle_heal_divisor_random_offset` is omitted,
   avoiding a zero-divisor path.

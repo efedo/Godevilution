@@ -283,6 +283,9 @@ The optional `zombie_movement_distance_minimum`,
 long-range movement threshold. Legacy monster rows retain the native minimum-
 two, base-four, intelligence-scale-two compatibility values. A complete
 positive tuple selects the behavior regardless of the row's `native_ai` label.
+When an action roll succeeds outside melee but below this threshold, the
+server performs the native intermediate-range random walk before returning to
+the normal adjacent attack path.
 The optional `skeleton_king_summon_minimum_distance`,
 `skeleton_king_summon_chance_base`, and
 `skeleton_king_summon_chance_intelligence_scale` columns externalize the
