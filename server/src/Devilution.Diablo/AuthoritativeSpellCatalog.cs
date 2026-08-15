@@ -873,7 +873,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ResistantDamageDivisor != 4
                     || definition.ImmolationControllerLifetime != 1
                     || definition.ImmolationSearchRadius != 4
-                    || definition.ImmolationProjectileCount != 36)) {
+                    || definition.ImmolationProjectileCount is < 1 or > 36)) {
                 throw new InvalidDataException(
                     "Immolation behavior requires the native moving fire-burst tuning.");
             }
@@ -973,7 +973,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ResistantDamageDivisor != 4
                     || definition.NovaControllerLifetime != 1
                     || definition.NovaSearchRadius != 4
-                    || definition.NovaProjectileCount != 36
+                    || definition.NovaProjectileCount is < 1 or > 36
                     || definition.RandomDamageRange != 6
                     || definition.RandomDamageIterationsBonus != 5
                     || definition.CharacterLevelDamageDivisor != 1

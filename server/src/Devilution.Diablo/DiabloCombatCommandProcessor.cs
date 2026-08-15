@@ -9394,29 +9394,18 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var quarterRadius = new List<(int X, int Y)>();
-        for (var y = 0; y <= spell.NovaSearchRadius; y++)
-            quarterRadius.Add((spell.NovaSearchRadius, y));
-        for (var x = spell.NovaSearchRadius - 1; x >= 0; x--)
-            quarterRadius.Add((x, spell.NovaSearchRadius));
-        foreach (var quarter in quarterRadius) {
-            var offsets = new[] {
-                quarter,
-                (-quarter.X, -quarter.Y),
-                (-quarter.X, quarter.Y),
-                (quarter.X, -quarter.Y),
-            };
-            foreach (var offset in offsets) {
-                var entityId = AllocateProjectileEntityId();
-                world.Projectiles.Add(
+        foreach (var offset in CreateRadialProjectileOffsets(
+                     spell.NovaSearchRadius,
+                     spell.NovaProjectileCount)) {
+            var entityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                entityId,
+                CreateNovaBall(
                     entityId,
-                    CreateNovaBall(
-                        entityId,
-                        controller,
-                        spell,
-                        checked(controller.PositionX + offset.Item1),
-                        checked(controller.PositionY + offset.Item2)));
-            }
+                    controller,
+                    spell,
+                    checked(controller.PositionX + offset.X),
+                    checked(controller.PositionY + offset.Y)));
         }
         world.Projectiles.Remove(controller.EntityId);
     }
@@ -9430,29 +9419,18 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var quarterRadius = new List<(int X, int Y)>();
-        for (var y = 0; y <= spell.ImmolationSearchRadius; y++)
-            quarterRadius.Add((spell.ImmolationSearchRadius, y));
-        for (var x = spell.ImmolationSearchRadius - 1; x >= 0; x--)
-            quarterRadius.Add((x, spell.ImmolationSearchRadius));
-        foreach (var quarter in quarterRadius) {
-            var offsets = new[] {
-                quarter,
-                (-quarter.X, -quarter.Y),
-                (-quarter.X, quarter.Y),
-                (quarter.X, -quarter.Y),
-            };
-            foreach (var offset in offsets) {
-                var entityId = AllocateProjectileEntityId();
-                world.Projectiles.Add(
+        foreach (var offset in CreateRadialProjectileOffsets(
+                     spell.ImmolationSearchRadius,
+                     spell.ImmolationProjectileCount)) {
+            var entityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                entityId,
+                CreateImmolationBall(
                     entityId,
-                    CreateImmolationBall(
-                        entityId,
-                        controller,
-                        spell,
-                        checked(controller.PositionX + offset.Item1),
-                        checked(controller.PositionY + offset.Item2)));
-            }
+                    controller,
+                    spell,
+                    checked(controller.PositionX + offset.X),
+                    checked(controller.PositionY + offset.Y)));
         }
 
         if (controller.RemainingTicks == 0) {
@@ -9473,6 +9451,41 @@ public sealed class DiabloCombatCommandProcessor
                 controller.PositionX,
                 controller.PositionY))
             world.Projectiles.Remove(controller.EntityId);
+    }
+
+    /** Enumerates the native radial fan-out order, capped by validated content. */
+    private static IReadOnlyList<(int X, int Y)> CreateRadialProjectileOffsets(
+        int radius,
+        int projectileCount)
+    {
+        var offsets = new List<(int X, int Y)>(projectileCount);
+        for (var y = 0; y <= radius && offsets.Count < projectileCount; y++) {
+            AddRadialProjectileOffsets(offsets, radius, y, projectileCount);
+        }
+        for (var x = radius - 1; x >= 0 && offsets.Count < projectileCount; x--) {
+            AddRadialProjectileOffsets(offsets, x, radius, projectileCount);
+        }
+        return offsets;
+    }
+
+    private static void AddRadialProjectileOffsets(
+        ICollection<(int X, int Y)> offsets,
+        int x,
+        int y,
+        int projectileCount)
+    {
+        var quarter = (X: x, Y: y);
+        var candidates = new[] {
+            quarter,
+            (-quarter.X, -quarter.Y),
+            (-quarter.X, quarter.Y),
+            (quarter.X, -quarter.Y),
+        };
+        foreach (var offset in candidates) {
+            if (offsets.Count >= projectileCount)
+                return;
+            offsets.Add(offset);
+        }
     }
 
     private void AdvanceApocalypseController(
