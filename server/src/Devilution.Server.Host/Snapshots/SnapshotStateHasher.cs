@@ -404,6 +404,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-counselor-delay-v1");
                     hasher.AppendInt32(monster.CounselorDelayTicks);
                 }
+                if (monster.AvoidanceDelayTicks != 0) {
+                    hasher.AppendString("godevilution-monster-avoidance-delay-v1");
+                    hasher.AppendInt32(monster.AvoidanceDelayTicks);
+                }
                 if (monster.CounselorRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-counselor-retreat-v1");
                     hasher.AppendInt32(monster.CounselorRetreatTicks);

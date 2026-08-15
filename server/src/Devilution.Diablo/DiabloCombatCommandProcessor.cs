@@ -4881,6 +4881,8 @@ public sealed class DiabloCombatCommandProcessor
         var goatTuning = GetGoatMeleeMovementTuning(monster);
         if (!goatTuning.HasValue || distance <= 1)
             return false;
+        if (monster.AdvanceAvoidanceDelay())
+            return true;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (TryAdvanceAiAvoidanceMoveGoal(
@@ -6136,6 +6138,8 @@ public sealed class DiabloCombatCommandProcessor
         var gargoyleTuning = GetGargoyleTuning(monster);
         if (!gargoyleTuning.HasValue)
             return false;
+        if (monster.AdvanceAvoidanceDelay())
+            return true;
 
         var safeDistance = gargoyleTuning.Value.DistanceBase
             + (gargoyleTuning.Value.IntelligenceScale * monster.Intelligence);
@@ -6515,6 +6519,9 @@ public sealed class DiabloCombatCommandProcessor
             monster.RecordAvoidanceMovement(
                 roundWalk.Value.X - monster.PositionX,
                 roundWalk.Value.Y - monster.PositionY);
+        } else {
+            monster.StartAvoidanceDelay(
+                10 + (int)((seed / 200U) % 10U));
         }
         return true;
     }

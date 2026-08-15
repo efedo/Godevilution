@@ -9275,7 +9275,15 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "GoatMelee",
             intelligence: 0);
         var world = new DiabloWorldState(
-            fallbackBlockedCells: [205, 206, 245, 247, 285, 286, 287],
+            objects: [
+                new AuthoritativeWorldObject(1001, 1, 0, 5, 5),
+                new AuthoritativeWorldObject(1002, 2, 0, 6, 5),
+                new AuthoritativeWorldObject(1003, 3, 0, 7, 5),
+                new AuthoritativeWorldObject(1004, 4, 0, 5, 6),
+                new AuthoritativeWorldObject(1005, 5, 0, 7, 6),
+                new AuthoritativeWorldObject(1006, 6, 0, 5, 7),
+                new AuthoritativeWorldObject(1007, 7, 0, 6, 7),
+                new AuthoritativeWorldObject(1008, 8, 0, 7, 7)],
             combatTargets: [monster]);
         var processor = CreateProcessor(world);
         var player = CreatePlayer(
@@ -9291,6 +9299,12 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.False(monster.IsMoving);
         Assert.Equal((6, 6), (monster.PositionX, monster.PositionY));
+        Assert.Equal(10, monster.AvoidanceDelayTicks);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(9, monster.AvoidanceDelayTicks);
+        Assert.False(monster.IsMoving);
     }
 
     [Fact]

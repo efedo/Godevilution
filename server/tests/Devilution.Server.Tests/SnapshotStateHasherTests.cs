@@ -1093,6 +1093,27 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void AvoidanceDelayStateExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var second = first.Clone();
+        second.Monsters[0].AvoidanceDelayTicks = 7;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
     public void CounselorRetreatStateExtendsTheStateHash()
     {
         var first = new Snapshot {
