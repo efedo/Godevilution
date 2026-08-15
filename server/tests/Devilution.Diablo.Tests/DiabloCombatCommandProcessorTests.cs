@@ -4534,6 +4534,11 @@ public sealed class DiabloCombatCommandProcessorTests
                 false) {
                 NativeAi = "SkeletonRanged",
                 AggroRange = 8,
+                SkeletonRangedRetreatMinimumDistance = 4,
+                SkeletonRangedRetreatChanceBase = 1,
+                SkeletonRangedRetreatChanceIntelligenceScale = 1,
+                SkeletonRangedAttackChanceBase = 100,
+                SkeletonRangedAttackChanceIntelligenceScale = 1,
             },
         ]);
         var world = new DiabloWorldState(combatTargets: [monster]);

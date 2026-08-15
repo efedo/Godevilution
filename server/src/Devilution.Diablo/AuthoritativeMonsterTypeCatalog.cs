@@ -245,6 +245,66 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 
     /** Native Rhino charge chance increase per intelligence point. */
     public int RhinoChargeChanceIntelligenceScale { get; init; }
+
+    /** True when any complete migrated AI controller tuple is present. */
+    public bool HasCompleteAiTuning
+        => FallenFearRadius > 0
+            && FallenFearLevelOffset > 0
+            && FallenFearMinimumTicks > 0
+            || SneakDistanceBase > 0
+            && SneakDistanceIntelligenceScale > 0
+            && SneakRetreatReleaseDistance > 0
+            && SneakRetreatTicks > 0
+            || BatAttackChanceBase > 0
+            && BatAttackChanceIntelligenceScale > 0
+            || SkeletonMeleeDelayChanceBase > 0
+            && SkeletonMeleeDelayChanceIntelligenceScale > 0
+            || SkeletonMeleeAttackChanceBase > 0
+            && SkeletonMeleeAttackChanceIntelligenceScale > 0
+            || GoatMeleeMovementChanceBase > 0
+            && GoatMeleeMovementChanceIntelligenceScale > 0
+            || GoatMeleeAttackChanceBase > 0
+            && GoatMeleeAttackChanceIntelligenceScale > 0
+            || GoatMeleeSpecialHealthThresholdPercent > 0
+            && GoatMeleeSpecialChanceGroupPeriod > 0
+            || FatMovementChanceBase > 0
+            && FatMovementChanceIntelligenceScale > 0
+            || FatAttackChanceBase > 0
+            && FatAttackChanceIntelligenceScale > 0
+            && FatSpecialChanceBase > 0
+            && FatSpecialChanceIntelligenceScale > 0
+            || ZombieActionChanceBase > 0
+            && ZombieActionChanceIntelligenceScale > 0
+            || ZombieRandomDirectionChanceBase > 0
+            && ZombieRandomDirectionChanceIntelligenceScale > 0
+            || ZombieMovementDistanceMinimum > 0
+            && ZombieMovementDistanceBase > 0
+            && ZombieMovementDistanceIntelligenceScale > 0
+            || SkeletonKingSummonMinimumDistance > 0
+            && SkeletonKingSummonChanceBase > 0
+            && SkeletonKingSummonChanceIntelligenceScale > 0
+            || HorkDemonAttackChanceBase > 0
+            && HorkDemonAttackChanceIntelligenceScale > 0
+            && HorkDemonSpawnMinimumDistance > 0
+            && HorkDemonSpawnChanceBase > 0
+            && HorkDemonSpawnChanceIntelligenceScale > 0
+            && HorkDemonMovementChanceBase > 0
+            && HorkDemonMovementChanceIntelligenceScale > 0
+            || GargoyleSafeDistanceBase > 0
+            && GargoyleSafeDistanceIntelligenceScale > 0
+            || ScavengerHealingDurationTicks > 0
+            && ScavengerCorpseSearchRadius > 0
+            && ScavengerHellfireHealingDivisor > 0
+            && ScavengerBaseHealingAmount > 0
+            && ScavengerBaseHealingTargetPercent > 0
+            || SkeletonRangedRetreatMinimumDistance > 0
+            && SkeletonRangedRetreatChanceBase > 0
+            && SkeletonRangedRetreatChanceIntelligenceScale > 0
+            && SkeletonRangedAttackChanceBase > 0
+            && SkeletonRangedAttackChanceIntelligenceScale > 0
+            || RhinoChargeMinimumDistance > 0
+            && RhinoChargeChanceBase > 0
+            && RhinoChargeChanceIntelligenceScale > 0;
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */

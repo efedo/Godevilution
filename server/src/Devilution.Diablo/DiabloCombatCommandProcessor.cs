@@ -4740,7 +4740,9 @@ public sealed class DiabloCombatCommandProcessor
     private bool UsesNativeAi(AuthoritativeCombatTarget monster, string nativeAi)
     {
         if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
-            return definition.NativeAi == nativeAi;
+            return monster.NativeAi == nativeAi
+                || !definition.HasCompleteAiTuning
+                    && definition.NativeAi == nativeAi;
         return monster.NativeAi == nativeAi;
     }
 
@@ -4962,7 +4964,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.HorkDemonMovementChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "HorkDemon"
+        return UsesNativeAi(target, "HorkDemon")
             ? (28, 2, 3, 43, 2, 33, 2)
             : null;
     }
@@ -5108,7 +5110,7 @@ public sealed class DiabloCombatCommandProcessor
                         : 50);
             }
         }
-        return target.NativeAi == "Scavenger"
+        return UsesNativeAi(target, "Scavenger")
             ? (10, 4, 8, 1, 75, 50)
             : null;
     }
@@ -5202,7 +5204,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SneakRetreatTicks);
             }
         }
-        return target.NativeAi == "Sneak"
+        return UsesNativeAi(target, "Sneak")
             ? (5, 1, 3, 9)
             : null;
     }
@@ -5224,7 +5226,7 @@ public sealed class DiabloCombatCommandProcessor
                         : 2);
             }
         }
-        return target.NativeAi == "Bat"
+        return UsesNativeAi(target, "Bat")
             ? (8, 4, 2)
             : null;
     }
@@ -5272,7 +5274,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.GoatMeleeMovementChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "GoatMelee"
+        return UsesNativeAi(target, "GoatMelee")
             ? (28, 2)
             : null;
     }
@@ -5298,7 +5300,7 @@ public sealed class DiabloCombatCommandProcessor
                         : 2);
             }
         }
-        return target.NativeAi == "GoatMelee"
+        return UsesNativeAi(target, "GoatMelee")
             ? (23, 2, 50, 2)
             : null;
     }
@@ -5314,7 +5316,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.FatMovementChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Fat"
+        return UsesNativeAi(target, "Fat")
             ? (20, 4)
             : null;
     }
@@ -5338,7 +5340,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.FatSpecialChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Fat"
+        return UsesNativeAi(target, "Fat")
             ? (20, 4, 15, 4)
             : null;
     }
@@ -5354,7 +5356,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.ZombieActionChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Zombie"
+        return UsesNativeAi(target, "Zombie")
             ? (10, 2)
             : null;
     }
@@ -5372,7 +5374,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.ZombieMovementDistanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Zombie"
+        return UsesNativeAi(target, "Zombie")
             ? (2, 4, 2)
             : null;
     }
@@ -5388,7 +5390,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.ZombieRandomDirectionChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Zombie"
+        return UsesNativeAi(target, "Zombie")
             ? (20, 2)
             : null;
     }
@@ -5464,7 +5466,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonKingSummonChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "SkeletonKing"
+        return UsesNativeAi(target, "SkeletonKing")
             ? (3, 35, 4)
             : null;
     }
@@ -5641,7 +5643,7 @@ public sealed class DiabloCombatCommandProcessor
                         : 4);
             }
         }
-        return target.NativeAi == "Gargoyle"
+        return UsesNativeAi(target, "Gargoyle")
             ? (2, 1, 50, 16, 5, 4)
             : null;
     }
@@ -6285,7 +6287,8 @@ public sealed class DiabloCombatCommandProcessor
                     != AuthoritativeProjectileBehavior.BloodStar)
                 return false;
             missile = mappedMissile;
-        } else if (monster.NativeAi is not ("Succubus" or "LazarusSuccubus")) {
+        } else if (!UsesNativeAi(monster, "Succubus")
+            && !UsesNativeAi(monster, "LazarusSuccubus")) {
             return false;
         }
 
@@ -6525,7 +6528,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonRangedAttackChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "SkeletonRanged"
+        return UsesNativeAi(target, "SkeletonRanged")
             ? (4, 13, 2, 3, 2)
             : null;
     }
@@ -6650,7 +6653,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.RhinoChargeChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "Rhino"
+        return UsesNativeAi(target, "Rhino")
             ? (5, 43, 2)
             : null;
     }
@@ -11959,7 +11962,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.FallenFearMinimumTicks);
             }
         }
-        return target.NativeAi == "Fallen"
+        return UsesNativeAi(target, "Fallen")
             ? (4, 8, 2)
             : null;
     }
