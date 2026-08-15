@@ -7252,6 +7252,40 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfirePerilUsesConfiguredDamageMultiplier()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire,
+                hellfirePerilDamageMultiplier: 3));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusGetHit = -2,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(4480, target.HitPointsQ6);
+        Assert.Equal(5888, player.Life);
+        Assert.Equal(1920, result.Events[1].AmountQ6);
+    }
+
+    [Fact]
     public void HellfirePerilUsesManaShieldForItsSelfDamage()
     {
         var manaShield = new AuthoritativeSpellDefinition(13, 13, 0, 0, 0, 0) {
@@ -7397,6 +7431,40 @@ public sealed class DiabloCombatCommandProcessorTests
             Assert.True(result.Succeeded);
             Assert.Equal(0U, random.State);
         }
+    }
+
+    [Fact]
+    public void HellfireDoppelgangerUsesConfiguredProcChance()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire,
+                hellfireDoppelgangerChancePercent: 0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(90, target.HitPoints);
+        Assert.Single(world.CombatTargets);
+        Assert.Equal(1U, random.State);
     }
 
     [Fact]

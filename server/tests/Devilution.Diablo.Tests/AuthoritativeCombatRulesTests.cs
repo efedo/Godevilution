@@ -399,6 +399,19 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredHellfirePerilAndDoppelgangerTuning()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_peril_damage_multiplier\thellfire_doppelganger_chance_percent\n"
+            + "10\t1\t100\t3\t27\n");
+
+        Assert.Equal((3, 27), (
+            rules.HellfirePerilDamageMultiplier,
+            rules.HellfireDoppelgangerChancePercent));
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -583,6 +596,22 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 hellfireJestersExpansionMultiplier: 0));
+    }
+
+    [Fact]
+    public void RejectsInvalidHellfirePerilAndDoppelgangerTuning()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_peril_damage_multiplier\n"
+                + "10\t1\t100\t0\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hellfireDoppelgangerChancePercent: 101));
     }
 
     [Fact]
