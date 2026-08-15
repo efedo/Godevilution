@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use existing validated `projectile_speed` metadata for MonsterArrow travel;
+  legacy rows retain the native speed-one fallback.
+
 - Add schema 1.208 optional mapped monster projectile impact lifetime to
   `monster_missiles.tsv`; monster arrows, charges, magic missiles, and Hork
   Spawn now use validated impact timing, retaining the native one-tick default.

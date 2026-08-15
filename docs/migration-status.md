@@ -33,6 +33,9 @@ Status date: 2026-08-15
   values retain the native one-tick impact phase across arrows, charges, magic
   missiles, and Hork Spawn.
 
+- Validated MonsterArrow mappings now consume their existing `projectile_speed`
+  metadata for travel; omitted values retain the native speed-one fallback.
+
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain
   the native 20–30% compatibility roll.

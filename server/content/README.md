@@ -523,8 +523,10 @@ mapping row supplies the native close-range retreat distance and
 `10 * (intelligence + 7)` avoidance band for deterministic retreat-cell
 selection. The controller is selected by projectile behavior, so valid content
 may use a different `native_ai` label or missile name; legacy `Targeted` rows
-remain compatible. Mapped arrow rows also keep ranged-only monsters from
-falling through to adjacent melee when the content label is changed.
+remain compatible. Their validated `projectile_speed` now controls arrow travel;
+omitted values retain the native speed-one fallback. Mapped arrow rows also keep
+ranged-only monsters from falling through to adjacent melee when the content
+label is changed.
 Validated `SnakeCharge` missile mappings select the native two-tile charge
 controller and server-owned collision path independently of the `Snake` label
 or `Rhino` missile name.
