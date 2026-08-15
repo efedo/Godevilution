@@ -208,6 +208,7 @@ public sealed class ShippedContentTests
         var items = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
             composed.GetRequiredTable("items.tsv").ToCanonicalTsv());
+        Assert.Equal(22, items.GetRequired(43).NativeItemIndex);
         var combinations = AuthoritativeItemCombinationCatalog.LoadTsv(
             "item_combinations.tsv",
             composed.GetRequiredTable("item_combinations.tsv").ToCanonicalTsv());

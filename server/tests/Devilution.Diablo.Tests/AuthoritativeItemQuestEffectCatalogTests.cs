@@ -12,7 +12,7 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
             "item_quest_effects.tsv",
             "item_id\tquest_id\teffect_kind\teffect_amount\n"
                 + "43\t3017\tActivateQuest\t1\n");
-        var items = new AuthoritativeItemCatalog([CreateItem(43, 42)]);
+        var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
         AuthoritativeQuestState[] quests = [
             new AuthoritativeQuestState(3017, 0, 1, active: false),
         ];
@@ -44,7 +44,7 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
     [Fact]
     public void CathedralMapPickupActivatesGraveQuestAndSetsNativeVariable()
     {
-        var items = new AuthoritativeItemCatalog([CreateItem(43, 42)]);
+        var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
         var effects = new AuthoritativeItemQuestEffectCatalog([
             new AuthoritativeItemQuestEffectDefinition(
                 43,
@@ -61,7 +61,7 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
             99,
             0,
             AuthoritativeItemState.Empty with {
-                ItemIndex = 42,
+                ItemIndex = 22,
                 InventoryWidth = 1,
                 InventoryHeight = 1,
             });
