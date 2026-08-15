@@ -226,6 +226,10 @@ Status date: 2026-08-15
   `RoundWalk`/`RandomWalk` candidates after Hork Spawn admission is evaluated;
   validated spawn identity and server-owned summon precedence remain intact.
 
+- Mega far-distance movement now delegates to the server-owned SkeletonAi
+  `35 - 4 * intelligence` delay and deterministic `RandomWalk` boundary when
+  Inferno is outside its validated maximum range.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
@@ -826,6 +830,9 @@ Status date: 2026-08-15
 - Native HorkDemon non-adjacent movement now preserves its far-distance
   RoundWalk/RandomWalk candidate order after Hork Spawn admission, before
   bounded navigation fallback.
+- Native MegaAi now delegates to the server-owned SkeletonAi movement boundary
+  at or beyond Inferno's maximum distance, preserving its native delay band
+  before bounded navigation fallback.
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.

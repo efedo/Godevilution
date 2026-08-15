@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   Hork Demons now use deterministic `RoundWalk`/`RandomWalk` candidates before
   bounded navigation, while validated Hork Spawn projectiles retain precedence.
 
+- Restore native `MegaAi` far-distance fallback: Mega now delegates to the
+  server-owned Skeleton movement boundary when Inferno is outside its validated
+  maximum range.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
