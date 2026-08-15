@@ -432,6 +432,10 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
+  `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
+  penalty and chance bounds when omitted.
+
 - Schema 1.200 adds optional persistent-projectile magic-hit tuning to
   `spells.tsv`; shared Fire Wall, Fireball, Elemental, Nova, Apocalypse, and
   Lightning-segment monster hits retain native 2/5/95 defaults when omitted.

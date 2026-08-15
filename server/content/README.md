@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.200.0` schema in
+It declares its identity and `devilution.diablo@1.201.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -216,6 +216,10 @@ The optional `persistent_projectile_hit_monster_level_scale`,
 monster magic-hit roll used by persistent Fire Wall, Fireball, Elemental,
 Nova, Apocalypse, and Lightning-segment projectiles. Legacy rows retain the
 2/5/95 bounds.
+The optional `persistent_projectile_hit_character_level_scale`,
+`persistent_projectile_player_minimum_hit_chance`, and
+`persistent_projectile_player_maximum_hit_chance` columns externalize the
+matching player-hit roll. Legacy rows retain the native 2/5/95 bounds.
 The optional `berserk_resistance_frequency` column externalizes Berserk's
 magic-resistance admission roll. Legacy Berserk rows retain the native
 1-in-2 compatibility roll.
@@ -1465,7 +1469,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.200.0"
+      "version": "1.201.0"
   },
   "dependencyConstraints": [
     {
@@ -1497,7 +1501,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.200.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.201.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1967,6 +1971,9 @@ terms and one-third current-life damage rule.
 
 Schema 1.200 adds the optional persistent-projectile magic-hit tuning columns
 to `spells.tsv`; omitted values retain the native 2/5/95 bounds.
+
+Schema 1.201 adds the optional persistent-projectile player magic-hit tuning
+columns to `spells.tsv`; omitted values retain the native 2/5/95 bounds.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
