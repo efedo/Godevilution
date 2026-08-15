@@ -274,6 +274,10 @@ Status date: 2026-08-15
   validated action band succeeds but no native one-step candidate is available,
   the server does not replace that result with generic navigation.
 
+- HorkDemon admitted movement now preserves the native blocked-candidate
+  no-op. When both deterministic `RoundWalk` and `RandomWalk` orders are
+  unavailable, the server leaves the monster stationary rather than navigating.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

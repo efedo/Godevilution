@@ -308,6 +308,10 @@ The `Zombie` identity likewise consumes an admitted action even when its
 native one-step movement is blocked; clients receive the unchanged
 authoritative snapshot rather than a client- or navigation-generated move.
 
+The `HorkDemon` identity also consumes an admitted movement branch when its
+native `RoundWalk` and `RandomWalk` candidates are blocked; no generic path is
+substituted on the authoritative tick.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive

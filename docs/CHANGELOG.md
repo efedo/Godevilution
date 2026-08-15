@@ -76,6 +76,10 @@ All notable changes to this fork are documented below.
   one-step destination is unavailable now leaves the monster stationary rather
   than invoking generic navigation.
 
+- Preserve the native HorkDemon blocked-movement result: admitted
+  `RoundWalk`/`RandomWalk` branches now consume the tick when every native
+  candidate is blocked instead of invoking generic navigation.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
