@@ -395,6 +395,12 @@ Optional `MonsterSnapshot.snake_delay_ticks` field 79 carries the remaining
 native SnakeAi delay. Older peers may omit it; clients never execute SnakeAi or
 its delay policy.
 
+Optional `MonsterSnapshot.counselor_delay_ticks` field 80 carries the remaining
+native CounselorAi delay after failed non-adjacent ranged and movement
+admissions. It is server-owned, validated, persisted by version-1 saves, and
+included in the canonical hash; older peers may omit it and clients never
+execute CounselorAi delay policy.
+
 The `Zombie` identity likewise consumes an admitted action even when its
 native one-step movement is blocked; clients receive the unchanged
 authoritative snapshot rather than a client- or navigation-generated move.

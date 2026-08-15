@@ -260,6 +260,11 @@ Status date: 2026-08-15
   snapshots, optional protocol field 79, saves, and canonical hashes; native
   lateral drift and admitted adjacent attacks remain server-owned.
 
+- Native Counselor non-adjacent failed ranged/movement admissions now preserve
+  the native `AiDelay` countdown. The server-owned delay persists through
+  snapshots, optional protocol field 80, saves, and canonical hashes; successful
+  ranged attacks, movement, and wounded retreat remain server-owned.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

@@ -87,6 +87,10 @@ All notable changes to this fork are documented below.
   through optional protocol field 79, snapshots, saves, and the canonical
   state hash.
 
+- Preserve native Counselor `AiDelay` state: failed non-adjacent ranged and
+  movement admissions now start a server-owned countdown, persisted through
+  optional protocol field 80, snapshots, saves, and the canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
