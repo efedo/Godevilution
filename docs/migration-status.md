@@ -157,6 +157,10 @@ Status date: 2026-08-15
   and canonical hashes. Ordinary Bat identities reach this movement boundary
   even when no optional charge-missile mapping is present.
 
+- Snake lateral drift now preserves native `RandomWalk2` fallback order after
+  a blocked drift candidate; the server checks only the original direction and
+  its two lateral candidates, with no extra ±90° replacement.
+
 - Gargoyle safety, wounded-health, and healing-formula behavior now use
   validated tuning independent of the row's native-AI label; rows without
   migrated tuning retain the native-name compatibility path, while the

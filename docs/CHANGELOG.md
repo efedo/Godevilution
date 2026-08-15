@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   the fresh-mode `intelligence + 63` band and persists through snapshots;
   ordinary Bat movement no longer requires a charge-missile mapping.
 
+- Preserve Snake's native blocked-drift fallback: after the lateral candidate
+  is unavailable, deterministic `RandomWalk2` now checks only straight, left,
+  and right from the original target direction instead of adding ±90° moves.
+
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.

@@ -263,6 +263,10 @@ the counters and never resolve these AI branches.
 The movement boundary is also server-owned for ordinary Bat identities without
 an optional charge-missile mapping; clients never substitute generic pursuit.
 
+Snake lateral drift is likewise server-owned. When its computed drift tile is
+blocked, the server applies the native three-candidate `RandomWalk2` fallback
+from the original target direction and emits no extra navigation replacement.
+
 `MonsterSnapshot.counselor_retreat_ticks` field 55 carries the remaining native
 Counselor wounded-adjacent retreat attempts. The server applies the four
 opposite-direction `RandomWalk` attempts before resuming mapped ranged
