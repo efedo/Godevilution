@@ -837,6 +837,29 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsRangedAttackFrameTiming()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\t"
+            + "ranged_attack_frame_skip_with_first_frame\t"
+            + "ranged_attack_frame_skip_without_first_frame\t"
+            + "ranged_fast_attack_frame_skip_bonus\n"
+            + "10\t1\t100\t3\t1\t2\n");
+
+        Assert.Equal((3, 1, 2), (
+            rules.RangedAttackFrameSkipWithFirstFrame,
+            rules.RangedAttackFrameSkipWithoutFirstFrame,
+            rules.RangedFastAttackFrameSkipBonus));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                rangedFastAttackFrameSkipBonus: 65));
+    }
+
+    [Fact]
     public void UsesConfiguredMonsterMagicAccuracyFormulaTerms()
     {
         var rules = new AuthoritativeCombatRules(

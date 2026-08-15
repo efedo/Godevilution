@@ -337,6 +337,43 @@ public sealed class DiabloPlayerActionLifecycleTests
     }
 
     [Fact]
+    public void BowTimingUsesExternalRangedFrameTiming()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var target = new AuthoritativeCombatTarget(9, 3, 0, 100);
+        var processor = CreateCombatProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            classes,
+            animations,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                rangedAttackFrameSkipWithFirstFrame: 3,
+                rangedAttackFrameSkipWithoutFirstFrame: 1,
+                rangedFastAttackFrameSkipBonus: 2));
+        var fastBow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = 1U << 18,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 1,
+            equipment: [new EquippedStoreItem(4, 100, fastBow)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloAttackIntent(9),
+            10).Succeeded);
+        Assert.Equal((13UL, 14UL, 18UL), (
+            player.CurrentAction!.EffectTick,
+            player.CurrentAction.ReadyTick,
+            player.CurrentAction.EndTick));
+    }
+
+    [Fact]
     public void LethalMonsterDamageCancelsMovementAndCompletesDeathAnimation()
     {
         var (classes, animations) = LoadShippedPlayerMetadata();
