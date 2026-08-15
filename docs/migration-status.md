@@ -432,6 +432,10 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.196 adds optional Charged Bolt magic-hit tuning to `spells.tsv`;
+  omitted values retain the native 2/5/95 monster-level penalty and
+  hit-chance bounds.
+
 - Schema 1.195 adds optional Town Portal destination slot metadata to
   `spells.tsv`; omitted values retain the native 57/40 destination origin,
   four slots, and two-tile spacing.

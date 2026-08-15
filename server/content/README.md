@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.195.0` schema in
+It declares its identity and `devilution.diablo@1.196.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -193,6 +193,10 @@ The optional `town_portal_destination_position_x`,
 and `town_portal_destination_slot_spacing` columns externalize the native
 Town Portal destination slot layout. Legacy Town Portal rows retain the
 57/40 origin, four slots, and two-tile spacing.
+The optional `charged_bolt_hit_monster_level_scale`,
+`charged_bolt_minimum_hit_chance`, and `charged_bolt_maximum_hit_chance`
+columns externalize Charged Bolt's native monster magic-hit roll. Legacy
+Charged Bolt rows retain the 2/5/95 penalty and chance bounds.
 The optional `berserk_resistance_frequency` column externalizes Berserk's
 magic-resistance admission roll. Legacy Berserk rows retain the native
 1-in-2 compatibility roll.
@@ -1442,7 +1446,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.195.0"
+      "version": "1.196.0"
   },
   "dependencyConstraints": [
     {
@@ -1474,7 +1478,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.195.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.196.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1925,6 +1929,10 @@ omitted values retain the native 20–30 percent reflected-damage roll.
 Schema 1.195 adds the optional Town Portal destination slot columns to
 `spells.tsv`; omitted values retain the native 57/40 destination origin,
 four slots, and two-tile spacing.
+
+Schema 1.196 adds the optional Charged Bolt magic-hit tuning columns to
+`spells.tsv`; omitted values retain the native 2/5/95 penalty and chance
+bounds.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
