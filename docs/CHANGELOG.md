@@ -20,6 +20,10 @@ All notable changes to this fork are documented below.
   rows and persistent authoritative quest variables, including native wrong-order
   reset behavior.
 
+- Externalize the Hellfire Na-Krul note combination through a validated item
+  combination table. The server now consumes the three note fragments and
+  produces the reconstructed note on pickup.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks

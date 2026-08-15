@@ -778,6 +778,10 @@ Status date: 2026-08-15
   Na-Krul's three tome interactions now use persistent server-owned quest
   variables, reset on wrong order, and complete the quest on the native order.
 
+- Schema 1.217 adds validated content-owned item combinations. The Hellfire
+  Na-Krul note fragments now combine on authoritative pickup into the
+  reconstructed note while preserving native item identities.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell
