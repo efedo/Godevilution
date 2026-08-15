@@ -976,6 +976,41 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsSkeletonKingDelayState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "SkeletonKing",
+                    skeletonKingDelayTicks: 7)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        Assert.Equal(7, Assert.Single(snapshot.Monsters).SkeletonKingDelayTicks);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "SkeletonKing")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal(7, restored.SkeletonKingDelayTicks);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsCounselorRetreatState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

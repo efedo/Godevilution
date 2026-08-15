@@ -561,6 +561,8 @@ message MonsterSnapshot {
 	optional int32 rhino_movement_mode = 74;
 	// Remaining native Rhino AiDelay ticks before the next decision.
 	optional int32 rhino_delay_ticks = 75;
+	// Remaining native LeoricAi delay ticks before the next decision.
+	optional int32 skeleton_king_delay_ticks = 76;
 }
 
 message WorldItemSnapshot {

@@ -175,6 +175,9 @@ public sealed record DiabloMonsterState(
     /** Remaining native Rhino AiDelay ticks before the next decision. */
     public int RhinoDelayTicks { get; init; }
 
+    /** Remaining native LeoricAi delay ticks before the next decision. */
+    public int SkeletonKingDelayTicks { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -487,6 +490,7 @@ public sealed partial class DiabloSimulation
                     RhinoMovementIdleTicks = target.RhinoMovementIdleTicks,
                     RhinoMovementMode = target.RhinoMovementMode,
                     RhinoDelayTicks = target.RhinoDelayTicks,
+                    SkeletonKingDelayTicks = target.SkeletonKingDelayTicks,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -785,6 +789,7 @@ public sealed partial class DiabloSimulation
                 || monster.RhinoMovementIdleTicks is < -1 or > 1024
                 || monster.RhinoMovementMode is < -1 or > 3
                 || monster.RhinoDelayTicks is < 0 or > 1024
+                || monster.SkeletonKingDelayTicks is < 0 or > 1024
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1669,6 +1674,7 @@ public sealed partial class DiabloSimulation
                     monster.RhinoMovementIdleTicks,
                     monster.RhinoMovementMode);
                 target.RestoreRhinoDelay(monster.RhinoDelayTicks);
+                target.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1747,6 +1753,7 @@ public sealed partial class DiabloSimulation
                     monster.RhinoMovementIdleTicks,
                     monster.RhinoMovementMode);
                 restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
+                restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1788,6 +1795,7 @@ public sealed partial class DiabloSimulation
                     monster.RhinoMovementIdleTicks,
                     monster.RhinoMovementMode);
                 restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
+                restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

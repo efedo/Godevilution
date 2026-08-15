@@ -81,7 +81,8 @@ public sealed class AuthoritativeCombatTarget
         int fatMovementMode = 0,
         int rhinoMovementIdleTicks = -1,
         int rhinoMovementMode = 0,
-        int rhinoDelayTicks = 0)
+        int rhinoDelayTicks = 0,
+        int skeletonKingDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -153,6 +154,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementMode));
         if (rhinoDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(rhinoDelayTicks));
+        if (skeletonKingDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(skeletonKingDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -238,6 +241,7 @@ public sealed class AuthoritativeCombatTarget
         RhinoMovementIdleTicks = rhinoMovementIdleTicks;
         RhinoMovementMode = rhinoMovementMode;
         RhinoDelayTicks = rhinoDelayTicks;
+        SkeletonKingDelayTicks = skeletonKingDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -422,6 +426,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native Rhino AiDelay ticks before the next decision. */
     public int RhinoDelayTicks { get; private set; }
+
+    /** Remaining native LeoricAi delay ticks before the next decision. */
+    public int SkeletonKingDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -975,6 +982,28 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RhinoDelayTicks = ticks;
+    }
+
+    internal void StartSkeletonKingDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        SkeletonKingDelayTicks = ticks;
+    }
+
+    internal bool AdvanceSkeletonKingDelay()
+    {
+        if (SkeletonKingDelayTicks == 0)
+            return false;
+        SkeletonKingDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreSkeletonKingDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        SkeletonKingDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)

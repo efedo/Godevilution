@@ -1824,6 +1824,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingPreservesNativeDelayAfterAFailedMovementAdmission()
+    {
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7);
+
+        // 50 ^ 9 ^ 7 = 62: native LeoricAi takes its delay branch and
+        // schedules GenerateRnd(10) + 10 ticks before another decision.
+        processor.AdvanceTick(50, [player]);
+
+        Assert.False(king.IsMoving);
+        Assert.Equal(10, king.SkeletonKingDelayTicks);
+
+        processor.AdvanceTick(51, [player]);
+
+        Assert.Equal(9, king.SkeletonKingDelayTicks);
+        Assert.False(king.IsMoving);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedSummonChanceTuning()
     {
         var nativeWorld = new AuthoritativeWorld();

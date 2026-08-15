@@ -5819,6 +5819,9 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
+        if (target.AdvanceSkeletonKingDelay())
+            return true;
+
         var summonTuning = GetSkeletonKingSummonTuning(target);
         var canAttemptSummon = summonTuning.HasValue
             && monsterSpawnPlanner is not null
@@ -5871,8 +5874,11 @@ public sealed class DiabloCombatCommandProcessor
 
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
         var movementChance = Math.Min(100, target.Intelligence + 25);
-        if (actionSeed % 100U >= (uint)movementChance)
+        if (actionSeed % 100U >= (uint)movementChance) {
+            target.StartSkeletonKingDelay(
+                10 + (int)((actionSeed / 200U) % 10U));
             return true;
+        }
 
         if (distance >= 3 && (actionSeed / 100U) % 4U == 0U) {
             var roundWalk = FindNativeRoundWalkStep(
@@ -5888,6 +5894,8 @@ public sealed class DiabloCombatCommandProcessor
             // Native LeoricAi enters AiDelay when its admitted RoundWalk
             // cannot find a candidate; do not replace that tick with a
             // different movement policy.
+            target.StartSkeletonKingDelay(
+                10 + (int)((actionSeed / 200U) % 10U));
             return true;
         }
 

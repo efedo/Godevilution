@@ -114,6 +114,7 @@ internal static class DiabloProtocolMapper
                 RhinoMovementIdleTicks = monster.RhinoMovementIdleTicks,
                 RhinoMovementMode = monster.RhinoMovementMode,
                 RhinoDelayTicks = monster.RhinoDelayTicks,
+                SkeletonKingDelayTicks = monster.SkeletonKingDelayTicks,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
             });
         }
@@ -490,6 +491,9 @@ internal static class DiabloProtocolMapper
                     : 0,
                 RhinoDelayTicks = monster.HasRhinoDelayTicks
                     ? monster.RhinoDelayTicks
+                    : 0,
+                SkeletonKingDelayTicks = monster.HasSkeletonKingDelayTicks
+                    ? monster.SkeletonKingDelayTicks
                     : 0,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
