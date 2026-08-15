@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.216.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.217.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,9 +202,19 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.216.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.217.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            composed.GetRequiredTable("items.tsv").ToCanonicalTsv());
+        var combinations = AuthoritativeItemCombinationCatalog.LoadTsv(
+            "item_combinations.tsv",
+            composed.GetRequiredTable("item_combinations.tsv").ToCanonicalTsv());
+        combinations.ValidateItems(items);
+        var noteCombination = Assert.Single(combinations.Definitions);
+        Assert.Equal(2004U, noteCombination.ResultItemId);
+        Assert.Equal([2001U, 2002U, 2003U], noteCombination.RequiredItemIds);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,
