@@ -10,6 +10,11 @@ All notable changes to this fork are documented below.
   retain Bat movement and all travel, resistance, and persistence remain
   authoritative.
 
+- Restore Gharbad's native post-dialogue combat boundary: the authoritative
+  server now accepts the `Gharbad` AI identity and preserves its AiAvoidance
+  attack admission and wounded special branch; dialogue and unique encounter
+  activation remain incremental.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 
