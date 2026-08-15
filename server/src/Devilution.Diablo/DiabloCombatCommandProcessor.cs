@@ -6012,6 +6012,11 @@ public sealed class DiabloCombatCommandProcessor
                     positionY,
                     entityId);
                 if (summon is not null) {
+                    DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                        summon,
+                        difficulty,
+                        rules.GameVariant,
+                        gameMode);
                     world.CombatTargets.Add(entityId, summon);
                     return true;
                 }
@@ -9297,8 +9302,14 @@ public sealed class DiabloCombatCommandProcessor
             spawnPosition.Value.X,
             spawnPosition.Value.Y,
             AllocateMonsterEntityId(players));
-        if (summon is not null)
+        if (summon is not null) {
+            DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                summon,
+                difficulty,
+                rules.GameVariant,
+                gameMode);
             world.CombatTargets.Add(summon.EntityId, summon);
+        }
     }
 
     /** Native AddAcid/ProcessGenericProjectile travel and expiry transition. */

@@ -141,6 +141,12 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         var combatRules = options.CombatRules ?? new AuthoritativeCombatRules(10, 1, 100);
         if (options.Items is not null)
             combatRules.ValidateItems(options.Items);
+        foreach (var target in worldState.CombatTargets.Values)
+            DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                target,
+                options.Difficulty,
+                combatRules.GameVariant,
+                options.GameMode);
         var random = new DiabloRandom(options.RandomSeed);
         var playerDamage = new AuthoritativePlayerDamageResolver(spells);
         var worldCommands = new DiabloWorldCommandProcessor(
@@ -335,8 +341,14 @@ public sealed partial class DiabloSimulation
                 break;
             firstEntityId = checked(firstEntityId + 1);
         } while (true);
-        foreach (var target in targets)
+        foreach (var target in targets) {
+            DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                target,
+                difficulty,
+                CombatRules.GameVariant,
+                gameMode);
             WorldState.CombatTargets.Add(target.EntityId, target);
+        }
         if (targets.Count != 0)
             nextGeneratedMonsterEntityId = checked(targets[^1].EntityId + 1);
     }
