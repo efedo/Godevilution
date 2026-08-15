@@ -4821,6 +4821,16 @@ public sealed class DiabloCombatCommandProcessor
         if (actionSeed % 100U < (uint)delayBand)
             return true;
 
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            victim,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue) {
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            return true;
+        }
+
         var next = AuthoritativeMonsterNavigation.FindStep(
             world,
             monster,
