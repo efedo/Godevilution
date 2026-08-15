@@ -3363,8 +3363,13 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.False(monster.IsMoving);
 
-        // 40 ^ 9 ^ 7 = 38, outside the delay band and admitted to movement.
-        Assert.Empty(processor.AdvanceTick(40, [player]));
+        // Native AiDelay persists for 15 ticks before SkeletonAi can choose
+        // another action.
+        for (var delayedTick = 40; delayedTick <= 54; delayedTick++)
+            Assert.Empty(processor.AdvanceTick((ulong)delayedTick, [player]));
+
+        // 55 ^ 9 ^ 7 = 57, outside the delay band and admitted to movement.
+        Assert.Empty(processor.AdvanceTick(55, [player]));
         Assert.True(monster.IsMoving);
         Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
     }
@@ -3426,8 +3431,14 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.False(monster.IsMoving);
 
-        // 40 ^ 9 ^ 7 = 38: the normal SkeletonAi branch uses RandomWalk.
-        Assert.Empty(processor.AdvanceTick(40, [player]));
+        // Native AiDelay persists for 15 ticks before SkeletonAi can choose
+        // another action. The direct test harness advances one logical tick
+        // per call, even when the deterministic RNG seed jumps.
+        for (var delayedTick = 40; delayedTick <= 54; delayedTick++)
+            Assert.Empty(processor.AdvanceTick((ulong)delayedTick, [player]));
+
+        // 55 ^ 9 ^ 7 = 57: the delayed SkeletonAi branch now uses RandomWalk.
+        Assert.Empty(processor.AdvanceTick(55, [player]));
         Assert.True(monster.IsMoving);
         Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
 
@@ -3435,11 +3446,16 @@ public sealed class DiabloCombatCommandProcessorTests
         player.PositionY = 0;
         player.Life = 100;
 
-        // 41 ^ 9 ^ 7 = 45: outside the native 20% adjacent attack band.
+        // 41 ^ 9 ^ 7 = 45: outside the native 20% adjacent attack band and
+        // starts another ten-tick native delay.
         Assert.Empty(processor.AdvanceTick(41, [player]));
         Assert.Equal(100, player.Life);
 
-        // 1 ^ 9 ^ 7 = 15: inside the native 20% adjacent attack band.
+        for (var delayedTick = 42; delayedTick <= 51; delayedTick++)
+            Assert.Empty(processor.AdvanceTick((ulong)delayedTick, [player]));
+
+        // 1 ^ 9 ^ 7 = 15: inside the native 20% adjacent attack band after
+        // the delay expires.
         Assert.Single(processor.AdvanceTick(1, [player]));
         Assert.Equal(95, player.Life);
     }
@@ -3534,7 +3550,9 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.False(monster.IsMoving);
-        Assert.Empty(processor.AdvanceTick(40, [player]));
+        for (var delayedTick = 40; delayedTick <= 54; delayedTick++)
+            Assert.Empty(processor.AdvanceTick((ulong)delayedTick, [player]));
+        Assert.Empty(processor.AdvanceTick(55, [player]));
         Assert.True(monster.IsMoving);
         Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
     }
@@ -9086,6 +9104,38 @@ public sealed class DiabloCombatCommandProcessorTests
         var deliveries = processor.AdvanceTick(40, [player]);
 
         Assert.Empty(deliveries);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void SkeletonMeleeAiPersistsItsNativeAdjacentDelay()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "SkeletonMelee",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38 misses the 26% native attack band and starts the
+        // four-tick adjacent SkeletonAi delay.
+        processor.AdvanceTick(40, [player]);
+        Assert.Equal(4, monster.SkeletonMeleeDelayTicks);
+
+        processor.AdvanceTick(41, [player]);
+        Assert.Equal(3, monster.SkeletonMeleeDelayTicks);
         Assert.Equal(100, player.Life);
     }
 

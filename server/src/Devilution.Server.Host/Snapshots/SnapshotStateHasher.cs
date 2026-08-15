@@ -358,6 +358,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.AvoidanceMovementIdleTicks);
                     hasher.AppendInt32(monster.AvoidanceMovementMode);
                 }
+                if (monster.SkeletonMeleeDelayTicks != 0) {
+                    hasher.AppendString("godevilution-monster-skeleton-delay-v1");
+                    hasher.AppendInt32(monster.SkeletonMeleeDelayTicks);
+                }
                 if (monster.CounselorRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-counselor-retreat-v1");
                     hasher.AppendInt32(monster.CounselorRetreatTicks);

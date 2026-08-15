@@ -545,6 +545,8 @@ message MonsterSnapshot {
 	optional int32 ranged_avoidance_movement_idle_ticks = 66;
 	// Native AiRangedAvoidance var1-compatible movement value retained across movement.
 	optional int32 ranged_avoidance_movement_mode = 67;
+	// Remaining native SkeletonAi delay ticks before the next decision.
+	optional int32 skeleton_melee_delay_ticks = 68;
 }
 
 message WorldItemSnapshot {

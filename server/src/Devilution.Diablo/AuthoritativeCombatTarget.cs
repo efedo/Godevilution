@@ -73,7 +73,8 @@ public sealed class AuthoritativeCombatTarget
         int avoidanceMovementTicks = -1,
         int avoidanceMovementTurn = 0,
         int avoidanceMovementIdleTicks = -1,
-        int avoidanceMovementMode = 0)
+        int avoidanceMovementMode = 0,
+        int skeletonMeleeDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -129,6 +130,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementIdleTicks));
         if (avoidanceMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementMode));
+        if (skeletonMeleeDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(skeletonMeleeDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -206,6 +209,7 @@ public sealed class AuthoritativeCombatTarget
         AvoidanceMovementTurn = avoidanceMovementTurn;
         AvoidanceMovementIdleTicks = avoidanceMovementIdleTicks;
         AvoidanceMovementMode = avoidanceMovementMode;
+        SkeletonMeleeDelayTicks = skeletonMeleeDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -366,6 +370,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native AiAvoidance var1-compatible movement value retained across movement. */
     public int AvoidanceMovementMode { get; private set; }
+
+    /** Remaining native SkeletonAi delay ticks before the next decision. */
+    public int SkeletonMeleeDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -794,6 +801,28 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         AvoidanceMovementIdleTicks = idleTicks;
         AvoidanceMovementMode = movementMode;
+    }
+
+    internal void StartSkeletonMeleeDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        SkeletonMeleeDelayTicks = ticks;
+    }
+
+    internal bool AdvanceSkeletonMeleeDelay()
+    {
+        if (SkeletonMeleeDelayTicks == 0)
+            return false;
+        SkeletonMeleeDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreSkeletonMeleeDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        SkeletonMeleeDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)

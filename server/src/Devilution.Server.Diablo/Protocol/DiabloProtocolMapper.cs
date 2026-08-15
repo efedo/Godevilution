@@ -106,6 +106,7 @@ internal static class DiabloProtocolMapper
                 AvoidanceMovementTurn = monster.AvoidanceMovementTurn,
                 AvoidanceMovementIdleTicks = monster.AvoidanceMovementIdleTicks,
                 AvoidanceMovementMode = monster.AvoidanceMovementMode,
+                SkeletonMeleeDelayTicks = monster.SkeletonMeleeDelayTicks,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
             });
         }
@@ -458,6 +459,9 @@ internal static class DiabloProtocolMapper
                     : -1,
                 AvoidanceMovementMode = monster.HasAvoidanceMovementMode
                     ? monster.AvoidanceMovementMode
+                    : 0,
+                SkeletonMeleeDelayTicks = monster.HasSkeletonMeleeDelayTicks
+                    ? monster.SkeletonMeleeDelayTicks
                     : 0,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),

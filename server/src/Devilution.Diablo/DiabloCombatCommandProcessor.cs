@@ -4539,8 +4539,13 @@ public sealed class DiabloCombatCommandProcessor
                         100,
                         skeletonMeleeAttackTuning.Value.ChanceBase
                             + (skeletonMeleeAttackTuning.Value.IntelligenceScale
-                                * target.Intelligence)))
+                                * target.Intelligence))) {
+                    target.StartSkeletonMeleeDelay(Math.Max(
+                        0,
+                        (2 * (5 - target.Intelligence))
+                            + (int)((attackSeed / 100U) % 10U)));
                     continue;
+                }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
                 if (goatMeleeAttackTuning.HasValue
                     && attackSeed % 100U >= (uint)Math.Min(
@@ -4829,6 +4834,9 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
+        if (monster.AdvanceSkeletonMeleeDelay())
+            return true;
+
         var skeletonTuning = GetSkeletonMeleeDelayTuning(monster);
         if (!skeletonTuning.HasValue || distance <= 1)
             return false;
@@ -4838,8 +4846,13 @@ public sealed class DiabloCombatCommandProcessor
             0,
             skeletonTuning.Value.ChanceBase
                 - (skeletonTuning.Value.IntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand)
+        if (actionSeed % 100U < (uint)delayBand) {
+            monster.StartSkeletonMeleeDelay(Math.Max(
+                0,
+                15 - (2 * monster.Intelligence)
+                    + (int)((actionSeed / 100U) % 10U)));
             return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
