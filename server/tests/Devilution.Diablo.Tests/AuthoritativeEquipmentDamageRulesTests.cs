@@ -314,6 +314,23 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void StandardModifierUsesConfiguredDivisor()
+    {
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(20, 20)),
+            [],
+            CreateClass("custom"),
+            standardStrengthDamageDivisor: 50);
+
+        Assert.Equal(20, profile.DamageModifier);
+    }
+
+    [Fact]
     public void RejectsInvalidBarbarianWeaponStrengthDivisor()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -371,6 +388,13 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
                 [],
                 CreateClass("custom"),
                 bardDefaultStrengthDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEquipmentDamageRules.Calculate(
+                1,
+                PlayerAttributesState.Zero,
+                [],
+                CreateClass("custom"),
+                standardStrengthDamageDivisor: 0));
     }
 
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)

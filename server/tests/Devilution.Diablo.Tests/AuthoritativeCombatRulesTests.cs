@@ -304,6 +304,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredStandardDivisor()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tstandard_strength_damage_divisor\n"
+            + "10\t1\t100\t101\n");
+
+        Assert.Equal(101, rules.StandardStrengthDamageDivisor);
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -382,6 +393,16 @@ public sealed class AuthoritativeCombatRulesTests
             AuthoritativeCombatRules.LoadTsv(
                 "combat.tsv",
                 "base_attack_damage\tminimum_damage\tdefeat_experience\tbard_default_strength_damage_divisor\n"
+                + "10\t1\t100\t0\n"));
+    }
+
+    [Fact]
+    public void RejectsInvalidStandardDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\tstandard_strength_damage_divisor\n"
                 + "10\t1\t100\t0\n"));
     }
 
