@@ -549,7 +549,9 @@ canonical hashes. Quest rows and transitions also preserve the native
 initial/active/done lifecycle and quest-log bit through protocol fields 7-8.
 Optional quest columns now also preserve native `_qvar1`, `_qvar2`, and `_qmsg`
 values through authoritative saves, snapshots, protocol fields 9-11, and
-compatibility-aware state hashes.
+compatibility-aware state hashes. Dialogue and completion transition columns
+apply content-owned minimum native variable states at the authoritative talk
+and defeat boundaries.
 Quest rows may also declare a `completion_monster_id`; the server applies that
 trigger at the authoritative monster-death boundary and persists the resulting
 progress and completion state.

@@ -32,8 +32,8 @@ All notable changes to this fork are documented below.
 
 - Externalize four native unique defeat quest states through the base
   `quest_states.tsv` catalog: Gharbad, Zhar, Warlord, and Lazarus now carry
-  exact unique-identity completion triggers; encounter placement, dialogue,
-  and rewards remain incremental.
+  exact unique-identity completion triggers and terminal native quest-variable
+  transitions; encounter placement, dialogue, and rewards remain incremental.
 
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,

@@ -743,6 +743,11 @@ Status date: 2026-08-15
   `monster_missiles.tsv`; omitted values retain the native one-tick impact
   phase.
 
+- Schema 1.209 adds optional quest dialogue and completion transition variables
+  to `quests.tsv` and `quest_states.tsv`; omitted values retain the existing
+  no-transition behavior while shipped unique quests preserve their native
+  terminal `_qvar1` states.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
@@ -1295,8 +1300,8 @@ Status date: 2026-08-15
   transitions remain incremental.
 - The base pack now supplies additive `quest_states.tsv` rows for the native
   Gharbad, Zhar, Warlord, and Lazarus defeat quests. Server-owned completion
-  uses exact unique identities; encounter placement, dialogue, and rewards
-  remain incremental.
+  uses exact unique identities and applies content-owned terminal native
+  variables; encounter placement, dialogue, and rewards remain incremental.
 - A shared `TalkToQuest` intent now validates a living adjacent unique target
   against the quest's configured completion identity, activates/logs the quest,
   applies content-owned minimum native dialogue variables monotonically, and
