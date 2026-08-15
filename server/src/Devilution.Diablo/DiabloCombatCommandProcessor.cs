@@ -5149,20 +5149,20 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.ScavengerHealingDurationTicks > 0
+            var hasHealingTuning = definition.ScavengerHealingDurationTicks > 0
                 && definition.ScavengerCorpseSearchRadius > 0
                 && definition.ScavengerHellfireHealingDivisor > 0
                 && definition.ScavengerBaseHealingAmount > 0
-                && definition.ScavengerBaseHealingTargetPercent > 0) {
+                && definition.ScavengerBaseHealingTargetPercent > 0;
+            var hasThresholdTuning = definition.ScavengerHealingHealthThresholdPercent > 0;
+            if (hasHealingTuning || hasThresholdTuning) {
                 return (
-                    definition.ScavengerHealingDurationTicks,
-                    definition.ScavengerCorpseSearchRadius,
-                    definition.ScavengerHellfireHealingDivisor,
-                    definition.ScavengerBaseHealingAmount,
-                    definition.ScavengerBaseHealingTargetPercent,
-                    definition.ScavengerHealingHealthThresholdPercent > 0
-                        ? definition.ScavengerHealingHealthThresholdPercent
-                        : 50);
+                    hasHealingTuning ? definition.ScavengerHealingDurationTicks : 10,
+                    hasHealingTuning ? definition.ScavengerCorpseSearchRadius : 4,
+                    hasHealingTuning ? definition.ScavengerHellfireHealingDivisor : 8,
+                    hasHealingTuning ? definition.ScavengerBaseHealingAmount : 1,
+                    hasHealingTuning ? definition.ScavengerBaseHealingTargetPercent : 75,
+                    hasThresholdTuning ? definition.ScavengerHealingHealthThresholdPercent : 50);
             }
         }
         return UsesNativeAi(target, "Scavenger")
