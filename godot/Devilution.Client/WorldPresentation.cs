@@ -159,16 +159,26 @@ public partial class WorldPresentation : Node2D
         var center = predicted is { } position
             ? ToScreen(position.X, position.Y)
             : PositionFor(player.EntityId, player.PositionX, player.PositionY);
-        var color = new Color(isLocal ? "4da6ff" : "6dd47e");
+        var statusKinds = player.StatusEffects
+            .Select(effect => StatusPresentationStyle.Resolve(effect.Behavior))
+            .ToHashSet();
+        var etherealized = statusKinds.Contains(StatusPresentationKind.Etherealize);
+        var color = new Color(
+            etherealized
+                ? "dce3eb"
+                : isLocal ? "4da6ff" : "6dd47e");
         DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
         if (player.ManaShieldActive)
             DrawArc(center, 17, 0, Mathf.Tau, 32, new Color("6fffe9"), 3);
         if (player.ReflectCharges > 0)
             DrawArc(center, 20, 0, Mathf.Tau, 32, new Color("d4a5ff"), 2);
-        if (isLocal && player.StatusEffects.Any(effect =>
-                effect.Behavior == StatusEffectBehavior.Infravision)) {
+        if (statusKinds.Contains(StatusPresentationKind.Infravision)) {
             DrawArc(center, 21, 0, Mathf.Tau, 32, new Color("ef6f6c"), 2);
         }
+        if (statusKinds.Contains(StatusPresentationKind.Search))
+            DrawArc(center, 23, 0, Mathf.Tau, 32, new Color("fff0a8"), 2);
+        if (etherealized)
+            DrawArc(center, 25, 0, Mathf.Tau, 32, new Color("dce3eb", 0.8f), 2);
         if (!isLocal)
             DrawArc(center, 14, 0, Mathf.Tau, 24, color, 2);
         DrawActionIndicator(player, center, currentLevel);
