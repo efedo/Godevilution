@@ -11933,6 +11933,30 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(fastProcessor.AdvanceTick(1, [owner, fastRogue]));
         Assert.Equal(5UL, fastRogue.CombatModeEndTick);
 
+        var tunedFastRogue = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 13,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 100, fastShield)],
+            characterClassId: 1);
+        var tunedFastProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                equipmentFastBlockFrameSkip: 3),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Empty(tunedFastProcessor.AdvanceTick(1, [owner, tunedFastRogue]));
+        Assert.Equal(fastRogue.CombatModeEndTick + 3, tunedFastRogue.CombatModeEndTick);
+
         var staff = AuthoritativeItemState.Empty with {
             ItemIndex = 101,
             ItemType = 1,

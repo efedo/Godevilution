@@ -36,6 +36,7 @@ public sealed class AuthoritativeCombatRulesTests
             rules.DeathDropSearchRadius));
         Assert.Equal(24U, rules.PvpEarItemId);
         Assert.Equal(2, rules.PvpBlockLevelScale);
+        Assert.Equal(2, rules.EquipmentFastBlockFrameSkip);
     }
 
     [Fact]
@@ -657,6 +658,23 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 pvpBlockLevelScale: 65));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesEquipmentFastBlockFrameSkip()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tequipment_fast_block_frame_skip\n"
+            + "10\t1\t100\t4\n");
+
+        Assert.Equal(4, rules.EquipmentFastBlockFrameSkip);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                equipmentFastBlockFrameSkip: 11));
     }
 
     [Fact]
