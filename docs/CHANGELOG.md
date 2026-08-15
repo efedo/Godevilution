@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.170 optional `combat.tsv`
+  `bard_sword_strength_dexterity_damage_divisor` metadata. Active Bard sword
+  physical damage scaling now uses the validated divisor, while direct legacy
+  damage callers retain the native 150 divisor.
 - Add schema 1.169 optional `combat.tsv` `monk_weapon_damage_divisor`
   metadata. Active Monk non-staff weapon physical damage scaling now uses the
   validated divisor, while direct legacy damage callers retain the native 300 divisor.
