@@ -2637,6 +2637,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeAiFallbackUsesValidatedMonsterIdentityBeforeRuntimeLabel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            monsterId: 1,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "Zombie",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Skeleton",
+                1,
+                16,
+                1,
+                1,
+                10,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                AggroRange = 5,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.False(monster.IsMoving);
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void AutonomousMonsterRoutesAroundBlockedCorridor()
     {
         var geometry = new AuthoritativeWorld();

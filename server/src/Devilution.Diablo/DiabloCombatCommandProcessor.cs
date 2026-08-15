@@ -4736,6 +4736,14 @@ public sealed class DiabloCombatCommandProcessor
         return monster.NativeAi == "Butcher";
     }
 
+    /** Active monster content owns fallback native-AI identity; direct targets retain the label path. */
+    private bool UsesNativeAi(AuthoritativeCombatTarget monster, string nativeAi)
+    {
+        if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
+            return definition.NativeAi == nativeAi;
+        return monster.NativeAi == nativeAi;
+    }
+
     /** Native SkeletonAi admits movement through its 35 - 4 * intelligence band. */
     private bool TryAdvanceSkeletonMeleeAi(
         AuthoritativeCombatTarget monster,
@@ -5232,7 +5240,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonMeleeDelayChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "SkeletonMelee"
+        return UsesNativeAi(target, "SkeletonMelee")
             ? (35, 4)
             : null;
     }
@@ -5248,7 +5256,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonMeleeAttackChanceIntelligenceScale);
             }
         }
-        return target.NativeAi == "SkeletonMelee"
+        return UsesNativeAi(target, "SkeletonMelee")
             ? (20, 2)
             : null;
     }
