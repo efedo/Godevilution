@@ -660,7 +660,9 @@ public sealed class AuthoritativeCombatRules
     {
         if (baseDamage <= 0 || monsterToHit <= 0)
             return 0;
-        if (monsterToHit > 255 || monsterLevel < 0 || targetArmorClass < 0)
+        // Nightmare/Hell add native accuracy bonuses after the byte-sized
+        // content value; the final hit chance is clamped below.
+        if (monsterToHit < 0 || monsterLevel < 0 || targetArmorClass < 0)
             throw new ArgumentOutOfRangeException(nameof(monsterToHit));
 
         // DevilutionX's MonsterAttackPlayer computes to-hit as the content
@@ -692,7 +694,9 @@ public sealed class AuthoritativeCombatRules
     {
         if (baseDamage <= 0 || monsterToHit <= 0)
             return 0;
-        if (monsterToHit > 255
+        // Nightmare/Hell add native accuracy bonuses after the byte-sized
+        // content value; the final hit chance is clamped below.
+        if (monsterToHit < 0
             || monsterLevel < 0
             || targetArmorClass < 0
             || distance < 0)

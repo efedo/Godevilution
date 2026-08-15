@@ -166,6 +166,59 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    private int GetDifficultyLevelOffset()
+        => difficulty switch {
+            DiabloDifficulty.Nightmare => 15,
+            DiabloDifficulty.Hell => 30,
+            _ => 0,
+        };
+
+    private int GetDifficultyToHitBonus()
+        => difficulty switch {
+            DiabloDifficulty.Nightmare => 85,
+            DiabloDifficulty.Hell => 120,
+            _ => 0,
+        };
+
+    /** Resolves native Monster::level without changing persisted base content. */
+    private int GetEffectiveMonsterLevel(AuthoritativeCombatTarget monster)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        return checked(monster.MonsterLevel + GetDifficultyLevelOffset());
+    }
+
+    /** Resolves native Monster::toHit/toHitSpecial for the active difficulty. */
+    private int GetEffectiveMonsterToHit(
+        AuthoritativeCombatTarget monster,
+        bool special)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        var baseToHit = special ? monster.ToHitSpecial : monster.ToHit;
+        // Native player minions use the server-owned golem accuracy for their
+        // normal attack and do not receive the difficulty accuracy bonus.
+        if (!special && monster.IsPlayerMinion)
+            return baseToHit;
+        return checked(baseToHit + GetDifficultyToHitBonus());
+    }
+
+    /** Resolves native Monster::exp for the active difficulty and uniqueness. */
+    private uint GetEffectiveMonsterExperienceReward(
+        AuthoritativeCombatTarget monster)
+    {
+        ArgumentNullException.ThrowIfNull(monster);
+        var baseReward = monster.ExperienceReward == 0
+            ? rules.DefeatExperience
+            : monster.ExperienceReward;
+        var difficultyReward = difficulty switch {
+            DiabloDifficulty.Nightmare => checked(2U * (baseReward + 1000U)),
+            DiabloDifficulty.Hell => checked(4U * (baseReward + 1000U)),
+            _ => baseReward,
+        };
+        return monster.IsUnique
+            ? checked(difficultyReward * 2U)
+            : difficultyReward;
+    }
+
     public DiabloCombatIntentResult Execute(
         AuthoritativePlayerState player,
         DiabloCombatIntent intent,
@@ -4596,9 +4649,7 @@ public sealed class DiabloCombatCommandProcessor
                 var attackDamage = usesSpecialAttack
                     ? SelectNativeSpecialDamage(target, attackSeed)
                     : target.AttackDamage;
-                var attackToHit = usesSpecialAttack
-                    ? target.ToHitSpecial
-                    : target.ToHit;
+                var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
                 var damage = attackToHit == 0
                     ? rules.ResolveAttackDamage(
                         attackDamage,
@@ -4607,7 +4658,7 @@ public sealed class DiabloCombatCommandProcessor
                     : rules.ResolveMonsterAttackDamage(
                         attackDamage,
                         attackToHit,
-                        target.MonsterLevel,
+                        GetEffectiveMonsterLevel(target),
                         victim.CharacterLevel,
                         target.LevelId,
                         armorClass,
@@ -5976,16 +6027,17 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
-    private static void ApplyNativeMonsterRegeneration(
+    private void ApplyNativeMonsterRegeneration(
         AuthoritativeCombatTarget monster,
         int levelDivisor)
     {
-        if (monster.MonsterLevel <= 0 || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
+        var effectiveMonsterLevel = GetEffectiveMonsterLevel(monster);
+        if (effectiveMonsterLevel <= 0 || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
             return;
 
-        var healing = monster.MonsterLevel > 1
-            ? monster.MonsterLevel / levelDivisor
-            : monster.MonsterLevel;
+        var healing = effectiveMonsterLevel > 1
+            ? effectiveMonsterLevel / levelDivisor
+            : effectiveMonsterLevel;
         monster.ApplyHealingQ6(DiabloFixedPointQ6.FromWhole(healing));
     }
 
@@ -6355,7 +6407,7 @@ public sealed class DiabloCombatCommandProcessor
                 AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted)
             || distance < 2
-            || monster.ToHit <= 0
+            || GetEffectiveMonsterToHit(monster, special: false) <= 0
             || monster.MaxDamage <= 0
             || IsPlayerProtectedByFlash(player)
             || IsPlayerEtherealized(player))
@@ -7685,8 +7737,8 @@ public sealed class DiabloCombatCommandProcessor
         }
         var damage = rules.ResolveMonsterRangedAttackDamage(
             SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
-            monster.ToHit,
-            monster.MonsterLevel,
+            GetEffectiveMonsterToHit(monster, special: false),
+            GetEffectiveMonsterLevel(monster),
             player.CharacterLevel,
             monster.LevelId,
             armorClass,
@@ -7804,7 +7856,7 @@ public sealed class DiabloCombatCommandProcessor
         var skeletonRangedTuning = GetSkeletonRangedTuning(monster);
         if (!skeletonRangedTuning.HasValue
             || !HasValidatedArrowMapping(monster)
-            || monster.ToHit <= 0
+            || GetEffectiveMonsterToHit(monster, special: false) <= 0
             || monster.MaxDamage <= 0)
             return false;
 
@@ -7954,7 +8006,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         if (distance < rhinoTuning.Value.MinimumDistance
-            || monster.ToHitSpecial <= 0
+            || GetEffectiveMonsterToHit(monster, special: true) <= 0
             || monster.MaxDamageSpecial <= 0)
             return TryAdvanceRhinoMovementFallback(
                 monster,
@@ -8005,8 +8057,8 @@ public sealed class DiabloCombatCommandProcessor
         var specialDamage = SelectNativeSpecialDamage(monster, attackSeed);
         var damage = rules.ResolveMonsterAttackDamage(
             specialDamage,
-            monster.ToHitSpecial,
-            monster.MonsterLevel,
+            GetEffectiveMonsterToHit(monster, special: true),
+            GetEffectiveMonsterLevel(monster),
             player.CharacterLevel,
             monster.LevelId,
             armorClass,
@@ -8178,7 +8230,7 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Validated Fat tuning selects its special melee band. */
-    private static bool UsesFatSpecialAttack(
+    private bool UsesFatSpecialAttack(
         AuthoritativeCombatTarget target,
         uint attackSeed,
         (
@@ -8188,7 +8240,7 @@ public sealed class DiabloCombatCommandProcessor
             int SpecialChanceIntelligenceScale)? tuning)
     {
         return tuning.HasValue
-            && target.ToHitSpecial > 0
+            && GetEffectiveMonsterToHit(target, special: true) > 0
             && target.MaxDamageSpecial > 0
             && attackSeed % 100U >= (uint)Math.Min(
                 100,
@@ -8218,7 +8270,7 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Validated GoatMelee tuning selects a wounded special on its configured roll. */
-    private static bool UsesGoatSpecialAttack(
+    private bool UsesGoatSpecialAttack(
         AuthoritativeCombatTarget target,
         uint attackSeed,
         (
@@ -8230,7 +8282,7 @@ public sealed class DiabloCombatCommandProcessor
         return tuning.HasValue
             && (long)target.HitPointsQ6 * 100
                 < (long)target.MaxHitPointsQ6 * tuning.Value.SpecialHealthThresholdPercent
-            && target.ToHitSpecial > 0
+            && GetEffectiveMonsterToHit(target, special: true) > 0
             && target.MaxDamageSpecial > 0
             && (attackSeed / 100U) % (uint)tuning.Value.SpecialChanceGroupPeriod == 0U;
     }
@@ -9332,7 +9384,7 @@ public sealed class DiabloCombatCommandProcessor
         var puddleDamageHigh = puddleMapping?.PuddleDamageHigh > 0
             ? puddleMapping.PuddleDamageHigh
             : 2;
-        var puddleDamage = monster.MonsterLevel >= puddleDamageMinimumLevel
+        var puddleDamage = GetEffectiveMonsterLevel(monster) >= puddleDamageMinimumLevel
             ? puddleDamageHigh
             : puddleDamageLow;
         var entityId = AllocateProjectileEntityId();
@@ -9546,7 +9598,7 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstUndead);
         }
         var hitChance = rules.ResolveMonsterChargeHitChance(
-            monster.MonsterLevel,
+            GetEffectiveMonsterLevel(monster),
             target.CharacterLevel,
             target.LevelId,
             armorClass);
@@ -9561,7 +9613,7 @@ public sealed class DiabloCombatCommandProcessor
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
                 + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
-                - (rules.MonsterPlayerBlockLevelScale * monster.MonsterLevel),
+                - (rules.MonsterPlayerBlockLevelScale * GetEffectiveMonsterLevel(monster)),
             0,
             100);
         if (blockRoll < blockChance) {
@@ -11931,7 +11983,7 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - target.MonsterLevel * hitMonsterLevelScale,
+                - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
@@ -11966,7 +12018,7 @@ public sealed class DiabloCombatCommandProcessor
             Math.Abs(target.PositionX - monster.PositionX),
             Math.Abs(target.PositionY - monster.PositionY));
         var hitChance = rules.ResolveMonsterMagicProjectileHitChance(
-            monster.MonsterLevel,
+            GetEffectiveMonsterLevel(monster),
             target.CharacterLevel,
             target.LevelId,
             distance);
@@ -11988,7 +12040,7 @@ public sealed class DiabloCombatCommandProcessor
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
                 + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
-                - (rules.MonsterPlayerBlockLevelScale * monster.MonsterLevel),
+                - (rules.MonsterPlayerBlockLevelScale * GetEffectiveMonsterLevel(monster)),
             0,
             100);
         if (!damageShifted
@@ -12148,7 +12200,7 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - target.MonsterLevel * hitMonsterLevelScale,
+                - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
         if (!target.IsPetrified && random.RandomIntLessThan(100) >= hitChance)
@@ -12272,7 +12324,7 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - target.MonsterLevel * hitMonsterLevelScale,
+                - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
@@ -12412,7 +12464,7 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + (ownerClass?.BaseMagicToHit ?? 50)
-                - target.MonsterLevel * hitMonsterLevelScale,
+                - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
@@ -13290,7 +13342,7 @@ public sealed class DiabloCombatCommandProcessor
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
                 + baseMagicToHit
-                - target.MonsterLevel * hitMonsterLevelScale,
+                - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
@@ -13450,9 +13502,7 @@ public sealed class DiabloCombatCommandProcessor
                 checked((int)player.DiabloKillLevel)));
         }
 
-        var experienceReward = target.ExperienceReward == 0
-            ? rules.DefeatExperience
-            : target.ExperienceReward;
+        var experienceReward = GetEffectiveMonsterExperienceReward(target);
         DiabloPlayerProgression.GrantExperience(player, experienceReward);
         events.Add(new DiabloGameplayEvent(
             DiabloGameplayEventKind.Experience,
@@ -13486,7 +13536,7 @@ public sealed class DiabloCombatCommandProcessor
             var tuning = GetFallenFearTuning(fallen)!.Value;
             fallen.StartFallenFear(
                 Math.Max(
-                    tuning.LevelOffset - fallen.MonsterLevel,
+                    tuning.LevelOffset - GetEffectiveMonsterLevel(fallen),
                     tuning.MinimumTicks),
                 GetDirection(
                     deceased.PositionX,

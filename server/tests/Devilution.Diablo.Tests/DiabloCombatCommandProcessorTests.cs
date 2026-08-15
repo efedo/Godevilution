@@ -1313,6 +1313,84 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(3U, player.DiabloKillLevel);
     }
 
+    [Theory]
+    [InlineData(DiabloDifficulty.Normal, 37U)]
+    [InlineData(DiabloDifficulty.Nightmare, 2074U)]
+    [InlineData(DiabloDifficulty.Hell, 4148U)]
+    public void MonsterExperienceUsesNativeDifficultyScaling(
+        DiabloDifficulty difficulty,
+        uint expectedExperience)
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            1,
+            experienceReward: 37);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            difficulty: difficulty);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(expectedExperience, player.Experience);
+        Assert.Equal(
+            checked((int)expectedExperience),
+            Assert.Single(result.Events, gameplayEvent =>
+                gameplayEvent.Kind == DiabloGameplayEventKind.Experience).Amount);
+    }
+
+    [Fact]
+    public void UniqueHellMonsterExperienceRetainsTheNativeDoubleReward()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            1,
+            experienceReward: 37,
+            unique: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            difficulty: DiabloDifficulty.Hell);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(8296U, player.Experience);
+    }
+
+    [Fact]
+    public void HellDifficultyAcceptsNativeAccuracyAboveTheBaseByteRange()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 3,
+            aggroRange: 5,
+            monsterLevel: 1,
+            toHit: 220);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            difficulty: DiabloDifficulty.Hell);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.NotEmpty(deliveries);
+        Assert.True(player.Life < 20);
+    }
+
     [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
@@ -10295,6 +10373,33 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Equal(11, monster.HitPoints);
         Assert.Equal(11 * DiabloFixedPointQ6.Scale, monster.HitPointsQ6);
+    }
+
+    [Theory]
+    [InlineData(DiabloDifficulty.Normal, 11)]
+    [InlineData(DiabloDifficulty.Nightmare, 18)]
+    [InlineData(DiabloDifficulty.Hell, 25)]
+    public void NativeMonsterRegenerationUsesDifficultyAdjustedLevel(
+        DiabloDifficulty difficulty,
+        int expectedHitPoints)
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            maxHitPoints: 100,
+            monsterLevel: 1,
+            aggroRange: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            difficulty: difficulty);
+        var player = CreatePlayer(life: 100, lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(expectedHitPoints, monster.HitPoints);
     }
 
     [Fact]
