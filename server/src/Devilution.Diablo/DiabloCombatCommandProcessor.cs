@@ -1718,7 +1718,11 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 applyEffects: false,
                 searchRadius: spell.TownPortalSearchRadius,
-                lifetime: spell.TownPortalLifetime);
+                lifetime: spell.TownPortalLifetime,
+                destinationPositionX: spell.TownPortalDestinationPositionX,
+                destinationPositionY: spell.TownPortalDestinationPositionY,
+                destinationSlotCount: spell.TownPortalDestinationSlotCount,
+                destinationSlotSpacing: spell.TownPortalDestinationSlotSpacing);
             if (!townPortalValidation.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
@@ -1839,7 +1843,11 @@ public sealed class DiabloCombatCommandProcessor
                 appliedTick,
                 players,
                 searchRadius: spell.TownPortalSearchRadius,
-                lifetime: spell.TownPortalLifetime);
+                lifetime: spell.TownPortalLifetime,
+                destinationPositionX: spell.TownPortalDestinationPositionX,
+                destinationPositionY: spell.TownPortalDestinationPositionY,
+                destinationSlotCount: spell.TownPortalDestinationSlotCount,
+                destinationSlotSpacing: spell.TownPortalDestinationSlotSpacing);
             if (!townPortalResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalResult.Failure ?? DiabloRuleFailure.Malformed);

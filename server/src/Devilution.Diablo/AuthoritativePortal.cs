@@ -17,13 +17,27 @@ public static class AuthoritativePortalRules
     /** Native town coordinates used by the four player portal slots. */
     public const uint TownLevelId = 0;
 
+    public const int TownPositionX = 57;
+
     public const int TownPositionY = 40;
 
-    public static int GetTownPositionX(uint ownerEntityId)
+    public const int TownPortalSlotCount = 4;
+
+    public const int TownPortalSlotSpacing = 2;
+
+    public static int GetTownPositionX(
+        uint ownerEntityId,
+        int positionX = TownPositionX,
+        int slotCount = TownPortalSlotCount,
+        int slotSpacing = TownPortalSlotSpacing)
     {
         if (ownerEntityId == 0)
             throw new ArgumentOutOfRangeException(nameof(ownerEntityId));
-        return 57 + (int)((ownerEntityId - 1) % 4) * 2;
+        if (slotCount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(slotCount));
+        if (slotSpacing < 0)
+            throw new ArgumentOutOfRangeException(nameof(slotSpacing));
+        return checked(positionX + (int)((ownerEntityId - 1) % (uint)slotCount) * slotSpacing);
     }
 }
 

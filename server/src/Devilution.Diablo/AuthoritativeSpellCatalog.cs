@@ -255,6 +255,18 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native lifetime, in ticks, of a server-owned Town Portal. */
     public int TownPortalLifetime { get; init; } = 100;
 
+    /** X coordinate of the first native Town Portal destination slot. */
+    public int TownPortalDestinationPositionX { get; init; } = AuthoritativePortalRules.TownPositionX;
+
+    /** Y coordinate shared by native Town Portal destination slots. */
+    public int TownPortalDestinationPositionY { get; init; } = AuthoritativePortalRules.TownPositionY;
+
+    /** Number of native Town Portal destination slots before wrapping. */
+    public int TownPortalDestinationSlotCount { get; init; } = AuthoritativePortalRules.TownPortalSlotCount;
+
+    /** X distance between native Town Portal destination slots. */
+    public int TownPortalDestinationSlotSpacing { get; init; } = AuthoritativePortalRules.TownPortalSlotSpacing;
+
     /** Reciprocal base used by native Mana Shield damage conversion. */
     public int ManaShieldBaseDamageReductionDivisor { get; init; }
 
@@ -1153,9 +1165,21 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.TownPortalSearchRadius <= 0
                     || definition.TownPortalSearchRadius > DiabloCrawl.MaximumSupportedRadius
-                    || definition.TownPortalLifetime <= 0)) {
+                    || definition.TownPortalLifetime <= 0
+                    || definition.TownPortalDestinationPositionX < 0
+                    || definition.TownPortalDestinationPositionY < 0
+                    || definition.TownPortalDestinationSlotCount <= 0
+                    || definition.TownPortalDestinationSlotSpacing < 0)) {
                 throw new InvalidDataException(
                     "Town Portal behavior requires one targeted world transition without combat effects.");
+            }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.TownPortal
+                && (definition.TownPortalDestinationPositionX != AuthoritativePortalRules.TownPositionX
+                    || definition.TownPortalDestinationPositionY != AuthoritativePortalRules.TownPositionY
+                    || definition.TownPortalDestinationSlotCount != AuthoritativePortalRules.TownPortalSlotCount
+                    || definition.TownPortalDestinationSlotSpacing != AuthoritativePortalRules.TownPortalSlotSpacing)) {
+                throw new InvalidDataException(
+                    "Town Portal destination tuning is only valid for Town Portal behavior.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Resurrection
                 && (definition.HealingAmount != 0
@@ -1940,6 +1964,18 @@ public sealed class AuthoritativeSpellCatalog
             WarpSearchRadius = row.OptionalInt32("warp_search_radius", 5),
             TownPortalSearchRadius = row.OptionalInt32("town_portal_search_radius", 5),
             TownPortalLifetime = row.OptionalInt32("town_portal_lifetime", 100),
+            TownPortalDestinationPositionX = row.OptionalInt32(
+                "town_portal_destination_position_x",
+                AuthoritativePortalRules.TownPositionX),
+            TownPortalDestinationPositionY = row.OptionalInt32(
+                "town_portal_destination_position_y",
+                AuthoritativePortalRules.TownPositionY),
+            TownPortalDestinationSlotCount = row.OptionalInt32(
+                "town_portal_destination_slot_count",
+                AuthoritativePortalRules.TownPortalSlotCount),
+            TownPortalDestinationSlotSpacing = row.OptionalInt32(
+                "town_portal_destination_slot_spacing",
+                AuthoritativePortalRules.TownPortalSlotSpacing),
             ManaShieldBaseDamageReductionDivisor = row.OptionalInt32(
                 "mana_shield_base_damage_reduction_divisor"),
             ManaShieldDamageReductionLevelStep = row.OptionalInt32(

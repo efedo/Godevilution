@@ -177,11 +177,20 @@ public sealed class DiabloWorldCommandProcessor
         IEnumerable<AuthoritativePlayerState> players,
         bool applyEffects = true,
         int searchRadius = 5,
-        int lifetime = 100)
+        int lifetime = 100,
+        int destinationPositionX = AuthoritativePortalRules.TownPositionX,
+        int destinationPositionY = AuthoritativePortalRules.TownPositionY,
+        int destinationSlotCount = AuthoritativePortalRules.TownPortalSlotCount,
+        int destinationSlotSpacing = AuthoritativePortalRules.TownPortalSlotSpacing)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
         if (searchRadius is <= 0 or > DiabloCrawl.MaximumSupportedRadius || lifetime <= 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        if (destinationPositionX < 0
+            || destinationPositionY < 0
+            || destinationSlotCount <= 0
+            || destinationSlotSpacing < 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var participants = players.ToArray();
         if (player.LevelId == AuthoritativePortalRules.TownLevelId
@@ -230,8 +239,12 @@ public sealed class DiabloWorldCommandProcessor
                 portalPosition.Value.X,
                 portalPosition.Value.Y,
                 AuthoritativePortalRules.TownLevelId,
-                AuthoritativePortalRules.GetTownPositionX(player.EntityId),
-                AuthoritativePortalRules.TownPositionY) {
+                AuthoritativePortalRules.GetTownPositionX(
+                    player.EntityId,
+                    destinationPositionX,
+                    destinationSlotCount,
+                    destinationSlotSpacing),
+                destinationPositionY) {
                 OwnerEntityId = player.EntityId,
                 Bidirectional = true,
                 RemainingTicks = checked((uint)lifetime),
