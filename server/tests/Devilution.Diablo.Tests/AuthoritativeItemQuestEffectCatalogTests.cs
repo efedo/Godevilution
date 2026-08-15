@@ -90,7 +90,9 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
     public void GraveObjectConsumesCathedralMapAndCompletesQuest()
     {
         var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
-        var quest = new AuthoritativeQuestState(3017, 0, 1, active: true, logged: true);
+        // Grave Matters is scoped to the crypt (level 17), but its offering
+        // object is placed in town (level 0), matching the native OpenGrave flow.
+        var quest = new AuthoritativeQuestState(3017, 17, 1, active: true, logged: true);
         var mapState = AuthoritativeItemState.Empty with {
             ItemIndex = 22,
             InventoryWidth = 1,

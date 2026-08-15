@@ -957,7 +957,6 @@ public sealed class DiabloWorldCommandProcessor
             || !world.Quests.TryGetValue(@object.QuestId, out var quest)
             || quest.Unavailable
             || quest.Completed
-            || quest.LevelId != player.LevelId
             || !items.TryGet((uint)@object.EffectAmount, out var itemDefinition)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
