@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.212.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.213.0"),
             DiabloContentSchema.Current);
     }
 
@@ -76,6 +76,32 @@ public sealed class DiabloSimulationTests
 
         Assert.Equal((65, 130), (wounded.HitPoints, wounded.MaxHitPoints));
         Assert.Equal((10, 10), (minion.HitPoints, minion.MaxHitPoints));
+    }
+
+    [Fact]
+    public void FactoryUsesExternalDifficultyHealthRules()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            maxHitPoints: 10);
+        DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                CombatRules = new AuthoritativeCombatRules(
+                    10,
+                    1,
+                    100,
+                    difficultyRules: new DiabloDifficultyRules {
+                        HellHealthMultiplier = 2,
+                        HellDiabloHealthBonus = 3,
+                    }),
+                Difficulty = DiabloDifficulty.Hell,
+            });
+
+        Assert.Equal((23, 23), (target.HitPoints, target.MaxHitPoints));
     }
 
     [Fact]
@@ -344,7 +370,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.212.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.213.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

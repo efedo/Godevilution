@@ -228,6 +228,38 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsExternalDifficultyTuningWithLegacyFallbacks()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tdifficulty_nightmare_level_offset\tdifficulty_hell_damage_bonus\tdifficulty_experience_bonus\n"
+            + "10\t1\t100\t17\t9\t1200\n");
+
+        Assert.Equal((17, 30, 85, 120, 50, 80), (
+            rules.DifficultyRules.NightmareLevelOffset,
+            rules.DifficultyRules.HellLevelOffset,
+            rules.DifficultyRules.NightmareToHitBonus,
+            rules.DifficultyRules.HellToHitBonus,
+            rules.DifficultyRules.NightmareArmorBonus,
+            rules.DifficultyRules.HellArmorBonus));
+        Assert.Equal((2, 2, 4, 9, 1200U), (
+            rules.DifficultyRules.NightmareDamageMultiplier,
+            rules.DifficultyRules.NightmareDamageBonus,
+            rules.DifficultyRules.HellDamageMultiplier,
+            rules.DifficultyRules.HellDamageBonus,
+            rules.DifficultyRules.ExperienceBonus));
+        Assert.Equal((3, 4, 100, 50, 100, 200, 100, 200), (
+            rules.DifficultyRules.NightmareHealthMultiplier,
+            rules.DifficultyRules.HellHealthMultiplier,
+            rules.DifficultyRules.NightmareDiabloHealthBonus,
+            rules.DifficultyRules.NightmareHellfireSinglePlayerHealthBonus,
+            rules.DifficultyRules.NightmareHellfireMultiplayerHealthBonus,
+            rules.DifficultyRules.HellDiabloHealthBonus,
+            rules.DifficultyRules.HellHellfireSinglePlayerHealthBonus,
+            rules.DifficultyRules.HellHellfireMultiplayerHealthBonus));
+    }
+
+    [Fact]
     public void LoadsConfiguredMaximumPrimaryAttribute()
     {
         var rules = AuthoritativeCombatRules.LoadTsv(

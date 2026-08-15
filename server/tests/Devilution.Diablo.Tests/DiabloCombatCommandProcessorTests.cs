@@ -1418,6 +1418,38 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(expectedDamage, Assert.Single(deliveries).Event.Amount);
     }
 
+    [Fact]
+    public void MonsterPhysicalDamageUsesExternalDifficultyTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 3,
+            aggroRange: 5,
+            monsterLevel: 1,
+            toHit: 255);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                difficultyRules: new DiabloDifficultyRules {
+                    HellDamageMultiplier = 3,
+                    HellDamageBonus = 1,
+                }),
+            difficulty: DiabloDifficulty.Hell);
+        var player = CreatePlayer(life: 100, lifeMaximum: 100, entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(100 - 10, player.Life);
+        Assert.Equal(10, Assert.Single(deliveries).Event.Amount);
+    }
+
     [Theory]
     [InlineData(DiabloDifficulty.Normal, 10)]
     [InlineData(DiabloDifficulty.Hell, 90)]
