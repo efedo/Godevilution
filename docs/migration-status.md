@@ -265,6 +265,12 @@ Status date: 2026-08-15
   snapshots, optional protocol field 80, saves, and canonical hashes; successful
   ranged attacks, movement, and wounded retreat remain server-owned.
 
+- Shared native `AiAvoidance` failed `RoundWalk` admissions now preserve the
+  native `AiDelay(GenerateRnd(10) + 10)` countdown for GoatMelee and Gargoyle.
+  The server-owned delay persists through snapshots, optional protocol field
+  81, saves, and canonical hashes; the next tick decrements the delay without
+  rerolling movement or attack admission.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

@@ -91,6 +91,11 @@ All notable changes to this fork are documented below.
   movement admissions now start a server-owned countdown, persisted through
   optional protocol field 80, snapshots, saves, and the canonical state hash.
 
+- Preserve shared native `AiAvoidance` `AiDelay` state: failed GoatMelee and
+  Gargoyle `RoundWalk` admissions now start the native
+  `GenerateRnd(10) + 10` countdown, persisted through optional protocol field
+  81, snapshots, saves, and the canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

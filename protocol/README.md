@@ -423,6 +423,9 @@ Windows toolchain command.
 - Optional `MonsterSnapshot.counselor_delay_ticks` field 80 carries the
   server-owned native CounselorAi delay countdown. Older peers may omit it;
   clients never execute CounselorAi delay policy.
+- Optional `MonsterSnapshot.avoidance_delay_ticks` field 81 carries the
+  server-owned shared `AiAvoidance` delay countdown after a blocked native
+  `RoundWalk`. Older peers may omit it; clients never execute the delay policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

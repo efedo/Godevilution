@@ -401,6 +401,12 @@ admissions. It is server-owned, validated, persisted by version-1 saves, and
 included in the canonical hash; older peers may omit it and clients never
 execute CounselorAi delay policy.
 
+Optional `MonsterSnapshot.avoidance_delay_ticks` field 81 carries the remaining
+shared native `AiAvoidance` `AiDelay` countdown after a failed `RoundWalk`
+admission. It is server-owned, validated, persisted by version-1 saves, and
+included in the canonical hash; older peers may omit it and clients never
+execute the delay policy.
+
 The `Zombie` identity likewise consumes an admitted action even when its
 native one-step movement is blocked; clients receive the unchanged
 authoritative snapshot rather than a client- or navigation-generated move.
