@@ -101,6 +101,12 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(18, townPortal.MinimumManaCost);
         Assert.Equal(3, townPortal.StaffLevel);
         Assert.Equal(AuthoritativeProjectileBehavior.TownPortal, townPortal.ProjectileBehavior);
+        Assert.Equal(5, townPortal.TownPortalSearchRadius);
+        Assert.Equal(100, townPortal.TownPortalLifetime);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([townPortal with { TownPortalSearchRadius = 0 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([townPortal with { TownPortalLifetime = 0 }]));
     }
 
     [Fact]

@@ -249,6 +249,12 @@ public sealed record AuthoritativeSpellDefinition(
     /** Maximum native crawl radius used to find Warp's destination. */
     public int WarpSearchRadius { get; init; } = 5;
 
+    /** Maximum native crawl radius used to place Town Portal. */
+    public int TownPortalSearchRadius { get; init; } = 5;
+
+    /** Native lifetime, in ticks, of a server-owned Town Portal. */
+    public int TownPortalLifetime { get; init; } = 100;
+
     /** Reciprocal base used by native Mana Shield damage conversion. */
     public int ManaShieldBaseDamageReductionDivisor { get; init; }
 
@@ -1115,7 +1121,10 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.DamageType != AuthoritativeDamageType.Magic
                     || definition.ProjectileSpeed != 0
                     || definition.ProjectileCount != 1
-                    || definition.ProjectileCountLevelDivisor != 0)) {
+                    || definition.ProjectileCountLevelDivisor != 0
+                    || definition.TownPortalSearchRadius <= 0
+                    || definition.TownPortalSearchRadius > DiabloCrawl.MaximumSupportedRadius
+                    || definition.TownPortalLifetime <= 0)) {
                 throw new InvalidDataException(
                     "Town Portal behavior requires one targeted world transition without combat effects.");
             }
@@ -1874,6 +1883,8 @@ public sealed class AuthoritativeSpellCatalog
             ResurrectionSearchRadius = row.OptionalInt32("resurrection_search_radius"),
             TeleportSearchRadius = row.OptionalInt32("teleport_search_radius", 5),
             WarpSearchRadius = row.OptionalInt32("warp_search_radius", 5),
+            TownPortalSearchRadius = row.OptionalInt32("town_portal_search_radius", 5),
+            TownPortalLifetime = row.OptionalInt32("town_portal_lifetime", 100),
             ManaShieldBaseDamageReductionDivisor = row.OptionalInt32(
                 "mana_shield_base_damage_reduction_divisor"),
             ManaShieldDamageReductionLevelStep = row.OptionalInt32(

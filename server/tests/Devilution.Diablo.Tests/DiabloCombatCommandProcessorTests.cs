@@ -160,7 +160,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var worldCommands = new DiabloWorldCommandProcessor(world);
         var processor = CreateProcessor(
             world,
-            new AuthoritativeSpellCatalog([CreateTownPortalSpell()]),
+            new AuthoritativeSpellCatalog([
+                CreateTownPortalSpell() with { TownPortalLifetime = 7 },
+            ]),
             worldCommands: worldCommands);
         var player = CreatePlayer(
             positionX: 10,
@@ -188,7 +190,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal((61, 40), (portal.DestinationPositionX, portal.DestinationPositionY));
         Assert.Equal(7U, portal.OwnerEntityId);
         Assert.True(portal.Bidirectional);
-        Assert.Equal(100U, portal.RemainingTicks);
+        Assert.Equal(7U, portal.RemainingTicks);
 
         player.PositionX = portal.SourcePositionX;
         player.PositionY = portal.SourcePositionY;

@@ -103,6 +103,55 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void TownPortalUsesTheValidatedPlacementRadiusAndLifetime()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 9, fallbackHeight: 9);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 2, positionY: 2, levelId: 1, entityId: 1);
+        var blockedPositions = new[] {
+            (4, 4), (3, 3), (4, 3), (5, 3),
+            (3, 4),           (5, 4),
+            (3, 5), (4, 5), (5, 5),
+        };
+        var blockers = blockedPositions
+            .Select((position, index) => CreatePlayer(
+                positionX: position.Item1,
+                positionY: position.Item2,
+                levelId: 1,
+                entityId: (uint)(10 + index)))
+            .ToArray();
+        var participants = new[] { player }.Concat(blockers).ToArray();
+
+        var tooSmall = processor.ExecuteTownPortal(
+            player,
+            4,
+            4,
+            1,
+            participants,
+            searchRadius: 1,
+            lifetime: 7);
+
+        Assert.True(tooSmall.Succeeded);
+        Assert.Empty(world.Portals);
+
+        var sufficient = processor.ExecuteTownPortal(
+            player,
+            4,
+            4,
+            1,
+            participants,
+            searchRadius: 2,
+            lifetime: 7);
+
+        Assert.True(sufficient.Succeeded);
+        var portal = Assert.Single(world.Portals.Values);
+        Assert.Equal(7U, portal.RemainingTicks);
+        Assert.Equal(2, Math.Max(
+            Math.Abs(portal.SourcePositionX - 4),
+            Math.Abs(portal.SourcePositionY - 4)));
+    }
+
+    [Fact]
     public void EnteringQuestRouteLevelActivatesInitialQuestFromExternalMetadata()
     {
         var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 3, 4);

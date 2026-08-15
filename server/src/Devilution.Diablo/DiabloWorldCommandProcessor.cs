@@ -175,10 +175,14 @@ public sealed class DiabloWorldCommandProcessor
         int targetY,
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players,
-        bool applyEffects = true)
+        bool applyEffects = true,
+        int searchRadius = 5,
+        int lifetime = 100)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
+        if (searchRadius is <= 0 or > DiabloCrawl.MaximumSupportedRadius || lifetime <= 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var participants = players.ToArray();
         if (player.LevelId == AuthoritativePortalRules.TownLevelId
             || !world.HasMissileLineOfSight(
@@ -194,7 +198,7 @@ public sealed class DiabloWorldCommandProcessor
             targetX,
             targetY,
             0,
-            5,
+            searchRadius,
             (candidateX, candidateY) =>
                 world.IsWalkable(player.LevelId, candidateX, candidateY)
                 && !world.IsMissileBlocked(player.LevelId, candidateX, candidateY)
@@ -230,7 +234,7 @@ public sealed class DiabloWorldCommandProcessor
                 AuthoritativePortalRules.TownPositionY) {
                 OwnerEntityId = player.EntityId,
                 Bidirectional = true,
-                RemainingTicks = 100,
+                RemainingTicks = checked((uint)lifetime),
             });
         return DiabloWorldIntentResult.Accepted;
     }

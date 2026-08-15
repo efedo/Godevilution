@@ -1690,7 +1690,9 @@ public sealed class DiabloCombatCommandProcessor
                 intent.TargetY,
                 appliedTick,
                 players,
-                applyEffects: false);
+                applyEffects: false,
+                searchRadius: spell.TownPortalSearchRadius,
+                lifetime: spell.TownPortalLifetime);
             if (!townPortalValidation.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
@@ -1809,7 +1811,9 @@ public sealed class DiabloCombatCommandProcessor
                 intent.TargetX,
                 intent.TargetY,
                 appliedTick,
-                players);
+                players,
+                searchRadius: spell.TownPortalSearchRadius,
+                lifetime: spell.TownPortalLifetime);
             if (!townPortalResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalResult.Failure ?? DiabloRuleFailure.Malformed);
