@@ -206,7 +206,9 @@ Status date: 2026-08-15
 
 - SkeletonMelee movement-delay and adjacent attack admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
-  without migrated tuning retain the native-name compatibility path.
+  without migrated tuning retain the native-name compatibility path. Delay
+  exits now use the native `RandomWalk` candidate order before bounded
+  navigation fallback.
 
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
@@ -809,7 +811,8 @@ Status date: 2026-08-15
   monster follows deterministic navigation until adjacent, then uses the shared
   authoritative melee path.
 - Native SkeletonMelee movement now uses the server-owned `35 - 4 * intelligence`
-  admission band, delaying or navigating deterministically before shared melee.
+  admission band, delaying or using deterministic `RandomWalk` candidates
+  before shared melee.
 - Native SkeletonRanged now has a server-owned four-tile retreat boundary and
   ranged-only idle path; generic melee is no longer admitted for validated bows.
 - Native GoatMelee non-adjacent movement now uses a server-owned

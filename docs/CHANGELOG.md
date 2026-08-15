@@ -20,6 +20,10 @@ All notable changes to this fork are documented below.
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.
 
+- Restore the native `SkeletonAi` movement walk: validated delay-band exits
+  now use the shared deterministic `RandomWalk` candidate order before bounded
+  navigation fallback.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
