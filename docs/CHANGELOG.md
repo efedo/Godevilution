@@ -59,7 +59,8 @@ All notable changes to this fork are documented below.
   the native-name compatibility defaults.
 - Select Skeleton King summon admission from a complete validated tuning tuple
   rather than requiring the `SkeletonKing` native-AI name; legacy rows without
-  tuning retain the native-name compatibility defaults.
+  tuning retain the native-name compatibility defaults, and summon candidates
+  can carry the complete SkeletonMelee tuple under an alternate label.
 - Select the migrated Hork Spawn controller from a complete validated Hork
   tuning tuple instead of requiring the `HorkDemon` native-AI name; legacy
   rows without tuning retain the native-name compatibility defaults.

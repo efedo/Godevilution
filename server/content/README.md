@@ -205,6 +205,9 @@ positive, the tuple selects the server-owned summon controller regardless of
 the row's `native_ai` label; rows without migrated tuning retain the native-name
 compatibility defaults. Legacy monster rows retain the native
 minimum-three, base-thirty-five, intelligence-scale-four compatibility values.
+Skeleton King summon candidates are likewise selected from complete positive
+SkeletonMelee delay and attack tuples, while rows labeled `SkeletonMelee`
+remain accepted as the legacy fallback.
 The optional `hork_demon_attack_chance_base`,
 `hork_demon_attack_chance_intelligence_scale`,
 `hork_demon_spawn_minimum_distance`, `hork_demon_spawn_chance_base`,

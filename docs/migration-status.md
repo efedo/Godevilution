@@ -92,7 +92,8 @@ Status date: 2026-08-14
 
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
-  tuning retain the native-name compatibility path.
+  tuning retain the native-name compatibility path, and summon candidates can
+  carry the complete SkeletonMelee tuple under an alternate validated label.
 
 - Hork Spawn admission is now selected by a complete validated tuning tuple,
   independent of the row's native-AI label; rows without migrated tuning retain
