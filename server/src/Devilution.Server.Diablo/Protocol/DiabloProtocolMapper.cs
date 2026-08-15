@@ -307,6 +307,7 @@ internal static class DiabloProtocolMapper
             CombatModeEndTick = state.CombatModeEndTick,
             LevelId = state.LevelId,
             Experience = state.Experience,
+            DiabloKillLevel = state.DiabloKillLevel,
             Attributes = new PlayerAttributesSnapshot {
                 Strength = ToProtocolAttribute(state.Attributes.Strength),
                 Magic = ToProtocolAttribute(state.Attributes.Magic),
@@ -749,6 +750,7 @@ internal static class DiabloProtocolMapper
             CharacterName = source.CharacterName,
             ManaShieldActive = source.ManaShieldActive,
             ReflectCharges = source.ReflectCharges,
+            DiabloKillLevel = source.DiabloKillLevel,
             AbilitySpellId = source.AbilitySpellId,
             AbilityKind = (DiabloPlayerAbilityKind)source.AbilityKind,
             MemorizedSpells = source.MemorizedSpells.Select(spell =>

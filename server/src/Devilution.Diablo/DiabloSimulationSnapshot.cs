@@ -413,6 +413,7 @@ public sealed partial class DiabloSimulation
             CharacterName = player.CharacterName,
             ManaShieldActive = player.ManaShieldActive,
             ReflectCharges = player.ReflectCharges,
+            DiabloKillLevel = player.DiabloKillLevel,
             AbilitySpellId = player.AbilitySpellId,
             AbilityKind = player.AbilityKind,
             MemorizedSpells = player.MemorizedSpells.ToArray(),
@@ -1526,6 +1527,7 @@ public sealed partial class DiabloSimulation
         destination.AbilityKind = source.AbilityKind;
         destination.ManaShieldActive = source.ManaShieldActive;
         destination.ReflectCharges = source.ReflectCharges;
+        destination.DiabloKillLevel = source.DiabloKillLevel;
         destination.FriendlyMode = source.FriendlyMode;
         destination.FacingDirection = source.FacingDirection;
         destination.CombatMode = source.CombatMode;

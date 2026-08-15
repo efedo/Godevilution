@@ -114,6 +114,20 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void DiabloKillLevelChangesTheStateHash()
+    {
+        var baseline = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1 } },
+        };
+        var ranked = baseline.Clone();
+        ranked.Players[0].DiabloKillLevel = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(ranked));
+    }
+
+    [Fact]
     public void HeldItemChangesHashWithoutChangingAbsentLegacyState()
     {
         var baseline = new Snapshot {

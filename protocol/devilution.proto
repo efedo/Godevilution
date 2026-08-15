@@ -385,6 +385,8 @@ message PlayerSnapshot {
 	int32 base_life_maximum = 32;
 	// Semantic class-skill role supplied by the active content loadout.
 	PlayerAbilityKind ability_kind = 33;
+	// Native persistent hero rank set after a single-player Diablo defeat.
+	uint32 diablo_kill_level = 34;
 }
 
 enum PlayerDirection {

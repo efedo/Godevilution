@@ -28,6 +28,7 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(source.Player.CharacterName, restored.Player.CharacterName);
         Assert.Equal(source.Player.ManaShieldActive, restored.Player.ManaShieldActive);
         Assert.Equal(source.Player.ReflectCharges, restored.Player.ReflectCharges);
+        Assert.Equal(source.Player.DiabloKillLevel, restored.Player.DiabloKillLevel);
         Assert.Equal(source.Player.AbilitySpellId, restored.Player.AbilitySpellId);
         Assert.Equal(source.Player.FriendlyMode, restored.Player.FriendlyMode);
         Assert.Equal(source.Player.FacingDirection, restored.Player.FacingDirection);
@@ -568,6 +569,7 @@ public sealed class AuthoritativeSaveCodecTests
             CharacterName = "Dead-Monk",
             ManaShieldActive = true,
             ReflectCharges = 12,
+            DiabloKillLevel = 1,
             AbilitySpellId = 46,
             FriendlyMode = false,
             FacingDirection = DiabloPlayerDirection.East,

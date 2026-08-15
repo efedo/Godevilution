@@ -50,6 +50,10 @@ public static class SnapshotStateHasher
                 hasher.AppendString("godevilution-player-reflect-v1");
                 hasher.AppendUInt32(player.ReflectCharges);
             }
+            if (player.DiabloKillLevel != 0) {
+                hasher.AppendString("godevilution-player-diablo-kill-level-v1");
+                hasher.AppendUInt32(player.DiabloKillLevel);
+            }
             var memorizedSpells = player.MemorizedSpells
                 .OrderBy(spell => spell.SpellId)
                 .ThenBy(spell => spell.Level)

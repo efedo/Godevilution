@@ -186,6 +186,8 @@ public sealed record StorePlayerSnapshot(
     public string CharacterName { get; init; } = string.Empty;
     public bool ManaShieldActive { get; init; }
     public uint ReflectCharges { get; init; }
+    /** Native persistent hero rank set after a single-player Diablo defeat. */
+    public uint DiabloKillLevel { get; init; }
     public uint AbilitySpellId { get; init; }
     /** Content-owned semantic role for the active class skill. */
     public DiabloPlayerAbilityKind AbilityKind { get; init; }
@@ -258,7 +260,8 @@ public sealed class AuthoritativePlayerState(
     AuthoritativePlayerClassDefinition? playerClass = null,
     DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
     AuthoritativeItemCatalog? items = null,
-    int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute)
+    int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute,
+    uint diabloKillLevel = 0)
 {
     public uint Gold { get; set; } = gold;
 
@@ -335,6 +338,9 @@ public sealed class AuthoritativePlayerState(
     public uint ReflectCharges { get; set; } = reflectCharges <= ushort.MaxValue
         ? reflectCharges
         : throw new ArgumentOutOfRangeException(nameof(reflectCharges));
+
+    /** Native persistent hero rank set after a single-player Diablo defeat. */
+    public uint DiabloKillLevel { get; set; } = diabloKillLevel;
 
     /** True while the player has not opted into hostile player targeting. */
     public bool FriendlyMode { get; set; } = friendlyMode;

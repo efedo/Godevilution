@@ -13435,7 +13435,7 @@ public sealed class DiabloCombatCommandProcessor
         target.BeginDeathAnimation();
         TriggerFallenFear(target);
 
-        AdvanceQuestForMonsterDefeat(target);
+        AdvanceQuestForMonsterDefeat(player, target);
 
         var experienceReward = target.ExperienceReward == 0
             ? rules.DefeatExperience
@@ -13503,10 +13503,14 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Applies an optional external quest kill trigger at the authoritative death boundary. */
-    private void AdvanceQuestForMonsterDefeat(AuthoritativeCombatTarget target)
+    private void AdvanceQuestForMonsterDefeat(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target)
     {
         if (target.MonsterId == 0)
             return;
+        if (target.IsDiablo && gameMode == DiabloGameMode.SinglePlayer)
+            player.DiabloKillLevel = Math.Max(player.DiabloKillLevel, 1U);
         foreach (var quest in world.Quests.Values
                      .Where(quest => quest.Active
                          && !quest.Unavailable
