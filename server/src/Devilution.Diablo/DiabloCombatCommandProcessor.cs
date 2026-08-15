@@ -6121,11 +6121,12 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY,
-                missile.ProjectileBehavior switch {
-                    AuthoritativeProjectileBehavior.Lightning => 0,
-                    AuthoritativeProjectileBehavior.ApocalypseController => 40,
-                    _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
-                },
+                missile.ProjectileDamage > 0
+                    ? missile.ProjectileDamage
+                    : missile.ProjectileBehavior switch {
+                        AuthoritativeProjectileBehavior.Lightning => 0,
+                        _ => SelectNativeDamage(monster.MinDamage, monster.MaxDamage, attackSeed),
+                    },
                 damageType,
                 0,
                 checked((uint)lifetime)) {

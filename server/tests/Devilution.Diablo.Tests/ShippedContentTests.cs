@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.162.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.163.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -70,6 +70,7 @@ public sealed class ShippedContentTests
         Assert.Equal(256, storm.ProjectileLifetime);
         Assert.True(activation.MonsterMissiles.TryGet("Diablo", out var diablo));
         Assert.Equal("DiabloApocalypse", diablo.MissileId);
+        Assert.Equal(40, diablo.ProjectileDamage);
         Assert.Equal(AuthoritativeProjectileBehavior.ApocalypseController, diablo.ProjectileBehavior);
         Assert.Equal(25U, diablo.SpellId);
         Assert.Equal(0, diablo.ProjectileSpeed);
@@ -188,7 +189,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.162.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.163.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 10, 2, 2, 40, 2, 500, 10, 40, 8, 3, 5, 3, 5, 40, 20), (

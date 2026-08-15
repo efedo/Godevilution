@@ -6011,7 +6011,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     "Diablo",
                     "DiabloApocalypse",
                     AuthoritativeProjectileBehavior.ApocalypseController,
-                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    ProjectileDamage: 40),
             ]));
         var player = CreatePlayer(
             entityId: 7,
