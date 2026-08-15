@@ -196,6 +196,25 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsMonsterSpecificFamiliarLightningMapping()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\tspell_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_impact_lifetime\n"
+                + "Bat\tLightning\tMonsterMagic\t43\t3\tLightning\t16\t2\t8\n");
+
+        Assert.True(catalog.TryGet("Bat", 43, out var familiar));
+        Assert.Equal("Lightning", familiar.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);
+        Assert.Equal(3U, familiar.SpellId);
+        Assert.Equal(AuthoritativeDamageType.Lightning, familiar.DamageType);
+        Assert.Equal((16, 2, 8), (
+            familiar.ProjectileSpeed,
+            familiar.ProjectileLifetime,
+            familiar.ProjectileImpactLifetime));
+    }
+
+    [Fact]
     public void LoadsValidatedSnakeChargeDistance()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

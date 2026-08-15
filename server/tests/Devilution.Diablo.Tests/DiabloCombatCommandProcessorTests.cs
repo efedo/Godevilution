@@ -6226,6 +6226,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FamiliarEmitsItsNativeLightningAfterAnAdjacentHit()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 43,
+            monsterLevel: 13,
+            minDamage: 4,
+            maxDamage: 4,
+            nativeAi: "Bat",
+            intelligence: 24);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(3, 1, 0, 0, 0, 0),
+            ]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Lightning",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    MonsterId: 43,
+                    SpellId: 3,
+                    DamageType: AuthoritativeDamageType.Lightning,
+                    ProjectileSpeed: 16,
+                    ProjectileLifetime: 2,
+                    ProjectileImpactLifetime: 8),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(8, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Lightning, projectile.DamageType);
+        Assert.Equal(3U, projectile.SpellId);
+        Assert.InRange(projectile.Damage, 1, 10);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.True(monster.BatRetreatTicks > 0);
+    }
+
+    [Fact]
     public void BatUsesItsNativeFreshMovementModeBand()
     {
         var monster = new AuthoritativeCombatTarget(

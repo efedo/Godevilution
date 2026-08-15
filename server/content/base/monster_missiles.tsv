@@ -18,6 +18,7 @@ Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0	25	0	Magic	0	
 BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
 Mega	InfernoControl	InfernoController	Ranged	100	0	21	0	Fire	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	5	40	10	3	5	5	1	2	0	0	1
 Bat	Rhino	BatCharge	RangedAvoidance	100	42	0	0		18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Bat	Lightning	MonsterMagic	Ranged	100	43	3	0	Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8
 Counselor	Firebolt	Firebolt	Ranged	100	107	1	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
 Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	0	Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
 Counselor	LightningControl	Lightning	Ranged	100	109	3	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1

@@ -4497,6 +4497,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceSnakeAi(target, victim, tick, players, distance))
                 continue;
+            if (TryAdvanceFamiliarBatAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceMappedChargeAi(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceMegaAi(target, victim, players, tick, distance))
@@ -4679,6 +4681,10 @@ public sealed class DiabloCombatCommandProcessor
                             victim.PositionX,
                             victim.PositionY),
                         batTuning.Value.RetreatDurationTicks);
+                if (target.HitPointsQ6 > 0
+                    && TryGetMonsterMissile(target, out var postMeleeMissile)
+                    && IsFamiliarLightningMissile(postMeleeMissile))
+                    CreateFamiliarLightningProjectile(target, victim, postMeleeMissile);
                 continue;
             }
 
@@ -6632,6 +6638,77 @@ public sealed class DiabloCombatCommandProcessor
         return null;
     }
 
+    /** Native Familiar uses Bat movement at range and emits Lightning after melee. */
+    private bool TryAdvanceFamiliarBatAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (!TryGetMonsterMissile(monster, out var missile)
+            || !IsFamiliarLightningMissile(missile)
+            || distance <= 1)
+            return false;
+
+        return TryAdvanceBatMovementFallback(
+            monster,
+            player,
+            players,
+            unchecked((uint)tick ^ monster.EntityId ^ player.EntityId),
+            distance);
+    }
+
+    private static bool IsFamiliarLightningMissile(
+        AuthoritativeMonsterMissileDefinition missile)
+        => missile.MonsterId != 0
+            && missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
+            && missile.MissileId == "Lightning";
+
+    /** Captures the native Familiar GenerateRnd(10) damage before missile travel. */
+    private void CreateFamiliarLightningProjectile(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        AuthoritativeMonsterMissileDefinition missile)
+    {
+        var speed = missile.ProjectileSpeed > 0 ? missile.ProjectileSpeed : 16;
+        var lifetime = missile.ProjectileLifetime > 0 ? missile.ProjectileLifetime : 2;
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var (velocityX, velocityY) = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            speed);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            player.EntityId,
+            missile.SpellId != 0 ? missile.SpellId : 3,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY,
+            random.RandomIntBetween(1, 10),
+            missile.DamageType ?? AuthoritativeDamageType.Lightning,
+            0,
+            checked((uint)lifetime)) {
+            Behavior = AuthoritativeProjectileBehavior.MonsterMagic,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            OriginalDirection = direction,
+            Speed = speed,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+    }
+
     /** Native Bat-family charge admitted by a monster-specific missile row. */
     private bool TryAdvanceMappedChargeAi(
         AuthoritativeCombatTarget monster,
@@ -6832,6 +6909,8 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.ApocalypseController
                 or AuthoritativeProjectileBehavior.Acid))
+            return false;
+        if (IsFamiliarLightningMissile(missile))
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
