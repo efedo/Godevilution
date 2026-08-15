@@ -7418,6 +7418,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireDecayUsesConfiguredReductionAndRemovalThreshold()
+    {
+        var rules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            gameVariant: DiabloGameVariant.Hellfire,
+            hellfireDecayDamageReduction: 7,
+            hellfireDecayRemovalThreshold: 21);
+        var decay = AuthoritativeItemState.Empty with {
+            ItemClass = 1,
+            StatFlag = true,
+            HellfireDamageArmorFlags =
+                AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+        };
+        var retainedTarget = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var retainedPlayer = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, decay)]);
+        var retainedProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [retainedTarget]),
+            rules: rules);
+
+        Assert.True(retainedProcessor.Execute(
+            retainedPlayer,
+            new DiabloAttackIntent(9),
+            1).Succeeded);
+        Assert.Equal(-7, Assert.Single(retainedPlayer.Equipment).State.PlusDamage);
+
+        var removedTarget = new AuthoritativeCombatTarget(10, 1, 0, 100);
+        var removedPlayer = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                decay with { PlusDamage = -14 })]);
+        var removedProcessor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [removedTarget]),
+            rules: rules);
+
+        Assert.True(removedProcessor.Execute(
+            removedPlayer,
+            new DiabloAttackIntent(10),
+            1).Succeeded);
+        Assert.Empty(removedPlayer.Equipment);
+    }
+
+    [Fact]
     public void HealingStatusAndExpiryAreModuleOwned()
     {
         var world = new DiabloWorldState();

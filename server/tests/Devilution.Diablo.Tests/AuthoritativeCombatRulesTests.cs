@@ -359,6 +359,19 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredHellfireDecayTuning()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_decay_damage_reduction\thellfire_decay_removal_threshold\n"
+            + "10\t1\t100\t7\t21\n");
+
+        Assert.Equal((7, 21), (
+            rules.HellfireDecayDamageReduction,
+            rules.HellfireDecayRemovalThreshold));
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -495,6 +508,22 @@ public sealed class AuthoritativeCombatRulesTests
                 100,
                 thornsDamageMinimum: 4,
                 thornsDamageMaximum: 3));
+    }
+
+    [Fact]
+    public void RejectsInvalidHellfireDecayTuning()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_decay_damage_reduction\n"
+                + "10\t1\t100\t0\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hellfireDecayRemovalThreshold: 0));
     }
 
     [Fact]
