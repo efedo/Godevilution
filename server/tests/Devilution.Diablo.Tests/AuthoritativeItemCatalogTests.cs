@@ -37,6 +37,58 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ResolvesNormalizedCursorSymbolsThroughTheExternalCatalog()
+    {
+        var cursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nSHORT_SWORD\t64\n");
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tcursor_graphic\n"
+                + "7\t1\t75\t100\tSHORT_SWORD\n",
+            cursorCatalog: cursors);
+
+        Assert.Equal(64, catalog.Generate(7, 42).NativeCursorGraphic);
+    }
+
+    [Fact]
+    public void RejectsUnknownNormalizedCursorSymbols()
+    {
+        var cursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nSHORT_SWORD\t64\n");
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tcursor_graphic\n"
+                + "7\t1\t75\t100\tUNKNOWN\n",
+            cursorCatalog: cursors));
+    }
+
+    [Fact]
+    public void ResolvesLegacyCursorSymbolsWhenCatalogIsAvailable()
+    {
+        var cursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nSHORT_SWORD\t64\n");
+        var catalog = AuthoritativeItemCatalog.LoadLegacyTsv(
+            "itemdat.tsv",
+            "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\n"
+                + "IDI_WARRIOR\t1\tWeapon\tOne-handed\tSHORT_SWORD\tSword\tNONE\tShort Sword\t\n",
+            cursorCatalog: cursors);
+
+        Assert.Equal(64, catalog.Generate(1, 42).NativeCursorGraphic);
+    }
+
+    [Fact]
+    public void RejectsDuplicateCursorGraphicIds()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nSHORT_SWORD\t64\nSWORD\t64\n"));
+    }
+
+    [Fact]
     public void RejectsInvalidExternalPresentationMetadata()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeItemCatalog([

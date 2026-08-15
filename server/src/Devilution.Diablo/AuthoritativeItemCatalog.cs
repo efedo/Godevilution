@@ -59,6 +59,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Optional native cursor projection for compatibility clients. */
     public int? NativeCursorGraphic { get; init; }
 
+    /** Optional legacy cursor symbol resolved through the active cursor catalog. */
+    public string CursorGraphic { get; init; } = string.Empty;
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -133,6 +136,7 @@ public sealed class AuthoritativeItemCatalog
                     && definition.SpellId <= 0)
                 || !IsValidPresentationText(definition.Name)
                 || !IsValidPresentationText(definition.IdentifiedName)
+                || !IsValidCursorSymbol(definition.CursorGraphic)
                 || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
@@ -153,6 +157,15 @@ public sealed class AuthoritativeItemCatalog
         return value is not null
             && !value.Contains('\0')
             && Encoding.UTF8.GetByteCount(value) < 64;
+    }
+
+    private static bool IsValidCursorSymbol(string value)
+    {
+        return value is not null
+            && (value.Length == 0
+                || value.All(character => character is >= 'A' and <= 'Z'
+                    or >= '0' and <= '9'
+                    or '_'));
     }
 
     /** Resolves a content definition from the native item index retained in state. */
@@ -270,7 +283,8 @@ public sealed class AuthoritativeItemCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemAffixCatalog? affixes = null,
-        AuthoritativeUniqueItemCatalog? uniqueItems = null)
+        AuthoritativeUniqueItemCatalog? uniqueItems = null,
+        AuthoritativeItemCursorCatalog? cursorCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row => new AuthoritativeItemDefinition(
@@ -306,7 +320,8 @@ public sealed class AuthoritativeItemCatalog
                 MaxCharges = row.OptionalInt32("max_charges"),
                 Name = OptionalPresentationText(row, "name"),
                 IdentifiedName = OptionalPresentationText(row, "identified_name"),
-                NativeCursorGraphic = ParseOptionalCursorGraphic(row),
+                CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
+                NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
     }
@@ -331,7 +346,8 @@ public sealed class AuthoritativeItemCatalog
         string contents,
         AuthoritativeItemAffixCatalog? affixes = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
-        AuthoritativeSpellCatalog? spellCatalog = null)
+        AuthoritativeSpellCatalog? spellCatalog = null,
+        AuthoritativeItemCursorCatalog? cursorCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var rows = table.Rows.ToArray();
@@ -372,6 +388,8 @@ public sealed class AuthoritativeItemCatalog
                         : 0,
                     Name = OptionalText(row, "name"),
                     IdentifiedName = OptionalText(row, "shortName"),
+                    CursorGraphic = LegacyCursorSymbol(row),
+                    NativeCursorGraphic = ParseLegacyCursorGraphic(row, cursorCatalog),
                 };
         }).ToArray();
         var catalog = new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -427,12 +445,49 @@ public sealed class AuthoritativeItemCatalog
         return value == "-" ? string.Empty : value;
     }
 
-    private static int? ParseOptionalCursorGraphic(TsvRow row)
+    private static int? ParseOptionalCursorGraphic(
+        TsvRow row,
+        AuthoritativeItemCursorCatalog? cursorCatalog)
     {
-        if (!row.TryGet("native_cursor_graphic", out var value)
-            || string.IsNullOrWhiteSpace(value))
-            return null;
-        return row.OptionalInt32("native_cursor_graphic");
+        var resolved = default(int?);
+        if (row.TryGet("cursor_graphic", out var symbol)
+            && !string.IsNullOrWhiteSpace(symbol)
+            && !symbol.Equals("-", StringComparison.Ordinal)) {
+            // Direct table consumers may not have loaded the optional
+            // compatibility catalog yet; activation resolves the symbol when
+            // the catalog is present and otherwise retains legacy fallback.
+            if (cursorCatalog is not null)
+                resolved = cursorCatalog.Resolve(symbol);
+        }
+        if (row.TryGet("native_cursor_graphic", out var value)
+            && !string.IsNullOrWhiteSpace(value)) {
+            var numeric = row.OptionalInt32("native_cursor_graphic");
+            if (resolved is not null && resolved.Value != numeric) {
+                throw new InvalidDataException(
+                    $"TSV row {row.LineNumber} contains conflicting cursor graphic values.");
+            }
+            resolved = numeric;
+        }
+        return resolved;
+    }
+
+    private static string LegacyCursorSymbol(TsvRow row)
+    {
+        if (!row.TryGet("cursorGraphic", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || value.Equals("DEFAULT", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+        return value;
+    }
+
+    private static int? ParseLegacyCursorGraphic(
+        TsvRow row,
+        AuthoritativeItemCursorCatalog? cursorCatalog)
+    {
+        var symbol = LegacyCursorSymbol(row);
+        return string.IsNullOrEmpty(symbol) || cursorCatalog is null
+            ? null
+            : cursorCatalog.Resolve(symbol);
     }
 
     private static int ParseLegacyItemClass(string value)

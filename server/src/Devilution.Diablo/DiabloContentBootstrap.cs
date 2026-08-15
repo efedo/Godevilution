@@ -168,12 +168,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     affixTable.ToCanonicalTsv(),
                     generationRules)
                 : null;
+        var cursorCatalog = content.TryGetTable(
+            "item_cursor_graphics.tsv",
+            out var cursorTable)
+            ? AuthoritativeItemCursorCatalog.LoadTsv(
+                cursorTable.SourcePath,
+                cursorTable.ToCanonicalTsv())
+            : null;
 
         var itemCatalog = content.TryGetTable("items.tsv", out var itemTable)
             ? AuthoritativeItemCatalog.LoadTsv(
                 itemTable.SourcePath,
                 itemTable.ToCanonicalTsv(),
-                affixes)
+                affixes,
+                null,
+                cursorCatalog)
             : null;
         // Normalized IDs take precedence. The legacy table remains a fallback
         // and intentionally derives compatibility IDs from its own row order.
@@ -184,7 +193,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 legacyItemTable.ToCanonicalTsv(),
                 affixes,
                 null,
-                spells);
+                spells,
+                cursorCatalog);
         }
         if (itemCatalog is null) {
             throw new InvalidDataException(
