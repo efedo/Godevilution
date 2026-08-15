@@ -314,7 +314,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
         "Acid", "AcidUnique", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
         "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "Gharbad", "GoatMelee", "GoatRanged",
         "Golem", "HorkDemon", "Lich", "Magma", "Mega", "Necromorb", "Psychorb", "Rhino", "Scavenger",
-        "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Storm",
+        "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Snotspill", "Storm",
         "Succubus", "LazarusSuccubus", "Torchant", "Warlord", "Zombie",
     };
 

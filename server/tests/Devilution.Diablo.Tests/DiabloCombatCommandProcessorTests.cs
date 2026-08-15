@@ -9536,6 +9536,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnotSpilUsesItsNativeFallenCombatBranch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "Snotspill",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // After the banner quest transition SnotSpil delegates to FallenAi;
+        // 1 ^ 9 ^ 7 = 15 is inside the native 20% SkeletonAi attack band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void GoatMeleeAiUsesValidatedMonsterTypeMovementTuning()
     {
         var monster = new AuthoritativeCombatTarget(
