@@ -198,6 +198,26 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void BarbarianDefaultModifierUsesConfiguredDivisor()
+    {
+        var barbarian = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Barbarian,
+        };
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(20, 20)),
+            [],
+            barbarian,
+            barbarianDefaultStrengthDamageDivisor: 50);
+
+        Assert.Equal(22, profile.DamageModifier);
+    }
+
+    [Fact]
     public void RogueStrengthDexterityModifierUsesConfiguredDivisor()
     {
         var rogue = CreateClass("custom") with {
@@ -387,6 +407,13 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
                 [],
                 CreateClass("custom"),
                 barbarianBowStrengthDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEquipmentDamageRules.Calculate(
+                1,
+                PlayerAttributesState.Zero,
+                [],
+                CreateClass("custom"),
+                barbarianDefaultStrengthDamageDivisor: 0));
             Assert.Throws<InvalidDataException>(() =>
             AuthoritativeEquipmentDamageRules.Calculate(
                 1,
