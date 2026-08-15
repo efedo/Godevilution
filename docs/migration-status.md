@@ -298,6 +298,10 @@ Status date: 2026-08-15
   no-op; no bounded generic path replaces an admitted but unavailable movement
   candidate.
 
+- GoatMelee's validated far-distance movement now preserves its native blocked
+  `RoundWalk` no-op; no bounded generic path replaces an admitted but
+  unavailable movement candidate.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

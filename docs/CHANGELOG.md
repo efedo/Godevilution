@@ -97,6 +97,10 @@ All notable changes to this fork are documented below.
 - Preserve Butcher's native blocked `RandomWalk` result: an admitted movement
   tick now defers instead of invoking bounded generic navigation.
 
+- Preserve GoatMelee's native blocked `RoundWalk` result: an admitted
+  far-distance movement tick now defers instead of invoking bounded generic
+  navigation.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
