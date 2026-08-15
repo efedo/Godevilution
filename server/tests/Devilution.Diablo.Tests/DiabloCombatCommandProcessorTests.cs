@@ -7087,6 +7087,39 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireDevastationUsesConfiguredChanceAndMultiplier()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire,
+                hellfireDevastationChancePercent: 100,
+                hellfireDevastationDamageMultiplier: 5));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(50, target.HitPoints);
+        Assert.Equal(1U, random.State);
+    }
+
+    [Fact]
     public void HellfireJestersPreservesNativeQ6DamageScaling()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);

@@ -372,6 +372,19 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredHellfireDevastationTuning()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_devastation_chance_percent\thellfire_devastation_damage_multiplier\n"
+            + "10\t1\t100\t17\t4\n");
+
+        Assert.Equal((17, 4), (
+            rules.HellfireDevastationChancePercent,
+            rules.HellfireDevastationDamageMultiplier));
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -524,6 +537,22 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 hellfireDecayRemovalThreshold: 0));
+    }
+
+    [Fact]
+    public void RejectsInvalidHellfireDevastationTuning()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_devastation_chance_percent\n"
+                + "10\t1\t100\t101\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hellfireDevastationDamageMultiplier: 0));
     }
 
     [Fact]
