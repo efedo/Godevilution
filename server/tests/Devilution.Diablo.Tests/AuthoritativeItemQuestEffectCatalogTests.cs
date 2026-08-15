@@ -86,6 +86,44 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
         Assert.Single(player.Inventory);
     }
 
+    [Fact]
+    public void GraveObjectConsumesCathedralMapAndCompletesQuest()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
+        var quest = new AuthoritativeQuestState(3017, 0, 1, active: true, logged: true);
+        var mapState = AuthoritativeItemState.Empty with {
+            ItemIndex = 22,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var inventory = new OwnedStoreItem(0, 0, 99, 0, 0, mapState);
+        var worldObject = new AuthoritativeWorldObject(
+            40,
+            6004,
+            0,
+            1,
+            0,
+            questId: 3017,
+            effectKind: AuthoritativeObjectEffectKind.QuestItemCompletion,
+            effectAmount: 43);
+        var world = new DiabloWorldState(objects: [worldObject], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayerWithInventory(inventory);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(40),
+            8,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(worldObject.Activated);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.All(player.InventoryGrid, cell => Assert.Equal(-1, cell));
+    }
+
     private static AuthoritativeItemDefinition CreateItem(
         uint itemId,
         int nativeItemIndex)
@@ -130,5 +168,13 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
             inventory: []) {
             EntityId = 1,
         };
+    }
+
+    private static AuthoritativePlayerState CreatePlayerWithInventory(OwnedStoreItem item)
+    {
+        var player = CreatePlayer();
+        player.Inventory.Add(item);
+        player.InventoryGrid[0] = 0;
+        return player;
     }
 }
