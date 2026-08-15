@@ -1992,17 +1992,19 @@ public sealed partial class DiabloSimulation
         uint itemSeed,
         AuthoritativeItemState state)
     {
-        var hasDynamicPresentation = !string.IsNullOrEmpty(state.BaseName)
+        var hasPresentation = !string.IsNullOrEmpty(state.BaseName)
             || !string.IsNullOrEmpty(state.IdentifiedName)
             || state.NativeCursorGraphic.HasValue;
-        if (!hasDynamicPresentation)
+        if (!hasPresentation)
             return itemSeed != 0;
-        return !string.IsNullOrEmpty(state.BaseName)
+        var hasValidNames = !string.IsNullOrEmpty(state.BaseName)
             && !string.IsNullOrEmpty(state.IdentifiedName)
-            && state.NativeCursorGraphic is >= 0 and <= byte.MaxValue
             && !state.BaseName.Contains('\0')
             && !state.IdentifiedName.Contains('\0')
             && System.Text.Encoding.UTF8.GetByteCount(state.BaseName) < 64
             && System.Text.Encoding.UTF8.GetByteCount(state.IdentifiedName) < 64;
+        return hasValidNames
+            && (!state.NativeCursorGraphic.HasValue
+                || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
     }
 }

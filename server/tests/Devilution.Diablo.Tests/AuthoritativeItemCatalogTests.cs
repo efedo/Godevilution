@@ -22,6 +22,32 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ProjectsExternalPresentationMetadataIntoGeneratedItemState()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tname\tidentified_name\tnative_cursor_graphic\n"
+                + "7\t1\t75\t100\t3\t9\tShort Sword\tSword\t12\n");
+
+        var state = catalog.Generate(7, 42);
+
+        Assert.Equal("Short Sword", state.BaseName);
+        Assert.Equal("Sword", state.IdentifiedName);
+        Assert.Equal(12, state.NativeCursorGraphic);
+    }
+
+    [Fact]
+    public void RejectsInvalidExternalPresentationMetadata()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                Name = new string('x', 64),
+                NativeCursorGraphic = 256,
+            },
+        ]));
+    }
+
+    [Fact]
     public void NativeIndexLookupRejectsConflictingDuplicateTags()
     {
         var catalog = new AuthoritativeItemCatalog([
@@ -413,6 +439,8 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(1, baseItem.ItemClass);
         Assert.Equal(2, baseItem.EquipLocation);
         Assert.Equal(28, baseItem.MiscId);
+        Assert.Equal("Cleaver", baseItem.BaseName);
+        Assert.Equal("Cleaver", baseItem.IdentifiedName);
 
         var uniques = AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
             "unique_itemdat.tsv",

@@ -109,13 +109,13 @@ public sealed record AuthoritativeItemState(
 
     public int InventoryHeight { get; init; } = 1;
 
-    /** Runtime-authored base name for dynamic items such as PvP ears. */
+    /** Content-owned or runtime-authored base name for an item. */
     public string BaseName { get; init; } = string.Empty;
 
-    /** Runtime-authored identified name for dynamic items such as PvP ears. */
+    /** Content-owned or runtime-authored identified name for an item. */
     public string IdentifiedName { get; init; } = string.Empty;
 
-    /** Optional native inventory cursor graphic override for dynamic items. */
+    /** Optional native inventory cursor graphic projection or override. */
     public int? NativeCursorGraphic { get; init; }
 
     public static AuthoritativeItemState Empty { get; } = new(

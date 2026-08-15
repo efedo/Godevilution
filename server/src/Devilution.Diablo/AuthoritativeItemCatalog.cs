@@ -1,3 +1,4 @@
+using System.Text;
 using Devilution.Data;
 
 namespace Devilution.Diablo;
@@ -49,6 +50,15 @@ public sealed record AuthoritativeItemDefinition(
 
     public int MaxCharges { get; init; }
 
+    /** Optional content-owned display name projected through item state. */
+    public string Name { get; init; } = string.Empty;
+
+    /** Optional identified display name; empty uses `Name`. */
+    public string IdentifiedName { get; init; } = string.Empty;
+
+    /** Optional native cursor projection for compatibility clients. */
+    public int? NativeCursorGraphic { get; init; }
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -86,6 +96,9 @@ public sealed record AuthoritativeItemDefinition(
             InventoryWidth = InventoryWidth,
             InventoryHeight = InventoryHeight,
             Identified = Identified,
+            BaseName = Name,
+            IdentifiedName = string.IsNullOrEmpty(IdentifiedName) ? Name : IdentifiedName,
+            NativeCursorGraphic = NativeCursorGraphic,
         };
     }
 }
@@ -117,7 +130,10 @@ public sealed class AuthoritativeItemCatalog
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
                     && (definition.SpellId <= 0 || definition.MaxCharges <= 0))
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem
-                    && definition.SpellId <= 0))
+                    && definition.SpellId <= 0)
+                || !IsValidPresentationText(definition.Name)
+                || !IsValidPresentationText(definition.IdentifiedName)
+                || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
                 throw new InvalidDataException($"Item {definition.ItemId} is defined more than once.");
@@ -131,6 +147,13 @@ public sealed class AuthoritativeItemCatalog
     public IReadOnlyList<AuthoritativeItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.ItemId).ToArray();
 
     public bool TryGet(uint itemId, out AuthoritativeItemDefinition definition) => definitions.TryGetValue(itemId, out definition!);
+
+    private static bool IsValidPresentationText(string value)
+    {
+        return value is not null
+            && !value.Contains('\0')
+            && Encoding.UTF8.GetByteCount(value) < 64;
+    }
 
     /** Resolves a content definition from the native item index retained in state. */
     public bool TryGetByNativeItemIndex(
@@ -281,6 +304,9 @@ public sealed class AuthoritativeItemCatalog
                     checked((int)row.RequiredUInt32("item_id"))),
                 Charges = row.OptionalInt32("charges"),
                 MaxCharges = row.OptionalInt32("max_charges"),
+                Name = OptionalPresentationText(row, "name"),
+                IdentifiedName = OptionalPresentationText(row, "identified_name"),
+                NativeCursorGraphic = ParseOptionalCursorGraphic(row),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
     }
@@ -344,6 +370,8 @@ public sealed class AuthoritativeItemCatalog
                     MaxCharges = ParseLegacyMiscId(OptionalText(row, "miscId")) == 24
                         ? 40
                         : 0,
+                    Name = OptionalText(row, "name"),
+                    IdentifiedName = OptionalText(row, "shortName"),
                 };
         }).ToArray();
         var catalog = new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -391,6 +419,20 @@ public sealed class AuthoritativeItemCatalog
     private static string OptionalText(TsvRow row, string column)
     {
         return row.TryGet(column, out var value) ? value : string.Empty;
+    }
+
+    private static string OptionalPresentationText(TsvRow row, string column)
+    {
+        var value = OptionalText(row, column);
+        return value == "-" ? string.Empty : value;
+    }
+
+    private static int? ParseOptionalCursorGraphic(TsvRow row)
+    {
+        if (!row.TryGet("native_cursor_graphic", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return null;
+        return row.OptionalInt32("native_cursor_graphic");
     }
 
     private static int ParseLegacyItemClass(string value)
