@@ -889,6 +889,15 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(5 + (23 / 5) + (9 / 4), armor);
         Assert.Equal(5 + (23 / 5), nonIronSkinArmor);
         Assert.Equal(5 + (barbarian.BaseDexterity / 5) + (9 / 4), player.ArmorClass);
+
+        var tunedBarbarian = barbarian with { IronSkinLevelDivisor = 3 };
+        var tunedArmor = AuthoritativeEquipmentStatRules.CalculateArmorClass(
+            5,
+            23,
+            [],
+            tunedBarbarian,
+            9);
+        Assert.Equal(5 + (23 / 5) + (9 / 3), tunedArmor);
     }
 
     [Fact]

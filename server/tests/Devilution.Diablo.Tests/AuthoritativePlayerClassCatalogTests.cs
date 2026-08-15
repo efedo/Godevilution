@@ -19,6 +19,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(9, catalog.Default.RepairAbilityDurabilityLevelOffset);
         Assert.Equal(2, catalog.Default.CriticalDamageMultiplier);
         Assert.Equal(1, catalog.Default.CriticalStrikeChancePerLevelPercent);
+        Assert.Equal(4, catalog.Resolve("barbarian").IronSkinLevelDivisor);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -116,7 +117,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 8; remove++)
+                    for (var remove = 0; remove < 9; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -161,7 +162,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 6; remove++)
+                    for (var remove = 0; remove < 7; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -195,7 +196,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 7; remove++)
+                    for (var remove = 0; remove < 8; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -403,14 +404,14 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\t9\t2\t1",
             "\t9\t0\t1",
             StringComparison.Ordinal);
-        var invalidCriticalChance = string.Join(
-            '\n',
-            source
-                .Replace("\r\n", "\n", StringComparison.Ordinal)
-                .Split('\n')
-                .Select(line => line.StartsWith("0\twarrior\t", StringComparison.Ordinal)
-                    ? line[..line.LastIndexOf('\t')] + "\t101"
-                    : line));
+        var invalidCriticalChance = source.Replace(
+            "\t2\t1\t4",
+            "\t2\t101\t4",
+            StringComparison.Ordinal);
+        var invalidIronSkinDivisor = source.Replace(
+            "\t2\t1\t4",
+            "\t2\t1\t0",
+            StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", changedSchema));
@@ -440,6 +441,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidCriticalMultiplier));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidCriticalChance));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidIronSkinDivisor));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()
