@@ -565,6 +565,8 @@ message MonsterSnapshot {
 	optional int32 skeleton_king_delay_ticks = 76;
 	// Remaining native HorkDemonAi delay ticks before the next decision.
 	optional int32 hork_demon_delay_ticks = 77;
+	// Remaining native AiRangedAvoidance delay ticks before the next decision.
+	optional int32 ranged_avoidance_delay_ticks = 78;
 }
 
 message WorldItemSnapshot {

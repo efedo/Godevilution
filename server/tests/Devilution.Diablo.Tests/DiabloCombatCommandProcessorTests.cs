@@ -8130,6 +8130,12 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.False(monster.IsMoving);
         Assert.Equal(11, monster.RangedAvoidanceMovementIdleTicks);
+        Assert.Equal(9, monster.RangedAvoidanceDelayTicks);
+
+        processor.AdvanceTick(4_945, [player]);
+
+        Assert.Equal(8, monster.RangedAvoidanceDelayTicks);
+        Assert.False(monster.IsMoving);
     }
 
     [Fact]

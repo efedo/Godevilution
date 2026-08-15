@@ -6795,10 +6795,13 @@ public sealed class DiabloCombatCommandProcessor
                     || (missile.ProjectileBehavior
                             == AuthoritativeProjectileBehavior.ApocalypseController
                         && projectile.Behavior
-                            == AuthoritativeProjectileBehavior.ApocalypseBoom))))
+                        == AuthoritativeProjectileBehavior.ApocalypseBoom))))
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+            && monster.AdvanceRangedAvoidanceDelay())
+            return true;
         var rangedAvoidanceUsesRoundWalk = false;
         var rangedAvoidanceRoundWalkTurn = -1;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
@@ -6879,12 +6882,15 @@ public sealed class DiabloCombatCommandProcessor
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;
                 } else {
-                    TryAdvanceRangedAvoidanceMovement(
+                    var moved = TryAdvanceRangedAvoidanceMovement(
                         monster,
                         player,
                         players,
                         attackSeed,
                         useRoundWalk: false);
+                    if (!moved)
+                        monster.StartRangedAvoidanceDelay(
+                            5 + (int)((attackSeed / 200U) % 10U));
                     return true;
                 }
                 return false;
@@ -6922,13 +6928,16 @@ public sealed class DiabloCombatCommandProcessor
             attackBand = checked(
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand)) {
-                TryAdvanceRangedAvoidanceMovement(
+                var moved = TryAdvanceRangedAvoidanceMovement(
                     monster,
                     player,
                     players,
                     attackSeed,
                     rangedAvoidanceUsesRoundWalk,
                     rangedAvoidanceRoundWalkTurn);
+                if (!moved)
+                    monster.StartRangedAvoidanceDelay(
+                        5 + (int)((attackSeed / 200U) % 10U));
                 return true;
             }
         } else {
@@ -6957,13 +6966,16 @@ public sealed class DiabloCombatCommandProcessor
                 player.PositionX,
                 player.PositionY)) {
             if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
-                TryAdvanceRangedAvoidanceMovement(
+                var moved = TryAdvanceRangedAvoidanceMovement(
                     monster,
                     player,
                     players,
                     attackSeed,
                     rangedAvoidanceUsesRoundWalk,
                     rangedAvoidanceRoundWalkTurn);
+                if (!moved)
+                    monster.StartRangedAvoidanceDelay(
+                        5 + (int)((attackSeed / 200U) % 10U));
                 return true;
             }
             if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController

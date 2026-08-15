@@ -380,6 +380,23 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsRangedAvoidanceDelayStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Magma",
+                RangedAvoidanceDelayTicks = 7,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        Assert.Equal(7, Assert.Single(restored.Monsters).RangedAvoidanceDelayTicks);
+    }
+
+    [Fact]
     public void VersionOneRoundTripsCounselorRetreatStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

@@ -83,7 +83,8 @@ public sealed class AuthoritativeCombatTarget
         int rhinoMovementMode = 0,
         int rhinoDelayTicks = 0,
         int skeletonKingDelayTicks = 0,
-        int horkDemonDelayTicks = 0)
+        int horkDemonDelayTicks = 0,
+        int rangedAvoidanceDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -159,6 +160,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(skeletonKingDelayTicks));
         if (horkDemonDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(horkDemonDelayTicks));
+        if (rangedAvoidanceDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -246,6 +249,7 @@ public sealed class AuthoritativeCombatTarget
         RhinoDelayTicks = rhinoDelayTicks;
         SkeletonKingDelayTicks = skeletonKingDelayTicks;
         HorkDemonDelayTicks = horkDemonDelayTicks;
+        RangedAvoidanceDelayTicks = rangedAvoidanceDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -436,6 +440,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native HorkDemonAi delay ticks before the next decision. */
     public int HorkDemonDelayTicks { get; private set; }
+
+    /** Remaining native AiRangedAvoidance delay ticks before the next decision. */
+    public int RangedAvoidanceDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -1033,6 +1040,28 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         HorkDemonDelayTicks = ticks;
+    }
+
+    internal void StartRangedAvoidanceDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RangedAvoidanceDelayTicks = ticks;
+    }
+
+    internal bool AdvanceRangedAvoidanceDelay()
+    {
+        if (RangedAvoidanceDelayTicks == 0)
+            return false;
+        RangedAvoidanceDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreRangedAvoidanceDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        RangedAvoidanceDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)
