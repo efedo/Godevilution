@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.211.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.212.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.211.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.212.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);

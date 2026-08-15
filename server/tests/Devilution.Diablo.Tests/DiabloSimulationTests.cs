@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.211.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.212.0"),
             DiabloContentSchema.Current);
     }
 
@@ -101,6 +101,83 @@ public sealed class DiabloSimulationTests
 
         var restored = Assert.Single(destination.WorldState.CombatTargets.Values);
         Assert.Equal((240, 240), (restored.HitPoints, restored.MaxHitPoints));
+    }
+
+    [Fact]
+    public void HellUsesTypeSpecificResistanceMetadataWithoutChangingNightmare()
+    {
+        var type = new AuthoritativeMonsterTypeDefinition(
+            12,
+            12,
+            "Hell-resistant monster",
+            1,
+            16,
+            10,
+            10,
+            10,
+            0,
+            1,
+            1,
+            1,
+            1,
+            false,
+            false,
+            false) {
+            FireResistance = 25,
+            LightningResistance = 50,
+            MagicResistance = 75,
+            AcidResistance = 100,
+            FireResistanceHell = 100,
+            LightningResistanceHell = 0,
+            MagicResistanceHell = 50,
+            AcidResistanceHell = 75,
+        };
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            monsterId: 12,
+            fireResistance: type.FireResistance,
+            lightningResistance: type.LightningResistance,
+            magicResistance: type.MagicResistance,
+            acidResistance: type.AcidResistance);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([type]);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                MonsterTypes = monsterTypes,
+                Difficulty = DiabloDifficulty.Hell,
+            });
+
+        Assert.Equal((100, 0, 50, 75), (
+            target.FireResistance,
+            target.LightningResistance,
+            target.MagicResistance,
+            target.AcidResistance));
+
+        var nightmareTarget = new AuthoritativeCombatTarget(
+            10,
+            1,
+            0,
+            10,
+            monsterId: 12,
+            fireResistance: type.FireResistance,
+            lightningResistance: type.LightningResistance,
+            magicResistance: type.MagicResistance,
+            acidResistance: type.AcidResistance);
+        var nightmare = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [nightmareTarget],
+                MonsterTypes = monsterTypes,
+                Difficulty = DiabloDifficulty.Nightmare,
+            });
+
+        Assert.Equal((25, 50, 75, 100), (
+            nightmareTarget.FireResistance,
+            nightmareTarget.LightningResistance,
+            nightmareTarget.MagicResistance,
+            nightmareTarget.AcidResistance));
     }
 
     [Fact]
@@ -267,7 +344,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.211.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.212.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

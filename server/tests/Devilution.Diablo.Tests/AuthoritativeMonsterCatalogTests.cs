@@ -35,6 +35,22 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsHellSpecificResistanceColumnsFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tfire_resistance\tlightning_resistance\tmagic_resistance\tacid_resistance\tfire_resistance_hell\tlightning_resistance_hell\tmagic_resistance_hell\tacid_resistance_hell\n"
+                + "2\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\t25\t50\t75\t100\t100\t0\t50\t75\n");
+
+        var zombie = Assert.Single(catalog.Definitions);
+        Assert.Equal((100, 0, 50, 75), (
+            zombie.FireResistanceHell,
+            zombie.LightningResistanceHell,
+            zombie.MagicResistanceHell,
+            zombie.AcidResistanceHell));
+    }
+
+    [Fact]
     public void RejectsOutOfRangeAggroRadius()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
