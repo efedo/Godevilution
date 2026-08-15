@@ -40,8 +40,9 @@ Status date: 2026-08-15
   omitted values retain physical arrows.
 
 - Validated BloodStar mappings now consume their existing `projectile_speed`,
-  `projectile_lifetime`, and optional `damage_type` metadata before falling back
-  to the mapped spell's transport values, keeping older rows compatible.
+  `projectile_lifetime`, optional `damage_type`, and optional
+  `projectile_damage` metadata before falling back to mapped-spell transport
+  values and native monster damage, keeping older rows compatible.
 
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain

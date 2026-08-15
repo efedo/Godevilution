@@ -555,8 +555,9 @@ block, resistance, and damage resolution remain server-owned. The optional
 cross-validated against the active spell catalog. When no missile catalog is
 active, legacy Succubus-family labels retain the native stable-ID fallback.
 When present, the mapping's `projectile_speed`, `projectile_lifetime`, and
-`damage_type` fields override the corresponding spell transport values; omitted
-fields retain the native spell-backed defaults.
+`damage_type` fields override the corresponding spell transport values, and
+`projectile_damage` supplies a fixed impact value; omitted fields retain the
+native spell-backed transport and monster-damage defaults.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
