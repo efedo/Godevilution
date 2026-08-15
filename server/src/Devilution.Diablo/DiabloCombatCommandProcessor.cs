@@ -4440,7 +4440,7 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 continue;
             }
-            ApplyNativeMonsterRegeneration(target);
+            ApplyNativeMonsterRegeneration(target, rules.MonsterRegenerationLevelDivisor);
             if (target.IsPetrified)
                 continue;
             if (TryAdvanceScavengerAi(target, players))
@@ -5526,13 +5526,14 @@ public sealed class DiabloCombatCommandProcessor
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
     private static void ApplyNativeMonsterRegeneration(
-        AuthoritativeCombatTarget monster)
+        AuthoritativeCombatTarget monster,
+        int levelDivisor)
     {
         if (monster.MonsterLevel <= 0 || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
             return;
 
         var healing = monster.MonsterLevel > 1
-            ? monster.MonsterLevel / 2
+            ? monster.MonsterLevel / levelDivisor
             : monster.MonsterLevel;
         monster.ApplyHealingQ6(DiabloFixedPointQ6.FromWhole(healing));
     }
