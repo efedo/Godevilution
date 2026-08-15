@@ -5863,6 +5863,11 @@ public sealed class DiabloCombatCommandProcessor
                 target.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 return true;
             }
+
+            // Native LeoricAi enters AiDelay when its admitted RoundWalk
+            // cannot find a candidate; do not replace that tick with a
+            // different movement policy.
+            return true;
         }
 
         var randomWalk = FindNativeRandomWalkStep(
@@ -5875,13 +5880,9 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var next = AuthoritativeMonsterNavigation.FindStep(
-            world,
-            target,
-            victim,
-            players);
-        if (next.HasValue)
-            target.BeginMovement(next.Value.X, next.Value.Y);
+        // Native LeoricAi consumes an admitted RandomWalk tick when every
+        // native candidate is unavailable; bounded navigation must not invent
+        // a replacement step.
         return true;
     }
 

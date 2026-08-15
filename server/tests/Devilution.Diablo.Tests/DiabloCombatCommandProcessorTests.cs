@@ -1738,6 +1738,35 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingDefersWhenItsNativeRoundWalkCandidatesAreBlocked()
+    {
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [205, 206, 245, 285, 286],
+            combatTargets: [king]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7);
+
+        // 101 ^ 9 ^ 7 = 111: movement is admitted, the RoundWalk branch is
+        // skipped, and every native RandomWalk candidate is blocked while
+        // bounded navigation still has an alternate route.
+        processor.AdvanceTick(101, [player]);
+
+        Assert.False(king.IsMoving);
+        Assert.Equal((6, 6), (king.PositionX, king.PositionY));
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedSummonChanceTuning()
     {
         var nativeWorld = new AuthoritativeWorld();
