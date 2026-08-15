@@ -8,4 +8,6 @@ public enum AuthoritativeObjectEffectKind
     Experience,
     /** Advances a content-owned ordered quest interaction sequence. */
     QuestSequence,
+    /** Consumes a required normalized item and completes the linked quest. */
+    QuestItemCompletion,
 }

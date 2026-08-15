@@ -93,9 +93,29 @@ public static class AuthoritativeWorldObjectCatalog
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest sequence object.");
+        if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion
+                && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
+            throw new InvalidDataException(
+                $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
         if (objects.Select(@object => @object.EntityId).Distinct().Count() != objects.Length)
             throw new InvalidDataException($"Object table '{sourcePath}' contains duplicate entity IDs.");
         return objects;
+    }
+
+    /** Validates normalized item identities encoded by quest-item objects. */
+    public static void ValidateItemRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeItemCatalog items)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(items);
+        foreach (var @object in objects
+                     .Where(@object => @object.EffectKind
+                         == AuthoritativeObjectEffectKind.QuestItemCompletion)) {
+            if (!items.TryGet((uint)@object.EffectAmount, out _))
+                throw new InvalidDataException(
+                    $"Quest-item object {@object.EntityId} references unknown item {@object.EffectAmount}.");
+        }
     }
 
     private static AuthoritativeObjectEffectKind ParseEffectKind(TsvRow row)

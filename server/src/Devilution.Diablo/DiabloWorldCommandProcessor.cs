@@ -880,6 +880,8 @@ public sealed class DiabloWorldCommandProcessor
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object);
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion)
+            return ApplyQuestItemCompletion(player, @object);
 
         @object.Activated = true;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
@@ -944,6 +946,40 @@ public sealed class DiabloWorldCommandProcessor
         default:
             return DiabloWorldIntentResult.Accepted;
         }
+    }
+
+    /** Consumes a content-selected inventory item at a quest interaction boundary. */
+    private DiabloWorldIntentResult ApplyQuestItemCompletion(
+        AuthoritativePlayerState player,
+        AuthoritativeWorldObject @object)
+    {
+        if (items is null
+            || !world.Quests.TryGetValue(@object.QuestId, out var quest)
+            || quest.Unavailable
+            || quest.Completed
+            || quest.LevelId != player.LevelId
+            || !items.TryGet((uint)@object.EffectAmount, out var itemDefinition)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        var inventoryIndex = -1;
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            if (player.Inventory[index].State.ItemIndex == itemDefinition.NativeItemIndex) {
+                inventoryIndex = index;
+                break;
+            }
+        }
+        if (inventoryIndex < 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, inventoryIndex);
+        player.Inventory.RemoveAt(inventoryIndex);
+        @object.Activated = true;
+        quest.Progress = quest.RequiredProgress;
+        quest.Completed = true;
+        quest.Active = false;
+        quest.Logged = true;
+        return DiabloWorldIntentResult.Accepted;
     }
 
     /** Applies one ordered quest interaction step, preserving native reset semantics. */
