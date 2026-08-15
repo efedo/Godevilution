@@ -230,6 +230,9 @@ The optional `gargoyle_healing_health_threshold_percent` column externalizes
 the Gargoyle wounded-health admission threshold for self-healing. Legacy
 monster rows retain the native 50-percent compatibility threshold. The
 validated threshold is selected independently of the row's `native_ai` label.
+The active catalog's validated `native_ai` identity also selects the server-owned
+Butcher pursuit boundary; direct legacy targets without a catalog retain the
+runtime-label fallback.
 The optional `skeleton_ranged_retreat_minimum_distance`,
 `skeleton_ranged_retreat_chance_base`,
 `skeleton_ranged_retreat_chance_intelligence_scale`,

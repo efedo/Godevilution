@@ -39,6 +39,8 @@ All notable changes to this fork are documented below.
   validated tuning tuples rather than requiring the `SkeletonRanged` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults,
   and validated ranged tuples suppress adjacent melee fallback.
+- Select Butcher pursuit from the active monster-type identity when a validated
+  catalog is present; direct legacy targets retain the native-label fallback.
 - Select Zombie action, random-direction, and movement-distance behavior from
   complete validated tuning tuples rather than requiring the `Zombie` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.

@@ -65,6 +65,9 @@ Status date: 2026-08-14
   persisted special lock remains snapshot/save compatible for any validated
   label carrying the tuple.
 
+- Butcher pursuit now consults the active validated monster-type identity when
+  a catalog is present; direct legacy targets retain the native-name fallback.
+
 - SkeletonRanged retreat and clear-lane arrow admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
   without migrated tuning retain the native-name compatibility path, and the
