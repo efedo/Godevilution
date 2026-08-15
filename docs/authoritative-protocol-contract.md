@@ -337,6 +337,11 @@ For GoatMelee's ordinary admitted movement, the server likewise uses the
 native `RandomWalk` candidate order and consumes the tick when those candidates
 are blocked; clients receive no bounded pursuit replacement.
 
+For a healthy Gargoyle outside melee range, the server applies the native
+`AiAvoidance` `RoundWalk`/`RandomWalk` candidate order after healing is not
+admitted; blocked candidates consume the tick without a generic navigation
+replacement.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive

@@ -306,6 +306,10 @@ Status date: 2026-08-15
   candidate order and blocked-tick no-op instead of invoking bounded generic
   pursuit.
 
+- Gargoyle healthy non-adjacent ticks now preserve native `AiAvoidance`
+  `RoundWalk`/`RandomWalk` candidate order and blocked-tick no-op after the
+  server-owned healing branch.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can
