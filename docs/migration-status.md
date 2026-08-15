@@ -219,6 +219,11 @@ Status date: 2026-08-15
   fresh-mode, and middle-band admissions are server-owned and persist through
   snapshots, optional protocol fields 64-65, saves, and canonical hashes.
 
+- Native Skeleton/Fallen `AiDelay` is now a server-owned countdown after
+  failed movement or adjacent attack admissions. The delay persists through
+  snapshots, optional protocol field 68, saves, and canonical hashes, so the
+  server does not reroll SkeletonAi while native delay mode is active.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

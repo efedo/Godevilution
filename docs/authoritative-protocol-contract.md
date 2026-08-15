@@ -295,6 +295,11 @@ movement value. The server applies the native long-idle, fresh-mode, and
 middle-band ordinary `RandomWalk` admissions; older peers may omit these
 fields, while far-distance `RoundWalk` goal state remains in fields 58-59.
 
+Optional `MonsterSnapshot.skeleton_melee_delay_ticks` field 68 carries the
+remaining native Skeleton/Fallen `AiDelay` countdown. The server consumes the
+countdown before the next movement or attack decision; older peers may omit
+the field and clients never execute the delay policy.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

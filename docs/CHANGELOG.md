@@ -47,6 +47,11 @@ All notable changes to this fork are documented below.
   persists that state through optional protocol fields 64-65, snapshots,
   saves, and the canonical state hash.
 
+- Preserve native Skeleton/Fallen `AiDelay` state: failed movement and adjacent
+  attack admissions now start a server-owned delay countdown, which persists
+  through optional protocol field 68, snapshots, saves, and the canonical
+  state hash instead of rerolling on the next tick.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -396,6 +396,9 @@ Windows toolchain command.
   `AiRangedAvoidance` `var2`-compatible idle counter and `var1`-compatible
   movement value. Older peers may omit them; clients never execute ordinary
   `RandomWalk` admissions.
+- Optional `MonsterSnapshot.skeleton_melee_delay_ticks` field 68 carries the
+  server-owned native Skeleton/Fallen `AiDelay` countdown. Older peers may omit
+  it; clients never execute the delay policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.
