@@ -214,6 +214,10 @@ Status date: 2026-08-15
   movement and adjacent attack bands as native `FallenAi`; fear state retains
   precedence, and specialized validated controller tuples are not shadowed.
 
+- Butcher movement now uses the native non-adjacent `RandomWalk` candidate order
+  before bounded navigation fallback; validated identity precedence remains
+  server-owned.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
@@ -812,8 +816,8 @@ Status date: 2026-08-15
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.
 - Native Butcher pursuit now has an explicit server-owned AI boundary: the
-  monster follows deterministic navigation until adjacent, then uses the shared
-  authoritative melee path.
+  monster uses deterministic native `RandomWalk` candidates until adjacent,
+  then uses the shared authoritative melee path.
 - Native SkeletonMelee movement now uses the server-owned `35 - 4 * intelligence`
   admission band, delaying or using deterministic `RandomWalk` candidates
   before shared melee.

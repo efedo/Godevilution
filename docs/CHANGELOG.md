@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
   movement and adjacent attack bands while preserving fear-state precedence and
   specialized validated controller identities.
 
+- Restore the native `ButcherAi` non-adjacent `RandomWalk` branch before shared
+  melee resolution, with bounded navigation retained only for blocked cells.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
