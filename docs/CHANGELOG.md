@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.190 optional `combat.tsv` hit-recovery tier metadata. Active
+  Fast/Faster/Fastest Hit Recovery flags now use validated skip values, while
+  omitted values retain the native ordered 1/2/3 behavior.
+
 - Add schema 1.189 optional `combat.tsv`
   `equipment_fast_block_frame_skip` metadata. Equipment FastBlock timing now
   uses the validated combat value, while omitted values retain the native

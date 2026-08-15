@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Equipment Fast/Faster/Fastest Hit Recovery timing now consumes validated
+  ordered tier metadata from `combat.tsv`; older combat schemas retain the
+  native 1/2/3 compatibility defaults.
+
 - Equipment-driven FastBlock timing now consumes validated
   `equipment_fast_block_frame_skip` combat metadata; older combat schemas
   retain the native two-frame compatibility default.
@@ -392,6 +396,10 @@ Status date: 2026-08-15
 - Schema 1.189 adds optional `equipment_fast_block_frame_skip` metadata to
   `combat.tsv`. Equipment FastBlock timing now uses the validated combat value;
   omitted values retain the native two-frame behavior.
+
+- Schema 1.190 adds optional Fast/Faster/Fastest Hit Recovery skip metadata to
+  `combat.tsv`. Active recovery timing now uses the validated ordered values;
+  omitted values retain the native 1/2/3 behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
