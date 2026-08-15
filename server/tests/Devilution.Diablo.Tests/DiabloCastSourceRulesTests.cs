@@ -110,4 +110,35 @@ public sealed class DiabloCastSourceRulesTests
             7,
             items));
     }
+
+    [Fact]
+    public void ExplicitlyUnusableConsumableItemsCannotBeCast()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 5, 0, 0, 0, 0) {
+                ConsumableMiscId = 47,
+            },
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 101,
+                MiscId = 47,
+                SpellId = 7,
+                SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+                Usable = false,
+            },
+        ]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 101,
+            MiscId = 47,
+            SpellId = 7,
+            SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+        };
+
+        Assert.False(DiabloCastSourceRules.IsMatchingConsumableItem(
+            state,
+            7,
+            spells,
+            items));
+    }
 }

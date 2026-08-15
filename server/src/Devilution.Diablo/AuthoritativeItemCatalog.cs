@@ -68,6 +68,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Native weighted drop rate; zero excludes the item from random selection. */
     public int DropRate { get; init; }
 
+    /** Optional native iUsable flag for cursor-consumable item actions. */
+    public bool? Usable { get; init; }
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -341,6 +344,7 @@ public sealed class AuthoritativeItemCatalog
                 CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
                 MinimumMonsterLevel = row.OptionalInt32("min_monster_level"),
                 DropRate = row.OptionalInt32("drop_rate"),
+                Usable = ParseOptionalBoolean(row, "usable"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -411,6 +415,7 @@ public sealed class AuthoritativeItemCatalog
                     CursorGraphic = LegacyCursorSymbol(row),
                     MinimumMonsterLevel = row.OptionalInt32("minMonsterLevel"),
                     DropRate = row.OptionalInt32("dropRate"),
+                    Usable = ParseLegacyUsable(row),
                     NativeCursorGraphic = ParseLegacyCursorGraphic(row, cursorCatalog),
                 };
         }).ToArray();
@@ -465,6 +470,23 @@ public sealed class AuthoritativeItemCatalog
     {
         var value = OptionalText(row, column);
         return value == "-" ? string.Empty : value;
+    }
+
+    private static bool? ParseOptionalBoolean(TsvRow row, string column)
+    {
+        if (!row.TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
+            return null;
+        if (bool.TryParse(value, out var result))
+            return result;
+        if (int.TryParse(value, out var numeric))
+            return numeric != 0;
+        throw new InvalidDataException(
+            $"TSV row {row.LineNumber} contains an invalid boolean '{value}'.");
+    }
+
+    private static bool ParseLegacyUsable(TsvRow row)
+    {
+        return ParseOptionalBoolean(row, "usable") ?? false;
     }
 
     private static int? ParseOptionalCursorGraphic(

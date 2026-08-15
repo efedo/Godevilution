@@ -10,8 +10,8 @@ public sealed class AuthoritativeItemCatalogTests
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
-            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\tmin_monster_level\tdrop_rate\n"
-                + "7\t1\t75\t100\t3\t9\t2\t1\t1\t12\t3\n");
+            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\tmin_monster_level\tdrop_rate\tusable\n"
+                + "7\t1\t75\t100\t3\t9\t2\t1\t1\t12\t3\ttrue\n");
 
         var state = catalog.Generate(7, 42);
         Assert.Equal(42U, state.CreateInfo);
@@ -21,6 +21,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(1, state.InventoryHeight);
         Assert.Equal(12, catalog.GetRequired(7).MinimumMonsterLevel);
         Assert.Equal(3, catalog.GetRequired(7).DropRate);
+        Assert.True(catalog.GetRequired(7).Usable);
     }
 
     [Fact]
@@ -548,6 +549,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal("Cleaver", baseItem.IdentifiedName);
         Assert.Equal(10, items.GetRequired(1).MinimumMonsterLevel);
         Assert.Equal(0, items.GetRequired(1).DropRate);
+        Assert.False(items.GetRequired(1).Usable);
 
         var uniques = AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
             "unique_itemdat.tsv",

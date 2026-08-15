@@ -120,6 +120,8 @@ public static class DiabloCastSourceRules
     {
         ArgumentNullException.ThrowIfNull(state);
         TryGetDefinition(state, items, out var definition);
+        if (definition?.Usable == false)
+            return false;
         var sourceKind = state.SpellSourceKind ?? definition?.SpellSourceKind;
         if (sourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ConsumableItem
