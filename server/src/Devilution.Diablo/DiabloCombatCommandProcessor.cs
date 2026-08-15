@@ -10966,13 +10966,21 @@ public sealed class DiabloCombatCommandProcessor
         if (owner is null)
             return false;
 
+        var hitMonsterLevelScale = 2;
+        var minimumHitChance = 5;
+        var maximumHitChance = 95;
+        if (spells.TryGet(projectile.SpellId, out var persistentSpell)) {
+            hitMonsterLevelScale = persistentSpell.PersistentProjectileHitMonsterLevelScale;
+            minimumHitChance = persistentSpell.PersistentProjectileMinimumHitChance;
+            maximumHitChance = persistentSpell.PersistentProjectileMaximumHitChance;
+        }
         var ownerClass = GetPlayerClass(owner);
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
-            + (ownerClass?.BaseMagicToHit ?? 50)
-            - target.MonsterLevel * 2,
-            5,
-            95);
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - target.MonsterLevel * hitMonsterLevelScale,
+            minimumHitChance,
+            maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
         if (!target.IsPetrified && hitRoll >= hitChance)
             return false;

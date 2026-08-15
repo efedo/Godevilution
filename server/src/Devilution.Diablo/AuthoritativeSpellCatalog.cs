@@ -201,6 +201,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Divisor applied to a monster's current life when Bone Spirit hits. */
     public int BoneSpiritDamageHitPointsDivisor { get; init; } = 3;
 
+    /** Monster-level penalty for shared persistent-projectile magic-hit rolls. */
+    public int PersistentProjectileHitMonsterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for shared persistent-projectile magic-hit rolls. */
+    public int PersistentProjectileMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for shared persistent-projectile magic-hit rolls. */
+    public int PersistentProjectileMaximumHitChance { get; init; } = 95;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -612,6 +621,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.BoneSpiritMinimumHitChance is < 0 or > 100
                 || definition.BoneSpiritMaximumHitChance is < 0 or > 100
                 || definition.BoneSpiritDamageHitPointsDivisor <= 0
+                || definition.PersistentProjectileHitMonsterLevelScale < 0
+                || definition.PersistentProjectileMinimumHitChance is < 0 or > 100
+                || definition.PersistentProjectileMaximumHitChance is < 0 or > 100
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -1434,6 +1446,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Bone Spirit hit tuning columns require BoneSpirit projectile behavior.");
             }
+            if (definition.PersistentProjectileMaximumHitChance
+                < definition.PersistentProjectileMinimumHitChance) {
+                throw new InvalidDataException(
+                    "Persistent projectile hit chance bounds must be ordered.");
+            }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
@@ -1973,6 +1990,15 @@ public sealed class AuthoritativeSpellCatalog
             BoneSpiritDamageHitPointsDivisor = row.OptionalInt32(
                 "bone_spirit_damage_hit_points_divisor",
                 3),
+            PersistentProjectileHitMonsterLevelScale = row.OptionalInt32(
+                "persistent_projectile_hit_monster_level_scale",
+                2),
+            PersistentProjectileMinimumHitChance = row.OptionalInt32(
+                "persistent_projectile_minimum_hit_chance",
+                5),
+            PersistentProjectileMaximumHitChance = row.OptionalInt32(
+                "persistent_projectile_maximum_hit_chance",
+                95),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),
