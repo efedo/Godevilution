@@ -252,6 +252,11 @@ Status date: 2026-08-14
   and distance terms for player-hit admission; omitted values retain the
   native 10/2/2/40/2 formula and shared 20/25/30 level-specific floors.
 
+- Schema 1.161 adds optional Snake charge special-hit accuracy metadata to
+  `combat.tsv`. Charge admission now uses the validated native base to-hit
+  value with shared monster accuracy terms; omitted values retain the native
+  500 compatibility value.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

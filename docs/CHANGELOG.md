@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.161 optional `combat.tsv` Snake charge special-hit accuracy
+  metadata. Charge admission now uses validated content for its native base
+  to-hit value while older definitions retain the 500 compatibility value.
 - Add schema 1.160 optional `combat.tsv` monster magic-projectile accuracy
   metadata. Monster-owned magic projectiles now use validated base, level, and
   distance terms for player-hit admission while legacy definitions retain the
