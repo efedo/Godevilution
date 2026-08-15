@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.191 optional `combat.tsv` melee attack-speed tier metadata.
+  Quick/Fast/Faster/Fastest melee timing now uses validated skips for both
+  first-frame and subsequent-frame paths; omitted values retain the native
+  1/0, 2/1, 3/2, and 4/2 compatibility defaults.
+
 - Add schema 1.190 optional `combat.tsv` hit-recovery tier metadata. Active
   Fast/Faster/Fastest Hit Recovery flags now use validated skip values, while
   omitted values retain the native ordered 1/2/3 behavior.

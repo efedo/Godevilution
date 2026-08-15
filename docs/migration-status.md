@@ -24,6 +24,11 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Melee Quick/Fast/Faster/Fastest attack timing now consumes validated
+  first-frame and subsequent-frame tier metadata from `combat.tsv`; older
+  combat schemas retain the native 1/0, 2/1, 3/2, and 4/2 compatibility
+  defaults.
+
 - Equipment Fast/Faster/Fastest Hit Recovery timing now consumes validated
   ordered tier metadata from `combat.tsv`; older combat schemas retain the
   native 1/2/3 compatibility defaults.
@@ -400,6 +405,11 @@ Status date: 2026-08-15
 - Schema 1.190 adds optional Fast/Faster/Fastest Hit Recovery skip metadata to
   `combat.tsv`. Active recovery timing now uses the validated ordered values;
   omitted values retain the native 1/2/3 behavior.
+
+- Schema 1.191 adds optional Quick/Fast/Faster/Fastest melee attack-speed skip
+  metadata to `combat.tsv`. Active melee timing now uses validated skips for
+  both first-frame and subsequent-frame paths; omitted values retain the
+  native 1/0, 2/1, 3/2, and 4/2 behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
