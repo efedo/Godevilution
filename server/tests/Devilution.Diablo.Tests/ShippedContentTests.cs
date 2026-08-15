@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.214.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.215.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.214.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.215.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
@@ -322,9 +322,9 @@ public sealed class ShippedContentTests
         Assert.True(defiler.IsUnique);
         Assert.Equal("Defiler", defiler.UniqueIdentity);
         Assert.Equal("SkeletonMelee", defiler.NativeAi);
-        Assert.NotNull(defiler.Drop);
-        Assert.Equal(43, defiler.Drop!.State.MiscId);
-        Assert.Equal(42, defiler.Drop.State.ItemIndex);
+        Assert.Null(defiler.Drop);
+        Assert.Equal(43U, activation.Simulation.WorldState.Quests[3021].CompletionRewardItemId);
+        Assert.Equal(0, activation.Simulation.WorldState.Quests[3021].CompletionRewardItemLevel);
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
             composed.GetRequiredTable("monster_types.tsv").ToCanonicalTsv());

@@ -1111,7 +1111,8 @@ public sealed class DiabloCombatCommandProcessorTests
             17,
             1,
             active: true,
-            completionUniqueIdentity: "Defiler");
+            completionUniqueIdentity: "Defiler",
+            completionRewardItemId: 43);
         var target = new AuthoritativeCombatTarget(
             16,
             1,
@@ -1119,19 +1120,32 @@ public sealed class DiabloCombatCommandProcessorTests
             8,
             levelId: 17,
             monsterId: 126,
-            dropItemEntityId: 1000016,
-            dropItemSeed: 3735928559,
-            dropItemState: AuthoritativeItemState.Empty with {
-                ItemIndex = 42,
-                MiscId = 43,
-                ItemClass = 5,
-            },
             unique: true,
             uniqueIdentity: "Defiler");
         var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                43,
+                5,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                true) {
+                NativeItemIndex = 42,
+                MiscId = 43,
+                ItemClass = 5,
+            },
+        ]);
         var processor = CreateProcessor(
             world,
-            rules: new AuthoritativeCombatRules(10, 1, 100));
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            items: items);
         var player = CreatePlayer(entityId: 7, levelId: 17);
 
         var result = processor.Execute(player, new DiabloAttackIntent(16), 1);
@@ -1143,6 +1157,8 @@ public sealed class DiabloCombatCommandProcessorTests
         var map = Assert.Single(world.WorldItems.Values);
         Assert.Equal(43, map.State.MiscId);
         Assert.Equal(42, map.State.ItemIndex);
+        Assert.NotEqual(0U, map.ItemSeed);
+        Assert.Equal((1, 0, 17U), (map.PositionX, map.PositionY, map.LevelId));
     }
 
     [Fact]

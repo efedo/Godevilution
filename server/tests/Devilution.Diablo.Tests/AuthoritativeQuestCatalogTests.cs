@@ -184,4 +184,15 @@ public sealed class AuthoritativeQuestCatalogTests
 
         Assert.Equal("Defiler", Assert.Single(quests).CompletionUniqueIdentity);
     }
+
+    [Fact]
+    public void QuestStateCanLoadACompletionRewardItem()
+    {
+        var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_reward_item_id\tcompletion_reward_item_level\n"
+                + "3021\t17\t1\t43\t7\n"));
+
+        Assert.Equal((43U, 7), (quest.CompletionRewardItemId, quest.CompletionRewardItemLevel));
+    }
 }
