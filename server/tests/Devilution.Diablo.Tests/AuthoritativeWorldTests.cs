@@ -93,6 +93,7 @@ public sealed class AuthoritativeWorldTests
 
         Assert.Equal(7U, world.FindNearestWarpTarget(1, 0, 0)!.WarpId);
         Assert.True(world.IsWarpTrigger(1, 1, 1));
+        Assert.Equal(0U, world.WarpTargets.Single().RequiredQuestId);
         Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.LoadTsv(
             "invalid-warps.tsv",
             "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"

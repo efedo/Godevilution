@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.219.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.220.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.219.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.220.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -311,6 +311,17 @@ public sealed class ShippedContentTests
             graveObject.QuestId,
             graveObject.EffectKind,
             graveObject.EffectAmount));
+        var cryptWarp = Assert.Single(
+            activation.Simulation.WorldState.World!.WarpTargets,
+            warp => warp.RequiredQuestId == 3017);
+        Assert.Equal((0U, 36, 22, 17U, 36, 24, true), (
+            cryptWarp.SourceLevelId,
+            cryptWarp.TriggerX,
+            cryptWarp.TriggerY,
+            cryptWarp.TargetLevelId,
+            cryptWarp.TargetX,
+            cryptWarp.TargetY,
+            cryptWarp.RequiredQuestCompleted));
         Assert.Equal(3, activation.Simulation.WorldState.Quests[3022].CompletionVariable1);
         var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(

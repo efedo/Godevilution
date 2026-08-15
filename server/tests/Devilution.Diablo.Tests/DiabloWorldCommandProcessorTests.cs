@@ -282,6 +282,49 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestGatedWarpRequiresCompletionBeforeLeavingTown()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(0, 40, 40));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(17, 40, 40));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(
+            2,
+            0,
+            36,
+            22,
+            17,
+            36,
+            24,
+            requiredQuestId: 3017,
+            requiredQuestCompleted: true));
+        var quest = new AuthoritativeQuestState(3017, 17, 1, active: true);
+        var world = new DiabloWorldState(authoritativeWorld, quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 36, positionY: 22, levelId: 0, entityId: 1);
+
+        var spellWarp = processor.ExecuteWarp(player, 12, [player]);
+        AssertRejected(spellWarp, DiabloRuleFailure.NotAllowed);
+
+        var locked = processor.ExecuteLevelTrigger(player, 12, [player]);
+
+        AssertRejected(locked, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(0U, player.LevelId);
+
+        quest.Completed = true;
+        quest.Active = false;
+        player.PositionX = 35;
+        var opened = processor.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            12,
+            [player]);
+
+        Assert.True(opened.Succeeded);
+        Assert.Equal(17U, player.LevelId);
+        Assert.Equal((36, 24), (player.PositionX, player.PositionY));
+    }
+
+    [Fact]
     public void PickupPlacesMultiCellItemAndRemovesItFromWorld()
     {
         var itemState = AuthoritativeItemState.Empty with {
