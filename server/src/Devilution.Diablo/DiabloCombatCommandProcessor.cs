@@ -7982,7 +7982,16 @@ public sealed class DiabloCombatCommandProcessor
 
         if (projectile.RemainingTicks == 0) {
             projectile.Phase = AuthoritativeProjectilePhase.Impact;
-            projectile.RemainingTicks = 2;
+            var impactLifetime = 2;
+            if (world.CombatTargets.TryGetValue(
+                    projectile.SourceEntityId,
+                    out var sourceMonster)
+                && TryGetMonsterMissile(sourceMonster, out var puddleMapping)
+                && puddleMapping.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+                && puddleMapping.PuddleImpactLifetime > 0) {
+                impactLifetime = puddleMapping.PuddleImpactLifetime;
+            }
+            projectile.RemainingTicks = checked((uint)impactLifetime);
         }
     }
 

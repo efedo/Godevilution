@@ -50,7 +50,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int InfernoRangedFarIntelligenceOffset = 0,
     int InfernoAdjacentChoiceModulo = 0,
     /** Optional fixed impact damage; zero preserves behavior-specific/native damage derivation. */
-    int ProjectileDamage = 0);
+    int ProjectileDamage = 0,
+    /** Optional Acid puddle impact lifetime; zero preserves the native two-tick phase. */
+    int PuddleImpactLifetime = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -82,6 +84,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.PuddleDamageMinimumMonsterLevel < 0
                 || definition.PuddleDamageLow < 0
                 || definition.PuddleDamageHigh < definition.PuddleDamageLow
+                || definition.PuddleImpactLifetime < 0
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
@@ -271,7 +274,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("inferno_ranged_chance_intelligence_scale"),
                 row.OptionalInt32("inferno_ranged_far_intelligence_offset"),
                 row.OptionalInt32("inferno_adjacent_choice_modulo"),
-                row.OptionalInt32("projectile_damage"));
+                row.OptionalInt32("projectile_damage"),
+                row.OptionalInt32("puddle_impact_lifetime"));
         }));
     }
 
