@@ -27,6 +27,10 @@ All notable changes to this fork are documented below.
   `RoundWalk` candidates are blocked; the server flips the turn state before
   its opposite-side `RandomWalk` fallback.
 
+- Persist native Rhino `goalVar1`/`goalVar2` movement state through
+  authoritative snapshots, optional protocol fields 60-61, saves, and the
+  canonical state hash; resumed Rhino Move goals remain server-owned.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -200,6 +200,10 @@ Status date: 2026-08-15
   `RoundWalk` candidates are blocked, matching the native opposite-side
   `RandomWalk` fallback on the next authoritative state.
 
+- Native Rhino `goalVar1`/`goalVar2` movement state is now server-owned and
+  persisted through snapshots, optional protocol fields 60-61, saves, and the
+  canonical state hash; Rhino's far-distance Move goal continues across ticks.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

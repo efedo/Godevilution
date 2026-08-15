@@ -274,6 +274,10 @@ movement counter and `goalVar2` turn state so a resumed server continues the
 same Move goal; a blocked primary `RoundWalk` flips `goalVar2` before the
 opposite-side fallback, and older peers may omit these fields.
 
+Optional `MonsterSnapshot` fields 60-61 carry the persisted Rhino `goalVar1`
+movement counter and `goalVar2` turn state. The server continues Rhino's
+far-distance Move goal across ticks and saves; clients never execute it.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

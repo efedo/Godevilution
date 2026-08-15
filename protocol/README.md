@@ -381,6 +381,9 @@ Windows toolchain command.
   A blocked primary `RoundWalk` may flip `goalVar2` before its fallback.
   Older peers may omit the fields; clients render the values but never execute
   the ranged-avoidance goal.
+- Optional `MonsterSnapshot` fields 60-61 carry the corresponding server-owned
+  Rhino `goalVar1` movement counter and `goalVar2` turn state. Older peers may
+  omit them; clients never execute Rhino movement policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.
