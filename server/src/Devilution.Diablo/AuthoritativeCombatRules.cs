@@ -101,8 +101,17 @@ public sealed class AuthoritativeCombatRules
         int playerMagicMaximumHitChance = 95,
         int monsterRegenerationLevelDivisor = 2,
         int monsterPlayerBlockLevelScale = 2,
-        DiabloDifficultyRules? difficultyRules = null)
+        DiabloDifficultyRules? difficultyRules = null,
+        int? rangedAttackFrameSkipWithFirstFrame = null,
+        int? rangedAttackFrameSkipWithoutFirstFrame = null,
+        int? rangedFastAttackFrameSkipBonus = null)
     {
+        var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
+            ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
+        var resolvedRangedAttackFrameSkipWithoutFirstFrame = rangedAttackFrameSkipWithoutFirstFrame
+            ?? 0;
+        var resolvedRangedFastAttackFrameSkipBonus = rangedFastAttackFrameSkipBonus
+            ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
             throw new InvalidDataException("Combat damage bounds are invalid.");
@@ -209,6 +218,11 @@ public sealed class AuthoritativeCombatRules
         }
         if (monsterRegenerationLevelDivisor is < 1 or > 64) {
             throw new InvalidDataException("Monster regeneration tuning is invalid.");
+        }
+        if (resolvedRangedAttackFrameSkipWithFirstFrame is < 0 or > 64
+            || resolvedRangedAttackFrameSkipWithoutFirstFrame is < 0 or > 64
+            || resolvedRangedFastAttackFrameSkipBonus is < 0 or > 64) {
+            throw new InvalidDataException("Ranged attack frame timing tuning is invalid.");
         }
         if (monsterPlayerBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("Monster player-block tuning is invalid.");
@@ -354,6 +368,9 @@ public sealed class AuthoritativeCombatRules
         PlayerMagicMaximumHitChance = playerMagicMaximumHitChance;
         MonsterRegenerationLevelDivisor = monsterRegenerationLevelDivisor;
         MonsterPlayerBlockLevelScale = monsterPlayerBlockLevelScale;
+        RangedAttackFrameSkipWithFirstFrame = resolvedRangedAttackFrameSkipWithFirstFrame;
+        RangedAttackFrameSkipWithoutFirstFrame = resolvedRangedAttackFrameSkipWithoutFirstFrame;
+        RangedFastAttackFrameSkipBonus = resolvedRangedFastAttackFrameSkipBonus;
     }
 
     public int BaseAttackDamage { get; }
@@ -578,6 +595,15 @@ public sealed class AuthoritativeCombatRules
 
     /** Native level-difference scale for monster attacks that can be blocked. */
     public int MonsterPlayerBlockLevelScale { get; }
+
+    /** Native ranged-attack frame skip when the animation includes its first frame. */
+    public int RangedAttackFrameSkipWithFirstFrame { get; }
+
+    /** Native ranged-attack frame skip when the animation starts after its first frame. */
+    public int RangedAttackFrameSkipWithoutFirstFrame { get; }
+
+    /** Additional native ranged frame skip contributed by a Fast Attack flag. */
+    public int RangedFastAttackFrameSkipBonus { get; }
 
     /** Native difficulty level, accuracy, armor, damage, health, and XP modifiers. */
     public DiabloDifficultyRules DifficultyRules { get; }
@@ -950,7 +976,10 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("player_magic_maximum_hit_chance", 95),
             row.OptionalInt32("monster_regeneration_level_divisor", 2),
             row.OptionalInt32("monster_player_block_level_scale", 2),
-            DiabloDifficultyRules.LoadTsv(row));
+            DiabloDifficultyRules.LoadTsv(row),
+            row.OptionalInt32("ranged_attack_frame_skip_with_first_frame", 1),
+            row.OptionalInt32("ranged_attack_frame_skip_without_first_frame"),
+            row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

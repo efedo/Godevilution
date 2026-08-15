@@ -13198,14 +13198,13 @@ public sealed class DiabloCombatCommandProcessor
     {
         var flags = GetUsableEquipmentFlags(player);
         if (ranged) {
-            if (rules.GameVariant == DiabloGameVariant.Hellfire)
-                return 0;
-            var skippedFrames = includesFirstFrame
-                && (flags & (QuickAttackFlag | FastAttackFlag)) != 0
-                ? 1
+            var skippedFrames = (flags & (QuickAttackFlag | FastAttackFlag)) != 0
+                ? includesFirstFrame
+                    ? rules.RangedAttackFrameSkipWithFirstFrame
+                    : rules.RangedAttackFrameSkipWithoutFirstFrame
                 : 0;
             if ((flags & FastAttackFlag) != 0)
-                ++skippedFrames;
+                skippedFrames += rules.RangedFastAttackFrameSkipBonus;
             return skippedFrames;
         }
         if ((flags & FastestAttackFlag) != 0)
