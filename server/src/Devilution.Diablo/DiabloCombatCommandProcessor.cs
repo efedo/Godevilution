@@ -8145,8 +8145,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
-                + checked((int)target.CharacterLevel * 2)
-                - (2 * monster.MonsterLevel),
+                + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
+                - (rules.MonsterPlayerBlockLevelScale * monster.MonsterLevel),
             0,
             100);
         if (blockRoll < blockChance) {
@@ -10559,8 +10559,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
-                + checked((int)target.CharacterLevel * 2)
-                - (2 * monster.MonsterLevel),
+                + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
+                - (rules.MonsterPlayerBlockLevelScale * monster.MonsterLevel),
             0,
             100);
         if (!damageShifted
