@@ -187,6 +187,11 @@ Status date: 2026-08-15
   candidate order: 90-degree turn, 45-degree turn, straight, then the
   opposite-side `RandomWalk` fallback.
 
+- Native `AiRangedAvoidance` now selects its deterministic movement fallback
+  by branch: the far-distance one-in-four (one-in-eight Acid) Move admission
+  uses `RoundWalk`, while the ordinary failed ranged admission uses
+  `RandomWalk`.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

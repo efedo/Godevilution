@@ -264,9 +264,11 @@ The movement boundary is also server-owned for ordinary Bat identities without
 an optional charge-missile mapping; clients never substitute generic pursuit.
 
 Ranged-avoidance monsters use a server-owned native `RoundWalk` fallback after
-failed or blocked ranged admissions. The server checks the 90-degree turn,
-45-degree turn, and straight candidate before the opposite-side random-walk
-fallback; clients receive only the resulting movement or unchanged snapshot.
+failed or blocked far-distance Move admissions. Ordinary failed ranged
+admissions use the native `RandomWalk` fallback; clients receive only the
+resulting movement or unchanged snapshot. For `RoundWalk`, the server checks
+the 90-degree turn, 45-degree turn, and straight candidate before the
+opposite-side random-walk fallback.
 
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback

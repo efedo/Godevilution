@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   deterministic fallbacks now test the 90-degree turn, 45-degree turn, and
   straight direction before the opposite-side `RandomWalk` candidates.
 
+- Preserve the native `AiRangedAvoidance` movement branch split: far-distance
+  Move admissions use `RoundWalk`, while ordinary failed ranged rolls use
+  `RandomWalk` before any generic navigation fallback.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
