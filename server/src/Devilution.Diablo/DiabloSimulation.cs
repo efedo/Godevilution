@@ -146,7 +146,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 target,
                 options.Difficulty,
                 combatRules.GameVariant,
-                options.GameMode);
+                options.GameMode,
+                combatRules.DifficultyRules);
             DiabloDifficultyMonsterScaling.ApplyInitialResistances(
                 target,
                 options.Difficulty,
@@ -355,7 +356,8 @@ public sealed partial class DiabloSimulation
                 target,
                 difficulty,
                 CombatRules.GameVariant,
-                gameMode);
+                gameMode,
+                CombatRules.DifficultyRules);
             DiabloDifficultyMonsterScaling.ApplyInitialResistances(
                 target,
                 difficulty,

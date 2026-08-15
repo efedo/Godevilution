@@ -7,27 +7,18 @@ internal static class DiabloDifficultyMonsterScaling
         AuthoritativeCombatTarget target,
         DiabloDifficulty difficulty,
         DiabloGameVariant gameVariant,
-        DiabloGameMode gameMode)
+        DiabloGameMode gameMode,
+        DiabloDifficultyRules rules)
     {
         ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(rules);
         if (difficulty == DiabloDifficulty.Normal || target.IsPlayerMinion)
             return;
 
         var baseMaximumQ6 = target.MaxHitPointsQ6;
         var baseCurrentQ6 = target.HitPointsQ6;
-        var (multiplier, bonusWhole) = difficulty switch {
-            DiabloDifficulty.Nightmare => (
-                3,
-                gameVariant == DiabloGameVariant.Hellfire
-                    ? gameMode == DiabloGameMode.Multiplayer ? 100 : 50
-                    : 100),
-            DiabloDifficulty.Hell => (
-                4,
-                gameVariant == DiabloGameVariant.Hellfire
-                    ? gameMode == DiabloGameMode.Multiplayer ? 200 : 100
-                    : 200),
-            _ => (1, 0),
-        };
+        var multiplier = rules.GetHealthMultiplier(difficulty);
+        var bonusWhole = rules.GetHealthBonus(difficulty, gameVariant, gameMode);
 
         var effectiveMaximumQ6 = checked((int)(
             checked((long)baseMaximumQ6 * multiplier)

@@ -100,7 +100,8 @@ public sealed class AuthoritativeCombatRules
         int playerMagicMinimumHitChance = 5,
         int playerMagicMaximumHitChance = 95,
         int monsterRegenerationLevelDivisor = 2,
-        int monsterPlayerBlockLevelScale = 2)
+        int monsterPlayerBlockLevelScale = 2,
+        DiabloDifficultyRules? difficultyRules = null)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -212,6 +213,7 @@ public sealed class AuthoritativeCombatRules
         if (monsterPlayerBlockLevelScale is < 0 or > 64) {
             throw new InvalidDataException("Monster player-block tuning is invalid.");
         }
+        DifficultyRules = (difficultyRules ?? DiabloDifficultyRules.NativeDefaults).Validate();
         if (equipmentFastBlockFrameSkip is < 0 or > 10) {
             throw new InvalidDataException("Equipment FastBlock tuning is invalid.");
         }
@@ -576,6 +578,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native level-difference scale for monster attacks that can be blocked. */
     public int MonsterPlayerBlockLevelScale { get; }
+
+    /** Native difficulty level, accuracy, armor, damage, health, and XP modifiers. */
+    public DiabloDifficultyRules DifficultyRules { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -944,7 +949,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("player_magic_minimum_hit_chance", 5),
             row.OptionalInt32("player_magic_maximum_hit_chance", 95),
             row.OptionalInt32("monster_regeneration_level_divisor", 2),
-            row.OptionalInt32("monster_player_block_level_scale", 2));
+            row.OptionalInt32("monster_player_block_level_scale", 2),
+            DiabloDifficultyRules.LoadTsv(row));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

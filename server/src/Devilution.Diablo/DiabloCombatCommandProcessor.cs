@@ -167,25 +167,13 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     private int GetDifficultyLevelOffset()
-        => difficulty switch {
-            DiabloDifficulty.Nightmare => 15,
-            DiabloDifficulty.Hell => 30,
-            _ => 0,
-        };
+        => rules.DifficultyRules.GetLevelOffset(difficulty);
 
     private int GetDifficultyToHitBonus()
-        => difficulty switch {
-            DiabloDifficulty.Nightmare => 85,
-            DiabloDifficulty.Hell => 120,
-            _ => 0,
-        };
+        => rules.DifficultyRules.GetToHitBonus(difficulty);
 
     private int GetDifficultyArmorClassBonus()
-        => difficulty switch {
-            DiabloDifficulty.Nightmare => 50,
-            DiabloDifficulty.Hell => 80,
-            _ => 0,
-        };
+        => rules.DifficultyRules.GetArmorBonus(difficulty);
 
     /** Resolves native Monster::level without changing persisted base content. */
     private int GetEffectiveMonsterLevel(AuthoritativeCombatTarget monster)
@@ -223,15 +211,9 @@ public sealed class DiabloCombatCommandProcessor
         ArgumentNullException.ThrowIfNull(monster);
         var minimum = special ? monster.MinDamageSpecial : monster.MinDamage;
         var maximum = special ? monster.MaxDamageSpecial : monster.MaxDamage;
-        return difficulty switch {
-            DiabloDifficulty.Nightmare => (
-                checked(2 * (minimum + 2)),
-                checked(2 * (maximum + 2))),
-            DiabloDifficulty.Hell => (
-                checked(4 * minimum + 6),
-                checked(4 * maximum + 6)),
-            _ => (minimum, maximum),
-        };
+        return (
+            rules.DifficultyRules.ApplyDamageScaling(minimum, difficulty),
+            rules.DifficultyRules.ApplyDamageScaling(maximum, difficulty));
     }
 
     /** Selects the native random monster damage after difficulty scaling. */
@@ -252,11 +234,11 @@ public sealed class DiabloCombatCommandProcessor
         var baseReward = monster.ExperienceReward == 0
             ? rules.DefeatExperience
             : monster.ExperienceReward;
-        var difficultyReward = difficulty switch {
-            DiabloDifficulty.Nightmare => checked(2U * (baseReward + 1000U)),
-            DiabloDifficulty.Hell => checked(4U * (baseReward + 1000U)),
-            _ => baseReward,
-        };
+        var multiplier = rules.DifficultyRules.GetExperienceMultiplier(difficulty);
+        var difficultyReward = difficulty == DiabloDifficulty.Normal
+            ? baseReward
+            : checked(
+                (baseReward + rules.DifficultyRules.ExperienceBonus) * (uint)multiplier);
         return monster.IsUnique
             ? checked(difficultyReward * 2U)
             : difficultyReward;
@@ -6016,7 +5998,8 @@ public sealed class DiabloCombatCommandProcessor
                         summon,
                         difficulty,
                         rules.GameVariant,
-                        gameMode);
+                        gameMode,
+                        rules.DifficultyRules);
                     DiabloDifficultyMonsterScaling.ApplyInitialResistances(
                         summon,
                         difficulty,
@@ -9311,7 +9294,8 @@ public sealed class DiabloCombatCommandProcessor
                 summon,
                 difficulty,
                 rules.GameVariant,
-                gameMode);
+                gameMode,
+                rules.DifficultyRules);
             DiabloDifficultyMonsterScaling.ApplyInitialResistances(
                 summon,
                 difficulty,
