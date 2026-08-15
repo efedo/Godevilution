@@ -4940,6 +4940,16 @@ public sealed class DiabloCombatCommandProcessor
         if (actionSeed % 100U >= (uint)movementChance)
             return true;
 
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            victim,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue) {
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            return true;
+        }
+
         var next = AuthoritativeMonsterNavigation.FindStep(
             world,
             monster,
@@ -5633,7 +5643,7 @@ public sealed class DiabloCombatCommandProcessor
         if (distance < longRangeMovementDistance) {
             if (distance < 2)
                 return false;
-            var randomStep = FindZombieRandomWalkStep(
+            var randomStep = FindNativeRandomWalkStep(
                 monster,
                 player,
                 players,
@@ -5693,9 +5703,8 @@ public sealed class DiabloCombatCommandProcessor
         return null;
     }
 
-    /** Native ZombieAi uses RandomWalk while the target is outside melee but
-     * inside its long-range pursuit boundary. */
-    private (int X, int Y)? FindZombieRandomWalkStep(
+    /** Native RandomWalk candidate order shared by movement AI controllers. */
+    private (int X, int Y)? FindNativeRandomWalkStep(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,

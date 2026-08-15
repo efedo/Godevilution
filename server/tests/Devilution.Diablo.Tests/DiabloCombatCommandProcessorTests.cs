@@ -3833,7 +3833,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void FatAiUsesItsNativeNonAdjacentMovementAdmission()
+    public void FatAiUsesItsNativeNonAdjacentMovementRandomWalk()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -3856,12 +3856,12 @@ public sealed class DiabloCombatCommandProcessorTests
         // 1 ^ 9 ^ 7 = 15: admitted to the native 20% movement band.
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.True(monster.IsMoving);
-        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
 
         // 40 ^ 9 ^ 7 = 38: outside the movement band after completion.
         Assert.Empty(processor.AdvanceTick(40, [player]));
         Assert.False(monster.IsMoving);
-        Assert.Equal((2, 1), (monster.PositionX, monster.PositionY));
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
     }
 
     [Fact]
