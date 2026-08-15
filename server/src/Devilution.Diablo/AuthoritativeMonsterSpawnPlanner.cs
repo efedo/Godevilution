@@ -182,7 +182,11 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             return null;
 
         var definitions = monsterTypes.GetAvailableForDungeonLevel((int)levelId)
-            .Where(definition => definition.NativeAi == "SkeletonMelee")
+            .Where(definition => definition.NativeAi == "SkeletonMelee"
+                || (definition.SkeletonMeleeDelayChanceBase > 0
+                    && definition.SkeletonMeleeDelayChanceIntelligenceScale > 0
+                    && definition.SkeletonMeleeAttackChanceBase > 0
+                    && definition.SkeletonMeleeAttackChanceIntelligenceScale > 0))
             .OrderBy(definition => definition.MonsterId)
             .ToArray();
         if (definitions.Length == 0)

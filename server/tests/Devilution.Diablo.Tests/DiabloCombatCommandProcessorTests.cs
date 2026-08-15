@@ -1287,7 +1287,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void SkeletonKingSummonsAValidatedSkeletonMeleeTarget()
+    public void SkeletonKingSummonsAValidatedSkeletonMeleeTargetFromTuning()
     {
         var nativeWorld = new AuthoritativeWorld();
         nativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
@@ -1309,8 +1309,12 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 true,
                 false) {
-                NativeAi = "SkeletonMelee",
+                NativeAi = "Fallen",
                 AggroRange = 6,
+                SkeletonMeleeDelayChanceBase = 35,
+                SkeletonMeleeDelayChanceIntelligenceScale = 4,
+                SkeletonMeleeAttackChanceBase = 20,
+                SkeletonMeleeAttackChanceIntelligenceScale = 2,
             },
         ]);
         var generation = new AuthoritativeLevelGenerationCatalog([
@@ -1338,7 +1342,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var summoned = Assert.Single(
             world.CombatTargets.Values,
             target => target.EntityId != king.EntityId);
-        Assert.Equal("SkeletonMelee", summoned.NativeAi);
+        Assert.Equal("Fallen", summoned.NativeAi);
         Assert.Equal(1U, summoned.LevelId);
         Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
     }
