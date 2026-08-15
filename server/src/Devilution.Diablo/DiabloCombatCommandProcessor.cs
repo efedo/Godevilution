@@ -6194,6 +6194,13 @@ public sealed class DiabloCombatCommandProcessor
                     if (attackSeed % 10_000U
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;
+                } else {
+                    TryAdvanceRangedAvoidanceMovement(
+                        monster,
+                        player,
+                        players,
+                        attackSeed);
+                    return true;
                 }
                 return false;
             }
@@ -6202,8 +6209,14 @@ public sealed class DiabloCombatCommandProcessor
                     + (distance >= farDistance ? farIntelligenceOffset : 0)));
             attackBand = checked(
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
-            if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand))
-                return false;
+            if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand)) {
+                TryAdvanceRangedAvoidanceMovement(
+                    monster,
+                    player,
+                    players,
+                    attackSeed);
+                return true;
+            }
         } else {
             var retreatTuning = ResolveRangedRetreatTuning(missile);
             var retreatChance = checked(
@@ -6228,9 +6241,17 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionX,
                 monster.PositionY,
                 player.PositionX,
-                player.PositionY))
-            return missile.AttackMode != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
-                && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
+                player.PositionY)) {
+            if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
+                TryAdvanceRangedAvoidanceMovement(
+                    monster,
+                    player,
+                    players,
+                    attackSeed);
+                return true;
+            }
+            return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
+        }
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior
@@ -6376,6 +6397,47 @@ public sealed class DiabloCombatCommandProcessor
         return missile?.ProjectileImpactLifetime > 0
             ? missile.ProjectileImpactLifetime
             : 1;
+    }
+
+    /** Native AiRangedAvoidance round-walk fallback for a failed ranged roll. */
+    private bool TryAdvanceRangedAvoidanceMovement(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
+        var directions = new[] {
+            RotateDirection(direction, firstTurn),
+            RotateDirection(direction, -firstTurn),
+            RotateDirection(direction, 2),
+            RotateDirection(direction, -2),
+            RotateDirection(direction, 4),
+            direction,
+            RotateDirection(direction, 3),
+            RotateDirection(direction, -3),
+        };
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (!world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                || world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                continue;
+            monster.BeginMovement(candidateX, candidateY);
+            return true;
+        }
+        return false;
     }
 
     private static (
