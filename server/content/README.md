@@ -988,8 +988,9 @@ server owns native ten-way deterministic dispatch into the existing typed spell
 paths, so single-player and multiplayer use the same authoritative result.
 
 Schema 0.49 adds stable Immolation spell row `45` (native `SpellID` `41`). The
-server owns the moving controller, native 36-projectile radial burst,
-spell-level speed cap, and FireballBow projectile impact lifecycle.
+server owns the moving controller and the validated `immolation_projectile_count`
+radial burst (the shipped row retains 36 projectiles), spell-level speed cap,
+and FireballBow projectile impact lifecycle.
 
 Schema 0.44 adds stable Town Portal spell row `39` (native `SpellID` `7`).
 The typed behavior performs native five-cell portal placement, replaces the
@@ -1119,8 +1120,9 @@ first-hit state through snapshots and the protocol.
 
 Schema 0.37 adds stable spell row (`18`) for native Nova (`SpellID` `18`) and
 its typed one-tick radial
-controller and ball behaviors. The controller preserves the native nine-point
-quarter-radius order and four mirrored emissions (36 balls total). Each ball
+controller and ball behaviors. The validated `nova_projectile_count` controls
+the deterministic prefix of the native nine-point quarter-radius order and
+four mirrored emissions; the shipped row retains 36 balls. Each ball
 travels at speed `16` for `255` ticks, uses the Lightning damage type and
 quarter-resistance rule, and can pass through a hit target while continuing to
 its endpoint. Ball damage is generated once as

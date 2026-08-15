@@ -44,6 +44,11 @@ Status date: 2026-08-15
   `projectile_damage` metadata before falling back to mapped-spell transport
   values and native monster damage, keeping older rows compatible.
 
+- Nova and Immolation controllers now consume their validated
+  `nova_projectile_count` and `immolation_projectile_count` fields in native
+  radial emission order; the shipped rows retain the native 36-projectile
+  fan-out.
+
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain
   the native 20–30% compatibility roll.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use validated `nova_projectile_count` and `immolation_projectile_count`
+  metadata for the deterministic radial fan-out prefix; checked-in content
+  retains the native 36-projectile Nova and Immolation behavior.
+
 - Use existing validated `projectile_speed`, `projectile_lifetime`, and
   optional `damage_type` and `projectile_damage` metadata for mapped BloodStar
   projectiles before falling back to spell transport values and native monster
