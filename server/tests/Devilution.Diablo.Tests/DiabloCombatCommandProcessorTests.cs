@@ -7617,7 +7617,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void RangedAvoidanceRoundWalksWhenItsRangedRollFails()
+    public void RangedAvoidanceUsesNativeRoundWalkOrderWhenItsRangedRollFails()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -7647,13 +7647,15 @@ public sealed class DiabloCombatCommandProcessorTests
             life: 100,
             lifeMaximum: 100);
 
-        // 5,000 ^ 9 ^ 7 = 5,006, outside the native 1,000-per-10,000
+        // 5,000 ^ 9 ^ 7 = 4,998, outside the native 1,000-per-10,000
         // distance-three ranged band; native AiRangedAvoidance round-walks.
         processor.AdvanceTick(5_000, [player]);
 
         Assert.Empty(world.Projectiles);
         Assert.True(monster.IsMoving);
-        Assert.NotEqual(0, monster.FuturePositionY);
+        // Seed 4,998 selects the native left-turn branch. Its first candidate
+        // is north (out of bounds), so RoundWalk advances straight east.
+        Assert.Equal((1, 0), (monster.FuturePositionX, monster.FuturePositionY));
     }
 
     [Fact]

@@ -6967,38 +6967,16 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed)
     {
-        var direction = GetDirection(
-            monster.PositionX,
-            monster.PositionY,
-            player.PositionX,
-            player.PositionY);
-        var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
-        var directions = new[] {
-            RotateDirection(direction, firstTurn),
-            RotateDirection(direction, -firstTurn),
-            RotateDirection(direction, 2),
-            RotateDirection(direction, -2),
-            RotateDirection(direction, 4),
-            direction,
-            RotateDirection(direction, 3),
-            RotateDirection(direction, -3),
-        };
-        foreach (var candidateDirection in directions) {
-            var displacement = DirectionDisplacements[candidateDirection];
-            var candidateX = checked(monster.PositionX + displacement.X);
-            var candidateY = checked(monster.PositionY + displacement.Y);
-            if (!world.IsWalkable(monster.LevelId, candidateX, candidateY)
-                || world.IsOccupied(
-                    monster.LevelId,
-                    candidateX,
-                    candidateY,
-                    players,
-                    monster.EntityId))
-                continue;
-            monster.BeginMovement(candidateX, candidateY);
-            return true;
-        }
-        return false;
+        var roundWalk = FindNativeRoundWalkStep(
+            monster,
+            player,
+            players,
+            seed);
+        if (!roundWalk.HasValue)
+            return false;
+
+        monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+        return true;
     }
 
     private static (
