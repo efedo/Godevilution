@@ -6310,9 +6310,9 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var delayBand = Math.Max(0, 35 - (2 * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand)
-            // Preserve the existing generic navigation fallback for the
-            // native delay branch when no Snake-specific step is admitted.
-            return false;
+            // Native SnakeAi consumes an AiDelay tick when this admission
+            // fails; do not replace that no-op with generic pursuit.
+            return true;
 
         var drift = FindSnakeDriftStep(monster, player, players, actionSeed);
         if (drift.HasValue)

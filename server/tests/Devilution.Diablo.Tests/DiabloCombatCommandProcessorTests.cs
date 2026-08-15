@@ -5237,11 +5237,49 @@ public sealed class DiabloCombatCommandProcessorTests
             lifeMaximum: 100,
             characterLevel: 1);
 
-        Assert.Empty(processor.AdvanceTick(1, [player]));
+        // 40 ^ 9 ^ 7 = 38, outside Snake's native 35-point delay band, so
+        // the configured non-charge distance still takes the drift branch.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
 
         Assert.Empty(world.Projectiles);
         Assert.Equal(100, player.Life);
         Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
+    public void SnakeAiDefersDuringItsNativeDelayBranch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, inside Snake's native 35-point delay band.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
     }
 
     [Fact]
