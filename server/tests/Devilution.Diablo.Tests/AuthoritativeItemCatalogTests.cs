@@ -10,8 +10,8 @@ public sealed class AuthoritativeItemCatalogTests
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
-            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\n"
-                + "7\t1\t75\t100\t3\t9\t2\t1\t1\n");
+            "item_id\titem_type\tvalue\tidentified_value\tdurability\tmax_durability\tinventory_width\tinventory_height\tidentified\tmin_monster_level\n"
+                + "7\t1\t75\t100\t3\t9\t2\t1\t1\t12\n");
 
         var state = catalog.Generate(7, 42);
         Assert.Equal(42U, state.CreateInfo);
@@ -19,6 +19,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(100, state.IdentifiedValue);
         Assert.Equal(2, state.InventoryWidth);
         Assert.Equal(1, state.InventoryHeight);
+        Assert.Equal(12, catalog.GetRequired(7).MinimumMonsterLevel);
     }
 
     [Fact]
@@ -95,6 +96,7 @@ public sealed class AuthoritativeItemCatalogTests
             new AuthoritativeItemDefinition(7, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
                 Name = new string('x', 64),
                 NativeCursorGraphic = 256,
+                MinimumMonsterLevel = -1,
             },
         ]));
     }
@@ -271,6 +273,20 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(0, normal.Magical);
         Assert.Equal(1, forced.Magical);
         Assert.Equal(1, forced.PlusToHit);
+    }
+
+    [Fact]
+    public void CatalogExposesNativeMonsterDropEligibility()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 0, 0, 0, 1, 1, 1, 1, true) {
+                MinimumMonsterLevel = 10,
+            },
+        ]);
+
+        Assert.False(catalog.CanDropAtMonsterLevel(7, 9));
+        Assert.True(catalog.CanDropAtMonsterLevel(7, 10));
+        Assert.Equal(7, catalog.GenerateDrop(7, 42, 9).ItemIndex);
     }
 
     [Fact]
@@ -528,6 +544,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(28, baseItem.MiscId);
         Assert.Equal("Cleaver", baseItem.BaseName);
         Assert.Equal("Cleaver", baseItem.IdentifiedName);
+        Assert.Equal(10, items.GetRequired(1).MinimumMonsterLevel);
 
         var uniques = AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
             "unique_itemdat.tsv",

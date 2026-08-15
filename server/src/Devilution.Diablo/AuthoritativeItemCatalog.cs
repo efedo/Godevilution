@@ -62,6 +62,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Optional legacy cursor symbol resolved through the active cursor catalog. */
     public string CursorGraphic { get; init; } = string.Empty;
 
+    /** Native minimum monster level for random item drops. */
+    public int MinimumMonsterLevel { get; init; }
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -137,6 +140,7 @@ public sealed class AuthoritativeItemCatalog
                 || !IsValidPresentationText(definition.Name)
                 || !IsValidPresentationText(definition.IdentifiedName)
                 || !IsValidCursorSymbol(definition.CursorGraphic)
+                || definition.MinimumMonsterLevel < 0
                 || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
@@ -231,6 +235,16 @@ public sealed class AuthoritativeItemCatalog
                 : affixes.Apply(state, itemSeed, itemLevel, definition.GenerationTags);
     }
 
+    /** Returns whether a catalog item is eligible for a random monster drop at the supplied level. */
+    public bool CanDropAtMonsterLevel(uint itemId, int monsterLevel)
+    {
+        if (!TryGet(itemId, out var definition))
+            throw new InvalidDataException($"Item {itemId} is not present in the authoritative catalog.");
+        if (monsterLevel < 0)
+            throw new ArgumentOutOfRangeException(nameof(monsterLevel));
+        return monsterLevel == 0 || monsterLevel >= definition.MinimumMonsterLevel;
+    }
+
     /** Generates a monster drop using the native magic-quality probability sequence. */
     public AuthoritativeItemState GenerateDrop(
         uint itemId,
@@ -321,6 +335,7 @@ public sealed class AuthoritativeItemCatalog
                 Name = OptionalPresentationText(row, "name"),
                 IdentifiedName = OptionalPresentationText(row, "identified_name"),
                 CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
+                MinimumMonsterLevel = row.OptionalInt32("min_monster_level"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -389,6 +404,7 @@ public sealed class AuthoritativeItemCatalog
                     Name = OptionalText(row, "name"),
                     IdentifiedName = OptionalText(row, "shortName"),
                     CursorGraphic = LegacyCursorSymbol(row),
+                    MinimumMonsterLevel = row.OptionalInt32("minMonsterLevel"),
                     NativeCursorGraphic = ParseLegacyCursorGraphic(row, cursorCatalog),
                 };
         }).ToArray();
