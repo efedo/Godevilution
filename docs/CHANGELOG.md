@@ -28,7 +28,8 @@ All notable changes to this fork are documented below.
   stealth state advances for any validated label carrying the tuple.
 - Select Bat adjacent attack and retreat-duration behavior from validated
   tuning regardless of the row's `Bat` native-AI name; legacy rows without
-  migrated tuning retain native-name compatibility defaults.
+  migrated tuning retain native-name compatibility defaults, and persisted
+  retreat ticks/direction advance for any validated label carrying the tuple.
 - Select Gargoyle safety, wounded-health, and healing-formula behavior from
   validated tuning regardless of the row's `Gargoyle` native-AI name; legacy
   rows without migrated tuning retain native-name compatibility defaults.

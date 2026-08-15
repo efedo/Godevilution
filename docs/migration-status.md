@@ -56,7 +56,8 @@ Status date: 2026-08-14
 - Bat adjacent attack and retreat-duration behavior now use validated tuning
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path, while retreat ticks/direction remain
-  snapshot/save compatible.
+  snapshot/save compatible and advance for any validated label carrying the
+  tuple.
 
 - Gargoyle safety, wounded-health, and healing-formula behavior now use
   validated tuning independent of the row's native-AI label; rows without

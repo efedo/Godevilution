@@ -128,7 +128,9 @@ The optional `bat_attack_chance_base` and
 attack admission band. Legacy monster rows retain the native base-eight,
 intelligence-scale-four compatibility values. A complete positive tuple selects
 the behavior regardless of the row's `native_ai` label; rows without migrated
-tuning retain the native-name compatibility path.
+tuning retain the native-name compatibility path. Persisted retreat ticks and
+direction are likewise accepted and advanced for any validated label carrying
+the complete tuple.
 The optional `goat_melee_special_health_threshold_percent` and
 `goat_melee_special_chance_group_period` columns externalize the GoatMelee
 wounded-special health threshold and deterministic random-group period.
@@ -1581,7 +1583,8 @@ and advanced for any validated label carrying the complete tuple.
 Schema 1.129 adds the optional Bat retreat-duration column to
 `monster_types.tsv`; checked-in Bat rows own the native two-tick post-hit retreat
 while older rows retain the compatibility duration. The validated duration is
-selected independently of the `native_ai` label.
+selected independently of the `native_ai` label, and persisted retreat state is
+accepted for any validated label carrying the tuple.
 Schema 1.130 adds optional GoatMelee wounded-special columns to
 `monster_types.tsv`; checked-in GoatMelee rows own the native 50-percent
 health threshold and two-group deterministic gate while older rows retain the
