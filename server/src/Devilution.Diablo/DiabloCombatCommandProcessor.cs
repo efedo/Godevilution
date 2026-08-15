@@ -4870,32 +4870,20 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        if (TryAdvanceAiAvoidanceMoveGoal(
+                monster,
+                victim,
+                players,
+                distance,
+                actionSeed))
+            return true;
+
         var movementChance = Math.Min(
             100,
             goatTuning.Value.ChanceBase
                 + (goatTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)movementChance)
             return true;
-
-        // Native AiAvoidance gives far-away targets a one-in-four RoundWalk
-        // branch before its ordinary movement path. Keep both native
-        // candidate orders deterministic and do not replace a blocked native
-        // movement tick with bounded pursuit.
-        if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
-            var roundWalk = FindNativeRoundWalkStep(
-                monster,
-                victim,
-                players,
-                actionSeed);
-            if (roundWalk.HasValue) {
-                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
-                return true;
-            }
-
-            // Native AiAvoidance consumes an admitted RoundWalk tick when
-            // every candidate is blocked; do not replace it with pursuit.
-            return true;
-        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
@@ -6200,20 +6188,17 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
-        if (actionSeed % 100U >= (uint)movementChance)
-            return true;
-
-        if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
-            var roundWalk = FindNativeRoundWalkStep(
+        if (TryAdvanceAiAvoidanceMoveGoal(
                 monster,
                 player,
                 players,
-                actionSeed);
-            if (roundWalk.HasValue)
-                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                distance,
+                actionSeed))
             return true;
-        }
+
+        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+        if (actionSeed % 100U >= (uint)movementChance)
+            return true;
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
@@ -6406,6 +6391,75 @@ public sealed class DiabloCombatCommandProcessor
         if (drift.HasValue)
             monster.BeginMovement(drift.Value.X, drift.Value.Y);
         return true;
+    }
+
+    /** Native AiAvoidance far-distance Move goal shared by GoatMelee/Gargoyle. */
+    private bool TryAdvanceAiAvoidanceMoveGoal(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance,
+        uint seed)
+    {
+        if (distance < 2) {
+            monster.ClearAvoidanceMovement();
+            return false;
+        }
+
+        var hasMoveGoal = monster.AvoidanceMovementTicks >= 0;
+        var startsMoveGoal = distance >= 4 && (seed / 100U) % 4U == 0U;
+        if (!hasMoveGoal && !startsMoveGoal)
+            return false;
+
+        if (!hasMoveGoal)
+            monster.StartAvoidanceMovement((int)((seed / 100U) % 2U));
+        if (!monster.AdvanceAvoidanceMovement(
+                distance,
+                world.HasLineOfSight(
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY),
+                IsNativeAvoidanceDirectionAvailable(
+                    monster,
+                    player,
+                    players)))
+            return false;
+
+        var roundWalk = FindNativeStatefulRoundWalkStep(
+            monster,
+            player,
+            players,
+            seed,
+            monster.AvoidanceMovementTurn,
+            out var nextTurn);
+        monster.UpdateAvoidanceMovementTurn(nextTurn);
+        if (roundWalk.HasValue)
+            monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+        return true;
+    }
+
+    private bool IsNativeAvoidanceDirectionAvailable(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var displacement = DirectionDisplacements[direction];
+        var candidateX = checked(monster.PositionX + displacement.X);
+        var candidateY = checked(monster.PositionY + displacement.Y);
+        return world.IsWalkable(monster.LevelId, candidateX, candidateY)
+            && !world.IsOccupied(
+                monster.LevelId,
+                candidateX,
+                candidateY,
+                players,
+                monster.EntityId);
     }
 
     /** Native SnakeAi's six-step lateral drift and three-candidate RandomWalk2 fallback. */

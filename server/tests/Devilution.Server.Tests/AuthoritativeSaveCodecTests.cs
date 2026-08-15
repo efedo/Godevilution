@@ -201,6 +201,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsAiAvoidanceMoveGoalStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "GoatMelee",
+                AvoidanceMovementTicks = 7,
+                AvoidanceMovementTurn = 1,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((7, 1), (
+            monster.AvoidanceMovementTicks,
+            monster.AvoidanceMovementTurn));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsCounselorRetreatStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

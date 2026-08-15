@@ -8701,6 +8701,13 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(monster.IsMoving);
         Assert.NotEqual(5, monster.FuturePositionY);
+        Assert.Equal(1, monster.AvoidanceMovementTicks);
+        Assert.Equal(0, monster.AvoidanceMovementTurn);
+
+        // The next tick continues the native Move goal instead of rerolling
+        // the far-distance admission.
+        processor.AdvanceTick(2, [player]);
+        Assert.Equal(2, monster.AvoidanceMovementTicks);
     }
 
     [Fact]

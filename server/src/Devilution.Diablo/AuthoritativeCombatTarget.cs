@@ -67,7 +67,9 @@ public sealed class AuthoritativeCombatTarget
         int rangedAvoidanceMoveTicks = -1,
         int rangedAvoidanceTurn = 0,
         int rhinoMovementTicks = -1,
-        int rhinoMovementTurn = 0)
+        int rhinoMovementTurn = 0,
+        int avoidanceMovementTicks = -1,
+        int avoidanceMovementTurn = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -111,6 +113,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementTicks));
         if (rhinoMovementTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementTurn));
+        if (avoidanceMovementTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTicks));
+        if (avoidanceMovementTurn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTurn));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -182,6 +188,8 @@ public sealed class AuthoritativeCombatTarget
         RangedAvoidanceTurn = rangedAvoidanceTurn;
         RhinoMovementTicks = rhinoMovementTicks;
         RhinoMovementTurn = rhinoMovementTurn;
+        AvoidanceMovementTicks = avoidanceMovementTicks;
+        AvoidanceMovementTurn = avoidanceMovementTurn;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -324,6 +332,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native Rhino goalVar2 turn state (0 or 1). */
     public int RhinoMovementTurn { get; private set; }
+
+    /** Native AiAvoidance goalVar1 movement counter; -1 means Normal. */
+    public int AvoidanceMovementTicks { get; private set; }
+
+    /** Native AiAvoidance goalVar2 turn state (0 or 1). */
+    public int AvoidanceMovementTurn { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -645,6 +659,59 @@ public sealed class AuthoritativeCombatTarget
         if (turn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(turn));
         RhinoMovementTurn = turn;
+    }
+
+    internal void StartAvoidanceMovement(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        AvoidanceMovementTicks = 0;
+        AvoidanceMovementTurn = turn;
+    }
+
+    internal bool AdvanceAvoidanceMovement(
+        int distance,
+        bool sameTransparencyRegion,
+        bool directionAvailable)
+    {
+        if (distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(distance));
+        if (AvoidanceMovementTicks < 0)
+            return false;
+
+        var completes = (AvoidanceMovementTicks >= checked(2 * distance)
+                && directionAvailable)
+            || !sameTransparencyRegion;
+        if (AvoidanceMovementTicks < 255)
+            AvoidanceMovementTicks++;
+        if (completes) {
+            AvoidanceMovementTicks = -1;
+            AvoidanceMovementTurn = 0;
+        }
+        return !completes;
+    }
+
+    internal void RestoreAvoidanceMovement(int movementTicks, int turn)
+    {
+        if (movementTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(movementTicks));
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        AvoidanceMovementTicks = movementTicks;
+        AvoidanceMovementTurn = turn;
+    }
+
+    internal void ClearAvoidanceMovement()
+    {
+        AvoidanceMovementTicks = -1;
+        AvoidanceMovementTurn = 0;
+    }
+
+    internal void UpdateAvoidanceMovementTurn(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        AvoidanceMovementTurn = turn;
     }
 
     internal void StartCounselorRetreat(int ticks)

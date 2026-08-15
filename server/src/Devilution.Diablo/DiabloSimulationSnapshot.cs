@@ -133,6 +133,12 @@ public sealed record DiabloMonsterState(
     /** Native Rhino goalVar2 turn state (0 or 1). */
     public int RhinoMovementTurn { get; init; }
 
+    /** Native AiAvoidance goalVar1 movement counter; -1 means Normal. */
+    public int AvoidanceMovementTicks { get; init; } = -1;
+
+    /** Native AiAvoidance goalVar2 turn state (0 or 1). */
+    public int AvoidanceMovementTurn { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -431,6 +437,8 @@ public sealed partial class DiabloSimulation
                     RangedAvoidanceTurn = target.RangedAvoidanceTurn,
                     RhinoMovementTicks = target.RhinoMovementTicks,
                     RhinoMovementTurn = target.RhinoMovementTurn,
+                    AvoidanceMovementTicks = target.AvoidanceMovementTicks,
+                    AvoidanceMovementTurn = target.AvoidanceMovementTurn,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -715,6 +723,8 @@ public sealed partial class DiabloSimulation
                 || monster.RangedAvoidanceTurn is < 0 or > 1
                 || monster.RhinoMovementTicks is < -1 or > 255
                 || monster.RhinoMovementTurn is < 0 or > 1
+                || monster.AvoidanceMovementTicks is < -1 or > 255
+                || monster.AvoidanceMovementTurn is < 0 or > 1
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1579,6 +1589,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreRhinoMovement(
                     monster.RhinoMovementTicks,
                     monster.RhinoMovementTurn);
+                target.RestoreAvoidanceMovement(
+                    monster.AvoidanceMovementTicks,
+                    monster.AvoidanceMovementTurn);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1639,7 +1652,9 @@ public sealed partial class DiabloSimulation
                     rangedAvoidanceMoveTicks: monster.RangedAvoidanceMoveTicks,
                     rangedAvoidanceTurn: monster.RangedAvoidanceTurn,
                     rhinoMovementTicks: monster.RhinoMovementTicks,
-                    rhinoMovementTurn: monster.RhinoMovementTurn);
+                    rhinoMovementTurn: monster.RhinoMovementTurn,
+                    avoidanceMovementTicks: monster.AvoidanceMovementTicks,
+                    avoidanceMovementTurn: monster.AvoidanceMovementTurn);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1661,6 +1676,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreRhinoMovement(
                     monster.RhinoMovementTicks,
                     monster.RhinoMovementTurn);
+                restoredTarget.RestoreAvoidanceMovement(
+                    monster.AvoidanceMovementTicks,
+                    monster.AvoidanceMovementTurn);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

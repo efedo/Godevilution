@@ -533,6 +533,10 @@ message MonsterSnapshot {
 	optional int32 rhino_movement_ticks = 60;
 	// Native Rhino goalVar2 turn state (0 or 1).
 	optional int32 rhino_movement_turn = 61;
+	// Native AiAvoidance goalVar1 movement counter; -1 means Normal.
+	optional int32 avoidance_movement_ticks = 62;
+	// Native AiAvoidance goalVar2 turn state (0 or 1).
+	optional int32 avoidance_movement_turn = 63;
 }
 
 message WorldItemSnapshot {

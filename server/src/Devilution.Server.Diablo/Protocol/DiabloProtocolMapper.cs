@@ -100,6 +100,8 @@ internal static class DiabloProtocolMapper
                 RangedAvoidanceTurn = monster.RangedAvoidanceTurn,
                 RhinoMovementTicks = monster.RhinoMovementTicks,
                 RhinoMovementTurn = monster.RhinoMovementTurn,
+                AvoidanceMovementTicks = monster.AvoidanceMovementTicks,
+                AvoidanceMovementTurn = monster.AvoidanceMovementTurn,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
             });
         }
@@ -434,6 +436,12 @@ internal static class DiabloProtocolMapper
                     : -1,
                 RhinoMovementTurn = monster.HasRhinoMovementTurn
                     ? monster.RhinoMovementTurn
+                    : 0,
+                AvoidanceMovementTicks = monster.HasAvoidanceMovementTicks
+                    ? monster.AvoidanceMovementTicks
+                    : -1,
+                AvoidanceMovementTurn = monster.HasAvoidanceMovementTurn
+                    ? monster.AvoidanceMovementTurn
                     : 0,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
