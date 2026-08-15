@@ -2276,6 +2276,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WarriorCriticalStrikeUsesConfiguredChancePerLevel()
+    {
+        var shippedClasses = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            shippedClasses.Definitions.Select(definition =>
+                definition.ClassId == 0
+                    ? definition with { CriticalStrikeChancePerLevelPercent = 0 }
+                    : definition));
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 4);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            random: new DiabloRandom(0),
+            playerClasses: configuredClasses);
+        var warrior = CreatePlayer(
+            entityId: 7,
+            characterClassId: 0,
+            characterLevel: 50,
+            attributes: configuredClasses.GetRequired(0).CreateStartingAttributes() with {
+                Strength = new PlayerAttributeState(0, 0),
+                Vitality = new PlayerAttributeState(0, 0),
+            },
+            equipment: [new EquippedStoreItem(
+                4,
+                1,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(warrior, new DiabloAttackIntent(9), 2);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(94, target.HitPoints);
+    }
+
+    [Fact]
     public void KnockbackEquipmentMovesOnlySuccessfulNonPetrifiedHits()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);

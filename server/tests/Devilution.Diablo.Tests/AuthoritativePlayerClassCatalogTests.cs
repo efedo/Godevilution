@@ -18,6 +18,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
         Assert.Equal(0, catalog.Default.MeleeArmorReductionDivisor);
         Assert.Equal(9, catalog.Default.RepairAbilityDurabilityLevelOffset);
         Assert.Equal(2, catalog.Default.CriticalDamageMultiplier);
+        Assert.Equal(1, catalog.Default.CriticalStrikeChancePerLevelPercent);
         Assert.Equal(20, catalog.Default.PvpEarCursorGraphic);
         Assert.Equal(
             new PlayerAttributesState(
@@ -115,7 +116,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 7; remove++)
+                    for (var remove = 0; remove < 8; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -160,7 +161,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 5; remove++)
+                    for (var remove = 0; remove < 6; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -194,7 +195,7 @@ public sealed class AuthoritativePlayerClassCatalogTests
                     if (!line.Contains('\t'))
                         return line;
                     var legacyLine = line;
-                    for (var remove = 0; remove < 6; remove++)
+                    for (var remove = 0; remove < 7; remove++)
                         legacyLine = legacyLine[..legacyLine.LastIndexOf('\t')];
                     return legacyLine;
                 }));
@@ -398,13 +399,17 @@ public sealed class AuthoritativePlayerClassCatalogTests
             "\tMonk\t2\t1\t0\t2",
             "\tMonk\t0\t1\t0\t2",
             StringComparison.Ordinal);
-        var invalidCriticalMultiplier = string.Join(
+        var invalidCriticalMultiplier = source.Replace(
+            "\t9\t2\t1",
+            "\t9\t0\t1",
+            StringComparison.Ordinal);
+        var invalidCriticalChance = string.Join(
             '\n',
             source
                 .Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Split('\n')
                 .Select(line => line.StartsWith("0\twarrior\t", StringComparison.Ordinal)
-                    ? line[..line.LastIndexOf('\t')] + "\t0"
+                    ? line[..line.LastIndexOf('\t')] + "\t101"
                     : line));
 
         Assert.Throws<InvalidDataException>(() =>
@@ -433,6 +438,8 @@ public sealed class AuthoritativePlayerClassCatalogTests
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidMonkUnarmedDivisor));
         Assert.Throws<InvalidDataException>(() =>
             AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidCriticalMultiplier));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", invalidCriticalChance));
     }
 
     private static AuthoritativePlayerClassCatalog LoadShippedCatalog()
