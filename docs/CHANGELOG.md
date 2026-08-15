@@ -29,6 +29,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.154 optional normalized item `min_armor_class` and
   `max_armor_class` metadata. Normalized item generation now preserves native
   armor ranges when declared and keeps fixed-armor fallback when omitted.
+- Add schema 1.155 optional normalized item `special_effects` metadata.
+  Symbolic native equipment effects now map to authoritative flags, while
+  numeric `flags` and legacy unknown-effect compatibility remain supported.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
