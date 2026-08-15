@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Honor standalone validated GoatMelee wounded-special tuning by composing
+  omitted attack-band terms from the native 23/2 defaults.
+
 - Restore native Snake non-charge movement: mapped Snake controllers now use a
   deterministic drift branch outside the charge boundary while preserving the
   existing generic navigation fallback for native delay ticks.

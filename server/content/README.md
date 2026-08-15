@@ -171,7 +171,9 @@ The optional `goat_melee_special_health_threshold_percent` and
 wounded-special health threshold and deterministic random-group period.
 Legacy monster rows retain the native 50-percent threshold and two-group
 compatibility gate. A complete positive special tuple selects the behavior
-regardless of the row's `native_ai` label.
+regardless of the row's `native_ai` label and composes the native 23/2 attack
+band when those optional attack columns are omitted. Omitted special values
+retain the native 50-percent threshold and two-group compatibility defaults.
 The optional `scavenger_healing_health_threshold_percent` column externalizes
 the Scavenger wounded-health admission threshold for corpse seeking. Legacy
 monster rows retain the native 50-percent compatibility threshold. The
