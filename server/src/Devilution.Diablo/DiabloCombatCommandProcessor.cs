@@ -6470,6 +6470,9 @@ public sealed class DiabloCombatCommandProcessor
         var projectileSpeed = missile?.ProjectileSpeed > 0
             ? missile.ProjectileSpeed
             : 1;
+        var projectileLifetime = missile?.ProjectileLifetime > 0
+            ? missile.ProjectileLifetime
+            : Math.Max(1, distance);
 
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
@@ -6484,7 +6487,7 @@ public sealed class DiabloCombatCommandProcessor
             damage,
             AuthoritativeDamageType.Physical,
             areaRadius: 0,
-            checked((uint)Math.Max(1, distance)),
+            checked((uint)projectileLifetime),
             allowZeroSpellId: true) {
             // The content row selects the native Arrow identity; the module
             // resolves both explicit MonsterArrow rows and legacy Targeted
