@@ -4279,7 +4279,8 @@ public sealed class DiabloCombatCommandProcessorTests
             world,
             monsterMissiles: CreateArrowMissileCatalog(
                 "SkeletonRanged",
-                projectileSpeed: 3));
+                projectileSpeed: 3,
+                projectileLifetime: 9));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,
@@ -4297,6 +4298,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
         Assert.Equal(2, arrow.Damage);
         Assert.Equal(3, arrow.Speed);
+        Assert.Equal(8U, arrow.RemainingTicks);
 
         for (ulong tick = 15; tick < 32 && world.Projectiles.Count != 0; tick++)
             deliveries = deliveries.Concat(processor.AdvanceTick(tick, [player])).ToList();
@@ -13561,14 +13563,16 @@ public sealed class DiabloCombatCommandProcessorTests
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(
         string nativeAi,
-        int projectileSpeed = 0)
+        int projectileSpeed = 0,
+        int projectileLifetime = 0)
     {
         return new AuthoritativeMonsterMissileCatalog([
             new AuthoritativeMonsterMissileDefinition(
                 nativeAi,
                 "Arrow",
                 AuthoritativeProjectileBehavior.Targeted,
-                ProjectileSpeed: projectileSpeed),
+                ProjectileSpeed: projectileSpeed,
+                ProjectileLifetime: projectileLifetime),
         ]);
     }
 
