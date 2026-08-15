@@ -68,6 +68,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeItemCatalog? Items { get; init; }
 
+    /** Validated server-owned item combinations applied during pickup. */
+    public AuthoritativeItemCombinationCatalog? ItemCombinations { get; init; }
+
     /** Stable spell identity authorizing the Bard's zero-cost Identify action. */
     public uint IdentifyAbilitySpellId { get; init; }
 
@@ -164,7 +167,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             playerDamage,
             options.TrapDisarmAbilitySpellId,
             options.QuestTypes,
-            options.GameMode);
+            options.GameMode,
+            options.Items,
+            options.ItemCombinations);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

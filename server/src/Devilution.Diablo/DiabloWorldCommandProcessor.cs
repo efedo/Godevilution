@@ -14,6 +14,8 @@ public sealed class DiabloWorldCommandProcessor
     private readonly uint trapDisarmAbilitySpellId;
     private readonly AuthoritativeQuestTypeCatalog? questTypes;
     private readonly DiabloGameMode gameMode;
+    private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -25,7 +27,9 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerDamageResolver? playerDamage = null,
         uint trapDisarmAbilitySpellId = 0,
         AuthoritativeQuestTypeCatalog? questTypes = null,
-        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        AuthoritativeItemCatalog? items = null,
+        AuthoritativeItemCombinationCatalog? itemCombinations = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -36,6 +40,8 @@ public sealed class DiabloWorldCommandProcessor
         this.trapDisarmAbilitySpellId = trapDisarmAbilitySpellId;
         this.questTypes = questTypes;
         this.gameMode = gameMode;
+        this.items = items;
+        this.itemCombinations = itemCombinations;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -651,7 +657,98 @@ public sealed class DiabloWorldCommandProcessor
             item.State.InventoryWidth,
             item.State.InventoryHeight);
         world.WorldItems.Remove(itemEntityId);
+        ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Applies deterministic content-owned item combinations after pickup. */
+    private void ApplyItemCombinations(
+        AuthoritativePlayerState player,
+        ulong appliedTick)
+    {
+        if (items is null || itemCombinations is null)
+            return;
+
+        while (true) {
+            AuthoritativeItemCombinationDefinition? selected = null;
+            var consumedIndices = Array.Empty<int>();
+            foreach (var definition in itemCombinations.Definitions) {
+                var usedIndices = new HashSet<int>();
+                var matchingIndices = new List<int>();
+                var allInputsPresent = true;
+                foreach (var itemId in definition.RequiredItemIds) {
+                    if (!items.TryGet(itemId, out var itemDefinition)) {
+                        allInputsPresent = false;
+                        break;
+                    }
+                    var matchingIndex = -1;
+                    for (var index = 0; index < player.Inventory.Count; index++) {
+                        if (!usedIndices.Contains(index)
+                            && player.Inventory[index].State.ItemIndex == itemDefinition.NativeItemIndex) {
+                            matchingIndex = index;
+                            break;
+                        }
+                    }
+                    if (matchingIndex < 0) {
+                        allInputsPresent = false;
+                        break;
+                    }
+                    usedIndices.Add(matchingIndex);
+                    matchingIndices.Add(matchingIndex);
+                }
+                if (allInputsPresent) {
+                    selected = definition;
+                    consumedIndices = matchingIndices.ToArray();
+                    break;
+                }
+            }
+
+            if (selected is null)
+                return;
+
+            var resultIndex = consumedIndices.Min();
+            foreach (var index in consumedIndices
+                         .Where(index => index != resultIndex)
+                         .OrderByDescending(index => index)) {
+                InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, index);
+                player.Inventory.RemoveAt(index);
+            }
+
+            var resultAnchor = InventoryGridLayout.FindAnchor(
+                player.InventoryGrid,
+                resultIndex);
+            var state = items.Generate(
+                selected.ResultItemId,
+                AllocateGoldStackSeed());
+            InventoryGridLayout.Clear(player.InventoryGrid, resultIndex);
+            var targetCell = resultAnchor >= 0
+                && InventoryGridLayout.CanPlace(
+                    player.InventoryGrid,
+                    (uint)resultAnchor,
+                    state.InventoryWidth,
+                    state.InventoryHeight)
+                ? resultAnchor
+                : InventoryGridLayout.FindFirstPlacement(
+                    player.InventoryGrid,
+                    state.InventoryWidth,
+                    state.InventoryHeight);
+            if (targetCell < 0)
+                throw new InvalidDataException(
+                    $"Item combination result {selected.ResultItemId} has no inventory placement.");
+            player.Inventory[resultIndex] = new OwnedStoreItem(
+                0,
+                0,
+                state.CreateInfo,
+                0,
+                appliedTick,
+                state);
+            InventoryGridLayout.Fill(
+                player.InventoryGrid,
+                targetCell,
+                resultIndex,
+                state.InventoryWidth,
+                state.InventoryHeight);
+        }
     }
 
     private DiabloWorldIntentResult DropHeldItem(

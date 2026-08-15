@@ -204,6 +204,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Active Diablo content must provide items.tsv or itemdat.tsv.");
         }
+        var itemCombinations = content.TryGetTable(
+            "item_combinations.tsv",
+            out var itemCombinationsTable)
+            ? AuthoritativeItemCombinationCatalog.LoadTsv(
+                itemCombinationsTable.SourcePath,
+                itemCombinationsTable.ToCanonicalTsv())
+            : null;
+        itemCombinations?.ValidateItems(itemCatalog);
         var combatRules = content.TryGetTable("combat.tsv", out var combatTable)
             ? AuthoritativeCombatRules.LoadTsv(
                 combatTable.SourcePath,
@@ -421,6 +429,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             Spells = spells,
             CombatRules = combatRules,
             Items = itemCatalog,
+            ItemCombinations = itemCombinations,
             IdentifyAbilitySpellId = identifyAbilitySpellId,
             RepairAbilitySpellId = repairAbilitySpellId,
             RechargeAbilitySpellId = rechargeAbilitySpellId,
