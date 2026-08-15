@@ -16,6 +16,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
     private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
+    private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -29,7 +30,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeQuestTypeCatalog? questTypes = null,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
-        AuthoritativeItemCombinationCatalog? itemCombinations = null)
+        AuthoritativeItemCombinationCatalog? itemCombinations = null,
+        AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -42,6 +44,7 @@ public sealed class DiabloWorldCommandProcessor
         this.gameMode = gameMode;
         this.items = items;
         this.itemCombinations = itemCombinations;
+        this.itemQuestEffects = itemQuestEffects;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -657,8 +660,47 @@ public sealed class DiabloWorldCommandProcessor
             item.State.InventoryWidth,
             item.State.InventoryHeight);
         world.WorldItems.Remove(itemEntityId);
+        ApplyItemQuestEffects(item.State);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Applies deterministic content-owned quest transitions after pickup. */
+    private void ApplyItemQuestEffects(AuthoritativeItemState itemState)
+    {
+        if (items is null || itemQuestEffects is null)
+            return;
+
+        foreach (var effect in itemQuestEffects.Definitions) {
+            if (!items.TryGet(effect.ItemId, out var itemDefinition)
+                || itemState.ItemIndex != itemDefinition.NativeItemIndex
+                || !world.Quests.TryGetValue(effect.QuestId, out var quest)
+                || quest.Unavailable) {
+                continue;
+            }
+
+            switch (effect.EffectKind) {
+            case AuthoritativeItemQuestEffectKind.ActivateQuest:
+                if (!quest.Completed)
+                    quest.Active = true;
+                quest.Logged = true;
+                quest.Variable1 = Math.Max(quest.Variable1, effect.EffectAmount);
+                break;
+            case AuthoritativeItemQuestEffectKind.CompleteQuest:
+                quest.Progress = quest.RequiredProgress;
+                quest.Completed = true;
+                quest.Active = false;
+                quest.Logged = true;
+                quest.Variable1 = Math.Max(quest.Variable1, effect.EffectAmount);
+                break;
+            case AuthoritativeItemQuestEffectKind.SetVariable1:
+                quest.Variable1 = effect.EffectAmount;
+                break;
+            default:
+                throw new InvalidDataException(
+                    $"Unsupported item quest effect {effect.EffectKind}.");
+            }
+        }
     }
 
     /** Applies deterministic content-owned item combinations after pickup. */

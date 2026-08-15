@@ -71,6 +71,9 @@ public sealed class DiabloSimulationOptions
     /** Validated server-owned item combinations applied during pickup. */
     public AuthoritativeItemCombinationCatalog? ItemCombinations { get; init; }
 
+    /** Validated server-owned quest transitions applied when items are picked up. */
+    public AuthoritativeItemQuestEffectCatalog? ItemQuestEffects { get; init; }
+
     /** Stable spell identity authorizing the Bard's zero-cost Identify action. */
     public uint IdentifyAbilitySpellId { get; init; }
 
@@ -169,7 +172,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.QuestTypes,
             options.GameMode,
             options.Items,
-            options.ItemCombinations);
+            options.ItemCombinations,
+            options.ItemQuestEffects);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

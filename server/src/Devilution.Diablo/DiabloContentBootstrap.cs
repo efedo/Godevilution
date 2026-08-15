@@ -386,6 +386,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questPools,
                 randomSeed);
         }
+        var itemQuestEffects = content.TryGetTable(
+            "item_quest_effects.tsv",
+            out var itemQuestEffectsTable)
+            ? AuthoritativeItemQuestEffectCatalog.LoadTsv(
+                itemQuestEffectsTable.SourcePath,
+                itemQuestEffectsTable.ToCanonicalTsv())
+            : null;
+        if (itemQuestEffects is not null) {
+            if (itemCatalog is null || quests is null)
+                throw new InvalidDataException(
+                    "Item quest effects require active item and quest catalogs.");
+            itemQuestEffects.ValidateItems(itemCatalog);
+            itemQuestEffects.ValidateQuests(quests);
+        }
 
         var defaultStartingLevelId = world?.DefaultStartingLevelId
             ?? world?.Levels.FirstOrDefault()?.LevelId
@@ -430,6 +444,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             CombatRules = combatRules,
             Items = itemCatalog,
             ItemCombinations = itemCombinations,
+            ItemQuestEffects = itemQuestEffects,
             IdentifyAbilitySpellId = identifyAbilitySpellId,
             RepairAbilitySpellId = repairAbilitySpellId,
             RechargeAbilitySpellId = rechargeAbilitySpellId,
