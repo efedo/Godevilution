@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   Move admissions use `RoundWalk`, while ordinary failed ranged rolls use
   `RandomWalk` before any generic navigation fallback.
 
+- Persist native `AiRangedAvoidance` `goalVar1`/`goalVar2` movement state through
+  authoritative snapshots, optional protocol fields 58-59, saves, and the
+  canonical state hash; resumed Move goals continue server-side.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -269,6 +269,9 @@ admissions use the native `RandomWalk` fallback; clients receive only the
 resulting movement or unchanged snapshot. For `RoundWalk`, the server checks
 the 90-degree turn, 45-degree turn, and straight candidate before the
 opposite-side random-walk fallback.
+Optional `MonsterSnapshot` fields 58-59 carry the persisted native `goalVar1`
+movement counter and `goalVar2` turn state so a resumed server continues the
+same Move goal; older peers may omit them.
 
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback

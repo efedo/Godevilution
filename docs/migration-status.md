@@ -192,6 +192,10 @@ Status date: 2026-08-15
   uses `RoundWalk`, while the ordinary failed ranged admission uses
   `RandomWalk`.
 
+- Native `AiRangedAvoidance` `goalVar1`/`goalVar2` movement state is now
+  server-owned and persisted through snapshots, optional protocol fields
+  58-59, saves, and the canonical state hash.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

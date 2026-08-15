@@ -376,6 +376,10 @@ Windows toolchain command.
 - `MonsterSnapshot` fields 56-57 carry the server-owned native Bat movement
   counters corresponding to `var2` and `var1`; clients render these values but
   never resolve Bat movement admissions.
+- Optional `MonsterSnapshot` fields 58-59 carry the server-owned native
+  `AiRangedAvoidance` `goalVar1` movement counter and `goalVar2` turn state.
+  Older peers may omit them; clients render the values but never execute the
+  ranged-avoidance goal.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.
