@@ -4456,7 +4456,9 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, distance))
                 continue;
-            if (target.NativeAi == "SkeletonRanged" && distance <= 1)
+            if (distance <= 1
+                && (target.NativeAi == "SkeletonRanged"
+                    || HasValidatedArrowMapping(target.NativeAi, target.MonsterId)))
                 continue;
             if (distance <= 1) {
                 if (IsPlayerProtectedByFlash(victim)
@@ -6455,7 +6457,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         var skeletonRangedTuning = GetSkeletonRangedTuning(monster);
         if (!skeletonRangedTuning.HasValue
-            || !HasValidatedArrowMapping(monster.NativeAi)
+            || !HasValidatedArrowMapping(monster.NativeAi, monster.MonsterId)
             || monster.ToHit <= 0
             || monster.MaxDamage <= 0)
             return false;
@@ -6516,12 +6518,11 @@ public sealed class DiabloCombatCommandProcessor
             : null;
     }
 
-    /** Native ranged bows retain the Arrow missile identity in validated content. */
-    private bool HasValidatedArrowMapping(string nativeAi)
+    /** Validated arrow mappings keep ranged-only monsters out of adjacent melee. */
+    private bool HasValidatedArrowMapping(string nativeAi, uint monsterId)
     {
         return monsterMissiles is not null
-            && monsterMissiles.TryGet(nativeAi, out var missile)
-            && missile.MissileId == "Arrow"
+            && monsterMissiles.TryGet(nativeAi, monsterId, out var missile)
             && missile.ProjectileBehavior is AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted;
     }

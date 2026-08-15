@@ -4371,6 +4371,42 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
     }
 
+    [Fact]
+    public void MappedMonsterArrowDoesNotFallThroughToAdjacentMelee()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "Acid");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "CustomArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(100, player.Life);
+        Assert.Empty(world.Projectiles);
+    }
+
     [Theory]
     [InlineData("Succubus")]
     [InlineData("LazarusSuccubus")]
