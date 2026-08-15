@@ -401,6 +401,8 @@ public sealed record AuthoritativeSpellDefinition(
     public int GolemDeathAnimationTicks { get; init; }
 
     /** Native Golem summon health and damage formula terms. */
+    public int GolemHitPointsLevelBaseQ6 { get; init; } = 320;
+
     public int GolemHitPointsLevelMultiplier { get; init; } = 2;
 
     public int GolemHitPointsManaDivisor { get; init; } = 3;
@@ -976,6 +978,7 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.StaffLevel != 9
                     || definition.GolemDeathAnimationTicks <= 0
+                    || definition.GolemHitPointsLevelBaseQ6 <= 0
                     || definition.GolemHitPointsLevelMultiplier <= 0
                     || definition.GolemHitPointsManaDivisor <= 0
                     || definition.GolemDamageLevelMultiplier <= 0
@@ -1895,6 +1898,8 @@ public sealed class AuthoritativeSpellCatalog
             BerserkResistanceFrequency = row.OptionalInt32(
                 "berserk_resistance_frequency"),
             GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
+            GolemHitPointsLevelBaseQ6 = row.OptionalInt32(
+                "golem_hit_points_level_base_q6", 320),
             GolemHitPointsLevelMultiplier = row.OptionalInt32(
                 "golem_hit_points_level_multiplier", 2),
             GolemHitPointsManaDivisor = row.OptionalInt32(

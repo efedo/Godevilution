@@ -4181,7 +4181,7 @@ public sealed class DiabloCombatCommandProcessor
 
         var entityId = AllocateProjectileEntityId();
         var hitPointsQ6 = checked(
-            spell.GolemHitPointsLevelMultiplier * (320 * effectiveSpellLevel
+            spell.GolemHitPointsLevelMultiplier * (spell.GolemHitPointsLevelBaseQ6 * effectiveSpellLevel
                 + DiabloFixedPointQ6.FromWhole(player.ManaMaximum)
                     / spell.GolemHitPointsManaDivisor));
         var hitPoints = DiabloFixedPointQ6.ToWholeCeiling(hitPointsQ6);
