@@ -7423,6 +7423,35 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesDeterministicRoundWalkInItsFarDistanceBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            40,
+            attackDamage: 2,
+            aggroRange: 7,
+            nativeAi: "GoatMelee",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: admitted to the native 28% movement band and its
+        // deterministic far-distance RoundWalk branch.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+
+        Assert.True(monster.IsMoving);
+        Assert.NotEqual(5, monster.FuturePositionY);
+    }
+
+    [Fact]
     public void GoatMeleeAiUsesValidatedMonsterTypeMovementTuning()
     {
         var monster = new AuthoritativeCombatTarget(

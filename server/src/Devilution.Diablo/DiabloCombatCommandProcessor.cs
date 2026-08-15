@@ -4851,6 +4851,22 @@ public sealed class DiabloCombatCommandProcessor
         if (actionSeed % 100U >= (uint)movementChance)
             return true;
 
+        // Native AiAvoidance gives far-away targets a one-in-four RoundWalk
+        // branch before its ordinary movement path. Keep that lateral bias
+        // deterministic while retaining bounded navigation if every turn is
+        // blocked.
+        if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
+            var roundWalk = FindGoatMeleeRoundWalkStep(
+                monster,
+                victim,
+                players,
+                actionSeed);
+            if (roundWalk.HasValue) {
+                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                return true;
+            }
+        }
+
         var next = AuthoritativeMonsterNavigation.FindStep(
             world,
             monster,
@@ -4859,6 +4875,49 @@ public sealed class DiabloCombatCommandProcessor
         if (next.HasValue)
             monster.BeginMovement(next.Value.X, next.Value.Y);
         return true;
+    }
+
+    /** Native AiAvoidance's far-distance RoundWalk, with deterministic turn order. */
+    private (int X, int Y)? FindGoatMeleeRoundWalkStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var turn = (seed / 100U) % 2U == 0U ? 1 : -1;
+        var turn45 = RotateDirection(direction, turn);
+        var turn90 = RotateDirection(turn45, turn);
+        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackTurn = (seed / 200U) % 2U == 0U ? 1 : -1;
+        var directions = new[] {
+            turn90,
+            turn45,
+            direction,
+            fallbackDirection,
+            RotateDirection(fallbackDirection, fallbackTurn),
+            RotateDirection(fallbackDirection, -fallbackTurn),
+            RotateDirection(fallbackDirection, 2),
+            RotateDirection(fallbackDirection, -2),
+        };
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
     }
 
     /** Native OverlordAi admits Fat movement through its 20 + 4 * intelligence band. */
