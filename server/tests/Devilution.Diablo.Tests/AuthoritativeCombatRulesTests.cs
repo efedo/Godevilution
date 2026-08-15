@@ -37,6 +37,10 @@ public sealed class AuthoritativeCombatRulesTests
         Assert.Equal(24U, rules.PvpEarItemId);
         Assert.Equal(2, rules.PvpBlockLevelScale);
         Assert.Equal(2, rules.EquipmentFastBlockFrameSkip);
+        Assert.Equal((1, 2, 3), (
+            rules.FastHitRecoveryFrameSkip,
+            rules.FasterHitRecoveryFrameSkip,
+            rules.FastestHitRecoveryFrameSkip));
     }
 
     [Fact]
@@ -675,6 +679,28 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 equipmentFastBlockFrameSkip: 11));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesHitRecoveryTierSkips()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tfast_hit_recovery_frame_skip\t"
+            + "faster_hit_recovery_frame_skip\tfastest_hit_recovery_frame_skip\n"
+            + "10\t1\t100\t2\t4\t6\n");
+
+        Assert.Equal((2, 4, 6), (
+            rules.FastHitRecoveryFrameSkip,
+            rules.FasterHitRecoveryFrameSkip,
+            rules.FastestHitRecoveryFrameSkip));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                fastHitRecoveryFrameSkip: 3,
+                fasterHitRecoveryFrameSkip: 2));
     }
 
     [Fact]

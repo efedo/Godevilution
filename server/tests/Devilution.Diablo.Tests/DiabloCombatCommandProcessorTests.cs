@@ -12030,6 +12030,28 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Single(recoveryProcessor.AdvanceTick(1, [owner, recoveringRogue]));
         Assert.Equal(DiabloPlayerCombatMode.GotHit, recoveringRogue.CombatMode);
         Assert.Equal(5UL, recoveringRogue.CombatModeEndTick);
+
+        var tunedRecoveringRogue = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 14,
+            equipment: [new EquippedStoreItem(0, 102, recoveryItem)],
+            characterClassId: 1);
+        var tunedRecoveryProcessor = CreateProcessor(
+            new DiabloWorldState(projectiles: [CreateStationaryChargedBolt(1, 1)]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                fastestHitRecoveryFrameSkip: 4),
+            random: new DiabloRandom(0),
+            playerClasses: classes);
+
+        Assert.Single(tunedRecoveryProcessor.AdvanceTick(1, [owner, tunedRecoveringRogue]));
+        Assert.Equal(DiabloPlayerCombatMode.GotHit, tunedRecoveringRogue.CombatMode);
+        Assert.Equal(recoveringRogue.CombatModeEndTick - 1, tunedRecoveringRogue.CombatModeEndTick);
     }
 
     [Fact]
