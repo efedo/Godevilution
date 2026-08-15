@@ -34,6 +34,10 @@ Status date: 2026-08-14
   independent of the `Succubus`/`LazarusSuccubus` label when a missile catalog
   is active; the no-catalog legacy path retains native-label compatibility.
 
+- Fat and GoatMelee special-attack selection now honors complete validated
+  attack tuples independently of the runtime native-AI label; rows without
+  migrated tuples retain their native compatibility paths.
+
 - Fallen fear radius and countdown behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
   retain the native-name compatibility path, while fear state remains

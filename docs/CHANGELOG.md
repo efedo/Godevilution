@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Select Blood Star dispatch from validated `BloodStar` missile behavior
   rather than requiring `Succubus`/`LazarusSuccubus` labels; no-catalog legacy
   rows retain the native-label fallback.
+- Remove the remaining `Fat` and `GoatMelee` label gates from validated
+  special-attack selection; complete attack tuples now select those branches
+  independently of the runtime native-AI label.
 - Select Fallen fear radius and countdown behavior from complete validated
   tuning tuples rather than requiring the `Fallen` native-AI name; legacy rows
   without tuning retain native-name compatibility defaults.
