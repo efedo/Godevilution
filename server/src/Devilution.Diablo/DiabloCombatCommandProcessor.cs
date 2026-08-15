@@ -1044,16 +1044,16 @@ public sealed class DiabloCombatCommandProcessor
             }
 
             var decayedState = state with {
-                PlusDamage = checked(state.PlusDamage - 5),
+                PlusDamage = checked(state.PlusDamage - rules.HellfireDecayDamageReduction),
             };
-            if (decayedState.PlusDamage <= -100)
+            if (decayedState.PlusDamage <= -rules.HellfireDecayRemovalThreshold)
                 player.Equipment.RemoveAt(equipmentIndex);
             else
                 player.Equipment[equipmentIndex] = equippedItem with {
                     State = decayedState,
                 };
             player.RecalculateEquipmentResources();
-            if (decayedState.PlusDamage <= -100)
+            if (decayedState.PlusDamage <= -rules.HellfireDecayRemovalThreshold)
                 return;
         }
     }

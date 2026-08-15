@@ -72,7 +72,9 @@ public sealed class AuthoritativeCombatRules
         int barbarianDefaultStrengthDamageDivisor = 100,
         int barbarianVitalityDamageDivisor = 100,
         int thornsDamageMinimum = 1,
-        int thornsDamageMaximum = 3)
+        int thornsDamageMaximum = 3,
+        int hellfireDecayDamageReduction = 5,
+        int hellfireDecayRemovalThreshold = 100)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -144,6 +146,12 @@ public sealed class AuthoritativeCombatRules
             || thornsDamageMaximum < thornsDamageMinimum
             || thornsDamageMaximum > 10_000) {
             throw new InvalidDataException("Thorns damage tuning is invalid.");
+        }
+        if (hellfireDecayDamageReduction <= 0
+            || hellfireDecayDamageReduction > 10_000
+            || hellfireDecayRemovalThreshold <= 0
+            || hellfireDecayRemovalThreshold > 10_000) {
+            throw new InvalidDataException("Hellfire Decay tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -234,6 +242,8 @@ public sealed class AuthoritativeCombatRules
         BarbarianVitalityDamageDivisor = barbarianVitalityDamageDivisor;
         ThornsDamageMinimum = thornsDamageMinimum;
         ThornsDamageMaximum = thornsDamageMaximum;
+        HellfireDecayDamageReduction = hellfireDecayDamageReduction;
+        HellfireDecayRemovalThreshold = hellfireDecayRemovalThreshold;
     }
 
     public int BaseAttackDamage { get; }
@@ -380,6 +390,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Native maximum damage rolled by a successful Thorns retaliation. */
     public int ThornsDamageMaximum { get; }
+
+    /** Native damage-bonus reduction applied by each Hellfire Decay proc. */
+    public int HellfireDecayDamageReduction { get; }
+
+    /** Positive native damage-bonus threshold that removes a Decay weapon. */
+    public int HellfireDecayRemovalThreshold { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -716,7 +732,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("barbarian_default_strength_damage_divisor", 100),
             row.OptionalInt32("barbarian_vitality_damage_divisor", 100),
             row.OptionalInt32("thorns_damage_minimum", 1),
-            row.OptionalInt32("thorns_damage_maximum", 3));
+            row.OptionalInt32("thorns_damage_maximum", 3),
+            row.OptionalInt32("hellfire_decay_damage_reduction", 5),
+            row.OptionalInt32("hellfire_decay_removal_threshold", 100));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
