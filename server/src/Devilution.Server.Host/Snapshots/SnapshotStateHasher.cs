@@ -14,6 +14,10 @@ public static class SnapshotStateHasher
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var hasher = new CanonicalStateHasher();
+        if (snapshot.VictoryTriggered) {
+            hasher.AppendString("godevilution-victory-v1");
+            hasher.AppendBool(true);
+        }
         var players = snapshot.Players.OrderBy(player => player.EntityId).ToArray();
         hasher.AppendUInt64((ulong)players.Length);
         foreach (var player in players) {

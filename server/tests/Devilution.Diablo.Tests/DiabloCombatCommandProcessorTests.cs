@@ -1240,11 +1240,19 @@ public sealed class DiabloCombatCommandProcessorTests
             rules: new AuthoritativeCombatRules(10, 1, 100));
         var player = CreatePlayer(levelId: 15, entityId: 7);
 
-        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
+        Assert.True(result.Succeeded);
         Assert.True(quest.Completed);
         Assert.False(quest.Active);
         Assert.Equal(1U, player.DiabloKillLevel);
+        Assert.True(world.VictoryTriggered);
+        var victory = Assert.Single(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Victory);
+        Assert.Equal(7U, victory.SourceEntityId);
+        Assert.Equal(9U, victory.TargetEntityId);
+        Assert.Equal(1, victory.Amount);
     }
 
     [Fact]
@@ -1271,10 +1279,15 @@ public sealed class DiabloCombatCommandProcessorTests
             gameMode: DiabloGameMode.Multiplayer);
         var player = CreatePlayer(levelId: 15, entityId: 7);
 
-        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
+        Assert.True(result.Succeeded);
         Assert.True(quest.Completed);
         Assert.Equal(0U, player.DiabloKillLevel);
+        Assert.True(world.VictoryTriggered);
+        Assert.Equal(
+            1,
+            result.Events.Count(gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Victory));
     }
 
     [Fact]

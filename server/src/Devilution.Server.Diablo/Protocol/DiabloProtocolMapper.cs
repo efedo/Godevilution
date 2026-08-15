@@ -34,6 +34,7 @@ internal static class DiabloProtocolMapper
         var snapshot = new Snapshot {
             Tick = source.Tick,
             RandomState = source.RandomState,
+            VictoryTriggered = source.VictoryTriggered,
         };
         foreach (var participant in projectedParticipants)
             snapshot.Players.Add(ToProtocolPlayer(participant, spells));
@@ -645,6 +646,7 @@ internal static class DiabloProtocolMapper
                 corpse.LevelId,
                 corpse.PositionX,
                 corpse.PositionY)).ToArray(),
+            VictoryTriggered = source.VictoryTriggered,
         };
     }
 
@@ -694,6 +696,15 @@ internal static class DiabloProtocolMapper
                         TargetEntityId = gameplayEvent.TargetEntityId,
                         QuestId = gameplayEvent.QuestId,
                         MessageId = gameplayEvent.MessageId,
+                    },
+                });
+                break;
+            case DiabloGameplayEventKind.Victory:
+                batch.Events.Add(new GameEvent {
+                    Victory = new VictoryEvent {
+                        PlayerEntityId = entityId,
+                        BossEntityId = gameplayEvent.TargetEntityId,
+                        DiabloKillLevel = (uint)Math.Max(gameplayEvent.Amount, 0),
                     },
                 });
                 break;

@@ -13436,6 +13436,14 @@ public sealed class DiabloCombatCommandProcessor
         TriggerFallenFear(target);
 
         AdvanceQuestForMonsterDefeat(player, target);
+        if (target.IsDiablo) {
+            world.VictoryTriggered = true;
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Victory,
+                player.EntityId,
+                target.EntityId,
+                checked((int)player.DiabloKillLevel)));
+        }
 
         var experienceReward = target.ExperienceReward == 0
             ? rules.DefeatExperience

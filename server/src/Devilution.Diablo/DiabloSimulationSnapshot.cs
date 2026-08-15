@@ -382,6 +382,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Defeated non-minion monster tiles used by corpse-consuming AI. */
     public IReadOnlyList<DiabloCorpseState> Corpses { get; init; } = [];
+
+    /** Native-compatible terminal Diablo defeat state. */
+    public bool VictoryTriggered { get; init; }
 }
 
 public sealed partial class DiabloSimulation
@@ -654,6 +657,7 @@ public sealed partial class DiabloSimulation
                     corpse.PositionX,
                     corpse.PositionY))
                 .ToArray(),
+            VictoryTriggered = WorldState.VictoryTriggered,
         };
     }
 
@@ -1470,6 +1474,7 @@ public sealed partial class DiabloSimulation
             WorldState.Projectiles.Add(projectile.EntityId, projectile);
         random.Restore(snapshot.RandomState);
         RestoreQuests(restoredQuests);
+        WorldState.VictoryTriggered = snapshot.VictoryTriggered;
         if (restoredStore is not null)
             storeCatalog.ReplaceStore(restoredStore.StoreId, restoredStore.Items);
     }

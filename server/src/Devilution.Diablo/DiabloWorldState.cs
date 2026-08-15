@@ -70,6 +70,9 @@ public sealed class DiabloWorldState
 
     public Dictionary<uint, AuthoritativeCombatTarget> CombatTargets { get; } = [];
 
+    /** Native-compatible terminal Diablo defeat state owned by the server. */
+    public bool VictoryTriggered { get; internal set; }
+
     public Dictionary<uint, AuthoritativePortal> Portals { get; } = [];
 
     /** Expires dynamic portals using elapsed authoritative simulation ticks. */

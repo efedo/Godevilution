@@ -102,15 +102,23 @@ public sealed class ClientModelTests
                             MessageId = 77,
                         },
                     },
+                    new GameEvent {
+                        Victory = new VictoryEvent {
+                            PlayerEntityId = 7,
+                            BossEntityId = 20,
+                            DiabloKillLevel = 1,
+                        },
+                    },
                 },
             }));
 
         Assert.Equal(12UL, model.CurrentTick);
         Assert.Equal(7U, model.PlayerEntityId);
-        Assert.Equal(2, model.RecentEvents.Count);
+        Assert.Equal(3, model.RecentEvents.Count);
         Assert.Equal(3, model.RecentEvents[0].Damage.Amount);
         Assert.Equal(3003U, model.RecentEvents[1].Dialogue.QuestId);
         Assert.Equal(77, model.RecentEvents[1].Dialogue.MessageId);
+        Assert.Equal(1U, model.RecentEvents[2].Victory.DiabloKillLevel);
         Assert.Equal(13UL, model.NextCommandTick);
     }
 

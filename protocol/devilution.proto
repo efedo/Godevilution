@@ -292,6 +292,8 @@ message Snapshot {
 	repeated CorpseSnapshot corpses = 12;
 	// Static authoritative geometry for presentation clients; omitted by saves.
 	repeated LevelGeometrySnapshot level_geometry = 13;
+	// Native-compatible terminal Diablo defeat state.
+	bool victory_triggered = 14;
 }
 
 message LevelGeometrySnapshot {
@@ -833,6 +835,7 @@ message GameEvent {
 		ExperienceEvent experience = 11;
 		HealingEvent healing = 12;
 		DialogueEvent dialogue = 13;
+		VictoryEvent victory = 14;
 	}
 }
 
@@ -862,6 +865,14 @@ message DialogueEvent {
 	uint32 target_entity_id = 2;
 	uint32 quest_id = 3;
 	int32 message_id = 4;
+}
+
+// Server-owned native Diablo defeat boundary. The rank is zero for
+// multiplayer sessions, where the native single-player hero rank is absent.
+message VictoryEvent {
+	uint32 player_entity_id = 1;
+	uint32 boss_entity_id = 2;
+	uint32 diablo_kill_level = 3;
 }
 
 message ProtocolError {

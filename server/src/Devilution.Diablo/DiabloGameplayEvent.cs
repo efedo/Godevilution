@@ -7,6 +7,7 @@ public enum DiabloGameplayEventKind
     Experience,
     Healing,
     Dialogue,
+    Victory,
 }
 
 public readonly record struct DiabloGameplayEvent(

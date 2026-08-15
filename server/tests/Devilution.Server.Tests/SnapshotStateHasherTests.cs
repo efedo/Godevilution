@@ -128,6 +128,18 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void VictoryStateChangesTheStateHash()
+    {
+        var baseline = new Snapshot();
+        var victory = baseline.Clone();
+        victory.VictoryTriggered = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(victory));
+    }
+
+    [Fact]
     public void HeldItemChangesHashWithoutChangingAbsentLegacyState()
     {
         var baseline = new Snapshot {

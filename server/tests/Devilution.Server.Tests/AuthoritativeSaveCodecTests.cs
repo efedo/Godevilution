@@ -51,6 +51,7 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(source.Objects.ToArray(), restored.Objects.ToArray());
         Assert.Equal(source.Projectiles.ToArray(), restored.Projectiles.ToArray());
         Assert.Equal(source.RandomState, restored.RandomState);
+        Assert.Equal(source.VictoryTriggered, restored.VictoryTriggered);
         Assert.Equal(source.ActiveStore!.StoreId, restored.ActiveStore!.StoreId);
         Assert.Equal(
             source.ActiveStore.Items.ToArray(),
@@ -801,6 +802,7 @@ public sealed class AuthoritativeSaveCodecTests
             }],
             new DiabloStoreState(1, [new StoreItem(0, 42, 10)])) {
             RandomState = 0x49BFD245,
+            VictoryTriggered = true,
         };
     }
 }

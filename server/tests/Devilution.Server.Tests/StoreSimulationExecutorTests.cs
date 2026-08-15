@@ -1468,6 +1468,40 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void DiabloDefeatPublishesVictoryEventAndSnapshotState()
+    {
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingPositionX: 0,
+            startingPositionY: 0,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                9,
+                1,
+                0,
+                1,
+                monsterId: 112,
+                diablo: true)]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            AttackRequested = new AttackRequested { TargetEntityId = 9 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var events = executor.DrainEvents("player-a", 7, 1);
+        var victory = Assert.Single(
+            events!.Events,
+            gameEvent => gameEvent.Victory is not null).Victory;
+        Assert.Equal(7U, victory.PlayerEntityId);
+        Assert.Equal(9U, victory.BossEntityId);
+        Assert.Equal(1U, victory.DiabloKillLevel);
+        Assert.True(executor.CreateSnapshot("player-a", 7, 1).VictoryTriggered);
+    }
+
+    [Fact]
     public void MovementRejectsBlockedCellsWithoutChangingPosition()
     {
         var executor = new StoreSimulationExecutor(
