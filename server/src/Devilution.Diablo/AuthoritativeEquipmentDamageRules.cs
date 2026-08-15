@@ -16,7 +16,8 @@ public static class AuthoritativeEquipmentDamageRules
         int bardSwordStrengthDexterityDamageDivisor = 150,
         int bardBowStrengthDexterityDamageDivisor = 250,
         int bardDefaultStrengthDamageDivisor = 100,
-        int standardStrengthDamageDivisor = 100)
+        int standardStrengthDamageDivisor = 100,
+        int barbarianBowStrengthDamageDivisor = 300)
     {
         if (characterLevel == 0)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
@@ -39,6 +40,8 @@ public static class AuthoritativeEquipmentDamageRules
             throw new InvalidDataException("Bard default damage tuning is invalid.");
         if (standardStrengthDamageDivisor is < 1 or > 10_000)
             throw new InvalidDataException("Standard damage tuning is invalid.");
+        if (barbarianBowStrengthDamageDivisor is < 1 or > 10_000)
+            throw new InvalidDataException("Barbarian bow damage tuning is invalid.");
 
         var usableEquipment = equipment
             .Where(item => item is not null && item.State.StatFlag)
@@ -102,7 +105,8 @@ public static class AuthoritativeEquipmentDamageRules
                 hasBow,
                 hasShield,
                 hasStaff,
-                barbarianWeaponStrengthDamageDivisor),
+                barbarianWeaponStrengthDamageDivisor,
+                barbarianBowStrengthDamageDivisor),
             _ => strengthModifier / standardStrengthDamageDivisor,
         };
 
@@ -121,12 +125,13 @@ public static class AuthoritativeEquipmentDamageRules
         bool hasBow,
         bool hasShield,
         bool hasStaff,
-        int barbarianWeaponStrengthDamageDivisor)
+        int barbarianWeaponStrengthDamageDivisor,
+        int barbarianBowStrengthDamageDivisor)
     {
         var damageModifier = hasAxe || hasMace
             ? strengthModifier / barbarianWeaponStrengthDamageDivisor
             : hasBow
-                ? strengthModifier / 300
+                ? strengthModifier / barbarianBowStrengthDamageDivisor
                 : strengthModifier / 100;
         if (!hasShield && !hasStaff && !hasBow)
             damageModifier = checked(damageModifier + level * vitality / 100);
