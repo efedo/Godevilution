@@ -1101,7 +1101,8 @@ public sealed class DiabloCombatCommandProcessor
                 rules.MonkWeaponDamageDivisor,
                 rules.BardSwordStrengthDexterityDamageDivisor,
                 rules.BardBowStrengthDexterityDamageDivisor,
-                rules.BardDefaultStrengthDamageDivisor)
+                rules.BardDefaultStrengthDamageDivisor,
+                rules.StandardStrengthDamageDivisor)
             : new AuthoritativePhysicalDamageProfile(
                 rules.BaseAttackDamage,
                 rules.BaseAttackDamage,
