@@ -4587,7 +4587,7 @@ public sealed class DiabloCombatCommandProcessor
                             damageResult.IncomingDamageQ6)));
                 }
                 // Native thorns retaliates after a successful monster hit,
-                // before the player death check, and uses one 1..3 Q6 roll.
+                // before the player death check, using one content-owned Q6 roll.
                 if (damage > 0
                     && target.HitPointsQ6 > 0
                     && HasUsableEquipmentFlag(
@@ -4597,7 +4597,9 @@ public sealed class DiabloCombatCommandProcessor
                     ApplyResolvedDamageQ6(
                         victim,
                         target,
-                        DiabloFixedPointQ6.FromWhole(random.RandomIntBetween(1, 3)),
+                        DiabloFixedPointQ6.FromWhole(random.RandomIntBetween(
+                            rules.ThornsDamageMinimum,
+                            rules.ThornsDamageMaximum)),
                         thornsEvents);
                     foreach (var thornsEvent in thornsEvents)
                         events.Add(new DiabloDirectedGameplayEvent(victim, thornsEvent));

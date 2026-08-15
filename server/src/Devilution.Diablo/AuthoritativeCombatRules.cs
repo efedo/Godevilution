@@ -70,7 +70,9 @@ public sealed class AuthoritativeCombatRules
         int standardStrengthDamageDivisor = 100,
         int barbarianBowStrengthDamageDivisor = 300,
         int barbarianDefaultStrengthDamageDivisor = 100,
-        int barbarianVitalityDamageDivisor = 100)
+        int barbarianVitalityDamageDivisor = 100,
+        int thornsDamageMinimum = 1,
+        int thornsDamageMaximum = 3)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -137,6 +139,11 @@ public sealed class AuthoritativeCombatRules
         }
         if (barbarianVitalityDamageDivisor is < 1 or > 10_000) {
             throw new InvalidDataException("Barbarian vitality damage tuning is invalid.");
+        }
+        if (thornsDamageMinimum <= 0
+            || thornsDamageMaximum < thornsDamageMinimum
+            || thornsDamageMaximum > 10_000) {
+            throw new InvalidDataException("Thorns damage tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -225,6 +232,8 @@ public sealed class AuthoritativeCombatRules
         BarbarianBowStrengthDamageDivisor = barbarianBowStrengthDamageDivisor;
         BarbarianDefaultStrengthDamageDivisor = barbarianDefaultStrengthDamageDivisor;
         BarbarianVitalityDamageDivisor = barbarianVitalityDamageDivisor;
+        ThornsDamageMinimum = thornsDamageMinimum;
+        ThornsDamageMaximum = thornsDamageMaximum;
     }
 
     public int BaseAttackDamage { get; }
@@ -365,6 +374,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Native Barbarian vitality damage divisor for weaponless physical attacks. */
     public int BarbarianVitalityDamageDivisor { get; }
+
+    /** Native minimum damage rolled by a successful Thorns retaliation. */
+    public int ThornsDamageMinimum { get; }
+
+    /** Native maximum damage rolled by a successful Thorns retaliation. */
+    public int ThornsDamageMaximum { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -699,7 +714,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("standard_strength_damage_divisor", 100),
             row.OptionalInt32("barbarian_bow_strength_damage_divisor", 300),
             row.OptionalInt32("barbarian_default_strength_damage_divisor", 100),
-            row.OptionalInt32("barbarian_vitality_damage_divisor", 100));
+            row.OptionalInt32("barbarian_vitality_damage_divisor", 100),
+            row.OptionalInt32("thorns_damage_minimum", 1),
+            row.OptionalInt32("thorns_damage_maximum", 3));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
