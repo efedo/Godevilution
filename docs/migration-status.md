@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Golem summon health, damage, and armor now consume validated formula terms
+  from the Golem spell row in `spells.tsv`; older spell schemas retain the
+  native health 2/3 terms, damage 2/4/8 terms, and armor class 25.
+
 - Melee Quick/Fast/Faster/Fastest attack timing now consumes validated
   first-frame and subsequent-frame tier metadata from `combat.tsv`; older
   combat schemas retain the native 1/0, 2/1, 3/2, and 4/2 compatibility
@@ -410,6 +414,11 @@ Status date: 2026-08-15
   metadata to `combat.tsv`. Active melee timing now uses validated skips for
   both first-frame and subsequent-frame paths; omitted values retain the
   native 1/0, 2/1, 3/2, and 4/2 behavior.
+
+- Schema 1.192 adds optional Golem summon formula metadata to `spells.tsv`:
+  health level/mana terms, damage level/offset terms, and armor class. Active
+  Golem summons now use validated row values; omitted values retain the native
+  health 2/3, damage 2/4/8, and armor 25 behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

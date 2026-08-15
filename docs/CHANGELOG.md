@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.192 optional `spells.tsv` Golem summon formula metadata.
+  Golem health, damage, and armor now use validated spell-row terms; omitted
+  values retain the native 2/3, 2/4/8, and 25 compatibility defaults.
+
 - Add schema 1.191 optional `combat.tsv` melee attack-speed tier metadata.
   Quick/Fast/Faster/Fastest melee timing now uses validated skips for both
   first-frame and subsequent-frame paths; omitted values retain the native

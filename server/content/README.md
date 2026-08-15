@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.191.0` schema in
+It declares its identity and `devilution.diablo@1.192.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -54,6 +54,11 @@ The `quick_attack_frame_skip_with_first_frame` through
 `fastest_attack_frame_skip_without_first_frame` columns externalize the native
 Quick/Fast/Faster/Fastest melee attack-speed skips for both animation timing
 paths; omitted values retain the native 1/0, 2/1, 3/2, and 4/2 defaults.
+The Golem spell row's `golem_hit_points_level_multiplier`,
+`golem_hit_points_mana_divisor`, `golem_damage_level_multiplier`,
+`golem_minimum_damage_level_offset`, `golem_maximum_damage_level_offset`, and
+`golem_armor_class` columns externalize its summon health, damage, and armor
+formula terms; omitted values retain the native 2/3, 2/4/8, and 25 defaults.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -1395,7 +1400,7 @@ the complete target header even when they upsert only one row.
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, and optional Jester dispatch tables. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables, and Golem summon formula terms. |
 | `items.tsv` | `item_id` | Normalized item identity, explicit spell-source kind and spell identity, validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
@@ -1425,7 +1430,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.191.0"
+      "version": "1.192.0"
   },
   "dependencyConstraints": [
     {
@@ -1457,7 +1462,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.191.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.192.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1891,6 +1896,11 @@ Schema 1.191 adds the optional Quick/Fast/Faster/Fastest melee attack-speed
 skip columns to `combat.tsv`. Active melee timing now uses validated skips for
 both first-frame and subsequent-frame paths; omitted values retain the native
 1/0, 2/1, 3/2, and 4/2 behavior.
+
+Schema 1.192 adds optional Golem summon formula columns to `spells.tsv`.
+The Golem row externalizes health level/mana terms, damage level/offset terms,
+and armor class; omitted values retain the native health 2/3, damage 2/4/8,
+and armor 25 behavior.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
