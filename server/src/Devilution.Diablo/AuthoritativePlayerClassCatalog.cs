@@ -92,6 +92,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native Warrior Repair durability denominator offset; zero keeps legacy 9. */
     public int RepairAbilityDurabilityLevelOffset { get; init; }
 
+    /** Native class critical-strike damage multiplier. */
+    public int CriticalDamageMultiplier { get; init; } = 2;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -245,6 +248,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "repair_ability_durability_level_offset",
     ];
 
+    private static readonly IReadOnlyList<string> CriticalTuningColumns = [
+        ..RepairTuningColumns,
+        "critical_damage_multiplier",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -324,7 +332,11 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var hasRepairTuning = table.Columns.SequenceEqual(
+        var hasCriticalTuning = table.Columns.SequenceEqual(
+            CriticalTuningColumns,
+            StringComparer.Ordinal);
+        var hasRepairTuning = hasCriticalTuning
+            || table.Columns.SequenceEqual(
             RepairTuningColumns,
             StringComparer.Ordinal);
         var hasPhysicalDamageTuning = table.Columns.SequenceEqual(
@@ -411,6 +423,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 RepairAbilityDurabilityLevelOffset = hasRepairTuning
                     ? row.RequiredInt32("repair_ability_durability_level_offset")
                     : 0,
+                CriticalDamageMultiplier = hasCriticalTuning
+                    ? row.RequiredInt32("critical_damage_multiplier")
+                    : 2,
             }));
     }
 
@@ -460,6 +475,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.MonkUnarmedMinimumDamageLevelDivisor <= 0
             || definition.MonkUnarmedMaximumDamageLevelDivisor <= 0
             || definition.RepairAbilityDurabilityLevelOffset < 0
+            || definition.CriticalDamageMultiplier is < 1 or > 100
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

@@ -1161,7 +1161,8 @@ public sealed class DiabloCombatCommandProcessor
         if (attackHit
             && playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
             && random.RandomIntLessThan(100) < player.CharacterLevel) {
-            criticalDamage = checked(criticalDamage * 2);
+            criticalDamage = checked(
+                criticalDamage * playerClass.CriticalDamageMultiplier);
         }
         criticalDamage = AuthoritativeMonsterDamageRules.ApplyWeaponClassModifier(
             criticalDamage,
