@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Use existing validated `projectile_speed`, `projectile_lifetime`, and
+  optional `damage_type` metadata for mapped BloodStar projectiles before
+  falling back to spell transport values, preserving older rows.
+
 - Use existing validated `projectile_speed` metadata for MonsterArrow travel;
   existing `projectile_lifetime` metadata now overrides arrow lifetime when
   present; legacy rows retain the native speed-one and distance-based lifetime

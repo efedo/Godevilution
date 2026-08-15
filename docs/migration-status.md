@@ -39,6 +39,10 @@ Status date: 2026-08-15
   optional `damage_type` selects the matching player-resistance channel, while
   omitted values retain physical arrows.
 
+- Validated BloodStar mappings now consume their existing `projectile_speed`,
+  `projectile_lifetime`, and optional `damage_type` metadata before falling back
+  to the mapped spell's transport values, keeping older rows compatible.
+
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain
   the native 20–30% compatibility roll.
