@@ -4508,11 +4508,11 @@ public sealed class DiabloCombatCommandProcessor
                                 + (batAttackTuning.Value.IntelligenceScale
                                     * target.Intelligence)))
                     continue;
-                var usesSpecialAttack = UsesNativeFatSpecialAttack(
+                var usesSpecialAttack = UsesFatSpecialAttack(
                     target,
                     attackSeed,
                     fatAttackTuning)
-                    || UsesNativeGoatSpecialAttack(
+                    || UsesGoatSpecialAttack(
                         target,
                         attackSeed,
                         goatMeleeAttackTuning);
@@ -6688,8 +6688,8 @@ public sealed class DiabloCombatCommandProcessor
         player.PositionY = destinationY;
     }
 
-    /** Native Overlord/Fat AI selects its special melee band five percent of the time. */
-    private static bool UsesNativeFatSpecialAttack(
+    /** Validated Fat tuning selects its special melee band. */
+    private static bool UsesFatSpecialAttack(
         AuthoritativeCombatTarget target,
         uint attackSeed,
         (
@@ -6699,7 +6699,6 @@ public sealed class DiabloCombatCommandProcessor
             int SpecialChanceIntelligenceScale)? tuning)
     {
         return tuning.HasValue
-            && target.NativeAi == "Fat"
             && target.ToHitSpecial > 0
             && target.MaxDamageSpecial > 0
             && attackSeed % 100U >= (uint)Math.Min(
@@ -6729,8 +6728,8 @@ public sealed class DiabloCombatCommandProcessor
                 + (tuning.AttackChanceIntelligenceScale * target.Intelligence));
     }
 
-    /** Native AiAvoidance selects a wounded GoatMelee special on its second 50% roll. */
-    private static bool UsesNativeGoatSpecialAttack(
+    /** Validated GoatMelee tuning selects a wounded special on its configured roll. */
+    private static bool UsesGoatSpecialAttack(
         AuthoritativeCombatTarget target,
         uint attackSeed,
         (
@@ -6740,7 +6739,6 @@ public sealed class DiabloCombatCommandProcessor
             int SpecialChanceGroupPeriod)? tuning)
     {
         return tuning.HasValue
-            && target.NativeAi == "GoatMelee"
             && (long)target.HitPointsQ6 * 100
                 < (long)target.MaxHitPointsQ6 * tuning.Value.SpecialHealthThresholdPercent
             && target.ToHitSpecial > 0

@@ -3067,7 +3067,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void FatAiUsesValidatedSpecialBandTuning()
+    public void FatAiUsesValidatedSpecialBandTuningIndependentOfNativeLabel()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -3081,7 +3081,7 @@ public sealed class DiabloCombatCommandProcessorTests
             maxDamageSpecial: 20,
             toHit: 255,
             toHitSpecial: 255,
-            nativeAi: "Fat");
+            nativeAi: "Fallen");
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(
                 1,
@@ -3103,7 +3103,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 NativeAi = "Fallen",
                 FatAttackChanceBase = 30,
                 FatAttackChanceIntelligenceScale = 1,
-                FatSpecialChanceBase = 20,
+                FatSpecialChanceBase = 10,
                 FatSpecialChanceIntelligenceScale = 1,
             },
         ]);
@@ -3118,12 +3118,12 @@ public sealed class DiabloCombatCommandProcessorTests
             life: 100,
             lifeMaximum: 100);
 
-        // 1 ^ 9 ^ 7 = 15: admitted by 30%, but below the configured 20%
-        // special lower bound, so the normal three-damage attack is selected.
+        // 1 ^ 9 ^ 7 = 15: admitted by 30% and above the configured 10%
+        // special lower bound, so the validated special range is selected.
         var deliveries = processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(97, player.Life);
-        Assert.Equal(3, Assert.Single(deliveries).Event.Amount);
+        Assert.Equal(90, player.Life);
+        Assert.Equal(10, Assert.Single(deliveries).Event.Amount);
     }
 
     [Fact]
@@ -5836,7 +5836,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void GoatMeleeAiUsesValidatedWoundedSpecialThreshold()
+    public void GoatMeleeAiUsesValidatedWoundedSpecialThresholdIndependentOfNativeLabel()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -5853,7 +5853,7 @@ public sealed class DiabloCombatCommandProcessorTests
             maxDamageSpecial: 20,
             toHit: 100,
             toHitSpecial: 100,
-            nativeAi: "GoatMelee");
+            nativeAi: "Fallen");
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(
                 1,
@@ -5875,7 +5875,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 NativeAi = "Fallen",
                 GoatMeleeAttackChanceBase = 100,
                 GoatMeleeAttackChanceIntelligenceScale = 1,
-                GoatMeleeSpecialHealthThresholdPercent = 60,
+                GoatMeleeSpecialHealthThresholdPercent = 80,
                 GoatMeleeSpecialChanceGroupPeriod = 1,
             },
         ]);
@@ -5892,8 +5892,8 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
-        Assert.Equal(3, damage.Amount);
-        Assert.Equal(97, player.Life);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(90, player.Life);
     }
 
     [Fact]
