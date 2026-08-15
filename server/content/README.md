@@ -325,7 +325,11 @@ rows without migrated tuning retain the native-name compatibility path.
 The optional `gargoyle_healing_health_threshold_percent` column externalizes
 the Gargoyle wounded-health admission threshold for self-healing. Legacy
 monster rows retain the native 50-percent compatibility threshold. The
-validated threshold is selected independently of the row's `native_ai` label.
+validated threshold is selected independently of the row's `native_ai` label;
+when supplied without the safe-distance pair, the runtime composes the native
+2/1 safety boundary and 16/5/4 healing-formula defaults. The optional
+`gargoyle_heal_divisor_multiplier`, `gargoyle_heal_divisor_random_range`, and
+`gargoyle_heal_divisor_random_offset` columns follow the same composition rule.
 The active catalog's validated `native_ai` identity also selects the server-owned
 Butcher pursuit boundary when no complete alternate AI tuple takes precedence;
 direct legacy targets without a catalog retain the runtime-label fallback.

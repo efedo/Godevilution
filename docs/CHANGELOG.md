@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Honor standalone validated Gargoyle healing tuning by composing omitted
+  safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
+  defaults.
+
 - Honor standalone validated Scavenger wounded-health tuning by composing
   omitted healing terms from the native 10/4/8/1/75 defaults.
 

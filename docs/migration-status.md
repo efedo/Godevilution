@@ -151,7 +151,8 @@ Status date: 2026-08-15
   validated tuning independent of the row's native-AI label; rows without
   migrated tuning retain the native-name compatibility path, while the
   persisted special lock remains snapshot/save compatible for any validated
-  label carrying the tuple.
+  label carrying migrated Gargoyle tuning. Standalone healing fields compose
+  the native 2/1 safety boundary and 16/5/4 healing-formula defaults.
 
 - Butcher pursuit now consults the active validated monster-type identity when
   a catalog is present, while complete alternate AI tuning retains precedence;
