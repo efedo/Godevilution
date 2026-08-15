@@ -537,6 +537,10 @@ message MonsterSnapshot {
 	optional int32 avoidance_movement_ticks = 62;
 	// Native AiAvoidance goalVar2 turn state (0 or 1).
 	optional int32 avoidance_movement_turn = 63;
+	// Native AiAvoidance var2-compatible movement counter used by admissions.
+	optional int32 avoidance_movement_idle_ticks = 64;
+	// Native AiAvoidance var1-compatible movement value retained across movement.
+	optional int32 avoidance_movement_mode = 65;
 }
 
 message WorldItemSnapshot {

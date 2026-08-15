@@ -4878,20 +4878,29 @@ public sealed class DiabloCombatCommandProcessor
                 actionSeed))
             return true;
 
-        var movementChance = Math.Min(
-            100,
-            goatTuning.Value.ChanceBase
-                + (goatTuning.Value.IntelligenceScale * monster.Intelligence));
+        var movementChance = GetAiAvoidanceMovementChance(
+            monster,
+            goatTuning.Value.ChanceBase,
+            goatTuning.Value.IntelligenceScale);
         if (actionSeed % 100U >= (uint)movementChance)
+        {
+            monster.AdvanceAvoidanceMovementIdle();
             return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
             victim,
             players,
             actionSeed);
-        if (randomWalk.HasValue)
+        if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            monster.RecordAvoidanceMovement(
+                randomWalk.Value.X - monster.PositionX,
+                randomWalk.Value.Y - monster.PositionY);
+        } else {
+            monster.AdvanceAvoidanceMovementIdle();
+        }
         return true;
     }
 
@@ -6196,17 +6205,26 @@ public sealed class DiabloCombatCommandProcessor
                 actionSeed))
             return true;
 
-        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+        var movementChance = GetAiAvoidanceMovementChance(monster, 28, 2);
         if (actionSeed % 100U >= (uint)movementChance)
+        {
+            monster.AdvanceAvoidanceMovementIdle();
             return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
             player,
             players,
             actionSeed);
-        if (randomWalk.HasValue)
+        if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            monster.RecordAvoidanceMovement(
+                randomWalk.Value.X - monster.PositionX,
+                randomWalk.Value.Y - monster.PositionY);
+        } else {
+            monster.AdvanceAvoidanceMovementIdle();
+        }
         return true;
     }
 
@@ -6435,9 +6453,31 @@ public sealed class DiabloCombatCommandProcessor
             monster.AvoidanceMovementTurn,
             out var nextTurn);
         monster.UpdateAvoidanceMovementTurn(nextTurn);
-        if (roundWalk.HasValue)
+        if (roundWalk.HasValue) {
             monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+            monster.RecordAvoidanceMovement(
+                roundWalk.Value.X - monster.PositionX,
+                roundWalk.Value.Y - monster.PositionY);
+        }
         return true;
+    }
+
+    /** Native AiAvoidance ordinary movement admission across var2 bands. */
+    private static int GetAiAvoidanceMovementChance(
+        AuthoritativeCombatTarget monster,
+        int chanceBase,
+        int intelligenceScale)
+    {
+        var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
+        var movementChance = monster.AvoidanceMovementIdleTicks == -1
+            ? longIdleChance
+            : monster.AvoidanceMovementIdleTicks > 20
+                ? longIdleChance
+                : monster.AvoidanceMovementIdleTicks == 0
+                    && monster.AvoidanceMovementMode is >= 1 and <= 3
+                    ? longIdleChance + 50
+                    : 0;
+        return Math.Min(100, movementChance);
     }
 
     private bool IsNativeAvoidanceDirectionAvailable(

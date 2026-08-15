@@ -732,6 +732,47 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsAiAvoidanceMovementCounterState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "GoatMelee",
+                    avoidanceMovementIdleTicks: 10,
+                    avoidanceMovementMode: 1)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        var savedMonster = Assert.Single(snapshot.Monsters);
+        Assert.Equal((10, 1), (
+            savedMonster.AvoidanceMovementIdleTicks,
+            savedMonster.AvoidanceMovementMode));
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "GoatMelee")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
+        Assert.Equal((10, 1), (
+            restored.AvoidanceMovementIdleTicks,
+            restored.AvoidanceMovementMode));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsCounselorRetreatState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

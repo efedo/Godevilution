@@ -69,7 +69,9 @@ public sealed class AuthoritativeCombatTarget
         int rhinoMovementTicks = -1,
         int rhinoMovementTurn = 0,
         int avoidanceMovementTicks = -1,
-        int avoidanceMovementTurn = 0)
+        int avoidanceMovementTurn = 0,
+        int avoidanceMovementIdleTicks = -1,
+        int avoidanceMovementMode = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -117,6 +119,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTicks));
         if (avoidanceMovementTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTurn));
+        if (avoidanceMovementIdleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(avoidanceMovementIdleTicks));
+        if (avoidanceMovementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(avoidanceMovementMode));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -190,6 +196,8 @@ public sealed class AuthoritativeCombatTarget
         RhinoMovementTurn = rhinoMovementTurn;
         AvoidanceMovementTicks = avoidanceMovementTicks;
         AvoidanceMovementTurn = avoidanceMovementTurn;
+        AvoidanceMovementIdleTicks = avoidanceMovementIdleTicks;
+        AvoidanceMovementMode = avoidanceMovementMode;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -338,6 +346,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native AiAvoidance goalVar2 turn state (0 or 1). */
     public int AvoidanceMovementTurn { get; private set; }
+
+    /** Native AiAvoidance var2-compatible movement counter used by admissions. */
+    public int AvoidanceMovementIdleTicks { get; private set; }
+
+    /** Native AiAvoidance var1-compatible movement value retained across movement. */
+    public int AvoidanceMovementMode { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -712,6 +726,33 @@ public sealed class AuthoritativeCombatTarget
         if (turn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(turn));
         AvoidanceMovementTurn = turn;
+    }
+
+    internal void RecordAvoidanceMovement(int displacementX, int displacementY)
+    {
+        if (displacementX is < -1 or > 1
+            || displacementY is < -1 or > 1
+            || (displacementX == 0 && displacementY == 0)) {
+            throw new ArgumentOutOfRangeException(nameof(displacementX));
+        }
+        AvoidanceMovementMode = displacementX;
+        AvoidanceMovementIdleTicks = displacementY;
+    }
+
+    internal void AdvanceAvoidanceMovementIdle()
+    {
+        if (AvoidanceMovementIdleTicks < 1024)
+            AvoidanceMovementIdleTicks++;
+    }
+
+    internal void RestoreAvoidanceMovementState(int idleTicks, int movementMode)
+    {
+        if (idleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(idleTicks));
+        if (movementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(movementMode));
+        AvoidanceMovementIdleTicks = idleTicks;
+        AvoidanceMovementMode = movementMode;
     }
 
     internal void StartCounselorRetreat(int ticks)

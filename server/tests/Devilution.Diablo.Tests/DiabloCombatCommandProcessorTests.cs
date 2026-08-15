@@ -8675,6 +8675,96 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesItsNativeFreshAvoidanceMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "GoatMelee",
+            intelligence: 0,
+            avoidanceMovementIdleTicks: 0,
+            avoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 50 ^ 9 ^ 7 = 60: the fresh var2 == 0 movement band admits the
+        // native 78-point AiAvoidance chance.
+        processor.AdvanceTick(50, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
+    public void GoatMeleeAiDefersInsideItsNativeAvoidanceMovementBands()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "GoatMelee",
+            intelligence: 0,
+            avoidanceMovementIdleTicks: 10,
+            avoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: var2 values 1..20 do not admit ordinary movement.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.AvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
+    public void GargoyleAiUsesItsNativeAvoidanceMovementCounter()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            aggroRange: 5,
+            nativeAi: "Gargoyle",
+            intelligence: 0,
+            avoidanceMovementIdleTicks: 21,
+            avoidanceMovementMode: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: the long-idle 28-point Gargoyle band admits walk.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
     public void GoatMeleeAiUsesDeterministicRoundWalkInItsFarDistanceBand()
     {
         var monster = new AuthoritativeCombatTarget(
