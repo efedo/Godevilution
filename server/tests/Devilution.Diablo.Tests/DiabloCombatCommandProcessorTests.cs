@@ -6520,6 +6520,12 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.False(monster.IsMoving);
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(15, monster.CounselorDelayTicks);
+
+        processor.AdvanceTick(5_101, [player]);
+
+        Assert.Equal(14, monster.CounselorDelayTicks);
+        Assert.False(monster.IsMoving);
         Assert.Empty(world.Projectiles);
     }
 

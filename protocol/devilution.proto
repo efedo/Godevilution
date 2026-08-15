@@ -569,6 +569,8 @@ message MonsterSnapshot {
 	optional int32 ranged_avoidance_delay_ticks = 78;
 	// Remaining native SnakeAi delay ticks before the next decision.
 	optional int32 snake_delay_ticks = 79;
+	// Remaining native CounselorAi delay ticks before the next decision.
+	optional int32 counselor_delay_ticks = 80;
 }
 
 message WorldItemSnapshot {

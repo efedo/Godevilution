@@ -5219,6 +5219,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (!UsesNativeAi(monster, "Counselor"))
             return false;
+        if (monster.AdvanceCounselorDelay())
+            return true;
 
         if (monster.CounselorRetreatTicks != 0) {
             var retreat = FindNativeCounselorRetreatStep(
@@ -5262,6 +5264,12 @@ public sealed class DiabloCombatCommandProcessor
                         attackSeed);
                     if (roundWalk.HasValue)
                         monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                } else {
+                    monster.StartCounselorDelay(
+                        Math.Max(
+                            0,
+                            2 * (5 - monster.Intelligence)
+                                + (int)((attackSeed / 200U) % 10U)));
                 }
                 return true;
             }

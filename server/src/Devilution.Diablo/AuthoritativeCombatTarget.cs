@@ -85,7 +85,8 @@ public sealed class AuthoritativeCombatTarget
         int skeletonKingDelayTicks = 0,
         int horkDemonDelayTicks = 0,
         int rangedAvoidanceDelayTicks = 0,
-        int snakeDelayTicks = 0)
+        int snakeDelayTicks = 0,
+        int counselorDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -165,6 +166,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceDelayTicks));
         if (snakeDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(snakeDelayTicks));
+        if (counselorDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(counselorDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -254,6 +257,7 @@ public sealed class AuthoritativeCombatTarget
         HorkDemonDelayTicks = horkDemonDelayTicks;
         RangedAvoidanceDelayTicks = rangedAvoidanceDelayTicks;
         SnakeDelayTicks = snakeDelayTicks;
+        CounselorDelayTicks = counselorDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -450,6 +454,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native SnakeAi delay ticks before the next decision. */
     public int SnakeDelayTicks { get; private set; }
+
+    /** Remaining native CounselorAi delay ticks before the next decision. */
+    public int CounselorDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -1091,6 +1098,28 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SnakeDelayTicks = ticks;
+    }
+
+    internal void StartCounselorDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        CounselorDelayTicks = ticks;
+    }
+
+    internal bool AdvanceCounselorDelay()
+    {
+        if (CounselorDelayTicks == 0)
+            return false;
+        CounselorDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreCounselorDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        CounselorDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)
