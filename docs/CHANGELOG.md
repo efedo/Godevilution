@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.168 optional `combat.tsv` `monk_staff_unarmed_damage_divisor`
+  metadata. Active Monk staff/unarmed physical damage scaling now uses the
+  validated divisor, while direct legacy damage callers retain the native 150 divisor.
 - Add schema 1.167 optional `combat.tsv`
   `rogue_strength_dexterity_damage_divisor` metadata. Active Rogue physical
   damage scaling now uses the validated divisor, while direct legacy damage

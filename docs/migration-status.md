@@ -284,6 +284,10 @@ Status date: 2026-08-14
   to `combat.tsv`. Active Rogue physical damage scaling now uses the validated
   divisor; omitted values retain the native 200 divisor for compatibility callers.
 
+- Schema 1.168 adds optional `monk_staff_unarmed_damage_divisor` metadata to
+  `combat.tsv`. Active Monk staff/unarmed physical damage scaling now uses the
+  validated divisor; omitted values retain the native 150 divisor for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
