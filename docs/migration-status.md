@@ -756,6 +756,13 @@ Status date: 2026-08-15
   quest-state columns; validated boss targets now complete the server-owned
   Diablo quest through an explicit native identity boundary.
 
+- Schema 1.212 adds optional `fire_resistance_hell`,
+  `lightning_resistance_hell`, `magic_resistance_hell`, and
+  `acid_resistance_hell` columns to `monster_types.tsv`. Hell materialization
+  now selects those validated native `resistanceHell` projections while
+  Normal/Nightmare retain the base resistance channels; omitted columns keep
+  the existing resistance values for compatibility.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell
@@ -769,8 +776,8 @@ Status date: 2026-08-15
   also applies native Nightmare/Hell 3x/4x health formulas with the
   Diablo/Hellfire single-player/multiplayer bonuses; effective Q6 health is
   persisted in snapshots while validated base monster definitions remain
-  unchanged. Hell-specific resistance data remains a subsequent
-  content/schema slice.
+  unchanged. Hell-specific resistance data is now externalized through the
+  validated monster-type columns and selected only at Hell materialization.
 
 - Native Diablo defeat now also sets a server-owned terminal victory flag,
   persists it through the transport-neutral snapshot and version-1 save

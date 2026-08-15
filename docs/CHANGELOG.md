@@ -65,7 +65,14 @@ All notable changes to this fork are documented below.
   Diablo/Hellfire single-player/multiplayer bonuses; effective Q6 health is
   persisted in snapshots while base content definitions remain unchanged.
   Normal behavior remains unchanged and unique rewards retain the native
-  double-experience rule; Hell-specific resistance data remains incremental.
+  double-experience rule; Hell-specific resistance data is covered by the
+  validated monster-type projection below.
+
+- Externalize native Hell-specific monster resistances through validated
+  `monster_types.tsv` columns. Hell materialization now selects the native
+  `resistanceHell` fire, lightning, magic, and acid channels while
+  Normal/Nightmare retain the ordinary resistance projection; omitted columns
+  preserve compatibility behavior.
 
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
