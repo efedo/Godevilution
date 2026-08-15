@@ -399,6 +399,19 @@ public sealed record AuthoritativeSpellDefinition(
 
     /** Native Golem death-animation duration in simulation ticks. */
     public int GolemDeathAnimationTicks { get; init; }
+
+    /** Native Golem summon health and damage formula terms. */
+    public int GolemHitPointsLevelMultiplier { get; init; } = 2;
+
+    public int GolemHitPointsManaDivisor { get; init; } = 3;
+
+    public int GolemDamageLevelMultiplier { get; init; } = 2;
+
+    public int GolemMinimumDamageLevelOffset { get; init; } = 4;
+
+    public int GolemMaximumDamageLevelOffset { get; init; } = 8;
+
+    public int GolemArmorClass { get; init; } = 25;
 }
 
 public sealed class AuthoritativeSpellCatalog
@@ -962,7 +975,13 @@ public sealed class AuthoritativeSpellCatalog
                     || definition.ProjectileCount != 1
                     || definition.ProjectileCountLevelDivisor != 0
                     || definition.StaffLevel != 9
-                    || definition.GolemDeathAnimationTicks != 12)) {
+                    || definition.GolemDeathAnimationTicks <= 0
+                    || definition.GolemHitPointsLevelMultiplier <= 0
+                    || definition.GolemHitPointsManaDivisor <= 0
+                    || definition.GolemDamageLevelMultiplier <= 0
+                    || definition.GolemMinimumDamageLevelOffset < 0
+                    || definition.GolemMaximumDamageLevelOffset < definition.GolemMinimumDamageLevelOffset
+                    || definition.GolemArmorClass < 0)) {
                 throw new InvalidDataException(
                     "Golem behavior requires the native targeted summon tuning.");
             }
@@ -1876,6 +1895,17 @@ public sealed class AuthoritativeSpellCatalog
             BerserkResistanceFrequency = row.OptionalInt32(
                 "berserk_resistance_frequency"),
             GolemDeathAnimationTicks = row.OptionalInt32("golem_death_animation_ticks"),
+            GolemHitPointsLevelMultiplier = row.OptionalInt32(
+                "golem_hit_points_level_multiplier", 2),
+            GolemHitPointsManaDivisor = row.OptionalInt32(
+                "golem_hit_points_mana_divisor", 3),
+            GolemDamageLevelMultiplier = row.OptionalInt32(
+                "golem_damage_level_multiplier", 2),
+            GolemMinimumDamageLevelOffset = row.OptionalInt32(
+                "golem_minimum_damage_level_offset", 4),
+            GolemMaximumDamageLevelOffset = row.OptionalInt32(
+                "golem_maximum_damage_level_offset", 8),
+            GolemArmorClass = row.OptionalInt32("golem_armor_class", 25),
             ResistantDamageDivisor = row.OptionalInt32("resistant_damage_divisor", 1),
             ProjectileImpactLifetime = row.OptionalInt32("projectile_impact_lifetime", 1),
             ResurrectionLife = row.OptionalInt32("resurrection_life"),

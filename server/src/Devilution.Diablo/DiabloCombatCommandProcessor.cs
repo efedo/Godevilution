@@ -1905,6 +1905,7 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 golemSpawnPosition!.Value,
                 effectiveSpellLevel,
+                spell,
                 spell.GolemDeathAnimationTicks);
         } else if (isBerserk && target is not null) {
             ApplyBerserk(target, spell, effectiveSpellLevel);
@@ -4168,6 +4169,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         (int X, int Y) position,
         int effectiveSpellLevel,
+        AuthoritativeSpellDefinition spell,
         int deathAnimationTicks)
     {
         foreach (var existing in world.CombatTargets.Values
@@ -4179,17 +4181,22 @@ public sealed class DiabloCombatCommandProcessor
 
         var entityId = AllocateProjectileEntityId();
         var hitPointsQ6 = checked(
-            2 * (320 * effectiveSpellLevel
-                + DiabloFixedPointQ6.FromWhole(player.ManaMaximum) / 3));
+            spell.GolemHitPointsLevelMultiplier * (320 * effectiveSpellLevel
+                + DiabloFixedPointQ6.FromWhole(player.ManaMaximum)
+                    / spell.GolemHitPointsManaDivisor));
         var hitPoints = DiabloFixedPointQ6.ToWholeCeiling(hitPointsQ6);
-        var minimumDamage = checked(2 * (effectiveSpellLevel + 4));
-        var maximumDamage = checked(2 * (effectiveSpellLevel + 8));
+        var minimumDamage = checked(
+            spell.GolemDamageLevelMultiplier
+                * (effectiveSpellLevel + spell.GolemMinimumDamageLevelOffset));
+        var maximumDamage = checked(
+            spell.GolemDamageLevelMultiplier
+                * (effectiveSpellLevel + spell.GolemMaximumDamageLevelOffset));
         var golem = new AuthoritativeCombatTarget(
             entityId,
             position.X,
             position.Y,
             hitPoints,
-            armorClass: 25,
+            armorClass: spell.GolemArmorClass,
             maxHitPoints: hitPoints,
             levelId: player.LevelId,
             attackDamage: maximumDamage,
