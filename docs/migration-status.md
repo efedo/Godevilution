@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Class NaturalResistance and HeavyHitThreshold now consume validated
+  per-level resistance and threshold-bonus percentages from `classes.tsv`;
+  older class schemas retain the native 100% and 25% compatibility defaults.
+
 - Class IronSkin now consumes validated armor-divisor metadata from
   `classes.tsv`; older class schemas retain the native level-divided-by-four
   compatibility default.
@@ -359,6 +363,11 @@ Status date: 2026-08-15
 - Schema 1.185 adds optional `iron_skin_level_divisor` metadata to
   `classes.tsv`. Active IronSkin armor now uses the validated class divisor;
   omitted values retain the native level-divided-by-four behavior.
+
+- Schema 1.186 adds optional `natural_resistance_per_level_percent` and
+  `heavy_hit_threshold_bonus_percent` metadata to `classes.tsv`. Active class
+  defense now uses the validated percentages; omitted values retain the native
+  100% and 25% behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

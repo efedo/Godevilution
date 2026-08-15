@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.186 optional `classes.tsv` natural-resistance and Heavy Hit
+  threshold tuning metadata. Active class defense now uses validated per-level
+  resistance and threshold bonus percentages, while omitted values retain the
+  native 100% and 25% behavior.
+
 - Add schema 1.185 optional `classes.tsv` `iron_skin_level_divisor` metadata.
   Active IronSkin armor now uses the validated class divisor, while omitted
   values retain the native level-divided-by-four behavior.
