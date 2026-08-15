@@ -5017,6 +5017,8 @@ public sealed class DiabloCombatCommandProcessor
         var horkDemonTuning = GetHorkDemonTuning(monster);
         if (!horkDemonTuning.HasValue)
             return false;
+        if (monster.AdvanceHorkDemonDelay())
+            return true;
         if (!TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.HorkSpawn)
             return true;
@@ -5103,8 +5105,11 @@ public sealed class DiabloCombatCommandProcessor
             horkDemonTuning.Value.MovementChanceBase
                 + (horkDemonTuning.Value.MovementChanceIntelligenceScale
                     * monster.Intelligence));
-        if (actionSeed % 100U >= (uint)movementChance)
+        if (actionSeed % 100U >= (uint)movementChance) {
+            monster.StartHorkDemonDelay(
+                10 + (int)((actionSeed / 200U) % 10U));
             return true;
+        }
 
         if (distance >= 5 && (actionSeed / 100U) % 4U != 0U) {
             var roundWalk = FindNativeRoundWalkStep(

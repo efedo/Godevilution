@@ -388,6 +388,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-skeleton-king-delay-v1");
                     hasher.AppendInt32(monster.SkeletonKingDelayTicks);
                 }
+                if (monster.HorkDemonDelayTicks != 0) {
+                    hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
+                    hasher.AppendInt32(monster.HorkDemonDelayTicks);
+                }
                 if (monster.CounselorRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-counselor-retreat-v1");
                     hasher.AppendInt32(monster.CounselorRetreatTicks);

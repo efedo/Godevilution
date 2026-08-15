@@ -2201,6 +2201,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonPreservesNativeDelayAfterAMovementAdmissionFails()
+    {
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117)]));
+        var player = CreatePlayer(
+            positionX: 7,
+            positionY: 0,
+            entityId: 7);
+
+        // 84 ^ 9 ^ 7 = 90: the native 33% movement admission fails and
+        // schedules GenerateRnd(10) + 10 ticks of AiDelay.
+        processor.AdvanceTick(84, [player]);
+
+        Assert.False(hork.IsMoving);
+        Assert.Equal(10, hork.HorkDemonDelayTicks);
+
+        processor.AdvanceTick(85, [player]);
+
+        Assert.Equal(9, hork.HorkDemonDelayTicks);
+        Assert.False(hork.IsMoving);
+    }
+
+    [Fact]
     public void BatUsesNativeAttackBandAndTwoStepRetreat()
     {
         var nativeWorld = new AuthoritativeWorld();
