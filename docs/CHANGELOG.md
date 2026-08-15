@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   normalized `cursor_graphic` item column. Normalized and legacy item loaders
   now share content-owned cursor symbols and native graphic IDs, while direct
   legacy callers retain their compatibility fallback when no catalog is loaded.
+- Add schema 1.149 unique-item presentation projection. Names already declared
+  by normalized `unique_items.tsv` and legacy `unique_itemdat.tsv` now become
+  the generated item's authoritative base and identified names.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent

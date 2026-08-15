@@ -199,6 +199,11 @@ Status date: 2026-08-14
   loaders resolve the same content-owned symbols to native cursor IDs, while
   callers that omit the catalog retain compatibility fallback behavior.
 
+- Schema 1.149 projects normalized and legacy unique-item names into generated
+  item state, so unique presentation no longer inherits a base-item label.
+  Unique names are validated at the catalog boundary and remain server-owned
+  through snapshots and protocol projections.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

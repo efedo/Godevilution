@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.148.0` schema in
+It declares its identity and `devilution.diablo@1.149.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1366,7 +1366,7 @@ the complete target header even when they upsert only one row.
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
-| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions and fixed effects. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions, authoritative presentation names, and fixed effects. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references. |
 | `store_services.tsv` | `key`, `spell_id` | Service pricing and spell-staff costs; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
@@ -1391,7 +1391,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.148.0"
+      "version": "1.149.0"
   },
   "dependencyConstraints": [
     {
@@ -1423,7 +1423,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.148.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.149.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1684,6 +1684,11 @@ column to `items.tsv`. The catalog validates the native byte-sized graphic IDs
 and resolves shared symbols for both normalized and legacy item tables; direct
 callers that do not load the optional catalog retain the native compatibility
 fallback.
+
+Schema 1.149 projects the existing `name` field from `unique_items.tsv` and
+`unique_itemdat.tsv` into both base and identified item-state names when a
+unique item is generated. This keeps unique presentation server-owned without
+adding a client-side name table.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
