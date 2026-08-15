@@ -25,7 +25,9 @@ public sealed class AuthoritativeQuestState
         int completionVariable2 = 0,
         uint completionActivateQuestId = 0,
         bool activateOnRoute = true,
-        bool completionDiablo = false)
+        bool completionDiablo = false,
+        uint completionRewardItemId = 0,
+        int completionRewardItemLevel = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -45,6 +47,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(completionVariable1));
         if (completionVariable2 is < 0 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(completionVariable2));
+        if (completionRewardItemLevel is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(completionRewardItemLevel));
         if (completionUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
@@ -67,6 +71,8 @@ public sealed class AuthoritativeQuestState
         CompletionActivateQuestId = completionActivateQuestId;
         ActivateOnRoute = activateOnRoute;
         CompletionDiablo = completionDiablo;
+        CompletionRewardItemId = completionRewardItemId;
+        CompletionRewardItemLevel = completionRewardItemLevel;
     }
 
     public uint QuestId { get; }
@@ -104,6 +110,10 @@ public sealed class AuthoritativeQuestState
     public bool ActivateOnRoute { get; }
     /** Whether the native Diablo boss identity completes this quest. */
     public bool CompletionDiablo { get; }
+    /** Optional item definition spawned at the native monster-defeat reward boundary. */
+    public uint CompletionRewardItemId { get; }
+    /** Optional native item level used when generating the completion reward. */
+    public int CompletionRewardItemLevel { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -143,11 +153,27 @@ public static class AuthoritativeQuestCatalog
                 completionVariable2: row.OptionalInt32("completion_variable2"),
                 completionActivateQuestId: row.OptionalUInt32("completion_activate_quest_id"),
                 activateOnRoute: row.OptionalInt32("route_activation") != 0,
-                completionDiablo: row.OptionalInt32("completion_diablo") != 0);
+                completionDiablo: row.OptionalInt32("completion_diablo") != 0,
+                completionRewardItemId: row.OptionalUInt32("completion_reward_item_id"),
+                completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level"));
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");
         return quests;
+    }
+
+    /** Validates quest-completion rewards against the active item catalog. */
+    public static void ValidateRewardItems(
+        IReadOnlyList<AuthoritativeQuestState> quests,
+        AuthoritativeItemCatalog items)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(items);
+        foreach (var quest in quests.Where(quest => quest.CompletionRewardItemId != 0)) {
+            if (!items.TryGet(quest.CompletionRewardItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown completion reward item {quest.CompletionRewardItemId}.");
+        }
     }
 
     /** Combines base quest state with an additive variant-specific state table. */

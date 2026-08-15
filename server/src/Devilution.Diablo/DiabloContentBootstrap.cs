@@ -359,6 +359,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     additionalQuests,
                     questStatesTable.SourcePath);
         }
+        if (quests is not null && itemCatalog is not null)
+            AuthoritativeQuestCatalog.ValidateRewardItems(quests, itemCatalog);
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null
             && questPools is not null) {

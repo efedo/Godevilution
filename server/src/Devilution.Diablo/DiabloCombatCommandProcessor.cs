@@ -26,6 +26,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
+    private IReadOnlyList<AuthoritativePlayerState> activePlayers = [];
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextMonsterEntityId = 0x10000000;
     private uint nextProjectileEntityId = 0x80000000;
@@ -267,6 +268,8 @@ public sealed class DiabloCombatCommandProcessor
                 nameof(players));
         }
 
+        activePlayers = players;
+
         return intent switch {
             DiabloAttackIntent attack => Attack(
                 player,
@@ -322,6 +325,8 @@ public sealed class DiabloCombatCommandProcessor
         ArgumentNullException.ThrowIfNull(players);
         if (players.Any(player => player is null))
             throw new ArgumentException("Combat tick players cannot contain null state.", nameof(players));
+
+        activePlayers = players;
 
         world.AdvancePortals(tick);
         var events = new List<DiabloDirectedGameplayEvent>();
@@ -13686,8 +13691,32 @@ public sealed class DiabloCombatCommandProcessor
                     && !nextQuest.Completed) {
                     nextQuest.Active = true;
                 }
+                SpawnQuestCompletionReward(quest, target);
             }
         }
+    }
+
+    /** Spawns a content-owned quest reward at the native monster-defeat position. */
+    private void SpawnQuestCompletionReward(
+        AuthoritativeQuestState quest,
+        AuthoritativeCombatTarget target)
+    {
+        if (quest.CompletionRewardItemId == 0 || items is null)
+            return;
+        var itemSeed = AllocateWorldItemSeed();
+        var state = items.Generate(
+            quest.CompletionRewardItemId,
+            itemSeed,
+            quest.CompletionRewardItemLevel);
+        var entityId = AllocateWorldItemEntityId(activePlayers);
+        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            entityId,
+            target.LevelId,
+            target.PositionX,
+            target.PositionY,
+            itemSeed,
+            checked((uint)Math.Max(0, state.IdentifiedValue)),
+            state);
     }
 
     private uint AllocateProjectileEntityId()
