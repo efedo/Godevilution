@@ -774,6 +774,10 @@ Status date: 2026-08-15
   `quest_states.tsv`; the Hellfire Defiler's Cathedral Map now spawns at the
   authoritative quest death boundary rather than as a static monster drop.
 
+- Schema 1.216 adds the validated `QuestSequence` world-object effect. Hellfire
+  Na-Krul's three tome interactions now use persistent server-owned quest
+  variables, reset on wrong order, and complete the quest on the native order.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell
