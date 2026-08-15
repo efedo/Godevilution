@@ -333,6 +333,10 @@ For GoatMelee, an admitted far-distance native `RoundWalk` also consumes the
 tick when all candidates are blocked; clients receive no generic navigation
 step.
 
+For GoatMelee's ordinary admitted movement, the server likewise uses the
+native `RandomWalk` candidate order and consumes the tick when those candidates
+are blocked; clients receive no bounded pursuit replacement.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive

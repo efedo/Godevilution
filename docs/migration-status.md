@@ -200,9 +200,9 @@ Status date: 2026-08-15
   complete validated tuning tuples independent of the row's native-AI label;
   rows without migrated tuning retain the native-name compatibility path.
   A standalone complete wounded-special tuple now composes the native 23/2
-  attack-band defaults instead of being ignored. Far-distance movement also
-  preserves the native one-in-four RoundWalk branch through deterministic
-  lateral turn order before bounded navigation.
+  attack-band defaults instead of being ignored. Non-adjacent movement now
+  preserves the native one-in-four RoundWalk and ordinary RandomWalk branches
+  through deterministic candidate order without bounded pursuit replacement.
 
 - SkeletonMelee movement-delay and adjacent attack admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
@@ -301,6 +301,10 @@ Status date: 2026-08-15
 - GoatMelee's validated far-distance movement now preserves its native blocked
   `RoundWalk` no-op; no bounded generic path replaces an admitted but
   unavailable movement candidate.
+
+- GoatMelee's ordinary admitted movement now preserves the native `RandomWalk`
+  candidate order and blocked-tick no-op instead of invoking bounded generic
+  pursuit.
 
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated

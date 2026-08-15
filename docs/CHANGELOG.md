@@ -17,7 +17,11 @@ All notable changes to this fork are documented below.
 
 - Restore the native `AiAvoidance` far-distance GoatMelee RoundWalk branch:
   validated movement admissions now use a deterministic lateral turn order for
-  one-in-four rolls at distance four or greater before bounded navigation.
+  one-in-four rolls at distance four or greater before native RandomWalk.
+
+- Restore GoatMelee's ordinary native `AiAvoidance` RandomWalk branch: admitted
+  non-round movement now uses deterministic immediate candidates instead of
+  bounded pursuit.
 
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
