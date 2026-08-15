@@ -1204,9 +1204,13 @@ public sealed class DiabloCombatCommandProcessor
             && HasUsableHellfireDamageArmorFlag(
                 player,
                 AuthoritativeEquipmentIncomingDamageRules.JestersFlag)) {
-            var roll = random.RandomIntBetween(0, 200);
-            if (roll >= 100)
-                roll = checked(100 + (roll - 100) * 5);
+            var roll = random.RandomIntBetween(0, rules.HellfireJestersRollMaximum);
+            if (roll >= rules.HellfireJestersExpansionThreshold) {
+                roll = checked(
+                    rules.HellfireJestersExpansionThreshold
+                    + (roll - rules.HellfireJestersExpansionThreshold)
+                        * rules.HellfireJestersExpansionMultiplier);
+            }
             resolvedDamageQ6 = checked(resolvedDamageQ6 * roll / 100);
         }
         if (perilActive)

@@ -76,7 +76,10 @@ public sealed class AuthoritativeCombatRules
         int hellfireDecayDamageReduction = 5,
         int hellfireDecayRemovalThreshold = 100,
         int hellfireDevastationChancePercent = 5,
-        int hellfireDevastationDamageMultiplier = 3)
+        int hellfireDevastationDamageMultiplier = 3,
+        int hellfireJestersRollMaximum = 200,
+        int hellfireJestersExpansionThreshold = 100,
+        int hellfireJestersExpansionMultiplier = 5)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -158,6 +161,13 @@ public sealed class AuthoritativeCombatRules
         if (hellfireDevastationChancePercent is < 0 or > 100
             || hellfireDevastationDamageMultiplier is < 1 or > 100) {
             throw new InvalidDataException("Hellfire Devastation tuning is invalid.");
+        }
+        if (hellfireJestersRollMaximum <= 0
+            || hellfireJestersRollMaximum > 10_000
+            || hellfireJestersExpansionThreshold < 0
+            || hellfireJestersExpansionThreshold > hellfireJestersRollMaximum
+            || hellfireJestersExpansionMultiplier is < 1 or > 100) {
+            throw new InvalidDataException("Hellfire Jesters tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -252,6 +262,9 @@ public sealed class AuthoritativeCombatRules
         HellfireDecayRemovalThreshold = hellfireDecayRemovalThreshold;
         HellfireDevastationChancePercent = hellfireDevastationChancePercent;
         HellfireDevastationDamageMultiplier = hellfireDevastationDamageMultiplier;
+        HellfireJestersRollMaximum = hellfireJestersRollMaximum;
+        HellfireJestersExpansionThreshold = hellfireJestersExpansionThreshold;
+        HellfireJestersExpansionMultiplier = hellfireJestersExpansionMultiplier;
     }
 
     public int BaseAttackDamage { get; }
@@ -410,6 +423,15 @@ public sealed class AuthoritativeCombatRules
 
     /** Native damage multiplier applied by a successful Devastation proc. */
     public int HellfireDevastationDamageMultiplier { get; }
+
+    /** Native inclusive upper bound for the Hellfire Jesters damage roll. */
+    public int HellfireJestersRollMaximum { get; }
+
+    /** Native threshold at which Jesters expands its upper-half roll. */
+    public int HellfireJestersExpansionThreshold { get; }
+
+    /** Native multiplier applied to the upper-half Jesters roll. */
+    public int HellfireJestersExpansionMultiplier { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -750,7 +772,10 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hellfire_decay_damage_reduction", 5),
             row.OptionalInt32("hellfire_decay_removal_threshold", 100),
             row.OptionalInt32("hellfire_devastation_chance_percent", 5),
-            row.OptionalInt32("hellfire_devastation_damage_multiplier", 3));
+            row.OptionalInt32("hellfire_devastation_damage_multiplier", 3),
+            row.OptionalInt32("hellfire_jesters_roll_maximum", 200),
+            row.OptionalInt32("hellfire_jesters_expansion_threshold", 100),
+            row.OptionalInt32("hellfire_jesters_expansion_multiplier", 5));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
