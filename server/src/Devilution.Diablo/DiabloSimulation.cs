@@ -259,6 +259,10 @@ public sealed partial class DiabloSimulation
         DiabloStoreIntent intent,
         ulong appliedTick)
     {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(intent);
+        if (WorldState.VictoryTriggered)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
         return storeCommands.Execute(player, intent, appliedTick);
     }
@@ -269,6 +273,11 @@ public sealed partial class DiabloSimulation
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players)
     {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(intent);
+        ArgumentNullException.ThrowIfNull(players);
+        if (WorldState.VictoryTriggered)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
         var participants = players as IReadOnlyList<AuthoritativePlayerState>
             ?? players.ToArray();
@@ -394,6 +403,10 @@ public sealed partial class DiabloSimulation
         DiabloCombatIntent intent,
         ulong appliedTick)
     {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(intent);
+        if (WorldState.VictoryTriggered)
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
         return combatCommands.Execute(player, intent, appliedTick, [player]);
     }
@@ -404,6 +417,11 @@ public sealed partial class DiabloSimulation
         ulong appliedTick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(intent);
+        ArgumentNullException.ThrowIfNull(players);
+        if (WorldState.VictoryTriggered)
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
         foreach (var participant in players)
             ConfigurePlayer(participant);
@@ -412,6 +430,9 @@ public sealed partial class DiabloSimulation
 
     public void AdvanceStatusEffects(AuthoritativePlayerState player, ulong tick)
     {
+        ArgumentNullException.ThrowIfNull(player);
+        if (WorldState.VictoryTriggered)
+            return;
         ConfigurePlayer(player);
         DiabloCombatCommandProcessor.AdvanceStatusEffects(player, tick);
     }
@@ -420,6 +441,9 @@ public sealed partial class DiabloSimulation
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        ArgumentNullException.ThrowIfNull(players);
+        if (WorldState.VictoryTriggered)
+            return [];
         foreach (var participant in players)
             ConfigurePlayer(participant);
         return combatCommands.AdvanceTick(tick, players);

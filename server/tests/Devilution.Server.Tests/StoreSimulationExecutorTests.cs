@@ -1499,6 +1499,14 @@ public sealed class StoreSimulationExecutorTests
         Assert.Equal(9U, victory.BossEntityId);
         Assert.Equal(1U, victory.DiabloKillLevel);
         Assert.True(executor.CreateSnapshot("player-a", 7, 1).VictoryTriggered);
+
+        var followUp = server.Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            MoveRequested = new MoveRequested { DirectionX = 1, DirectionY = 0 },
+        }, 2);
+        Assert.Equal(CommandStatus.Rejected, followUp.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, followUp.RejectReason);
     }
 
     [Fact]
