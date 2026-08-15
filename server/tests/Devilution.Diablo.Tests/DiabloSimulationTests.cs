@@ -605,6 +605,42 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsCounselorRetreatState()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Counselor",
+                    counselorRetreatTicks: 3)],
+            });
+        var player = CreatePlayer();
+
+        var snapshot = simulation.CaptureSnapshot(player, 1);
+        Assert.Equal(3, Assert.Single(snapshot.Monsters).CounselorRetreatTicks);
+
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    4,
+                    2,
+                    20,
+                    levelId: 0,
+                    nativeAi: "Counselor")],
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Equal(
+            3,
+            Assert.Single(replacement.WorldState.CombatTargets).Value.CounselorRetreatTicks);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsHellfireEquipmentResourceBasesAndEffectiveMaxima()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

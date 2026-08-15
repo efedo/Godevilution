@@ -323,6 +323,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.BatRetreatTicks);
                     hasher.AppendInt32(monster.BatRetreatDirection);
                 }
+                if (monster.CounselorRetreatTicks != 0) {
+                    hasher.AppendString("godevilution-monster-counselor-retreat-v1");
+                    hasher.AppendInt32(monster.CounselorRetreatTicks);
+                }
             }
         }
 

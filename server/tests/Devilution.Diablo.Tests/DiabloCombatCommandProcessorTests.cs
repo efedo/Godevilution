@@ -5359,6 +5359,72 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WoundedCounselorStartsItsFourAttemptRetreatBeforeRangedDispatch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            4,
+            maxHitPoints: 10,
+            aggroRange: 8,
+            nativeAi: "Counselor");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(4, monster.CounselorRetreatTicks);
+        Assert.False(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(3, monster.CounselorRetreatTicks);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void HealthyCounselorDoesNotEnterWoundedRetreat()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            maxHitPoints: 10,
+            aggroRange: 8,
+            nativeAi: "Counselor");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(0, monster.CounselorRetreatTicks);
+    }
+
+    [Fact]
     public void CounselorChargedBoltUsesTheMonsterOwnedProjectilePath()
     {
         var monster = new AuthoritativeCombatTarget(

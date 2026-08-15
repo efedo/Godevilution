@@ -60,7 +60,8 @@ public sealed class AuthoritativeCombatTarget
         uint scavengerCorpseEntityId = 0,
         int batRetreatTicks = 0,
         int batRetreatDirection = 0,
-        string uniqueIdentity = "")
+        string uniqueIdentity = "",
+        int counselorRetreatTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -92,6 +93,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
         if (batRetreatDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
+        if (counselorRetreatTicks is < 0 or > 64)
+            throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(uniqueIdentity));
         if (!string.IsNullOrWhiteSpace(uniqueIdentity) && !unique)
@@ -154,6 +157,7 @@ public sealed class AuthoritativeCombatTarget
         ScavengerCorpseEntityId = scavengerCorpseEntityId;
         BatRetreatTicks = batRetreatTicks;
         BatRetreatDirection = batRetreatDirection;
+        CounselorRetreatTicks = counselorRetreatTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -278,6 +282,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Direction toward the victim when the native Bat retreat started. */
     public int BatRetreatDirection { get; private set; }
+
+    /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
+    public int CounselorRetreatTicks { get; private set; }
 
     /** Remaining server ticks in the terminal death animation, when active. */
     public int DeathTicksRemaining { get; private set; }
@@ -470,6 +477,28 @@ public sealed class AuthoritativeCombatTarget
         BatRetreatTicks--;
         if (BatRetreatTicks == 0)
             BatRetreatDirection = 0;
+        return true;
+    }
+
+    internal void StartCounselorRetreat(int ticks)
+    {
+        if (ticks is < 1 or > 64)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        CounselorRetreatTicks = ticks;
+    }
+
+    internal void RestoreCounselorRetreat(int ticks)
+    {
+        if (ticks is < 0 or > 64)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        CounselorRetreatTicks = ticks;
+    }
+
+    internal bool AdvanceCounselorRetreat()
+    {
+        if (CounselorRetreatTicks == 0)
+            return false;
+        CounselorRetreatTicks--;
         return true;
     }
 

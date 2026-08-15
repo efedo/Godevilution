@@ -155,6 +155,23 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal((1, 7), (monster.BatRetreatTicks, monster.BatRetreatDirection));
     }
 
+    [Fact]
+    public void VersionOneRoundTripsCounselorRetreatStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Counselor",
+                CounselorRetreatTicks = 3,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        Assert.Equal(3, Assert.Single(restored.Monsters).CounselorRetreatTicks);
+    }
+
     [Theory]
     [InlineData(
         DiabloPlayerActionKind.Death,

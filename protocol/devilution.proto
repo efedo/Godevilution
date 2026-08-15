@@ -519,6 +519,8 @@ message MonsterSnapshot {
 	int32 bat_retreat_direction = 53;
 	// Server-owned native unique-monster identity; clients treat it as opaque.
 	string unique_identity = 54;
+	// Remaining native Counselor retreat attempts after a wounded adjacent turn.
+	int32 counselor_retreat_ticks = 55;
 }
 
 message WorldItemSnapshot {

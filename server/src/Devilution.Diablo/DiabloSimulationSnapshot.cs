@@ -115,6 +115,9 @@ public sealed record DiabloMonsterState(
     /** Direction toward the victim when the native Bat retreat started. */
     public int BatRetreatDirection { get; init; }
 
+    /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
+    public int CounselorRetreatTicks { get; init; }
+
     public int HitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(HitPoints);
 
     public int MaxHitPointsQ6 { get; init; } = DiabloFixedPointQ6.FromWhole(MaxHitPoints);
@@ -404,6 +407,7 @@ public sealed partial class DiabloSimulation
                     ScavengerCorpseEntityId = target.ScavengerCorpseEntityId,
                     BatRetreatTicks = target.BatRetreatTicks,
                     BatRetreatDirection = target.BatRetreatDirection,
+                    CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
                 })
@@ -681,6 +685,7 @@ public sealed partial class DiabloSimulation
                 || monster.ScavengerHealingTicks is < 0 or > 64
                 || monster.BatRetreatTicks is < 0 or > 64
                 || monster.BatRetreatDirection is < 0 or >= 8
+                || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)
@@ -1535,6 +1540,7 @@ public sealed partial class DiabloSimulation
                 target.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
+                target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
                     throw new InvalidDataException(
@@ -1601,6 +1607,7 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
+                restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
                     monster.MaxHitPointsQ6);

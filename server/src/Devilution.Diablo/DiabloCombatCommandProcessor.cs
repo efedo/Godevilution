@@ -4499,6 +4499,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceMegaAi(target, victim, players, tick, distance))
                 continue;
+            if (TryAdvanceCounselorAi(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceSuccubusRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
@@ -5153,6 +5155,78 @@ public sealed class DiabloCombatCommandProcessor
         if (next.HasValue)
             monster.BeginMovement(next.Value.X, next.Value.Y);
         return true;
+    }
+
+    /** Native Counselor wounded-adjacent retreat persists its four RandomWalk attempts. */
+    private bool TryAdvanceCounselorAi(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (!UsesNativeAi(monster, "Counselor"))
+            return false;
+
+        if (monster.CounselorRetreatTicks != 0) {
+            var retreat = FindNativeCounselorRetreatStep(
+                monster,
+                victim,
+                players,
+                unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId));
+            if (retreat.HasValue)
+                monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+            monster.AdvanceCounselorRetreat();
+            return true;
+        }
+
+        // CounselorAi compares whole native hit points against the integer
+        // half-health threshold before entering MonsterGoal::Retreat.
+        if (distance > 1 || monster.HitPoints >= monster.MaxHitPoints / 2)
+            return false;
+
+        // Native goalVar1 starts at zero and admits four RandomWalk calls
+        // (0, 1, 2, and 3) on subsequent active AI ticks.
+        monster.StartCounselorRetreat(4);
+        return true;
+    }
+
+    /** Native Counselor RandomWalk begins in the direction opposite the victim. */
+    private (int X, int Y)? FindNativeCounselorRetreatStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var towardPlayer = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var awayFromPlayer = RotateDirection(towardPlayer, 4);
+        var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
+        var secondTurn = (seed / 200U) % 2U == 0 ? 2 : -2;
+        var directions = new[] {
+            awayFromPlayer,
+            RotateDirection(awayFromPlayer, firstTurn),
+            RotateDirection(awayFromPlayer, -firstTurn),
+            RotateDirection(awayFromPlayer, secondTurn),
+            RotateDirection(awayFromPlayer, -secondTurn),
+        };
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
     }
 
     private (
