@@ -88,7 +88,8 @@ public sealed class AuthoritativeCombatTarget
         int snakeDelayTicks = 0,
         int counselorDelayTicks = 0,
         int avoidanceDelayTicks = 0,
-        int rangedDelayTicks = 0)
+        int rangedDelayTicks = 0,
+        int megaDelayTicks = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -174,6 +175,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(avoidanceDelayTicks));
         if (rangedDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(rangedDelayTicks));
+        if (megaDelayTicks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(megaDelayTicks));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -266,6 +269,7 @@ public sealed class AuthoritativeCombatTarget
         CounselorDelayTicks = counselorDelayTicks;
         AvoidanceDelayTicks = avoidanceDelayTicks;
         RangedDelayTicks = rangedDelayTicks;
+        MegaDelayTicks = megaDelayTicks;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -471,6 +475,9 @@ public sealed class AuthoritativeCombatTarget
 
     /** Remaining native AiRanged delay ticks after a ranged attack. */
     public int RangedDelayTicks { get; private set; }
+
+    /** Remaining native MegaAi post-action delay ticks. */
+    public int MegaDelayTicks { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -1178,6 +1185,28 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RangedDelayTicks = ticks;
+    }
+
+    internal void StartMegaDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        MegaDelayTicks = ticks;
+    }
+
+    internal bool AdvanceMegaDelay()
+    {
+        if (MegaDelayTicks == 0)
+            return false;
+        MegaDelayTicks--;
+        return true;
+    }
+
+    internal void RestoreMegaDelay(int ticks)
+    {
+        if (ticks is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(ticks));
+        MegaDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)

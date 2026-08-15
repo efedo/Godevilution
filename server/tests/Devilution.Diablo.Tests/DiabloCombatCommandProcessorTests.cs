@@ -7357,6 +7357,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(monster.IsMoving);
         Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(5, monster.MegaDelayTicks);
         Assert.Empty(world.Projectiles);
     }
 

@@ -575,6 +575,8 @@ message MonsterSnapshot {
 	optional int32 avoidance_delay_ticks = 81;
 	// Remaining native AiRanged delay ticks after a ranged attack.
 	optional int32 ranged_delay_ticks = 82;
+	// Remaining native MegaAi post-action delay ticks.
+	optional int32 mega_delay_ticks = 83;
 }
 
 message WorldItemSnapshot {

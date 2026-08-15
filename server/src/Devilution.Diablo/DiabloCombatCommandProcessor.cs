@@ -6835,6 +6835,10 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
+            && UsesNativeAi(monster, "Mega")
+            && monster.AdvanceMegaDelay())
+            return true;
         if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController
             && monster.AdvanceRangedDelay())
@@ -6885,6 +6889,7 @@ public sealed class DiabloCombatCommandProcessor
                             players,
                             attackSeed,
                             distance);
+                        monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
                         return true;
                     }
                     return false;
@@ -7034,6 +7039,7 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     attackSeed,
                     distance);
+                monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
                 return true;
             }
             return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
@@ -7142,6 +7148,9 @@ public sealed class DiabloCombatCommandProcessor
         if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
             monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
+        else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
+            && UsesNativeAi(monster, "Mega"))
+            monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
         return true;
     }
 
