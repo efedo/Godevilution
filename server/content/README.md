@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.192.0` schema in
+It declares its identity and `devilution.diablo@1.193.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -59,6 +59,9 @@ The Golem spell row's `golem_hit_points_level_multiplier`,
 `golem_minimum_damage_level_offset`, `golem_maximum_damage_level_offset`, and
 `golem_armor_class` columns externalize its summon health, damage, and armor
 formula terms; omitted values retain the native 2/3, 2/4/8, and 25 defaults.
+`golem_hit_points_level_base_q6` externalizes the native Q6 health contribution
+per effective spell level; omitted values retain the native 320-unit
+compatibility default.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -1430,7 +1433,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.192.0"
+      "version": "1.193.0"
   },
   "dependencyConstraints": [
     {
@@ -1462,7 +1465,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.192.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.193.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1901,6 +1904,10 @@ Schema 1.192 adds optional Golem summon formula columns to `spells.tsv`.
 The Golem row externalizes health level/mana terms, damage level/offset terms,
 and armor class; omitted values retain the native health 2/3, damage 2/4/8,
 and armor 25 behavior.
+
+Schema 1.193 adds the optional `golem_hit_points_level_base_q6` column to the
+Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
+health term.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

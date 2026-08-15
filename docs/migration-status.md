@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Golem summon health now consumes a validated per-effective-level Q6 base
+  term from the Golem row in `spells.tsv`; older spell schemas retain the
+  native 320 Q6 per-level health term.
+
 - Golem summon health, damage, and armor now consume validated formula terms
   from the Golem spell row in `spells.tsv`; older spell schemas retain the
   native health 2/3 terms, damage 2/4/8 terms, and armor class 25.
@@ -419,6 +423,10 @@ Status date: 2026-08-15
   health level/mana terms, damage level/offset terms, and armor class. Active
   Golem summons now use validated row values; omitted values retain the native
   health 2/3, damage 2/4/8, and armor 25 behavior.
+
+- Schema 1.193 adds optional `golem_hit_points_level_base_q6` metadata to the
+  Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
+  health term.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

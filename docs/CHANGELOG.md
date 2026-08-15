@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.193 optional `spells.tsv` Golem per-level Q6 health metadata.
+  Golem health now uses a validated per-level base term; omitted values retain
+  the native 320 Q6 compatibility default.
+
 - Add schema 1.192 optional `spells.tsv` Golem summon formula metadata.
   Golem health, damage, and armor now use validated spell-row terms; omitted
   values retain the native 2/3, 2/4/8, and 25 compatibility defaults.
