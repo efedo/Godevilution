@@ -9,6 +9,9 @@ All notable changes to this fork are documented below.
   columns, preserving the native distinct Nightmare and Hell damage formulas
   while retaining legacy defaults for older packs.
 
+- Externalize native ranged-attack frame timing through validated `combat.tsv`
+  columns, including Hellfire's zero-skip timing while retaining legacy defaults.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks

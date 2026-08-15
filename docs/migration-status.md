@@ -764,6 +764,7 @@ Status date: 2026-08-15
   the existing resistance values for compatibility.
 
 - Schema 1.213 adds optional native difficulty tuning columns to `combat.tsv`.
+- Schema 1.214 adds external ranged-attack frame timing columns to `combat.tsv`, including the Hellfire zero-skip variant.
   Level, accuracy, armor, damage, experience, and initial-health formulas now
   consume validated pack values; omitted columns retain the native defaults,
   including the distinct Nightmare `2 * (base + 2)` and Hell `4 * base + 6`
