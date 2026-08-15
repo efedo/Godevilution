@@ -6405,8 +6405,7 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native SnakeAi's six-step lateral drift, with deterministic blocked-cell
-     * fallback in place of native RandomWalk2. */
+    /** Native SnakeAi's six-step lateral drift and three-candidate RandomWalk2 fallback. */
     private (int X, int Y)? FindSnakeDriftStep(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -6422,15 +6421,27 @@ public sealed class DiabloCombatCommandProcessor
         var direction = RotateDirection(
             targetDirection,
             SnakeDriftPattern[patternIndex]);
+        var driftDisplacement = DirectionDisplacements[direction];
+        var driftX = checked(monster.PositionX + driftDisplacement.X);
+        var driftY = checked(monster.PositionY + driftDisplacement.Y);
+        if (world.IsWalkable(monster.LevelId, driftX, driftY)
+            && !world.IsOccupied(
+                monster.LevelId,
+                driftX,
+                driftY,
+                players,
+                monster.EntityId))
+            return (driftX, driftY);
+
+        // Native RandomWalk2 starts from monster.direction (the unmodified
+        // target direction) and only considers straight, left, and right.
         var fallbackTurn = (seed / 600U) % 2U == 0 ? 1 : -1;
-        var directions = new[] {
-            direction,
-            RotateDirection(direction, fallbackTurn),
-            RotateDirection(direction, -fallbackTurn),
-            RotateDirection(direction, 2),
-            RotateDirection(direction, -2),
+        var targetDirections = new[] {
+            targetDirection,
+            RotateDirection(targetDirection, fallbackTurn),
+            RotateDirection(targetDirection, -fallbackTurn),
         };
-        foreach (var candidateDirection in directions) {
+        foreach (var candidateDirection in targetDirections) {
             var displacement = DirectionDisplacements[candidateDirection];
             var candidateX = checked(monster.PositionX + displacement.X);
             var candidateY = checked(monster.PositionY + displacement.Y);

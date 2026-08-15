@@ -5575,6 +5575,39 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiUsesNativeRandomWalk2WhenItsDriftCandidateIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 41, 42],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(entityId: 7, positionX: 5, positionY: 0);
+
+        // 130 ^ 9 ^ 7 = 140: the +1 drift candidate (2,1), then native
+        // RandomWalk2's (2,0)/(1,1) candidates are blocked. The old five-way
+        // replacement would have moved to (0,1).
+        processor.AdvanceTick(130, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void SnakeAiDefersDuringItsNativeDelayBranch()
     {
         var monster = new AuthoritativeCombatTarget(
