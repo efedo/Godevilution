@@ -210,6 +210,34 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
     }
 
     [Fact]
+    public void MonkWeaponModifierUsesConfiguredDivisor()
+    {
+        var monk = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Monk,
+        };
+        var sword = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemType = 1,
+                ItemClass = 1,
+                StatFlag = true,
+            });
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(20, 20)),
+            [sword],
+            monk,
+            monkWeaponDamageDivisor: 100);
+
+        Assert.Equal(20, profile.DamageModifier);
+    }
+
+    [Fact]
     public void RejectsInvalidBarbarianWeaponStrengthDivisor()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -239,6 +267,13 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
                 [],
                 CreateClass("custom"),
                 monkStaffUnarmedDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEquipmentDamageRules.Calculate(
+                1,
+                PlayerAttributesState.Zero,
+                [],
+                CreateClass("custom"),
+                monkWeaponDamageDivisor: 0));
     }
 
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)
