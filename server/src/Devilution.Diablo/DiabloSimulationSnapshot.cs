@@ -184,6 +184,9 @@ public sealed record DiabloMonsterState(
     /** Remaining native AiRangedAvoidance delay ticks before the next decision. */
     public int RangedAvoidanceDelayTicks { get; init; }
 
+    /** Remaining native SnakeAi delay ticks before the next decision. */
+    public int SnakeDelayTicks { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -499,6 +502,7 @@ public sealed partial class DiabloSimulation
                     SkeletonKingDelayTicks = target.SkeletonKingDelayTicks,
                     HorkDemonDelayTicks = target.HorkDemonDelayTicks,
                     RangedAvoidanceDelayTicks = target.RangedAvoidanceDelayTicks,
+                    SnakeDelayTicks = target.SnakeDelayTicks,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -800,6 +804,7 @@ public sealed partial class DiabloSimulation
                 || monster.SkeletonKingDelayTicks is < 0 or > 1024
                 || monster.HorkDemonDelayTicks is < 0 or > 1024
                 || monster.RangedAvoidanceDelayTicks is < 0 or > 1024
+                || monster.SnakeDelayTicks is < 0 or > 1024
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1687,6 +1692,7 @@ public sealed partial class DiabloSimulation
                 target.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 target.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
                 target.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
+                target.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1768,6 +1774,7 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
                 restoredTarget.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
+                restoredTarget.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1812,6 +1819,7 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
                 restoredTarget.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
+                restoredTarget.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

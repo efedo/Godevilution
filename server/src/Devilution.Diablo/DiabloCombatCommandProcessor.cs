@@ -6371,6 +6371,8 @@ public sealed class DiabloCombatCommandProcessor
             || !TryGetMonsterMissile(monster, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge)
             return false;
+        if (monster.AdvanceSnakeDelay())
+            return true;
 
         var chargeDistance = missile.ChargeMinimumDistance > 0
             ? missile.ChargeMinimumDistance
@@ -6428,15 +6430,29 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        if (distance < 2)
-            return false;
-
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        if (distance < 2) {
+            var attackChance = Math.Min(100, monster.Intelligence + 20);
+            if (actionSeed % 100U >= (uint)attackChance) {
+                monster.StartSnakeDelay(
+                    Math.Max(
+                        0,
+                        10 - monster.Intelligence
+                            + (int)((actionSeed / 100U) % 10U)));
+                return true;
+            }
+            return false;
+        }
+
         var delayBand = Math.Max(0, 35 - (2 * monster.Intelligence));
-        if (actionSeed % 100U < (uint)delayBand)
-            // Native SnakeAi consumes an AiDelay tick when this admission
-            // fails; do not replace that no-op with generic pursuit.
+        if (actionSeed % 100U < (uint)delayBand) {
+            monster.StartSnakeDelay(
+                Math.Max(
+                    0,
+                    15 - monster.Intelligence
+                        + (int)((actionSeed / 100U) % 10U)));
             return true;
+        }
 
         var drift = FindSnakeDriftStep(monster, player, players, actionSeed);
         if (drift.HasValue)

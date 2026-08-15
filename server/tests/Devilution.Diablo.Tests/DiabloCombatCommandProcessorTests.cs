@@ -5955,6 +5955,52 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.False(monster.IsMoving);
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
         Assert.Equal(100, player.Life);
+        Assert.Equal(15, monster.SnakeDelayTicks);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(14, monster.SnakeDelayTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
+    public void SnakeAiStartsItsNativeDelayAfterAnAdjacentAttackAdmissionFails()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 50 ^ 9 ^ 7 = 60: the native adjacent 20% attack admission fails
+        // and schedules 10 + GenerateRnd(10) ticks of AiDelay.
+        processor.AdvanceTick(50, [player]);
+
+        Assert.Equal(10, monster.SnakeDelayTicks);
+        Assert.Equal(100, player.Life);
+
+        processor.AdvanceTick(51, [player]);
+
+        Assert.Equal(9, monster.SnakeDelayTicks);
+        Assert.Equal(100, player.Life);
     }
 
     [Fact]
