@@ -6,4 +6,6 @@ public enum AuthoritativeObjectEffectKind
     Heal,
     Damage,
     Experience,
+    /** Advances a content-owned ordered quest interaction sequence. */
+    QuestSequence,
 }

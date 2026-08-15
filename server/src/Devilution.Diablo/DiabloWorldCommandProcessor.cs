@@ -739,6 +739,9 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
+            return ApplyQuestSequence(player, @object);
+
         @object.Activated = true;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
             && !quest.Unavailable
@@ -802,6 +805,37 @@ public sealed class DiabloWorldCommandProcessor
         default:
             return DiabloWorldIntentResult.Accepted;
         }
+    }
+
+    /** Applies one ordered quest interaction step, preserving native reset semantics. */
+    private DiabloWorldIntentResult ApplyQuestSequence(
+        AuthoritativePlayerState player,
+        AuthoritativeWorldObject @object)
+    {
+        if (!world.Quests.TryGetValue(@object.QuestId, out var quest)
+            || quest.Unavailable
+            || quest.Completed
+            || quest.LevelId != player.LevelId) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        quest.Active = true;
+        quest.Logged = true;
+        var expectedStep = checked(quest.Variable1 + 1);
+        if (@object.EffectAmount != expectedStep) {
+            quest.Variable1 = 0;
+            return DiabloWorldIntentResult.Accepted;
+        }
+
+        quest.Variable1 = @object.EffectAmount;
+        if (quest.CompletionVariable1 > 0
+            && quest.Variable1 >= quest.CompletionVariable1) {
+            quest.Progress = quest.RequiredProgress;
+            quest.Completed = true;
+            quest.Active = false;
+            quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+        }
+        return DiabloWorldIntentResult.Accepted;
     }
 
     private DiabloWorldIntentResult DisarmTrap(

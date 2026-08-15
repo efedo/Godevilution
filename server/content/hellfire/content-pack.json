@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.215.0"
+    "version": "1.216.0"
   },
   "dependencyConstraints": [
     {
@@ -38,6 +38,11 @@
     {
       "table": "quest_types.tsv",
       "keys": ["quest_id"],
+      "mode": "upsert"
+    },
+    {
+      "table": "objects.tsv",
+      "keys": ["entity_id"],
       "mode": "upsert"
     },
     {

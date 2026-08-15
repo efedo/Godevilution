@@ -89,6 +89,10 @@ public static class AuthoritativeWorldObjectCatalog
             row.OptionalInt32("trap_armed") != 0)).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
+        if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence
+                && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
+            throw new InvalidDataException(
+                $"Object table '{sourcePath}' contains an invalid quest sequence object.");
         if (objects.Select(@object => @object.EntityId).Distinct().Count() != objects.Length)
             throw new InvalidDataException($"Object table '{sourcePath}' contains duplicate entity IDs.");
         return objects;
