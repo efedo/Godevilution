@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Restore the native `AiRangedAvoidance` round-walk fallback for failed or
+  blocked ranged rolls, preventing generic pursuit from replacing native
+  lateral movement.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

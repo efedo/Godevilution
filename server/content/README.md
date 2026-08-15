@@ -504,7 +504,9 @@ content pack now selects the native `AiRanged` or `AiRangedAvoidance` branch
 and its probability scaling; omitted values retain the `Ranged`/100-percent
 compatibility defaults. The server also preserves the native adjacent melee
 fallback band for `AiRangedAvoidance` (`1000 * (intelligence + 6)` per 10,000,
-halved for Acid) instead of admitting every shared melee tick.
+halved for Acid) instead of admitting every shared melee tick. Failed or
+blocked ranged rolls use a deterministic lateral round-walk fallback rather
+than generic pursuit toward the player.
 Schema 1.83 adds the optional `monster_id` discriminator to
 `monster_missiles.tsv`. A monster-specific row takes precedence over its
 native-AI wildcard, allowing shared native AI identities such as `Bat` to

@@ -165,7 +165,9 @@ Status date: 2026-08-15
 
 - Native `AiRangedAvoidance` adjacent melee now uses its server-owned
   `1000 * (intelligence + 6)` admission band (halved for Acid) before shared
-  melee resolution, preserving the native failed-roll defer path.
+  melee resolution, preserving the native failed-roll defer path. Failed or
+  blocked ranged rolls now use deterministic lateral round-walk movement
+  instead of generic pursuit.
 
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
