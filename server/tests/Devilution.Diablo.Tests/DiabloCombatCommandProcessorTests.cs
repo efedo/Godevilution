@@ -552,6 +552,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTimedMeleeAttackUsesConfiguredFastestAttackTierSkip()
+    {
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = 1U << 20,
+        };
+        var defaultAttacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+        var defaultVictim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280);
+        var defaultProcessor = CreateProcessor(
+            new DiabloWorldState(),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            playerClasses: LoadShippedPlayerClasses(),
+            useNativePlayerActionTiming: true);
+        var defaultResult = defaultProcessor.Execute(
+            defaultAttacker,
+            new DiabloAttackIntent(defaultVictim.EntityId),
+            1,
+            [defaultAttacker, defaultVictim]);
+
+        var tunedAttacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+        var tunedVictim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 1280,
+            lifeMaximum: 1280);
+        var tunedProcessor = CreateProcessor(
+            new DiabloWorldState(),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: true,
+                fastestAttackFrameSkipWithoutFirstFrame: 4),
+            playerClasses: LoadShippedPlayerClasses(),
+            useNativePlayerActionTiming: true);
+        var tunedResult = tunedProcessor.Execute(
+            tunedAttacker,
+            new DiabloAttackIntent(tunedVictim.EntityId),
+            1,
+            [tunedAttacker, tunedVictim]);
+
+        Assert.True(defaultResult.Succeeded, defaultResult.Failure?.ToString());
+        Assert.True(tunedResult.Succeeded, tunedResult.Failure?.ToString());
+        var defaultAction = Assert.IsType<AuthoritativePlayerActionState>(defaultAttacker.CurrentAction);
+        var tunedAction = Assert.IsType<AuthoritativePlayerActionState>(tunedAttacker.CurrentAction);
+        Assert.Equal(defaultAction.EffectTick - 2, tunedAction.EffectTick);
+        Assert.Equal(defaultAction.EndTick - 2, tunedAction.EndTick);
+    }
+
+    [Fact]
     public void NativeTimedPlayerAttackPublishesAPlayerBlockAtItsEffectTick()
     {
         var world = new DiabloWorldState();

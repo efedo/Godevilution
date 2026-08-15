@@ -704,6 +704,36 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsAndValidatesMeleeAttackSpeedTierSkips()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\t"
+            + "quick_attack_frame_skip_with_first_frame\tquick_attack_frame_skip_without_first_frame\t"
+            + "fast_attack_frame_skip_with_first_frame\tfast_attack_frame_skip_without_first_frame\t"
+            + "faster_attack_frame_skip_with_first_frame\tfaster_attack_frame_skip_without_first_frame\t"
+            + "fastest_attack_frame_skip_with_first_frame\tfastest_attack_frame_skip_without_first_frame\n"
+            + "10\t1\t100\t2\t1\t4\t2\t6\t3\t8\t4\n");
+
+        Assert.Equal((2, 1, 4, 2, 6, 3, 8, 4), (
+            rules.QuickAttackFrameSkipWithFirstFrame,
+            rules.QuickAttackFrameSkipWithoutFirstFrame,
+            rules.FastAttackFrameSkipWithFirstFrame,
+            rules.FastAttackFrameSkipWithoutFirstFrame,
+            rules.FasterAttackFrameSkipWithFirstFrame,
+            rules.FasterAttackFrameSkipWithoutFirstFrame,
+            rules.FastestAttackFrameSkipWithFirstFrame,
+            rules.FastestAttackFrameSkipWithoutFirstFrame));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                fastestAttackFrameSkipWithFirstFrame: 2,
+                fastestAttackFrameSkipWithoutFirstFrame: 3));
+    }
+
+    [Fact]
     public void UsesConfiguredMonsterMagicAccuracyFormulaTerms()
     {
         var rules = new AuthoritativeCombatRules(
