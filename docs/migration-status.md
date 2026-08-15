@@ -763,6 +763,12 @@ Status date: 2026-08-15
   Normal/Nightmare retain the base resistance channels; omitted columns keep
   the existing resistance values for compatibility.
 
+- Schema 1.213 adds optional native difficulty tuning columns to `combat.tsv`.
+  Level, accuracy, armor, damage, experience, and initial-health formulas now
+  consume validated pack values; omitted columns retain the native defaults,
+  including the distinct Nightmare `2 * (base + 2)` and Hell `4 * base + 6`
+  damage formulas.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell

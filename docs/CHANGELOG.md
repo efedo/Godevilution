@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize native Nightmare/Hell level, accuracy, armor, damage, experience,
+  and initial-health modifiers through validated `combat.tsv` difficulty
+  columns, preserving the native distinct Nightmare and Hell damage formulas
+  while retaining legacy defaults for older packs.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
