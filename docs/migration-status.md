@@ -66,7 +66,8 @@ Status date: 2026-08-14
   label carrying the tuple.
 
 - Butcher pursuit now consults the active validated monster-type identity when
-  a catalog is present; direct legacy targets retain the native-name fallback.
+  a catalog is present, while complete alternate AI tuning retains precedence;
+  direct legacy targets retain the native-name fallback.
 
 - Mapped monster missile dispatch now resolves the active validated
   monster-type identity before the runtime-label compatibility fallback, so
