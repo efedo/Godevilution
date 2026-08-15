@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.217.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.218.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.217.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.218.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -215,6 +215,16 @@ public sealed class ShippedContentTests
         var noteCombination = Assert.Single(combinations.Definitions);
         Assert.Equal(2004U, noteCombination.ResultItemId);
         Assert.Equal([2001U, 2002U, 2003U], noteCombination.RequiredItemIds);
+        var itemQuestEffects = AuthoritativeItemQuestEffectCatalog.LoadTsv(
+            "item_quest_effects.tsv",
+            composed.GetRequiredTable("item_quest_effects.tsv").ToCanonicalTsv());
+        itemQuestEffects.ValidateItems(items);
+        var mapEffect = Assert.Single(itemQuestEffects.Definitions);
+        Assert.Equal((43U, 3017U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
+            mapEffect.ItemId,
+            mapEffect.QuestId,
+            mapEffect.EffectKind,
+            mapEffect.EffectAmount));
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,
@@ -246,6 +256,7 @@ public sealed class ShippedContentTests
             combat.HellfireArmorBonusAgainstDemons,
             combat.HellfireArmorBonusAgainstUndead));
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
+        itemQuestEffects.ValidateQuests(activation.Simulation.WorldState.Quests.Values);
         Assert.Equal(
             [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],
             activation.Simulation.WorldState.World!.Levels.Select(level => level.LevelId));
