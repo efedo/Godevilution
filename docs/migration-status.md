@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Reflect retaliation now consumes validated minimum and maximum damage
+  percentages from the Reflect row in `spells.tsv`; older spell schemas retain
+  the native 20–30% compatibility roll.
+
 - Golem summon health now consumes a validated per-effective-level Q6 base
   term from the Golem row in `spells.tsv`; older spell schemas retain the
   native 320 Q6 per-level health term.
@@ -427,6 +431,10 @@ Status date: 2026-08-15
 - Schema 1.193 adds optional `golem_hit_points_level_base_q6` metadata to the
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
+
+- Schema 1.194 adds optional `reflect_damage_percent_minimum` and
+  `reflect_damage_percent_maximum` metadata to the Reflect row in `spells.tsv`;
+  omitted values retain the native 20–30% reflected-damage roll.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

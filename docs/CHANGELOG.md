@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.194 optional Reflect damage-percentage bounds to `spells.tsv`.
+  Monster retaliation now uses validated Reflect-row bounds; omitted values
+  retain the native 20–30% compatibility roll.
+
 - Add schema 1.193 optional `spells.tsv` Golem per-level Q6 health metadata.
   Golem health now uses a validated per-level base term; omitted values retain
   the native 320 Q6 compatibility default.
