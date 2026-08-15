@@ -149,6 +149,17 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(2, Math.Max(
             Math.Abs(portal.SourcePositionX - 4),
             Math.Abs(portal.SourcePositionY - 4)));
+
+        var malformed = processor.ExecuteTownPortal(
+            player,
+            4,
+            4,
+            1,
+            participants,
+            destinationPositionX: -1);
+
+        Assert.False(malformed.Succeeded);
+        Assert.Equal(DiabloRuleFailure.Malformed, malformed.Failure);
     }
 
     [Fact]

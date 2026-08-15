@@ -103,10 +103,24 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(AuthoritativeProjectileBehavior.TownPortal, townPortal.ProjectileBehavior);
         Assert.Equal(5, townPortal.TownPortalSearchRadius);
         Assert.Equal(100, townPortal.TownPortalLifetime);
+        Assert.Equal(57, townPortal.TownPortalDestinationPositionX);
+        Assert.Equal(40, townPortal.TownPortalDestinationPositionY);
+        Assert.Equal(4, townPortal.TownPortalDestinationSlotCount);
+        Assert.Equal(2, townPortal.TownPortalDestinationSlotSpacing);
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([townPortal with { TownPortalSearchRadius = 0 }]));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([townPortal with { TownPortalLifetime = 0 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([townPortal with { TownPortalDestinationSlotCount = 0 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([townPortal with { TownPortalDestinationSlotSpacing = -1 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0) {
+                    TownPortalDestinationPositionX = 58,
+                },
+            ]));
     }
 
     [Fact]

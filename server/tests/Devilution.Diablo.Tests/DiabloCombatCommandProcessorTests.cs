@@ -161,7 +161,13 @@ public sealed class DiabloCombatCommandProcessorTests
         var processor = CreateProcessor(
             world,
             new AuthoritativeSpellCatalog([
-                CreateTownPortalSpell() with { TownPortalLifetime = 7 },
+                CreateTownPortalSpell() with {
+                    TownPortalLifetime = 7,
+                    TownPortalDestinationPositionX = 70,
+                    TownPortalDestinationPositionY = 42,
+                    TownPortalDestinationSlotCount = 3,
+                    TownPortalDestinationSlotSpacing = 3,
+                },
             ]),
             worldCommands: worldCommands);
         var player = CreatePlayer(
@@ -187,7 +193,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(760, player.Mana);
         var portal = Assert.Single(world.Portals.Values);
         Assert.Equal((12, 10), (portal.SourcePositionX, portal.SourcePositionY));
-        Assert.Equal((61, 40), (portal.DestinationPositionX, portal.DestinationPositionY));
+        Assert.Equal((70, 42), (portal.DestinationPositionX, portal.DestinationPositionY));
         Assert.Equal(7U, portal.OwnerEntityId);
         Assert.True(portal.Bidirectional);
         Assert.Equal(7U, portal.RemainingTicks);
@@ -199,7 +205,7 @@ public sealed class DiabloCombatCommandProcessorTests
             new DiabloUsePortalIntent(portal.PortalId),
             2,
             [player]).Succeeded);
-        Assert.Equal((0U, 61, 40), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Equal((0U, 70, 42), (player.LevelId, player.PositionX, player.PositionY));
 
         Assert.True(worldCommands.Execute(
             player,
