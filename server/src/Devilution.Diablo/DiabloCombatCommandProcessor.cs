@@ -11466,7 +11466,7 @@ public sealed class DiabloCombatCommandProcessor
         DiabloPlayerActionLifecycle.Cancel(player);
         var blockingFrames = GetPlayerAnimation(player)?.BlockingFrames ?? 2;
         var skippedFrames = HasUsableEquipmentFlag(player, FastBlockFlag)
-            ? blockingFrames - 2
+            ? blockingFrames - rules.EquipmentFastBlockFrameSkip
             : IsNativeFastBlockingClass(player, playerClass)
                 ? blockingFrames - playerClass!.FastBlockFrameSkip
                 : 0;
