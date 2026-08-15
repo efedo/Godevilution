@@ -1367,6 +1367,7 @@ public sealed partial class DiabloSimulation
         StorePlayerSnapshot source,
         AuthoritativePlayerState destination)
     {
+        destination.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
         destination.Gold = source.Gold;
         destination.Experience = source.Experience;
         destination.Attributes = source.Attributes;

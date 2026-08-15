@@ -266,7 +266,9 @@ public sealed partial class DiabloSimulation
         public AuthoritativePlayerState CreateParticipant(string sessionId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
-            return playerTemplate.CreatePlayer();
+            var player = playerTemplate.CreatePlayer();
+            player.ConfigureMaximumAttribute(simulation.CombatRules.MaximumAttribute);
+            return player;
         }
 
         public void AdvanceParticipant(AuthoritativePlayerState state, ulong tick)

@@ -259,6 +259,7 @@ public sealed partial class DiabloSimulation
         DiabloStoreIntent intent,
         ulong appliedTick)
     {
+        ConfigurePlayer(player);
         return storeCommands.Execute(player, intent, appliedTick);
     }
 
@@ -268,8 +269,11 @@ public sealed partial class DiabloSimulation
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players)
     {
+        ConfigurePlayer(player);
         var participants = players as IReadOnlyList<AuthoritativePlayerState>
             ?? players.ToArray();
+        foreach (var participant in participants)
+            ConfigurePlayer(participant);
         var result = worldCommands.Execute(player, intent, appliedTick, participants);
         if (result.Succeeded)
             EnsureProceduralMonsterSpawns(player.LevelId, participants);
@@ -390,6 +394,7 @@ public sealed partial class DiabloSimulation
         DiabloCombatIntent intent,
         ulong appliedTick)
     {
+        ConfigurePlayer(player);
         return combatCommands.Execute(player, intent, appliedTick, [player]);
     }
 
@@ -399,11 +404,15 @@ public sealed partial class DiabloSimulation
         ulong appliedTick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        ConfigurePlayer(player);
+        foreach (var participant in players)
+            ConfigurePlayer(participant);
         return combatCommands.Execute(player, intent, appliedTick, players);
     }
 
     public void AdvanceStatusEffects(AuthoritativePlayerState player, ulong tick)
     {
+        ConfigurePlayer(player);
         DiabloCombatCommandProcessor.AdvanceStatusEffects(player, tick);
     }
 
@@ -411,6 +420,14 @@ public sealed partial class DiabloSimulation
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        foreach (var participant in players)
+            ConfigurePlayer(participant);
         return combatCommands.AdvanceTick(tick, players);
+    }
+
+    private void ConfigurePlayer(AuthoritativePlayerState player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        player.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
     }
 }

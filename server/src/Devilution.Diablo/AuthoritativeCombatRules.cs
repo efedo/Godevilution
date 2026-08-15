@@ -58,7 +58,8 @@ public sealed class AuthoritativeCombatRules
         int monsterChargeBaseToHit = 500,
         int monsterAcidPuddleMinimumHitChance = 10,
         int monsterAcidPuddleBaseHitChance = 40,
-        int maximumResistance = 75)
+        int maximumResistance = 75,
+        int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -92,6 +93,7 @@ public sealed class AuthoritativeCombatRules
         if (maximumResistance is < 0 or > 100) {
             throw new InvalidDataException("Maximum resistance tuning is invalid.");
         }
+        AuthoritativeEquipmentAttributeRules.ValidateMaximumAttribute(maximumAttribute);
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
             || stealLife5Percent is < 0 or > 100
@@ -167,6 +169,7 @@ public sealed class AuthoritativeCombatRules
         MonsterAcidPuddleMinimumHitChance = monsterAcidPuddleMinimumHitChance;
         MonsterAcidPuddleBaseHitChance = monsterAcidPuddleBaseHitChance;
         MaximumResistance = maximumResistance;
+        MaximumAttribute = maximumAttribute;
     }
 
     public int BaseAttackDamage { get; }
@@ -271,6 +274,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native maximum elemental resistance percentage. */
     public int MaximumResistance { get; }
+
+    /** Maximum effective primary attribute after equipment bonuses. */
+    public int MaximumAttribute { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -593,7 +599,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_charge_base_to_hit", 500),
             row.OptionalInt32("monster_acid_puddle_minimum_hit_chance", 10),
             row.OptionalInt32("monster_acid_puddle_base_hit_chance", 40),
-            row.OptionalInt32("maximum_resistance", 75));
+            row.OptionalInt32("maximum_resistance", 75),
+            row.OptionalInt32("maximum_attribute", AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

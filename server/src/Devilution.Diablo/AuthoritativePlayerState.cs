@@ -257,7 +257,8 @@ public sealed class AuthoritativePlayerState(
     int baseManaMaximum = -1,
     AuthoritativePlayerClassDefinition? playerClass = null,
     DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
-    AuthoritativeItemCatalog? items = null)
+    AuthoritativeItemCatalog? items = null,
+    int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute)
 {
     public uint Gold { get; set; } = gold;
 
@@ -383,6 +384,10 @@ public sealed class AuthoritativePlayerState(
 
     public PlayerAttributesState Attributes { get; set; } = attributes;
 
+    /** Active content-owned ceiling for equipment-derived primary attributes. */
+    public int MaximumAttribute { get; private set; } =
+        AuthoritativeEquipmentAttributeRules.ValidateMaximumAttribute(maximumAttribute);
+
     private AuthoritativeEquipmentAttributeBonuses AppliedEquipmentAttributeBonuses { get; set; }
 
     public List<EquippedStoreItem> Equipment { get; } = equipment.ToList();
@@ -428,8 +433,19 @@ public sealed class AuthoritativePlayerState(
         Attributes = AuthoritativeEquipmentAttributeRules.Apply(
             Attributes,
             Equipment,
-            AppliedEquipmentAttributeBonuses);
+            AppliedEquipmentAttributeBonuses,
+            MaximumAttribute);
         AppliedEquipmentAttributeBonuses = AuthoritativeEquipmentAttributeRules.ResolveBonuses(Equipment);
+    }
+
+    /** Applies the simulation's active attribute ceiling to this mutable state. */
+    internal void ConfigureMaximumAttribute(int maximumAttribute)
+    {
+        maximumAttribute = AuthoritativeEquipmentAttributeRules.ValidateMaximumAttribute(maximumAttribute);
+        if (MaximumAttribute == maximumAttribute)
+            return;
+        MaximumAttribute = maximumAttribute;
+        RecalculateEquipmentAttributes();
     }
 
     /** Aligns attribute bookkeeping with a serialized equipment/attribute pair. */

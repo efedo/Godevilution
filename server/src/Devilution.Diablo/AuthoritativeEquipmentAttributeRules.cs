@@ -12,16 +12,27 @@ public readonly record struct AuthoritativeEquipmentAttributeBonuses(
 
 public static class AuthoritativeEquipmentAttributeRules
 {
-    private const int NativeMaximumAttribute = 750;
+    /** Native maximum primary attribute retained as the compatibility default. */
+    public const int NativeMaximumAttribute = 750;
+
+    /** Validates one content-owned primary-attribute ceiling. */
+    public static int ValidateMaximumAttribute(int maximumAttribute)
+    {
+        if (maximumAttribute is < 1 or > 10_000)
+            throw new InvalidDataException("Maximum primary attribute tuning is invalid.");
+        return maximumAttribute;
+    }
 
     /** Applies requirement-qualified, identified item attribute bonuses. */
     public static PlayerAttributesState Apply(
         PlayerAttributesState baseAttributes,
         IEnumerable<EquippedStoreItem> equipment,
-        AuthoritativeEquipmentAttributeBonuses previousBonuses = default)
+        AuthoritativeEquipmentAttributeBonuses previousBonuses = default,
+        int maximumAttribute = NativeMaximumAttribute)
     {
         ArgumentNullException.ThrowIfNull(baseAttributes);
         ArgumentNullException.ThrowIfNull(equipment);
+        maximumAttribute = ValidateMaximumAttribute(maximumAttribute);
 
         var bonuses = ResolveBonuses(equipment);
 
@@ -29,22 +40,26 @@ public static class AuthoritativeEquipmentAttributeRules
             baseAttributes.Strength with {
                 Current = AddAndClamp(
                     baseAttributes.Strength.Current - previousBonuses.Strength,
-                    bonuses.Strength),
+                    bonuses.Strength,
+                    maximumAttribute),
             },
             baseAttributes.Magic with {
                 Current = AddAndClamp(
                     baseAttributes.Magic.Current - previousBonuses.Magic,
-                    bonuses.Magic),
+                    bonuses.Magic,
+                    maximumAttribute),
             },
             baseAttributes.Dexterity with {
                 Current = AddAndClamp(
                     baseAttributes.Dexterity.Current - previousBonuses.Dexterity,
-                    bonuses.Dexterity),
+                    bonuses.Dexterity,
+                    maximumAttribute),
             },
             baseAttributes.Vitality with {
                 Current = AddAndClamp(
                     baseAttributes.Vitality.Current - previousBonuses.Vitality,
-                    bonuses.Vitality),
+                    bonuses.Vitality,
+                    maximumAttribute),
             });
     }
 
@@ -70,8 +85,8 @@ public static class AuthoritativeEquipmentAttributeRules
         return new(strength, magic, dexterity, vitality);
     }
 
-    private static int AddAndClamp(int baseValue, int bonus)
+    private static int AddAndClamp(int baseValue, int bonus, int maximumAttribute)
     {
-        return Math.Clamp(checked(baseValue + bonus), 0, NativeMaximumAttribute);
+        return Math.Clamp(checked(baseValue + bonus), 0, maximumAttribute);
     }
 }
