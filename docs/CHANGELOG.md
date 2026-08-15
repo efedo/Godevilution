@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh the 22 tracked replay fixtures to the current base and Hellfire
+  content-manifest identities, restoring the complete server replay gate.
+
 - Restore the native `AiRangedAvoidance` round-walk fallback for failed or
   blocked ranged rolls, preventing generic pursuit from replacing native
   lateral movement.
