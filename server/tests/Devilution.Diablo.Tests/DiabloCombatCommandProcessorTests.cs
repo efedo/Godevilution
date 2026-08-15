@@ -6612,6 +6612,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiDefersWhenItsSkeletonMovementCandidatesAreBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 41, 42],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 14 ^ 7 = 37, outside SkeletonAi's native 35-point delay
+        // band. Every native RandomWalk candidate is blocked.
+        processor.AdvanceTick(40, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MegaAiFallsBackWhenItsInfernoLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

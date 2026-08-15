@@ -5149,13 +5149,8 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var next = AuthoritativeMonsterNavigation.FindStep(
-            world,
-            monster,
-            victim,
-            players);
-        if (next.HasValue)
-            monster.BeginMovement(next.Value.X, next.Value.Y);
+        // Native MegaAi delegates to SkeletonAi here; a blocked RandomWalk
+        // consumes the tick rather than invoking bounded generic navigation.
         return true;
     }
 
