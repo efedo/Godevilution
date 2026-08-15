@@ -7007,19 +7007,87 @@ public sealed class DiabloCombatCommandProcessor
         bool useRoundWalk,
         int roundWalkTurn = -1)
     {
-        var movement = useRoundWalk
-            ? FindNativeRoundWalkStep(
+        (int X, int Y)? movement;
+        if (useRoundWalk && roundWalkTurn is 0 or 1) {
+            movement = FindNativeRangedAvoidanceRoundWalkStep(
                 monster,
                 player,
                 players,
                 seed,
-                roundWalkTurn is 0 or 1 ? roundWalkTurn : null)
-            : FindNativeRandomWalkStep(monster, player, players, seed);
+                roundWalkTurn,
+                out var nextTurn);
+            monster.UpdateRangedAvoidanceTurn(nextTurn);
+        } else {
+            movement = FindNativeRandomWalkStep(monster, player, players, seed);
+        }
         if (!movement.HasValue)
             return false;
 
         monster.BeginMovement(movement.Value.X, movement.Value.Y);
         return true;
+    }
+
+    /** Native AiRangedAvoidance RoundWalk, including its goalVar2 flip. */
+    private (int X, int Y)? FindNativeRangedAvoidanceRoundWalkStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed,
+        int turnState,
+        out int nextTurnState)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var turn = turnState == 0 ? 1 : -1;
+        var turn45 = RotateDirection(direction, turn);
+        var turn90 = RotateDirection(turn45, turn);
+        var primaryDirections = new[] { turn90, turn45, direction };
+        foreach (var candidateDirection in primaryDirections) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId)) {
+                nextTurnState = turnState;
+                return (candidateX, candidateY);
+            }
+        }
+
+        // Native RoundWalk flips goalVar2 before calling RandomWalk in the
+        // opposite direction. Keep the deterministic fallback order shared
+        // with the existing RoundWalk approximation.
+        nextTurnState = turnState == 0 ? 1 : 0;
+        var fallbackDirection = RotateDirection(turn90, 4);
+        var fallbackTurn = (seed / 200U) % 2U == 0U ? 1 : -1;
+        var fallbackDirections = new[] {
+            fallbackDirection,
+            RotateDirection(fallbackDirection, fallbackTurn),
+            RotateDirection(fallbackDirection, -fallbackTurn),
+            RotateDirection(fallbackDirection, 2),
+            RotateDirection(fallbackDirection, -2),
+        };
+        foreach (var candidateDirection in fallbackDirections) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
     }
 
     private bool IsNativeRangedAvoidanceDirectionAvailable(

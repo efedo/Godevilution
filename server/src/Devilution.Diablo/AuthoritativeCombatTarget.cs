@@ -577,6 +577,13 @@ public sealed class AuthoritativeCombatTarget
         RangedAvoidanceTurn = 0;
     }
 
+    internal void UpdateRangedAvoidanceTurn(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RangedAvoidanceTurn = turn;
+    }
+
     internal void StartCounselorRetreat(int ticks)
     {
         if (ticks is < 1 or > 64)

@@ -7739,6 +7739,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceFlipsItsNativeTurnStateAfterBlockedRoundWalk()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            rangedAvoidanceMoveTicks: 0,
+            rangedAvoidanceTurn: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [206, 245, 246],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // The primary southeast, south, and east candidates are blocked.
+        // Native RoundWalk tries its opposite-side RandomWalk and flips
+        // goalVar2 before selecting north.
+        processor.AdvanceTick(5_000, [player]);
+
+        Assert.Equal((5, 4), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(1, monster.RangedAvoidanceTurn);
+        Assert.Equal(1, monster.RangedAvoidanceMoveTicks);
+    }
+
+    [Fact]
     public void RangedAvoidanceUsesConfiguredDistanceBoundary()
     {
         var monster = new AuthoritativeCombatTarget(
