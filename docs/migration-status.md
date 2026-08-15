@@ -1298,6 +1298,10 @@ Status date: 2026-08-15
   Gharbad, Zhar, Warlord, and Lazarus defeat quests. Server-owned completion
   uses exact unique identities; encounter placement, dialogue, and rewards
   remain incremental.
+- A shared `TalkToQuest` intent now validates a living adjacent unique target
+  against the quest's configured completion identity, activates/logs the quest,
+  and emits a typed server-owned dialogue event with the content message ID;
+  localized text and unique encounter placement remain incremental.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.

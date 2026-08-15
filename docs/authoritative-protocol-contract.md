@@ -127,6 +127,12 @@ creates the world item with the same item seed, price, and complete state. A
 retry cannot duplicate the item because normal command deduplication and the
 following snapshot remain authoritative.
 
+`TalkToQuestRequested` is the additive command at field 30. It names a stable
+quest ID and target entity ID; the server requires a living adjacent unique
+encounter whose validated identity matches the quest's completion identity.
+Accepted dialogue activates and logs the quest and emits a `DialogueEvent`;
+clients do not choose message text or mutate quest state.
+
 ## State, Events, and Persistence
 
 `Snapshot` is a complete projection for the receiving session. The server owns
@@ -144,9 +150,12 @@ entity ID, so receiver-relative player ordering cannot change the hash. The
 snapshot remains a per-session projection: receiver-scoped fields such as the
 singular active-store view may legitimately produce a different overall hash.
 
-`EventBatch` contains presentation-friendly deltas such as damage, healing, and
-experience. Events are not a second source of truth. A reconnect or dropped
-event cannot invalidate the next snapshot.
+`EventBatch` contains presentation-friendly deltas such as damage, healing,
+experience, and validated quest dialogue. `DialogueEvent` carries the source
+player, unique encounter entity, quest identity, and content-owned message ID;
+it does not carry localized text or mutable quest state. Events are not a second
+source of truth. A reconnect or dropped event cannot invalidate the next
+snapshot.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are
