@@ -51,6 +51,10 @@ All notable changes to this fork are documented below.
   terminal simulation state and emits a typed `VictoryEvent` with the boss
   identity and single-player hero rank for protocol clients.
 
+- Enforce the native post-victory terminal boundary: once Diablo is defeated,
+  later player intents are rejected server-side and autonomous simulation ticks
+  no longer advance gameplay state.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a

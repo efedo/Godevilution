@@ -764,9 +764,9 @@ Status date: 2026-08-15
 
 - Native Diablo defeat now also sets a server-owned terminal victory flag,
   persists it through the transport-neutral snapshot and version-1 save
-  boundary, includes it in canonical hashes, and emits a typed protocol event;
-  cinematic playback and broader post-victory world shutdown remain client and
-  host presentation work.
+  boundary, includes it in canonical hashes, emits a typed protocol event, and
+  rejects later player intents or autonomous gameplay ticks; cinematic
+  playback and broader post-victory presentation remain client work.
 
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
