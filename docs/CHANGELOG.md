@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.147 optional item presentation metadata. Normalized and legacy
+  item definitions now project validated base and identified names through the
+  authoritative item state and existing protocol fields, with legacy tables
+  retaining their native-name fallback.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
