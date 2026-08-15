@@ -54,7 +54,8 @@ public sealed class AuthoritativeCombatRules
         int monsterMagicToHitMonsterLevelScale = 2,
         int monsterMagicToHitPlayerLevelScale = 2,
         int monsterMagicToHitBaseBonus = 40,
-        int monsterMagicDistancePenalty = 2)
+        int monsterMagicDistancePenalty = 2,
+        int monsterChargeBaseToHit = 500)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -77,6 +78,9 @@ public sealed class AuthoritativeCombatRules
             || monsterMagicToHitBaseBonus is < 0 or > 255
             || monsterMagicDistancePenalty is < 0 or > 64) {
             throw new InvalidDataException("Monster magic accuracy formula tuning is invalid.");
+        }
+        if (monsterChargeBaseToHit is < 0 or > 1000) {
+            throw new InvalidDataException("Monster charge accuracy tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -149,6 +153,7 @@ public sealed class AuthoritativeCombatRules
         MonsterMagicToHitPlayerLevelScale = monsterMagicToHitPlayerLevelScale;
         MonsterMagicToHitBaseBonus = monsterMagicToHitBaseBonus;
         MonsterMagicDistancePenalty = monsterMagicDistancePenalty;
+        MonsterChargeBaseToHit = monsterChargeBaseToHit;
     }
 
     public int BaseAttackDamage { get; }
@@ -241,6 +246,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native per-tile accuracy penalty for monster magic projectiles. */
     public int MonsterMagicDistancePenalty { get; }
+
+    /** Native base to-hit value passed to a monster Snake charge attack. */
+    public int MonsterChargeBaseToHit { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -401,6 +409,27 @@ public sealed class AuthoritativeCombatRules
         return Math.Clamp(hitChance, 0, 100);
     }
 
+    /** Resolves the native special-hit admission chance for a Snake charge. */
+    public int ResolveMonsterChargeHitChance(
+        int monsterLevel,
+        uint targetCharacterLevel,
+        uint targetLevelId,
+        int targetArmorClass)
+    {
+        if (monsterLevel < 0 || targetArmorClass < 0)
+            throw new ArgumentOutOfRangeException(nameof(monsterLevel));
+
+        var levelDelta = checked(
+            MonsterToHitLevelScale * (monsterLevel - checked((int)targetCharacterLevel)));
+        var hitChance = Math.Max(
+            ResolveMonsterMinimumHitChance(targetLevelId, MonsterMeleeMinimumHitChance),
+            checked(MonsterChargeBaseToHit
+                + levelDelta
+                + MonsterToHitBaseBonus
+                - targetArmorClass));
+        return Math.Clamp(hitChance, 0, 100);
+    }
+
     /** Resolves the native hit roll independently from post-armor damage. */
     public bool ResolveAttackHit(int hitChancePercent, uint seed)
     {
@@ -525,7 +554,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monster_magic_to_hit_monster_level_scale", 2),
             row.OptionalInt32("monster_magic_to_hit_player_level_scale", 2),
             row.OptionalInt32("monster_magic_to_hit_base_bonus", 40),
-            row.OptionalInt32("monster_magic_distance_penalty", 2));
+            row.OptionalInt32("monster_magic_distance_penalty", 2),
+            row.OptionalInt32("monster_charge_base_to_hit", 500));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

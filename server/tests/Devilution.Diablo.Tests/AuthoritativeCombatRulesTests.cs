@@ -56,9 +56,9 @@ public sealed class AuthoritativeCombatRulesTests
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
-            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\tmonster_magic_minimum_hit_chance\tmonster_magic_to_hit_monster_level_scale\tmonster_magic_to_hit_player_level_scale\tmonster_magic_to_hit_base_bonus\tmonster_magic_distance_penalty\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\thellfire_armor_bonus_against_demons\thellfire_armor_bonus_against_undead\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t55\t6\t7\t45\t8\t10\t7\t9\t11\t13\t17\t19\n");
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tmonster_melee_minimum_hit_chance\tmonster_ranged_minimum_hit_chance\tmonster_minimum_hit_chance_level_14\tmonster_minimum_hit_chance_level_15\tmonster_minimum_hit_chance_level_16\tmonster_to_hit_level_scale\tmonster_to_hit_base_bonus\tmonster_ranged_distance_penalty\tmonster_magic_minimum_hit_chance\tmonster_magic_to_hit_monster_level_scale\tmonster_magic_to_hit_player_level_scale\tmonster_magic_to_hit_base_bonus\tmonster_magic_distance_penalty\tmonster_charge_base_to_hit\trandom_steal_life_divisor\tsteal_life_3_percent\tsteal_life_5_percent\tsteal_mana_3_percent\tsteal_mana_5_percent\thellfire_armor_bonus_against_demons\thellfire_armor_bonus_against_undead\n10\t1\t100\t50\t60\t70\t80\t90\t3\t40\t5\t55\t6\t7\t45\t8\t501\t10\t7\t9\t11\t13\t17\t19\n");
 
-        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 55, 6, 7, 45, 8, 10, 7, 9, 11, 13, 17, 19), (
+        Assert.Equal((50, 60, 70, 80, 90, 3, 40, 5, 55, 6, 7, 45, 8, 501, 10, 7, 9, 11, 13, 17, 19), (
             rules.MonsterMeleeMinimumHitChance,
             rules.MonsterRangedMinimumHitChance,
             rules.MonsterMinimumHitChanceLevel14,
@@ -72,6 +72,7 @@ public sealed class AuthoritativeCombatRulesTests
             rules.MonsterMagicToHitPlayerLevelScale,
             rules.MonsterMagicToHitBaseBonus,
             rules.MonsterMagicDistancePenalty,
+            rules.MonsterChargeBaseToHit,
             rules.RandomStealLifeDivisor,
             rules.StealLife3Percent,
             rules.StealLife5Percent,
@@ -124,6 +125,13 @@ public sealed class AuthoritativeCombatRulesTests
                 targetCharacterLevel: 1,
                 targetLevelId: 14,
                 distance: 100));
+        Assert.Equal(
+            50,
+            rules.ResolveMonsterChargeHitChance(
+                monsterLevel: 3,
+                targetCharacterLevel: 1,
+                targetLevelId: 1,
+                targetArmorClass: 500));
     }
 
     [Fact]
@@ -232,6 +240,24 @@ public sealed class AuthoritativeCombatRulesTests
                 targetCharacterLevel: 1,
                 targetLevelId: 14,
                 distance: 100));
+        Assert.Equal(
+            28,
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMeleeMinimumHitChance: 0,
+                monsterMinimumHitChanceLevel14: 0,
+                monsterMinimumHitChanceLevel15: 0,
+                monsterMinimumHitChanceLevel16: 0,
+                monsterToHitLevelScale: 3,
+                monsterToHitBaseBonus: 4,
+                monsterChargeBaseToHit: 20)
+                .ResolveMonsterChargeHitChance(
+                    monsterLevel: 3,
+                    targetCharacterLevel: 1,
+                    targetLevelId: 1,
+                    targetArmorClass: 2));
     }
 
     [Fact]
@@ -253,6 +279,11 @@ public sealed class AuthoritativeCombatRulesTests
             1,
             100,
             monsterMagicToHitBaseBonus: 256));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            monsterChargeBaseToHit: 1001));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeCombatRules(
             10,
             1,

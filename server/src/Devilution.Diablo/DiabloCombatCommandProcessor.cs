@@ -8079,20 +8079,12 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
-        var minimumHitChance = target.LevelId switch {
-            14 => 20,
-            15 => 25,
-            16 => 30,
-            _ => 15,
-        };
-        var hitChance = Math.Max(
-            minimumHitChance,
-            500
-                + (2 * monster.MonsterLevel)
-                - (2 * checked((int)target.CharacterLevel))
-                + 30
-                - armorClass);
-        if (random.RandomIntLessThan(100) >= Math.Clamp(hitChance, 0, 100))
+        var hitChance = rules.ResolveMonsterChargeHitChance(
+            monster.MonsterLevel,
+            target.CharacterLevel,
+            target.LevelId,
+            armorClass);
+        if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
         var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand

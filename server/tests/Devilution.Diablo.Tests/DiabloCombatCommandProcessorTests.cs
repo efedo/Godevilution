@@ -4088,6 +4088,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeChargeUsesConfiguredSpecialHitAdmissionFormula()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMeleeMinimumHitChance: 0,
+                monsterMinimumHitChanceLevel14: 0,
+                monsterMinimumHitChanceLevel15: 0,
+                monsterMinimumHitChanceLevel16: 0,
+                monsterToHitLevelScale: 0,
+                monsterToHitBaseBonus: 0,
+                monsterChargeBaseToHit: 0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void SnakeChargeDispatchUsesMappedProjectileBehaviorInsteadOfNativeAiLabel()
     {
         var monster = new AuthoritativeCombatTarget(
