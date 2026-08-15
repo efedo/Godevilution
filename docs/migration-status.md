@@ -268,6 +268,10 @@ Status date: 2026-08-14
   impact value when declared; omitted values retain behavior-specific/native
   damage derivation.
 
+- Schema 1.164 adds optional `maximum_resistance` metadata to `combat.tsv`.
+  Active player elemental resistance calculations now use the validated cap;
+  direct legacy resistance callers retain the native 75-percent default.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

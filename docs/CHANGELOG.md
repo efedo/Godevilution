@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.164 optional `combat.tsv` `maximum_resistance` metadata. Active
+  player elemental resistance now uses the validated cap, while direct legacy
+  resistance callers retain the native 75-percent default.
 - Add schema 1.163 optional `monster_missiles.tsv` `projectile_damage`
   metadata. Mapped monster projectiles now consume content-owned fixed impact
   damage when declared, while omitted values retain native damage derivation.

@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.163.0` schema in
+It declares its identity and `devilution.diablo@1.164.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1398,7 +1398,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.163.0"
+      "version": "1.164.0"
   },
   "dependencyConstraints": [
     {
@@ -1430,7 +1430,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.163.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.164.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1765,6 +1765,10 @@ Schema 1.163 adds the optional `projectile_damage` column to
 impact value when present; omitted values retain behavior-specific/native
 damage derivation. The checked-in Diablo Apocalypse mapping declares its native
 40-point impact explicitly.
+
+Schema 1.164 adds the optional `maximum_resistance` column to `combat.tsv`.
+Active player elemental resistance calculations use the validated cap; omitted
+values retain the native 75-percent default for compatibility callers.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
