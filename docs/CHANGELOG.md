@@ -38,6 +38,11 @@ All notable changes to this fork are documented below.
   the configured square in native traversal order and keeps the first visible
   corpse instead of choosing the nearest tile.
 
+- Preserve Bat's native movement admissions: server-owned `var1`/`var2`
+  movement state now distinguishes the long-idle `intelligence + 13` band from
+  the fresh-mode `intelligence + 63` band and persists through snapshots;
+  ordinary Bat movement no longer requires a charge-missile mapping.
+
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.

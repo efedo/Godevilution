@@ -151,6 +151,12 @@ Status date: 2026-08-15
   migrated Bat tuning. A standalone validated retreat duration composes the
   native 8/4 attack defaults instead of being ignored.
 
+- Bat movement now preserves native `var1`/`var2` admission state: long-idle
+  ticks use the `intelligence + 13` band, fresh movement modes use the
+  `intelligence + 63` band, and both counters cross snapshots, saves, protocol,
+  and canonical hashes. Ordinary Bat identities reach this movement boundary
+  even when no optional charge-missile mapping is present.
+
 - Gargoyle safety, wounded-health, and healing-formula behavior now use
   validated tuning independent of the row's native-AI label; rows without
   migrated tuning retain the native-name compatibility path, while the

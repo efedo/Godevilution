@@ -256,6 +256,13 @@ the victim captured when the retreat began. The server applies the native
 `4 * intelligence + 8` adjacent-attack admission and performs the two-step
 retreat; clients render only the authoritative state.
 
+`MonsterSnapshot` fields 56-57 carry Bat's server-owned native `var2`/`var1`
+movement counters. Long-idle ticks use the `intelligence + 13` admission, while
+a fresh movement mode with `var2 == 0` uses `intelligence + 63`; clients render
+the counters and never resolve these AI branches.
+The movement boundary is also server-owned for ordinary Bat identities without
+an optional charge-missile mapping; clients never substitute generic pursuit.
+
 `MonsterSnapshot.counselor_retreat_ticks` field 55 carries the remaining native
 Counselor wounded-adjacent retreat attempts. The server applies the four
 opposite-direction `RandomWalk` attempts before resuming mapped ranged

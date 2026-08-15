@@ -373,6 +373,9 @@ Windows toolchain command.
 - `MonsterSnapshot` fields 52-53 carry server-owned Bat retreat steps and its
   attack direction. The server owns Bat attack admission and retreat movement;
   clients render the resulting snapshot without executing the AI.
+- `MonsterSnapshot` fields 56-57 carry the server-owned native Bat movement
+  counters corresponding to `var2` and `var1`; clients render these values but
+  never resolve Bat movement admissions.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

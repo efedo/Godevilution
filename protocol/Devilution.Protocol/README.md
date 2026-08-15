@@ -14,6 +14,9 @@ native AI behavior. Sneak hidden state and retreat countdown are likewise
 server-owned fields 48-49. Corpse snapshots and Scavenger healing state are
 server-owned fields 12 and 50-51. Bat retreat steps and attack direction are
 server-owned fields 52-53; clients render the state and never execute Bat AI.
+Native Bat movement counters corresponding to `var2` and `var1` are carried by
+server-owned fields 56-57; clients render the state and never resolve Bat
+movement admissions.
 Live snapshots may also carry additive `level_geometry` projections. These
 dimensions and blocked-cell lists come from the active server content pack;
 save snapshots omit them because static geometry is ruleset content, not
