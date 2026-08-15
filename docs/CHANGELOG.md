@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.160 optional `combat.tsv` monster magic-projectile accuracy
+  metadata. Monster-owned magic projectiles now use validated base, level, and
+  distance terms for player-hit admission while legacy definitions retain the
+  native 10/2/2/40/2 formula.
 - Add schema 1.159 optional `spells.tsv` Town Portal placement and lifetime
   metadata. Authoritative portal creation now consumes the validated crawl
   radius and expiry ticks while direct legacy world-command callers retain

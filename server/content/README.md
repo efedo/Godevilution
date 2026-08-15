@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.159.0` schema in
+It declares its identity and `devilution.diablo@1.160.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -270,6 +270,13 @@ The `monster_to_hit_level_scale`, `monster_to_hit_base_bonus`, and
 `monster_ranged_distance_penalty` columns externalize the remaining native
 monster accuracy formula terms; legacy rows retain the 2/30/2 compatibility
 values.
+The `monster_magic_minimum_hit_chance`,
+`monster_magic_to_hit_monster_level_scale`,
+`monster_magic_to_hit_player_level_scale`,
+`monster_magic_to_hit_base_bonus`, and `monster_magic_distance_penalty`
+columns externalize the native monster-owned magic-projectile admission
+formula; legacy rows retain the 10/2/2/40/2 compatibility values. The
+level-specific floors remain shared with ordinary monster attacks.
 The `random_steal_life_divisor`, `steal_life_3_percent`,
 `steal_life_5_percent`, `steal_mana_3_percent`, and
 `steal_mana_5_percent` columns externalize post-hit equipment resource gains;
@@ -1391,7 +1398,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.159.0"
+      "version": "1.160.0"
   },
   "dependencyConstraints": [
     {
@@ -1423,7 +1430,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.159.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.160.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1737,6 +1744,11 @@ Schema 1.159 adds the optional `town_portal_search_radius` and
 `town_portal_lifetime` columns to `spells.tsv`. Town Portal uses the validated
 crawl radius and expiry ticks; omitted values retain five tiles and 100 ticks
 for direct legacy world-command callers.
+
+Schema 1.160 adds optional monster magic-projectile accuracy columns to
+`combat.tsv`. Monster-owned magic projectiles now use validated base, level,
+and distance terms for player-hit admission; omitted values retain the native
+10/2/2/40/2 compatibility formula.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
