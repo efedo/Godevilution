@@ -23,6 +23,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.152 optional item `drop_rate` metadata. Normalized and legacy
   item catalogs now retain native weighted random-drop rates, including zero
   values that exclude an item from selection.
+- Add schema 1.153 optional item `usable` metadata. The authoritative
+  consumable source gate now honors explicit native iUsable values while
+  retaining compatibility fallback when the field is absent.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
