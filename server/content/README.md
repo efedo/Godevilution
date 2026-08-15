@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.219.0` schema in
+It declares its identity and `devilution.diablo@1.220.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1205,7 +1205,9 @@ server persists the active state and all channels.
 binds a stable trigger to a source level and an authored destination level and
 tile. Activation validates both levels and all coordinates; runtime selection
 is nearest-trigger first, then stable warp ID, with the native five-cell
-destination crawl applied by the server.
+destination crawl applied by the server. Optional quest-gate columns keep
+native entrances such as the Hellfire crypt closed until their linked quest is
+completed.
 
 The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell
@@ -1478,7 +1480,7 @@ the complete target header even when they upsert only one row.
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
-| `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell. |
+| `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id` and `required_quest_completed` gates. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
@@ -1521,7 +1523,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.219.0"
+      "version": "1.220.0"
   },
   "dependencyConstraints": [
     {
@@ -1553,7 +1555,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.219.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.220.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2107,3 +2109,6 @@ Cathedral Map activates Grave Matters and sets its native first quest variable.
 Schema 1.219 adds the `QuestItemCompletion` object effect. The Hellfire grave
 object consumes the server-owned Cathedral Map and completes Grave Matters
 through the existing authoritative object-interaction path.
+Schema 1.220 adds optional quest gates to `warps.tsv`; the Hellfire crypt
+entrance is now a server-owned trigger that remains closed until Grave Matters
+is completed.

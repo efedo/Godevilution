@@ -33,6 +33,10 @@ All notable changes to this fork are documented below.
   Grave Matters server-side, including content-defined completion variables and
   follow-on quest activation.
 
+- Externalize the Hellfire crypt entrance as a quest-gated server warp. The
+  native town trigger remains closed until Grave Matters is completed, then
+  uses the authored crypt destination and validated destination crawl.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
