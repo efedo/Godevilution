@@ -6170,6 +6170,104 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiUsesNativeRandomWalkAfterAnIntermediateInfernoMiss()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 5,
+                    InfernoAdjacentChanceBase: 40,
+                    InfernoAdjacentChanceIntelligenceScale: 10,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 1,
+                    InfernoRangedChanceIntelligenceScale: 1,
+                    InfernoRangedFarIntelligenceOffset: 1,
+                    InfernoAdjacentChoiceModulo: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 14 ^ 7 = 8: the one-percent Inferno roll misses, while the
+        // native 50-percent RandomWalk fallback admits its first candidate.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MegaAiDefersAfterAnIntermediateInfernoMissWhenRandomWalkRollFails()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 5,
+                    InfernoAdjacentChanceBase: 40,
+                    InfernoAdjacentChanceIntelligenceScale: 10,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 1,
+                    InfernoRangedChanceIntelligenceScale: 1,
+                    InfernoRangedFarIntelligenceOffset: 1,
+                    InfernoAdjacentChoiceModulo: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5100 ^ 14 ^ 7 = 5109: the second native 50-percent movement roll
+        // misses, so the server must defer instead of generic-pursuing.
+        processor.AdvanceTick(5100, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MegaAiUsesSkeletonMovementBeyondItsInfernoRange()
     {
         var nativeWorld = new AuthoritativeWorld();

@@ -5157,6 +5157,34 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    /** Native Mega normal-state fallback after an Inferno admission miss. */
+    private bool TryAdvanceMegaIntermediateMovement(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed,
+        int distance)
+    {
+        if (!UsesNativeAi(monster, "Mega") || distance < 2)
+            return false;
+
+        var movementChance = Math.Min(
+            100,
+            2 * (5 * monster.Intelligence + 25));
+        if ((seed / 100U) % 100U >= (uint)movementChance)
+            return false;
+
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            player,
+            players,
+            seed);
+        if (!randomWalk.HasValue)
+            return false;
+        monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+        return true;
+    }
+
     /** Native Counselor wounded-adjacent retreat persists its four RandomWalk attempts. */
     private bool TryAdvanceCounselorAi(
         AuthoritativeCombatTarget monster,
@@ -6462,8 +6490,21 @@ public sealed class DiabloCombatCommandProcessor
                             + (distance >= infernoTuning.RangedFarDistance
                                 ? infernoTuning.RangedFarIntelligenceOffset
                                 : 0)));
-                if (attackSeed % 100U >= (uint)Math.Min(100, attackBand))
+                if (attackSeed % 100U >= (uint)Math.Min(100, attackBand)) {
+                    // MegaAi's normal branch may RandomWalk after a missed
+                    // Inferno roll. Consume that branch here so the target
+                    // does not fall through to generic pursuit.
+                    if (UsesNativeAi(monster, "Mega")) {
+                        TryAdvanceMegaIntermediateMovement(
+                            monster,
+                            player,
+                            players,
+                            attackSeed,
+                            distance);
+                        return true;
+                    }
                     return false;
+                }
             }
         } else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance) {
             // Legacy rows retain the native AiRangedAvoidance values while
@@ -6557,6 +6598,16 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed);
+                return true;
+            }
+            if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
+                && UsesNativeAi(monster, "Mega")) {
+                TryAdvanceMegaIntermediateMovement(
+                    monster,
+                    player,
+                    players,
+                    attackSeed,
+                    distance);
                 return true;
             }
             return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
