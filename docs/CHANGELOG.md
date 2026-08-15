@@ -23,6 +23,12 @@ All notable changes to this fork are documented below.
   authoritative snapshots, optional protocol fields 58-59, saves, and the
   canonical state hash; resumed Move goals continue server-side.
 
+- Preserve native `AiRangedAvoidance` ordinary movement admissions: the server
+  now carries its `var1`/`var2`-compatible mode counter, applies the long-idle,
+  fresh-mode, and middle-band `RandomWalk` probabilities, and persists that
+  state through optional protocol fields 66-67, snapshots, saves, and the
+  canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` `goalVar2` mutation when all primary
   `RoundWalk` candidates are blocked; the server flips the turn state before
   its opposite-side `RandomWalk` fallback.

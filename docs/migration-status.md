@@ -196,6 +196,12 @@ Status date: 2026-08-15
   server-owned and persisted through snapshots, optional protocol fields
   58-59, saves, and the canonical state hash.
 
+- Native `AiRangedAvoidance` ordinary `RandomWalk` movement now preserves its
+  `var1`/`var2`-compatible mode counter. Long-idle, fresh-mode, and middle-band
+  admissions are server-owned and persist through snapshots, optional protocol
+  fields 66-67, saves, and canonical hashes; far-distance `RoundWalk` goals
+  remain on fields 58-59.
+
 - Native `AiRangedAvoidance` now flips persisted `goalVar2` when its primary
   `RoundWalk` candidates are blocked, matching the native opposite-side
   `RandomWalk` fallback on the next authoritative state.

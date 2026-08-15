@@ -392,6 +392,10 @@ Windows toolchain command.
   `AiAvoidance` `var2`-compatible idle counter and `var1`-compatible movement
   value. Older peers may omit them; clients never execute ordinary movement
   admissions.
+- Optional `MonsterSnapshot` fields 66-67 carry the server-owned native
+  `AiRangedAvoidance` `var2`-compatible idle counter and `var1`-compatible
+  movement value. Older peers may omit them; clients never execute ordinary
+  `RandomWalk` admissions.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

@@ -289,6 +289,12 @@ server applies the native long-idle, fresh-mode, and middle-band ordinary
 movement admissions for `GoatMelee` and `Gargoyle`; older peers may omit these
 fields and clients never execute the AI.
 
+Optional `MonsterSnapshot` fields 66-67 carry the native
+`AiRangedAvoidance` `var2`-compatible idle counter and `var1`-compatible
+movement value. The server applies the native long-idle, fresh-mode, and
+middle-band ordinary `RandomWalk` admissions; older peers may omit these
+fields, while far-distance `RoundWalk` goal state remains in fields 58-59.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.
