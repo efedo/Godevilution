@@ -257,6 +257,11 @@ Status date: 2026-08-15
   before suppressing generic pursuit. Adjacent ticks remain available to the
   shared melee boundary.
 
+- SkeletonRanged blocked arrow lanes now retain the native `SkeletonBowAi`
+  defer at long range. The server does not replace a missing clear lane with
+  generic pursuit; its validated close-range retreat branch remains evaluated
+  before that no-op.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

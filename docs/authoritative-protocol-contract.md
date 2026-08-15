@@ -291,6 +291,8 @@ the unchanged authoritative snapshot.
 The `SkeletonRanged` identity drives a server-owned clear-lane arrow boundary
 using the native `3 + 2 * intelligence` attack band. Its resolved damage is an
 ordinary directed gameplay event; clients do not perform the hit roll.
+When the lane is blocked at long range, the server preserves the native
+defer rather than delegating pursuit to the client or generic navigation.
 
 The `GoatRanged` identity drives the shared native `AiRanged` boundary. On a
 clear missile lane it emits the server-resolved arrow damage event; inside four
