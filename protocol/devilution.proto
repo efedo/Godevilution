@@ -551,6 +551,10 @@ message MonsterSnapshot {
 	optional int32 skeleton_ranged_movement_idle_ticks = 69;
 	// Native SkeletonBow var1-compatible movement value.
 	optional int32 skeleton_ranged_movement_mode = 70;
+	// Native OverlordAi var2-compatible movement counter.
+	optional int32 fat_movement_idle_ticks = 71;
+	// Native OverlordAi var1-compatible movement value.
+	optional int32 fat_movement_mode = 72;
 }
 
 message WorldItemSnapshot {

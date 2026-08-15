@@ -302,6 +302,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsFatMovementCounterStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "Fat",
+                FatMovementIdleTicks = 10,
+                FatMovementMode = 1,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((10, 1), (
+            monster.FatMovementIdleTicks,
+            monster.FatMovementMode));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsCounselorRetreatStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

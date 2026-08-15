@@ -4204,6 +4204,66 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FatAiUsesItsNativeFreshMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "Fat",
+            intelligence: 0,
+            fatMovementIdleTicks: 0,
+            fatMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 2,000 ^ 9 ^ 7 = 2,014: movement roll 20 is outside the long-idle
+        // 20% band but inside the fresh-mode 70% band.
+        processor.AdvanceTick(2_000, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.FatMovementIdleTicks);
+    }
+
+    [Fact]
+    public void FatAiDefersInsideItsNativeMiddleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            nativeAi: "Fat",
+            intelligence: 0,
+            fatMovementIdleTicks: 10,
+            fatMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(2_000, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.FatMovementIdleTicks);
+    }
+
+    [Fact]
     public void FatAiDefersWhenItsNativeRandomWalkCandidatesAreBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

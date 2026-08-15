@@ -160,6 +160,12 @@ public sealed record DiabloMonsterState(
     /** Native SkeletonBow var1-compatible movement value. */
     public int SkeletonRangedMovementMode { get; init; }
 
+    /** Native OverlordAi var2-compatible movement counter. */
+    public int FatMovementIdleTicks { get; init; } = -1;
+
+    /** Native OverlordAi var1-compatible movement value. */
+    public int FatMovementMode { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -467,6 +473,8 @@ public sealed partial class DiabloSimulation
                     SkeletonMeleeDelayTicks = target.SkeletonMeleeDelayTicks,
                     SkeletonRangedMovementIdleTicks = target.SkeletonRangedMovementIdleTicks,
                     SkeletonRangedMovementMode = target.SkeletonRangedMovementMode,
+                    FatMovementIdleTicks = target.FatMovementIdleTicks,
+                    FatMovementMode = target.FatMovementMode,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -760,6 +768,8 @@ public sealed partial class DiabloSimulation
                 || monster.SkeletonMeleeDelayTicks is < 0 or > 1024
                 || monster.SkeletonRangedMovementIdleTicks is < -1 or > 1024
                 || monster.SkeletonRangedMovementMode is < -1 or > 3
+                || monster.FatMovementIdleTicks is < -1 or > 1024
+                || monster.FatMovementMode is < -1 or > 3
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1637,6 +1647,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreSkeletonRangedMovementState(
                     monster.SkeletonRangedMovementIdleTicks,
                     monster.SkeletonRangedMovementMode);
+                target.RestoreFatMovementState(
+                    monster.FatMovementIdleTicks,
+                    monster.FatMovementMode);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1708,6 +1721,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreSkeletonRangedMovementState(
                     monster.SkeletonRangedMovementIdleTicks,
                     monster.SkeletonRangedMovementMode);
+                restoredTarget.RestoreFatMovementState(
+                    monster.FatMovementIdleTicks,
+                    monster.FatMovementMode);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1742,6 +1758,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreSkeletonRangedMovementState(
                     monster.SkeletonRangedMovementIdleTicks,
                     monster.SkeletonRangedMovementMode);
+                restoredTarget.RestoreFatMovementState(
+                    monster.FatMovementIdleTicks,
+                    monster.FatMovementMode);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

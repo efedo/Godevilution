@@ -4976,12 +4976,14 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
-        var movementChance = Math.Min(
-            100,
-            fatTuning.Value.ChanceBase
-                + (fatTuning.Value.IntelligenceScale * monster.Intelligence));
-        if (actionSeed % 100U >= (uint)movementChance)
+        var movementChance = GetFatMovementChance(
+            monster,
+            fatTuning.Value.ChanceBase,
+            fatTuning.Value.IntelligenceScale);
+        if (actionSeed % 100U >= (uint)movementChance) {
+            monster.AdvanceFatMovementIdle();
             return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
@@ -4990,8 +4992,13 @@ public sealed class DiabloCombatCommandProcessor
             actionSeed);
         if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            monster.RecordFatMovement(
+                randomWalk.Value.X - monster.PositionX,
+                randomWalk.Value.Y - monster.PositionY);
             return true;
         }
+
+        monster.AdvanceFatMovementIdle();
 
         // Native OverlordAi consumes an admitted RandomWalk tick when every
         // native candidate is unavailable; bounded navigation must not invent
@@ -7147,6 +7154,24 @@ public sealed class DiabloCombatCommandProcessor
             movement.Value.X - monster.PositionX,
             movement.Value.Y - monster.PositionY);
         return true;
+    }
+
+    /** Native OverlordAi movement admission across var2 bands. */
+    private static int GetFatMovementChance(
+        AuthoritativeCombatTarget monster,
+        int chanceBase,
+        int intelligenceScale)
+    {
+        var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
+        var movementChance = monster.FatMovementIdleTicks == -1
+            ? longIdleChance
+            : monster.FatMovementIdleTicks > 20
+                ? longIdleChance
+                : monster.FatMovementIdleTicks == 0
+                    && monster.FatMovementMode is >= 1 and <= 3
+                    ? longIdleChance + 50
+                    : 0;
+        return Math.Min(100, movementChance);
     }
 
     /** Native AiRangedAvoidance ordinary movement admission across var2 bands. */

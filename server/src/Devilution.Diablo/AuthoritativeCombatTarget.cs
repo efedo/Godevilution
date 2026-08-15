@@ -76,7 +76,9 @@ public sealed class AuthoritativeCombatTarget
         int avoidanceMovementMode = 0,
         int skeletonMeleeDelayTicks = 0,
         int skeletonRangedMovementIdleTicks = -1,
-        int skeletonRangedMovementMode = 0)
+        int skeletonRangedMovementMode = 0,
+        int fatMovementIdleTicks = -1,
+        int fatMovementMode = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -138,6 +140,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementIdleTicks));
         if (skeletonRangedMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementMode));
+        if (fatMovementIdleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(fatMovementIdleTicks));
+        if (fatMovementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(fatMovementMode));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -218,6 +224,8 @@ public sealed class AuthoritativeCombatTarget
         SkeletonMeleeDelayTicks = skeletonMeleeDelayTicks;
         SkeletonRangedMovementIdleTicks = skeletonRangedMovementIdleTicks;
         SkeletonRangedMovementMode = skeletonRangedMovementMode;
+        FatMovementIdleTicks = fatMovementIdleTicks;
+        FatMovementMode = fatMovementMode;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -387,6 +395,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native SkeletonBow var1-compatible movement value. */
     public int SkeletonRangedMovementMode { get; private set; }
+
+    /** Native OverlordAi var2-compatible movement counter. */
+    public int FatMovementIdleTicks { get; private set; }
+
+    /** Native OverlordAi var1-compatible movement value. */
+    public int FatMovementMode { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -864,6 +878,33 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         SkeletonRangedMovementIdleTicks = idleTicks;
         SkeletonRangedMovementMode = movementMode;
+    }
+
+    internal void RecordFatMovement(int displacementX, int displacementY)
+    {
+        if (displacementX is < -1 or > 1
+            || displacementY is < -1 or > 1
+            || (displacementX == 0 && displacementY == 0)) {
+            throw new ArgumentOutOfRangeException(nameof(displacementX));
+        }
+        FatMovementMode = displacementX;
+        FatMovementIdleTicks = displacementY;
+    }
+
+    internal void AdvanceFatMovementIdle()
+    {
+        if (FatMovementIdleTicks < 1024)
+            FatMovementIdleTicks++;
+    }
+
+    internal void RestoreFatMovementState(int idleTicks, int movementMode)
+    {
+        if (idleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(idleTicks));
+        if (movementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(movementMode));
+        FatMovementIdleTicks = idleTicks;
+        FatMovementMode = movementMode;
     }
 
     internal void StartCounselorRetreat(int ticks)

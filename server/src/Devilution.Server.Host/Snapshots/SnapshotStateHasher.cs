@@ -368,6 +368,12 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.SkeletonRangedMovementIdleTicks);
                     hasher.AppendInt32(monster.SkeletonRangedMovementMode);
                 }
+                if (monster.FatMovementIdleTicks != -1
+                    || monster.FatMovementMode != 0) {
+                    hasher.AppendString("godevilution-monster-fat-counter-v1");
+                    hasher.AppendInt32(monster.FatMovementIdleTicks);
+                    hasher.AppendInt32(monster.FatMovementMode);
+                }
                 if (monster.CounselorRetreatTicks != 0) {
                     hasher.AppendString("godevilution-monster-counselor-retreat-v1");
                     hasher.AppendInt32(monster.CounselorRetreatTicks);
