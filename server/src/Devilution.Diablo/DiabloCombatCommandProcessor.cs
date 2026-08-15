@@ -1095,7 +1095,8 @@ public sealed class DiabloCombatCommandProcessor
                 player.Equipment,
                 playerClass!,
                 items,
-                rules.BarbarianWeaponStrengthDamageDivisor)
+                rules.BarbarianWeaponStrengthDamageDivisor,
+                rules.RogueStrengthDexterityDamageDivisor)
             : new AuthoritativePhysicalDamageProfile(
                 rules.BaseAttackDamage,
                 rules.BaseAttackDamage,
