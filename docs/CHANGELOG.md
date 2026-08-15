@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.166 optional `combat.tsv`
+  `barbarian_weapon_strength_damage_divisor` metadata. Active Barbarian
+  axe/mace damage scaling now uses the validated divisor, while direct legacy
+  damage callers retain the native 75 divisor.
 - Add schema 1.165 optional `combat.tsv` `maximum_attribute` metadata. Active
   player equipment recalculation now uses the validated primary-attribute
   ceiling, while direct legacy state and rules callers retain the native 750

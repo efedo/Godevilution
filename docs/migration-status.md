@@ -276,6 +276,10 @@ Status date: 2026-08-14
   Active player equipment recalculation now uses the validated primary-attribute
   ceiling; omitted values retain the native 750 default for compatibility callers.
 
+- Schema 1.166 adds optional `barbarian_weapon_strength_damage_divisor` metadata
+  to `combat.tsv`. Active Barbarian axe/mace damage scaling now uses the
+  validated divisor; omitted values retain the native 75 divisor for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
