@@ -84,7 +84,10 @@ public sealed class AuthoritativeCombatRules
         int hellfireDoppelgangerChancePercent = 10,
         int tripleDemonDamageMultiplier = 3,
         int pvpBlockLevelScale = 2,
-        int equipmentFastBlockFrameSkip = 2)
+        int equipmentFastBlockFrameSkip = 2,
+        int fastHitRecoveryFrameSkip = 1,
+        int fasterHitRecoveryFrameSkip = 2,
+        int fastestHitRecoveryFrameSkip = 3)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -187,6 +190,12 @@ public sealed class AuthoritativeCombatRules
         if (equipmentFastBlockFrameSkip is < 0 or > 10) {
             throw new InvalidDataException("Equipment FastBlock tuning is invalid.");
         }
+        if (fastHitRecoveryFrameSkip is < 0 or > 10
+            || fasterHitRecoveryFrameSkip < fastHitRecoveryFrameSkip
+            || fastestHitRecoveryFrameSkip < fasterHitRecoveryFrameSkip
+            || fastestHitRecoveryFrameSkip > 10) {
+            throw new InvalidDataException("Hit recovery tier tuning is invalid.");
+        }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
             || stealLife5Percent is < 0 or > 100
@@ -288,6 +297,9 @@ public sealed class AuthoritativeCombatRules
         TripleDemonDamageMultiplier = tripleDemonDamageMultiplier;
         PvpBlockLevelScale = pvpBlockLevelScale;
         EquipmentFastBlockFrameSkip = equipmentFastBlockFrameSkip;
+        FastHitRecoveryFrameSkip = fastHitRecoveryFrameSkip;
+        FasterHitRecoveryFrameSkip = fasterHitRecoveryFrameSkip;
+        FastestHitRecoveryFrameSkip = fastestHitRecoveryFrameSkip;
     }
 
     public int BaseAttackDamage { get; }
@@ -470,6 +482,15 @@ public sealed class AuthoritativeCombatRules
 
     /** Native frame skip applied by equipment carrying the FastBlock flag. */
     public int EquipmentFastBlockFrameSkip { get; }
+
+    /** Native skip for equipment carrying the Fast Hit Recovery flag. */
+    public int FastHitRecoveryFrameSkip { get; }
+
+    /** Native skip for equipment carrying the Faster Hit Recovery flag. */
+    public int FasterHitRecoveryFrameSkip { get; }
+
+    /** Native skip for equipment carrying the Fastest Hit Recovery flag. */
+    public int FastestHitRecoveryFrameSkip { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -818,7 +839,10 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hellfire_doppelganger_chance_percent", 10),
             row.OptionalInt32("triple_demon_damage_multiplier", 3),
             row.OptionalInt32("pvp_block_level_scale", 2),
-            row.OptionalInt32("equipment_fast_block_frame_skip", 2));
+            row.OptionalInt32("equipment_fast_block_frame_skip", 2),
+            row.OptionalInt32("fast_hit_recovery_frame_skip", 1),
+            row.OptionalInt32("faster_hit_recovery_frame_skip", 2),
+            row.OptionalInt32("fastest_hit_recovery_frame_skip", 3));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

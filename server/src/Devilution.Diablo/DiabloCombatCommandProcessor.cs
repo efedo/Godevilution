@@ -11496,11 +11496,11 @@ public sealed class DiabloCombatCommandProcessor
         var recoveryFrames = GetPlayerAnimation(player)?.RecoveryFrames ?? 6;
         var flags = GetUsableEquipmentFlags(player);
         var skippedFrames = (flags & FastestHitRecoveryFlag) != 0
-            ? 3
+            ? rules.FastestHitRecoveryFrameSkip
             : (flags & FasterHitRecoveryFlag) != 0
-                ? 2
+                ? rules.FasterHitRecoveryFrameSkip
                 : (flags & FastHitRecoveryFlag) != 0
-                    ? 1
+                    ? rules.FastHitRecoveryFrameSkip
                     : 0;
         var duration = Math.Max(1, recoveryFrames - skippedFrames);
         player.CombatMode = DiabloPlayerCombatMode.GotHit;
