@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.167 optional `combat.tsv`
+  `rogue_strength_dexterity_damage_divisor` metadata. Active Rogue physical
+  damage scaling now uses the validated divisor, while direct legacy damage
+  callers retain the native 200 divisor.
 - Add schema 1.166 optional `combat.tsv`
   `barbarian_weapon_strength_damage_divisor` metadata. Active Barbarian
   axe/mace damage scaling now uses the validated divisor, while direct legacy
