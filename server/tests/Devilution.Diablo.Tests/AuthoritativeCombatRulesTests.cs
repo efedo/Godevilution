@@ -238,6 +238,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredRogueStrengthDexterityDivisor()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\trogue_strength_dexterity_damage_divisor\n"
+            + "10\t1\t100\t201\n");
+
+        Assert.Equal(201, rules.RogueStrengthDexterityDamageDivisor);
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -256,6 +267,16 @@ public sealed class AuthoritativeCombatRulesTests
             AuthoritativeCombatRules.LoadTsv(
                 "combat.tsv",
                 "base_attack_damage\tminimum_damage\tdefeat_experience\tbarbarian_weapon_strength_damage_divisor\n"
+                + "10\t1\t100\t0\n"));
+    }
+
+    [Fact]
+    public void RejectsInvalidRogueStrengthDexterityDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\trogue_strength_dexterity_damage_divisor\n"
                 + "10\t1\t100\t0\n"));
     }
 
