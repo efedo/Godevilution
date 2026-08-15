@@ -2047,6 +2047,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonDefersWhenItsNativeMovementCandidatesAreBlocked()
+    {
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 41, 42],
+            combatTargets: [hork]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117),
+            ]));
+        var player = CreatePlayer(
+            positionX: 7,
+            positionY: 0,
+            entityId: 7);
+
+        // 1 ^ 9 ^ 7 = 15, inside the native movement band. The east and
+        // native lateral candidates are blocked, so no generic path is used.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(hork.IsMoving);
+        Assert.Equal((1, 0), (hork.PositionX, hork.PositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void BatUsesNativeAttackBandAndTwoStepRetreat()
     {
         var nativeWorld = new AuthoritativeWorld();

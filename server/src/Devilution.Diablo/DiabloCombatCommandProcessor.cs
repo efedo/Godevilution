@@ -5106,7 +5106,9 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        return false;
+        // Native HorkDemonAi consumes the admitted movement branch even when
+        // both its RoundWalk and RandomWalk candidates are blocked.
+        return true;
     }
 
     /** Native MegaAi delegates to SkeletonAi beyond its Inferno range. */
