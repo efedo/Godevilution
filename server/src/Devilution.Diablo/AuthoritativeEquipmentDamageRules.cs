@@ -18,7 +18,8 @@ public static class AuthoritativeEquipmentDamageRules
         int bardDefaultStrengthDamageDivisor = 100,
         int standardStrengthDamageDivisor = 100,
         int barbarianBowStrengthDamageDivisor = 300,
-        int barbarianDefaultStrengthDamageDivisor = 100)
+        int barbarianDefaultStrengthDamageDivisor = 100,
+        int barbarianVitalityDamageDivisor = 100)
     {
         if (characterLevel == 0)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
@@ -45,6 +46,8 @@ public static class AuthoritativeEquipmentDamageRules
             throw new InvalidDataException("Barbarian bow damage tuning is invalid.");
         if (barbarianDefaultStrengthDamageDivisor is < 1 or > 10_000)
             throw new InvalidDataException("Barbarian default damage tuning is invalid.");
+        if (barbarianVitalityDamageDivisor is < 1 or > 10_000)
+            throw new InvalidDataException("Barbarian vitality damage tuning is invalid.");
 
         var usableEquipment = equipment
             .Where(item => item is not null && item.State.StatFlag)
@@ -110,7 +113,8 @@ public static class AuthoritativeEquipmentDamageRules
                 hasStaff,
                 barbarianWeaponStrengthDamageDivisor,
                 barbarianBowStrengthDamageDivisor,
-                barbarianDefaultStrengthDamageDivisor),
+                barbarianDefaultStrengthDamageDivisor,
+                barbarianVitalityDamageDivisor),
             _ => strengthModifier / standardStrengthDamageDivisor,
         };
 
@@ -131,7 +135,8 @@ public static class AuthoritativeEquipmentDamageRules
         bool hasStaff,
         int barbarianWeaponStrengthDamageDivisor,
         int barbarianBowStrengthDamageDivisor,
-        int barbarianDefaultStrengthDamageDivisor)
+        int barbarianDefaultStrengthDamageDivisor,
+        int barbarianVitalityDamageDivisor)
     {
         var damageModifier = hasAxe || hasMace
             ? strengthModifier / barbarianWeaponStrengthDamageDivisor
@@ -139,7 +144,7 @@ public static class AuthoritativeEquipmentDamageRules
                 ? strengthModifier / barbarianBowStrengthDamageDivisor
                 : strengthModifier / barbarianDefaultStrengthDamageDivisor;
         if (!hasShield && !hasStaff && !hasBow)
-            damageModifier = checked(damageModifier + level * vitality / 100);
+            damageModifier = checked(damageModifier + level * vitality / barbarianVitalityDamageDivisor);
         return damageModifier;
     }
 }
