@@ -4311,6 +4311,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterArrowUsesConfiguredDamageTypeAndPlayerResistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "SkeletonRanged",
+                    "FireArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow,
+                    ProjectileSpeed: 1,
+                    DamageType: AuthoritativeDamageType.Fire),
+            ]));
+        var fireResistantArmor = AuthoritativeItemState.Empty with {
+            StatFlag = true,
+            PlusFireResistance = 50,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            equipment: [new EquippedStoreItem(3, 99, fireResistantArmor)]);
+
+        processor.AdvanceTick(14, [player]);
+
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeDamageType.Fire, arrow.DamageType);
+        for (ulong tick = 15; tick < 32 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(99, player.Life);
+    }
+
+    [Fact]
     public void SkeletonRangedAiFallsBackToMovementWhenTheArrowLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -13564,7 +13614,8 @@ public sealed class DiabloCombatCommandProcessorTests
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(
         string nativeAi,
         int projectileSpeed = 0,
-        int projectileLifetime = 0)
+        int projectileLifetime = 0,
+        AuthoritativeDamageType? damageType = null)
     {
         return new AuthoritativeMonsterMissileCatalog([
             new AuthoritativeMonsterMissileDefinition(
@@ -13572,7 +13623,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 "Arrow",
                 AuthoritativeProjectileBehavior.Targeted,
                 ProjectileSpeed: projectileSpeed,
-                ProjectileLifetime: projectileLifetime),
+                ProjectileLifetime: projectileLifetime,
+                DamageType: damageType),
         ]);
     }
 
