@@ -297,7 +297,8 @@ defer rather than delegating pursuit to the client or generic navigation.
 The `GoatRanged` identity drives the shared native `AiRanged` boundary. On a
 clear missile lane it emits the server-resolved arrow damage event; inside four
 tiles it first applies the native `10 * (intelligence + 7)` avoidance band and
-selects a deterministic retreat cell when one is available.
+selects a deterministic retreat cell when one is available. At long range, a
+blocked lane preserves the native defer rather than generic pursuit.
 
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the

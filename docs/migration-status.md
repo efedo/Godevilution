@@ -262,6 +262,10 @@ Status date: 2026-08-15
   generic pursuit; its validated close-range retreat branch remains evaluated
   before that no-op.
 
+- GoatRanged blocked arrow lanes now retain the native `AiRanged` defer at long
+  range. Its validated close-range avoidance branch remains evaluated first;
+  a missing clear lane no longer delegates movement to generic navigation.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

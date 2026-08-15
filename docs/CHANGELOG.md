@@ -64,6 +64,10 @@ All notable changes to this fork are documented below.
   with no clear missile lane now leaves the SkeletonRanged monster stationary
   instead of falling through to generic pursuit.
 
+- Preserve the native `AiRanged` blocked-lane defer for GoatRanged: after its
+  close-range avoidance branch, a long-range arrow with no clear missile lane
+  now leaves the monster stationary instead of entering generic pursuit.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
