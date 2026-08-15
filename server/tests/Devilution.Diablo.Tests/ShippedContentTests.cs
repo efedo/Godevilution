@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.210.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.211.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.210.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.211.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
@@ -282,6 +282,7 @@ public sealed class ShippedContentTests
         Assert.Equal("Defiler", activation.Simulation.WorldState.Quests[3021].CompletionUniqueIdentity);
         Assert.False(activation.Simulation.WorldState.Quests[3006].Active);
         Assert.False(activation.Simulation.WorldState.Quests[3006].ActivateOnRoute);
+        Assert.True(activation.Simulation.WorldState.Quests[3006].CompletionDiablo);
         Assert.Equal(1, activation.QuestTypes.Definitions[12].SetLevel);
         Assert.Equal("Archbishop Lazarus' Lair", activation.SetLevelNames!.GetDisplayName(5));
         Assert.Equal("Gharbad", activation.Simulation.WorldState.Quests[3003].CompletionUniqueIdentity);

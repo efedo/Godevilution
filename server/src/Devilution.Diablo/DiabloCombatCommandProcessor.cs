@@ -13518,7 +13518,8 @@ public sealed class DiabloCombatCommandProcessor
                                  && string.Equals(
                                      quest.CompletionUniqueIdentity,
                                      target.UniqueIdentity,
-                                     StringComparison.Ordinal)))
+                                     StringComparison.Ordinal))
+                             || (quest.CompletionDiablo && target.IsDiablo))
                          && (quest.LevelId == 0 || quest.LevelId == target.LevelId))) {
             quest.Progress = Math.Min(
                 quest.RequiredProgress,

@@ -30,6 +30,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native monster ability that displaces a player after a successful hit. */
     public bool Knockback { get; init; }
 
+    /** Native boss identity used by Diablo end-state and quest completion rules. */
+    public bool Diablo { get; init; }
+
     /** Native resistance percentages derived from the active monster data. */
     public int FireResistance { get; init; }
     public int LightningResistance { get; init; }
@@ -605,6 +608,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 Demon = ParseFlag(row, "demon"),
                 Animal = ParseFlag(row, "animal"),
                 Knockback = ParseFlag(row, "knockback"),
+                Diablo = ParseFlag(row, "diablo"),
                 FireResistance = row.OptionalInt32("fire_resistance"),
                 LightningResistance = row.OptionalInt32("lightning_resistance"),
                 MagicResistance = row.OptionalInt32("magic_resistance"),

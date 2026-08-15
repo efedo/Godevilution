@@ -1218,6 +1218,35 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void DiabloDefeatCompletesItsContentDeclaredQuest()
+    {
+        var quest = new AuthoritativeQuestState(
+            3006,
+            15,
+            1,
+            active: true,
+            completionDiablo: true);
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            levelId: 15,
+            monsterId: 112,
+            diablo: true);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(levelId: 15, entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(

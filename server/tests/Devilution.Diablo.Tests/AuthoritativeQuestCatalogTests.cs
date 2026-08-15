@@ -127,6 +127,17 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadDiabloCompletionTrigger()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_diablo\n"
+                + "3006\t15\t1\t1\n");
+
+        Assert.True(Assert.Single(quests).CompletionDiablo);
+    }
+
+    [Fact]
     public void QuestStateCanLoadAnOptionalMonsterCompletionTrigger()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

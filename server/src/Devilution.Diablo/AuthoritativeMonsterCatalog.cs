@@ -195,7 +195,7 @@ public sealed class AuthoritativeMonsterCatalog
                     "max_damage_special",
                     monsterType?.MaximumSpecialDamage ?? ReadInt32(row, "attack_damage", 0)),
                 unique: unique,
-                diablo: diablo,
+                diablo: diablo || (monsterType?.Diablo ?? false),
                 berserkImmune: berserkImmune,
                 deathAnimationTicks: deathAnimationTicks,
                 experienceReward: experienceReward,

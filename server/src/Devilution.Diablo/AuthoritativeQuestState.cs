@@ -24,7 +24,8 @@ public sealed class AuthoritativeQuestState
         int completionVariable1 = 0,
         int completionVariable2 = 0,
         uint completionActivateQuestId = 0,
-        bool activateOnRoute = true)
+        bool activateOnRoute = true,
+        bool completionDiablo = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -65,6 +66,7 @@ public sealed class AuthoritativeQuestState
         CompletionVariable2 = completionVariable2;
         CompletionActivateQuestId = completionActivateQuestId;
         ActivateOnRoute = activateOnRoute;
+        CompletionDiablo = completionDiablo;
     }
 
     public uint QuestId { get; }
@@ -100,6 +102,8 @@ public sealed class AuthoritativeQuestState
     public uint CompletionActivateQuestId { get; }
     /** Whether native route-level entry may activate this quest automatically. */
     public bool ActivateOnRoute { get; }
+    /** Whether the native Diablo boss identity completes this quest. */
+    public bool CompletionDiablo { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -138,7 +142,8 @@ public static class AuthoritativeQuestCatalog
                 completionVariable1: row.OptionalInt32("completion_variable1"),
                 completionVariable2: row.OptionalInt32("completion_variable2"),
                 completionActivateQuestId: row.OptionalUInt32("completion_activate_quest_id"),
-                activateOnRoute: row.OptionalInt32("route_activation") != 0);
+                activateOnRoute: row.OptionalInt32("route_activation") != 0,
+                completionDiablo: row.OptionalInt32("completion_diablo") != 0);
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");

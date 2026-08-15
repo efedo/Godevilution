@@ -282,7 +282,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             demon: spawn.Definition.Demon,
             animal: spawn.Definition.Animal,
             unique: dropDefinition?.MonsterUnique ?? false,
-            diablo: dropDefinition?.MonsterDiablo ?? false,
+            diablo: spawn.Definition.Diablo || (dropDefinition?.MonsterDiablo ?? false),
             deathAnimationTicks: spawn.Definition.DeathAnimationTicks,
             experienceReward: spawn.Definition.ExperienceReward,
             toHit: spawn.Definition.ToHit,
