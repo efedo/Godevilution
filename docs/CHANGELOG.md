@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.206 optional monster-player block level scale to `combat.tsv`;
+  blockable monster attacks now use validated level-difference tuning, retaining
+  the native scale of two when omitted.
+
 - Add schema 1.205 optional monster regeneration level divisor to `combat.tsv`;
   higher-level per-tick recovery now uses validated content, retaining the
   native `level / 2` rule when omitted.

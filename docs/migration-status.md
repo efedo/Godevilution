@@ -445,6 +445,9 @@ Status date: 2026-08-15
 - Schema 1.205 adds an optional monster regeneration level divisor to
   `combat.tsv`; omitted values retain the native `level / 2` recovery rule.
 
+- Schema 1.206 adds an optional monster-player block level scale to
+  `combat.tsv`; omitted values retain the native level-difference scale of two.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
