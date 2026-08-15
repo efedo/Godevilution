@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   declare the native Diablo identity, and quest rows can complete against that
   identity without relying on an AI label or static encounter placement.
 
+- Persist the native single-player Diablo defeat rank through authoritative
+  player snapshots, protocol, version-1 saves, and canonical state hashes;
+  multiplayer quest completion leaves this single-player hero state unchanged.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a

@@ -756,6 +756,12 @@ Status date: 2026-08-15
   quest-state columns; validated boss targets now complete the server-owned
   Diablo quest through an explicit native identity boundary.
 
+- The native single-player Diablo defeat rank is now server-owned and crosses
+  snapshots, protocol field 34, version-1 saves, and canonical state hashes;
+  multiplayer completion does not mutate it. The current authoritative
+  difficulty boundary records rank 1 until difficulty selection is
+  externalized.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
