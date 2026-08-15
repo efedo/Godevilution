@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.197 optional Holy Bolt magic-hit tuning to `spells.tsv`.
+  Holy Bolt now uses validated monster-level penalty and hit-chance bounds;
+  omitted values retain the native 2/5/95 compatibility terms.
+
 - Add schema 1.196 optional Charged Bolt magic-hit tuning to `spells.tsv`.
   The server now uses validated monster-level penalty and hit-chance bounds;
   omitted values retain the native 2/5/95 compatibility terms.
