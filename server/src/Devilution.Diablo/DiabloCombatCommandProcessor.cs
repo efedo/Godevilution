@@ -11653,8 +11653,8 @@ public sealed class DiabloCombatCommandProcessor
         var blockChance = Math.Clamp(
             target.Attributes.Dexterity.Current
                 + (targetClass?.BaseBlockChance ?? 0)
-                + checked((int)target.CharacterLevel * 2)
-                - checked((int)attacker.CharacterLevel * 2),
+                + checked((int)target.CharacterLevel * rules.PvpBlockLevelScale)
+                - checked((int)attacker.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
         if (blockRoll >= blockChance)
