@@ -9506,6 +9506,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void WarlordUsesItsNativeSkeletonCombatBranch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "Warlord",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // WarlordAi delegates normal post-dialogue combat to SkeletonAi;
+        // 1 ^ 9 ^ 7 = 15 is inside its 20 + 2 * intelligence attack band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void GoatMeleeAiUsesValidatedMonsterTypeMovementTuning()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -315,7 +315,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
         "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "Gharbad", "GoatMelee", "GoatRanged",
         "Golem", "HorkDemon", "Lich", "Magma", "Mega", "Necromorb", "Psychorb", "Rhino", "Scavenger",
         "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Storm",
-        "Succubus", "LazarusSuccubus", "Torchant", "Zombie",
+        "Succubus", "LazarusSuccubus", "Torchant", "Warlord", "Zombie",
     };
 
     private readonly Dictionary<uint, AuthoritativeMonsterTypeDefinition> definitions;

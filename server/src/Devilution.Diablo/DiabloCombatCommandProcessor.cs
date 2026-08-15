@@ -5699,7 +5699,7 @@ public sealed class DiabloCombatCommandProcessor
                 return false;
             return definition.NativeAi is "SkeletonMelee" or "Fallen";
         }
-        return target.NativeAi == "Fallen";
+        return target.NativeAi is "Fallen" or "Warlord";
     }
 
     private (int ChanceBase, int IntelligenceScale)? GetGoatMeleeMovementTuning(
