@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
   authoritative snapshots, optional protocol fields 60-61, saves, and the
   canonical state hash; resumed Rhino Move goals remain server-owned.
 
+- Persist shared native `AiAvoidance` `goalVar1`/`goalVar2` movement state for
+  GoatMelee and Gargoyle through authoritative snapshots, optional protocol
+  fields 62-63, saves, and the canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

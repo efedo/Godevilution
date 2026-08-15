@@ -384,6 +384,10 @@ Windows toolchain command.
 - Optional `MonsterSnapshot` fields 60-61 carry the corresponding server-owned
   Rhino `goalVar1` movement counter and `goalVar2` turn state. Older peers may
   omit them; clients never execute Rhino movement policy.
+- Optional `MonsterSnapshot` fields 62-63 carry the shared server-owned
+  `AiAvoidance` `goalVar1` movement counter and `goalVar2` turn state used by
+  GoatMelee and Gargoyle. Older peers may omit them; clients never execute the
+  movement goal.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

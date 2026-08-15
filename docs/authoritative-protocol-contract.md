@@ -278,6 +278,11 @@ Optional `MonsterSnapshot` fields 60-61 carry the persisted Rhino `goalVar1`
 movement counter and `goalVar2` turn state. The server continues Rhino's
 far-distance Move goal across ticks and saves; clients never execute it.
 
+Optional `MonsterSnapshot` fields 62-63 carry the shared persisted
+`AiAvoidance` `goalVar1` movement counter and `goalVar2` turn state used by
+GoatMelee and Gargoyle. The server continues their far-distance Move goals;
+clients never execute them.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

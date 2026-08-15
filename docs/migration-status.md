@@ -204,6 +204,10 @@ Status date: 2026-08-15
   persisted through snapshots, optional protocol fields 60-61, saves, and the
   canonical state hash; Rhino's far-distance Move goal continues across ticks.
 
+- Shared native `AiAvoidance` `goalVar1`/`goalVar2` movement state is now
+  server-owned for GoatMelee and Gargoyle and persists through snapshots,
+  optional protocol fields 62-63, saves, and the canonical state hash.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains
