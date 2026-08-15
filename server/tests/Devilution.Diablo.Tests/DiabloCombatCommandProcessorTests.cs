@@ -9227,6 +9227,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GolemCastUsesConfiguredSummonFormulaTerms()
+    {
+        var world = new DiabloWorldState();
+        var spell = CreateGolemSpell() with {
+            GolemHitPointsLevelMultiplier = 3,
+            GolemHitPointsManaDivisor = 2,
+            GolemDamageLevelMultiplier = 4,
+            GolemMinimumDamageLevelOffset = 1,
+            GolemMaximumDamageLevelOffset = 5,
+            GolemArmorClass = 17,
+        };
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([spell]));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterLevel: 2,
+            mana: 20000,
+            manaMaximum: 20000,
+            positionX: 10,
+            positionY: 10,
+            memorizedSpells: [new MemorizedSpellState(52, 1)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloCastIntent(52, 0, 11, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var golem = Assert.Single(world.CombatTargets.Values);
+        Assert.Equal(17, golem.ArmorClass);
+        Assert.Equal(4 * (1 + 1), golem.MinDamage);
+        Assert.Equal(4 * (1 + 5), golem.MaxDamage);
+        Assert.Equal(3 * (320 * 1 + (20000 * 64) / 2), golem.MaxHitPointsQ6);
+    }
+
+    [Fact]
     public void GolemDeathAnimationPersistsAndExpiresAtNativeDuration()
     {
         var golem = new AuthoritativeCombatTarget(

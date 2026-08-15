@@ -179,6 +179,13 @@ public sealed class AuthoritativeSpellCatalogTests
             golem.MinimumManaCost,
             golem.StaffLevel));
         Assert.Equal(12, golem.GolemDeathAnimationTicks);
+        Assert.Equal((2, 3, 2, 4, 8, 25), (
+            golem.GolemHitPointsLevelMultiplier,
+            golem.GolemHitPointsManaDivisor,
+            golem.GolemDamageLevelMultiplier,
+            golem.GolemMinimumDamageLevelOffset,
+            golem.GolemMaximumDamageLevelOffset,
+            golem.GolemArmorClass));
     }
 
     [Fact]
@@ -1160,6 +1167,18 @@ public sealed class AuthoritativeSpellCatalogTests
                 DamageBonus = 2,
                 CharacterLevelRandomDamageDivisor = 1,
                 DamageScale = 64,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(52, 100, 0, 0, 0, 0) {
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Golem,
+                ProjectileLifetime = 1,
+                ProjectileCount = 1,
+                Range = 1,
+                DamageType = AuthoritativeDamageType.Fire,
+                StaffLevel = 9,
+                GolemDeathAnimationTicks = 12,
+                GolemHitPointsManaDivisor = 0,
             },
         ]));
     }
