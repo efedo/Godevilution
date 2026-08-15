@@ -3909,6 +3909,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeChargeDispatchUsesMappedProjectileBehaviorInsteadOfNativeAiLabel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "GoatRanged",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "GoatRanged",
+                    "CustomCharge",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var charge = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
+    }
+
+    [Fact]
     public void SnakeUsesValidatedChargeTrajectoryTuning()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -4294,6 +4333,42 @@ public sealed class DiabloCombatCommandProcessorTests
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+    }
+
+    [Fact]
+    public void MonsterArrowDispatchUsesMappedProjectileBehaviorInsteadOfNativeAiLabel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "Acid");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "CustomArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
     }
 
     [Theory]

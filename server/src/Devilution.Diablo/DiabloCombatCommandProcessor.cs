@@ -4450,11 +4450,11 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceMappedRangedAttack(target, victim, tick, players, distance))
                 continue;
-            if (TryAdvanceGoatRangedAttack(target, victim, tick, players, distance))
-                continue;
             if (TryAdvanceSkeletonRangedRetreat(target, victim, players, tick, distance))
                 continue;
             if (TryAdvanceSkeletonRangedAttack(target, victim, tick, players, distance))
+                continue;
+            if (TryAdvanceGoatRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (target.NativeAi == "SkeletonRanged" && distance <= 1)
                 continue;
@@ -5670,7 +5670,7 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native AiRanged behavior used by GoatRanged monsters. */
+    /** Native Arrow behavior selected by a validated MonsterArrow mapping. */
     private bool TryAdvanceGoatRangedAttack(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -5678,10 +5678,8 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "GoatRanged"
-            || monsterMissiles is null
-            || !monsterMissiles.TryGet(monster.NativeAi, out var missile)
-            || missile.MissileId != "Arrow"
+        if (monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted)
@@ -5724,16 +5722,14 @@ public sealed class DiabloCombatCommandProcessor
             attackSeed);
     }
 
-    /** Native SnakeAi starts a Rhino controller only from a clear two-tile lane. */
+    /** Native Snake charge behavior selected by a validated SnakeCharge mapping. */
     private bool TryAdvanceSnakeAi(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         int distance)
     {
-        if (monster.NativeAi != "Snake"
-            || monsterMissiles is null
-            || !monsterMissiles.TryGet("Snake", out var missile)
-            || missile.MissileId != "Rhino"
+        if (monsterMissiles is null
+            || !monsterMissiles.TryGet(monster.NativeAi, monster.MonsterId, out var missile)
             || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge)
             return false;
 
