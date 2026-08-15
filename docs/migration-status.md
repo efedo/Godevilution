@@ -793,6 +793,8 @@ Status date: 2026-08-15
 
 - Schema 1.220 adds quest-gated level triggers. The Hellfire crypt entrance is
   now a server-owned town warp that opens only after Grave Matters completes.
+  Procedural crypt return triggers remain part of the native map-synthesis
+  backlog until their generated tile identities are externalized.
 
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
