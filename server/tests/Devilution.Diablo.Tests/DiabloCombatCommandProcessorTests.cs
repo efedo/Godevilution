@@ -2006,6 +2006,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonUsesNativeRoundWalkWhenItsSummonRollIsUnavailable()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(18, 12, 12));
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            120,
+            levelId: 18,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117,
+                    ProjectileSpeed: 8,
+                    ProjectileLifetime: 9),
+            ]));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            levelId: 18,
+            entityId: 7);
+
+        // 101 ^ 9 ^ 7 = 107: movement is admitted and the native three-in-four
+        // far-distance RoundWalk branch selects the lateral candidate order.
+        processor.AdvanceTick(101, [player]);
+
+        Assert.True(hork.IsMoving);
+        Assert.NotEqual((5, 6), (hork.FuturePositionX, hork.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void BatUsesNativeAttackBandAndTwoStepRetreat()
     {
         var nativeWorld = new AuthoritativeWorld();

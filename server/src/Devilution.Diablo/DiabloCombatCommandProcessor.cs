@@ -5077,7 +5077,32 @@ public sealed class DiabloCombatCommandProcessor
             horkDemonTuning.Value.MovementChanceBase
                 + (horkDemonTuning.Value.MovementChanceIntelligenceScale
                     * monster.Intelligence));
-        return actionSeed % 100U >= (uint)movementChance;
+        if (actionSeed % 100U >= (uint)movementChance)
+            return true;
+
+        if (distance >= 5 && (actionSeed / 100U) % 4U != 0U) {
+            var roundWalk = FindNativeRoundWalkStep(
+                monster,
+                victim,
+                players,
+                actionSeed);
+            if (roundWalk.HasValue) {
+                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                return true;
+            }
+        }
+
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            victim,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue) {
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            return true;
+        }
+
+        return false;
     }
 
     private (
