@@ -26,6 +26,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.153 optional item `usable` metadata. The authoritative
   consumable source gate now honors explicit native iUsable values while
   retaining compatibility fallback when the field is absent.
+- Add schema 1.154 optional normalized item `min_armor_class` and
+  `max_armor_class` metadata. Normalized item generation now preserves native
+  armor ranges when declared and keeps fixed-armor fallback when omitted.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
