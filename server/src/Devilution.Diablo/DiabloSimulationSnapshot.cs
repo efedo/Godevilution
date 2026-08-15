@@ -675,7 +675,6 @@ public sealed partial class DiabloSimulation
                 || (!string.IsNullOrWhiteSpace(monster.UniqueIdentity) && !monster.IsUnique)
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
-                || (monster.GargoyleSpecialActive && monster.NativeAi != "Gargoyle")
                 || monster.FallenFearTicks is < 0 or > 1024
                 || monster.FallenFearDirection is < 0 or >= 8
                 || monster.SneakRetreatTicks is < 0 or > 64

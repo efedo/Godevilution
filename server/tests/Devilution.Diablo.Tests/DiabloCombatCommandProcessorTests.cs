@@ -3407,7 +3407,7 @@ public sealed class DiabloCombatCommandProcessorTests
             attackDamage: 1,
             aggroRange: 8,
             monsterId: 1,
-            nativeAi: "Gargoyle",
+            nativeAi: "Fallen",
             intelligence: 0);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(world, monsterTypes: monsterTypes);
@@ -3461,7 +3461,7 @@ public sealed class DiabloCombatCommandProcessorTests
             attackDamage: 1,
             aggroRange: 8,
             monsterId: 1,
-            nativeAi: "Gargoyle");
+            nativeAi: "Fallen");
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(world, monsterTypes: monsterTypes);
         var player = CreatePlayer(
@@ -3515,7 +3515,7 @@ public sealed class DiabloCombatCommandProcessorTests
             attackDamage: 1,
             aggroRange: 8,
             monsterId: 1,
-            nativeAi: "Gargoyle");
+            nativeAi: "Fallen");
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(world, monsterTypes: monsterTypes);
         var player = CreatePlayer(
@@ -3604,15 +3604,17 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void GargoyleSpecialLockRequiresTheGargoyleNativeIdentity()
+    public void GargoyleSpecialLockCanUseAnAlternateValidatedIdentity()
     {
-        Assert.Throws<ArgumentException>(() => new AuthoritativeCombatTarget(
+        var monster = new AuthoritativeCombatTarget(
             9,
             1,
             0,
             40,
             nativeAi: "Rhino",
-            gargoyleSpecialActive: true));
+            gargoyleSpecialActive: true);
+
+        Assert.True(monster.GargoyleSpecialActive);
     }
 
     [Fact]

@@ -394,7 +394,7 @@ public sealed class DiabloSimulationTests
                     maxHitPoints: 100,
                     attackDamage: 1,
                     aggroRange: 8,
-                    nativeAi: "Gargoyle",
+                    nativeAi: "Fallen",
                     intelligence: 2,
                     gargoyleSpecialActive: true)],
             });
@@ -415,7 +415,7 @@ public sealed class DiabloSimulationTests
                     maxHitPoints: 100,
                     attackDamage: 1,
                     aggroRange: 8,
-                    nativeAi: "Gargoyle",
+                    nativeAi: "Fallen",
                     intelligence: 2)],
             });
         var restoredPlayer = CreatePlayer();

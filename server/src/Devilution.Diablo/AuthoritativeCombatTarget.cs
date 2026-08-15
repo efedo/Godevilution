@@ -101,10 +101,6 @@ public sealed class AuthoritativeCombatTarget
         if (!string.IsNullOrEmpty(nativeAi)
             && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(nativeAi))
             throw new ArgumentException("The monster native AI identity is invalid.", nameof(nativeAi));
-        if (gargoyleSpecialActive && nativeAi != "Gargoyle")
-            throw new ArgumentException(
-                "The Gargoyle special lock requires the Gargoyle native AI identity.",
-                nameof(gargoyleSpecialActive));
         if (fireResistance is < -100 or > 100
             || lightningResistance is < -100 or > 100
             || magicResistance is < -100 or > 100
