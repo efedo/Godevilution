@@ -39,6 +39,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     public int MagicResistance { get; init; }
     public int AcidResistance { get; init; }
 
+    /** Native Hell difficulty resistance percentages, when distinct from Normal. */
+    public int? FireResistanceHell { get; init; }
+    public int? LightningResistanceHell { get; init; }
+    public int? MagicResistanceHell { get; init; }
+    public int? AcidResistanceHell { get; init; }
+
     /** Native aggro radius used by autonomous monster behavior. */
     public int AggroRange { get; init; } = 6;
 
@@ -349,6 +355,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.LightningResistance is < -100 or > 100
                 || definition.MagicResistance is < -100 or > 100
                 || definition.AcidResistance is < -100 or > 100
+                || definition.FireResistanceHell is < -100 or > 100
+                || definition.LightningResistanceHell is < -100 or > 100
+                || definition.MagicResistanceHell is < -100 or > 100
+                || definition.AcidResistanceHell is < -100 or > 100
                 || definition.AggroRange is < 0 or > 64
                 || definition.DeathAnimationTicks is < 0 or > 1024
                 || definition.ExperienceReward > 1_000_000
@@ -613,6 +623,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 LightningResistance = row.OptionalInt32("lightning_resistance"),
                 MagicResistance = row.OptionalInt32("magic_resistance"),
                 AcidResistance = row.OptionalInt32("acid_resistance"),
+                FireResistanceHell = ReadOptionalResistance(row, "fire_resistance_hell"),
+                LightningResistanceHell = ReadOptionalResistance(row, "lightning_resistance_hell"),
+                MagicResistanceHell = ReadOptionalResistance(row, "magic_resistance_hell"),
+                AcidResistanceHell = ReadOptionalResistance(row, "acid_resistance_hell"),
                 AggroRange = row.OptionalInt32("aggro_range", 6),
                 DeathAnimationTicks = row.OptionalInt32("death_animation_ticks"),
                 ExperienceReward = row.OptionalUInt32("experience_reward"),
@@ -697,4 +711,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 $"Monster type row {row.LineNumber} has invalid {column} value {value}.");
         return value == 1;
     }
+
+    private static int? ReadOptionalResistance(TsvRow row, string column)
+        => row.TryGet(column, out _) ? row.OptionalInt32(column) : null;
 }

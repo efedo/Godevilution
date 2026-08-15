@@ -141,12 +141,17 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         var combatRules = options.CombatRules ?? new AuthoritativeCombatRules(10, 1, 100);
         if (options.Items is not null)
             combatRules.ValidateItems(options.Items);
-        foreach (var target in worldState.CombatTargets.Values)
+        foreach (var target in worldState.CombatTargets.Values) {
             DiabloDifficultyMonsterScaling.ApplyInitialHealth(
                 target,
                 options.Difficulty,
                 combatRules.GameVariant,
                 options.GameMode);
+            DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                target,
+                options.Difficulty,
+                options.MonsterTypes);
+        }
         var random = new DiabloRandom(options.RandomSeed);
         var playerDamage = new AuthoritativePlayerDamageResolver(spells);
         var worldCommands = new DiabloWorldCommandProcessor(
@@ -199,7 +204,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.RandomSeed,
             options.GameMode,
             options.Items,
-            options.Difficulty);
+            options.Difficulty,
+            options.MonsterTypes);
     }
 }
 
@@ -219,6 +225,7 @@ public sealed partial class DiabloSimulation
     private readonly uint proceduralMonsterSeed;
     private readonly DiabloGameMode gameMode;
     private readonly DiabloDifficulty difficulty;
+    private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly HashSet<uint> materializedProceduralLevels = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
@@ -238,7 +245,8 @@ public sealed partial class DiabloSimulation
         uint proceduralMonsterSeed = 0,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
-        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -258,6 +266,7 @@ public sealed partial class DiabloSimulation
             ? difficulty
             : throw new ArgumentOutOfRangeException(nameof(difficulty));
         Items = items;
+        this.monsterTypes = monsterTypes;
         ReconcileProceduralSpawnState();
     }
 
@@ -347,6 +356,10 @@ public sealed partial class DiabloSimulation
                 difficulty,
                 CombatRules.GameVariant,
                 gameMode);
+            DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                target,
+                difficulty,
+                monsterTypes);
             WorldState.CombatTargets.Add(target.EntityId, target);
         }
         if (targets.Count != 0)

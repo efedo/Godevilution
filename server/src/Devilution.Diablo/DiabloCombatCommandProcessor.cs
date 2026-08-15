@@ -6017,6 +6017,10 @@ public sealed class DiabloCombatCommandProcessor
                         difficulty,
                         rules.GameVariant,
                         gameMode);
+                    DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                        summon,
+                        difficulty,
+                        monsterTypes);
                     world.CombatTargets.Add(entityId, summon);
                     return true;
                 }
@@ -9308,6 +9312,10 @@ public sealed class DiabloCombatCommandProcessor
                 difficulty,
                 rules.GameVariant,
                 gameMode);
+            DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                summon,
+                difficulty,
+                monsterTypes);
             world.CombatTargets.Add(summon.EntityId, summon);
         }
     }

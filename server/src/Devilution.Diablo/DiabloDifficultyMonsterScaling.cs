@@ -39,4 +39,23 @@ internal static class DiabloDifficultyMonsterScaling
                 / baseMaximumQ6));
         target.RestoreHitPointsQ6(effectiveCurrentQ6, effectiveMaximumQ6);
     }
+
+    public static void ApplyInitialResistances(
+        AuthoritativeCombatTarget target,
+        DiabloDifficulty difficulty,
+        AuthoritativeMonsterTypeCatalog? monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (difficulty != DiabloDifficulty.Hell
+            || target.IsPlayerMinion
+            || monsterTypes is null
+            || !monsterTypes.TryGet(target.MonsterId, out var definition)) {
+            return;
+        }
+
+        target.FireResistance = definition.FireResistanceHell ?? target.FireResistance;
+        target.LightningResistance = definition.LightningResistanceHell ?? target.LightningResistance;
+        target.MagicResistance = definition.MagicResistanceHell ?? target.MagicResistance;
+        target.AcidResistance = definition.AcidResistanceHell ?? target.AcidResistance;
+    }
 }
