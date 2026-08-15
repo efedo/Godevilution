@@ -218,6 +218,10 @@ Status date: 2026-08-15
   before bounded navigation fallback; validated identity precedence remains
   server-owned.
 
+- Skeleton King non-adjacent movement now uses deterministic native
+  `RoundWalk`/`RandomWalk` candidates after summon admission is evaluated;
+  validated summon identity and server-owned summon precedence remain intact.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
@@ -812,6 +816,9 @@ Status date: 2026-08-15
   adjacent cell, including candidates selected by a complete behavior tuple
   under an alternate validated label; clients receive ordinary authoritative
   monster snapshots and never execute the summon AI.
+- Native SkeletonKing non-adjacent movement now preserves LeoricAi's deterministic
+  RoundWalk/RandomWalk candidate order after summon admission, before bounded
+  navigation fallback.
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.

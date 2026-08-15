@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
 - Restore the native `ButcherAi` non-adjacent `RandomWalk` branch before shared
   melee resolution, with bounded navigation retained only for blocked cells.
 
+- Restore native `LeoricAi` non-adjacent movement after summon admission:
+  Skeleton King now uses deterministic `RoundWalk`/`RandomWalk` candidates before
+  bounded navigation, while validated summons retain precedence.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
