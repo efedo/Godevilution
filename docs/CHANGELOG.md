@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.183 optional `classes.tsv` `critical_damage_multiplier`
+  metadata. Active class Critical Strike now uses the validated multiplier,
+  while omitted values retain the native 2× behavior for compatibility callers.
+
 - Add schema 1.182 optional `combat.tsv`
   `triple_demon_damage_multiplier` metadata. Active Triple Demon Damage now
   uses the validated multiplier, while direct legacy combat rules retain the

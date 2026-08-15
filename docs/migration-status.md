@@ -343,6 +343,10 @@ Status date: 2026-08-14
   Hellfire Peril and Doppelganger now use validated native terms; omitted
   values retain the native 2× and 10% behavior for compatibility callers.
 
+- Schema 1.183 adds optional `critical_damage_multiplier` metadata to
+  `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
+  omitted values retain the native 2× behavior for compatibility callers.
+
 - Schema 1.182 adds optional `triple_demon_damage_multiplier` metadata to
   `combat.tsv`. Active Triple Demon Damage now uses the validated multiplier;
   omitted values retain the native 3× behavior for compatibility callers.
