@@ -1,0 +1,5 @@
+quest_id	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity
+3003	4	1	0	0	0	1	0	0	0	0	0	Gharbad
+3004	8	1	0	0	0	1	0	0	0	0	0	Zhar
+3012	13	1	0	0	0	1	0	0	0	0	0	Warlord
+3016	15	1	0	0	0	1	0	0	0	0	0	Lazarus

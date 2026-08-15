@@ -41,6 +41,11 @@
       "mode": "upsert"
     },
     {
+      "table": "quest_states.tsv",
+      "keys": ["quest_id"],
+      "mode": "upsert"
+    },
+    {
       "table": "levels.tsv",
       "keys": ["level_id"],
       "mode": "upsert"

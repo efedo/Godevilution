@@ -273,7 +273,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(9, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(13, activation.Simulation.WorldState.Quests.Count);
         var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),
@@ -282,6 +282,10 @@ public sealed class ShippedContentTests
         Assert.Equal("Defiler", activation.Simulation.WorldState.Quests[3021].CompletionUniqueIdentity);
         Assert.Equal(1, activation.QuestTypes.Definitions[12].SetLevel);
         Assert.Equal("Archbishop Lazarus' Lair", activation.SetLevelNames!.GetDisplayName(5));
+        Assert.Equal("Gharbad", activation.Simulation.WorldState.Quests[3003].CompletionUniqueIdentity);
+        Assert.Equal("Zhar", activation.Simulation.WorldState.Quests[3004].CompletionUniqueIdentity);
+        Assert.Equal("Warlord", activation.Simulation.WorldState.Quests[3012].CompletionUniqueIdentity);
+        Assert.Equal("Lazarus", activation.Simulation.WorldState.Quests[3016].CompletionUniqueIdentity);
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);
