@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.165 optional `combat.tsv` `maximum_attribute` metadata. Active
+  player equipment recalculation now uses the validated primary-attribute
+  ceiling, while direct legacy state and rules callers retain the native 750
+  default.
 - Add schema 1.164 optional `combat.tsv` `maximum_resistance` metadata. Active
   player elemental resistance now uses the validated cap, while direct legacy
   resistance callers retain the native 75-percent default.

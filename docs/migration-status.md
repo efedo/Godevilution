@@ -272,6 +272,10 @@ Status date: 2026-08-14
   Active player elemental resistance calculations now use the validated cap;
   direct legacy resistance callers retain the native 75-percent default.
 
+- Schema 1.165 adds optional `maximum_attribute` metadata to `combat.tsv`.
+  Active player equipment recalculation now uses the validated primary-attribute
+  ceiling; omitted values retain the native 750 default for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
