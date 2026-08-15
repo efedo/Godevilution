@@ -417,6 +417,9 @@ Windows toolchain command.
 - Optional `MonsterSnapshot.ranged_avoidance_delay_ticks` field 78 carries the
   server-owned native `AiRangedAvoidance` no-action delay countdown. Older
   peers may omit it; clients never execute the delay policy.
+- Optional `MonsterSnapshot.snake_delay_ticks` field 79 carries the server-owned
+  native SnakeAi delay countdown. Older peers may omit it; clients never
+  execute SnakeAi policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

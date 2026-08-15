@@ -387,8 +387,13 @@ selects a deterministic retreat cell when one is available. At long range, a
 blocked lane preserves the native defer rather than generic pursuit.
 
 The validated Snake charge mapping preserves the native non-charge boundary:
-an `AiDelay` admission remains an unchanged authoritative snapshot, while an
-admitted lateral drift is applied by the server before any generic navigation.
+failed movement and adjacent attack admissions carry a server-owned `AiDelay`
+countdown, while admitted lateral drift and attacks are applied by the server
+before any generic navigation.
+
+Optional `MonsterSnapshot.snake_delay_ticks` field 79 carries the remaining
+native SnakeAi delay. Older peers may omit it; clients never execute SnakeAi or
+its delay policy.
 
 The `Zombie` identity likewise consumes an admitted action even when its
 native one-step movement is blocked; clients receive the unchanged

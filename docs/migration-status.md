@@ -255,6 +255,11 @@ Status date: 2026-08-15
   through snapshots, optional protocol field 78, saves, and canonical hashes;
   successful movement and ranged admissions remain unaffected.
 
+- Native Snake charge mappings now preserve both non-charge and adjacent
+  attack `AiDelay` countdowns. The server-owned delay persists through
+  snapshots, optional protocol field 79, saves, and canonical hashes; native
+  lateral drift and admitted adjacent attacks remain server-owned.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains
@@ -352,9 +357,10 @@ Status date: 2026-08-15
   range. Its validated close-range avoidance branch remains evaluated first;
   a missing clear lane no longer delegates movement to generic navigation.
 
-- Snake non-charge `AiDelay` ticks now remain server-owned no-ops. The
-  validated lateral drift branch still runs when its native delay admission is
-  cleared, and generic pursuit no longer replaces the delayed tick.
+- Snake non-charge and adjacent attack `AiDelay` ticks now remain server-owned
+  countdowns. The validated lateral drift and melee branches resume only after
+  the native delay expires, and generic pursuit no longer replaces delayed
+  ticks.
 
 - Zombie action ticks now preserve the native blocked-walk no-op. When the
   validated action band succeeds but no native one-step candidate is available,

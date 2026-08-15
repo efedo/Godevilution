@@ -82,6 +82,11 @@ All notable changes to this fork are documented below.
   persisted through optional protocol field 78, snapshots, saves, and the
   canonical state hash.
 
+- Preserve native Snake `AiDelay` state: failed non-charge movement and
+  adjacent attack admissions now start server-owned countdowns, persisted
+  through optional protocol field 79, snapshots, saves, and the canonical
+  state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
@@ -167,9 +172,10 @@ All notable changes to this fork are documented below.
   close-range avoidance branch, a long-range arrow with no clear missile lane
   now leaves the monster stationary instead of entering generic pursuit.
 
-- Preserve the native Snake `AiDelay` branch: failed non-charge movement
-  admissions now consume the authoritative tick without falling through to
-  generic pursuit, while admitted lateral drift remains server-owned.
+- Preserve the native Snake `AiDelay` branch: failed non-charge movement and
+  adjacent attack admissions now consume the authoritative tick without
+  falling through to generic pursuit, while admitted lateral drift and attacks
+  remain server-owned.
 
 - Preserve the native Zombie blocked-walk result: a successful action whose
   one-step destination is unavailable now leaves the monster stationary rather
