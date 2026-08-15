@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.172 optional `combat.tsv`
+  `bard_default_strength_damage_divisor` metadata. Active Bard fallback
+  physical damage scaling now uses the validated divisor, while direct legacy
+  damage callers retain the native 100 divisor.
 - Add schema 1.171 optional `combat.tsv`
   `bard_bow_strength_dexterity_damage_divisor` metadata. Active Bard bow
   physical damage scaling now uses the validated divisor, while direct legacy
