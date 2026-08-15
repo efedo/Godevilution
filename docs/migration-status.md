@@ -338,6 +338,11 @@ Status date: 2026-08-14
   Hellfire Jesters now uses the validated roll and upper-half expansion terms;
   omitted values retain the native 0–200/100/5 behavior for compatibility callers.
 
+- Schema 1.181 adds optional `hellfire_peril_damage_multiplier` and
+  `hellfire_doppelganger_chance_percent` metadata to `combat.tsv`. Active
+  Hellfire Peril and Doppelganger now use validated native terms; omitted
+  values retain the native 2× and 10% behavior for compatibility callers.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.
@@ -661,11 +666,13 @@ Status date: 2026-08-14
   Devastation boundary in exact Q6 arithmetic; fractional damage remains
   authoritative through target damage and life/mana-on-hit effects.
 - Hellfire `Peril` now applies its native pre-modifier self-damage, including
-  usable equipment `PlusGetHit`, and doubles the final physical hit in Q6;
-  Mana Shield, death handling, and emitted damage events remain server-owned.
-- Hellfire `Doppelganger` now consumes its native post-hit 10% roll, excludes
-  unique and Diablo targets, and spawns a full-health non-unique copy on the
-  deterministic last available adjacent cell; the copy is snapshot-owned.
+  usable equipment `PlusGetHit`, and applies the validated final physical-hit
+  multiplier in Q6; Mana Shield, death handling, and emitted damage events
+  remain server-owned.
+- Hellfire `Doppelganger` now consumes its validated post-hit proc chance,
+  excludes unique and Diablo targets, and spawns a full-health non-unique copy
+  on the deterministic last available adjacent cell; the copy is
+  snapshot-owned.
 - Hellfire `Decay` now applies after an authoritative attack to eligible hand
   weapons in native order, subtracting five damage-bonus points and removing a
   weapon at -100; hit resolution is kept separate from post-armor damage so

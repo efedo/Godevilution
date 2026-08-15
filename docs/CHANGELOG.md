@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.181 optional `combat.tsv`
+  `hellfire_peril_damage_multiplier` and
+  `hellfire_doppelganger_chance_percent` metadata. Active Hellfire Peril and
+  Doppelganger now use validated native terms, while direct legacy combat rules
+  retain the native 2× and 10% behavior.
+
 - Add schema 1.180 optional `combat.tsv`
   `hellfire_jesters_roll_maximum`, `hellfire_jesters_expansion_threshold`,
   and `hellfire_jesters_expansion_multiplier` metadata. Active Hellfire
