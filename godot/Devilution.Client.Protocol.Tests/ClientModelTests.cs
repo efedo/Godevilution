@@ -92,13 +92,25 @@ public sealed class ClientModelTests
         model.Apply(new AuthoritativeClientMessage(
             Events: new EventBatch {
                 Tick = 12,
-                Events = { new GameEvent { Damage = new DamageEvent { TargetEntityId = 7, Amount = 3 } } },
+                Events = {
+                    new GameEvent { Damage = new DamageEvent { TargetEntityId = 7, Amount = 3 } },
+                    new GameEvent {
+                        Dialogue = new DialogueEvent {
+                            SourceEntityId = 7,
+                            TargetEntityId = 20,
+                            QuestId = 3003,
+                            MessageId = 77,
+                        },
+                    },
+                },
             }));
 
         Assert.Equal(12UL, model.CurrentTick);
         Assert.Equal(7U, model.PlayerEntityId);
-        Assert.Single(model.RecentEvents);
+        Assert.Equal(2, model.RecentEvents.Count);
         Assert.Equal(3, model.RecentEvents[0].Damage.Amount);
+        Assert.Equal(3003U, model.RecentEvents[1].Dialogue.QuestId);
+        Assert.Equal(77, model.RecentEvents[1].Dialogue.MessageId);
         Assert.Equal(13UL, model.NextCommandTick);
     }
 

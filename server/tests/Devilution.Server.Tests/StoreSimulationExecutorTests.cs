@@ -1353,6 +1353,48 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void QuestDialogueCommandActivatesOnlyTheMatchingUniqueEncounter()
+    {
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            startingGold: 0,
+            startingPositionX: 0,
+            startingPositionY: 0,
+            startingCombatTargets: [new AuthoritativeCombatTarget(
+                20,
+                1,
+                0,
+                100,
+                unique: true,
+                uniqueIdentity: "Gharbad")],
+            startingQuests: [new AuthoritativeQuestState(
+                3003,
+                0,
+                1,
+                active: false,
+                messageId: 77,
+                completionUniqueIdentity: "Gharbad")]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            TalkToQuestRequested = new TalkToQuestRequested {
+                QuestId = 3003,
+                TargetEntityId = 20,
+            },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var events = executor.DrainEvents("player-a", 7, 1);
+        var dialogue = Assert.Single(events!.Events).Dialogue;
+        Assert.Equal(3003U, dialogue.QuestId);
+        Assert.Equal(20U, dialogue.TargetEntityId);
+        Assert.Equal(77, dialogue.MessageId);
+        Assert.False(Assert.Single(executor.CreateSnapshot("player-a", 7, 1).Quests).Initial);
+    }
+
+    [Fact]
     public void DefeatingAMonsterSpawnsItsConfiguredDrop()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 1, dropItemEntityId: 1009, dropItemSeed: 6001, dropItemPrice: 25);

@@ -104,6 +104,7 @@ message Command {
 		RestartTownRequested restart_town_requested = 27;
 		DropHeldItemRequested drop_held_item_requested = 28;
 		DisarmTrapRequested disarm_trap_requested = 29;
+		TalkToQuestRequested talk_to_quest_requested = 30;
 	}
 }
 
@@ -218,6 +219,11 @@ message DisarmTrapRequested {
 
 message AdvanceQuestRequested {
 	uint32 quest_id = 1;
+}
+
+message TalkToQuestRequested {
+	uint32 quest_id = 1;
+	uint32 target_entity_id = 2;
 }
 
 // Explicit state, rather than a toggle, keeps retries idempotent.
@@ -824,6 +830,7 @@ message GameEvent {
 		DamageEvent damage = 10;
 		ExperienceEvent experience = 11;
 		HealingEvent healing = 12;
+		DialogueEvent dialogue = 13;
 	}
 }
 
@@ -846,6 +853,13 @@ message HealingEvent {
 	int32 amount = 2;
 	// Exact authoritative healing in native Q6 resource units.
 	int32 amount_q6 = 3;
+}
+
+message DialogueEvent {
+	uint32 source_entity_id = 1;
+	uint32 target_entity_id = 2;
+	uint32 quest_id = 3;
+	int32 message_id = 4;
 }
 
 message ProtocolError {

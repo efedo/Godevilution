@@ -17,6 +17,9 @@ public sealed record DiabloDisarmTrapIntent(uint ObjectEntityId) : DiabloWorldIn
 
 public sealed record DiabloAdvanceQuestIntent(uint QuestId) : DiabloWorldIntent;
 
+/** Starts a validated quest conversation with a server-owned unique encounter. */
+public sealed record DiabloTalkToQuestIntent(uint QuestId, uint TargetEntityId) : DiabloWorldIntent;
+
 public sealed record DiabloSetFriendlyModeIntent(bool FriendlyMode) : DiabloWorldIntent;
 
 public sealed record DiabloRestartTownIntent : DiabloWorldIntent;

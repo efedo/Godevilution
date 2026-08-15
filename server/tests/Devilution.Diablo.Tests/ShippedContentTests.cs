@@ -286,6 +286,10 @@ public sealed class ShippedContentTests
         Assert.Equal("Zhar", activation.Simulation.WorldState.Quests[3004].CompletionUniqueIdentity);
         Assert.Equal("Warlord", activation.Simulation.WorldState.Quests[3012].CompletionUniqueIdentity);
         Assert.Equal("Lazarus", activation.Simulation.WorldState.Quests[3016].CompletionUniqueIdentity);
+        Assert.Equal(144, activation.Simulation.WorldState.Quests[3003].MessageId);
+        Assert.Equal(148, activation.Simulation.WorldState.Quests[3004].MessageId);
+        Assert.Equal(110, activation.Simulation.WorldState.Quests[3012].MessageId);
+        Assert.Equal(35, activation.Simulation.WorldState.Quests[3016].MessageId);
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);

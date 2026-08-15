@@ -85,6 +85,10 @@ public sealed class DiabloWorldCommandProcessor
             DiabloOperateObjectIntent operation => OperateObject(player, operation.ObjectEntityId),
             DiabloDisarmTrapIntent disarm => DisarmTrap(player, disarm.ObjectEntityId),
             DiabloAdvanceQuestIntent quest => AdvanceQuest(player, quest.QuestId),
+            DiabloTalkToQuestIntent talk => TalkToQuest(
+                player,
+                talk.QuestId,
+                talk.TargetEntityId),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
@@ -865,6 +869,49 @@ public sealed class DiabloWorldCommandProcessor
             quest.Active = false;
         }
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /**
+     * Starts the native quest-dialogue boundary without exposing presentation
+     * text or encounter state to the client. Content supplies the quest's
+     * message identity and unique completion identity; the server validates
+     * both before activating the conversation.
+     */
+    private DiabloWorldIntentResult TalkToQuest(
+        AuthoritativePlayerState player,
+        uint questId,
+        uint targetEntityId)
+    {
+        if (!world.Quests.TryGetValue(questId, out var quest)
+            || quest.Unavailable
+            || quest.Completed
+            || quest.LevelId != player.LevelId
+            || string.IsNullOrWhiteSpace(quest.CompletionUniqueIdentity)
+            || !world.CombatTargets.TryGetValue(targetEntityId, out var target)
+            || !target.IsUnique
+            || target.HitPoints <= 0
+            || target.LevelId != player.LevelId
+            || !string.Equals(
+                target.UniqueIdentity,
+                quest.CompletionUniqueIdentity,
+                StringComparison.Ordinal)
+            || Math.Max(
+                Math.Abs(target.PositionX - player.PositionX),
+                Math.Abs(target.PositionY - player.PositionY)) > 1) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        quest.Active = true;
+        quest.Logged = true;
+        return DiabloWorldIntentResult.AcceptedWith(
+            new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Dialogue,
+                player.EntityId,
+                target.EntityId,
+                0) {
+                MessageId = quest.MessageId,
+                QuestId = quest.QuestId,
+            });
     }
 
     private static DiabloWorldIntentResult SetFriendlyMode(

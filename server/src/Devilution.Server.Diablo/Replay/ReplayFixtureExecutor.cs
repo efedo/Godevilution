@@ -216,6 +216,14 @@ public static class ReplayFixtureExecutor
                     RequestedTick = fixtureCommand.TargetTick,
                     AdvanceQuestRequested = new AdvanceQuestRequested { QuestId = fixtureCommand.QuestId },
                 },
+                "TalkToQuest" => new Command {
+                    ClientSequence = fixtureCommand.ClientSequence,
+                    RequestedTick = fixtureCommand.TargetTick,
+                    TalkToQuestRequested = new TalkToQuestRequested {
+                        QuestId = fixtureCommand.QuestId,
+                        TargetEntityId = fixtureCommand.TargetEntityId,
+                    },
+                },
                 _ => throw new InvalidDataException($"Unsupported replay command '{fixtureCommand.Kind}'."),
             };
     }

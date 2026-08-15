@@ -574,7 +574,7 @@ public static class ReplayFixtureLoader
                         ? inventory.GetUInt32()
                         : 0U;
 
-            if (kind is not ("OpenStore" or "BuyItem" or "SellItem" or "RefillMana" or "Move" or "Attack" or "Cast" or "UsePortal" or "RestartTown" or "PickupWorldItem" or "DropHeldItem" or "OperateObject" or "AdvanceQuest"))
+            if (kind is not ("OpenStore" or "BuyItem" or "SellItem" or "RefillMana" or "Move" or "Attack" or "Cast" or "UsePortal" or "RestartTown" or "PickupWorldItem" or "DropHeldItem" or "OperateObject" or "AdvanceQuest" or "TalkToQuest"))
                 throw new InvalidDataException($"Unsupported replay command kind '{kind}'.");
 
             commands.Add(new ReplayFixtureCommand(

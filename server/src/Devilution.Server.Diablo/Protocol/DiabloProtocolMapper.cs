@@ -686,6 +686,16 @@ internal static class DiabloProtocolMapper
                     },
                 });
                 break;
+            case DiabloGameplayEventKind.Dialogue:
+                batch.Events.Add(new GameEvent {
+                    Dialogue = new DialogueEvent {
+                        SourceEntityId = gameplayEvent.SourceEntityId,
+                        TargetEntityId = gameplayEvent.TargetEntityId,
+                        QuestId = gameplayEvent.QuestId,
+                        MessageId = gameplayEvent.MessageId,
+                    },
+                });
+                break;
             default:
                 throw new InvalidOperationException(
                     $"Unsupported Diablo gameplay event kind '{gameplayEvent.Kind}'.");

@@ -6,6 +6,7 @@ public enum DiabloGameplayEventKind
     Damage,
     Experience,
     Healing,
+    Dialogue,
 }
 
 public readonly record struct DiabloGameplayEvent(
@@ -14,6 +15,12 @@ public readonly record struct DiabloGameplayEvent(
     uint TargetEntityId,
     int Amount)
 {
+    /** Optional quest speech identity carried by Dialogue events. */
+    public int MessageId { get; init; }
+
+    /** Optional quest identity carried by Dialogue events. */
+    public uint QuestId { get; init; }
+
     /** Exact Q6 amount; legacy healing events already express Amount in native resource units. */
     public int AmountQ6 { get; init; } = Kind == DiabloGameplayEventKind.Healing
         ? Amount

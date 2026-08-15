@@ -756,6 +756,77 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestDialogueValidatesUniqueIdentityActivatesQuestAndEmitsMessage()
+    {
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            active: false,
+            messageId: 77,
+            completionUniqueIdentity: "Gharbad");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            1,
+            0,
+            100,
+            levelId: 0,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3003, 20),
+            5,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(7U, dialogue.SourceEntityId);
+        Assert.Equal(20U, dialogue.TargetEntityId);
+        Assert.Equal(3003U, dialogue.QuestId);
+        Assert.Equal(77, dialogue.MessageId);
+        Assert.Equal(0, dialogue.Amount);
+    }
+
+    [Fact]
+    public void QuestDialogueRejectsMismatchedUniqueIdentity()
+    {
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            messageId: 77,
+            completionUniqueIdentity: "Gharbad");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            1,
+            0,
+            100,
+            levelId: 0,
+            unique: true,
+            uniqueIdentity: "Zhar");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3003, 20),
+                5,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Logged);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(
