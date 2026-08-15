@@ -183,6 +183,10 @@ Status date: 2026-08-15
   blocked ranged rolls now use deterministic lateral round-walk movement
   instead of generic pursuit.
 
+- Native `AiRangedAvoidance` round-walk movement now follows the native
+  candidate order: 90-degree turn, 45-degree turn, straight, then the
+  opposite-side `RandomWalk` fallback.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains
