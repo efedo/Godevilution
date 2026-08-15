@@ -247,6 +247,10 @@ Status date: 2026-08-15
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
 
+- Rhino charge misses and blocked lanes now consume the native far-distance
+  `RoundWalk` and ordinary `33 + 2 * intelligence` `RandomWalk` fallback before
+  generic navigation.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

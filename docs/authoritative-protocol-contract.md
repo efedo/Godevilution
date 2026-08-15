@@ -279,6 +279,8 @@ The `Rhino` identity likewise drives a server-owned clear-lane charge using the
 native `43 + 2 * intelligence` probability boundary. Its
 resulting monster/player positions, damage event, and blocked-lane fallback are
 ordinary authoritative snapshot state; clients do not simulate the charge.
+Charge misses and blocked lanes retain the native far-distance `RoundWalk` or
+ordinary `33 + 2 * intelligence` `RandomWalk` movement fallback on the server.
 
 The `SkeletonRanged` identity drives a server-owned clear-lane arrow boundary
 using the native `3 + 2 * intelligence` attack band. Its resolved damage is an
