@@ -180,6 +180,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Inclusive upper bound for Holy Bolt's native magic-hit roll. */
     public int HolyBoltMaximumHitChance { get; init; } = 95;
 
+    /** Monster-level penalty applied by Firebolt's native magic-hit roll. */
+    public int FireboltHitMonsterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for Firebolt's native magic-hit roll. */
+    public int FireboltMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for Firebolt's native magic-hit roll. */
+    public int FireboltMaximumHitChance { get; init; } = 95;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -584,6 +593,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.HolyBoltHitMonsterLevelScale < 0
                 || definition.HolyBoltMinimumHitChance is < 0 or > 100
                 || definition.HolyBoltMaximumHitChance is < 0 or > 100
+                || definition.FireboltHitMonsterLevelScale < 0
+                || definition.FireboltMinimumHitChance is < 0 or > 100
+                || definition.FireboltMaximumHitChance is < 0 or > 100
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -657,6 +669,11 @@ public sealed class AuthoritativeSpellCatalog
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
                 throw new InvalidDataException(
                     "Holy Bolt hit chance bounds must be ordered.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Firebolt
+                && definition.FireboltMaximumHitChance < definition.FireboltMinimumHitChance) {
+                throw new InvalidDataException(
+                    "Firebolt hit chance bounds must be ordered.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Firebolt
                 && (definition.ProjectileSpeed == 0
@@ -1384,6 +1401,13 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Holy Bolt hit tuning columns require HolyBolt projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Firebolt
+                && (definition.FireboltHitMonsterLevelScale != 2
+                    || definition.FireboltMinimumHitChance != 5
+                    || definition.FireboltMaximumHitChance != 95)) {
+                throw new InvalidDataException(
+                    "Firebolt hit tuning columns require Firebolt projectile behavior.");
+            }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
@@ -1901,6 +1925,15 @@ public sealed class AuthoritativeSpellCatalog
                 5),
             HolyBoltMaximumHitChance = row.OptionalInt32(
                 "holy_bolt_maximum_hit_chance",
+                95),
+            FireboltHitMonsterLevelScale = row.OptionalInt32(
+                "firebolt_hit_monster_level_scale",
+                2),
+            FireboltMinimumHitChance = row.OptionalInt32(
+                "firebolt_minimum_hit_chance",
+                5),
+            FireboltMaximumHitChance = row.OptionalInt32(
+                "firebolt_maximum_hit_chance",
                 95),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
