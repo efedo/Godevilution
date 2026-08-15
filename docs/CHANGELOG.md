@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a shared client-side status presentation classifier; Godot now renders
+  server-owned Infravision, Search, and Etherealize state as typed player
+  overlays while leaving status timing and admission authoritative.
+
 - Render authoritative Teleport and Phasing movement controllers in Godot with
   typed presentation families instead of filtering those server-owned
   transitions from the world view.

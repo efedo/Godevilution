@@ -30,6 +30,11 @@ Status date: 2026-08-15
   simulation logic into the client. Teleport and Phasing controllers remain
   server-owned while their authoritative positions are now visible to players.
 
+- The Godot client also maps authoritative status-effect identities to typed
+  overlays: Infravision, Search, and Etherealize now have distinct player
+  presentation while the server retains all timing, stacking, and admission
+  rules.
+
 - Acid puddle impact duration now consumes validated `puddle_impact_lifetime`
   metadata from `monster_missiles.tsv`; omitted values retain the native
   two-tick impact phase.
