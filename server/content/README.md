@@ -117,7 +117,9 @@ the native base-five, intelligence-scale-one, release-three, nine-tick values.
 The optional `bat_attack_chance_base` and
 `bat_attack_chance_intelligence_scale` columns externalize the Bat adjacent
 attack admission band. Legacy monster rows retain the native base-eight,
-intelligence-scale-four compatibility values.
+intelligence-scale-four compatibility values. A complete positive tuple selects
+the behavior regardless of the row's `native_ai` label; rows without migrated
+tuning retain the native-name compatibility path.
 The optional `goat_melee_special_health_threshold_percent` and
 `goat_melee_special_chance_group_period` columns externalize the GoatMelee
 wounded-special health threshold and deterministic random-group period.
@@ -1467,7 +1469,8 @@ checked-in Sneak rows own their visibility and retreat values while older rows
 retain the compatibility formula.
 Schema 1.106 adds the optional Bat attack-band columns to `monster_types.tsv`;
 checked-in Bat rows own their adjacent attack chance while older rows retain
-the compatibility formula.
+the compatibility formula. Complete positive tuples are selected independently
+of the `native_ai` label.
 Schema 1.107 adds the optional SkeletonMelee delay-band columns to
 `monster_types.tsv`; checked-in SkeletonMelee rows own their movement delay
 chance while older rows retain the compatibility formula.
@@ -1556,7 +1559,8 @@ base-game target-health percentage while older rows retain the compatibility
 values.
 Schema 1.129 adds the optional Bat retreat-duration column to
 `monster_types.tsv`; checked-in Bat rows own the native two-tick post-hit retreat
-while older rows retain the compatibility duration.
+while older rows retain the compatibility duration. The validated duration is
+selected independently of the `native_ai` label.
 Schema 1.130 adds optional GoatMelee wounded-special columns to
 `monster_types.tsv`; checked-in GoatMelee rows own the native 50-percent
 health threshold and two-group deterministic gate while older rows retain the

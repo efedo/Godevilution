@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Bat adjacent attack and retreat-duration behavior from validated
+  tuning regardless of the row's `Bat` native-AI name; legacy rows without
+  migrated tuning retain native-name compatibility defaults.
 - Select Gargoyle safety, wounded-health, and healing-formula behavior from
   validated tuning regardless of the row's `Gargoyle` native-AI name; legacy
   rows without migrated tuning retain native-name compatibility defaults.

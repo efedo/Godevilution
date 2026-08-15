@@ -24,6 +24,11 @@ Status date: 2026-08-14
 
 ## Implemented authoritative systems
 
+- Bat adjacent attack and retreat-duration behavior now use validated tuning
+  independent of the row's native-AI label; rows without migrated tuning retain
+  the native-name compatibility path, while retreat ticks/direction remain
+  snapshot/save compatible.
+
 - Gargoyle safety, wounded-health, and healing-formula behavior now use
   validated tuning independent of the row's native-AI label; rows without
   migrated tuning retain the native-name compatibility path, while the
