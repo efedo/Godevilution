@@ -762,9 +762,11 @@ Status date: 2026-08-15
   difficulty is now selected by authoritative start configuration and
   persisted in snapshots, protocol field 15, version-1 saves, and hashes;
   the rank records difficulty + 1. The authoritative combat module now derives
-  native Nightmare/Hell monster level (+15/+30), attack accuracy (+85/+120),
-  regeneration, and experience scaling (2/4 × base-plus-1000, with unique
-  rewards doubled) at runtime without mutating persisted base monster data.
+  native Nightmare/Hell monster level (+15/+30), armor (+50/+80), attack
+  accuracy (+85/+120), physical damage scaling, regeneration, and experience
+  scaling (2/4 × base-plus-1000, with unique rewards doubled) at runtime
+  without mutating persisted base monster data. Native difficulty health and
+  Hell-specific resistance data remain a subsequent content/schema slice.
 
 - Native Diablo defeat now also sets a server-owned terminal victory flag,
   persists it through the transport-neutral snapshot and version-1 save
