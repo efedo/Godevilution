@@ -2518,6 +2518,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ButcherAiUsesValidatedMonsterIdentityForAnAlternateRuntimeLabel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            levelId: 0,
+            monsterId: 1,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "Fallen");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Butcher",
+                1,
+                16,
+                1,
+                10,
+                10,
+                0,
+                3,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Butcher",
+                AggroRange = 5,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void SkeletonMeleeAiUsesItsNativeMovementAdmissionBand()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -4715,7 +4715,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
-        if (monster.NativeAi != "Butcher" || distance <= 1)
+        if (!UsesButcherPursuit(monster) || distance <= 1)
             return false;
 
         var next = AuthoritativeMonsterNavigation.FindStep(
@@ -4726,6 +4726,14 @@ public sealed class DiabloCombatCommandProcessor
         if (next.HasValue)
             monster.BeginMovement(next.Value.X, next.Value.Y);
         return true;
+    }
+
+    /** Active monster content owns Butcher controller assignment; direct legacy targets keep the label fallback. */
+    private bool UsesButcherPursuit(AuthoritativeCombatTarget monster)
+    {
+        if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
+            return definition.NativeAi == "Butcher";
+        return monster.NativeAi == "Butcher";
     }
 
     /** Native SkeletonAi admits movement through its 35 - 4 * intelligence band. */
