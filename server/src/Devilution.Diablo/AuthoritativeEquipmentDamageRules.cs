@@ -8,13 +8,16 @@ public static class AuthoritativeEquipmentDamageRules
         PlayerAttributesState attributes,
         IEnumerable<EquippedStoreItem> equipment,
         AuthoritativePlayerClassDefinition playerClass,
-        AuthoritativeItemCatalog? items = null)
+        AuthoritativeItemCatalog? items = null,
+        int barbarianWeaponStrengthDamageDivisor = 75)
     {
         if (characterLevel == 0)
             throw new ArgumentOutOfRangeException(nameof(characterLevel));
         ArgumentNullException.ThrowIfNull(attributes);
         ArgumentNullException.ThrowIfNull(equipment);
         ArgumentNullException.ThrowIfNull(playerClass);
+        if (barbarianWeaponStrengthDamageDivisor is < 1 or > 10_000)
+            throw new InvalidDataException("Barbarian weapon damage tuning is invalid.");
 
         var usableEquipment = equipment
             .Where(item => item is not null && item.State.StatFlag)
@@ -76,7 +79,8 @@ public static class AuthoritativeEquipmentDamageRules
                 hasMace,
                 hasBow,
                 hasShield,
-                hasStaff),
+                hasStaff,
+                barbarianWeaponStrengthDamageDivisor),
             _ => strengthModifier / 100,
         };
 
@@ -94,10 +98,11 @@ public static class AuthoritativeEquipmentDamageRules
         bool hasMace,
         bool hasBow,
         bool hasShield,
-        bool hasStaff)
+        bool hasStaff,
+        int barbarianWeaponStrengthDamageDivisor)
     {
         var damageModifier = hasAxe || hasMace
-            ? strengthModifier / 75
+            ? strengthModifier / barbarianWeaponStrengthDamageDivisor
             : hasBow
                 ? strengthModifier / 300
                 : strengthModifier / 100;
