@@ -260,6 +260,10 @@ For the `Mega` identity, Inferno admission and its intermediate-distance
 `2 * (5 * intelligence + 25)` RandomWalk fallback are server-owned. A failed or
 blocked mapped Inferno roll never delegates movement policy to the client.
 
+Counselor mapped ranged rows use the native `5 * (intelligence + 10)` admission
+and 30-percent `RoundWalk` fallback; clients receive only the resulting
+projectile or authoritative movement snapshot.
+
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid
 `SkeletonMelee` definition, creates the summon on an available adjacent cell,

@@ -55,6 +55,10 @@ All notable changes to this fork are documented below.
   with retreat state preserved through snapshots, protocol saves, and state
   hashing.
 
+- Restore Counselor’s native ranged admission: mapped Firebolt, Charged Bolt,
+  Fireball, Lightning, and magic rows now use the `5 * (intelligence + 10)`
+  attack band and 30-percent `RoundWalk` fallback before generic pursuit.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.

@@ -239,6 +239,10 @@ Status date: 2026-08-15
   is carried through snapshots, protocol saves, and the authoritative state
   hash, while the Godot client remains behavior-blind.
 
+- Counselor mapped ranged rows now consume the native
+  `5 * (intelligence + 10)` admission and 30-percent `RoundWalk` fallback;
+  failed admissions defer on the server instead of generic-pursuing.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
