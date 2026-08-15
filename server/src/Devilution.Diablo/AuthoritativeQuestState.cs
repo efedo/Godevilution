@@ -18,7 +18,9 @@ public sealed class AuthoritativeQuestState
         int variable2 = 0,
         int messageId = 0,
         uint completionMonsterId = 0,
-        string completionUniqueIdentity = "")
+        string completionUniqueIdentity = "",
+        int dialogueVariable1 = 0,
+        int dialogueVariable2 = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -30,6 +32,10 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(variable2));
         if (messageId < 0 || messageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(messageId));
+        if (dialogueVariable1 is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueVariable1));
+        if (dialogueVariable2 is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueVariable2));
         if (completionUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
@@ -45,6 +51,8 @@ public sealed class AuthoritativeQuestState
         MessageId = messageId;
         CompletionMonsterId = completionMonsterId;
         CompletionUniqueIdentity = completionUniqueIdentity;
+        DialogueVariable1 = dialogueVariable1;
+        DialogueVariable2 = dialogueVariable2;
     }
 
     public uint QuestId { get; }
@@ -68,6 +76,10 @@ public sealed class AuthoritativeQuestState
     public uint CompletionMonsterId { get; set; }
     /** Optional native unique-monster identity whose defeat advances this quest. */
     public string CompletionUniqueIdentity { get; set; }
+    /** Content-owned minimum native _qvar1 after the first quest conversation. */
+    public int DialogueVariable1 { get; }
+    /** Content-owned minimum native _qvar2 after the first quest conversation. */
+    public int DialogueVariable2 { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -100,7 +112,9 @@ public static class AuthoritativeQuestCatalog
                 completionUniqueIdentity: row.TryGet("completion_unique_identity", out var uniqueIdentity)
                     && !string.Equals(uniqueIdentity, "NONE", StringComparison.OrdinalIgnoreCase)
                     ? uniqueIdentity
-                    : string.Empty);
+                    : string.Empty,
+                dialogueVariable1: row.OptionalInt32("dialogue_variable1"),
+                dialogueVariable2: row.OptionalInt32("dialogue_variable2"));
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");

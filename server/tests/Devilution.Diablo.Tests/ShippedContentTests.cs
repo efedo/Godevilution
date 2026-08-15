@@ -290,6 +290,10 @@ public sealed class ShippedContentTests
         Assert.Equal(148, activation.Simulation.WorldState.Quests[3004].MessageId);
         Assert.Equal(110, activation.Simulation.WorldState.Quests[3012].MessageId);
         Assert.Equal(35, activation.Simulation.WorldState.Quests[3016].MessageId);
+        Assert.Equal(1, activation.Simulation.WorldState.Quests[3003].DialogueVariable1);
+        Assert.Equal(2, activation.Simulation.WorldState.Quests[3004].DialogueVariable1);
+        Assert.Equal(2, activation.Simulation.WorldState.Quests[3012].DialogueVariable1);
+        Assert.Equal(6, activation.Simulation.WorldState.Quests[3016].DialogueVariable1);
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);

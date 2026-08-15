@@ -903,6 +903,8 @@ public sealed class DiabloWorldCommandProcessor
 
         quest.Active = true;
         quest.Logged = true;
+        quest.Variable1 = Math.Max(quest.Variable1, quest.DialogueVariable1);
+        quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
         return DiabloWorldIntentResult.AcceptedWith(
             new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Dialogue,

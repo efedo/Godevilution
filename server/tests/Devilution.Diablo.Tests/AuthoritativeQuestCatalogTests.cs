@@ -86,6 +86,18 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadDialogueVariableTransitions()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tdialogue_variable1\tdialogue_variable2\n"
+                + "3001\t1\t1\t3\t4\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((3, 4), (quest.DialogueVariable1, quest.DialogueVariable2));
+    }
+
+    [Fact]
     public void QuestStateCanLoadAnOptionalMonsterCompletionTrigger()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

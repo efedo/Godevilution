@@ -1,9 +1,9 @@
-quest_id	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity
-3017	17	1	0	0	0	1	0	0	0	0	0	NONE
-3018	9	1	0	0	0	1	0	0	0	0	0	NONE
-3019	17	1	0	0	0	1	0	0	0	0	0	NONE
-3020	21	1	0	0	0	1	0	0	0	0	0	NONE
-3021	17	1	0	0	0	1	0	0	0	0	0	Defiler
-3022	21	1	0	0	0	1	0	0	0	0	0	NONE
-3023	21	1	0	0	0	1	0	0	0	0	0	NONE
-3024	9	1	0	0	0	1	0	0	0	0	0	NONE
+quest_id	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity	dialogue_variable1	dialogue_variable2
+3017	17	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3018	9	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3019	17	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3020	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3021	17	1	0	0	0	1	0	0	0	0	0	Defiler	0	0
+3022	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3023	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0
+3024	9	1	0	0	0	1	0	0	0	0	0	NONE	0	0

@@ -764,7 +764,9 @@ public sealed class DiabloWorldCommandProcessorTests
             1,
             active: false,
             messageId: 77,
-            completionUniqueIdentity: "Gharbad");
+            completionUniqueIdentity: "Gharbad",
+            dialogueVariable1: 1,
+            dialogueVariable2: 2);
         var target = new AuthoritativeCombatTarget(
             20,
             1,
@@ -786,6 +788,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(result.Succeeded);
         Assert.True(quest.Active);
         Assert.True(quest.Logged);
+        Assert.Equal((1, 2), (quest.Variable1, quest.Variable2));
         var dialogue = Assert.Single(result.Events);
         Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
         Assert.Equal(7U, dialogue.SourceEntityId);
@@ -793,6 +796,37 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(3003U, dialogue.QuestId);
         Assert.Equal(77, dialogue.MessageId);
         Assert.Equal(0, dialogue.Amount);
+    }
+
+    [Fact]
+    public void QuestDialogueDoesNotRegressNativeDialogueVariablesOnRetry()
+    {
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            variable1: 3,
+            dialogueVariable1: 1,
+            completionUniqueIdentity: "Gharbad");
+        var target = new AuthoritativeCombatTarget(
+            20,
+            1,
+            0,
+            100,
+            levelId: 0,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3003, 20),
+            5,
+            [player]).Succeeded);
+
+        Assert.Equal(3, quest.Variable1);
     }
 
     [Fact]
