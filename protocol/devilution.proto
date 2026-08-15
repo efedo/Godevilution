@@ -547,6 +547,10 @@ message MonsterSnapshot {
 	optional int32 ranged_avoidance_movement_mode = 67;
 	// Remaining native SkeletonAi delay ticks before the next decision.
 	optional int32 skeleton_melee_delay_ticks = 68;
+	// Native SkeletonBow var2-compatible movement counter.
+	optional int32 skeleton_ranged_movement_idle_ticks = 69;
+	// Native SkeletonBow var1-compatible movement value.
+	optional int32 skeleton_ranged_movement_mode = 70;
 }
 
 message WorldItemSnapshot {

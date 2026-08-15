@@ -5181,6 +5181,74 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonRangedAiUsesItsNativeFreshMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0,
+            skeletonRangedMovementIdleTicks: 0,
+            skeletonRangedMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1,296 ^ 9 ^ 7 = 1,310: movement roll 13 is outside the long-idle
+        // 13% band but inside the fresh-mode 63% band.
+        processor.AdvanceTick(1_296, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.SkeletonRangedMovementIdleTicks);
+    }
+
+    [Fact]
+    public void SkeletonRangedAiDefersInsideItsNativeMiddleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0,
+            skeletonRangedMovementIdleTicks: 10,
+            skeletonRangedMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1_296, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.SkeletonRangedMovementIdleTicks);
+    }
+
+    [Fact]
     public void SkeletonRangedUsesValidatedRetreatBoundaryTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

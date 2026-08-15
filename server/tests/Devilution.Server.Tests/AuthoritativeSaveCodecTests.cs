@@ -281,6 +281,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsSkeletonRangedMovementCounterStateThroughTheProtocolSave()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "SkeletonRanged",
+                SkeletonRangedMovementIdleTicks = 10,
+                SkeletonRangedMovementMode = 1,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        var monster = Assert.Single(restored.Monsters);
+        Assert.Equal((10, 1), (
+            monster.SkeletonRangedMovementIdleTicks,
+            monster.SkeletonRangedMovementMode));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsCounselorRetreatStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();

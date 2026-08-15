@@ -7542,23 +7542,47 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
-        var retreatChance = Math.Min(
-            100,
-            skeletonRangedTuning.Value.RetreatChanceBase
-                + (skeletonRangedTuning.Value.RetreatChanceIntelligenceScale
-                    * monster.Intelligence));
-        if ((actionSeed / 100U) % 100U >= (uint)retreatChance)
+        var retreatChance = GetSkeletonRangedMovementChance(
+            monster,
+            skeletonRangedTuning.Value.RetreatChanceBase,
+            skeletonRangedTuning.Value.RetreatChanceIntelligenceScale);
+        if ((actionSeed / 100U) % 100U >= (uint)retreatChance) {
+            monster.AdvanceSkeletonRangedMovementIdle();
             return false;
+        }
 
         var retreat = FindGoatRangedRetreatDestination(
             monster,
             player,
             players,
             distance);
-        if (!retreat.HasValue)
+        if (!retreat.HasValue) {
+            monster.AdvanceSkeletonRangedMovementIdle();
             return false;
+        }
         monster.BeginMovement(retreat.Value.X, retreat.Value.Y);
+        monster.RecordSkeletonRangedMovement(
+            retreat.Value.X - monster.PositionX,
+            retreat.Value.Y - monster.PositionY);
         return true;
+    }
+
+    /** Native SkeletonBow close-range movement admission across var2 bands. */
+    private static int GetSkeletonRangedMovementChance(
+        AuthoritativeCombatTarget monster,
+        int chanceBase,
+        int intelligenceScale)
+    {
+        var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
+        var movementChance = monster.SkeletonRangedMovementIdleTicks == -1
+            ? longIdleChance
+            : monster.SkeletonRangedMovementIdleTicks > 20
+                ? longIdleChance
+                : monster.SkeletonRangedMovementIdleTicks == 0
+                    && monster.SkeletonRangedMovementMode is >= 1 and <= 3
+                    ? longIdleChance + 50
+                    : 0;
+        return Math.Min(100, movementChance);
     }
 
     /** Native SkeletonBow AI keeps a clear-lane monster ranged-only. */
