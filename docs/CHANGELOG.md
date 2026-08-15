@@ -59,6 +59,11 @@ All notable changes to this fork are documented below.
   start configuration, protocol snapshots, version-1 saves, and canonical
   hashes; the Diablo defeat rank now records difficulty + 1 for single-player.
 
+- Apply native Nightmare/Hell monster level, accuracy, regeneration, and
+  experience modifiers in the authoritative combat module while retaining
+  base content values in snapshots; Normal behavior remains unchanged and
+  unique rewards retain the native double-experience rule.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a
