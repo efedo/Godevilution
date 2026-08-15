@@ -4491,6 +4491,8 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceGargoyleHealing(target, victim, tick, players, events, distance))
                 continue;
+            if (TryAdvanceGargoyleMovement(target, victim, players, tick, distance))
+                continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
             if (TryAdvanceSnakeAi(target, victim, tick, players, distance))
@@ -6127,6 +6129,43 @@ public sealed class DiabloCombatCommandProcessor
         return UsesNativeAi(target, "Gargoyle")
             ? (2, 1, 50, 16, 5, 4)
             : null;
+    }
+
+    /** Native GargoyleAi delegates healthy non-adjacent ticks to AiAvoidance. */
+    private bool TryAdvanceGargoyleMovement(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong tick,
+        int distance)
+    {
+        if (!UsesNativeAi(monster, "Gargoyle") || distance <= 1)
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var movementChance = Math.Min(100, 28 + (2 * monster.Intelligence));
+        if (actionSeed % 100U >= (uint)movementChance)
+            return true;
+
+        if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
+            var roundWalk = FindNativeRoundWalkStep(
+                monster,
+                player,
+                players,
+                actionSeed);
+            if (roundWalk.HasValue)
+                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+            return true;
+        }
+
+        var randomWalk = FindNativeRandomWalkStep(
+            monster,
+            player,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue)
+            monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+        return true;
     }
 
     /** Native GargoyleAi retreats from a wounded player before healing. */

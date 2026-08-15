@@ -4344,6 +4344,64 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiUsesNativeAvoidanceMovementWhenHealthy()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 1,
+            aggroRange: 5,
+            nativeAi: "Gargoyle",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: native AiAvoidance admits its 28% movement roll
+        // and ordinary RandomWalk selects the west candidate (2,0).
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
+    public void GargoyleAiDefersWhenNativeAvoidanceCandidatesAreBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 1,
+            aggroRange: 5,
+            nativeAi: "Gargoyle",
+            intelligence: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 42, 43],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((3, 0), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void GargoyleUsesValidatedSafetyBoundaryTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
