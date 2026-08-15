@@ -219,6 +219,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Inclusive upper bound for shared persistent-projectile player-hit rolls. */
     public int PersistentProjectilePlayerMaximumHitChance { get; init; } = 95;
 
+    /** Divisor applied to shared persistent-projectile player damage. */
+    public int PersistentProjectilePlayerDamageDivisor { get; init; } = 2;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -636,6 +639,7 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.PersistentProjectileHitCharacterLevelScale < 0
                 || definition.PersistentProjectilePlayerMinimumHitChance is < 0 or > 100
                 || definition.PersistentProjectilePlayerMaximumHitChance is < 0 or > 100
+                || definition.PersistentProjectilePlayerDamageDivisor <= 0
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -2025,6 +2029,9 @@ public sealed class AuthoritativeSpellCatalog
             PersistentProjectilePlayerMaximumHitChance = row.OptionalInt32(
                 "persistent_projectile_player_maximum_hit_chance",
                 95),
+            PersistentProjectilePlayerDamageDivisor = row.OptionalInt32(
+                "persistent_projectile_player_damage_divisor",
+                2),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
             DamageBonus = row.OptionalInt32("damage_bonus"),
