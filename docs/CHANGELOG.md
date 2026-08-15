@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
   combination table. The server now consumes the three note fragments and
   produces the reconstructed note on pickup.
 
+- Externalize the Hellfire Cathedral Map pickup transition through a validated
+  item quest-effect table. Picking up the map now activates Grave Matters and
+  preserves the native first quest variable on the authoritative server.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks

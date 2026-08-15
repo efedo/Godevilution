@@ -782,6 +782,10 @@ Status date: 2026-08-15
   Na-Krul note fragments now combine on authoritative pickup into the
   reconstructed note while preserving native item identities.
 
+- Schema 1.218 adds validated item quest effects. The Hellfire Cathedral Map
+  now activates Grave Matters and sets its native first quest variable when
+  picked up by the authoritative player.
+
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
   multiplayer completion does not mutate it. Native Normal/Nightmare/Hell
