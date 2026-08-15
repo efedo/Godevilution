@@ -107,6 +107,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native HeavyHitThreshold bonus percentage over character level. */
     public int HeavyHitThresholdBonusPercent { get; init; } = 25;
 
+    /** Native staff FastBlock frame skip. */
+    public int FastBlockFrameSkip { get; init; } = 2;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -296,6 +299,7 @@ public sealed class AuthoritativePlayerClassCatalog
         ..DefenseTuningColumns,
         "natural_resistance_per_level_percent",
         "heavy_hit_threshold_bonus_percent",
+        "fast_block_frame_skip",
     ];
 
     private const DiabloPlayerClassFlags KnownFlags
@@ -496,6 +500,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 HeavyHitThresholdBonusPercent = hasClassDefenseTuning
                     ? row.RequiredInt32("heavy_hit_threshold_bonus_percent")
                     : 25,
+                FastBlockFrameSkip = hasClassDefenseTuning
+                    ? row.RequiredInt32("fast_block_frame_skip")
+                    : 2,
             }));
     }
 
@@ -550,6 +557,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.IronSkinLevelDivisor <= 0
             || definition.NaturalResistancePerLevelPercent is < 0 or > 100
             || definition.HeavyHitThresholdBonusPercent is < 0 or > 100
+            || definition.FastBlockFrameSkip is < 0 or > 10
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

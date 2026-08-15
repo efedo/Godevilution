@@ -11466,9 +11466,10 @@ public sealed class DiabloCombatCommandProcessor
         DiabloPlayerActionLifecycle.Cancel(player);
         var blockingFrames = GetPlayerAnimation(player)?.BlockingFrames ?? 2;
         var skippedFrames = HasUsableEquipmentFlag(player, FastBlockFlag)
-                || IsNativeFastBlockingClass(player, playerClass)
             ? blockingFrames - 2
-            : 0;
+            : IsNativeFastBlockingClass(player, playerClass)
+                ? blockingFrames - playerClass!.FastBlockFrameSkip
+                : 0;
         var duration = checked((blockingFrames - 1 - skippedFrames) * 3 + 1);
         player.CombatMode = DiabloPlayerCombatMode.Block;
         player.CombatModeEndTick = checked(tick + (ulong)duration);
