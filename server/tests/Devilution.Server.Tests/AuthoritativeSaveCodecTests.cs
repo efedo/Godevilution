@@ -145,6 +145,8 @@ public sealed class AuthoritativeSaveCodecTests
                 NativeAi = "Bat",
                 BatRetreatTicks = 1,
                 BatRetreatDirection = 7,
+                BatMovementIdleTicks = 21,
+                BatMovementMode = 1,
             }],
         };
 
@@ -153,6 +155,7 @@ public sealed class AuthoritativeSaveCodecTests
 
         var monster = Assert.Single(restored.Monsters);
         Assert.Equal((1, 7), (monster.BatRetreatTicks, monster.BatRetreatDirection));
+        Assert.Equal((21, 1), (monster.BatMovementIdleTicks, monster.BatMovementMode));
     }
 
     [Fact]

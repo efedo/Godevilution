@@ -2208,6 +2208,31 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BatUsesNativeMovementWithoutAChargeMapping()
+    {
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 21);
+        var world = new DiabloWorldState(combatTargets: [bat]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7, positionX: 7, positionY: 0);
+
+        // 11 ^ 9 ^ 7 = 5: ordinary Bat movement is admitted without a
+        // monster missile row because native BatAi still owns this branch.
+        processor.AdvanceTick(11, [player]);
+
+        Assert.True(bat.IsMoving);
+        Assert.Equal(1, bat.BatMovementMode);
+        Assert.Equal(0, bat.BatMovementIdleTicks);
+    }
+
+    [Fact]
     public void BatSkipsAdjacentAttackOutsideNativeAttackBand()
     {
         var nativeWorld = new AuthoritativeWorld();
@@ -5767,6 +5792,116 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.False(monster.IsMoving);
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
         Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
+    public void BatUsesItsNativeLongIdleMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 21,
+            batMovementMode: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(entityId: 7, positionX: 7, positionY: 0);
+
+        // 11 ^ 9 ^ 7 = 5: the charge roll misses and the native 13-point
+        // long-idle movement band admits the five-candidate RandomWalk.
+        processor.AdvanceTick(11, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.BatMovementMode);
+        Assert.Equal(0, monster.BatMovementIdleTicks);
+    }
+
+    [Fact]
+    public void BatUsesItsNativeFreshMovementModeBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 0,
+            batMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(entityId: 7, positionX: 7, positionY: 0);
+
+        processor.AdvanceTick(11, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.BatMovementMode);
+        Assert.Equal(0, monster.BatMovementIdleTicks);
+    }
+
+    [Fact]
+    public void BatDefersBeforeItsNativeMovementModeIsReady()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            monsterLevel: 9,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 10,
+            batMovementMode: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(entityId: 7, positionX: 7, positionY: 0);
+
+        processor.AdvanceTick(11, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(11, monster.BatMovementIdleTicks);
     }
 
     [Fact]

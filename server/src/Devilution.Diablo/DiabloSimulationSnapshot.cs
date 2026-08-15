@@ -115,6 +115,12 @@ public sealed record DiabloMonsterState(
     /** Direction toward the victim when the native Bat retreat started. */
     public int BatRetreatDirection { get; init; }
 
+    /** Native Bat var2-compatible movement counter used by movement admissions. */
+    public int BatMovementIdleTicks { get; init; } = -1;
+
+    /** Native Bat var1-compatible movement value retained across movement. */
+    public int BatMovementMode { get; init; }
+
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; init; }
 
@@ -407,6 +413,8 @@ public sealed partial class DiabloSimulation
                     ScavengerCorpseEntityId = target.ScavengerCorpseEntityId,
                     BatRetreatTicks = target.BatRetreatTicks,
                     BatRetreatDirection = target.BatRetreatDirection,
+                    BatMovementIdleTicks = target.BatMovementIdleTicks,
+                    BatMovementMode = target.BatMovementMode,
                     CounselorRetreatTicks = target.CounselorRetreatTicks,
                     HitPointsQ6 = target.HitPointsQ6,
                     MaxHitPointsQ6 = target.MaxHitPointsQ6,
@@ -685,6 +693,8 @@ public sealed partial class DiabloSimulation
                 || monster.ScavengerHealingTicks is < 0 or > 64
                 || monster.BatRetreatTicks is < 0 or > 64
                 || monster.BatRetreatDirection is < 0 or >= 8
+                || monster.BatMovementIdleTicks is < -1 or > 1024
+                || monster.BatMovementMode is < -1 or > 3
                 || monster.CounselorRetreatTicks is < 0 or > 64
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
@@ -1540,6 +1550,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
+                target.RestoreBatMovementState(
+                    monster.BatMovementIdleTicks,
+                    monster.BatMovementMode);
                 target.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 if (monster.HitPointsQ6 == 0 && monster.DeathAnimationTicks == 0
                     && monster.DeathTicksRemaining != 0) {
@@ -1594,7 +1607,9 @@ public sealed partial class DiabloSimulation
                     toHitSpecial: monster.ToHitSpecial,
                     nativeAi: monster.NativeAi,
                     intelligence: monster.Intelligence,
-                    gargoyleSpecialActive: monster.GargoyleSpecialActive);
+                    gargoyleSpecialActive: monster.GargoyleSpecialActive,
+                    batMovementIdleTicks: monster.BatMovementIdleTicks,
+                    batMovementMode: monster.BatMovementMode);
                 restoredTarget.RestoreFallenFear(
                     monster.FallenFearTicks,
                     monster.FallenFearDirection);
@@ -1607,6 +1622,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreBatRetreat(
                     monster.BatRetreatTicks,
                     monster.BatRetreatDirection);
+                restoredTarget.RestoreBatMovementState(
+                    monster.BatMovementIdleTicks,
+                    monster.BatMovementMode);
                 restoredTarget.RestoreCounselorRetreat(monster.CounselorRetreatTicks);
                 restoredTarget.RestoreHitPointsQ6(
                     monster.HitPointsQ6,

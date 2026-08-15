@@ -580,13 +580,16 @@ public sealed class DiabloSimulationTests
                     levelId: 0,
                     nativeAi: "Zombie",
                     batRetreatTicks: 1,
-                    batRetreatDirection: 7)],
+                    batRetreatDirection: 7,
+                    batMovementIdleTicks: 21,
+                    batMovementMode: 1)],
             });
         var player = CreatePlayer();
 
         var snapshot = simulation.CaptureSnapshot(player, 1);
         var savedMonster = Assert.Single(snapshot.Monsters);
         Assert.Equal((1, 7), (savedMonster.BatRetreatTicks, savedMonster.BatRetreatDirection));
+        Assert.Equal((21, 1), (savedMonster.BatMovementIdleTicks, savedMonster.BatMovementMode));
 
         var replacement = DiabloSimulationFactory.Instance.Create(
             new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
@@ -602,6 +605,7 @@ public sealed class DiabloSimulationTests
 
         var restored = Assert.Single(replacement.WorldState.CombatTargets).Value;
         Assert.Equal((1, 7), (restored.BatRetreatTicks, restored.BatRetreatDirection));
+        Assert.Equal((21, 1), (restored.BatMovementIdleTicks, restored.BatMovementMode));
     }
 
     [Fact]

@@ -521,6 +521,10 @@ message MonsterSnapshot {
 	string unique_identity = 54;
 	// Remaining native Counselor retreat attempts after a wounded adjacent turn.
 	int32 counselor_retreat_ticks = 55;
+	// Native Bat var2-compatible movement counter used by movement admissions.
+	int32 bat_movement_idle_ticks = 56;
+	// Native Bat var1-compatible movement value retained across movement.
+	int32 bat_movement_mode = 57;
 }
 
 message WorldItemSnapshot {

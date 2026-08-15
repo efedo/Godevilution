@@ -759,6 +759,30 @@ public sealed class SnapshotStateHasherTests
         var second = first.Clone();
         second.Monsters[0].BatRetreatTicks = 1;
         second.Monsters[0].BatRetreatDirection = 7;
+        second.Monsters[0].BatMovementIdleTicks = 21;
+        second.Monsters[0].BatMovementMode = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
+    public void BatMovementStateExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var second = first.Clone();
+        second.Monsters[0].BatMovementIdleTicks = 21;
+        second.Monsters[0].BatMovementMode = 1;
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(first),

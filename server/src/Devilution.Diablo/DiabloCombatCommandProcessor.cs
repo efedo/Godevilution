@@ -6454,8 +6454,17 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (!TryGetMonsterMissile(monster, out var missile)
-            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge)
+        if (!TryGetMonsterMissile(monster, out var missile)) {
+            if (distance < 2 || !UsesNativeAi(monster, "Bat"))
+                return false;
+            return TryAdvanceBatMovementFallback(
+                monster,
+                player,
+                players,
+                unchecked((uint)tick ^ monster.EntityId ^ player.EntityId),
+                distance);
+        }
+        if (missile.ProjectileBehavior != AuthoritativeProjectileBehavior.BatCharge)
             return false;
 
         if (world.Projectiles.Values.Any(projectile =>
@@ -6550,21 +6559,37 @@ public sealed class DiabloCombatCommandProcessor
         if (distance < 2)
             return false;
 
-        // The native controller has two movement-mode branches (intelligence
-        // + 13 and intelligence + 63). The server target does not yet carry
-        // animation var1/var2, so the standing-tick compatibility path uses
-        // the move-mode boundary while keeping the native RandomWalk order.
-        var movementChance = Math.Min(100, monster.Intelligence + 63);
-        if (seed % 100U >= (uint)movementChance)
+        // BatAi uses the native var1/var2 movement state: after a long idle
+        // animation it admits intelligence + 13, while a fresh movement mode
+        // with var2 == 0 admits intelligence + 63. Legacy hand-built targets
+        // without that state retain the earlier standing-tick boundary once.
+        var movementChance = monster.BatMovementIdleTicks == -1
+            ? monster.Intelligence + 63
+            : monster.BatMovementIdleTicks > 20
+                ? monster.Intelligence + 13
+                : monster.BatMovementIdleTicks == 0
+                    && monster.BatMovementMode is >= 1 and <= 3
+                    ? monster.Intelligence + 63
+                    : 0;
+        movementChance = Math.Min(100, movementChance);
+        if (seed % 100U >= (uint)movementChance) {
+            monster.AdvanceBatMovementIdle();
             return true;
+        }
 
         var randomWalk = FindNativeRandomWalkStep(
             monster,
             player,
             players,
             seed);
-        if (randomWalk.HasValue)
+        if (randomWalk.HasValue) {
             monster.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            monster.RecordBatMovement(
+                randomWalk.Value.X - monster.PositionX,
+                randomWalk.Value.Y - monster.PositionY);
+        } else {
+            monster.AdvanceBatMovementIdle();
+        }
         return true;
     }
 

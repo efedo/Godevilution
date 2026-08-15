@@ -61,7 +61,9 @@ public sealed class AuthoritativeCombatTarget
         int batRetreatTicks = 0,
         int batRetreatDirection = 0,
         string uniqueIdentity = "",
-        int counselorRetreatTicks = 0)
+        int counselorRetreatTicks = 0,
+        int batMovementIdleTicks = -1,
+        int batMovementMode = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -93,6 +95,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
         if (batRetreatDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
+        if (batMovementIdleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(batMovementIdleTicks));
+        if (batMovementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(batMovementMode));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -158,6 +164,8 @@ public sealed class AuthoritativeCombatTarget
         BatRetreatTicks = batRetreatTicks;
         BatRetreatDirection = batRetreatDirection;
         CounselorRetreatTicks = counselorRetreatTicks;
+        BatMovementIdleTicks = batMovementIdleTicks;
+        BatMovementMode = batMovementMode;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -282,6 +290,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Direction toward the victim when the native Bat retreat started. */
     public int BatRetreatDirection { get; private set; }
+
+    /** Native Bat var2-compatible movement counter used by movement admissions. */
+    public int BatMovementIdleTicks { get; private set; }
+
+    /** Native Bat var1-compatible movement value retained across movement. */
+    public int BatMovementMode { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -478,6 +492,33 @@ public sealed class AuthoritativeCombatTarget
         if (BatRetreatTicks == 0)
             BatRetreatDirection = 0;
         return true;
+    }
+
+    internal void RecordBatMovement(int displacementX, int displacementY)
+    {
+        if (displacementX is < -1 or > 1
+            || displacementY is < -1 or > 1
+            || (displacementX == 0 && displacementY == 0)) {
+            throw new ArgumentOutOfRangeException(nameof(displacementX));
+        }
+        BatMovementMode = displacementX;
+        BatMovementIdleTicks = displacementY;
+    }
+
+    internal void AdvanceBatMovementIdle()
+    {
+        if (BatMovementIdleTicks < 1024)
+            BatMovementIdleTicks++;
+    }
+
+    internal void RestoreBatMovementState(int idleTicks, int movementMode)
+    {
+        if (idleTicks is < -1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(idleTicks));
+        if (movementMode is < -1 or > 3)
+            throw new ArgumentOutOfRangeException(nameof(movementMode));
+        BatMovementIdleTicks = idleTicks;
+        BatMovementMode = movementMode;
     }
 
     internal void StartCounselorRetreat(int ticks)

@@ -94,6 +94,8 @@ internal static class DiabloProtocolMapper
                 ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
                 BatRetreatTicks = monster.BatRetreatTicks,
                 BatRetreatDirection = monster.BatRetreatDirection,
+                BatMovementIdleTicks = monster.BatMovementIdleTicks,
+                BatMovementMode = monster.BatMovementMode,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
             });
         }
@@ -415,6 +417,8 @@ internal static class DiabloProtocolMapper
                 ScavengerCorpseEntityId = monster.ScavengerCorpseEntityId,
                 BatRetreatTicks = monster.BatRetreatTicks,
                 BatRetreatDirection = monster.BatRetreatDirection,
+                BatMovementIdleTicks = monster.BatMovementIdleTicks,
+                BatMovementMode = monster.BatMovementMode,
                 CounselorRetreatTicks = monster.CounselorRetreatTicks,
                 HitPointsQ6 = ResolveQ6(monster.HitPoints, monster.HitPointsQ6),
                 MaxHitPointsQ6 = ResolveQ6(monster.MaxHitPoints, monster.MaxHitPointsQ6),
