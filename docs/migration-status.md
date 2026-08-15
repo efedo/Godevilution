@@ -245,6 +245,11 @@ Status date: 2026-08-15
   optional protocol field 76, saves, and canonical hashes; the server does not
   reroll LeoricAi while native delay mode is active.
 
+- Native HorkDemonAi ordinary movement `AiDelay` is now a server-owned
+  countdown after failed movement admissions. The countdown persists through
+  snapshots, optional protocol field 77, saves, and canonical hashes; the
+  server does not reroll HorkDemonAi while native delay mode is active.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

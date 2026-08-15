@@ -72,6 +72,11 @@ All notable changes to this fork are documented below.
   optional protocol field 76, snapshots, saves, and the canonical state hash
   instead of rerolling on the next tick.
 
+- Preserve native HorkDemonAi `AiDelay` state: failed ordinary movement
+  admissions now start a server-owned countdown, which persists through
+  optional protocol field 77, snapshots, saves, and the canonical state hash
+  instead of rerolling on the next tick.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -321,6 +321,12 @@ remaining native Leoric/Skeleton King `AiDelay` countdown. It is server-owned,
 validated, persisted by version-1 saves, and included in the canonical hash;
 older peers may omit it and clients never execute LeoricAi policy.
 
+Optional `MonsterSnapshot.hork_demon_delay_ticks` field 77 carries the
+remaining native HorkDemonAi `AiDelay` countdown after an ordinary movement
+admission fails. It is server-owned, validated, persisted by version-1 saves,
+and included in the canonical hash; older peers may omit it and clients never
+execute HorkDemonAi policy.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

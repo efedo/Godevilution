@@ -411,6 +411,9 @@ Windows toolchain command.
 - Optional `MonsterSnapshot.skeleton_king_delay_ticks` field 76 carries the
   server-owned native Leoric/Skeleton King `AiDelay` countdown. Older peers may
   omit it; clients never execute LeoricAi policy.
+- Optional `MonsterSnapshot.hork_demon_delay_ticks` field 77 carries the
+  server-owned native HorkDemonAi `AiDelay` countdown. Older peers may omit it;
+  clients never execute HorkDemonAi policy.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.
