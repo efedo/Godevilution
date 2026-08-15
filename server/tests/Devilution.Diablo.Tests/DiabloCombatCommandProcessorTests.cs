@@ -8700,7 +8700,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void PersistentFireballPlayerHitUsesConfiguredMagicHitBounds()
+    public void PersistentFireballPlayerHitUsesConfiguredMagicHitBoundsAndDamageDivisor()
     {
         var directTarget = new AuthoritativeCombatTarget(
             9,
@@ -8714,8 +8714,9 @@ public sealed class DiabloCombatCommandProcessorTests
             world,
             new AuthoritativeSpellCatalog([
                 CreateFireballSpell() with {
-                    PersistentProjectilePlayerMinimumHitChance = 0,
-                    PersistentProjectilePlayerMaximumHitChance = 0,
+                    PersistentProjectilePlayerMinimumHitChance = 100,
+                    PersistentProjectilePlayerMaximumHitChance = 100,
+                    PersistentProjectilePlayerDamageDivisor = 1000,
                 },
             ]),
             rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
