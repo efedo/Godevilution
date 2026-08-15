@@ -5399,7 +5399,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     SpellId: 37,
                     DamageType: AuthoritativeDamageType.Fire,
                     ProjectileSpeed: 7,
-                    ProjectileLifetime: 12),
+                    ProjectileLifetime: 12,
+                    ProjectileDamage: 13),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -5416,6 +5417,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
         Assert.Equal(7, projectile.Speed);
         Assert.Equal(11U, projectile.RemainingTicks);
+        Assert.Equal(13, projectile.Damage);
     }
 
     [Fact]
