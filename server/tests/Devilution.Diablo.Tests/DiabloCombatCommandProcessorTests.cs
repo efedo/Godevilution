@@ -2896,6 +2896,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterAttackUsesConfiguredThornsDamageBounds()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            1,
+            100,
+            levelId: 0,
+            maxHitPoints: 100,
+            attackDamage: 20,
+            aggroRange: 5);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(1),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                thornsDamageMinimum: 7,
+                thornsDamageMaximum: 7));
+        var player = CreatePlayer(
+            positionY: 0,
+            life: 50,
+            lifeMaximum: 50,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentIncomingDamageRules.ThornsFlag,
+                })]);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(7, Assert.Single(deliveries.Skip(1)).Event.Amount);
+        Assert.Equal(93, monster.HitPoints);
+    }
+
+    [Fact]
     public void DrainLifeAppliesFourQ6PerActiveTickButNotInTown()
     {
         var equipment = new[] {

@@ -348,6 +348,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredThornsDamageBounds()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tthorns_damage_minimum\tthorns_damage_maximum\n"
+            + "10\t1\t100\t7\t11\n");
+
+        Assert.Equal((7, 11), (rules.ThornsDamageMinimum, rules.ThornsDamageMaximum));
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -467,6 +478,23 @@ public sealed class AuthoritativeCombatRulesTests
                 "combat.tsv",
                 "base_attack_damage\tminimum_damage\tdefeat_experience\tbarbarian_vitality_damage_divisor\n"
                 + "10\t1\t100\t0\n"));
+    }
+
+    [Fact]
+    public void RejectsInvalidThornsDamageBounds()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\tthorns_damage_minimum\tthorns_damage_maximum\n"
+                + "10\t1\t100\t0\t3\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                thornsDamageMinimum: 4,
+                thornsDamageMaximum: 3));
     }
 
     [Fact]
