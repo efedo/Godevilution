@@ -26,8 +26,9 @@ Status date: 2026-08-15
 
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
-  spell, arrow, beam, and impact families without moving simulation logic into
-  the client.
+  spell, arrow, beam, impact, and movement-transition families without moving
+  simulation logic into the client. Teleport and Phasing controllers remain
+  server-owned while their authoritative positions are now visible to players.
 
 - Acid puddle impact duration now consumes validated `puddle_impact_lifetime`
   metadata from `monster_missiles.tsv`; omitted values retain the native

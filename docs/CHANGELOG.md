@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Render authoritative Teleport and Phasing movement controllers in Godot with
+  typed presentation families instead of filtering those server-owned
+  transitions from the world view.
+
 - Add a shared client-side projectile presentation classifier for authoritative
   behavior IDs; Godot now renders distinct Fire, Lightning, Holy, Blood Star,
   Bone Spirit, Acid, arrow, beam, and impact families with a generic fallback.
