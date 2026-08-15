@@ -79,7 +79,9 @@ public sealed class AuthoritativeCombatRules
         int hellfireDevastationDamageMultiplier = 3,
         int hellfireJestersRollMaximum = 200,
         int hellfireJestersExpansionThreshold = 100,
-        int hellfireJestersExpansionMultiplier = 5)
+        int hellfireJestersExpansionMultiplier = 5,
+        int hellfirePerilDamageMultiplier = 2,
+        int hellfireDoppelgangerChancePercent = 10)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -168,6 +170,10 @@ public sealed class AuthoritativeCombatRules
             || hellfireJestersExpansionThreshold > hellfireJestersRollMaximum
             || hellfireJestersExpansionMultiplier is < 1 or > 100) {
             throw new InvalidDataException("Hellfire Jesters tuning is invalid.");
+        }
+        if (hellfirePerilDamageMultiplier is < 1 or > 100
+            || hellfireDoppelgangerChancePercent is < 0 or > 100) {
+            throw new InvalidDataException("Hellfire Peril/Doppelganger tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -265,6 +271,8 @@ public sealed class AuthoritativeCombatRules
         HellfireJestersRollMaximum = hellfireJestersRollMaximum;
         HellfireJestersExpansionThreshold = hellfireJestersExpansionThreshold;
         HellfireJestersExpansionMultiplier = hellfireJestersExpansionMultiplier;
+        HellfirePerilDamageMultiplier = hellfirePerilDamageMultiplier;
+        HellfireDoppelgangerChancePercent = hellfireDoppelgangerChancePercent;
     }
 
     public int BaseAttackDamage { get; }
@@ -432,6 +440,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Native multiplier applied to the upper-half Jesters roll. */
     public int HellfireJestersExpansionMultiplier { get; }
+
+    /** Native final-damage multiplier applied while Hellfire Peril is active. */
+    public int HellfirePerilDamageMultiplier { get; }
+
+    /** Native post-hit proc chance for Hellfire Doppelganger. */
+    public int HellfireDoppelgangerChancePercent { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -775,7 +789,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hellfire_devastation_damage_multiplier", 3),
             row.OptionalInt32("hellfire_jesters_roll_maximum", 200),
             row.OptionalInt32("hellfire_jesters_expansion_threshold", 100),
-            row.OptionalInt32("hellfire_jesters_expansion_multiplier", 5));
+            row.OptionalInt32("hellfire_jesters_expansion_multiplier", 5),
+            row.OptionalInt32("hellfire_peril_damage_multiplier", 2),
+            row.OptionalInt32("hellfire_doppelganger_chance_percent", 10));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

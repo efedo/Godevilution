@@ -1195,7 +1195,7 @@ public sealed class DiabloCombatCommandProcessor
             && HasUsableHellfireDamageArmorFlag(
                 player,
                 AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag)
-            && random.RandomIntLessThan(100) < 10) {
+            && random.RandomIntLessThan(100) < rules.HellfireDoppelgangerChancePercent) {
             doppelgangerProc = true;
         }
         var resolvedDamageQ6 = DiabloFixedPointQ6.FromWhole(resolvedDamage);
@@ -1214,7 +1214,7 @@ public sealed class DiabloCombatCommandProcessor
             resolvedDamageQ6 = checked(resolvedDamageQ6 * roll / 100);
         }
         if (perilActive)
-            resolvedDamageQ6 = checked(resolvedDamageQ6 * 2);
+            resolvedDamageQ6 = checked(resolvedDamageQ6 * rules.HellfirePerilDamageMultiplier);
         return resolvedDamageQ6;
     }
 
