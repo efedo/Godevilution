@@ -4658,6 +4658,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiDriftsWhenChargeDistanceIsNotMet()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38, outside Snake's native 35-point delay band. The
+        // distance-four target is outside the two-tile charge boundary, so
+        // the native drift branch must move instead of idling.
+        processor.AdvanceTick(40, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void SnakeChargeUsesConfiguredMonsterPlayerBlockLevelScale()
     {
         var monster = new AuthoritativeCombatTarget(

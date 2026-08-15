@@ -55,6 +55,8 @@ public sealed class DiabloCombatCommandProcessor
         (1, 0),
     ];
 
+    private static readonly int[] SnakeDriftPattern = [1, 1, 0, -1, -1, 0];
+
     private static readonly (int X, int Y)[] FlashBottomOffsets = [
         (-1, 0),
         (0, 0),
@@ -4491,7 +4493,7 @@ public sealed class DiabloCombatCommandProcessor
                 continue;
             if (TryAdvanceRhinoCharge(target, victim, tick, players, events, distance))
                 continue;
-            if (TryAdvanceSnakeAi(target, victim, distance))
+            if (TryAdvanceSnakeAi(target, victim, tick, players, distance))
                 continue;
             if (TryAdvanceMappedChargeAi(target, victim, tick, distance))
                 continue;
@@ -5849,6 +5851,8 @@ public sealed class DiabloCombatCommandProcessor
     private bool TryAdvanceSnakeAi(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
         int distance)
     {
         if (monsterMissiles is null
@@ -5859,60 +5863,114 @@ public sealed class DiabloCombatCommandProcessor
         var chargeDistance = missile.ChargeMinimumDistance > 0
             ? missile.ChargeMinimumDistance
             : 2;
-        if (distance != chargeDistance)
+        if (distance == chargeDistance) {
+            if (world.Projectiles.Values.Any(projectile =>
+                    projectile.SourceEntityId == monster.EntityId
+                    && projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge))
+                return true;
+
+            if (world.HasMissileLineOfSight(
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY)) {
+                var direction = GetDirection(
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY);
+                var chargeProjectileTuning = ResolveMappedChargeProjectileTuning(
+                    missile,
+                    monster.Intelligence);
+                var (velocityX, velocityY) = CalculateVelocity(
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY,
+                    chargeProjectileTuning.Speed);
+                var projectile = new AuthoritativeProjectile(
+                    AllocateProjectileEntityId(),
+                    monster.EntityId,
+                    player.EntityId,
+                    1,
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY,
+                    0,
+                    AuthoritativeDamageType.Physical,
+                    0,
+                    checked((uint)chargeProjectileTuning.Lifetime)) {
+                    Behavior = AuthoritativeProjectileBehavior.SnakeCharge,
+                    VelocityX = velocityX,
+                    VelocityY = velocityY,
+                    OriginalDirection = direction,
+                    Speed = chargeProjectileTuning.Speed,
+                    ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
+                    ResistantDamageDivisor = 1,
+                };
+                world.Projectiles.Add(projectile.EntityId, projectile);
+                return true;
+            }
+        }
+
+        if (distance < 2)
             return false;
 
-        if (world.Projectiles.Values.Any(projectile =>
-                projectile.SourceEntityId == monster.EntityId
-                && projectile.Behavior == AuthoritativeProjectileBehavior.SnakeCharge))
-            return true;
-
-        if (!world.HasMissileLineOfSight(
-                monster.LevelId,
-                monster.PositionX,
-                monster.PositionY,
-                player.PositionX,
-                player.PositionY))
+        var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var delayBand = Math.Max(0, 35 - (2 * monster.Intelligence));
+        if (actionSeed % 100U < (uint)delayBand)
+            // Preserve the existing generic navigation fallback for the
+            // native delay branch when no Snake-specific step is admitted.
             return false;
 
-        var direction = GetDirection(
+        var drift = FindSnakeDriftStep(monster, player, players, actionSeed);
+        if (drift.HasValue)
+            monster.BeginMovement(drift.Value.X, drift.Value.Y);
+        return true;
+    }
+
+    /** Native SnakeAi's six-step lateral drift, with deterministic blocked-cell
+     * fallback in place of native RandomWalk2. */
+    private (int X, int Y)? FindSnakeDriftStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var targetDirection = GetDirection(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY);
-        var chargeProjectileTuning = ResolveMappedChargeProjectileTuning(
-            missile,
-            monster.Intelligence);
-        var (velocityX, velocityY) = CalculateVelocity(
-            monster.PositionX,
-            monster.PositionY,
-            player.PositionX,
-            player.PositionY,
-            chargeProjectileTuning.Speed);
-        var projectile = new AuthoritativeProjectile(
-            AllocateProjectileEntityId(),
-            monster.EntityId,
-            player.EntityId,
-            1,
-            monster.LevelId,
-            monster.PositionX,
-            monster.PositionY,
-            player.PositionX,
-            player.PositionY,
-            0,
-            AuthoritativeDamageType.Physical,
-            0,
-            checked((uint)chargeProjectileTuning.Lifetime)) {
-            Behavior = AuthoritativeProjectileBehavior.SnakeCharge,
-            VelocityX = velocityX,
-            VelocityY = velocityY,
-            OriginalDirection = direction,
-            Speed = chargeProjectileTuning.Speed,
-            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
-            ResistantDamageDivisor = 1,
+        var patternIndex = (int)((seed / 100U) % (uint)SnakeDriftPattern.Length);
+        var direction = RotateDirection(
+            targetDirection,
+            SnakeDriftPattern[patternIndex]);
+        var fallbackTurn = (seed / 600U) % 2U == 0 ? 1 : -1;
+        var directions = new[] {
+            direction,
+            RotateDirection(direction, fallbackTurn),
+            RotateDirection(direction, -fallbackTurn),
+            RotateDirection(direction, 2),
+            RotateDirection(direction, -2),
         };
-        world.Projectiles.Add(projectile.EntityId, projectile);
-        return true;
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
     }
 
     /** Native Bat-family charge admitted by a monster-specific missile row. */
