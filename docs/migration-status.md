@@ -232,6 +232,11 @@ Status date: 2026-08-14
   Validated symbolic Hellfire damage/armor effects now project directly into
   generated item state; legacy unique and affix effect paths remain available.
 
+- Schema 1.157 adds optional spell `teleport_search_radius` metadata.
+  Teleport destination resolution now consumes the validated crawl radius in
+  both its cast admission and movement-controller tick; direct legacy spell
+  definitions retain the native five-tile default.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

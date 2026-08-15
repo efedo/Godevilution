@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.157 optional `spells.tsv` `teleport_search_radius` metadata.
+  Authoritative Teleport resolution now consumes the validated native crawl
+  radius while direct legacy spell definitions retain the five-tile default.
 - Add schema 1.156 optional normalized item `hellfire_effects` metadata. The
   validated symbolic effects project native Hellfire damage/armor flags into
   generated item state while preserving legacy unique and affix compatibility.

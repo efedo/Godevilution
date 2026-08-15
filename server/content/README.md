@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.156.0` schema in
+It declares its identity and `devilution.diablo@1.157.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1391,7 +1391,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.156.0"
+      "version": "1.157.0"
   },
   "dependencyConstraints": [
     {
@@ -1423,7 +1423,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.156.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.157.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1723,6 +1723,10 @@ Schema 1.156 adds the optional `hellfire_effects` column to `items.tsv`. Its
 validated symbolic names map to native Hellfire damage/armor effects including
 Devastation, Decay, Peril, Jesters, Doppelganger, and class-specific armor
 bonuses. Legacy unique and affix effect paths remain supported.
+
+Schema 1.157 adds the optional `teleport_search_radius` column to `spells.tsv`.
+Teleport uses this validated crawl radius for both destination admission and
+the authoritative movement-controller tick; omitted values retain five tiles.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
