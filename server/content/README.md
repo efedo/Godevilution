@@ -180,7 +180,9 @@ retain the native 50-percent threshold and two-group compatibility defaults.
 The optional `scavenger_healing_health_threshold_percent` column externalizes
 the Scavenger wounded-health admission threshold for corpse seeking. Legacy
 monster rows retain the native 50-percent compatibility threshold. The
-validated threshold is selected independently of the row's `native_ai` label.
+validated threshold is selected independently of the row's `native_ai` label;
+when supplied without the healing tuple, the runtime composes the native
+10/4/8/1/75 healing defaults.
 The optional `mana_random_range`, `mana_character_level_random_range`, and
 `mana_spell_level_random_range` columns externalize the three native Mana
 restoration rolls. Legacy Mana rows retain the native 10, 4, and 6 ranges.

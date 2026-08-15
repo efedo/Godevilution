@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Honor standalone validated Scavenger wounded-health tuning by composing
+  omitted healing terms from the native 10/4/8/1/75 defaults.
+
 - Honor standalone validated Bat retreat-duration tuning by composing omitted
   attack-band terms from the native 8/4 defaults.
 
