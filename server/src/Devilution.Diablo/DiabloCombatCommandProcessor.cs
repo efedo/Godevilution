@@ -5271,14 +5271,14 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.BatAttackChanceBase > 0
-                && definition.BatAttackChanceIntelligenceScale > 0) {
+            var hasAttackTuning = definition.BatAttackChanceBase > 0
+                && definition.BatAttackChanceIntelligenceScale > 0;
+            var hasRetreatTuning = definition.BatRetreatDurationTicks > 0;
+            if (hasAttackTuning || hasRetreatTuning) {
                 return (
-                    definition.BatAttackChanceBase,
-                    definition.BatAttackChanceIntelligenceScale,
-                    definition.BatRetreatDurationTicks > 0
-                        ? definition.BatRetreatDurationTicks
-                        : 2);
+                    hasAttackTuning ? definition.BatAttackChanceBase : 8,
+                    hasAttackTuning ? definition.BatAttackChanceIntelligenceScale : 4,
+                    hasRetreatTuning ? definition.BatRetreatDurationTicks : 2);
             }
         }
         return UsesNativeAi(target, "Bat")

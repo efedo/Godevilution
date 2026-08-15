@@ -2048,6 +2048,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BatUsesStandaloneRetreatDurationWithNativeAttackDefaults()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 5, 5, isDefaultStart: true));
+        var bat = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            monsterId: 1,
+            aggroRange: 6,
+            levelId: 0,
+            nativeAi: "Butcher",
+            intelligence: 23);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Bat",
+                1,
+                16,
+                1,
+                1,
+                20,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Fallen",
+                BatRetreatDurationTicks = 5,
+            },
+        ]);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [bat]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(positionX: 2, positionY: 0, levelId: 0, entityId: 7);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(5, bat.BatRetreatTicks);
+    }
+
+    [Fact]
     public void AttackUsesValidatedMonsterExperienceReward()
     {
         var target = new AuthoritativeCombatTarget(
