@@ -109,7 +109,9 @@ offset.
 The optional `fallen_fear_radius`, `fallen_fear_level_offset`, and
 `fallen_fear_minimum_ticks` monster-type columns externalize the Fallen fear
 admission radius and countdown formula. Legacy monster rows retain the native
-radius-four, offset-eight, minimum-two compatibility values.
+radius-four, offset-eight, minimum-two compatibility values. A complete positive
+tuple selects the behavior regardless of the row's `native_ai` label; rows
+without migrated tuning retain the native-name compatibility path.
 The optional `sneak_distance_base`, `sneak_distance_intelligence_scale`,
 `sneak_retreat_release_distance`, and `sneak_retreat_ticks` columns externalize
 the Sneak visibility band and hit-retreat timing. Legacy monster rows retain
@@ -1467,7 +1469,8 @@ Schema 1.103 adds the two Monk unarmed damage level-divisor columns; legacy
 1.102 and older class schemas retain the native defaults.
 Schema 1.104 adds the optional Fallen fear tuning columns to `monster_types.tsv`;
 checked-in Fallen rows own their radius and countdown values while older rows
-retain the compatibility formula.
+retain the compatibility formula. Complete positive tuples are selected
+independently of the `native_ai` label.
 Schema 1.105 adds the optional Sneak tuning columns to `monster_types.tsv`;
 checked-in Sneak rows own their visibility and retreat values while older rows
 retain the compatibility formula. Complete positive tuples are selected
