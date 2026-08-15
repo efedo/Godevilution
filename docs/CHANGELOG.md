@@ -27,6 +27,9 @@ All notable changes to this fork are documented below.
   deterministic `RoundWalk`/`RandomWalk` candidates now run after its healing
   branch instead of falling through to bounded pursuit.
 
+- Preserve Gargoyle's native adjacent `AiAvoidance` admission: the server now
+  applies the `23 + 2 * intelligence` attack band before shared melee damage.
+
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.

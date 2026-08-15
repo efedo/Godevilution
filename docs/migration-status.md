@@ -310,6 +310,9 @@ Status date: 2026-08-15
   `RoundWalk`/`RandomWalk` candidate order and blocked-tick no-op after the
   server-owned healing branch.
 
+- Gargoyle adjacent attacks now preserve the native `23 + 2 * intelligence`
+  `AiAvoidance` admission before shared authoritative melee resolution.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

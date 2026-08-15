@@ -342,6 +342,10 @@ For a healthy Gargoyle outside melee range, the server applies the native
 admitted; blocked candidates consume the tick without a generic navigation
 replacement.
 
+When a Gargoyle is adjacent, the server applies its native
+`23 + 2 * intelligence` `AiAvoidance` attack admission before emitting the
+authoritative melee result; a failed roll emits no client-side action.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive
