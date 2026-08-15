@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.179 optional `combat.tsv`
+  `hellfire_devastation_chance_percent` and
+  `hellfire_devastation_damage_multiplier` metadata. Active Hellfire
+  Devastation now uses the validated proc chance and multiplier, while direct
+  legacy combat rules retain the native 5%/3× behavior.
+
 - Add schema 1.178 optional `combat.tsv`
   `hellfire_decay_damage_reduction` and `hellfire_decay_removal_threshold`
   metadata. Active Hellfire Decay now uses the validated decrement and removal
