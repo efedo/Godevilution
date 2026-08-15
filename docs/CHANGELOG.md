@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Fix partial external Gargoyle healing tuning to retain the native random
+  divisor offset of 4 when `gargoyle_heal_divisor_random_offset` is omitted,
+  avoiding a zero-divisor path.
+
 - Add a shared client-side status presentation classifier; Godot now renders
   server-owned Infravision, Search, and Etherealize state as typed player
   overlays while leaving status timing and admission authoritative.

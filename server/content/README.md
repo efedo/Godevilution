@@ -1690,7 +1690,8 @@ mapped charges.
 Schema 1.127 adds optional Gargoyle healing-formula columns to
 `monster_types.tsv`; checked-in Gargoyle rows own the native divisor multiplier,
 random-range modulus, and random offset (`16 * (seed % 5 + 4)`) while older rows
-retain the compatibility formula. Complete positive tuples are selected
+retain the compatibility formula. An omitted random offset retains the native
+offset of four. Complete positive tuples are selected
 independently of the `native_ai` label; persisted special-lock state is
 accepted for any validated label carrying the tuple.
 Schema 1.128 adds optional Scavenger healing/search columns to

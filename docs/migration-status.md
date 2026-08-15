@@ -35,6 +35,10 @@ Status date: 2026-08-15
   presentation while the server retains all timing, stacking, and admission
   rules.
 
+- Partial external Gargoyle AI tuning now retains the native healing divisor
+  offset when its optional random-offset column is omitted; validated content
+  cannot reach the previous zero-divisor path.
+
 - Acid puddle impact duration now consumes validated `puddle_impact_lifetime`
   metadata from `monster_missiles.tsv`; omitted values retain the native
   two-tick impact phase.
