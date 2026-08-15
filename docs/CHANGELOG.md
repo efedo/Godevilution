@@ -18,6 +18,8 @@ All notable changes to this fork are documented below.
 - Add schema 1.150 optional unique-item `cursor_graphic` metadata. Normalized
   and legacy unique rows now resolve shared cursor symbols through the active
   catalog, while omitted symbols preserve the base item's cursor.
+- Add schema 1.151 optional item `min_monster_level` metadata. Normalized and
+  legacy item catalogs now retain native random-drop eligibility thresholds.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
