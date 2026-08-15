@@ -304,6 +304,10 @@ The validated Snake charge mapping preserves the native non-charge boundary:
 an `AiDelay` admission remains an unchanged authoritative snapshot, while an
 admitted lateral drift is applied by the server before any generic navigation.
 
+The `Zombie` identity likewise consumes an admitted action even when its
+native one-step movement is blocked; clients receive the unchanged
+authoritative snapshot rather than a client- or navigation-generated move.
+
 The `GoatMelee` identity drives the adjacent `AiAvoidance` admission boundary
 of `23 + 2 * intelligence`. When its wounded special branch is selected, the
 server uses the externalized special accuracy and damage range; clients receive

@@ -72,6 +72,10 @@ All notable changes to this fork are documented below.
   admissions now consume the authoritative tick without falling through to
   generic pursuit, while admitted lateral drift remains server-owned.
 
+- Preserve the native Zombie blocked-walk result: a successful action whose
+  one-step destination is unavailable now leaves the monster stationary rather
+  than invoking generic navigation.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state

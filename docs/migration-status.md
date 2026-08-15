@@ -270,6 +270,10 @@ Status date: 2026-08-15
   validated lateral drift branch still runs when its native delay admission is
   cleared, and generic pursuit no longer replaces the delayed tick.
 
+- Zombie action ticks now preserve the native blocked-walk no-op. When the
+  validated action band succeeds but no native one-step candidate is available,
+  the server does not replace that result with generic navigation.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can
