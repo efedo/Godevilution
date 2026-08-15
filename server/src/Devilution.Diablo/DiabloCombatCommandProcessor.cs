@@ -6467,6 +6467,9 @@ public sealed class DiabloCombatCommandProcessor
             damage,
             rules.MinimumDamage,
             player.Equipment);
+        var projectileSpeed = missile?.ProjectileSpeed > 0
+            ? missile.ProjectileSpeed
+            : 1;
 
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
@@ -6487,7 +6490,7 @@ public sealed class DiabloCombatCommandProcessor
             // resolves both explicit MonsterArrow rows and legacy Targeted
             // overlays to this server-owned monster lifecycle.
             Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
-            Speed = 1,
+            Speed = projectileSpeed,
             ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
         };
