@@ -1086,7 +1086,7 @@ public sealed class DiabloCombatCommandProcessorTests
             20,
             monsterId: 1,
             aggroRange: 8,
-            nativeAi: "Sneak",
+            nativeAi: "Fallen",
             intelligence: 2);
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([
             new AuthoritativeMonsterTypeDefinition(

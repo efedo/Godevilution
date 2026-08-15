@@ -105,14 +105,6 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "The Gargoyle special lock requires the Gargoyle native AI identity.",
                 nameof(gargoyleSpecialActive));
-        if (sneakHidden && nativeAi != "Sneak")
-            throw new ArgumentException(
-                "Sneak visibility requires the Sneak native AI identity.",
-                nameof(sneakHidden));
-        if (sneakRetreatTicks != 0 && nativeAi != "Sneak")
-            throw new ArgumentException(
-                "Sneak retreat requires the Sneak native AI identity.",
-                nameof(sneakRetreatTicks));
         if ((scavengerHealingTicks != 0 || scavengerCorpseEntityId != 0)
             && nativeAi != "Scavenger")
             throw new ArgumentException(
@@ -404,15 +396,11 @@ public sealed class AuthoritativeCombatTarget
 
     internal void SetSneakHidden(bool hidden)
     {
-        if (NativeAi != "Sneak")
-            throw new InvalidOperationException("Only Sneak monsters can change visibility.");
         SneakHidden = hidden;
     }
 
     internal void StartSneakRetreat(int ticks)
     {
-        if (NativeAi != "Sneak")
-            throw new InvalidOperationException("Only Sneak monsters can retreat.");
         if (ticks < 0)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SneakHidden = false;
@@ -423,8 +411,6 @@ public sealed class AuthoritativeCombatTarget
     {
         if (retreatTicks < 0)
             throw new ArgumentOutOfRangeException(nameof(retreatTicks));
-        if ((hidden || retreatTicks != 0) && NativeAi != "Sneak")
-            throw new InvalidDataException("Only Sneak monsters can restore stealth state.");
         SneakHidden = hidden;
         SneakRetreatTicks = retreatTicks;
     }

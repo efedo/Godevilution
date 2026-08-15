@@ -471,7 +471,7 @@ public sealed class DiabloSimulationTests
                     4,
                     2,
                     20,
-                    nativeAi: "Sneak",
+                    nativeAi: "Zombie",
                     sneakHidden: true,
                     sneakRetreatTicks: 5)],
             });
@@ -488,7 +488,7 @@ public sealed class DiabloSimulationTests
                     4,
                     2,
                     20,
-                    nativeAi: "Sneak")],
+                    nativeAi: "Zombie")],
             });
         replacement.RestoreSnapshot(CreatePlayer(), snapshot);
 
