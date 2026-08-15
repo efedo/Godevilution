@@ -4143,6 +4143,59 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleUsesNativeRandomOffsetWhenOptionalTuningOmitsIt()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Gargoyle",
+                0,
+                0,
+                9,
+                60,
+                90,
+                45,
+                10,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Fallen",
+                GargoyleSafeDistanceBase = 2,
+                GargoyleSafeDistanceIntelligenceScale = 1,
+                GargoyleHealDivisorMultiplier = 16,
+                GargoyleHealDivisorRandomRange = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 1,
+            nativeAi: "Fallen");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var healing = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(41, monster.HitPoints);
+        Assert.Equal(1, Assert.Single(healing).Event.Amount);
+    }
+
+    [Fact]
     public void GargoyleAiClearsItsSpecialLockWhenThePlayerClosesDistance()
     {
         var monster = new AuthoritativeCombatTarget(

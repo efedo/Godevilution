@@ -5692,7 +5692,7 @@ public sealed class DiabloCombatCommandProcessor
                     definition.GargoyleHealDivisorRandomRange > 0
                         ? definition.GargoyleHealDivisorRandomRange
                         : 5,
-                    definition.GargoyleHealDivisorMultiplier > 0
+                    definition.GargoyleHealDivisorRandomOffset > 0
                         ? definition.GargoyleHealDivisorRandomOffset
                         : 4);
             }
