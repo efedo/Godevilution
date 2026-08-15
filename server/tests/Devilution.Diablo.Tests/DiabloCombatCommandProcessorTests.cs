@@ -6244,6 +6244,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     PuddleDamageMinimumMonsterLevel: 1,
                     PuddleDamageLow: 3,
                     PuddleDamageHigh: 7,
+                    PuddleImpactLifetime: 4,
                     DamageType: AuthoritativeDamageType.Acid),
             ]));
         var player = CreatePlayer(
@@ -6285,6 +6286,10 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal((8, 1), (puddle!.PositionX, puddle.PositionY));
         Assert.Equal(98U, puddle.RemainingTicks);
         Assert.Equal(7, puddle.Damage);
+        for (ulong tick = 64; tick < 200 && puddle.Phase != AuthoritativeProjectilePhase.Impact; tick++)
+            processor.AdvanceTick(tick, [player, puddlePlayer]);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, puddle.Phase);
+        Assert.Equal(4U, puddle.RemainingTicks);
         Assert.Contains(
             deliveries,
             delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage

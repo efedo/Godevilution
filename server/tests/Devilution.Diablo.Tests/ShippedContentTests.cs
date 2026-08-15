@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.206.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.207.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -105,6 +105,7 @@ public sealed class ShippedContentTests
         Assert.Equal(2, acid.PuddleDamageMinimumMonsterLevel);
         Assert.Equal(1, acid.PuddleDamageLow);
         Assert.Equal(2, acid.PuddleDamageHigh);
+        Assert.Equal(2, acid.PuddleImpactLifetime);
         Assert.Equal((2, 3, 500, 500, 1), (
             acid.RangedAvoidanceMinimumDistance,
             acid.RangedAvoidanceFarDistance,
@@ -122,6 +123,7 @@ public sealed class ShippedContentTests
         Assert.Equal(2, acidUnique.PuddleDamageMinimumMonsterLevel);
         Assert.Equal(1, acidUnique.PuddleDamageLow);
         Assert.Equal(2, acidUnique.PuddleDamageHigh);
+        Assert.Equal(2, acidUnique.PuddleImpactLifetime);
         Assert.Equal((4, 70, 10), (
             acidUnique.RangedRetreatMinimumDistance,
             acidUnique.RangedRetreatChanceBase,
@@ -189,7 +191,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.206.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.207.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
