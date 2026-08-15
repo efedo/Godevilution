@@ -1282,6 +1282,10 @@ Status date: 2026-08-15
   23 + 2 * intelligence adjacent-attack band and wounded special branch.
   Dialogue-driven quest transitions and unique encounter activation remain
   incremental.
+- Warlord's post-dialogue combat now accepts the native `Warlord` identity and
+  delegates to the server-owned `SkeletonAi` boundary, preserving its native
+  adjacent attack and non-adjacent delay/movement bands. Dialogue-driven quest
+  activation and unique encounter state remain incremental.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.

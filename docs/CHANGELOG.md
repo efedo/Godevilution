@@ -15,6 +15,11 @@ All notable changes to this fork are documented below.
   attack admission and wounded special branch; dialogue and unique encounter
   activation remain incremental.
 
+- Restore Warlord's native post-dialogue combat boundary: the authoritative
+  server now accepts the `Warlord` AI identity and delegates normal combat to
+  the server-owned SkeletonAi timing and movement boundary; quest activation
+  and unique encounter state remain incremental.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 
