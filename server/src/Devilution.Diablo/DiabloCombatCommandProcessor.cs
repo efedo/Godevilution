@@ -5714,6 +5714,7 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         return UsesNativeAi(target, "GoatMelee")
+            || UsesNativeAi(target, "Gharbad")
             ? (28, 2)
             : null;
     }
@@ -5747,6 +5748,7 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         return UsesNativeAi(target, "GoatMelee")
+            || UsesNativeAi(target, "Gharbad")
             ? (23, 2, 50, 2)
             : null;
     }

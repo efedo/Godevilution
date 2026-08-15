@@ -312,7 +312,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
 {
     private static readonly HashSet<string> ValidNativeAis = new(StringComparer.Ordinal) {
         "Acid", "AcidUnique", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
-        "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "GoatMelee", "GoatRanged",
+        "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "Gharbad", "GoatMelee", "GoatRanged",
         "Golem", "HorkDemon", "Lich", "Magma", "Mega", "Necromorb", "Psychorb", "Rhino", "Scavenger",
         "SkeletonKing", "SkeletonMelee", "SkeletonRanged", "Snake", "Sneak", "Storm",
         "Succubus", "LazarusSuccubus", "Torchant", "Zombie",

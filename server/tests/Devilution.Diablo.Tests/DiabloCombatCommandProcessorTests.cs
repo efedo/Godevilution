@@ -9030,6 +9030,43 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GharbadUsesItsNativeAiAvoidanceCombatBranch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            maxHitPoints: 100,
+            attackDamage: 2,
+            aggroRange: 5,
+            minDamage: 3,
+            maxDamage: 3,
+            minDamageSpecial: 8,
+            maxDamageSpecial: 20,
+            toHit: 100,
+            toHitSpecial: 100,
+            nativeAi: "Gharbad");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // Gharbad's normal post-dialogue combat delegates to AiAvoidance:
+        // 1 ^ 9 ^ 7 = 15 admits the 23% attack and its wounded special branch.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(90, player.Life);
+    }
+
+    [Fact]
     public void GoatMeleeAiUsesValidatedWoundedSpecialThresholdIndependentOfNativeLabel()
     {
         var monster = new AuthoritativeCombatTarget(
