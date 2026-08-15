@@ -179,7 +179,8 @@ public sealed class AuthoritativeSpellCatalogTests
             golem.MinimumManaCost,
             golem.StaffLevel));
         Assert.Equal(12, golem.GolemDeathAnimationTicks);
-        Assert.Equal((2, 3, 2, 4, 8, 25), (
+        Assert.Equal((320, 2, 3, 2, 4, 8, 25), (
+            golem.GolemHitPointsLevelBaseQ6,
             golem.GolemHitPointsLevelMultiplier,
             golem.GolemHitPointsManaDivisor,
             golem.GolemDamageLevelMultiplier,
@@ -1178,7 +1179,8 @@ public sealed class AuthoritativeSpellCatalogTests
                 DamageType = AuthoritativeDamageType.Fire,
                 StaffLevel = 9,
                 GolemDeathAnimationTicks = 12,
-                GolemHitPointsManaDivisor = 0,
+                GolemHitPointsLevelBaseQ6 = 0,
+                GolemHitPointsManaDivisor = 3,
             },
         ]));
     }

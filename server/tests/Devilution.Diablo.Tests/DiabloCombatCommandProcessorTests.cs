@@ -9231,6 +9231,7 @@ public sealed class DiabloCombatCommandProcessorTests
     {
         var world = new DiabloWorldState();
         var spell = CreateGolemSpell() with {
+            GolemHitPointsLevelBaseQ6 = 240,
             GolemHitPointsLevelMultiplier = 3,
             GolemHitPointsManaDivisor = 2,
             GolemDamageLevelMultiplier = 4,
@@ -9260,7 +9261,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(17, golem.ArmorClass);
         Assert.Equal(4 * (1 + 1), golem.MinDamage);
         Assert.Equal(4 * (1 + 5), golem.MaxDamage);
-        Assert.Equal(3 * (320 * 1 + (20000 * 64) / 2), golem.MaxHitPointsQ6);
+        Assert.Equal(3 * (240 * 1 + (20000 * 64) / 2), golem.MaxHitPointsQ6);
     }
 
     [Fact]
