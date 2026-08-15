@@ -318,6 +318,59 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BarbarianAxeAttackUsesConfiguredStrengthDamageDivisor()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: true,
+                barbarianWeaponStrengthDamageDivisor: 50),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var axe = AuthoritativeItemState.Empty with {
+            ItemType = 2,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            StatFlag = true,
+        };
+        var attacker = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            characterClassId: 5,
+            characterLevel: 10,
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(20, 20)),
+            equipment: [new EquippedStoreItem(4, 42, axe)]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(23, Assert.Single(result.Events).Amount);
+        Assert.Equal(4928, victim.Life);
+    }
+
+    [Fact]
     public void ShieldedPlayerTargetBlocksAnAdjacentMeleeAttack()
     {
         var world = new DiabloWorldState();

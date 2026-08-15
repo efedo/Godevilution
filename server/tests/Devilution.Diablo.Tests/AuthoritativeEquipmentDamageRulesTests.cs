@@ -135,6 +135,58 @@ public sealed class AuthoritativeEquipmentDamageRulesTests
         Assert.Equal(10, profile.DamageModifier);
     }
 
+    [Fact]
+    public void BarbarianWeaponStrengthModifierUsesConfiguredDivisor()
+    {
+        var barbarian = CreateClass("custom") with {
+            PhysicalDamageFormula = AuthoritativePhysicalDamageFormula.Barbarian,
+        };
+        var axe = new EquippedStoreItem(
+            4,
+            1,
+            AuthoritativeItemState.Empty with {
+                ItemType = 2,
+                ItemClass = 1,
+                StatFlag = true,
+            });
+        var rules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            barbarianWeaponStrengthDamageDivisor: 50);
+
+        var profile = AuthoritativeEquipmentDamageRules.Calculate(
+            10,
+            new PlayerAttributesState(
+                new PlayerAttributeState(100, 100),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(20, 20)),
+            [axe],
+            barbarian,
+            barbarianWeaponStrengthDamageDivisor: rules.BarbarianWeaponStrengthDamageDivisor);
+
+        Assert.Equal(22, profile.DamageModifier);
+    }
+
+    [Fact]
+    public void RejectsInvalidBarbarianWeaponStrengthDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                barbarianWeaponStrengthDamageDivisor: 0));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEquipmentDamageRules.Calculate(
+                1,
+                PlayerAttributesState.Zero,
+                [],
+                CreateClass("custom"),
+                barbarianWeaponStrengthDamageDivisor: 0));
+    }
+
     private static AuthoritativePlayerClassDefinition CreateClass(string symbol)
     {
         return new AuthoritativePlayerClassDefinition(
