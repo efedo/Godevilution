@@ -34,6 +34,10 @@ All notable changes to this fork are documented below.
   five-candidate movement now defers when those candidates are blocked instead
   of scanning the full neighboring ring.
 
+- Preserve Scavenger's native coin-selected corpse scan: the server searches
+  the configured square in native traversal order and keeps the first visible
+  corpse instead of choosing the nearest tile.
+
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.

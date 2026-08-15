@@ -135,6 +135,10 @@ Status date: 2026-08-15
   standalone validated wounded-health threshold composes the native
   10/4/8/1/75 healing defaults instead of being ignored.
 
+- Scavenger corpse selection now preserves native coin-selected square-scan
+  order and chooses the first visible corpse, rather than nearest-corpse
+  ordering; the selected identity remains persisted for deterministic pursuit.
+
 - Sneak visibility and hit-retreat behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
   retain the native-name compatibility path, while hidden/retreat state also

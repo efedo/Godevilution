@@ -246,6 +246,11 @@ values but never execute the corresponding AI.
 `Snapshot.corpses` carries persisted defeated non-minion corpse tiles. Corpse
 identity and position are server-owned and included in canonical hashing.
 
+When a Scavenger enters its healing goal, the server performs the native
+coin-selected square scan and persists the first visible corpse identity. It
+does not replace native traversal order with nearest-corpse selection; clients
+only render the resulting identity and movement.
+
 `MonsterSnapshot` fields 52-53 carry Bat retreat steps and the direction toward
 the victim captured when the retreat began. The server applies the native
 `4 * intelligence + 8` adjacent-attack admission and performs the two-step
