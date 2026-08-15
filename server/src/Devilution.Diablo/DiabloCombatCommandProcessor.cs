@@ -11927,8 +11927,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Fallen")
-                return null;
             if (definition.FallenFearRadius > 0
                 && definition.FallenFearLevelOffset > 0
                 && definition.FallenFearMinimumTicks > 0) {

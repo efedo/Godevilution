@@ -990,7 +990,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Fallen",
+                NativeAi = "Zombie",
                 FallenFearRadius = 1,
                 FallenFearLevelOffset = 4,
                 FallenFearMinimumTicks = 1,

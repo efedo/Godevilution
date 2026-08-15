@@ -296,17 +296,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.FallenFearRadius is < 0 or > 64
                 || definition.FallenFearLevelOffset is < 0 or > 255
                 || definition.FallenFearMinimumTicks is < 0 or > 255
-                || (definition.NativeAi == "Fallen"
-                    && ((definition.FallenFearRadius != 0
-                            || definition.FallenFearLevelOffset != 0
-                            || definition.FallenFearMinimumTicks != 0)
-                        && (definition.FallenFearRadius <= 0
-                            || definition.FallenFearLevelOffset <= 0
-                            || definition.FallenFearMinimumTicks <= 0)))
-                || (definition.NativeAi != "Fallen"
-                    && (definition.FallenFearRadius != 0
+                || ((definition.FallenFearRadius != 0
                         || definition.FallenFearLevelOffset != 0
-                        || definition.FallenFearMinimumTicks != 0))
+                        || definition.FallenFearMinimumTicks != 0)
+                    && (definition.FallenFearRadius <= 0
+                        || definition.FallenFearLevelOffset <= 0
+                        || definition.FallenFearMinimumTicks <= 0))
                 || definition.SneakDistanceBase is < 0 or > 64
                 || definition.SneakDistanceIntelligenceScale is < 0 or > 64
                 || definition.SneakRetreatReleaseDistance is < 0 or > 64
