@@ -20,6 +20,9 @@ All notable changes to this fork are documented below.
   catalog, while omitted symbols preserve the base item's cursor.
 - Add schema 1.151 optional item `min_monster_level` metadata. Normalized and
   legacy item catalogs now retain native random-drop eligibility thresholds.
+- Add schema 1.152 optional item `drop_rate` metadata. Normalized and legacy
+  item catalogs now retain native weighted random-drop rates, including zero
+  values that exclude an item from selection.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
