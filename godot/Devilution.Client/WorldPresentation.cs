@@ -7,8 +7,6 @@ namespace Devilution.Client;
 /** Asset-backed world view driven exclusively by authoritative snapshots. */
 public partial class WorldPresentation : Node2D
 {
-    private const int TeleportProjectileBehavior = 9;
-    private const int PhasingProjectileBehavior = 15;
     private const float TileSize = 32;
     private const float OriginX = 96;
     private const float OriginY = 96;
@@ -50,9 +48,7 @@ public partial class WorldPresentation : Node2D
             else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId)
                 UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta);
         }
-        foreach (var projectile in snapshot.Projectiles.Where(
-                     projectile => projectile.Behavior != TeleportProjectileBehavior
-                         && projectile.Behavior != PhasingProjectileBehavior))
+        foreach (var projectile in snapshot.Projectiles)
             UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta);
         QueueRedraw();
     }
@@ -119,9 +115,7 @@ public partial class WorldPresentation : Node2D
         foreach (var portal in snapshot.Portals)
             DrawPortal(portal, currentLevel);
         foreach (var projectile in snapshot.Projectiles.Where(projectile =>
-                     projectile.Behavior != TeleportProjectileBehavior
-                     && projectile.Behavior != PhasingProjectileBehavior
-                     && IsVisible(projectile.LevelId, currentLevel)))
+                     IsVisible(projectile.LevelId, currentLevel)))
             DrawProjectile(projectile);
     }
 
@@ -270,11 +264,15 @@ public partial class WorldPresentation : Node2D
         var beam = kind == ProjectilePresentationKind.Beam;
         var stoneCurse = kind == ProjectilePresentationKind.StoneCurse;
         var fireImpact = kind == ProjectilePresentationKind.FireImpact;
+        var movement = kind is ProjectilePresentationKind.Teleport
+            or ProjectilePresentationKind.Phasing;
         var size = beam
             ? new Vector2(20, 28)
             : stoneCurse
                 ? new Vector2(18, 18)
-                : fireImpact ? new Vector2(30, 30) : new Vector2(12, 12);
+                : fireImpact
+                    ? new Vector2(30, 30)
+                    : movement ? new Vector2(20, 20) : new Vector2(12, 12);
         var color = kind switch {
             ProjectilePresentationKind.Fire
                 or ProjectilePresentationKind.FireImpact => new Color("ff7b32"),
@@ -285,11 +283,19 @@ public partial class WorldPresentation : Node2D
             ProjectilePresentationKind.Acid => new Color("8be28b"),
             ProjectilePresentationKind.Arrow => new Color("d29b5f"),
             ProjectilePresentationKind.StoneCurse => new Color("dce3eb"),
+            ProjectilePresentationKind.Teleport => new Color("bd7cff"),
+            ProjectilePresentationKind.Phasing => new Color("6fffe9"),
             _ => new Color("6fffe9"),
         };
         var radius = beam
             ? 8
-            : stoneCurse ? 8 : fireImpact ? 14 : kind == ProjectilePresentationKind.Lightning ? 6 : 5;
+            : stoneCurse
+                ? 8
+                : fireImpact
+                    ? 14
+                    : movement
+                        ? 9
+                        : kind == ProjectilePresentationKind.Lightning ? 6 : 5;
         DrawTextureOrCircle(
             beam ? "resurrection_beam" : "projectile",
             PositionFor(projectile.EntityId, projectile.PositionX, projectile.PositionY),

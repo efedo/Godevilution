@@ -14,6 +14,8 @@ public enum ProjectilePresentationKind
     Arrow,
     Beam,
     StoneCurse,
+    Teleport,
+    Phasing,
 }
 
 /** Maps authoritative behavior identities to client-only visual families. */
@@ -23,6 +25,8 @@ public static class ProjectilePresentationStyle
     private const int LightningSegment = 4;
     private const int ResurrectionBeam = 11;
     private const int StoneCurse = 13;
+    private const int Teleport = 9;
+    private const int Phasing = 15;
     private const int Fireball = 16;
     private const int HolyBolt = 19;
     private const int BloodStar = 20;
@@ -51,6 +55,10 @@ public static class ProjectilePresentationStyle
     {
         if (behavior == ResurrectionBeam)
             return ProjectilePresentationKind.Beam;
+        if (behavior == Teleport)
+            return ProjectilePresentationKind.Teleport;
+        if (behavior == Phasing)
+            return ProjectilePresentationKind.Phasing;
         if (behavior == StoneCurse)
             return ProjectilePresentationKind.StoneCurse;
         if (behavior == Fireball)
