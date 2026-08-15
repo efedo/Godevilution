@@ -311,20 +311,14 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SneakDistanceIntelligenceScale is < 0 or > 64
                 || definition.SneakRetreatReleaseDistance is < 0 or > 64
                 || definition.SneakRetreatTicks is < 0 or > 64
-                || (definition.NativeAi == "Sneak"
-                    && ((definition.SneakDistanceBase != 0
-                            || definition.SneakDistanceIntelligenceScale != 0
-                            || definition.SneakRetreatReleaseDistance != 0
-                            || definition.SneakRetreatTicks != 0)
-                        && (definition.SneakDistanceBase <= 0
-                            || definition.SneakDistanceIntelligenceScale <= 0
-                            || definition.SneakRetreatReleaseDistance <= 0
-                            || definition.SneakRetreatTicks <= 0)))
-                || (definition.NativeAi != "Sneak"
-                    && (definition.SneakDistanceBase != 0
+                || ((definition.SneakDistanceBase != 0
                         || definition.SneakDistanceIntelligenceScale != 0
                         || definition.SneakRetreatReleaseDistance != 0
-                        || definition.SneakRetreatTicks != 0))
+                        || definition.SneakRetreatTicks != 0)
+                    && (definition.SneakDistanceBase <= 0
+                        || definition.SneakDistanceIntelligenceScale <= 0
+                        || definition.SneakRetreatReleaseDistance <= 0
+                        || definition.SneakRetreatTicks <= 0))
                 || definition.BatAttackChanceBase is < 0 or > 100
                 || definition.BatAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.BatAttackChanceBase != 0

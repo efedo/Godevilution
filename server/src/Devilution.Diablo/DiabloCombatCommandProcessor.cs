@@ -5175,8 +5175,6 @@ public sealed class DiabloCombatCommandProcessor
         GetSneakTuning(AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Sneak")
-                return null;
             if (definition.SneakDistanceBase > 0
                 && definition.SneakDistanceIntelligenceScale > 0
                 && definition.SneakRetreatReleaseDistance > 0

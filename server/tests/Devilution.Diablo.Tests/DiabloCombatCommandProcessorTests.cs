@@ -1101,7 +1101,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Sneak",
+                NativeAi = "Fallen",
                 SneakDistanceBase = 8,
                 SneakDistanceIntelligenceScale = 2,
                 SneakRetreatReleaseDistance = 1,
