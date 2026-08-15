@@ -8873,6 +8873,7 @@ public sealed class DiabloCombatCommandProcessorTests
             ResistantDamageDivisor = 4,
             ProjectileImpactLifetime = 7,
             SelfDamage = 6,
+            BoneSpiritDamageHitPointsDivisor = 2,
         };
         var world = new DiabloWorldState(combatTargets: [target]);
         var processor = CreateProcessor(
@@ -8919,11 +8920,11 @@ public sealed class DiabloCombatCommandProcessorTests
         for (ulong tick = 1; tick <= 32 && target.HitPoints == 40; tick++)
             deliveries = processor.AdvanceTick(tick, [player]);
 
-        Assert.Equal(37, target.HitPoints);
-        Assert.Equal(2352, target.HitPointsQ6);
+        Assert.Equal(35, target.HitPoints);
+        Assert.Equal(2240, target.HitPointsQ6);
         var delivery = Assert.Single(deliveries);
-        Assert.Equal(3, delivery.Event.Amount);
-        Assert.Equal(208, delivery.Event.AmountQ6);
+        Assert.Equal(5, delivery.Event.Amount);
+        Assert.Equal(320, delivery.Event.AmountQ6);
         projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
         Assert.Equal(7U, projectile.RemainingTicks);
@@ -8931,6 +8932,57 @@ public sealed class DiabloCombatCommandProcessorTests
         for (ulong tick = 2; tick <= 8; tick++)
             processor.AdvanceTick(tick, [player]);
         Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void BoneSpiritUsesConfiguredMonsterMagicHitBounds()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            40,
+            monsterLevel: 10);
+        var projectile = new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            0,
+            38,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            AuthoritativeDamageType.Magic,
+            0,
+            32) {
+            Behavior = AuthoritativeProjectileBehavior.BoneSpirit,
+            OriginalDirection = 0,
+            PathTicks = 1,
+            Speed = 16,
+            ImpactLifetime = 7,
+            ResistantDamageDivisor = 4,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateBoneSpiritSpell() with {
+                    BoneSpiritHitMonsterLevelScale = 0,
+                    BoneSpiritMinimumHitChance = 0,
+                    BoneSpiritMaximumHitChance = 0,
+                },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(40, target.HitPoints);
     }
 
     [Fact]
