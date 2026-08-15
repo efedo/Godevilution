@@ -432,6 +432,9 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.202 adds an optional persistent-projectile player damage divisor to
+  `spells.tsv`; omitted values retain the native divisor of two.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
