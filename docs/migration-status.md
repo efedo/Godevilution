@@ -1280,19 +1280,18 @@ Status date: 2026-08-15
 - Gharbad's post-dialogue combat now accepts the native `Gharbad` identity and
   delegates to the server-owned `AiAvoidance` boundary, including the native
   23 + 2 * intelligence adjacent-attack band and wounded special branch.
-  Dialogue-driven quest transitions and unique encounter activation remain
-  incremental.
+  Unique encounter placement and later multi-step dialogue remain incremental.
 - Warlord's post-dialogue combat now accepts the native `Warlord` identity and
   delegates to the server-owned `SkeletonAi` boundary, preserving its native
-  adjacent attack and non-adjacent delay/movement bands. Dialogue-driven quest
-  activation and unique encounter state remain incremental.
+  adjacent attack and non-adjacent delay/movement bands. Later dialogue-driven
+  encounter state remains incremental.
 - SnotSpil's post-banner combat now accepts the native `Snotspill` identity and
   delegates to the server-owned `FallenAi`/`SkeletonAi` boundary, including
   native Fallen fear state and combat timing. Banner quest activation and map
   transition behavior remain incremental.
 - Zhar and Archbishop Lazarus now accept their native `Zhar` and `Lazarus`
   identities, use validated Fireball mappings, and delegate normal combat to
-  the server-owned `CounselorAi` boundary. Their dialogue-driven quest and map
+  the server-owned `CounselorAi` boundary. Later dialogue-driven quest and map
   transitions remain incremental.
 - The base pack now supplies additive `quest_states.tsv` rows for the native
   Gharbad, Zhar, Warlord, and Lazarus defeat quests. Server-owned completion
@@ -1300,8 +1299,10 @@ Status date: 2026-08-15
   remain incremental.
 - A shared `TalkToQuest` intent now validates a living adjacent unique target
   against the quest's configured completion identity, activates/logs the quest,
-  and emits a typed server-owned dialogue event with the content message ID;
-  localized text and unique encounter placement remain incremental.
+  applies content-owned minimum native dialogue variables monotonically, and
+  emits a typed server-owned dialogue event with the content message ID;
+  localized text, unique encounter placement, and later dialogue steps remain
+  incremental.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.

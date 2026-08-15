@@ -37,8 +37,9 @@ All notable changes to this fork are documented below.
 
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
-  and emits a typed protocol dialogue event carrying only stable identities and
-  the content-owned message ID.
+  advances content-owned native dialogue variables monotonically, and emits a
+  typed protocol dialogue event carrying only stable identities and the
+  content-owned message ID.
 
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.

@@ -131,7 +131,9 @@ following snapshot remain authoritative.
 quest ID and target entity ID; the server requires a living adjacent unique
 encounter whose validated identity matches the quest's completion identity.
 Accepted dialogue activates and logs the quest and emits a `DialogueEvent`;
-clients do not choose message text or mutate quest state.
+the quest's content-owned native dialogue variables advance monotonically as
+part of the same authoritative transition. Clients do not choose message text
+or mutate quest state.
 
 ## State, Events, and Persistence
 
