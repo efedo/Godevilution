@@ -277,6 +277,11 @@ Status date: 2026-08-15
   saves, and canonical hashes; active projectiles no longer permit a second
   ranged admission while the native delay is pending.
 
+- Native intermediate-distance `MegaAi` post-action delays now preserve the
+  `AiDelay(GenerateRnd(10) + 5)` countdown in dedicated server-owned state,
+  persisted through optional protocol field 83, snapshots, saves, and the
+  canonical hash.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

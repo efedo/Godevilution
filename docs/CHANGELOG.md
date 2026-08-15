@@ -101,6 +101,11 @@ All notable changes to this fork are documented below.
   through optional protocol field 82, snapshots, saves, and the canonical
   state hash.
 
+- Preserve native intermediate-distance `MegaAi` delay state: Inferno and
+  movement decisions now start the native `GenerateRnd(10) + 5` countdown,
+  persisted through optional protocol field 83, snapshots, saves, and the
+  canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
