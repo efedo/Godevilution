@@ -765,6 +765,9 @@ Status date: 2026-08-15
 
 - Schema 1.213 adds optional native difficulty tuning columns to `combat.tsv`.
 - Schema 1.214 adds external ranged-attack frame timing columns to `combat.tsv`, including the Hellfire zero-skip variant.
+- Schema 1.215 adds optional quest-completion reward item metadata to
+  `quest_states.tsv`; the Hellfire Defiler's Cathedral Map now spawns at the
+  authoritative quest death boundary rather than as a static monster drop.
   Level, accuracy, armor, damage, experience, and initial-health formulas now
   consume validated pack values; omitted columns retain the native defaults,
   including the distinct Nightmare `2 * (base + 2)` and Hell `4 * base + 6`
