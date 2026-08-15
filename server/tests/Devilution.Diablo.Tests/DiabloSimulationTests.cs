@@ -15,6 +15,94 @@ public sealed class DiabloSimulationTests
             DiabloContentSchema.Current);
     }
 
+    [Theory]
+    [InlineData(DiabloDifficulty.Normal, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 10)]
+    [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 130)]
+    [InlineData(DiabloDifficulty.Hell, DiabloGameVariant.Diablo, DiabloGameMode.SinglePlayer, 240)]
+    [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Hellfire, DiabloGameMode.SinglePlayer, 80)]
+    [InlineData(DiabloDifficulty.Nightmare, DiabloGameVariant.Hellfire, DiabloGameMode.Multiplayer, 130)]
+    [InlineData(DiabloDifficulty.Hell, DiabloGameVariant.Hellfire, DiabloGameMode.SinglePlayer, 140)]
+    [InlineData(DiabloDifficulty.Hell, DiabloGameVariant.Hellfire, DiabloGameMode.Multiplayer, 240)]
+    public void FactoryAppliesNativeDifficultyHealthScaling(
+        DiabloDifficulty difficulty,
+        DiabloGameVariant gameVariant,
+        DiabloGameMode gameMode,
+        int expectedMaximumHitPoints)
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            maxHitPoints: 10);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [target],
+                CombatRules = new AuthoritativeCombatRules(
+                    10,
+                    1,
+                    100,
+                    gameVariant: gameVariant),
+                Difficulty = difficulty,
+                GameMode = gameMode,
+            });
+
+        Assert.Same(target, Assert.Single(simulation.WorldState.CombatTargets.Values));
+        Assert.Equal(expectedMaximumHitPoints, target.MaxHitPoints);
+        Assert.Equal(expectedMaximumHitPoints, target.HitPoints);
+    }
+
+    [Fact]
+    public void DifficultyHealthScalingPreservesPartialMonsterHealthAndExcludesPlayerMinions()
+    {
+        var wounded = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            maxHitPoints: 10);
+        var minion = new AuthoritativeCombatTarget(
+            10,
+            2,
+            0,
+            10,
+            maxHitPoints: 10,
+            playerMinion: true);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [wounded, minion],
+                Difficulty = DiabloDifficulty.Nightmare,
+            });
+
+        Assert.Equal((65, 130), (wounded.HitPoints, wounded.MaxHitPoints));
+        Assert.Equal((10, 10), (minion.HitPoints, minion.MaxHitPoints));
+    }
+
+    [Fact]
+    public void SnapshotRestoreRetainsEffectiveDifficultyHealthWithoutScalingAgain()
+    {
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9,
+                    1,
+                    0,
+                    10,
+                    maxHitPoints: 10)],
+                Difficulty = DiabloDifficulty.Hell,
+            });
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+        var destination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                Difficulty = DiabloDifficulty.Hell,
+            });
+
+        destination.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(destination.WorldState.CombatTargets.Values);
+        Assert.Equal((240, 240), (restored.HitPoints, restored.MaxHitPoints));
+    }
+
     [Fact]
     public void SimulationAppliesContentMaximumAttributeToLivePlayers()
     {
@@ -256,6 +344,7 @@ public sealed class DiabloSimulationTests
                 MonsterSpawnPlanner = planner,
                 ProceduralMonsterSpawns = new DiabloMonsterSpawnConfiguration(1),
                 RandomSeed = 0x1234,
+                Difficulty = DiabloDifficulty.Nightmare,
             });
         var player = CreatePlayer();
         player.LevelId = 1;
@@ -276,6 +365,7 @@ public sealed class DiabloSimulationTests
             target => target.LevelId == 2);
         Assert.True(world.IsWalkable(2, generated.PositionX, generated.PositionY));
         Assert.NotEqual(AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId, generated.EntityId);
+        Assert.Equal(130, generated.MaxHitPoints);
     }
 
     [Fact]

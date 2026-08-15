@@ -1476,6 +1476,7 @@ public sealed class StoreSimulationExecutorTests
             startingPositionX: 0,
             startingPositionY: 0,
             difficulty: DiabloDifficulty.Hell,
+            startingCombatRules: new AuthoritativeCombatRules(1000, 1, 100),
             startingCombatTargets: [new AuthoritativeCombatTarget(
                 9,
                 1,
