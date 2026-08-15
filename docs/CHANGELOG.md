@@ -16,7 +16,8 @@ All notable changes to this fork are documented below.
   independently of the runtime native-AI label.
 - Select Fallen fear radius and countdown behavior from complete validated
   tuning tuples rather than requiring the `Fallen` native-AI name; legacy rows
-  without tuning retain native-name compatibility defaults.
+  without tuning retain native-name compatibility defaults, and persisted fear
+  state advances for any validated label carrying the tuple.
 - Select Scavenger corpse-healing and search behavior from validated tuning
   independently of the row's `Scavenger` native-AI name; legacy rows without
   migrated tuning retain native-name compatibility defaults.

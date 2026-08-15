@@ -111,7 +111,9 @@ The optional `fallen_fear_radius`, `fallen_fear_level_offset`, and
 admission radius and countdown formula. Legacy monster rows retain the native
 radius-four, offset-eight, minimum-two compatibility values. A complete positive
 tuple selects the behavior regardless of the row's `native_ai` label; rows
-without migrated tuning retain the native-name compatibility path.
+without migrated tuning retain the native-name compatibility path. The
+persisted fear timer and retreat direction are accepted and advanced for any
+validated label carrying the complete tuple.
 The optional `sneak_distance_base`, `sneak_distance_intelligence_scale`,
 `sneak_retreat_release_distance`, and `sneak_retreat_ticks` columns externalize
 the Sneak visibility band and hit-retreat timing. Legacy monster rows retain

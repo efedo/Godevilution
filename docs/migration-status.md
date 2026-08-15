@@ -40,8 +40,8 @@ Status date: 2026-08-14
 
 - Fallen fear radius and countdown behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
-  retain the native-name compatibility path, while fear state remains
-  snapshot/save compatible.
+  retain the native-name compatibility path, while persisted fear state also
+  advances and remains snapshot/save compatible for alternate labels.
 
 - Scavenger corpse-healing and search behavior now use validated tuning
   independent of the row's native-AI label; rows without migrated tuning retain
