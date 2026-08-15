@@ -41,6 +41,28 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsNormalizedSpecialEffectsIntoAuthoritativeFlags()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tspecial_effects\tflags\n"
+                + "7\t1\t75\t100\tKnockback,NoMana\t0\n");
+
+        var flags = catalog.GetRequired(7).Flags;
+        Assert.NotEqual(0U, flags & AuthoritativeEquipmentAttackEffectRules.KnockbackFlag);
+        Assert.NotEqual(0U, flags & AuthoritativeEquipmentManaRules.NoManaFlag);
+    }
+
+    [Fact]
+    public void RejectsUnknownNormalizedSpecialEffects()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tspecial_effects\n"
+                + "7\t1\t75\t100\tNotANativeEffect\n"));
+    }
+
+    [Fact]
     public void ResolvesNormalizedCursorSymbolsThroughTheExternalCatalog()
     {
         var cursors = AuthoritativeItemCursorCatalog.LoadTsv(

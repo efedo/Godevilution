@@ -335,7 +335,7 @@ public sealed class AuthoritativeItemCatalog
                 MiscId = row.OptionalInt32("misc_id"),
                 SpellId = row.OptionalInt32("spell_id"),
                 SpellSourceKind = ParseSpellSourceKind(row),
-                Flags = row.OptionalUInt32("flags"),
+                Flags = ParseNormalizedFlags(row),
                 MinArmorClass = row.OptionalInt32("min_armor_class", -1),
                 MaxArmorClass = row.OptionalInt32("max_armor_class", -1),
                 MinimumStrength = row.OptionalInt32("min_strength"),
@@ -628,11 +628,32 @@ public sealed class AuthoritativeItemCatalog
         return nativeSpellId;
     }
 
+    private static uint ParseNormalizedFlags(TsvRow row)
+    {
+        var flags = row.OptionalUInt32("flags");
+        if (!row.TryGet("special_effects", out var value)
+            || string.IsNullOrWhiteSpace(value)) {
+            return flags;
+        }
+        return flags | ParseSpecialEffects(
+            value,
+            rejectUnknown: true,
+            lineNumber: row.LineNumber);
+    }
+
     private static uint ParseLegacyFlags(string value)
+    {
+        return ParseSpecialEffects(value, rejectUnknown: false, lineNumber: null);
+    }
+
+    private static uint ParseSpecialEffects(
+        string value,
+        bool rejectUnknown,
+        int? lineNumber)
     {
         var flags = 0U;
         foreach (var effect in (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
-            flags |= effect.ToUpperInvariant() switch {
+            uint? flag = effect.ToUpperInvariant() switch {
                 "RANDOMSTEALLIFE" => 0x00000002U,
                 "RANDOMARROWVELOCITY" => 0x00000004U,
                 "FIREARROWS" => AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
@@ -647,8 +668,16 @@ public sealed class AuthoritativeItemCatalog
                 "HALFTRAPDAMAGE" => AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag,
                 "TRIPLEDEMONDAMAGE" => 0x40000000U,
                 "ZERORESISTANCE" => 0x80000000U,
-                _ => 0U,
+                _ => null,
             };
+            if (flag is null) {
+                if (rejectUnknown) {
+                    throw new InvalidDataException(
+                        $"TSV row {lineNumber} contains unknown item special effect '{effect}'.");
+                }
+                continue;
+            }
+            flags |= flag.Value;
         }
         return flags;
     }
