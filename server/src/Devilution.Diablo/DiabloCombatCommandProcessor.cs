@@ -11578,13 +11578,21 @@ public sealed class DiabloCombatCommandProcessor
             return skippedFrames;
         }
         if ((flags & FastestAttackFlag) != 0)
-            return includesFirstFrame ? 4 : 2;
+            return includesFirstFrame
+                ? rules.FastestAttackFrameSkipWithFirstFrame
+                : rules.FastestAttackFrameSkipWithoutFirstFrame;
         if ((flags & FasterAttackFlag) != 0)
-            return includesFirstFrame ? 3 : 2;
+            return includesFirstFrame
+                ? rules.FasterAttackFrameSkipWithFirstFrame
+                : rules.FasterAttackFrameSkipWithoutFirstFrame;
         if ((flags & FastAttackFlag) != 0)
-            return includesFirstFrame ? 2 : 1;
+            return includesFirstFrame
+                ? rules.FastAttackFrameSkipWithFirstFrame
+                : rules.FastAttackFrameSkipWithoutFirstFrame;
         if ((flags & QuickAttackFlag) != 0)
-            return includesFirstFrame ? 1 : 0;
+            return includesFirstFrame
+                ? rules.QuickAttackFrameSkipWithFirstFrame
+                : rules.QuickAttackFrameSkipWithoutFirstFrame;
         return 0;
     }
 

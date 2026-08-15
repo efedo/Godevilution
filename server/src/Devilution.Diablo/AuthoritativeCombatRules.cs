@@ -87,7 +87,15 @@ public sealed class AuthoritativeCombatRules
         int equipmentFastBlockFrameSkip = 2,
         int fastHitRecoveryFrameSkip = 1,
         int fasterHitRecoveryFrameSkip = 2,
-        int fastestHitRecoveryFrameSkip = 3)
+        int fastestHitRecoveryFrameSkip = 3,
+        int quickAttackFrameSkipWithFirstFrame = 1,
+        int quickAttackFrameSkipWithoutFirstFrame = 0,
+        int fastAttackFrameSkipWithFirstFrame = 2,
+        int fastAttackFrameSkipWithoutFirstFrame = 1,
+        int fasterAttackFrameSkipWithFirstFrame = 3,
+        int fasterAttackFrameSkipWithoutFirstFrame = 2,
+        int fastestAttackFrameSkipWithFirstFrame = 4,
+        int fastestAttackFrameSkipWithoutFirstFrame = 2)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -196,6 +204,20 @@ public sealed class AuthoritativeCombatRules
             || fastestHitRecoveryFrameSkip > 10) {
             throw new InvalidDataException("Hit recovery tier tuning is invalid.");
         }
+        if (quickAttackFrameSkipWithFirstFrame is < 0 or > 10
+            || quickAttackFrameSkipWithoutFirstFrame is < 0
+            || quickAttackFrameSkipWithoutFirstFrame > quickAttackFrameSkipWithFirstFrame
+            || fastAttackFrameSkipWithFirstFrame is < 0 or > 10
+            || fastAttackFrameSkipWithoutFirstFrame is < 0
+            || fastAttackFrameSkipWithoutFirstFrame > fastAttackFrameSkipWithFirstFrame
+            || fasterAttackFrameSkipWithFirstFrame is < 0 or > 10
+            || fasterAttackFrameSkipWithoutFirstFrame is < 0
+            || fasterAttackFrameSkipWithoutFirstFrame > fasterAttackFrameSkipWithFirstFrame
+            || fastestAttackFrameSkipWithFirstFrame is < 0 or > 10
+            || fastestAttackFrameSkipWithoutFirstFrame is < 0
+            || fastestAttackFrameSkipWithoutFirstFrame > fastestAttackFrameSkipWithFirstFrame) {
+            throw new InvalidDataException("Melee attack-speed tier tuning is invalid.");
+        }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
             || stealLife5Percent is < 0 or > 100
@@ -300,6 +322,14 @@ public sealed class AuthoritativeCombatRules
         FastHitRecoveryFrameSkip = fastHitRecoveryFrameSkip;
         FasterHitRecoveryFrameSkip = fasterHitRecoveryFrameSkip;
         FastestHitRecoveryFrameSkip = fastestHitRecoveryFrameSkip;
+        QuickAttackFrameSkipWithFirstFrame = quickAttackFrameSkipWithFirstFrame;
+        QuickAttackFrameSkipWithoutFirstFrame = quickAttackFrameSkipWithoutFirstFrame;
+        FastAttackFrameSkipWithFirstFrame = fastAttackFrameSkipWithFirstFrame;
+        FastAttackFrameSkipWithoutFirstFrame = fastAttackFrameSkipWithoutFirstFrame;
+        FasterAttackFrameSkipWithFirstFrame = fasterAttackFrameSkipWithFirstFrame;
+        FasterAttackFrameSkipWithoutFirstFrame = fasterAttackFrameSkipWithoutFirstFrame;
+        FastestAttackFrameSkipWithFirstFrame = fastestAttackFrameSkipWithFirstFrame;
+        FastestAttackFrameSkipWithoutFirstFrame = fastestAttackFrameSkipWithoutFirstFrame;
     }
 
     public int BaseAttackDamage { get; }
@@ -491,6 +521,24 @@ public sealed class AuthoritativeCombatRules
 
     /** Native skip for equipment carrying the Fastest Hit Recovery flag. */
     public int FastestHitRecoveryFrameSkip { get; }
+
+    /** Native melee attack-speed tier skips when the first animation frame is included. */
+    public int QuickAttackFrameSkipWithFirstFrame { get; }
+
+    public int FastAttackFrameSkipWithFirstFrame { get; }
+
+    public int FasterAttackFrameSkipWithFirstFrame { get; }
+
+    public int FastestAttackFrameSkipWithFirstFrame { get; }
+
+    /** Native melee attack-speed tier skips after the first animation frame. */
+    public int QuickAttackFrameSkipWithoutFirstFrame { get; }
+
+    public int FastAttackFrameSkipWithoutFirstFrame { get; }
+
+    public int FasterAttackFrameSkipWithoutFirstFrame { get; }
+
+    public int FastestAttackFrameSkipWithoutFirstFrame { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -842,7 +890,15 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("equipment_fast_block_frame_skip", 2),
             row.OptionalInt32("fast_hit_recovery_frame_skip", 1),
             row.OptionalInt32("faster_hit_recovery_frame_skip", 2),
-            row.OptionalInt32("fastest_hit_recovery_frame_skip", 3));
+            row.OptionalInt32("fastest_hit_recovery_frame_skip", 3),
+            row.OptionalInt32("quick_attack_frame_skip_with_first_frame", 1),
+            row.OptionalInt32("quick_attack_frame_skip_without_first_frame"),
+            row.OptionalInt32("fast_attack_frame_skip_with_first_frame", 2),
+            row.OptionalInt32("fast_attack_frame_skip_without_first_frame", 1),
+            row.OptionalInt32("faster_attack_frame_skip_with_first_frame", 3),
+            row.OptionalInt32("faster_attack_frame_skip_without_first_frame", 2),
+            row.OptionalInt32("fastest_attack_frame_skip_with_first_frame", 4),
+            row.OptionalInt32("fastest_attack_frame_skip_without_first_frame", 2));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
