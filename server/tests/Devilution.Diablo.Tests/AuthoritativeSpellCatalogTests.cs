@@ -338,6 +338,10 @@ public sealed class AuthoritativeSpellCatalogTests
             firebolt.FireboltHitMonsterLevelScale,
             firebolt.FireboltMinimumHitChance,
             firebolt.FireboltMaximumHitChance));
+        Assert.Equal((2, 5, 95), (
+            firebolt.PersistentProjectileHitMonsterLevelScale,
+            firebolt.PersistentProjectileMinimumHitChance,
+            firebolt.PersistentProjectileMaximumHitChance));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             firebolt with { FireboltMinimumHitChance = 96 },
         ]));
@@ -345,6 +349,12 @@ public sealed class AuthoritativeSpellCatalogTests
             firebolt with {
                 FireboltMinimumHitChance = 80,
                 FireboltMaximumHitChance = 79,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            firebolt with {
+                PersistentProjectileMinimumHitChance = 80,
+                PersistentProjectileMaximumHitChance = 79,
             },
         ]));
     }
