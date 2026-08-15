@@ -95,6 +95,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native class critical-strike damage multiplier. */
     public int CriticalDamageMultiplier { get; init; } = 2;
 
+    /** Native Critical Strike chance added per character level, in percent. */
+    public int CriticalStrikeChancePerLevelPercent { get; init; } = 1;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -253,6 +256,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "critical_damage_multiplier",
     ];
 
+    private static readonly IReadOnlyList<string> CriticalChanceTuningColumns = [
+        ..CriticalTuningColumns,
+        "critical_strike_chance_per_level_percent",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -332,10 +340,15 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasCriticalChanceTuning = table.Columns.SequenceEqual(
+            CriticalChanceTuningColumns,
+            StringComparer.Ordinal);
         var hasCriticalTuning = table.Columns.SequenceEqual(
             CriticalTuningColumns,
-            StringComparer.Ordinal);
-        var hasRepairTuning = hasCriticalTuning
+            StringComparer.Ordinal)
+            || hasCriticalChanceTuning;
+        var hasRepairTuning = hasCriticalChanceTuning
+            || hasCriticalTuning
             || table.Columns.SequenceEqual(
             RepairTuningColumns,
             StringComparer.Ordinal);
@@ -426,6 +439,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 CriticalDamageMultiplier = hasCriticalTuning
                     ? row.RequiredInt32("critical_damage_multiplier")
                     : 2,
+                CriticalStrikeChancePerLevelPercent = hasCriticalChanceTuning
+                    ? row.RequiredInt32("critical_strike_chance_per_level_percent")
+                    : 1,
             }));
     }
 
@@ -476,6 +492,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.MonkUnarmedMaximumDamageLevelDivisor <= 0
             || definition.RepairAbilityDurabilityLevelOffset < 0
             || definition.CriticalDamageMultiplier is < 1 or > 100
+            || definition.CriticalStrikeChancePerLevelPercent is < 0 or > 100
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

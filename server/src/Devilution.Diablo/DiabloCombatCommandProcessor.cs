@@ -1160,7 +1160,11 @@ public sealed class DiabloCombatCommandProcessor
         var criticalDamage = damage;
         if (attackHit
             && playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
-            && random.RandomIntLessThan(100) < player.CharacterLevel) {
+            && random.RandomIntLessThan(100) < Math.Min(
+                100,
+                checked(
+                    (int)player.CharacterLevel
+                    * playerClass.CriticalStrikeChancePerLevelPercent))) {
             criticalDamage = checked(
                 criticalDamage * playerClass.CriticalDamageMultiplier);
         }
