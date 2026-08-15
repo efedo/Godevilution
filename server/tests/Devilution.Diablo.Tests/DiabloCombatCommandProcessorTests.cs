@@ -7264,6 +7264,33 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NativeMonsterRegenerationUsesConfiguredLevelDivisor()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            10,
+            maxHitPoints: 20,
+            monsterLevel: 4,
+            aggroRange: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterRegenerationLevelDivisor: 4));
+        var player = CreatePlayer(life: 100, lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(11, monster.HitPoints);
+        Assert.Equal(11 * DiabloFixedPointQ6.Scale, monster.HitPointsQ6);
+    }
+
+    [Fact]
     public void NativeMonsterKnockbackDisplacesSuccessfulHitsAndRespectsBlockedTiles()
     {
         var monster = new AuthoritativeCombatTarget(

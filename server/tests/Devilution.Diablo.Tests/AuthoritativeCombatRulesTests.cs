@@ -45,6 +45,7 @@ public sealed class AuthoritativeCombatRulesTests
             rules.PlayerMagicHitCharacterLevelScale,
             rules.PlayerMagicMinimumHitChance,
             rules.PlayerMagicMaximumHitChance));
+        Assert.Equal(2, rules.MonsterRegenerationLevelDivisor);
     }
 
     [Fact]
@@ -695,6 +696,24 @@ public sealed class AuthoritativeCombatRulesTests
                 100,
                 playerMagicMinimumHitChance: 90,
                 playerMagicMaximumHitChance: 89));
+    }
+
+    [Fact]
+    public void LoadsAndValidatesMonsterRegenerationLevelDivisor()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\t"
+            + "monster_regeneration_level_divisor\n"
+            + "10\t1\t100\t4\n");
+
+        Assert.Equal(4, rules.MonsterRegenerationLevelDivisor);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterRegenerationLevelDivisor: 0));
     }
 
     [Fact]
