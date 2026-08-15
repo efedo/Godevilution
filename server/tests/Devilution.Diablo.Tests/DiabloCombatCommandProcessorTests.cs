@@ -4402,6 +4402,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiUsesNativeAdjacentAttackAdmission()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "Gargoyle",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38: outside the native 23% AiAvoidance attack band.
+        Assert.Empty(processor.AdvanceTick(40, [player]));
+        Assert.Equal(100, player.Life);
+
+        // 1 ^ 9 ^ 7 = 15: inside the same native attack band.
+        Assert.Single(processor.AdvanceTick(1, [player]));
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void GargoyleUsesValidatedSafetyBoundaryTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

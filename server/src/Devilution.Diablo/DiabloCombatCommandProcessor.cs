@@ -4549,6 +4549,14 @@ public sealed class DiabloCombatCommandProcessor
                             + (goatMeleeAttackTuning.Value.IntelligenceScale
                                 * target.Intelligence)))
                     continue;
+                var gargoyleAttackTuning = GetGargoyleAttackTuning(target);
+                if (gargoyleAttackTuning.HasValue
+                    && attackSeed % 100U >= (uint)Math.Min(
+                        100,
+                        gargoyleAttackTuning.Value.ChanceBase
+                            + (gargoyleAttackTuning.Value.IntelligenceScale
+                                * target.Intelligence)))
+                    continue;
                 var fatAttackTuning = GetFatAttackTuning(target);
                 if (fatAttackTuning.HasValue
                     && !NativeFatAttackBandAllowsAttack(
@@ -6128,6 +6136,15 @@ public sealed class DiabloCombatCommandProcessor
         }
         return UsesNativeAi(target, "Gargoyle")
             ? (2, 1, 50, 16, 5, 4)
+            : null;
+    }
+
+    /** Native Gargoyle AiAvoidance adjacent attack admission. */
+    private (int ChanceBase, int IntelligenceScale)? GetGargoyleAttackTuning(
+        AuthoritativeCombatTarget target)
+    {
+        return UsesNativeAi(target, "Gargoyle")
+            ? (23, 2)
             : null;
     }
 
