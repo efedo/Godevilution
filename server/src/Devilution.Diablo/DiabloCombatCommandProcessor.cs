@@ -6221,7 +6221,11 @@ public sealed class DiabloCombatCommandProcessor
                 monster.PositionY,
                 player.PositionX,
                 player.PositionY))
-            return false;
+            // Native AiRanged does not pursue when its clear missile lane is
+            // unavailable. Close-range avoidance has already run above;
+            // preserve the remaining deferred tick instead of generic
+            // navigation.
+            return true;
 
         return CreateNativeRangedAttackProjectile(
             monster,
