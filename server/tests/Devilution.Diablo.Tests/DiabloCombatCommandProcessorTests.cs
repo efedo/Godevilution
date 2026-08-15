@@ -1706,7 +1706,35 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(1, [player]);
 
         Assert.Single(world.CombatTargets);
-        Assert.Equal((2, 1), (king.FuturePositionX, king.FuturePositionY));
+        Assert.Equal((1, 2), (king.FuturePositionX, king.FuturePositionY));
+    }
+
+    [Fact]
+    public void SkeletonKingUsesNativeRoundWalkWhenSummonAdmissionIsUnavailable()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(1, 12, 12));
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            levelId: 1,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [king]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            levelId: 1,
+            entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(king.IsMoving);
+        Assert.NotEqual((5, 6), (king.FuturePositionX, king.FuturePositionY));
     }
 
     [Fact]
@@ -1786,7 +1814,7 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(1, [player]);
 
         Assert.Single(world.CombatTargets);
-        Assert.Equal((2, 1), (king.FuturePositionX, king.FuturePositionY));
+        Assert.Equal((1, 2), (king.FuturePositionX, king.FuturePositionY));
     }
 
     [Fact]

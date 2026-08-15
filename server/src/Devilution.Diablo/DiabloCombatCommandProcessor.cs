@@ -4876,7 +4876,7 @@ public sealed class DiabloCombatCommandProcessor
         // deterministic while retaining bounded navigation if every turn is
         // blocked.
         if (distance >= 4 && (actionSeed / 100U) % 4U == 0U) {
-            var roundWalk = FindGoatMeleeRoundWalkStep(
+            var roundWalk = FindNativeRoundWalkStep(
                 monster,
                 victim,
                 players,
@@ -4897,8 +4897,8 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** Native AiAvoidance's far-distance RoundWalk, with deterministic turn order. */
-    private (int X, int Y)? FindGoatMeleeRoundWalkStep(
+    /** Native RoundWalk candidate order with deterministic turn state. */
+    private (int X, int Y)? FindNativeRoundWalkStep(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
@@ -5590,53 +5590,89 @@ public sealed class DiabloCombatCommandProcessor
         int distance)
     {
         var summonTuning = GetSkeletonKingSummonTuning(target);
-        if (!summonTuning.HasValue
-            || monsterSpawnPlanner is null
-            || gameMode == DiabloGameMode.Multiplayer
-            || distance < summonTuning.Value.MinimumDistance
-            || random.RandomIntLessThan(100)
-                >= Math.Min(
+        var canAttemptSummon = summonTuning.HasValue
+            && monsterSpawnPlanner is not null
+            && gameMode != DiabloGameMode.Multiplayer
+            && distance >= summonTuning.Value.MinimumDistance
+            && random.RandomIntLessThan(100)
+                < Math.Min(
                     100,
                     summonTuning.Value.ChanceBase
                         + (summonTuning.Value.IntelligenceScale * target.Intelligence))
-            || !world.HasMissileLineOfSight(
+            && world.HasMissileLineOfSight(
                 target.LevelId,
                 target.PositionX,
                 target.PositionY,
                 victim.PositionX,
                 victim.PositionY)
-            || world.CombatTargets.Count >= 256) {
-            return false;
+            && world.CombatTargets.Count < 256;
+        if (canAttemptSummon) {
+            var direction = GetDirection(
+                target.PositionX,
+                target.PositionY,
+                victim.PositionX,
+                victim.PositionY);
+            var displacement = DirectionDisplacements[direction];
+            var positionX = checked(target.PositionX + displacement.X);
+            var positionY = checked(target.PositionY + displacement.Y);
+            if (world.IsWalkable(target.LevelId, positionX, positionY)
+                && !world.IsOccupied(
+                    target.LevelId,
+                    positionX,
+                    positionY,
+                    players,
+                    target.EntityId)) {
+                var entityId = AllocateMonsterEntityId(players);
+                var summon = monsterSpawnPlanner!.CreateSkeletonSummon(
+                    target.LevelId,
+                    unchecked((uint)tick ^ target.EntityId ^ victim.EntityId),
+                    positionX,
+                    positionY,
+                    entityId);
+                if (summon is not null) {
+                    world.CombatTargets.Add(entityId, summon);
+                    return true;
+                }
+            }
         }
 
-        var direction = GetDirection(
-            target.PositionX,
-            target.PositionY,
-            victim.PositionX,
-            victim.PositionY);
-        var displacement = DirectionDisplacements[direction];
-        var positionX = checked(target.PositionX + displacement.X);
-        var positionY = checked(target.PositionY + displacement.Y);
-        if (!world.IsWalkable(target.LevelId, positionX, positionY)
-            || world.IsOccupied(
-                target.LevelId,
-                positionX,
-                positionY,
+        if (!summonTuning.HasValue || distance <= 1)
+            return false;
+
+        var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
+        var movementChance = Math.Min(100, target.Intelligence + 25);
+        if (actionSeed % 100U >= (uint)movementChance)
+            return true;
+
+        if (distance >= 3 && (actionSeed / 100U) % 4U == 0U) {
+            var roundWalk = FindNativeRoundWalkStep(
+                target,
+                victim,
                 players,
-                target.EntityId)) {
-            return false;
+                actionSeed);
+            if (roundWalk.HasValue) {
+                target.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                return true;
+            }
         }
 
-        var entityId = AllocateMonsterEntityId(players);
-        var summon = monsterSpawnPlanner.CreateSkeletonSummon(
-            target.LevelId,
-            unchecked((uint)tick ^ target.EntityId ^ victim.EntityId),
-            positionX,
-            positionY,
-            entityId);
-        if (summon is null)
-            return false;
-        world.CombatTargets.Add(entityId, summon);
+        var randomWalk = FindNativeRandomWalkStep(
+            target,
+            victim,
+            players,
+            actionSeed);
+        if (randomWalk.HasValue) {
+            target.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
+            return true;
+        }
+
+        var next = AuthoritativeMonsterNavigation.FindStep(
+            world,
+            target,
+            victim,
+            players);
+        if (next.HasValue)
+            target.BeginMovement(next.Value.X, next.Value.Y);
         return true;
     }
 
