@@ -63,6 +63,31 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsNormalizedHellfireEffectsIntoGeneratedItemState()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\thellfire_effects\n"
+                + "7\t1\t75\t100\tDoppelganger,ACAgainstDemons\n");
+
+        var state = catalog.Generate(7, 42);
+
+        Assert.Equal(
+            AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag
+                | AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag,
+            state.HellfireDamageArmorFlags);
+    }
+
+    [Fact]
+    public void RejectsUnknownNormalizedHellfireEffects()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\thellfire_effects\n"
+                + "7\t1\t75\t100\tNotAHellfireEffect\n"));
+    }
+
+    [Fact]
     public void ResolvesNormalizedCursorSymbolsThroughTheExternalCatalog()
     {
         var cursors = AuthoritativeItemCursorCatalog.LoadTsv(

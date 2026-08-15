@@ -37,6 +37,9 @@ public sealed record AuthoritativeItemDefinition(
 
     public uint Flags { get; init; }
 
+    /** Native Hellfire secondary damage/armor effects supplied by content. */
+    public int HellfireDamageArmorFlags { get; init; }
+
     public int MinimumStrength { get; init; }
 
     public int MinimumMagic { get; init; }
@@ -90,6 +93,7 @@ public sealed record AuthoritativeItemDefinition(
             SpellId = SpellId,
             SpellSourceKind = SpellSourceKind,
             Flags = Flags,
+            HellfireDamageArmorFlags = HellfireDamageArmorFlags,
             MinimumStrength = MinimumStrength,
             MinimumMagic = MinimumMagic,
             MinimumDexterity = MinimumDexterity,
@@ -148,6 +152,7 @@ public sealed class AuthoritativeItemCatalog
                 || !IsValidCursorSymbol(definition.CursorGraphic)
                 || definition.MinimumMonsterLevel < 0
                 || definition.DropRate is < 0 or > byte.MaxValue
+                || definition.HellfireDamageArmorFlags is < 0 or > 0x7F
                 || definition.MinArmorClass < -1
                 || definition.MaxArmorClass < -1
                 || (definition.MinArmorClass == -1) != (definition.MaxArmorClass == -1)
@@ -336,6 +341,7 @@ public sealed class AuthoritativeItemCatalog
                 SpellId = row.OptionalInt32("spell_id"),
                 SpellSourceKind = ParseSpellSourceKind(row),
                 Flags = ParseNormalizedFlags(row),
+                HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(row),
                 MinArmorClass = row.OptionalInt32("min_armor_class", -1),
                 MaxArmorClass = row.OptionalInt32("max_armor_class", -1),
                 MinimumStrength = row.OptionalInt32("min_strength"),
@@ -639,6 +645,36 @@ public sealed class AuthoritativeItemCatalog
             value,
             rejectUnknown: true,
             lineNumber: row.LineNumber);
+    }
+
+    private static int ParseNormalizedHellfireEffects(TsvRow row)
+    {
+        if (!row.TryGet("hellfire_effects", out var value)
+            || string.IsNullOrWhiteSpace(value)) {
+            return 0;
+        }
+
+        var flags = 0;
+        foreach (var effect in value.Split(
+                     ',',
+                     StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+            var flag = effect.ToUpperInvariant() switch {
+                "DEVASTATION" => AuthoritativeEquipmentIncomingDamageRules.DevastationFlag,
+                "DECAY" => AuthoritativeEquipmentIncomingDamageRules.DecayFlag,
+                "PERIL" => AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                "JESTERS" => AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+                "DOPPELGANGER" => AuthoritativeEquipmentIncomingDamageRules.DoppelgangerFlag,
+                "ACAGAINSTDEMONS" or "ACDEMON" => AuthoritativeEquipmentIncomingDamageRules.AgainstDemonsFlag,
+                "ACAGAINSTUNDEAD" or "ACUNDEAD" => AuthoritativeEquipmentIncomingDamageRules.AgainstUndeadFlag,
+                _ => 0,
+            };
+            if (flag == 0) {
+                throw new InvalidDataException(
+                    $"TSV row {row.LineNumber} contains unknown Hellfire item effect '{effect}'.");
+            }
+            flags |= flag;
+        }
+        return flags;
     }
 
     private static uint ParseLegacyFlags(string value)
