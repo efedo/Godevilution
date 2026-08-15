@@ -65,7 +65,8 @@ public sealed class AuthoritativeCombatRules
         int monkStaffUnarmedDamageDivisor = 150,
         int monkWeaponDamageDivisor = 300,
         int bardSwordStrengthDexterityDamageDivisor = 150,
-        int bardBowStrengthDexterityDamageDivisor = 250)
+        int bardBowStrengthDexterityDamageDivisor = 250,
+        int bardDefaultStrengthDamageDivisor = 100)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -117,6 +118,9 @@ public sealed class AuthoritativeCombatRules
         }
         if (bardBowStrengthDexterityDamageDivisor is < 1 or > 10_000) {
             throw new InvalidDataException("Bard bow damage tuning is invalid.");
+        }
+        if (bardDefaultStrengthDamageDivisor is < 1 or > 10_000) {
+            throw new InvalidDataException("Bard default damage tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -200,6 +204,7 @@ public sealed class AuthoritativeCombatRules
         MonkWeaponDamageDivisor = monkWeaponDamageDivisor;
         BardSwordStrengthDexterityDamageDivisor = bardSwordStrengthDexterityDamageDivisor;
         BardBowStrengthDexterityDamageDivisor = bardBowStrengthDexterityDamageDivisor;
+        BardDefaultStrengthDamageDivisor = bardDefaultStrengthDamageDivisor;
     }
 
     public int BaseAttackDamage { get; }
@@ -325,6 +330,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native Bard bow strength-plus-dexterity damage divisor. */
     public int BardBowStrengthDexterityDamageDivisor { get; }
+
+    /** Native Bard fallback strength damage divisor without a sword or bow. */
+    public int BardDefaultStrengthDamageDivisor { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -654,7 +662,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("monk_staff_unarmed_damage_divisor", 150),
             row.OptionalInt32("monk_weapon_damage_divisor", 300),
             row.OptionalInt32("bard_sword_strength_dexterity_damage_divisor", 150),
-            row.OptionalInt32("bard_bow_strength_dexterity_damage_divisor", 250));
+            row.OptionalInt32("bard_bow_strength_dexterity_damage_divisor", 250),
+            row.OptionalInt32("bard_default_strength_damage_divisor", 100));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
