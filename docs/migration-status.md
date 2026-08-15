@@ -271,6 +271,12 @@ Status date: 2026-08-15
   81, saves, and canonical hashes; the next tick decrements the delay without
   rerolling movement or attack admission.
 
+- Native `AiRanged` post-attack delays now preserve the
+  `AiDelay(GenerateRnd(20))` countdown for generic ranged mappings. The
+  server-owned delay persists through snapshots, optional protocol field 82,
+  saves, and canonical hashes; active projectiles no longer permit a second
+  ranged admission while the native delay is pending.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

@@ -96,6 +96,11 @@ All notable changes to this fork are documented below.
   `GenerateRnd(10) + 10` countdown, persisted through optional protocol field
   81, snapshots, saves, and the canonical state hash.
 
+- Preserve native `AiRanged` post-attack delay state: generic ranged mappings
+  now start the native `GenerateRnd(20)` countdown after firing, persisted
+  through optional protocol field 82, snapshots, saves, and the canonical
+  state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.
