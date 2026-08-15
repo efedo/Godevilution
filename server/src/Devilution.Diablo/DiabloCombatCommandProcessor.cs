@@ -4457,7 +4457,7 @@ public sealed class DiabloCombatCommandProcessor
             if (TryAdvanceGoatRangedAttack(target, victim, tick, players, distance))
                 continue;
             if (distance <= 1
-                && (target.NativeAi == "SkeletonRanged"
+                && (GetSkeletonRangedTuning(target).HasValue
                     || HasValidatedArrowMapping(target.NativeAi, target.MonsterId)))
                 continue;
             if (distance <= 1) {

@@ -3840,12 +3840,38 @@ public sealed class DiabloCombatCommandProcessorTests
             minDamage: 2,
             maxDamage: 9,
             toHit: 35,
-            nativeAi: "SkeletonRanged",
+            monsterId: 1,
+            nativeAi: "Fallen",
             intelligence: 0);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
             world,
-            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+            monsterTypes: new AuthoritativeMonsterTypeCatalog([
+                new AuthoritativeMonsterTypeDefinition(
+                    1,
+                    81,
+                    "Skeleton Bow",
+                    0,
+                    0,
+                    1,
+                    4,
+                    4,
+                    10,
+                    2,
+                    9,
+                    0,
+                    0,
+                    false,
+                    true,
+                    false) {
+                    NativeAi = "SkeletonRanged",
+                    SkeletonRangedRetreatMinimumDistance = 4,
+                    SkeletonRangedRetreatChanceBase = 1,
+                    SkeletonRangedRetreatChanceIntelligenceScale = 1,
+                    SkeletonRangedAttackChanceBase = 3,
+                    SkeletonRangedAttackChanceIntelligenceScale = 2,
+                },
+            ]));
         var player = CreatePlayer(
             entityId: 7,
             positionX: 0,
