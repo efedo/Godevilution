@@ -412,6 +412,17 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredTripleDemonDamageMultiplier()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\ttriple_demon_damage_multiplier\n"
+            + "10\t1\t100\t7\n");
+
+        Assert.Equal(7, rules.TripleDemonDamageMultiplier);
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -612,6 +623,22 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 hellfireDoppelgangerChancePercent: 101));
+    }
+
+    [Fact]
+    public void RejectsInvalidTripleDemonDamageMultiplier()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\ttriple_demon_damage_multiplier\n"
+                + "10\t1\t100\t0\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                tripleDemonDamageMultiplier: 101));
     }
 
     [Fact]

@@ -2100,6 +2100,40 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TripleDemonDamageUsesConfiguredMultiplier()
+    {
+        var demon = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 0,
+            demon: true);
+        var world = new DiabloWorldState(combatTargets: [demon]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                tripleDemonDamageMultiplier: 5));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(50, demon.HitPoints);
+    }
+
+    [Fact]
     public void WarriorCriticalStrikeDoublesPhysicalDamageBeforeArmorAndConsumesItsNativeRoll()
     {
         var criticalTarget = new AuthoritativeCombatTarget(
