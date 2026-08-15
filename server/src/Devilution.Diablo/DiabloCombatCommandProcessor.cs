@@ -4730,11 +4730,7 @@ public sealed class DiabloCombatCommandProcessor
 
     /** Active monster content owns Butcher controller assignment; direct legacy targets keep the label fallback. */
     private bool UsesButcherPursuit(AuthoritativeCombatTarget monster)
-    {
-        if (monsterTypes?.TryGet(monster.MonsterId, out var definition) == true)
-            return definition.NativeAi == "Butcher";
-        return monster.NativeAi == "Butcher";
-    }
+        => UsesNativeAi(monster, "Butcher");
 
     /** Active monster content owns fallback native-AI identity; direct targets retain the label path. */
     private bool UsesNativeAi(AuthoritativeCombatTarget monster, string nativeAi)

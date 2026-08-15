@@ -2562,6 +2562,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CompleteAlternateAiTuningTakesPrecedenceOverButcherFallback()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            levelId: 0,
+            monsterId: 1,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "Zombie");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Butcher",
+                1,
+                16,
+                1,
+                10,
+                10,
+                0,
+                3,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Butcher",
+                HorkDemonAttackChanceBase = 1,
+                HorkDemonAttackChanceIntelligenceScale = 1,
+                HorkDemonSpawnMinimumDistance = 3,
+                HorkDemonSpawnChanceBase = 1,
+                HorkDemonSpawnChanceIntelligenceScale = 1,
+                HorkDemonMovementChanceBase = 100,
+                HorkDemonMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void SkeletonMeleeAiUsesItsNativeMovementAdmissionBand()
     {
         var monster = new AuthoritativeCombatTarget(
