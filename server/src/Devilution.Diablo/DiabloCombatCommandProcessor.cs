@@ -1177,7 +1177,7 @@ public sealed class DiabloCombatCommandProcessor
         if (target.IsDemon
             && (GetUsableEquipmentFlags(player)
                 & AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag) != 0) {
-            resolvedDamage = checked(resolvedDamage * 3);
+            resolvedDamage = checked(resolvedDamage * rules.TripleDemonDamageMultiplier);
         }
         if (rules.GameVariant == DiabloGameVariant.Hellfire
             && resolvedDamage > 0

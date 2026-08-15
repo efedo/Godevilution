@@ -81,7 +81,8 @@ public sealed class AuthoritativeCombatRules
         int hellfireJestersExpansionThreshold = 100,
         int hellfireJestersExpansionMultiplier = 5,
         int hellfirePerilDamageMultiplier = 2,
-        int hellfireDoppelgangerChancePercent = 10)
+        int hellfireDoppelgangerChancePercent = 10,
+        int tripleDemonDamageMultiplier = 3)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -174,6 +175,9 @@ public sealed class AuthoritativeCombatRules
         if (hellfirePerilDamageMultiplier is < 1 or > 100
             || hellfireDoppelgangerChancePercent is < 0 or > 100) {
             throw new InvalidDataException("Hellfire Peril/Doppelganger tuning is invalid.");
+        }
+        if (tripleDemonDamageMultiplier is < 1 or > 100) {
+            throw new InvalidDataException("Triple Demon damage tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -273,6 +277,7 @@ public sealed class AuthoritativeCombatRules
         HellfireJestersExpansionMultiplier = hellfireJestersExpansionMultiplier;
         HellfirePerilDamageMultiplier = hellfirePerilDamageMultiplier;
         HellfireDoppelgangerChancePercent = hellfireDoppelgangerChancePercent;
+        TripleDemonDamageMultiplier = tripleDemonDamageMultiplier;
     }
 
     public int BaseAttackDamage { get; }
@@ -446,6 +451,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Native post-hit proc chance for Hellfire Doppelganger. */
     public int HellfireDoppelgangerChancePercent { get; }
+
+    /** Native damage multiplier applied by the Triple Demon Damage effect. */
+    public int TripleDemonDamageMultiplier { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -791,7 +799,8 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hellfire_jesters_expansion_threshold", 100),
             row.OptionalInt32("hellfire_jesters_expansion_multiplier", 5),
             row.OptionalInt32("hellfire_peril_damage_multiplier", 2),
-            row.OptionalInt32("hellfire_doppelganger_chance_percent", 10));
+            row.OptionalInt32("hellfire_doppelganger_chance_percent", 10),
+            row.OptionalInt32("triple_demon_damage_multiplier", 3));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
