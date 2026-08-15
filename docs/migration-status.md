@@ -313,6 +313,10 @@ Status date: 2026-08-15
 - Gargoyle adjacent attacks now preserve the native `23 + 2 * intelligence`
   `AiAvoidance` admission before shared authoritative melee resolution.
 
+- Scavenger corpse-seeking movement now preserves native `RandomWalk` candidate
+  order and consumes the tick when all five native candidates are blocked; no
+  eight-way replacement is used.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can

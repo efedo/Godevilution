@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
 - Preserve Gargoyle's native adjacent `AiAvoidance` admission: the server now
   applies the `23 + 2 * intelligence` attack band before shared melee damage.
 
+- Preserve Scavenger's native corpse-seeking `RandomWalk`: deterministic
+  five-candidate movement now defers when those candidates are blocked instead
+  of scanning the full neighboring ring.
+
 - Restore the native `OverlordAi` Fat movement walk: validated `20 + 4 *
   intelligence` admissions now use the shared deterministic `RandomWalk`
   candidate order before bounded navigation fallback.

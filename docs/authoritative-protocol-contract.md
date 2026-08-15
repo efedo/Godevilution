@@ -342,6 +342,10 @@ For a healthy Gargoyle outside melee range, the server applies the native
 admitted; blocked candidates consume the tick without a generic navigation
 replacement.
 
+While a Scavenger is seeking a corpse, the server uses the native five-candidate
+`RandomWalk` order and emits no movement replacement when those candidates are
+blocked.
+
 When a Gargoyle is adjacent, the server applies its native
 `23 + 2 * intelligence` `AiAvoidance` attack admission before emitting the
 authoritative melee result; a failed roll emits no client-side action.
