@@ -71,10 +71,12 @@ public sealed class AuthoritativeWorld
     public AuthoritativeWarpTarget? FindNearestWarpTarget(
         uint sourceLevelId,
         int positionX,
-        int positionY)
+        int positionY,
+        Func<AuthoritativeWarpTarget, bool>? isAvailable = null)
     {
         return warpTargets.Values
-            .Where(target => target.SourceLevelId == sourceLevelId)
+            .Where(target => target.SourceLevelId == sourceLevelId
+                && (isAvailable is null || isAvailable(target)))
             .OrderBy(target => checked(
                 (long)(target.TriggerX - positionX) * (target.TriggerX - positionX)
                 + (long)(target.TriggerY - positionY) * (target.TriggerY - positionY)))

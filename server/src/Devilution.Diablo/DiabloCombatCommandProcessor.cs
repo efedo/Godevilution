@@ -393,6 +393,7 @@ public sealed class DiabloCombatCommandProcessor
             case DiabloPlayerActionKind.Move:
                 player.PositionX = checked(player.PositionX + action.DirectionX);
                 player.PositionY = checked(player.PositionY + action.DirectionY);
+                worldCommands?.ExecuteLevelTrigger(player, tick, players);
                 break;
             case DiabloPlayerActionKind.Attack:
                 AddDirectedEvents(

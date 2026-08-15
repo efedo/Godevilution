@@ -12,7 +12,9 @@ public sealed class AuthoritativeWarpTarget
         int triggerY,
         uint targetLevelId,
         int targetX,
-        int targetY)
+        int targetY,
+        uint requiredQuestId = 0,
+        bool requiredQuestCompleted = false)
     {
         if (warpId == 0)
             throw new ArgumentOutOfRangeException(nameof(warpId));
@@ -23,6 +25,12 @@ public sealed class AuthoritativeWarpTarget
         TargetLevelId = targetLevelId;
         TargetX = targetX;
         TargetY = targetY;
+        if (requiredQuestId == 0 && requiredQuestCompleted)
+            throw new ArgumentException(
+                "A quest-gated warp must identify its required quest.",
+                nameof(requiredQuestCompleted));
+        RequiredQuestId = requiredQuestId;
+        RequiredQuestCompleted = requiredQuestCompleted;
     }
 
     public uint WarpId { get; }
@@ -38,6 +46,12 @@ public sealed class AuthoritativeWarpTarget
     public int TargetX { get; }
 
     public int TargetY { get; }
+
+    /** Optional server-owned quest gate for native level-trigger availability. */
+    public uint RequiredQuestId { get; }
+
+    /** Whether the required quest must be completed rather than active. */
+    public bool RequiredQuestCompleted { get; }
 }
 
 /** Loads normalized native trigger destinations from an external content table. */
@@ -59,7 +73,9 @@ public static class AuthoritativeWarpCatalog
                 row.RequiredInt32("trigger_y"),
                 row.RequiredUInt32("target_level_id"),
                 row.RequiredInt32("target_x"),
-                row.RequiredInt32("target_y"));
+                row.RequiredInt32("target_y"),
+                row.OptionalUInt32("required_quest_id"),
+                row.OptionalInt32("required_quest_completed") != 0);
             if (!world.ContainsLevel(target.SourceLevelId)
                 || !world.ContainsLevel(target.TargetLevelId)) {
                 throw new InvalidDataException(

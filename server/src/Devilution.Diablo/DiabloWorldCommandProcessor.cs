@@ -283,9 +283,61 @@ public sealed class DiabloWorldCommandProcessor
         var warp = world.World.FindNearestWarpTarget(
             player.LevelId,
             player.PositionX,
-            player.PositionY);
+            player.PositionY,
+            IsWarpAvailable);
         if (warp is null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        return ApplyWarpTarget(
+            player,
+            warp,
+            appliedTick,
+            players,
+            applyEffects,
+            searchRadius);
+    }
+
+    /** Applies an exact authored level-trigger after movement reaches its tile. */
+    public DiabloWorldIntentResult ExecuteLevelTrigger(
+        AuthoritativePlayerState player,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
+        bool applyEffects = true,
+        int searchRadius = 5)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        if (world.World is null) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        var warp = world.World.WarpTargets
+            .Where(target => target.SourceLevelId == player.LevelId
+                && target.TriggerX == player.PositionX
+                && target.TriggerY == player.PositionY)
+            .Where(IsWarpAvailable)
+            .OrderBy(target => target.WarpId)
+            .FirstOrDefault();
+        if (warp is null)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        return ApplyWarpTarget(
+            player,
+            warp,
+            appliedTick,
+            players,
+            applyEffects,
+            searchRadius);
+    }
+
+    private DiabloWorldIntentResult ApplyWarpTarget(
+        AuthoritativePlayerState player,
+        AuthoritativeWarpTarget warp,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players,
+        bool applyEffects,
+        int searchRadius)
+    {
 
         var participants = players.ToArray();
         var destination = DiabloCrawl.FindClosestValidPosition(
@@ -302,7 +354,7 @@ public sealed class DiabloWorldCommandProcessor
                     candidateY,
                     participants,
                     player.EntityId)
-                && !world.World.IsWarpTrigger(
+                && !world.World!.IsWarpTrigger(
                     warp.TargetLevelId,
                     candidateX,
                     candidateY));
@@ -448,6 +500,9 @@ public sealed class DiabloWorldCommandProcessor
             intent.DirectionY);
         player.PositionX = targetX;
         player.PositionY = targetY;
+        var levelTrigger = ExecuteLevelTrigger(player, appliedTick, players);
+        if (levelTrigger.Succeeded)
+            return levelTrigger;
         return DiabloWorldIntentResult.Accepted;
     }
 
@@ -663,6 +718,21 @@ public sealed class DiabloWorldCommandProcessor
         ApplyItemQuestEffects(item.State);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Resolves content-owned quest gates on native level triggers. */
+    private bool IsWarpAvailable(AuthoritativeWarpTarget warp)
+    {
+        if (warp.RequiredQuestId == 0)
+            return true;
+        if (!world.Quests.TryGetValue(warp.RequiredQuestId, out var quest)
+            || quest.Unavailable
+            || (warp.RequiredQuestCompleted
+                ? !quest.Completed
+                : !quest.Active)) {
+            return false;
+        }
+        return true;
     }
 
     /** Applies deterministic content-owned quest transitions after pickup. */
