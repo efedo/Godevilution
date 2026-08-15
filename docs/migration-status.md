@@ -224,6 +224,11 @@ Status date: 2026-08-15
   snapshots, optional protocol field 68, saves, and canonical hashes, so the
   server does not reroll SkeletonAi while native delay mode is active.
 
+- Native `SkeletonBowAi` close-range retreat now preserves its `var1`/`var2`
+  movement counter. Long-idle and fresh-mode admissions are server-owned and
+  persist through snapshots, optional protocol fields 69-70, saves, and
+  canonical hashes; blocked arrow lanes remain server-owned no-ops.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

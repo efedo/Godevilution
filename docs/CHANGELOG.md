@@ -52,6 +52,11 @@ All notable changes to this fork are documented below.
   through optional protocol field 68, snapshots, saves, and the canonical
   state hash instead of rerolling on the next tick.
 
+- Preserve native `SkeletonBowAi` movement admissions: the server now carries
+  its `var1`/`var2`-compatible counter, applies the long-idle and fresh-mode
+  close-range retreat bands, and persists that state through optional protocol
+  fields 69-70, snapshots, saves, and the canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

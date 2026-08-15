@@ -300,6 +300,11 @@ remaining native Skeleton/Fallen `AiDelay` countdown. The server consumes the
 countdown before the next movement or attack decision; older peers may omit
 the field and clients never execute the delay policy.
 
+Optional `MonsterSnapshot` fields 69-70 carry the native `SkeletonBowAi`
+`var2`-compatible idle counter and `var1`-compatible movement value. The
+server applies the long-idle and fresh-mode close-range retreat admissions;
+older peers may omit these fields and clients never execute the AI.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.
