@@ -8,11 +8,7 @@ namespace Devilution.Client;
 public partial class WorldPresentation : Node2D
 {
     private const int TeleportProjectileBehavior = 9;
-    private const int ResurrectionBeamProjectileBehavior = 11;
-    private const int StoneCurseProjectileBehavior = 13;
     private const int PhasingProjectileBehavior = 15;
-    private const int FireballProjectileBehavior = 16;
-    private const int ProjectileImpactPhase = 1;
     private const float TileSize = 32;
     private const float OriginX = 96;
     private const float OriginY = 96;
@@ -268,24 +264,38 @@ public partial class WorldPresentation : Node2D
 
     private void DrawProjectile(ProjectileSnapshot projectile)
     {
-        var resurrectionBeam = projectile.Behavior == ResurrectionBeamProjectileBehavior;
-        var stoneCurse = projectile.Behavior == StoneCurseProjectileBehavior;
-        var fireball = projectile.Behavior == FireballProjectileBehavior;
-        var fireballImpact = fireball && projectile.Phase == ProjectileImpactPhase;
+        var kind = ProjectilePresentationStyle.Resolve(
+            projectile.Behavior,
+            projectile.Phase);
+        var beam = kind == ProjectilePresentationKind.Beam;
+        var stoneCurse = kind == ProjectilePresentationKind.StoneCurse;
+        var fireImpact = kind == ProjectilePresentationKind.FireImpact;
+        var size = beam
+            ? new Vector2(20, 28)
+            : stoneCurse
+                ? new Vector2(18, 18)
+                : fireImpact ? new Vector2(30, 30) : new Vector2(12, 12);
+        var color = kind switch {
+            ProjectilePresentationKind.Fire
+                or ProjectilePresentationKind.FireImpact => new Color("ff7b32"),
+            ProjectilePresentationKind.Lightning => new Color("f4d35e"),
+            ProjectilePresentationKind.Holy => new Color("f8d66d"),
+            ProjectilePresentationKind.BloodStar => new Color("d86bff"),
+            ProjectilePresentationKind.BoneSpirit => new Color("dce3eb"),
+            ProjectilePresentationKind.Acid => new Color("8be28b"),
+            ProjectilePresentationKind.Arrow => new Color("d29b5f"),
+            ProjectilePresentationKind.StoneCurse => new Color("dce3eb"),
+            _ => new Color("6fffe9"),
+        };
+        var radius = beam
+            ? 8
+            : stoneCurse ? 8 : fireImpact ? 14 : kind == ProjectilePresentationKind.Lightning ? 6 : 5;
         DrawTextureOrCircle(
-            resurrectionBeam ? "resurrection_beam" : "projectile",
+            beam ? "resurrection_beam" : "projectile",
             PositionFor(projectile.EntityId, projectile.PositionX, projectile.PositionY),
-            resurrectionBeam
-                ? new Vector2(20, 28)
-                : stoneCurse
-                    ? new Vector2(18, 18)
-                    : fireballImpact ? new Vector2(30, 30) : new Vector2(12, 12),
-            resurrectionBeam
-                ? new Color("f8d66d")
-                : stoneCurse
-                    ? new Color("dce3eb")
-                    : fireball ? new Color("ff7b32") : new Color("6fffe9"),
-            resurrectionBeam ? 8 : stoneCurse ? 8 : fireballImpact ? 14 : fireball ? 7 : 5);
+            size,
+            color,
+            radius);
     }
 
     private void DrawTextureOrRect(string assetName, Vector2 center, Vector2 size, Color fallback, bool outline = false)
