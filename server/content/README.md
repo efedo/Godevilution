@@ -1573,7 +1573,10 @@ behavior. The checked-in `Arrow` rows explicitly select the server-owned
 remain accepted as a compatibility spelling. Schema 1.82 additionally externalizes the
 native ranged-AI branch and avoidance probability columns. Schema 1.83 adds
 monster-specific mapping rows. Schema 1.84 adds the Counselor missile rows
-and the monster-owned Charged Bolt behavior. Schema 1.85 adds Mega's
+and the monster-owned Charged Bolt behavior. The checked-in base pack also
+admits native `Zhar` and `Lazarus` aliases through validated Fireball rows;
+their runtime controller remains the server-owned Counselor boundary. Schema
+1.85 adds Mega's
 monster-owned Inferno controller and persistent segment path. Schema 1.86
 externalizes the Hork Demon native AI identity and its validated Hork Spawn
 summon admission. Schema 1.87 adds the validated Hork Spawn missile mapping,

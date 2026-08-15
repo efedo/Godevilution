@@ -1290,6 +1290,10 @@ Status date: 2026-08-15
   delegates to the server-owned `FallenAi`/`SkeletonAi` boundary, including
   native Fallen fear state and combat timing. Banner quest activation and map
   transition behavior remain incremental.
+- Zhar and Archbishop Lazarus now accept their native `Zhar` and `Lazarus`
+  identities, use validated Fireball mappings, and delegate normal combat to
+  the server-owned `CounselorAi` boundary. Their dialogue-driven quest and map
+  transitions remain incremental.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.

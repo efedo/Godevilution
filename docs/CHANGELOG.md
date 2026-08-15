@@ -25,6 +25,11 @@ All notable changes to this fork are documented below.
   fear state through the server-owned FallenAi/SkeletonAi boundary; banner
   activation and map transition behavior remain incremental.
 
+- Restore Zhar and Archbishop Lazarus's native combat boundary: validated
+  `Zhar` and `Lazarus` Fireball mappings now delegate normal combat through the
+  server-owned CounselorAi controller; dialogue-driven quest and map
+  transitions remain incremental.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 
