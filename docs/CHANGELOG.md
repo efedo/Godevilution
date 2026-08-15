@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   exact unique-identity completion triggers and terminal native quest-variable
   transitions; encounter placement, dialogue, and rewards remain incremental.
 
+- Add the validated Lazarus-to-Diablo quest handoff: completing the Lazarus
+  quest activates the server-owned Diablo quest, while route activation remains
+  suppressed until that handoff occurs.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a

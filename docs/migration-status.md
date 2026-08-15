@@ -748,6 +748,10 @@ Status date: 2026-08-15
   no-transition behavior while shipped unique quests preserve their native
   terminal `_qvar1` states.
 
+- Schema 1.210 adds optional follow-on quest activation and route-activation
+  policy columns; Lazarus can now activate the server-owned Diablo quest while
+  that quest remains suppressed from premature route entry.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
@@ -1299,9 +1303,10 @@ Status date: 2026-08-15
   the server-owned `CounselorAi` boundary. Later dialogue-driven quest and map
   transitions remain incremental.
 - The base pack now supplies additive `quest_states.tsv` rows for the native
-  Gharbad, Zhar, Warlord, and Lazarus defeat quests. Server-owned completion
-  uses exact unique identities and applies content-owned terminal native
-  variables; encounter placement, dialogue, and rewards remain incremental.
+  Gharbad, Zhar, Warlord, Lazarus, and Diablo quest states. Server-owned
+  completion uses exact unique identities, applies content-owned terminal
+  native variables, and activates Lazarus's declared follow-on Diablo quest;
+  encounter placement, dialogue, and rewards remain incremental.
 - A shared `TalkToQuest` intent now validates a living adjacent unique target
   against the quest's configured completion identity, activates/logs the quest,
   applies content-owned minimum native dialogue variables monotonically, and
