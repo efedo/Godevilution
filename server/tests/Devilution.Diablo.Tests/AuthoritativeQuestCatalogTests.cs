@@ -98,6 +98,18 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadCompletionVariableTransitions()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_variable1\tcompletion_variable2\n"
+                + "3001\t1\t1\t5\t6\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((5, 6), (quest.CompletionVariable1, quest.CompletionVariable2));
+    }
+
+    [Fact]
     public void QuestStateCanLoadAnOptionalMonsterCompletionTrigger()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

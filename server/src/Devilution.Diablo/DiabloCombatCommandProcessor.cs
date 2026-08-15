@@ -13527,6 +13527,12 @@ public sealed class DiabloCombatCommandProcessor
             if (quest.Progress == quest.RequiredProgress) {
                 quest.Completed = true;
                 quest.Active = false;
+                quest.Variable1 = Math.Max(
+                    quest.Variable1,
+                    quest.CompletionVariable1);
+                quest.Variable2 = Math.Max(
+                    quest.Variable2,
+                    quest.CompletionVariable2);
             }
         }
     }

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.208.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.209.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -202,7 +202,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.208.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.209.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
@@ -294,6 +294,10 @@ public sealed class ShippedContentTests
         Assert.Equal(2, activation.Simulation.WorldState.Quests[3004].DialogueVariable1);
         Assert.Equal(2, activation.Simulation.WorldState.Quests[3012].DialogueVariable1);
         Assert.Equal(6, activation.Simulation.WorldState.Quests[3016].DialogueVariable1);
+        Assert.Equal(5, activation.Simulation.WorldState.Quests[3003].CompletionVariable1);
+        Assert.Equal(3, activation.Simulation.WorldState.Quests[3004].CompletionVariable1);
+        Assert.Equal(3, activation.Simulation.WorldState.Quests[3012].CompletionVariable1);
+        Assert.Equal(7, activation.Simulation.WorldState.Quests[3016].CompletionVariable1);
         var hellfireMonster = activation.Simulation.WorldState.CombatTargets[10];
         Assert.Equal(2U, hellfireMonster.MonsterId);
         Assert.True(hellfireMonster.IsUndead);

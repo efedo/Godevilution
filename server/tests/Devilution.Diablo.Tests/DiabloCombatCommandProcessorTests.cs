@@ -1146,6 +1146,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void UniqueQuestDefeatAppliesItsNativeCompletionVariables()
+    {
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            active: true,
+            completionUniqueIdentity: "Gharbad",
+            completionVariable1: 5);
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            levelId: 0,
+            monsterId: 126,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+
+        Assert.True(quest.Completed);
+        Assert.Equal(5, quest.Variable1);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(
