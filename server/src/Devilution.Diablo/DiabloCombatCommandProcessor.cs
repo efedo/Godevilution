@@ -1184,8 +1184,9 @@ public sealed class DiabloCombatCommandProcessor
             && HasUsableHellfireDamageArmorFlag(
                 player,
                 AuthoritativeEquipmentIncomingDamageRules.DevastationFlag)
-            && random.RandomIntLessThan(100) < 5) {
-            resolvedDamage = checked(resolvedDamage * 3);
+            && random.RandomIntLessThan(100) < rules.HellfireDevastationChancePercent) {
+            resolvedDamage = checked(
+                resolvedDamage * rules.HellfireDevastationDamageMultiplier);
         }
         if (rules.GameVariant == DiabloGameVariant.Hellfire
             && resolvedDamage > 0

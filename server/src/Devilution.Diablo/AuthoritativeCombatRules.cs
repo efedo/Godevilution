@@ -74,7 +74,9 @@ public sealed class AuthoritativeCombatRules
         int thornsDamageMinimum = 1,
         int thornsDamageMaximum = 3,
         int hellfireDecayDamageReduction = 5,
-        int hellfireDecayRemovalThreshold = 100)
+        int hellfireDecayRemovalThreshold = 100,
+        int hellfireDevastationChancePercent = 5,
+        int hellfireDevastationDamageMultiplier = 3)
     {
         if (baseAttackDamage <= 0 || minimumDamage <= 0 || minimumDamage > baseAttackDamage
             || hitChancePercent is < 0 or > 100 || criticalChancePercent is < 0 or > 100 || criticalMultiplier < 1)
@@ -152,6 +154,10 @@ public sealed class AuthoritativeCombatRules
             || hellfireDecayRemovalThreshold <= 0
             || hellfireDecayRemovalThreshold > 10_000) {
             throw new InvalidDataException("Hellfire Decay tuning is invalid.");
+        }
+        if (hellfireDevastationChancePercent is < 0 or > 100
+            || hellfireDevastationDamageMultiplier is < 1 or > 100) {
+            throw new InvalidDataException("Hellfire Devastation tuning is invalid.");
         }
         if (randomStealLifeDivisor <= 0
             || stealLife3Percent is < 0 or > 100
@@ -244,6 +250,8 @@ public sealed class AuthoritativeCombatRules
         ThornsDamageMaximum = thornsDamageMaximum;
         HellfireDecayDamageReduction = hellfireDecayDamageReduction;
         HellfireDecayRemovalThreshold = hellfireDecayRemovalThreshold;
+        HellfireDevastationChancePercent = hellfireDevastationChancePercent;
+        HellfireDevastationDamageMultiplier = hellfireDevastationDamageMultiplier;
     }
 
     public int BaseAttackDamage { get; }
@@ -396,6 +404,12 @@ public sealed class AuthoritativeCombatRules
 
     /** Positive native damage-bonus threshold that removes a Decay weapon. */
     public int HellfireDecayRemovalThreshold { get; }
+
+    /** Native post-hit proc chance for Hellfire Devastation. */
+    public int HellfireDevastationChancePercent { get; }
+
+    /** Native damage multiplier applied by a successful Devastation proc. */
+    public int HellfireDevastationDamageMultiplier { get; }
 
     /** Native divisor for the random life-steal equipment effect. */
     public int RandomStealLifeDivisor { get; }
@@ -734,7 +748,9 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("thorns_damage_minimum", 1),
             row.OptionalInt32("thorns_damage_maximum", 3),
             row.OptionalInt32("hellfire_decay_damage_reduction", 5),
-            row.OptionalInt32("hellfire_decay_removal_threshold", 100));
+            row.OptionalInt32("hellfire_decay_removal_threshold", 100),
+            row.OptionalInt32("hellfire_devastation_chance_percent", 5),
+            row.OptionalInt32("hellfire_devastation_damage_multiplier", 3));
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)
