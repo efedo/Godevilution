@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Class FastBlock staff timing now consumes validated
+  `fast_block_frame_skip` metadata from `classes.tsv`; older class schemas
+  retain the native two-frame compatibility default.
+
 - Player-versus-player block chance now consumes validated
   `pvp_block_level_scale` combat metadata; older combat schemas retain the
   native level-difference scale of two.
@@ -376,6 +380,10 @@ Status date: 2026-08-15
 - Schema 1.187 adds optional `pvp_block_level_scale` metadata to `combat.tsv`.
   Active player-versus-player block chance now uses the validated scale;
   omitted values retain the native scale of two.
+
+- Schema 1.188 adds optional `fast_block_frame_skip` metadata to `classes.tsv`.
+  Active FastBlock staff timing now uses the validated class value; omitted
+  values retain the native two-frame behavior.
 
 - Schema 1.183 adds optional `critical_damage_multiplier` metadata to
   `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

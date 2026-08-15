@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.187.0` schema in
+It declares its identity and `devilution.diablo@1.188.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -43,6 +43,8 @@ native HeavyHitThreshold stun threshold bonus; omitted values retain the native
 25% bonus.
 `pvp_block_level_scale` externalizes the native player-versus-player block
 chance level-difference scale; omitted values retain the native scale of two.
+`fast_block_frame_skip` externalizes the native FastBlock staff timing value;
+omitted values retain the native two-frame compatibility default.
 `base_melee_to_hit` and `base_ranged_to_hit` are active native physical combat
 metadata: initialized player attacks add the class base modifier to level and
 dexterity (`dexterity / 2` for melee, full dexterity for ranged) before shared
@@ -103,10 +105,11 @@ The `FlexibleBlock` class flag externalizes the Monk's native alternative block
 equipment rules. In addition to an ordinary usable shield, that class may block
 with a usable staff, while unarmed, or while holding exactly one usable
 one-handed weapon. The `FastBlock` flag separately declares the native staff
-fast-block timing, and `HeavyHitThreshold` declares the native Barbarian
-hit-stun threshold multiplier. Activation rejects unknown class flags. Legacy
-class rows without the new flags retain those two native traits through the
-loader's compatibility mapping.
+fast-block timing, with `fast_block_frame_skip` supplying its validated value,
+and `HeavyHitThreshold` declares the native Barbarian hit-stun threshold
+multiplier. Activation rejects unknown class flags. Legacy class rows without
+the new flags retain those native traits through the loader's compatibility
+mapping.
 
 The `physical_damage_formula` class column selects the validated native
 equipped-damage formula (`Standard`, `Rogue`, `Monk`, `Bard`, or `Barbarian`).
@@ -1363,7 +1366,7 @@ the complete target header even when they upsert only one row.
 
 | Table | Stable row key | Module-owned meaning |
 | --- | --- | --- |
-| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, and class defense tuning. |
+| `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, and FastBlock timing. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
@@ -1413,7 +1416,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.187.0"
+      "version": "1.188.0"
   },
   "dependencyConstraints": [
     {
@@ -1445,7 +1448,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.187.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.188.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1862,6 +1865,10 @@ defense now uses the validated percentages; omitted values retain the native
 Schema 1.187 adds the optional `pvp_block_level_scale` column to `combat.tsv`.
 Active player-versus-player block chance now uses the validated scale; omitted
 values retain the native scale of two.
+
+Schema 1.188 adds the optional `fast_block_frame_skip` column to `classes.tsv`.
+Active FastBlock staff timing now uses the validated class value; omitted values
+retain the native two-frame behavior.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;
