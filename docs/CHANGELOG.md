@@ -5,7 +5,9 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Use existing validated `projectile_speed` metadata for MonsterArrow travel;
-  legacy rows retain the native speed-one fallback.
+  existing `projectile_lifetime` metadata now overrides arrow lifetime when
+  present; legacy rows retain the native speed-one and distance-based lifetime
+  fallbacks.
 
 - Add schema 1.208 optional mapped monster projectile impact lifetime to
   `monster_missiles.tsv`; monster arrows, charges, magic missiles, and Hork
