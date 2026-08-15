@@ -388,6 +388,10 @@ Windows toolchain command.
   `AiAvoidance` `goalVar1` movement counter and `goalVar2` turn state used by
   GoatMelee and Gargoyle. Older peers may omit them; clients never execute the
   movement goal.
+- Optional `MonsterSnapshot` fields 64-65 carry the shared server-owned
+  `AiAvoidance` `var2`-compatible idle counter and `var1`-compatible movement
+  value. Older peers may omit them; clients never execute ordinary movement
+  admissions.
 - The `SkeletonKing` identity drives a server-owned summon boundary. The server
   selects a level-valid `SkeletonMelee` definition and emits the resulting
   authoritative monster snapshot; clients never create or simulate summons.

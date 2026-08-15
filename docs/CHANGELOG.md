@@ -35,6 +35,12 @@ All notable changes to this fork are documented below.
   GoatMelee and Gargoyle through authoritative snapshots, optional protocol
   fields 62-63, saves, and the canonical state hash.
 
+- Preserve shared native `AiAvoidance` ordinary movement admissions: the
+  server now carries the native `var1`/`var2`-compatible mode counter, applies
+  the long-idle, fresh-mode, and middle-band movement probabilities, and
+  persists that state through optional protocol fields 64-65, snapshots,
+  saves, and the canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -283,6 +283,12 @@ Optional `MonsterSnapshot` fields 62-63 carry the shared persisted
 GoatMelee and Gargoyle. The server continues their far-distance Move goals;
 clients never execute them.
 
+Optional `MonsterSnapshot` fields 64-65 carry the shared `AiAvoidance`
+`var2`-compatible idle counter and `var1`-compatible movement value. The
+server applies the native long-idle, fresh-mode, and middle-band ordinary
+movement admissions for `GoatMelee` and `Gargoyle`; older peers may omit these
+fields and clients never execute the AI.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.

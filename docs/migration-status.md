@@ -208,6 +208,11 @@ Status date: 2026-08-15
   server-owned for GoatMelee and Gargoyle and persists through snapshots,
   optional protocol fields 62-63, saves, and the canonical state hash.
 
+- Shared native `AiAvoidance` ordinary movement now preserves the native
+  `var1`/`var2`-compatible mode counter for GoatMelee and Gargoyle. Long-idle,
+  fresh-mode, and middle-band admissions are server-owned and persist through
+  snapshots, optional protocol fields 64-65, saves, and canonical hashes.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains
