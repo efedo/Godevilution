@@ -706,6 +706,26 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedWarpCarriesNativeDestinationSearchTuning()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path));
+
+        Assert.True(catalog.TryGet(49, out var warp));
+        Assert.Equal(AuthoritativeProjectileBehavior.Warp, warp.ProjectileBehavior);
+        Assert.Equal(5, warp.WarpSearchRadius);
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([warp with { WarpSearchRadius = 0 }]));
+    }
+
+    [Fact]
     public void ShippedResurrectionCarriesNativePlayerRevivalAndManaTuning()
     {
         var path = Path.Combine(

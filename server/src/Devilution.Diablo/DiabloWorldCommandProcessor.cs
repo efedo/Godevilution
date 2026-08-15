@@ -240,7 +240,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players,
-        bool applyEffects = true)
+        bool applyEffects = true,
+        int searchRadius = 5)
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
@@ -261,7 +262,7 @@ public sealed class DiabloWorldCommandProcessor
             warp.TargetX,
             warp.TargetY,
             0,
-            5,
+            searchRadius,
             (candidateX, candidateY) =>
                 world.IsWalkable(warp.TargetLevelId, candidateX, candidateY)
                 && !world.IsMissileBlocked(warp.TargetLevelId, candidateX, candidateY)

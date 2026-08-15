@@ -176,6 +176,52 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void WarpUsesTheValidatedDestinationSearchRadius()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 7, 7));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 7, 7));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(7, 1, 1, 1, 2, 3, 3));
+        var world = new DiabloWorldState(authoritativeWorld);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 0, positionY: 0, levelId: 1, entityId: 1);
+        var blockedPositions = new[] {
+            (3, 3), (2, 2), (3, 2), (4, 2),
+            (2, 3),           (4, 3),
+            (2, 4), (3, 4), (4, 4),
+        };
+        var blockers = blockedPositions
+            .Select((position, index) => CreatePlayer(
+                positionX: position.Item1,
+                positionY: position.Item2,
+                levelId: 2,
+                entityId: (uint)(10 + index)))
+            .ToArray();
+        var participants = new[] { player }.Concat(blockers).ToArray();
+
+        var tooSmall = processor.ExecuteWarp(
+            player,
+            12,
+            participants,
+            searchRadius: 1);
+
+        AssertRejected(tooSmall, DiabloRuleFailure.NotAllowed);
+        Assert.Equal(1U, player.LevelId);
+
+        var sufficient = processor.ExecuteWarp(
+            player,
+            12,
+            participants,
+            searchRadius: 2);
+
+        Assert.True(sufficient.Succeeded);
+        Assert.Equal(2U, player.LevelId);
+        Assert.Equal(2, Math.Max(
+            Math.Abs(player.PositionX - 3),
+            Math.Abs(player.PositionY - 3)));
+    }
+
+    [Fact]
     public void PickupPlacesMultiCellItemAndRemovesItFromWorld()
     {
         var itemState = AuthoritativeItemState.Empty with {

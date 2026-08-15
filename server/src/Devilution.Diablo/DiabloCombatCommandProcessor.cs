@@ -1716,7 +1716,8 @@ public sealed class DiabloCombatCommandProcessor
                 player,
                 appliedTick,
                 players,
-                applyEffects: false);
+                applyEffects: false,
+                searchRadius: spell.WarpSearchRadius);
             if (!warpValidation.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     warpValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
@@ -1817,7 +1818,8 @@ public sealed class DiabloCombatCommandProcessor
             var warpResult = worldCommands!.ExecuteWarp(
                 player,
                 appliedTick,
-                players);
+                players,
+                searchRadius: spell.WarpSearchRadius);
             if (!warpResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     warpResult.Failure ?? DiabloRuleFailure.Malformed);
