@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.195 optional Town Portal destination slot metadata to
+  `spells.tsv`. Server-owned portals now use validated destination origin,
+  slot count, and spacing; omitted values retain the native 57/40, four-slot,
+  two-tile layout.
+
 - Add schema 1.194 optional Reflect damage-percentage bounds to `spells.tsv`.
   Monster retaliation now uses validated Reflect-row bounds; omitted values
   retain the native 20–30% compatibility roll.

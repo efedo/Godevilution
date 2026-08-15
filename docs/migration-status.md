@@ -432,6 +432,10 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.195 adds optional Town Portal destination slot metadata to
+  `spells.tsv`; omitted values retain the native 57/40 destination origin,
+  four slots, and two-tile spacing.
+
 - Schema 1.194 adds optional `reflect_damage_percent_minimum` and
   `reflect_damage_percent_maximum` metadata to the Reflect row in `spells.tsv`;
   omitted values retain the native 20–30% reflected-damage roll.
