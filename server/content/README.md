@@ -511,6 +511,10 @@ Schema 1.83 adds the optional `monster_id` discriminator to
 `monster_missiles.tsv`. A monster-specific row takes precedence over its
 native-AI wildcard, allowing shared native AI identities such as `Bat` to
 retain content-specific controllers without engine-side type checks.
+The checked-in Familiar row uses that discriminator to select the native Bat
+Lightning follow-up after an adjacent hit; the server captures its
+`GenerateRnd(10) + 1` damage and emits a `MonsterMagic` projectile while
+unrelated Bat rows retain their mapped-charge behavior.
 Schema 1.84 adds five native Counselor missile rows for monster IDs 107, 108,
 109, 110, and 113. They select Firebolt, Charged Bolt, Lightning, or Fireball
 from validated content; the server owns the monster-specific Charged Bolt

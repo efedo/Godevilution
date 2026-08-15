@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve native Familiar Bat follow-up lightning: validated monster-specific
+  content now emits a server-owned `MonsterMagic` projectile with captured
+  `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
+  retain Bat movement and all travel, resistance, and persistence remain
+  authoritative.
+
 - Refresh the 22 tracked replay fixtures to the current base and Hellfire
   content-manifest identities, restoring the complete server replay gate.
 

@@ -1272,6 +1272,11 @@ Status date: 2026-08-15
 - The native `FireBat` `AiRanged` boundary now consumes its validated Firebolt
   mapping and resolves server-owned projectile travel plus native
   monster-to-player magic hit, resistance, block, and Q6 damage rules.
+- Native Familiar now consumes its monster-specific validated `Bat` Lightning
+  mapping: the server preserves Bat movement at range and emits the native
+  `GenerateRnd(10) + 1` lightning damage after an admitted adjacent hit.
+  Projectile travel, lightning resistance, hit admission, and persistence stay
+  server-owned; clients receive only the resulting `MonsterMagic` projection.
 - Native `LazarusSuccubus` minions now use the same validated Blood Star path;
   their retained `LazarusMinionAi` dispatch is represented server-side without
   exposing AI execution to clients.
