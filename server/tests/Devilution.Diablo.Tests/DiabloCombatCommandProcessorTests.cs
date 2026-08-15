@@ -1738,7 +1738,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void SkeletonKingDefersWhenItsNativeRoundWalkCandidatesAreBlocked()
+    public void SkeletonKingDefersWhenItsNativeRandomWalkCandidatesAreBlocked()
     {
         var king = new AuthoritativeCombatTarget(
             9,
