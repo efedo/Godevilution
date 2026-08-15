@@ -240,6 +240,11 @@ Status date: 2026-08-15
   73-75, saves, and canonical hashes; far-distance Move goals remain in
   fields 60-61.
 
+- Native Leoric/Skeleton King `AiDelay` is now a server-owned countdown after
+  failed movement admissions. The countdown persists through snapshots,
+  optional protocol field 76, saves, and canonical hashes; the server does not
+  reroll LeoricAi while native delay mode is active.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

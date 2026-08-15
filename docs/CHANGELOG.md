@@ -67,6 +67,11 @@ All notable changes to this fork are documented below.
   83% bands, starts the native delay countdown on failed admissions, and
   persists movement and delay state through optional protocol fields 73-75.
 
+- Preserve native Leoric/Skeleton King `AiDelay` state: failed movement
+  admissions now start a server-owned countdown, which persists through
+  optional protocol field 76, snapshots, saves, and the canonical state hash
+  instead of rerolling on the next tick.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

@@ -316,6 +316,11 @@ carries the remaining native Rhino `AiDelay` countdown. The server owns these
 ordinary movement and delay decisions; older peers may omit the fields while
 Rhino far-distance Move goal state remains in fields 60-61.
 
+Optional `MonsterSnapshot.skeleton_king_delay_ticks` field 76 carries the
+remaining native Leoric/Skeleton King `AiDelay` countdown. It is server-owned,
+validated, persisted by version-1 saves, and included in the canonical hash;
+older peers may omit it and clients never execute LeoricAi policy.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.
