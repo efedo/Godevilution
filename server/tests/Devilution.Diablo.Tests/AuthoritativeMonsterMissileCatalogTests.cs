@@ -27,8 +27,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-                "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\tranged_avoidance_minimum_distance\tranged_avoidance_far_distance\tranged_avoidance_chance_base\tranged_avoidance_chance_intelligence_scale\tranged_avoidance_far_intelligence_offset\tprojectile_damage\tpuddle_impact_lifetime\n"
-                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\tAcid\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\t2\t3\t500\t500\t1\t40\t4\n");
+                "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\tranged_avoidance_minimum_distance\tranged_avoidance_far_distance\tranged_avoidance_chance_base\tranged_avoidance_chance_intelligence_scale\tranged_avoidance_far_intelligence_offset\tprojectile_damage\tpuddle_impact_lifetime\tprojectile_impact_lifetime\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\tAcid\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\t2\t3\t500\t500\t1\t40\t4\t6\n");
 
         Assert.True(catalog.TryGet("Acid", out var acid));
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
@@ -48,6 +48,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(2, acid.PuddleDamageHigh);
         Assert.Equal(40, acid.ProjectileDamage);
         Assert.Equal(4, acid.PuddleImpactLifetime);
+        Assert.Equal(6, acid.ProjectileImpactLifetime);
         Assert.Equal((2, 3, 500, 500, 1), (
             acid.RangedAvoidanceMinimumDistance,
             acid.RangedAvoidanceFarDistance,
@@ -114,6 +115,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.PuddleDamageLow);
         Assert.Equal(0, succubus.PuddleDamageHigh);
         Assert.Equal(0, succubus.PuddleImpactLifetime);
+        Assert.Equal(0, succubus.ProjectileImpactLifetime);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);
@@ -244,6 +246,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "Acid",
                     AuthoritativeProjectileBehavior.Acid,
                     PuddleImpactLifetime: -1),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsNegativeProjectileImpactLifetime()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Acid",
+                    "Acid",
+                    AuthoritativeProjectileBehavior.Acid,
+                    ProjectileImpactLifetime: -1),
             ]));
     }
 

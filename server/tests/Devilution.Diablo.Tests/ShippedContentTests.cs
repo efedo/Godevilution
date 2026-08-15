@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.207.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.208.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -106,6 +106,7 @@ public sealed class ShippedContentTests
         Assert.Equal(1, acid.PuddleDamageLow);
         Assert.Equal(2, acid.PuddleDamageHigh);
         Assert.Equal(2, acid.PuddleImpactLifetime);
+        Assert.Equal(1, acid.ProjectileImpactLifetime);
         Assert.Equal((2, 3, 500, 500, 1), (
             acid.RangedAvoidanceMinimumDistance,
             acid.RangedAvoidanceFarDistance,
@@ -124,6 +125,7 @@ public sealed class ShippedContentTests
         Assert.Equal(1, acidUnique.PuddleDamageLow);
         Assert.Equal(2, acidUnique.PuddleDamageHigh);
         Assert.Equal(2, acidUnique.PuddleImpactLifetime);
+        Assert.Equal(1, acidUnique.ProjectileImpactLifetime);
         Assert.Equal((4, 70, 10), (
             acidUnique.RangedRetreatMinimumDistance,
             acidUnique.RangedRetreatChanceBase,
@@ -191,7 +193,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.207.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.208.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
@@ -473,6 +475,7 @@ public sealed class ShippedContentTests
         Assert.Equal(117U, horkDemonMissile.SpawnMonsterId);
         Assert.Equal(8, horkDemonMissile.ProjectileSpeed);
         Assert.Equal(9, horkDemonMissile.ProjectileLifetime);
+        Assert.Equal(1, horkDemonMissile.ProjectileImpactLifetime);
         Assert.Equal(48, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 85).DeathAnimationTicks);
         Assert.Equal(42, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 129).DeathAnimationTicks);
         Assert.Equal(12, monsterTypes.Definitions.Single(definition => definition.NativeMonsterId == 109).DeathAnimationTicks);

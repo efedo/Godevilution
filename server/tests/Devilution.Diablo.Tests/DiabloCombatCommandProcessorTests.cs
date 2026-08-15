@@ -1805,7 +1805,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     AuthoritativeProjectileBehavior.HorkSpawn,
                     SpawnMonsterId: 117,
                     ProjectileSpeed: 8,
-                    ProjectileLifetime: 9),
+                    ProjectileLifetime: 9,
+                    ProjectileImpactLifetime: 6),
             ]),
             monsterSpawnPlanner: planner,
             monsterTypes: monsterTypes);
@@ -1821,6 +1822,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.HorkSpawn, projectile.Behavior);
         Assert.Equal(117U, projectile.SpellId);
         Assert.Equal((8, 8U), (projectile.Speed, projectile.RemainingTicks));
+        Assert.Equal(6, projectile.ImpactLifetime);
         Assert.DoesNotContain(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
 
         for (ulong tick = 2; tick <= 9; tick++)
@@ -4716,7 +4718,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     "Rhino",
                     AuthoritativeProjectileBehavior.SnakeCharge,
                     ProjectileSpeed: 7,
-                    ProjectileLifetime: 12),
+                    ProjectileLifetime: 12,
+                    ProjectileImpactLifetime: 5),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -4732,6 +4735,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
         Assert.Equal(7, charge.Speed);
         Assert.Equal(11U, charge.RemainingTicks);
+        Assert.Equal(5, charge.ImpactLifetime);
     }
 
     [Fact]
@@ -5440,7 +5444,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 AuthoritativeProjectileBehavior.Firebolt,
                 SpellId: 52,
                 ProjectileSpeed: 17,
-                ProjectileLifetime: 19),
+                ProjectileLifetime: 19,
+                ProjectileImpactLifetime: 7),
         ]);
         var processor = CreateProcessor(
             world,
@@ -5463,6 +5468,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(52U, projectile.SpellId);
         Assert.Equal(17, projectile.Speed);
         Assert.Equal(18U, projectile.RemainingTicks);
+        Assert.Equal(7, projectile.ImpactLifetime);
         Assert.Equal(100, player.Life);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();
