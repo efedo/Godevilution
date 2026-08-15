@@ -5359,6 +5359,66 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BloodStarMappingUsesConfiguredProjectileTransportMetadata()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterLevel: 5,
+            nativeAi: "Succubus",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(37, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                Range = 112,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.BloodStar,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                MagicDamageDivisor = 2,
+                MagicDamageReductionDivisor = 8,
+                SpellLevelDamage = 3,
+                SelfDamage = 5,
+                ResistantDamageDivisor = 4,
+            },
+        ]);
+        var processor = CreateProcessor(
+            world,
+            spells,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Succubus",
+                    "BloodStar",
+                    AuthoritativeProjectileBehavior.BloodStar,
+                    SpellId: 37,
+                    DamageType: AuthoritativeDamageType.Fire,
+                    ProjectileSpeed: 7,
+                    ProjectileLifetime: 12),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
+        Assert.Equal(7, projectile.Speed);
+        Assert.Equal(11U, projectile.RemainingTicks);
+    }
+
+    [Fact]
     public void SuccubusFamilyUsesConfiguredRetreatDistance()
     {
         var monster = new AuthoritativeCombatTarget(
