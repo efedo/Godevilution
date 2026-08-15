@@ -752,6 +752,10 @@ Status date: 2026-08-15
   policy columns; Lazarus can now activate the server-owned Diablo quest while
   that quest remains suppressed from premature route entry.
 
+- Schema 1.211 adds optional `diablo` monster-type and `completion_diablo`
+  quest-state columns; validated boss targets now complete the server-owned
+  Diablo quest through an explicit native identity boundary.
+
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
   penalty and chance bounds when omitted.
@@ -1305,8 +1309,9 @@ Status date: 2026-08-15
 - The base pack now supplies additive `quest_states.tsv` rows for the native
   Gharbad, Zhar, Warlord, Lazarus, and Diablo quest states. Server-owned
   completion uses exact unique identities, applies content-owned terminal
-  native variables, and activates Lazarus's declared follow-on Diablo quest;
-  encounter placement, dialogue, and rewards remain incremental.
+  native variables, activates Lazarus's declared follow-on Diablo quest, and
+  completes Diablo through an explicit validated boss identity; encounter
+  placement, dialogue, and rewards remain incremental.
 - A shared `TalkToQuest` intent now validates a living adjacent unique target
   against the quest's configured completion identity, activates/logs the quest,
   applies content-owned minimum native dialogue variables monotonically, and

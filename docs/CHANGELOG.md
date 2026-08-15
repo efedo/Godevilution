@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   quest activates the server-owned Diablo quest, while route activation remains
   suppressed until that handoff occurs.
 
+- Externalize the Diablo boss completion boundary: validated monster types can
+  declare the native Diablo identity, and quest rows can complete against that
+  identity without relying on an AI label or static encounter placement.
+
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,
   advances content-owned native dialogue variables monotonically, and emits a
