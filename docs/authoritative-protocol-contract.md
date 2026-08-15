@@ -256,6 +256,10 @@ Counselor wounded-adjacent retreat attempts. The server applies the four
 opposite-direction `RandomWalk` attempts before resuming mapped ranged
 dispatch; clients render only the resulting movement and snapshot state.
 
+For the `Mega` identity, Inferno admission and its intermediate-distance
+`2 * (5 * intelligence + 25)` RandomWalk fallback are server-owned. A failed or
+blocked mapped Inferno roll never delegates movement policy to the client.
+
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid
 `SkeletonMelee` definition, creates the summon on an available adjacent cell,

@@ -230,6 +230,10 @@ Status date: 2026-08-15
   `35 - 4 * intelligence` delay and deterministic `RandomWalk` boundary when
   Inferno is outside its validated maximum range.
 
+- Mega intermediate-distance Inferno misses now consume the native
+  `2 * (5 * intelligence + 25)` RandomWalk fallback before generic pursuit;
+  clear-lane and blocked-lane outcomes remain server-owned.
+
 - Counselor wounded-adjacent retreat now enters a persisted four-attempt native
   `RandomWalk` state in the server before mapped ranged dispatch; retreat state
   is carried through snapshots, protocol saves, and the authoritative state

@@ -46,6 +46,10 @@ All notable changes to this fork are documented below.
   server-owned Skeleton movement boundary when Inferno is outside its validated
   maximum range.
 
+- Preserve the native Mega intermediate-distance fallback: a missed or
+  blocked mapped Inferno admission now consumes the native
+  `2 * (5 * intelligence + 25)` RandomWalk band before generic pursuit.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state
