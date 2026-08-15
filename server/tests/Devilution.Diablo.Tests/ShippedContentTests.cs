@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.148.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.149.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.148.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.149.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 8, 3, 5, 3, 5, 40, 20), (
@@ -614,6 +614,8 @@ public sealed class ShippedContentTests
         hellfireItems.AttachUniqueCatalog(hellfireUniques);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
+        Assert.Equal("The Undead Crown", crown.BaseName);
+        Assert.Equal("The Undead Crown", crown.IdentifiedName);
         Assert.Equal(16650, crown.Value);
         Assert.Equal(15, crown.ArmorClass);
         Assert.Equal(0x00000002U, crown.Flags);

@@ -1,3 +1,4 @@
+using System.Text;
 using Devilution.Data;
 
 namespace Devilution.Diablo;
@@ -43,7 +44,7 @@ public sealed class AuthoritativeUniqueItemCatalog
         ArgumentNullException.ThrowIfNull(definitions);
         this.definitions = new Dictionary<uint, AuthoritativeUniqueItemDefinition>();
         foreach (var definition in definitions) {
-            if (definition.UniqueId == 0 || string.IsNullOrWhiteSpace(definition.Name) || definition.BaseItemId == 0
+            if (definition.UniqueId == 0 || !IsValidPresentationText(definition.Name) || definition.BaseItemId == 0
                 || definition.MinimumLevel < 0 || definition.Value < 0 || definition.Powers.Count > 6)
                 throw new InvalidDataException("Unique item definitions contain invalid bounds.");
             if (definition.Powers.Any(power => string.IsNullOrWhiteSpace(power.Power)))
@@ -92,6 +93,8 @@ public sealed class AuthoritativeUniqueItemCatalog
         // separate magic-item path.
         var state = items.Generate(definition.BaseItemId, itemSeed) with {
             UniqueId = checked((int)uniqueId),
+            BaseName = definition.Name,
+            IdentifiedName = definition.Name,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -108,6 +111,8 @@ public sealed class AuthoritativeUniqueItemCatalog
         ArgumentNullException.ThrowIfNull(definition);
         state = state with {
             UniqueId = checked((int)definition.UniqueId),
+            BaseName = definition.Name,
+            IdentifiedName = definition.Name,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -133,6 +138,8 @@ public sealed class AuthoritativeUniqueItemCatalog
         ArgumentNullException.ThrowIfNull(random);
         state = state with {
             UniqueId = checked((int)definition.UniqueId),
+            BaseName = definition.Name,
+            IdentifiedName = definition.Name,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -168,6 +175,13 @@ public sealed class AuthoritativeUniqueItemCatalog
                     powers);
             });
         return new AuthoritativeUniqueItemCatalog(definitions);
+    }
+
+    private static bool IsValidPresentationText(string value)
+    {
+        return !string.IsNullOrWhiteSpace(value)
+            && !value.Contains('\0')
+            && Encoding.UTF8.GetByteCount(value) < 64;
     }
 
     /** Loads the native unique_itemdat.tsv shape, resolving uniqueBaseItem symbols through the base catalog. */

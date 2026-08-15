@@ -313,9 +313,25 @@ public sealed class AuthoritativeItemCatalogTests
         var item = items.GenerateUnique(1001, 42, 5);
 
         Assert.Equal(1001, item.UniqueId);
+        Assert.Equal("Ember Blade", item.BaseName);
+        Assert.Equal("Ember Blade", item.IdentifiedName);
         Assert.Equal(3650, item.Value);
         Assert.Equal(10, item.PlusToHit);
         Assert.InRange(item.FireMinDamage, 1, 10);
+    }
+
+    [Fact]
+    public void RejectsInvalidUniquePresentationNames()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(
+                1001,
+                new string('x', 64),
+                7,
+                1,
+                100,
+                []),
+        ]));
     }
 
     [Fact]
@@ -503,6 +519,8 @@ public sealed class AuthoritativeItemCatalogTests
 
         var unique = items.GenerateUnique(1, 42, 1);
         Assert.Equal(1, unique.UniqueId);
+        Assert.Equal("The Butcher's Cleaver", unique.BaseName);
+        Assert.Equal("The Butcher's Cleaver", unique.IdentifiedName);
         Assert.Equal(10, unique.PlusStrength);
         Assert.Equal(4, unique.MinDamage);
         Assert.Equal(24, unique.MaxDamage);
