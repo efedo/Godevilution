@@ -7175,6 +7175,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireJestersUsesConfiguredRollExpansionTerms()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var random = new DiabloRandom(1);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            random: random,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire,
+                hellfireJestersRollMaximum: 80,
+                hellfireJestersExpansionThreshold: 40,
+                hellfireJestersExpansionMultiplier: 2));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.JestersFlag,
+                })]);
+        var expectedRandom = new DiabloRandom(1);
+        var expectedRoll = expectedRandom.RandomIntBetween(0, 80);
+        expectedRoll = expectedRoll >= 40
+            ? 40 + (expectedRoll - 40) * 2
+            : expectedRoll;
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(6400 - 640 * expectedRoll / 100, target.HitPointsQ6);
+        Assert.Equal(expectedRandom.State, random.State);
+    }
+
+    [Fact]
     public void HellfirePerilDoublesFinalDamageAndHurtsAttackerFromPreModifierDamage()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);

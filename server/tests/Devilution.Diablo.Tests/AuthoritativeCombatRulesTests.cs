@@ -385,6 +385,20 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void LoadsConfiguredHellfireJestersTuning()
+    {
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_jesters_roll_maximum\thellfire_jesters_expansion_threshold\thellfire_jesters_expansion_multiplier\n"
+            + "10\t1\t100\t80\t40\t2\n");
+
+        Assert.Equal((80, 40, 2), (
+            rules.HellfireJestersRollMaximum,
+            rules.HellfireJestersExpansionThreshold,
+            rules.HellfireJestersExpansionMultiplier));
+    }
+
+    [Fact]
     public void RejectsInvalidMaximumPrimaryAttribute()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -553,6 +567,22 @@ public sealed class AuthoritativeCombatRulesTests
                 1,
                 100,
                 hellfireDevastationDamageMultiplier: 0));
+    }
+
+    [Fact]
+    public void RejectsInvalidHellfireJestersTuning()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.LoadTsv(
+                "combat.tsv",
+                "base_attack_damage\tminimum_damage\tdefeat_experience\thellfire_jesters_roll_maximum\thellfire_jesters_expansion_threshold\n"
+                + "10\t1\t100\t10\t11\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hellfireJestersExpansionMultiplier: 0));
     }
 
     [Fact]
