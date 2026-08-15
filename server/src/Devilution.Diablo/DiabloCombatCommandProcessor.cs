@@ -5356,23 +5356,9 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionY,
                 corpse.PositionX,
                 corpse.PositionY)) {
-            corpse = world.Corpses.Values
-                .Where(candidate => (candidate.LevelId == 0 || candidate.LevelId == target.LevelId)
-                    && Math.Max(
-                        Math.Abs(candidate.PositionX - target.PositionX),
-                        Math.Abs(candidate.PositionY - target.PositionY))
-                    <= scavengerTuning.Value.CorpseSearchRadius
-                    && world.HasLineOfSight(
-                        target.LevelId,
-                        target.PositionX,
-                        target.PositionY,
-                        candidate.PositionX,
-                        candidate.PositionY))
-                .OrderBy(candidate => Math.Max(
-                    Math.Abs(candidate.PositionX - target.PositionX),
-                    Math.Abs(candidate.PositionY - target.PositionY)))
-                .ThenBy(candidate => candidate.EntityId)
-                .FirstOrDefault();
+            corpse = FindNativeScavengerCorpse(
+                target,
+                scavengerTuning.Value.CorpseSearchRadius);
             target.SelectScavengerCorpse(corpse?.EntityId ?? 0);
         }
 
@@ -5420,6 +5406,36 @@ public sealed class DiabloCombatCommandProcessor
         if (target.ScavengerHealingTicks == 0)
             target.ClearScavengerHealing();
         return true;
+    }
+
+    /** Native ScavengerFindCorpse's coin-selected square scan order. */
+    private AuthoritativeCorpse? FindNativeScavengerCorpse(
+        AuthoritativeCombatTarget scavenger,
+        int searchRadius)
+    {
+        var reverseSearch = random.FlipCoin(2);
+        var first = reverseSearch ? searchRadius : -searchRadius;
+        var last = reverseSearch ? -searchRadius : searchRadius;
+        var increment = reverseSearch ? -1 : 1;
+        for (var y = first; reverseSearch ? y >= last : y <= last; y += increment) {
+            for (var x = first; reverseSearch ? x >= last : x <= last; x += increment) {
+                var candidateX = checked(scavenger.PositionX + x);
+                var candidateY = checked(scavenger.PositionY + y);
+                var corpse = world.Corpses.Values.FirstOrDefault(candidate =>
+                    (candidate.LevelId == 0 || candidate.LevelId == scavenger.LevelId)
+                    && candidate.PositionX == candidateX
+                    && candidate.PositionY == candidateY);
+                if (corpse is not null
+                    && world.HasLineOfSight(
+                        scavenger.LevelId,
+                        scavenger.PositionX,
+                        scavenger.PositionY,
+                        candidateX,
+                        candidateY))
+                    return corpse;
+            }
+        }
+        return null;
     }
 
     private (

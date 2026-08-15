@@ -1425,6 +1425,32 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ScavengerUsesNativeCoinSelectedCorpseScanOrder()
+    {
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            4,
+            maxHitPoints: 20,
+            nativeAi: "Scavenger");
+        var nearCorpse = new AuthoritativeCorpse(10, 0, 1, 0);
+        var nativeFirstCorpse = new AuthoritativeCorpse(11, 0, 2, 2);
+        var world = new DiabloWorldState(
+            combatTargets: [scavenger],
+            corpses: [nearCorpse, nativeFirstCorpse]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(entityId: 7);
+
+        // Seed zero makes the native FlipCoin(2) choose reverse traversal:
+        // (4,4) through (-4,-4), so (2,2) wins before the nearer (1,0).
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(11U, scavenger.ScavengerCorpseEntityId);
+        Assert.Equal((1, 1), (scavenger.FuturePositionX, scavenger.FuturePositionY));
+    }
+
+    [Fact]
     public void HellfireScavengerConsumesItsCorpseWhenFullyHealed()
     {
         var scavenger = new AuthoritativeCombatTarget(
