@@ -3139,6 +3139,35 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ButcherAiDefersWhenItsNativeRandomWalkCandidatesAreBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            40,
+            aggroRange: 8,
+            nativeAi: "Butcher");
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [205, 206, 245, 285, 286],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 6,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 9 ^ 7 = 14: every native RandomWalk candidate is blocked while
+        // bounded navigation has an alternate route.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((6, 6), (monster.PositionX, monster.PositionY));
+    }
+
+    [Fact]
     public void ButcherAiUsesValidatedMonsterIdentityForAnAlternateRuntimeLabel()
     {
         var monster = new AuthoritativeCombatTarget(
