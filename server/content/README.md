@@ -131,7 +131,8 @@ compatibility gate. A complete positive special tuple selects the behavior
 regardless of the row's `native_ai` label.
 The optional `scavenger_healing_health_threshold_percent` column externalizes
 the Scavenger wounded-health admission threshold for corpse seeking. Legacy
-monster rows retain the native 50-percent compatibility threshold.
+monster rows retain the native 50-percent compatibility threshold. The
+validated threshold is selected independently of the row's `native_ai` label.
 The optional `mana_random_range`, `mana_character_level_random_range`, and
 `mana_spell_level_random_range` columns externalize the three native Mana
 restoration rolls. Legacy Mana rows retain the native 10, 4, and 6 ranges.
@@ -1560,7 +1561,8 @@ Schema 1.128 adds optional Scavenger healing/search columns to
 `monster_types.tsv`; checked-in Scavenger rows own the corpse-eating duration,
 search radius, Hellfire maximum-health divisor, base-game healing amount, and
 base-game target-health percentage while older rows retain the compatibility
-values.
+values. Complete positive tuples are selected independently of the `native_ai`
+label.
 Schema 1.129 adds the optional Bat retreat-duration column to
 `monster_types.tsv`; checked-in Bat rows own the native two-tick post-hit retreat
 while older rows retain the compatibility duration. The validated duration is
@@ -1572,7 +1574,8 @@ compatibility values. Complete positive tuples are selected independently of
 the `native_ai` label.
 Schema 1.131 adds the optional Scavenger wounded-health threshold column to
 `monster_types.tsv`; checked-in Scavenger rows own the native 50-percent corpse
-seeking threshold while older rows retain the compatibility value.
+seeking threshold while older rows retain the compatibility value. The
+validated threshold is selected independently of the `native_ai` label.
 Schema 1.132 adds the optional Gargoyle wounded-health threshold column to
 `monster_types.tsv`; checked-in Gargoyle rows own the native 50-percent
 self-healing threshold while older rows retain the compatibility value. The

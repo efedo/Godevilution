@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Select Scavenger corpse-healing and search behavior from validated tuning
+  independently of the row's `Scavenger` native-AI name; legacy rows without
+  migrated tuning retain native-name compatibility defaults.
 - Select Sneak visibility and hit-retreat behavior from complete validated
   tuning tuples rather than requiring the `Sneak` native-AI name; legacy rows
   without tuning retain native-name compatibility defaults.
