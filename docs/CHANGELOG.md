@@ -77,6 +77,11 @@ All notable changes to this fork are documented below.
   optional protocol field 77, snapshots, saves, and the canonical state hash
   instead of rerolling on the next tick.
 
+- Preserve native `AiRangedAvoidance` no-action delay state: failed attack or
+  movement decisions now start the native `GenerateRnd(10) + 5` countdown,
+  persisted through optional protocol field 78, snapshots, saves, and the
+  canonical state hash.
+
 - Preserve the native `AiRangedAvoidance` adjacent melee band, including Acid's
   half-rate branch, instead of allowing every adjacent tick through shared
   melee resolution.

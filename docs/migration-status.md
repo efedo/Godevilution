@@ -250,6 +250,11 @@ Status date: 2026-08-15
   snapshots, optional protocol field 77, saves, and canonical hashes; the
   server does not reroll HorkDemonAi while native delay mode is active.
 
+- Native `AiRangedAvoidance` no-action ticks now preserve the native
+  `AiDelay(GenerateRnd(10) + 5)` countdown. The server-owned delay persists
+  through snapshots, optional protocol field 78, saves, and canonical hashes;
+  successful movement and ranged admissions remain unaffected.
+
 - Legacy native-AI fallback controllers now consult the active validated
   monster-type identity before the runtime-label compatibility path when no
   complete migrated tuning is present; alternate complete tuning retains

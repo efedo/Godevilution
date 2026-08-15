@@ -327,6 +327,12 @@ admission fails. It is server-owned, validated, persisted by version-1 saves,
 and included in the canonical hash; older peers may omit it and clients never
 execute HorkDemonAi policy.
 
+Optional `MonsterSnapshot.ranged_avoidance_delay_ticks` field 78 carries the
+remaining native `AiRangedAvoidance` no-action `AiDelay` countdown. It is
+server-owned, validated, persisted by version-1 saves, and included in the
+canonical hash; older peers may omit it and clients never execute the delay
+policy.
+
 Snake lateral drift is likewise server-owned. When its computed drift tile is
 blocked, the server applies the native three-candidate `RandomWalk2` fallback
 from the original target direction and emits no extra navigation replacement.
