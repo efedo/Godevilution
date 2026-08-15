@@ -301,11 +301,15 @@ public sealed class AuthoritativeItemCatalogTests
     [Fact]
     public void GeneratesUniqueItemsFromBaseDefinitionsAndMultiplePowerRows()
     {
+        var cursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nCLEAVER\t106\n");
         var uniques = AuthoritativeUniqueItemCatalog.LoadTsv(
             "unique_items.tsv",
-            "unique_id\tname\tbase_item_id\tmin_level\tvalue\tpower\tvalue1\tvalue2\n"
-                + "1001\tEmber Blade\t7\t1\t3650\tFIREDAM\t1\t10\n"
-                + "1001\tEmber Blade\t7\t1\t3650\tTOHIT\t10\t10\n");
+            "unique_id\tname\tbase_item_id\tmin_level\tvalue\tpower\tvalue1\tvalue2\tcursor_graphic\n"
+                + "1001\tEmber Blade\t7\t1\t3650\tFIREDAM\t1\t10\tCLEAVER\n"
+                + "1001\tEmber Blade\t7\t1\t3650\tTOHIT\t10\t10\tCLEAVER\n",
+            cursors);
         var items = new AuthoritativeItemCatalog([
             new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
         ], uniqueItems: uniques);
@@ -316,8 +320,23 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal("Ember Blade", item.BaseName);
         Assert.Equal("Ember Blade", item.IdentifiedName);
         Assert.Equal(3650, item.Value);
+        Assert.Equal(106, item.NativeCursorGraphic);
         Assert.Equal(10, item.PlusToHit);
         Assert.InRange(item.FireMinDamage, 1, 10);
+    }
+
+    [Fact]
+    public void RejectsUnknownNormalizedUniqueCursorSymbols()
+    {
+        var cursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            "symbol\tnative_cursor_graphic\nSHORT_SWORD\t64\n");
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            "unique_id\tname\tbase_item_id\tmin_level\tvalue\tpower\tvalue1\tvalue2\tcursor_graphic\n"
+                + "1001\tEmber Blade\t7\t1\t3650\tTOHIT\t10\t10\tUNKNOWN\n",
+            cursors));
     }
 
     [Fact]
@@ -513,8 +532,11 @@ public sealed class AuthoritativeItemCatalogTests
         var uniques = AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
             "unique_itemdat.tsv",
             "name\tcursorGraphic\tuniqueBaseItem\tminLevel\tvalue\tpower0\tpower0.value1\tpower0.value2\tpower1\tpower1.value1\tpower1.value2\tpower2\tpower2.value1\tpower2.value2\tpower3\tpower3.value1\tpower3.value2\tpower4\tpower4.value1\tpower4.value2\tpower5\tpower5.value1\tpower5.value2\n"
-                + "The Butcher's Cleaver\t\tCLEAVER\t1\t3650\tSTR\t10\t10\tSETDAM\t4\t24\t\t\t\t\t\t\t\t\t\t\t\t\n",
-            items);
+                + "The Butcher's Cleaver\tCLEAVER\tCLEAVER\t1\t3650\tSTR\t10\t10\tSETDAM\t4\t24\t\t\t\t\t\t\t\t\t\t\t\t\n",
+            items,
+            AuthoritativeItemCursorCatalog.LoadTsv(
+                "item_cursor_graphics.tsv",
+                "symbol\tnative_cursor_graphic\nCLEAVER\t106\n"));
         items.AttachUniqueCatalog(uniques);
 
         var unique = items.GenerateUnique(1, 42, 1);
@@ -524,6 +546,7 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(10, unique.PlusStrength);
         Assert.Equal(4, unique.MinDamage);
         Assert.Equal(24, unique.MaxDamage);
+        Assert.Equal(106, unique.NativeCursorGraphic);
     }
 
     [Fact]

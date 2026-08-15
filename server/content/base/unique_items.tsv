@@ -1,4 +1,4 @@
-unique_id	name	base_item_id	min_level	value	power	value1	value2
-1001	The Ember Blade	1	1	3650	FIREDAM	1	10
-1001	The Ember Blade	1	1	3650	TOHIT	10	10
-1002	The Ward Shield	2	1	2000	ALLRES	10	10
+unique_id	name	base_item_id	min_level	value	power	value1	value2	cursor_graphic
+1001	The Ember Blade	1	1	3650	FIREDAM	1	10	-
+1001	The Ember Blade	1	1	3650	TOHIT	10	10	-
+1002	The Ward Shield	2	1	2000	ALLRES	10	10	-

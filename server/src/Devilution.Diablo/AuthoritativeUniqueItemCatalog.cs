@@ -31,7 +31,14 @@ public sealed record AuthoritativeUniqueItemDefinition(
     uint BaseItemId,
     int MinimumLevel,
     int Value,
-    IReadOnlyList<AuthoritativeUniqueItemPower> Powers);
+    IReadOnlyList<AuthoritativeUniqueItemPower> Powers)
+{
+    /** Optional legacy cursor symbol; an empty value preserves the base item cursor. */
+    public string CursorGraphic { get; init; } = string.Empty;
+
+    /** Optional native cursor projection resolved through the active cursor catalog. */
+    public int? NativeCursorGraphic { get; init; }
+}
 
 /** Deterministic unique item generation backed by the authoritative base catalog. */
 public sealed class AuthoritativeUniqueItemCatalog
@@ -45,7 +52,9 @@ public sealed class AuthoritativeUniqueItemCatalog
         this.definitions = new Dictionary<uint, AuthoritativeUniqueItemDefinition>();
         foreach (var definition in definitions) {
             if (definition.UniqueId == 0 || !IsValidPresentationText(definition.Name) || definition.BaseItemId == 0
-                || definition.MinimumLevel < 0 || definition.Value < 0 || definition.Powers.Count > 6)
+                || definition.MinimumLevel < 0 || definition.Value < 0 || definition.Powers.Count > 6
+                || !IsValidCursorSymbol(definition.CursorGraphic)
+                || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Unique item definitions contain invalid bounds.");
             if (definition.Powers.Any(power => string.IsNullOrWhiteSpace(power.Power)))
                 throw new InvalidDataException($"Unique item {definition.UniqueId} contains an invalid power.");
@@ -91,10 +100,12 @@ public sealed class AuthoritativeUniqueItemCatalog
         // Legacy unique generation starts from the base item and applies only
         // the unique's declared powers; random prefix/suffix allocation is a
         // separate magic-item path.
-        var state = items.Generate(definition.BaseItemId, itemSeed) with {
+        var state = items.Generate(definition.BaseItemId, itemSeed);
+        state = state with {
             UniqueId = checked((int)uniqueId),
             BaseName = definition.Name,
             IdentifiedName = definition.Name,
+            NativeCursorGraphic = definition.NativeCursorGraphic ?? state.NativeCursorGraphic,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -113,6 +124,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             UniqueId = checked((int)definition.UniqueId),
             BaseName = definition.Name,
             IdentifiedName = definition.Name,
+            NativeCursorGraphic = definition.NativeCursorGraphic ?? state.NativeCursorGraphic,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -140,6 +152,7 @@ public sealed class AuthoritativeUniqueItemCatalog
             UniqueId = checked((int)definition.UniqueId),
             BaseName = definition.Name,
             IdentifiedName = definition.Name,
+            NativeCursorGraphic = definition.NativeCursorGraphic ?? state.NativeCursorGraphic,
             Value = definition.Value,
             IdentifiedValue = definition.Value,
             Identified = true,
@@ -150,7 +163,10 @@ public sealed class AuthoritativeUniqueItemCatalog
         return state;
     }
 
-    public static AuthoritativeUniqueItemCatalog LoadTsv(string sourcePath, string contents)
+    public static AuthoritativeUniqueItemCatalog LoadTsv(
+        string sourcePath,
+        string contents,
+        AuthoritativeItemCursorCatalog? cursorCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows
@@ -164,7 +180,9 @@ public sealed class AuthoritativeUniqueItemCatalog
                 if (group.Any(row => row.Required("name") != first.Required("name")
                     || row.RequiredUInt32("base_item_id") != first.RequiredUInt32("base_item_id")
                     || row.RequiredInt32("min_level") != first.RequiredInt32("min_level")
-                    || row.RequiredInt32("value") != first.RequiredInt32("value")))
+                    || row.RequiredInt32("value") != first.RequiredInt32("value")
+                    || OptionalCursorSymbol(row, "cursor_graphic")
+                        != OptionalCursorSymbol(first, "cursor_graphic")))
                     throw new InvalidDataException($"Unique item {group.Key} has inconsistent definition columns.");
                 return new AuthoritativeUniqueItemDefinition(
                     group.Key,
@@ -172,7 +190,10 @@ public sealed class AuthoritativeUniqueItemCatalog
                     first.RequiredUInt32("base_item_id"),
                     first.RequiredInt32("min_level"),
                     first.RequiredInt32("value"),
-                    powers);
+                    powers) {
+                        CursorGraphic = OptionalCursorSymbol(first, "cursor_graphic"),
+                        NativeCursorGraphic = ParseOptionalCursorGraphic(first, cursorCatalog),
+                    };
             });
         return new AuthoritativeUniqueItemCatalog(definitions);
     }
@@ -184,11 +205,49 @@ public sealed class AuthoritativeUniqueItemCatalog
             && Encoding.UTF8.GetByteCount(value) < 64;
     }
 
+    private static bool IsValidCursorSymbol(string value)
+    {
+        return value is not null
+            && (value.Length == 0
+                || value.All(character => character is >= 'A' and <= 'Z'
+                    or >= '0' and <= '9'
+                    or '_'));
+    }
+
+    private static string OptionalCursorSymbol(TsvRow row, string column)
+    {
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || value.Equals("-", StringComparison.Ordinal))
+            return string.Empty;
+        return value.Trim();
+    }
+
+    private static int? ParseOptionalCursorGraphic(
+        TsvRow row,
+        AuthoritativeItemCursorCatalog? cursorCatalog)
+    {
+        var symbol = OptionalCursorSymbol(row, "cursor_graphic");
+        return string.IsNullOrEmpty(symbol) || cursorCatalog is null
+            ? null
+            : cursorCatalog.Resolve(symbol);
+    }
+
+    private static string LegacyCursorSymbol(TsvRow row)
+    {
+        if (!row.TryGet("cursorGraphic", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || value.Equals("DEFAULT", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+        return value.Trim();
+    }
+
     /** Loads the native unique_itemdat.tsv shape, resolving uniqueBaseItem symbols through the base catalog. */
     public static AuthoritativeUniqueItemCatalog LoadLegacyTsv(
         string sourcePath,
         string contents,
-        AuthoritativeItemCatalog items)
+        AuthoritativeItemCatalog items,
+        AuthoritativeItemCursorCatalog? cursorCatalog = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         var table = TsvTable.Parse(sourcePath, contents);
@@ -206,13 +265,19 @@ public sealed class AuthoritativeUniqueItemCatalog
                 .Where(power => power is not null)
                 .Cast<AuthoritativeUniqueItemPower>()
                 .ToArray();
+            var cursorGraphic = LegacyCursorSymbol(row);
             return new AuthoritativeUniqueItemDefinition(
                 checked((uint)index + 1),
                 row.Required("name"),
                 items.ResolveLegacySymbol(row.Required("uniqueBaseItem")),
                 row.RequiredInt32("minLevel"),
                 row.RequiredInt32("value"),
-                powers);
+                powers) {
+                    CursorGraphic = cursorGraphic,
+                    NativeCursorGraphic = string.IsNullOrEmpty(cursorGraphic) || cursorCatalog is null
+                        ? null
+                        : cursorCatalog.Resolve(cursorGraphic),
+                };
         }).ToArray();
         return new AuthoritativeUniqueItemCatalog(definitions, usesLegacyRandom: true);
     }

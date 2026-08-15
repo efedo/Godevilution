@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.149.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.150.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -188,7 +188,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.149.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.150.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal((15, 10, 20, 25, 30, 2, 30, 2, 8, 3, 5, 3, 5, 40, 20), (
@@ -605,17 +605,23 @@ public sealed class ShippedContentTests
         Assert.Equal("The Magic Rock", questTypes.Definitions[0].Name);
         Assert.Equal("The Jersey's Jersey", questTypes.Definitions[^1].Name);
         Assert.Equal(23U, questTypes.Definitions[^1].NativeQuestId);
+        var hellfireCursors = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            composed.GetRequiredTable("item_cursor_graphics.tsv").ToCanonicalTsv());
         var hellfireItems = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
-            composed.GetRequiredTable("items.tsv").ToCanonicalTsv());
+            composed.GetRequiredTable("items.tsv").ToCanonicalTsv(),
+            cursorCatalog: hellfireCursors);
         var hellfireUniques = AuthoritativeUniqueItemCatalog.LoadTsv(
             "unique_items.tsv",
-            composed.GetRequiredTable("unique_items.tsv").ToCanonicalTsv());
+            composed.GetRequiredTable("unique_items.tsv").ToCanonicalTsv(),
+            hellfireCursors);
         hellfireItems.AttachUniqueCatalog(hellfireUniques);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
         Assert.Equal("The Undead Crown", crown.IdentifiedName);
+        Assert.Equal(77, crown.NativeCursorGraphic);
         Assert.Equal(16650, crown.Value);
         Assert.Equal(15, crown.ArmorClass);
         Assert.Equal(0x00000002U, crown.Flags);
