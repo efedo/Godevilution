@@ -446,25 +446,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.ScavengerBaseHealingAmount is < 0 or > 256
                 || definition.ScavengerBaseHealingTargetPercent is < 0 or > 100
                 || definition.ScavengerHealingHealthThresholdPercent is < 0 or > 100
-                || (definition.NativeAi == "Scavenger"
-                    && ((definition.ScavengerHealingDurationTicks != 0
-                            || definition.ScavengerCorpseSearchRadius != 0
-                            || definition.ScavengerHellfireHealingDivisor != 0
-                            || definition.ScavengerBaseHealingAmount != 0
-                            || definition.ScavengerBaseHealingTargetPercent != 0)
-                        && (definition.ScavengerHealingDurationTicks <= 0
-                            || definition.ScavengerCorpseSearchRadius <= 0
-                            || definition.ScavengerHellfireHealingDivisor <= 0
-                            || definition.ScavengerBaseHealingAmount <= 0
-                            || definition.ScavengerBaseHealingTargetPercent <= 0)))
-                || (definition.NativeAi != "Scavenger"
-                    && (definition.ScavengerHealingDurationTicks != 0
+                || ((definition.ScavengerHealingDurationTicks != 0
                         || definition.ScavengerCorpseSearchRadius != 0
                         || definition.ScavengerHellfireHealingDivisor != 0
                         || definition.ScavengerBaseHealingAmount != 0
-                        || definition.ScavengerBaseHealingTargetPercent != 0))
-                || (definition.NativeAi != "Scavenger"
-                    && definition.ScavengerHealingHealthThresholdPercent != 0)
+                        || definition.ScavengerBaseHealingTargetPercent != 0)
+                    && (definition.ScavengerHealingDurationTicks <= 0
+                        || definition.ScavengerCorpseSearchRadius <= 0
+                        || definition.ScavengerHellfireHealingDivisor <= 0
+                        || definition.ScavengerBaseHealingAmount <= 0
+                        || definition.ScavengerBaseHealingTargetPercent <= 0))
                 || definition.SkeletonRangedRetreatMinimumDistance is < 0 or > 64
                 || definition.SkeletonRangedRetreatChanceBase is < 0 or > 100
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100

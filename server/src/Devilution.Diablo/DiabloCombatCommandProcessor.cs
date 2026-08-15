@@ -5074,8 +5074,6 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
-            if (definition.NativeAi != "Scavenger")
-                return null;
             if (definition.ScavengerHealingDurationTicks > 0
                 && definition.ScavengerCorpseSearchRadius > 0
                 && definition.ScavengerHellfireHealingDivisor > 0

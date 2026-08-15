@@ -1201,7 +1201,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Scavenger",
+                NativeAi = "Fallen",
                 ScavengerHealingDurationTicks = 10,
                 ScavengerCorpseSearchRadius = 5,
                 ScavengerHellfireHealingDivisor = 4,
@@ -1252,7 +1252,7 @@ public sealed class DiabloCombatCommandProcessorTests
                 false,
                 false,
                 false) {
-                NativeAi = "Scavenger",
+                NativeAi = "Fallen",
                 ScavengerHealingDurationTicks = 10,
                 ScavengerCorpseSearchRadius = 5,
                 ScavengerHellfireHealingDivisor = 4,
