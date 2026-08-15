@@ -432,6 +432,10 @@ Status date: 2026-08-15
   Golem row in `spells.tsv`; omitted values retain the native 320 Q6 per-level
   health term.
 
+- Schema 1.199 adds optional Bone Spirit magic-hit and current-life damage
+  tuning to `spells.tsv`; omitted values retain the native 2/5/95 hit terms
+  and one-third current-life damage rule.
+
 - Schema 1.198 adds optional Firebolt magic-hit tuning to `spells.tsv`;
   omitted values retain the native 2/5/95 monster-level penalty and
   hit-chance bounds.

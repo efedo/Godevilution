@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.198.0` schema in
+It declares its identity and `devilution.diablo@1.199.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -205,6 +205,11 @@ The optional `firebolt_hit_monster_level_scale`,
 `firebolt_minimum_hit_chance`, and `firebolt_maximum_hit_chance` columns
 externalize Firebolt's native monster magic-hit roll. Legacy Firebolt rows
 retain the 2/5/95 penalty and chance bounds.
+The optional `bone_spirit_hit_monster_level_scale`,
+`bone_spirit_minimum_hit_chance`, `bone_spirit_maximum_hit_chance`, and
+`bone_spirit_damage_hit_points_divisor` columns externalize Bone Spirit's
+monster magic-hit roll and current-life damage rule. Legacy Bone Spirit rows
+retain the 2/5/95 terms and one-third current-life damage.
 The optional `berserk_resistance_frequency` column externalizes Berserk's
 magic-resistance admission roll. Legacy Berserk rows retain the native
 1-in-2 compatibility roll.
@@ -1454,7 +1459,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.198.0"
+      "version": "1.199.0"
   },
   "dependencyConstraints": [
     {
@@ -1486,7 +1491,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.198.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.199.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1949,6 +1954,10 @@ bounds.
 Schema 1.198 adds the optional Firebolt magic-hit tuning columns to
 `spells.tsv`; omitted values retain the native 2/5/95 penalty and chance
 bounds.
+
+Schema 1.199 adds the optional Bone Spirit magic-hit and current-life damage
+tuning columns to `spells.tsv`; omitted values retain the native 2/5/95 hit
+terms and one-third current-life damage rule.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

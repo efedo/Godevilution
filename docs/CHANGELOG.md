@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.199 optional Bone Spirit magic-hit and current-life damage
+  tuning to `spells.tsv`; omitted values retain the native 2/5/95 hit terms
+  and one-third current-life damage rule.
+
 - Add schema 1.198 optional Firebolt magic-hit tuning to `spells.tsv`.
   Firebolt now uses validated monster-level penalty and hit-chance bounds;
   omitted values retain the native 2/5/95 compatibility terms.
