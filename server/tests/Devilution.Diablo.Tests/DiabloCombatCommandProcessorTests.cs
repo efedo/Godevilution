@@ -8253,6 +8253,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ZombieAiDefersWhenItsNativeWalkIsBlocked()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie");
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 6 ^ 9 ^ 7 = 8, inside the native action band. The direct east
+        // walk is blocked, so the native controller consumes the tick.
+        processor.AdvanceTick(6, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void ZombieAiRandomWalksInsideItsLongRangeMovementBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

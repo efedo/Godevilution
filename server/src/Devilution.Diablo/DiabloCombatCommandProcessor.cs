@@ -5962,7 +5962,9 @@ public sealed class DiabloCombatCommandProcessor
             monster.BeginMovement(step.Value.X, step.Value.Y);
             return true;
         }
-        return false;
+        // Native ZombieAi consumes the action even when its one-step walk is
+        // blocked; do not replace the failed walk with generic navigation.
+        return true;
     }
 
     private (int X, int Y)? FindZombieStep(
