@@ -5558,11 +5558,22 @@ public sealed class DiabloCombatCommandProcessor
                 + (zombieActionTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U >= (uint)actionChance)
             return true;
-        if (distance < Math.Max(
-                zombieMovementTuning.Value.MinimumDistance,
-                zombieMovementTuning.Value.DistanceBase
-                    + (zombieMovementTuning.Value.IntelligenceScale * monster.Intelligence)))
-            return false;
+        var longRangeMovementDistance = Math.Max(
+            zombieMovementTuning.Value.MinimumDistance,
+            zombieMovementTuning.Value.DistanceBase
+                + (zombieMovementTuning.Value.IntelligenceScale * monster.Intelligence));
+        if (distance < longRangeMovementDistance) {
+            if (distance < 2)
+                return false;
+            var randomStep = FindZombieRandomWalkStep(
+                monster,
+                player,
+                players,
+                actionSeed);
+            if (randomStep.HasValue)
+                monster.BeginMovement(randomStep.Value.X, randomStep.Value.Y);
+            return true;
+        }
 
         var step = FindZombieStep(monster, player, players, actionSeed);
         if (step.HasValue) {
@@ -5610,6 +5621,44 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     monster.EntityId))
                 return candidate;
+        }
+        return null;
+    }
+
+    /** Native ZombieAi uses RandomWalk while the target is outside melee but
+     * inside its long-range pursuit boundary. */
+    private (int X, int Y)? FindZombieRandomWalkStep(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
+        var secondTurn = (seed / 200U) % 2U == 0 ? 2 : -2;
+        var directions = new[] {
+            direction,
+            RotateDirection(direction, firstTurn),
+            RotateDirection(direction, -firstTurn),
+            RotateDirection(direction, secondTurn),
+            RotateDirection(direction, -secondTurn),
+        };
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
         }
         return null;
     }

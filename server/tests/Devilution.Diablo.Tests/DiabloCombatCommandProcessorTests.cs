@@ -7312,6 +7312,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ZombieAiRandomWalksInsideItsLongRangeMovementBoundary()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 8,
+            nativeAi: "Zombie");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 6 ^ 9 ^ 7 = 8, inside Zombie's ten-percent action band. The
+        // distance-two target is outside melee but below the native distance
+        // four long-range pursuit boundary, so RandomWalk must still move.
+        var deliveries = processor.AdvanceTick(6, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void ZombieAiUsesValidatedMonsterTypeActionTuning()
     {
         var monster = new AuthoritativeCombatTarget(
