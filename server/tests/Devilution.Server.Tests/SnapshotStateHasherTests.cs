@@ -790,6 +790,28 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void RangedAvoidanceMoveGoalStateExtendsTheStateHash()
+    {
+        var first = new Snapshot {
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                },
+            },
+        };
+        var second = first.Clone();
+        second.Monsters[0].RangedAvoidanceMoveTicks = 7;
+        second.Monsters[0].RangedAvoidanceTurn = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(second));
+    }
+
+    [Fact]
     public void CounselorRetreatStateExtendsTheStateHash()
     {
         var first = new Snapshot {

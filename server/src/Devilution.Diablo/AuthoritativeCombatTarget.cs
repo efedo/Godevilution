@@ -63,7 +63,9 @@ public sealed class AuthoritativeCombatTarget
         string uniqueIdentity = "",
         int counselorRetreatTicks = 0,
         int batMovementIdleTicks = -1,
-        int batMovementMode = 0)
+        int batMovementMode = 0,
+        int rangedAvoidanceMoveTicks = -1,
+        int rangedAvoidanceTurn = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -99,6 +101,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(batMovementIdleTicks));
         if (batMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(batMovementMode));
+        if (rangedAvoidanceMoveTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMoveTicks));
+        if (rangedAvoidanceTurn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceTurn));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -166,6 +172,8 @@ public sealed class AuthoritativeCombatTarget
         CounselorRetreatTicks = counselorRetreatTicks;
         BatMovementIdleTicks = batMovementIdleTicks;
         BatMovementMode = batMovementMode;
+        RangedAvoidanceMoveTicks = rangedAvoidanceMoveTicks;
+        RangedAvoidanceTurn = rangedAvoidanceTurn;
         hitPointsQ6 = DiabloFixedPointQ6.FromWhole(hitPoints);
         ArmorClass = armorClass;
         maxHitPointsQ6 = DiabloFixedPointQ6.FromWhole(
@@ -296,6 +304,12 @@ public sealed class AuthoritativeCombatTarget
 
     /** Native Bat var1-compatible movement value retained across movement. */
     public int BatMovementMode { get; private set; }
+
+    /** Native AiRangedAvoidance goalVar1; -1 means the Normal goal is active. */
+    public int RangedAvoidanceMoveTicks { get; private set; }
+
+    /** Native AiRangedAvoidance goalVar2 turn state (0 or 1). */
+    public int RangedAvoidanceTurn { get; private set; }
 
     /** Remaining native Counselor retreat attempts after a wounded adjacent turn. */
     public int CounselorRetreatTicks { get; private set; }
@@ -519,6 +533,48 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(movementMode));
         BatMovementIdleTicks = idleTicks;
         BatMovementMode = movementMode;
+    }
+
+    internal void StartRangedAvoidanceMovement(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RangedAvoidanceMoveTicks = 0;
+        RangedAvoidanceTurn = turn;
+    }
+
+    internal bool AdvanceRangedAvoidanceMovement(int distance, bool directionAvailable)
+    {
+        if (distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(distance));
+        if (RangedAvoidanceMoveTicks < 0)
+            return false;
+
+        var completes = RangedAvoidanceMoveTicks >= checked(2 * distance)
+            && directionAvailable;
+        if (RangedAvoidanceMoveTicks < 255)
+            RangedAvoidanceMoveTicks++;
+        if (completes) {
+            RangedAvoidanceMoveTicks = -1;
+            RangedAvoidanceTurn = 0;
+        }
+        return !completes;
+    }
+
+    internal void RestoreRangedAvoidanceMovement(int moveTicks, int turn)
+    {
+        if (moveTicks is < -1 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(moveTicks));
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        RangedAvoidanceMoveTicks = moveTicks;
+        RangedAvoidanceTurn = turn;
+    }
+
+    internal void ClearRangedAvoidanceMovement()
+    {
+        RangedAvoidanceMoveTicks = -1;
+        RangedAvoidanceTurn = 0;
     }
 
     internal void StartCounselorRetreat(int ticks)

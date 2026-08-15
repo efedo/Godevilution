@@ -7697,6 +7697,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceCarriesItsNativeMoveGoalAcrossTicks()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // The first far-distance Move admission starts goalVar1 at zero.
+        processor.AdvanceTick(5_002, [player]);
+        Assert.Equal(1, monster.RangedAvoidanceMoveTicks);
+
+        // The next tick continues the persisted Move goal even though its
+        // independent far-distance admission roll is not selected.
+        processor.AdvanceTick(5_003, [player]);
+        Assert.Equal(2, monster.RangedAvoidanceMoveTicks);
+        Assert.Equal(1, monster.RangedAvoidanceTurn);
+    }
+
+    [Fact]
     public void RangedAvoidanceUsesConfiguredDistanceBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

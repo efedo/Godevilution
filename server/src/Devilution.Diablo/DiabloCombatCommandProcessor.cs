@@ -4912,14 +4912,17 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
-        uint seed)
+        uint seed,
+        int? turnOverride = null)
     {
         var direction = GetDirection(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY);
-        var turn = (seed / 100U) % 2U == 0U ? 1 : -1;
+        var turn = turnOverride.HasValue
+            ? turnOverride.Value == 0 ? 1 : -1
+            : (seed / 100U) % 2U == 0U ? 1 : -1;
         var turn45 = RotateDirection(direction, turn);
         var turn90 = RotateDirection(turn45, turn);
         var fallbackDirection = RotateDirection(turn90, 4);
@@ -6670,6 +6673,7 @@ public sealed class DiabloCombatCommandProcessor
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var rangedAvoidanceUsesRoundWalk = false;
+        var rangedAvoidanceRoundWalkTurn = -1;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
             var infernoTuning = ResolveMonsterInfernoTuning(missile);
             if (distance >= infernoTuning.MaximumDistance)
@@ -6731,18 +6735,19 @@ public sealed class DiabloCombatCommandProcessor
                 && missile.RangedAvoidanceFarIntelligenceOffset == 0)
                 farIntelligenceOffset = 1;
             if (distance < minimumDistance) {
+                monster.ClearRangedAvoidanceMovement();
                 // Native AiRangedAvoidance falls back to a probabilistic
                 // adjacent melee attack instead of admitting every shared
                 // melee tick. Keep failed native rolls out of that fallback;
                 // successful rolls continue into the authoritative melee
                 // resolver below.
                 if (distance <= 1) {
-                    var lessMissiles = missile.ProjectileBehavior
+                    var adjacentLessMissiles = missile.ProjectileBehavior
                         == AuthoritativeProjectileBehavior.Acid
                         ? 1
                         : 0;
                     var adjacentAttackBand =
-                        (1000 * (monster.Intelligence + 6)) >> lessMissiles;
+                        (1000 * (monster.Intelligence + 6)) >> adjacentLessMissiles;
                     if (attackSeed % 10_000U
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;
@@ -6759,12 +6764,27 @@ public sealed class DiabloCombatCommandProcessor
             }
             // Native AiRangedAvoidance enters its far-distance Move goal only
             // on the configured far boundary and a one-in-four (one-in-eight
-            // Acid) admission. That branch uses the lower attack band and
-            // RoundWalk; the ordinary Normal branch uses the far attack band
-            // and RandomWalk when its roll fails.
-            rangedAvoidanceUsesRoundWalk = distance >= farDistance
-                && attackSeed % (uint)(4 << (missile.ProjectileBehavior
-                    == AuthoritativeProjectileBehavior.Acid ? 1 : 0)) == 0;
+            // Acid) admission. Once entered, goalVar1/goalVar2 persist across
+            // ticks and saves until the native movement window completes.
+            var lessMissiles = missile.ProjectileBehavior
+                == AuthoritativeProjectileBehavior.Acid ? 1 : 0;
+            var hasMoveGoal = monster.RangedAvoidanceMoveTicks >= 0;
+            var startsMoveGoal = distance >= farDistance
+                && attackSeed % (uint)(4 << lessMissiles) == 0;
+            if (hasMoveGoal || startsMoveGoal) {
+                if (!hasMoveGoal)
+                    monster.StartRangedAvoidanceMovement(
+                        (int)((attackSeed / 100U) % 2U));
+                if (monster.AdvanceRangedAvoidanceMovement(
+                        distance,
+                        IsNativeRangedAvoidanceDirectionAvailable(
+                            monster,
+                            player,
+                            players))) {
+                    rangedAvoidanceUsesRoundWalk = true;
+                    rangedAvoidanceRoundWalkTurn = monster.RangedAvoidanceTurn;
+                }
+            }
             var attackBand = checked(
                 chanceBase + chanceIntelligenceScale * (monster.Intelligence
                     + (rangedAvoidanceUsesRoundWalk
@@ -6780,7 +6800,8 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed,
-                    rangedAvoidanceUsesRoundWalk);
+                    rangedAvoidanceUsesRoundWalk,
+                    rangedAvoidanceRoundWalkTurn);
                 return true;
             }
         } else {
@@ -6814,7 +6835,8 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed,
-                    rangedAvoidanceUsesRoundWalk);
+                    rangedAvoidanceUsesRoundWalk,
+                    rangedAvoidanceRoundWalkTurn);
                 return true;
             }
             if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
@@ -6982,16 +7004,44 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed,
-        bool useRoundWalk)
+        bool useRoundWalk,
+        int roundWalkTurn = -1)
     {
         var movement = useRoundWalk
-            ? FindNativeRoundWalkStep(monster, player, players, seed)
+            ? FindNativeRoundWalkStep(
+                monster,
+                player,
+                players,
+                seed,
+                roundWalkTurn is 0 or 1 ? roundWalkTurn : null)
             : FindNativeRandomWalkStep(monster, player, players, seed);
         if (!movement.HasValue)
             return false;
 
         monster.BeginMovement(movement.Value.X, movement.Value.Y);
         return true;
+    }
+
+    private bool IsNativeRangedAvoidanceDirectionAvailable(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var displacement = DirectionDisplacements[direction];
+        var candidateX = checked(monster.PositionX + displacement.X);
+        var candidateY = checked(monster.PositionY + displacement.Y);
+        return world.IsWalkable(monster.LevelId, candidateX, candidateY)
+            && !world.IsOccupied(
+                monster.LevelId,
+                candidateX,
+                candidateY,
+                players,
+                monster.EntityId);
     }
 
     private static (
