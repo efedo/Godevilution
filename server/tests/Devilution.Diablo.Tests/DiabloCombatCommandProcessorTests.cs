@@ -8605,6 +8605,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireboltUsesConfiguredMonsterMagicHitBounds()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            40,
+            monsterLevel: 10);
+        var projectile = new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            4,
+            AuthoritativeDamageType.Fire,
+            0,
+            32) {
+            Behavior = AuthoritativeProjectileBehavior.Firebolt,
+            OriginalDirection = 0,
+            PathTicks = 1,
+            Speed = 26,
+            ImpactLifetime = 1,
+            ResistantDamageDivisor = 4,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateFireboltSpell() with {
+                    FireboltHitMonsterLevelScale = 0,
+                    FireboltMinimumHitChance = 0,
+                    FireboltMaximumHitChance = 0,
+                },
+            ]),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(entityId: 7);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Equal(40, target.HitPoints);
+    }
+
+    [Fact]
     public void BloodStarUsesNativeMagicDamageAndAppliesItsPhysicalSelfDamage()
     {
         var target = new AuthoritativeCombatTarget(
