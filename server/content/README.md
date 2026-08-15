@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.173.0` schema in
+It declares its identity and `devilution.diablo@1.174.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1352,7 +1352,7 @@ the complete target header even when they upsert only one row.
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
-| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Rogue, and Barbarian weapon damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
+| `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/axe/mace scaling, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1398,7 +1398,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.173.0"
+      "version": "1.174.0"
   },
   "dependencyConstraints": [
     {
@@ -1430,7 +1430,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.173.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.174.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -1805,6 +1805,10 @@ validated divisor; omitted values retain the native 100 divisor for compatibilit
 Schema 1.173 adds the optional `standard_strength_damage_divisor` column to
 `combat.tsv`. Active standard-class fallback physical damage scaling now uses
 the validated divisor; omitted values retain the native 100 divisor for compatibility callers.
+
+Schema 1.174 adds the optional `barbarian_bow_strength_damage_divisor` column
+to `combat.tsv`. Active Barbarian bow physical damage scaling now uses the
+validated divisor; omitted values retain the native 300 divisor for compatibility callers.
 
 Changes to authoritative content can change deterministic results. Update or
 add loader tests and shared replay fixtures whenever a content change affects
