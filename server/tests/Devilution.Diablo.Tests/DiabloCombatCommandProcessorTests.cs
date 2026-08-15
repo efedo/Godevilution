@@ -2974,7 +2974,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void ButcherAiUsesDedicatedPursuitBeforeTheSharedMeleeAttack()
+    public void ButcherAiUsesNativeRandomWalkBeforeTheSharedMeleeAttack()
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -2991,10 +2991,10 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.True(monster.IsMoving);
-        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
 
         Assert.Empty(processor.AdvanceTick(2, [player]));
-        Assert.Equal((1, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal((1, 0), (monster.FuturePositionX, monster.FuturePositionY));
 
         var deliveries = processor.AdvanceTick(3, [player]);
         Assert.Equal(17, player.Life);
@@ -3044,7 +3044,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Empty(processor.AdvanceTick(1, [player]));
         Assert.True(monster.IsMoving);
-        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
     }
 
     [Fact]
