@@ -50,8 +50,8 @@ Status date: 2026-08-14
 
 - Sneak visibility and hit-retreat behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
-  retain the native-name compatibility path, while hidden/retreat state remains
-  snapshot/save compatible.
+  retain the native-name compatibility path, while hidden/retreat state also
+  advances and remains snapshot/save compatible for alternate labels.
 
 - Bat adjacent attack and retreat-duration behavior now use validated tuning
   independent of the row's native-AI label; rows without migrated tuning retain

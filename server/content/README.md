@@ -121,6 +121,8 @@ the native base-five, intelligence-scale-one, release-three, nine-tick values.
 A complete positive tuple selects the behavior regardless of the row's
 `native_ai` label; rows without migrated tuning retain the native-name
 compatibility path.
+Persisted hidden state and retreat ticks are likewise accepted and advanced
+for any validated label carrying the complete tuple.
 The optional `bat_attack_chance_base` and
 `bat_attack_chance_intelligence_scale` columns externalize the Bat adjacent
 attack admission band. Legacy monster rows retain the native base-eight,
