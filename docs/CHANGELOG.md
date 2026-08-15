@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   Skeleton King now uses deterministic `RoundWalk`/`RandomWalk` candidates before
   bounded navigation, while validated summons retain precedence.
 
+- Restore native `HorkDemonAi` far-distance movement after summon admission:
+  Hork Demons now use deterministic `RoundWalk`/`RandomWalk` candidates before
+  bounded navigation, while validated Hork Spawn projectiles retain precedence.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.

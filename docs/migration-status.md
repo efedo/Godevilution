@@ -222,6 +222,10 @@ Status date: 2026-08-15
   `RoundWalk`/`RandomWalk` candidates after summon admission is evaluated;
   validated summon identity and server-owned summon precedence remain intact.
 
+- Hork Demon non-adjacent movement now uses deterministic native
+  `RoundWalk`/`RandomWalk` candidates after Hork Spawn admission is evaluated;
+  validated spawn identity and server-owned summon precedence remain intact.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
@@ -819,6 +823,9 @@ Status date: 2026-08-15
 - Native SkeletonKing non-adjacent movement now preserves LeoricAi's deterministic
   RoundWalk/RandomWalk candidate order after summon admission, before bounded
   navigation fallback.
+- Native HorkDemon non-adjacent movement now preserves its far-distance
+  RoundWalk/RandomWalk candidate order after Hork Spawn admission, before
+  bounded navigation fallback.
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.
