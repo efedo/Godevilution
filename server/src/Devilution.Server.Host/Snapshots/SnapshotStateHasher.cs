@@ -18,6 +18,11 @@ public static class SnapshotStateHasher
             hasher.AppendString("godevilution-victory-v1");
             hasher.AppendBool(true);
         }
+        if (snapshot.Difficulty != GameDifficulty.Unspecified
+            && snapshot.Difficulty != GameDifficulty.Normal) {
+            hasher.AppendString("godevilution-game-difficulty-v1");
+            hasher.AppendInt32((int)snapshot.Difficulty);
+        }
         var players = snapshot.Players.OrderBy(player => player.EntityId).ToArray();
         hasher.AppendUInt64((ulong)players.Length);
         foreach (var player in players) {

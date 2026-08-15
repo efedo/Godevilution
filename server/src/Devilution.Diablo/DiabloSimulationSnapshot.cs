@@ -385,6 +385,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Native-compatible terminal Diablo defeat state. */
     public bool VictoryTriggered { get; init; }
+
+    /** Native difficulty persisted with the authoritative session. */
+    public DiabloDifficulty Difficulty { get; init; } = DiabloDifficulty.Normal;
 }
 
 public sealed partial class DiabloSimulation
@@ -658,6 +661,7 @@ public sealed partial class DiabloSimulation
                     corpse.PositionY))
                 .ToArray(),
             VictoryTriggered = WorldState.VictoryTriggered,
+            Difficulty = this.Difficulty,
         };
     }
 
@@ -668,6 +672,11 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
+        if (!Enum.IsDefined(snapshot.Difficulty)
+            || snapshot.Difficulty != Difficulty) {
+            throw new InvalidDataException(
+                "The authoritative save difficulty does not match the active session.");
+        }
         var source = snapshot.Player
             ?? throw new InvalidDataException("The authoritative save does not contain player state.");
         if (snapshot.Monsters is null

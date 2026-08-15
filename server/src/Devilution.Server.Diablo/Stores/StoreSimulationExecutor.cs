@@ -104,7 +104,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint repairAbilitySpellId = 0,
         uint rechargeAbilitySpellId = 0,
         uint trapDisarmAbilitySpellId = 0,
-        uint startingReflectCharges = 0)
+        uint startingReflectCharges = 0,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -136,6 +137,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 UseNativePlayerActionTiming = useNativePlayerActionTiming,
                 RandomSeed = startingRandomSeed,
                 GameMode = gameMode,
+                Difficulty = difficulty,
             });
         var compatibilityTemplate = new DiabloPlayerTemplate(
             startingGold,

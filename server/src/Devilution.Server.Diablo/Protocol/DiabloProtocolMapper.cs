@@ -35,6 +35,7 @@ internal static class DiabloProtocolMapper
             Tick = source.Tick,
             RandomState = source.RandomState,
             VictoryTriggered = source.VictoryTriggered,
+            Difficulty = ToProtocolDifficulty(source.Difficulty),
         };
         foreach (var participant in projectedParticipants)
             snapshot.Players.Add(ToProtocolPlayer(participant, spells));
@@ -647,6 +648,27 @@ internal static class DiabloProtocolMapper
                 corpse.PositionX,
                 corpse.PositionY)).ToArray(),
             VictoryTriggered = source.VictoryTriggered,
+            Difficulty = FromProtocolDifficulty(source.Difficulty),
+        };
+    }
+
+    private static GameDifficulty ToProtocolDifficulty(DiabloDifficulty difficulty)
+    {
+        return difficulty switch {
+            DiabloDifficulty.Normal => GameDifficulty.Normal,
+            DiabloDifficulty.Nightmare => GameDifficulty.Nightmare,
+            DiabloDifficulty.Hell => GameDifficulty.Hell,
+            _ => throw new ArgumentOutOfRangeException(nameof(difficulty)),
+        };
+    }
+
+    private static DiabloDifficulty FromProtocolDifficulty(GameDifficulty difficulty)
+    {
+        return difficulty switch {
+            GameDifficulty.Unspecified or GameDifficulty.Normal => DiabloDifficulty.Normal,
+            GameDifficulty.Nightmare => DiabloDifficulty.Nightmare,
+            GameDifficulty.Hell => DiabloDifficulty.Hell,
+            _ => throw new InvalidDataException("The authoritative snapshot difficulty is invalid."),
         };
     }
 

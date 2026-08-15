@@ -7,6 +7,14 @@ public enum DiabloGameMode
     Multiplayer,
 }
 
+/** Native-compatible game difficulty stored in authoritative saves. */
+public enum DiabloDifficulty
+{
+    Normal,
+    Nightmare,
+    Hell,
+}
+
 /** Construction data for one protocol-independent Diablo simulation. */
 public sealed class DiabloSimulationOptions
 {
@@ -84,6 +92,9 @@ public sealed class DiabloSimulationOptions
 
     /** Explicit session mode; it must not be inferred from connected participants. */
     public DiabloGameMode GameMode { get; init; } = DiabloGameMode.SinglePlayer;
+
+    /** Native difficulty selected for this authoritative simulation. */
+    public DiabloDifficulty Difficulty { get; init; } = DiabloDifficulty.Normal;
 
     /** Optional server-owned encounter policy used for initial and entered levels. */
     public DiabloMonsterSpawnConfiguration? ProceduralMonsterSpawns { get; init; }
@@ -170,7 +181,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 worldCommands,
                 options.MonsterMissiles,
                 options.MonsterSpawnPlanner,
-                options.MonsterTypes),
+                options.MonsterTypes,
+                options.Difficulty),
             spells,
             random,
             combatRules,
@@ -180,7 +192,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.ProceduralMonsterSpawns,
             options.RandomSeed,
             options.GameMode,
-            options.Items);
+            options.Items,
+            options.Difficulty);
     }
 }
 
@@ -199,6 +212,7 @@ public sealed partial class DiabloSimulation
     private readonly DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns;
     private readonly uint proceduralMonsterSeed;
     private readonly DiabloGameMode gameMode;
+    private readonly DiabloDifficulty difficulty;
     private readonly HashSet<uint> materializedProceduralLevels = [];
     private uint nextGeneratedMonsterEntityId = AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId;
 
@@ -217,7 +231,8 @@ public sealed partial class DiabloSimulation
         DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns = null,
         uint proceduralMonsterSeed = 0,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
-        AuthoritativeItemCatalog? items = null)
+        AuthoritativeItemCatalog? items = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -233,6 +248,9 @@ public sealed partial class DiabloSimulation
         this.proceduralMonsterSpawns = proceduralMonsterSpawns?.Validate();
         this.proceduralMonsterSeed = proceduralMonsterSeed;
         this.gameMode = gameMode;
+        this.difficulty = Enum.IsDefined(difficulty)
+            ? difficulty
+            : throw new ArgumentOutOfRangeException(nameof(difficulty));
         Items = items;
         ReconcileProceduralSpawnState();
     }
@@ -251,6 +269,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated item definitions used by snapshot and world identity checks. */
     public AuthoritativeItemCatalog? Items { get; }
+
+    /** Native difficulty selected for this authoritative simulation. */
+    public DiabloDifficulty Difficulty => difficulty;
 
     public uint RandomState => random.State;
 

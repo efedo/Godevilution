@@ -69,6 +69,7 @@ internal static class Program
             options.StartingMana) {
             RandomSeed = randomSeed,
             GameMode = options.GameMode,
+            Difficulty = options.Difficulty,
             ProceduralMonsterLimit = options.ProceduralMonsterLimit,
             ProceduralMonsterLevelId = options.ProceduralMonsterLevelId,
         };

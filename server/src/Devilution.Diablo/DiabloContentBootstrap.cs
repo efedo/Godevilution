@@ -86,7 +86,8 @@ public interface IDiabloContentBootstrap
         ComposedContent content,
         uint randomSeed = 0,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
-        DiabloMonsterSpawnConfiguration? monsterSpawns = null);
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal);
 }
 
 /** First-party content activation kept entirely inside the Diablo module. */
@@ -111,10 +112,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         ComposedContent content,
         uint randomSeed = 0,
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
-        DiabloMonsterSpawnConfiguration? monsterSpawns = null)
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
     {
         ArgumentNullException.ThrowIfNull(content);
         monsterSpawns?.Validate();
+        if (!Enum.IsDefined(difficulty))
+            throw new ArgumentOutOfRangeException(nameof(difficulty));
         if (content.Manifest.Schema is not null
             && content.Manifest.Schema != Schema) {
             throw new InvalidDataException(
@@ -417,6 +421,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             UseNativePlayerActionTiming = true,
             RandomSeed = randomSeed,
             GameMode = gameMode,
+            Difficulty = difficulty,
             MonsterSpawnPlanner = monsterSpawnPlanner,
             ProceduralMonsterSpawns = monsterSpawns,
         });

@@ -32,6 +32,9 @@ public sealed record ServerHostOptions(
     /** Standalone servers are multiplayer unless a local single-player launch opts out. */
     public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.Multiplayer;
 
+    /** Native difficulty selected for the authoritative session. */
+    public AuthoritativeGameDifficulty Difficulty { get; init; } = AuthoritativeGameDifficulty.Normal;
+
     /** Optional bounded server-owned encounter replacement for the start level. */
     public int? ProceduralMonsterLimit { get; init; }
 
@@ -160,6 +163,14 @@ public sealed record ServerHostOptions(
                 }
                 current = current with { GameMode = gameMode };
                 break;
+            case "--difficulty":
+                if (!TryParseDifficulty(value, out var difficulty)) {
+                    options = current;
+                    error = $"'{value}' is not a valid game difficulty.";
+                    return false;
+                }
+                current = current with { Difficulty = difficulty };
+                break;
             case "--procedural-monsters":
                 if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var monsterLimit)
                     || monsterLimit < 0) {
@@ -225,6 +236,26 @@ public sealed record ServerHostOptions(
         }
     }
 
+    private static bool TryParseDifficulty(
+        string value,
+        out AuthoritativeGameDifficulty difficulty)
+    {
+        switch (value) {
+        case "normal":
+            difficulty = AuthoritativeGameDifficulty.Normal;
+            return true;
+        case "nightmare":
+            difficulty = AuthoritativeGameDifficulty.Nightmare;
+            return true;
+        case "hell":
+            difficulty = AuthoritativeGameDifficulty.Hell;
+            return true;
+        default:
+            difficulty = default;
+            return false;
+        }
+    }
+
     public static string Usage => """
         Usage: Devilution.Server [options]
 
@@ -243,6 +274,7 @@ public sealed record ServerHostOptions(
           --starting-mana <amount>     Override content-derived initial mana (Q6)
           --random-seed <uint32>       Deterministic simulation seed (default: generated)
           --game-mode <mode>           single-player or multiplayer (default: multiplayer)
+          --difficulty <level>         normal, nightmare, or hell (default: normal)
           --procedural-monsters <n>    Replace static encounters with at most n generated monsters
           --procedural-monster-level <id> Level for generated encounters (default: start level)
           --save-root <directory>      Server-owned authoritative save directory

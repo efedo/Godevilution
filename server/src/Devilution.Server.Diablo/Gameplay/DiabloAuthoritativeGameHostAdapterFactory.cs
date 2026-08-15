@@ -44,7 +44,13 @@ internal sealed class DiabloAuthoritativeGameHostAdapterFactory
                     ? new DiabloMonsterSpawnConfiguration(
                         maximumMonsters,
                         playerStart.ProceduralMonsterLevelId)
-                    : null);
+                    : null,
+                playerStart.Difficulty switch {
+                    AuthoritativeGameDifficulty.Normal => DiabloDifficulty.Normal,
+                    AuthoritativeGameDifficulty.Nightmare => DiabloDifficulty.Nightmare,
+                    AuthoritativeGameDifficulty.Hell => DiabloDifficulty.Hell,
+                    _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
+                });
         return new StoreSimulationExecutor(
             activatedContent,
             (sessionId, requestedClassId) => {

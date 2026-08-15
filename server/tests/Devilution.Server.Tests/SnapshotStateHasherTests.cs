@@ -140,6 +140,18 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void NonNormalDifficultyChangesTheStateHash()
+    {
+        var baseline = new Snapshot();
+        var hell = baseline.Clone();
+        hell.Difficulty = GameDifficulty.Hell;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(hell));
+    }
+
+    [Fact]
     public void HeldItemChangesHashWithoutChangingAbsentLegacyState()
     {
         var baseline = new Snapshot {

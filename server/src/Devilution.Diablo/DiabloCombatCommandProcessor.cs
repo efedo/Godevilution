@@ -19,6 +19,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativePlayerAnimationCatalog? playerAnimations;
     private readonly bool useNativePlayerActionTiming;
     private readonly DiabloGameMode gameMode;
+    private readonly DiabloDifficulty difficulty;
     private readonly AuthoritativeItemCatalog? items;
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
@@ -134,7 +135,8 @@ public sealed class DiabloCombatCommandProcessor
         DiabloWorldCommandProcessor? worldCommands = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
-        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -148,6 +150,9 @@ public sealed class DiabloCombatCommandProcessor
         this.gameMode = Enum.IsDefined(gameMode)
             ? gameMode
             : throw new ArgumentOutOfRangeException(nameof(gameMode));
+        this.difficulty = Enum.IsDefined(difficulty)
+            ? difficulty
+            : throw new ArgumentOutOfRangeException(nameof(difficulty));
         this.items = items;
         this.monsterMissiles = monsterMissiles;
         this.monsterSpawnPlanner = monsterSpawnPlanner;
@@ -13518,7 +13523,9 @@ public sealed class DiabloCombatCommandProcessor
         if (target.MonsterId == 0)
             return;
         if (target.IsDiablo && gameMode == DiabloGameMode.SinglePlayer)
-            player.DiabloKillLevel = Math.Max(player.DiabloKillLevel, 1U);
+            player.DiabloKillLevel = Math.Max(
+                player.DiabloKillLevel,
+                checked((uint)difficulty + 1));
         foreach (var quest in world.Quests.Values
                      .Where(quest => quest.Active
                          && !quest.Unavailable

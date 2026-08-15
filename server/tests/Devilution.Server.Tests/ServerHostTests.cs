@@ -22,6 +22,7 @@ public sealed class ServerHostTests
         Assert.Null(ServerHostOptions.Defaults.StartingMana);
         Assert.Null(ServerHostOptions.Defaults.RandomSeed);
         Assert.Equal(AuthoritativeGameMode.Multiplayer, ServerHostOptions.Defaults.GameMode);
+        Assert.Equal(AuthoritativeGameDifficulty.Normal, ServerHostOptions.Defaults.Difficulty);
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLimit);
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLevelId);
     }
@@ -46,6 +47,7 @@ public sealed class ServerHostTests
             "--starting-life", "4480",
             "--starting-mana", "640",
             "--game-mode", "single-player",
+            "--difficulty", "hell",
             "--random-seed", "305419896",
             "--procedural-monsters", "12",
             "--procedural-monster-level", "24"],
@@ -65,6 +67,7 @@ public sealed class ServerHostTests
         Assert.Equal(4480, options.StartingLife);
         Assert.Equal(640, options.StartingMana);
         Assert.Equal(AuthoritativeGameMode.SinglePlayer, options.GameMode);
+        Assert.Equal(AuthoritativeGameDifficulty.Hell, options.Difficulty);
         Assert.Equal(305419896U, options.RandomSeed);
         Assert.Equal(12, options.ProceduralMonsterLimit);
         Assert.Equal(24U, options.ProceduralMonsterLevelId);
@@ -81,6 +84,7 @@ public sealed class ServerHostTests
     [InlineData("--procedural-monsters", "-1")]
     [InlineData("--procedural-monster-level", "not-a-level")]
     [InlineData("--game-mode", "cooperative")]
+    [InlineData("--difficulty", "torment")]
     [InlineData("--unknown", "value")]
     public void RejectsInvalidOptions(string name, string value)
     {

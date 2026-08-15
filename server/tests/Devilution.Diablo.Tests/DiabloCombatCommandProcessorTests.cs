@@ -1291,6 +1291,29 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellDifficultySetsTheNativeHeroRankThree()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            levelId: 15,
+            monsterId: 112,
+            diablo: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            difficulty: DiabloDifficulty.Hell);
+        var player = CreatePlayer(levelId: 15, entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+
+        Assert.Equal(3U, player.DiabloKillLevel);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(
@@ -16532,7 +16555,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        bool useNativePlayerActionTiming = false)
+        bool useNativePlayerActionTiming = false,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -16551,7 +16575,8 @@ public sealed class DiabloCombatCommandProcessorTests
             worldCommands: worldCommands,
             monsterMissiles: monsterMissiles,
             monsterSpawnPlanner: monsterSpawnPlanner,
-            monsterTypes: monsterTypes);
+            monsterTypes: monsterTypes,
+            difficulty: difficulty);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(

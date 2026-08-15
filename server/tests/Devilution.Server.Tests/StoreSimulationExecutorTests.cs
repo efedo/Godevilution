@@ -1475,6 +1475,7 @@ public sealed class StoreSimulationExecutorTests
             startingGold: 100,
             startingPositionX: 0,
             startingPositionY: 0,
+            difficulty: DiabloDifficulty.Hell,
             startingCombatTargets: [new AuthoritativeCombatTarget(
                 9,
                 1,
@@ -1497,8 +1498,10 @@ public sealed class StoreSimulationExecutorTests
             gameEvent => gameEvent.Victory is not null).Victory;
         Assert.Equal(7U, victory.PlayerEntityId);
         Assert.Equal(9U, victory.BossEntityId);
-        Assert.Equal(1U, victory.DiabloKillLevel);
-        Assert.True(executor.CreateSnapshot("player-a", 7, 1).VictoryTriggered);
+        Assert.Equal(3U, victory.DiabloKillLevel);
+        var victorySnapshot = executor.CreateSnapshot("player-a", 7, 1);
+        Assert.True(victorySnapshot.VictoryTriggered);
+        Assert.Equal(GameDifficulty.Hell, victorySnapshot.Difficulty);
 
         var followUp = server.Process("player-a", new Command {
             ClientSequence = 2,

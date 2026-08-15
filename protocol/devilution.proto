@@ -226,6 +226,13 @@ message TalkToQuestRequested {
 	uint32 target_entity_id = 2;
 }
 
+enum GameDifficulty {
+	GAME_DIFFICULTY_UNSPECIFIED = 0;
+	GAME_DIFFICULTY_NORMAL = 1;
+	GAME_DIFFICULTY_NIGHTMARE = 2;
+	GAME_DIFFICULTY_HELL = 3;
+}
+
 // Explicit state, rather than a toggle, keeps retries idempotent.
 message SetFriendlyModeRequested {
 	bool friendly_mode = 1;
@@ -294,6 +301,8 @@ message Snapshot {
 	repeated LevelGeometrySnapshot level_geometry = 13;
 	// Native-compatible terminal Diablo defeat state.
 	bool victory_triggered = 14;
+	// Native difficulty selected for the authoritative session.
+	GameDifficulty difficulty = 15;
 }
 
 message LevelGeometrySnapshot {

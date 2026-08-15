@@ -11,6 +11,14 @@ public enum AuthoritativeGameMode
     Multiplayer,
 }
 
+/** Native-compatible difficulty shared by server-hosted game modules. */
+public enum AuthoritativeGameDifficulty
+{
+    Normal,
+    Nightmare,
+    Hell,
+}
+
 /** Combined game-facing boundary consumed by the generic authoritative host. */
 public interface IAuthoritativeGameHostAdapter
     : IAuthoritativeCommandExecutor,
@@ -48,6 +56,8 @@ public sealed record AuthoritativePlayerStartConfiguration(
 
     public AuthoritativeGameMode GameMode { get; init; } = AuthoritativeGameMode.SinglePlayer;
 
+    public AuthoritativeGameDifficulty Difficulty { get; init; } = AuthoritativeGameDifficulty.Normal;
+
     /** Optional server-owned encounter replacement for the selected start level. */
     public int? ProceduralMonsterLimit { get; init; }
 
@@ -62,6 +72,8 @@ public sealed record AuthoritativePlayerStartConfiguration(
             throw new ArgumentOutOfRangeException(nameof(Mana));
         if (!Enum.IsDefined(GameMode))
             throw new ArgumentOutOfRangeException(nameof(GameMode));
+        if (!Enum.IsDefined(Difficulty))
+            throw new ArgumentOutOfRangeException(nameof(Difficulty));
         if (ProceduralMonsterLimit is < 0)
             throw new ArgumentOutOfRangeException(nameof(ProceduralMonsterLimit));
         if (ProceduralMonsterLevelId.HasValue && !ProceduralMonsterLimit.HasValue)
