@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
   melee fallback, and legacy `Targeted` arrow rows remain accepted.
+- Select Blood Star dispatch from validated `BloodStar` missile behavior
+  rather than requiring `Succubus`/`LazarusSuccubus` labels; no-catalog legacy
+  rows retain the native-label fallback.
 - Select Fallen fear radius and countdown behavior from complete validated
   tuning tuples rather than requiring the `Fallen` native-AI name; legacy rows
   without tuning retain native-name compatibility defaults.

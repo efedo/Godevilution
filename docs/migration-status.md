@@ -30,6 +30,10 @@ Status date: 2026-08-14
   accepted, mapped arrow rows suppress adjacent melee fallback, and controller
   state stays server-owned.
 
+- Blood Star dispatch now uses validated `BloodStar` missile behavior
+  independent of the `Succubus`/`LazarusSuccubus` label when a missile catalog
+  is active; the no-catalog legacy path retains native-label compatibility.
+
 - Fallen fear radius and countdown behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
   retain the native-name compatibility path, while fear state remains

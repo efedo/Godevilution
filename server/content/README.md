@@ -431,12 +431,13 @@ server-owned and falls back to the shared authoritative navigation when needed.
 Native monster regeneration is also server-owned: each live monster recovers
 one life at level 1 or `level / 2` at higher levels per simulation tick, capped
 at maximum life and preserved in exact Q6 state.
-The native `Succubus` identity now dispatches Blood Star through the existing
-authoritative magic-projectile path and consumes the validated ranged-retreat
-tuning; player hit, block, resistance, and damage resolution remain
-server-owned. Its optional `spell_id` mapping is now used directly for the
-projectile identity and is cross-validated against the active spell catalog;
-legacy rows without the mapping retain the native stable-ID fallback.
+Validated `BloodStar` missile mappings dispatch through the existing
+authoritative magic-projectile path and consume the validated ranged-retreat
+tuning independently of the `Succubus`/`LazarusSuccubus` label; player hit,
+block, resistance, and damage resolution remain server-owned. The optional
+`spell_id` mapping is used directly for the projectile identity and is
+cross-validated against the active spell catalog. When no missile catalog is
+active, legacy Succubus-family labels retain the native stable-ID fallback.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and
