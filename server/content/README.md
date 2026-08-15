@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.206.0` schema in
+It declares its identity and `devilution.diablo@1.207.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1447,7 +1447,7 @@ the complete target header even when they upsert only one row.
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, resistance, capability, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning. |
-| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
+| `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, mapped `spell_id`, optional `spawn_monster_id`, explicit `damage_type`, projectile speed/lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement, effects, linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional `completion_monster_id`, and optional single-player pool exclusion state. |
 | `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, and completion-trigger fields. |
@@ -1484,7 +1484,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.206.0"
+      "version": "1.207.0"
   },
   "dependencyConstraints": [
     {
@@ -1516,7 +1516,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.206.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.207.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2005,6 +2005,9 @@ Schema 1.205 adds the optional monster regeneration level divisor to
 
 Schema 1.206 adds the optional monster-player block level scale to
 `combat.tsv`; omitted values retain the native level-difference scale of two.
+
+Schema 1.207 adds the optional Acid puddle impact lifetime to
+`monster_missiles.tsv`; omitted values retain the native two-tick impact phase.
 
 Schema 1.183 adds the optional `critical_damage_multiplier` column to
 `classes.tsv`. Active class Critical Strike now uses the validated multiplier;

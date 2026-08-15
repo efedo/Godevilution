@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.207 optional Acid puddle impact lifetime to
+  `monster_missiles.tsv`; validated Acid mappings now own the persistent
+  puddle impact phase, retaining the native two-tick lifetime when omitted.
+
 - Add schema 1.206 optional monster-player block level scale to `combat.tsv`;
   blockable monster attacks now use validated level-difference tuning, retaining
   the native scale of two when omitted.

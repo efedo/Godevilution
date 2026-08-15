@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Acid puddle impact duration now consumes validated `puddle_impact_lifetime`
+  metadata from `monster_missiles.tsv`; omitted values retain the native
+  two-tick impact phase.
+
 - Reflect retaliation now consumes validated minimum and maximum damage
   percentages from the Reflect row in `spells.tsv`; older spell schemas retain
   the native 20–30% compatibility roll.
@@ -447,6 +451,10 @@ Status date: 2026-08-15
 
 - Schema 1.206 adds an optional monster-player block level scale to
   `combat.tsv`; omitted values retain the native level-difference scale of two.
+
+- Schema 1.207 adds an optional Acid puddle impact lifetime to
+  `monster_missiles.tsv`; omitted values retain the native two-tick impact
+  phase.
 
 - Schema 1.201 adds optional persistent-projectile player magic-hit tuning to
   `spells.tsv`; shared player-hit rolls retain native 2/5/95 character-level
