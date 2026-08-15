@@ -242,6 +242,11 @@ Status date: 2026-08-14
   admission and world-transition application; direct legacy world-command
   callers retain the native five-tile default.
 
+- Schema 1.159 adds optional Town Portal placement and lifetime metadata:
+  `town_portal_search_radius` and `town_portal_lifetime`. Portal creation now
+  consumes the validated crawl radius and expiry ticks; direct legacy
+  world-command callers retain native five-tile, 100-tick defaults.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.159 optional `spells.tsv` Town Portal placement and lifetime
+  metadata. Authoritative portal creation now consumes the validated crawl
+  radius and expiry ticks while direct legacy world-command callers retain
+  five-tile, 100-tick defaults.
 - Add schema 1.158 optional `spells.tsv` `warp_search_radius` metadata.
   Authoritative Warp resolution now consumes the validated destination crawl
   radius while direct legacy world-command callers retain the five-tile default.
