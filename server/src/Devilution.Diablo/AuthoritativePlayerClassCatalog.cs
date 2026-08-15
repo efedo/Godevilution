@@ -98,6 +98,9 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native Critical Strike chance added per character level, in percent. */
     public int CriticalStrikeChancePerLevelPercent { get; init; } = 1;
 
+    /** Native IronSkin armor bonus level divisor. */
+    public int IronSkinLevelDivisor { get; init; } = 4;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -261,6 +264,11 @@ public sealed class AuthoritativePlayerClassCatalog
         "critical_strike_chance_per_level_percent",
     ];
 
+    private static readonly IReadOnlyList<string> DefenseTuningColumns = [
+        ..CriticalChanceTuningColumns,
+        "iron_skin_level_divisor",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -340,9 +348,13 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasDefenseTuning = table.Columns.SequenceEqual(
+            DefenseTuningColumns,
+            StringComparer.Ordinal);
         var hasCriticalChanceTuning = table.Columns.SequenceEqual(
             CriticalChanceTuningColumns,
-            StringComparer.Ordinal);
+            StringComparer.Ordinal)
+            || hasDefenseTuning;
         var hasCriticalTuning = table.Columns.SequenceEqual(
             CriticalTuningColumns,
             StringComparer.Ordinal)
@@ -442,6 +454,9 @@ public sealed class AuthoritativePlayerClassCatalog
                 CriticalStrikeChancePerLevelPercent = hasCriticalChanceTuning
                     ? row.RequiredInt32("critical_strike_chance_per_level_percent")
                     : 1,
+                IronSkinLevelDivisor = hasDefenseTuning
+                    ? row.RequiredInt32("iron_skin_level_divisor")
+                    : 4,
             }));
     }
 
@@ -493,6 +508,7 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.RepairAbilityDurabilityLevelOffset < 0
             || definition.CriticalDamageMultiplier is < 1 or > 100
             || definition.CriticalStrikeChancePerLevelPercent is < 0 or > 100
+            || definition.IronSkinLevelDivisor <= 0
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(

@@ -43,7 +43,8 @@ public static class AuthoritativeEquipmentStatRules
         }
 
         if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.IronSkin) == true)
-            armorClass = checked(armorClass + (int)(characterLevel / 4));
+            armorClass = checked(
+                armorClass + (int)(characterLevel / (uint)playerClass.IronSkinLevelDivisor));
 
         if (playerClass?.MonkArmorLevelDivisor > 0) {
             var chest = equipment.FirstOrDefault(item => item.Slot == 3);
