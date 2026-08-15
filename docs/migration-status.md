@@ -415,8 +415,9 @@ Status date: 2026-08-14
   consumption cross snapshots, saves, protocol, and canonical hashes.
 - Native SkeletonKing summoning is now server-owned. A validated, level-aware
   SkeletonMelee content boundary creates deterministic summons on an available
-  adjacent cell; clients receive ordinary authoritative monster snapshots and
-  never execute the summon AI.
+  adjacent cell, including candidates selected by a complete behavior tuple
+  under an alternate validated label; clients receive ordinary authoritative
+  monster snapshots and never execute the summon AI.
 - Native Bat adjacent attacks now use the `4 * intelligence + 8` admission
   band, then retain the native two-step retreat direction and countdown through
   snapshots, saves, protocol, and canonical hashes.

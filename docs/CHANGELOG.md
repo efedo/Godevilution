@@ -406,7 +406,9 @@ All notable changes to this fork are documented below.
 - Add server-owned corpse tiles and Scavenger healing/navigation, with native
   Hellfire corpse consumption and persisted healing goals.
 - Add the server-owned SkeletonKing summon boundary, selecting level-valid
-  SkeletonMelee content and creating deterministic authoritative summons.
+  SkeletonMelee content and creating deterministic authoritative summons; the
+  selected candidate may now carry the complete behavior tuple under another
+  validated native label.
 - Add server-owned Bat attack admission and a persisted two-step native retreat
   after adjacent attacks, including protocol, save, and canonical-hash state.
 - Add the server-owned Butcher pursuit boundary, routing its native close-range
