@@ -1576,7 +1576,8 @@ Schema 1.128 adds optional Scavenger healing/search columns to
 search radius, Hellfire maximum-health divisor, base-game healing amount, and
 base-game target-health percentage while older rows retain the compatibility
 values. Complete positive tuples are selected independently of the `native_ai`
-label.
+label. Persisted healing timers and corpse identities are likewise accepted
+and advanced for any validated label carrying the complete tuple.
 Schema 1.129 adds the optional Bat retreat-duration column to
 `monster_types.tsv`; checked-in Bat rows own the native two-tick post-hit retreat
 while older rows retain the compatibility duration. The validated duration is

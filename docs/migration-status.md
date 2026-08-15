@@ -45,8 +45,8 @@ Status date: 2026-08-14
 
 - Scavenger corpse-healing and search behavior now use validated tuning
   independent of the row's native-AI label; rows without migrated tuning retain
-  the native-name compatibility path, while corpse and healing state remains
-  snapshot/save compatible.
+  the native-name compatibility path, while persisted corpse and healing state
+  advances for any validated label and remains snapshot/save compatible.
 
 - Sneak visibility and hit-retreat behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
