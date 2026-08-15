@@ -10871,13 +10871,21 @@ public sealed class DiabloCombatCommandProcessor
             || (!rules.FriendlyFire && owner.FriendlyMode))
             return false;
 
+        var hitCharacterLevelScale = 2;
+        var minimumHitChance = 5;
+        var maximumHitChance = 95;
+        if (spells.TryGet(projectile.SpellId, out var persistentSpell)) {
+            hitCharacterLevelScale = persistentSpell.PersistentProjectileHitCharacterLevelScale;
+            minimumHitChance = persistentSpell.PersistentProjectilePlayerMinimumHitChance;
+            maximumHitChance = persistentSpell.PersistentProjectilePlayerMaximumHitChance;
+        }
         var ownerClass = GetPlayerClass(owner);
         var hitChance = Math.Clamp(
             owner.Attributes.Magic.Current
-            + (ownerClass?.BaseMagicToHit ?? 50)
-            - checked((int)target.CharacterLevel * 2),
-            5,
-            95);
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - checked((int)target.CharacterLevel * hitCharacterLevelScale),
+            minimumHitChance,
+            maximumHitChance);
         if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 

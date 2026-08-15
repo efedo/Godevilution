@@ -210,6 +210,15 @@ public sealed record AuthoritativeSpellDefinition(
     /** Inclusive upper bound for shared persistent-projectile magic-hit rolls. */
     public int PersistentProjectileMaximumHitChance { get; init; } = 95;
 
+    /** Character-level penalty for shared persistent-projectile player-hit rolls. */
+    public int PersistentProjectileHitCharacterLevelScale { get; init; } = 2;
+
+    /** Inclusive lower bound for shared persistent-projectile player-hit rolls. */
+    public int PersistentProjectilePlayerMinimumHitChance { get; init; } = 5;
+
+    /** Inclusive upper bound for shared persistent-projectile player-hit rolls. */
+    public int PersistentProjectilePlayerMaximumHitChance { get; init; } = 95;
+
     /** Divides current magic before it is subtracted from Blood Star damage. */
     public int MagicDamageReductionDivisor { get; init; }
 
@@ -624,6 +633,9 @@ public sealed class AuthoritativeSpellCatalog
                 || definition.PersistentProjectileHitMonsterLevelScale < 0
                 || definition.PersistentProjectileMinimumHitChance is < 0 or > 100
                 || definition.PersistentProjectileMaximumHitChance is < 0 or > 100
+                || definition.PersistentProjectileHitCharacterLevelScale < 0
+                || definition.PersistentProjectilePlayerMinimumHitChance is < 0 or > 100
+                || definition.PersistentProjectilePlayerMaximumHitChance is < 0 or > 100
                 || definition.ProjectileSpeedSpellLevelStep < 0
                 || definition.ProjectileSpeedMaximumBonus < 0
                 || definition.ProjectileSpeedMaximumBonus > 256
@@ -1451,6 +1463,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Persistent projectile hit chance bounds must be ordered.");
             }
+            if (definition.PersistentProjectilePlayerMaximumHitChance
+                < definition.PersistentProjectilePlayerMinimumHitChance) {
+                throw new InvalidDataException(
+                    "Persistent projectile player-hit chance bounds must be ordered.");
+            }
             if (definition.ProjectileBehavior is not (
                     AuthoritativeProjectileBehavior.Firebolt
                     or AuthoritativeProjectileBehavior.HolyBolt
@@ -1998,6 +2015,15 @@ public sealed class AuthoritativeSpellCatalog
                 5),
             PersistentProjectileMaximumHitChance = row.OptionalInt32(
                 "persistent_projectile_maximum_hit_chance",
+                95),
+            PersistentProjectileHitCharacterLevelScale = row.OptionalInt32(
+                "persistent_projectile_hit_character_level_scale",
+                2),
+            PersistentProjectilePlayerMinimumHitChance = row.OptionalInt32(
+                "persistent_projectile_player_minimum_hit_chance",
+                5),
+            PersistentProjectilePlayerMaximumHitChance = row.OptionalInt32(
+                "persistent_projectile_player_maximum_hit_chance",
                 95),
             MagicDamageReductionDivisor = row.OptionalInt32("magic_damage_reduction_divisor"),
             SpellLevelDamage = row.OptionalInt32("spell_level_damage"),
