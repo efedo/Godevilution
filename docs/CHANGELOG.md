@@ -55,6 +55,11 @@ All notable changes to this fork are documented below.
   ordinary `33 + 2 * intelligence` band uses `RandomWalk` before generic
   navigation.
 
+- Restore native `BatAi` movement after a mapped Gloom charge misses or is
+  blocked: the server now applies the deterministic move-mode
+  `63 + intelligence` admission and native `RandomWalk` candidate order,
+  suppressing generic pursuit on deferred ticks.
+
 - Restore native `CounselorAi` wounded-adjacent retreat: Counselors now enter a
   server-owned four-attempt `RandomWalk` state before mapped ranged dispatch,
   with retreat state preserved through snapshots, protocol saves, and state

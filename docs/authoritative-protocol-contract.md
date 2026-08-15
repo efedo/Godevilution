@@ -282,6 +282,12 @@ ordinary authoritative snapshot state; clients do not simulate the charge.
 Charge misses and blocked lanes retain the native far-distance `RoundWalk` or
 ordinary `33 + 2 * intelligence` `RandomWalk` movement fallback on the server.
 
+The validated Gloom `BatCharge` mapping likewise retains the native `BatAi`
+movement branch after a charge miss or blocked lane. The server applies the
+standing-tick compatibility `63 + intelligence` admission and deterministic
+`RandomWalk` candidate order; clients receive only the resulting movement or
+the unchanged authoritative snapshot.
+
 The `SkeletonRanged` identity drives a server-owned clear-lane arrow boundary
 using the native `3 + 2 * intelligence` attack band. Its resolved damage is an
 ordinary directed gameplay event; clients do not perform the hit roll.

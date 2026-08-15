@@ -251,6 +251,12 @@ Status date: 2026-08-15
   `RoundWalk` and ordinary `33 + 2 * intelligence` `RandomWalk` fallback before
   generic navigation.
 
+- Mapped Gloom `BatCharge` misses and blocked lanes now retain the native
+  `BatAi` movement branch: the server applies the standing-tick compatibility
+  `63 + intelligence` admission and deterministic `RandomWalk` candidates
+  before suppressing generic pursuit. Adjacent ticks remain available to the
+  shared melee boundary.
+
 - Skeleton King summon admission is now selected by its complete validated
   tuning tuple independent of the row's native-AI label; rows without migrated
   tuning retain the native-name compatibility path, and summon candidates can
