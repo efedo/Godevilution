@@ -11479,9 +11479,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerClassDefinition? playerClass,
         int damageQ6)
     {
-        var threshold = checked((int)player.CharacterLevel);
-        if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.HeavyHitThreshold) == true)
-            threshold += threshold / 4;
+        var threshold = playerClass?.Flags.HasFlag(
+                DiabloPlayerClassFlags.HeavyHitThreshold) == true
+            ? playerClass.CalculateHeavyHitThreshold(player.CharacterLevel)
+            : checked((int)player.CharacterLevel);
         return (damageQ6 >> 6) >= threshold;
     }
 
@@ -11603,7 +11604,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         var naturalResistanceBonus = playerClass?.Flags.HasFlag(
             DiabloPlayerClassFlags.NaturalResistance) == true
-            ? checked((int)player.CharacterLevel)
+            ? playerClass.CalculateNaturalResistanceBonus(player.CharacterLevel)
             : 0;
         return AuthoritativeEquipmentResistanceRules.Calculate(
             player.Equipment,

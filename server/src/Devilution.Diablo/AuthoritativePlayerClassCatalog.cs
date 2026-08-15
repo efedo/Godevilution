@@ -101,6 +101,12 @@ public sealed record AuthoritativePlayerClassDefinition(
     /** Native IronSkin armor bonus level divisor. */
     public int IronSkinLevelDivisor { get; init; } = 4;
 
+    /** Native resistance percentage added per character level. */
+    public int NaturalResistancePerLevelPercent { get; init; } = 100;
+
+    /** Native HeavyHitThreshold bonus percentage over character level. */
+    public int HeavyHitThresholdBonusPercent { get; init; } = 25;
+
     /** Native inventory cursor graphic used for this class's PvP ear. */
     public int PvpEarCursorGraphic { get; init; }
 
@@ -118,6 +124,23 @@ public sealed record AuthoritativePlayerClassDefinition(
 
     /** Native Monk armor bonus denominator shared by the armor formulas. */
     public int MonkArmorLevelDivisor { get; init; }
+
+    /** Calculates the class's native natural-resistance contribution. */
+    public int CalculateNaturalResistanceBonus(uint characterLevel)
+    {
+        if (characterLevel == 0)
+            throw new ArgumentOutOfRangeException(nameof(characterLevel));
+        return checked((int)((ulong)characterLevel * (uint)NaturalResistancePerLevelPercent / 100));
+    }
+
+    /** Calculates the class's native heavy-hit threshold. */
+    public int CalculateHeavyHitThreshold(uint characterLevel)
+    {
+        if (characterLevel == 0)
+            throw new ArgumentOutOfRangeException(nameof(characterLevel));
+        var level = checked((int)characterLevel);
+        return checked(level + (int)((long)level * HeavyHitThresholdBonusPercent / 100));
+    }
 
     public PlayerAttributesState CreateStartingAttributes()
     {
@@ -269,6 +292,12 @@ public sealed class AuthoritativePlayerClassCatalog
         "iron_skin_level_divisor",
     ];
 
+    private static readonly IReadOnlyList<string> ClassDefenseTuningColumns = [
+        ..DefenseTuningColumns,
+        "natural_resistance_per_level_percent",
+        "heavy_hit_threshold_bonus_percent",
+    ];
+
     private const DiabloPlayerClassFlags KnownFlags
         = DiabloPlayerClassFlags.CriticalStrike
             | DiabloPlayerClassFlags.DualWield
@@ -348,9 +377,13 @@ public sealed class AuthoritativePlayerClassCatalog
         string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasClassDefenseTuning = table.Columns.SequenceEqual(
+            ClassDefenseTuningColumns,
+            StringComparer.Ordinal);
         var hasDefenseTuning = table.Columns.SequenceEqual(
             DefenseTuningColumns,
-            StringComparer.Ordinal);
+            StringComparer.Ordinal)
+            || hasClassDefenseTuning;
         var hasCriticalChanceTuning = table.Columns.SequenceEqual(
             CriticalChanceTuningColumns,
             StringComparer.Ordinal)
@@ -457,6 +490,12 @@ public sealed class AuthoritativePlayerClassCatalog
                 IronSkinLevelDivisor = hasDefenseTuning
                     ? row.RequiredInt32("iron_skin_level_divisor")
                     : 4,
+                NaturalResistancePerLevelPercent = hasClassDefenseTuning
+                    ? row.RequiredInt32("natural_resistance_per_level_percent")
+                    : 100,
+                HeavyHitThresholdBonusPercent = hasClassDefenseTuning
+                    ? row.RequiredInt32("heavy_hit_threshold_bonus_percent")
+                    : 25,
             }));
     }
 
@@ -509,6 +548,8 @@ public sealed class AuthoritativePlayerClassCatalog
             || definition.CriticalDamageMultiplier is < 1 or > 100
             || definition.CriticalStrikeChancePerLevelPercent is < 0 or > 100
             || definition.IronSkinLevelDivisor <= 0
+            || definition.NaturalResistancePerLevelPercent is < 0 or > 100
+            || definition.HeavyHitThresholdBonusPercent is < 0 or > 100
             || definition.MeleeArmorReductionDivisor < 0
             || definition.PvpEarCursorGraphic is < 0 or > byte.MaxValue) {
             throw new InvalidDataException(
