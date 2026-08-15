@@ -1,16 +1,16 @@
-item_id	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level
-1	1	75	75	4	8	0	20	20	1	1	1	Weapon,Sword	0	0	0	0	0	0	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2
-2	1	25	25	0	0	5	20	20	1	1	1	Armor,Shield	0	0	0	0	0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2
-24	0	0	0	0	0	0	0	0	1	1	0	Misc	7	3	44	0	0	0	0	0	23	0	0	None	Ear	Ear	-	0
-25	11	0	0	0	0	0	0	0	1	1	1	Gold	7	4	0	0	0	0	0	0	0	0	0	None	Gold	Gold	GOLD_SMALL	1
-100	1	120	120	2	6	0	24	24	1	3	0	Weapon,Sword,OneHanded	1	1	0	0	0	18	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2
-101	5	30	30	0	0	3	16	16	2	2	0	Armor,Shield,OneHanded	1	2	0	0	0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2
-102	4	20	20	1	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0	0	0	0	0	3	0	0	None	Club	Club	CLUB	1
-103	3	100	100	1	4	0	30	30	2	3	0	Bow,TwoHanded	2	1	0	0	0	0	0	0	4	0	0	None	Short Bow	Short Bow	SHORT_BOW	1
-104	10	470	470	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	23	30	0	0	25	0	166	40	40	ChargedItem	Short Staff of Charged Bolt	Short Staff of Charged Bolt	SHORT_STAFF	1
-105	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0	0	0	0	0	24	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	0
-106	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0	0	0	0	0	25	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	0
-107	10	20	20	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	0	0	0	0	0	0	36	0	0	None	Short Staff	Short Staff	SHORT_STAFF	1
-108	1	20	20	1	5	0	8	8	1	3	0	Weapon,Sword,OneHanded	1	1	0	0	0	15	0	20	37	0	0	None	Sword	Sword	SHORT_SWORD	2
-109	1	20	20	1	4	0	16	16	1	2	0	Weapon,Sword,OneHanded	1	1	0	0	0	0	0	0	38	0	0	None	Dagger	Dagger	DAGGER	1
-110	4	225	225	3	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0	0	18	0	0	139	0	0	None	Spiked Club	Spiked Club	SPIKED_CLUB	4
+item_id	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level	drop_rate
+1	1	75	75	4	8	0	20	20	1	1	1	Weapon,Sword	0	0	0	0	0	0	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0
+2	1	25	25	0	0	5	20	20	1	1	1	Armor,Shield	0	0	0	0	0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0
+24	0	0	0	0	0	0	0	0	1	1	0	Misc	7	3	44	0	0	0	0	0	23	0	0	None	Ear	Ear	-	0	0
+25	11	0	0	0	0	0	0	0	1	1	1	Gold	7	4	0	0	0	0	0	0	0	0	0	None	Gold	Gold	GOLD_SMALL	1	1
+100	1	120	120	2	6	0	24	24	1	3	0	Weapon,Sword,OneHanded	1	1	0	0	0	18	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0
+101	5	30	30	0	0	3	16	16	2	2	0	Armor,Shield,OneHanded	1	2	0	0	0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0
+102	4	20	20	1	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0	0	0	0	0	3	0	0	None	Club	Club	CLUB	1	0
+103	3	100	100	1	4	0	30	30	2	3	0	Bow,TwoHanded	2	1	0	0	0	0	0	0	4	0	0	None	Short Bow	Short Bow	SHORT_BOW	1	0
+104	10	470	470	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	23	30	0	0	25	0	166	40	40	ChargedItem	Short Staff of Charged Bolt	Short Staff of Charged Bolt	SHORT_STAFF	1	0
+105	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0	0	0	0	0	24	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	0	0
+106	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0	0	0	0	0	25	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	0	0
+107	10	20	20	2	4	0	25	25	1	3	0	Staff,TwoHanded	2	1	0	0	0	0	0	0	36	0	0	None	Short Staff	Short Staff	SHORT_STAFF	1	0
+108	1	20	20	1	5	0	8	8	1	3	0	Weapon,Sword,OneHanded	1	1	0	0	0	15	0	20	37	0	0	None	Sword	Sword	SHORT_SWORD	2	0
+109	1	20	20	1	4	0	16	16	1	2	0	Weapon,Sword,OneHanded	1	1	0	0	0	0	0	0	38	0	0	None	Dagger	Dagger	DAGGER	1	0
+110	4	225	225	3	6	0	20	20	1	3	0	Weapon,Mace,OneHanded	1	1	0	0	0	18	0	0	139	0	0	None	Spiked Club	Spiked Club	SPIKED_CLUB	4	1

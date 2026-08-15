@@ -65,6 +65,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Native minimum monster level for random item drops. */
     public int MinimumMonsterLevel { get; init; }
 
+    /** Native weighted drop rate; zero excludes the item from random selection. */
+    public int DropRate { get; init; }
+
     public AuthoritativeItemState Generate(uint itemSeed)
     {
         return Generate(itemSeed, new AuthoritativeLegacyRandom(itemSeed));
@@ -141,6 +144,7 @@ public sealed class AuthoritativeItemCatalog
                 || !IsValidPresentationText(definition.IdentifiedName)
                 || !IsValidCursorSymbol(definition.CursorGraphic)
                 || definition.MinimumMonsterLevel < 0
+                || definition.DropRate is < 0 or > byte.MaxValue
                 || definition.NativeCursorGraphic is < 0 or > byte.MaxValue)
                 throw new InvalidDataException("Item definitions contain invalid bounds.");
             if (!this.definitions.TryAdd(definition.ItemId, definition))
@@ -336,6 +340,7 @@ public sealed class AuthoritativeItemCatalog
                 IdentifiedName = OptionalPresentationText(row, "identified_name"),
                 CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
                 MinimumMonsterLevel = row.OptionalInt32("min_monster_level"),
+                DropRate = row.OptionalInt32("drop_rate"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -405,6 +410,7 @@ public sealed class AuthoritativeItemCatalog
                     IdentifiedName = OptionalText(row, "shortName"),
                     CursorGraphic = LegacyCursorSymbol(row),
                     MinimumMonsterLevel = row.OptionalInt32("minMonsterLevel"),
+                    DropRate = row.OptionalInt32("dropRate"),
                     NativeCursorGraphic = ParseLegacyCursorGraphic(row, cursorCatalog),
                 };
         }).ToArray();
