@@ -210,6 +210,10 @@ Status date: 2026-08-15
   exits now use the native `RandomWalk` candidate order before bounded
   navigation fallback.
 
+- Fallen normal-state AI now delegates to the same server-owned SkeletonAi
+  movement and adjacent attack bands as native `FallenAi`; fear state retains
+  precedence, and specialized validated controller tuples are not shadowed.
+
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
   the native-name compatibility path.
@@ -813,6 +817,9 @@ Status date: 2026-08-15
 - Native SkeletonMelee movement now uses the server-owned `35 - 4 * intelligence`
   admission band, delaying or using deterministic `RandomWalk` candidates
   before shared melee.
+- Native Fallen normal-state movement and adjacent attack now use the shared
+  SkeletonAi `35 - 4 * intelligence` and `20 + 2 * intelligence` bands;
+  server-owned fear movement remains the higher-priority state.
 - Native SkeletonRanged now has a server-owned four-tile retreat boundary and
   ranged-only idle path; generic melee is no longer admitted for validated bows.
 - Native GoatMelee non-adjacent movement now uses a server-owned

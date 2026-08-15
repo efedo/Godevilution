@@ -24,6 +24,10 @@ All notable changes to this fork are documented below.
   now use the shared deterministic `RandomWalk` candidate order before bounded
   navigation fallback.
 
+- Map native `FallenAi` normal-state delegation to the server-owned SkeletonAi
+  movement and adjacent attack bands while preserving fear-state precedence and
+  specialized validated controller identities.
+
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4
   defaults.
