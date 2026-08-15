@@ -27,7 +27,8 @@ Status date: 2026-08-14
 - Monster arrow and snake-charge controllers now dispatch from validated
   missile projectile behavior rather than requiring `GoatRanged`/`Snake`
   labels or `Arrow`/`Rhino` missile names; legacy `Targeted` arrow rows remain
-  accepted, and controller state stays server-owned.
+  accepted, mapped arrow rows suppress adjacent melee fallback, and controller
+  state stays server-owned.
 
 - Fallen fear radius and countdown behavior now use complete validated tuning
   tuples independent of the row's native-AI label; rows without migrated tuning
