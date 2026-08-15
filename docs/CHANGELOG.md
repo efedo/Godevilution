@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   item definitions now project validated base and identified names through the
   authoritative item state and existing protocol fields, with legacy tables
   retaining their native-name fallback.
+- Add schema 1.148's validated `item_cursor_graphics.tsv` catalog and optional
+  normalized `cursor_graphic` item column. Normalized and legacy item loaders
+  now share content-owned cursor symbols and native graphic IDs, while direct
+  legacy callers retain their compatibility fallback when no catalog is loaded.
 - Select monster arrow and snake-charge controllers from validated missile
   projectile behavior rather than requiring `GoatRanged`/`Snake` labels or
   `Arrow`/`Rhino` missile names; mapped arrow rows also suppress adjacent
