@@ -4445,7 +4445,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyNativeMonsterRegeneration(target, rules.MonsterRegenerationLevelDivisor);
             if (target.IsPetrified)
                 continue;
-            if (TryAdvanceScavengerAi(target, players))
+            if (TryAdvanceScavengerAi(target, tick, players))
                 continue;
             if (TryAdvanceFallenFear(target, players))
                 continue;
@@ -5326,6 +5326,7 @@ public sealed class DiabloCombatCommandProcessor
 
     private bool TryAdvanceScavengerAi(
         AuthoritativeCombatTarget target,
+        ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         var scavengerTuning = GetScavengerTuning(target);
@@ -5407,32 +5408,14 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var direction = GetDirection(
-            target.PositionX,
-            target.PositionY,
+        var randomWalk = FindNativeRandomWalkStepToward(
+            target,
             corpse.PositionX,
-            corpse.PositionY);
-        for (var offset = 0; offset < DirectionDisplacements.Length; offset++) {
-            var candidateDirection = offset == 0
-                ? direction
-                : offset % 2 == 1
-                    ? RotateDirection(direction, (offset + 1) / 2)
-                    : RotateDirection(direction, -(offset / 2));
-            var displacement = DirectionDisplacements[candidateDirection];
-            var candidateX = checked(target.PositionX + displacement.X);
-            var candidateY = checked(target.PositionY + displacement.Y);
-            if (!world.IsWalkable(target.LevelId, candidateX, candidateY)
-                || world.IsOccupied(
-                    target.LevelId,
-                    candidateX,
-                    candidateY,
-                    players,
-                    target.EntityId)) {
-                continue;
-            }
-            target.BeginMovement(candidateX, candidateY);
-            break;
-        }
+            corpse.PositionY,
+            players,
+            unchecked((uint)tick ^ target.EntityId ^ corpse.EntityId));
+        if (randomWalk.HasValue)
+            target.BeginMovement(randomWalk.Value.X, randomWalk.Value.Y);
         target.AdvanceScavengerHealing();
         if (target.ScavengerHealingTicks == 0)
             target.ClearScavengerHealing();
@@ -6021,6 +6004,44 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY);
+        var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
+        var secondTurn = (seed / 200U) % 2U == 0 ? 2 : -2;
+        var directions = new[] {
+            direction,
+            RotateDirection(direction, firstTurn),
+            RotateDirection(direction, -firstTurn),
+            RotateDirection(direction, secondTurn),
+            RotateDirection(direction, -secondTurn),
+        };
+        foreach (var candidateDirection in directions) {
+            var displacement = DirectionDisplacements[candidateDirection];
+            var candidateX = checked(monster.PositionX + displacement.X);
+            var candidateY = checked(monster.PositionY + displacement.Y);
+            if (world.IsWalkable(monster.LevelId, candidateX, candidateY)
+                && !world.IsOccupied(
+                    monster.LevelId,
+                    candidateX,
+                    candidateY,
+                    players,
+                    monster.EntityId))
+                return (candidateX, candidateY);
+        }
+        return null;
+    }
+
+    /** Native RandomWalk candidate order toward an arbitrary AI target tile. */
+    private (int X, int Y)? FindNativeRandomWalkStepToward(
+        AuthoritativeCombatTarget monster,
+        int targetX,
+        int targetY,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint seed)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            targetX,
+            targetY);
         var firstTurn = (seed / 100U) % 2U == 0 ? 1 : -1;
         var secondTurn = (seed / 200U) % 2U == 0 ? 2 : -2;
         var directions = new[] {

@@ -1394,6 +1394,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ScavengerDefersWhenItsNativeCorpseSeekingCandidatesAreBlocked()
+    {
+        var scavenger = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            4,
+            maxHitPoints: 20,
+            nativeAi: "Scavenger");
+        var corpse = new AuthoritativeCorpse(10, 0, 0, 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: [2, 42, 43],
+            combatTargets: [scavenger],
+            corpses: [corpse]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 10,
+            positionY: 10,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 10 = 2: native RandomWalk checks (2,0), (2,1), and
+        // (3,1); the old eight-way scan would have selected (4,1).
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(scavenger.IsMoving);
+        Assert.Equal((3, 0), (scavenger.PositionX, scavenger.PositionY));
+    }
+
+    [Fact]
     public void HellfireScavengerConsumesItsCorpseWhenFullyHealed()
     {
         var scavenger = new AuthoritativeCombatTarget(
