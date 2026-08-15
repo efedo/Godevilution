@@ -263,6 +263,11 @@ Status date: 2026-08-14
   validated level floors and base-hit terms; omitted values retain native
   10/40 compatibility values.
 
+- Schema 1.163 adds optional `projectile_damage` metadata to
+  `monster_missiles.tsv`. Mapped monster projectiles consume a validated fixed
+  impact value when declared; omitted values retain behavior-specific/native
+  damage derivation.
+
 - Monster missile `spell_id` mappings are now authoritative for the Succubus
   Blood Star path and are cross-validated against the active spell catalog;
   older rows without a mapping retain the native inference fallback.

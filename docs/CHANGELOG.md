@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.163 optional `monster_missiles.tsv` `projectile_damage`
+  metadata. Mapped monster projectiles now consume content-owned fixed impact
+  damage when declared, while omitted values retain native damage derivation.
 - Add schema 1.162 optional `combat.tsv` Acid Puddle player-hit accuracy
   metadata. Persistent puddles now use validated level-floor and base-hit
   terms while older definitions retain the native 10/40 compatibility values.
