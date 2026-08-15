@@ -13533,6 +13533,14 @@ public sealed class DiabloCombatCommandProcessor
                 quest.Variable2 = Math.Max(
                     quest.Variable2,
                     quest.CompletionVariable2);
+                if (quest.CompletionActivateQuestId != 0
+                    && world.Quests.TryGetValue(
+                        quest.CompletionActivateQuestId,
+                        out var nextQuest)
+                    && !nextQuest.Unavailable
+                    && !nextQuest.Completed) {
+                    nextQuest.Active = true;
+                }
             }
         }
     }

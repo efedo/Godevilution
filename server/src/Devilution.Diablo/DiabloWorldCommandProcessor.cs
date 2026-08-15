@@ -542,6 +542,7 @@ public sealed class DiabloWorldCommandProcessor
             if (quest.Unavailable
                 || quest.Completed
                 || quest.Active
+                || !quest.ActivateOnRoute
                 || !questTypes.TryGet(quest.QuestId, out var definition)) {
                 continue;
             }

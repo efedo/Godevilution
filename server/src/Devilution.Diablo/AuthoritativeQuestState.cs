@@ -22,7 +22,9 @@ public sealed class AuthoritativeQuestState
         int dialogueVariable1 = 0,
         int dialogueVariable2 = 0,
         int completionVariable1 = 0,
-        int completionVariable2 = 0)
+        int completionVariable2 = 0,
+        uint completionActivateQuestId = 0,
+        bool activateOnRoute = true)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -61,6 +63,8 @@ public sealed class AuthoritativeQuestState
         DialogueVariable2 = dialogueVariable2;
         CompletionVariable1 = completionVariable1;
         CompletionVariable2 = completionVariable2;
+        CompletionActivateQuestId = completionActivateQuestId;
+        ActivateOnRoute = activateOnRoute;
     }
 
     public uint QuestId { get; }
@@ -92,6 +96,10 @@ public sealed class AuthoritativeQuestState
     public int CompletionVariable1 { get; }
     /** Content-owned minimum native _qvar2 after quest completion. */
     public int CompletionVariable2 { get; }
+    /** Content-owned quest identity activated when this quest completes. */
+    public uint CompletionActivateQuestId { get; }
+    /** Whether native route-level entry may activate this quest automatically. */
+    public bool ActivateOnRoute { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -128,7 +136,9 @@ public static class AuthoritativeQuestCatalog
                 dialogueVariable1: row.OptionalInt32("dialogue_variable1"),
                 dialogueVariable2: row.OptionalInt32("dialogue_variable2"),
                 completionVariable1: row.OptionalInt32("completion_variable1"),
-                completionVariable2: row.OptionalInt32("completion_variable2"));
+                completionVariable2: row.OptionalInt32("completion_variable2"),
+                completionActivateQuestId: row.OptionalUInt32("completion_activate_quest_id"),
+                activateOnRoute: row.OptionalInt32("route_activation") != 0);
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");
@@ -152,6 +162,14 @@ public static class AuthoritativeQuestCatalog
                 throw new InvalidDataException(
                     $"Quest state table '{additionalSourcePath}' contains duplicate quest ID {quest.QuestId}.");
             result.Add(quest);
+        }
+        var mergedQuestIds = result.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var quest in result) {
+            if (quest.CompletionActivateQuestId != 0
+                && !mergedQuestIds.Contains(quest.CompletionActivateQuestId)) {
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} activates unknown quest {quest.CompletionActivateQuestId}.");
+            }
         }
         return result;
     }

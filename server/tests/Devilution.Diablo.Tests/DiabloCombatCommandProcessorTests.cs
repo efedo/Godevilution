@@ -1177,6 +1177,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void QuestDefeatActivatesItsValidatedFollowOnQuest()
+    {
+        var quest = new AuthoritativeQuestState(
+            3016,
+            0,
+            1,
+            active: true,
+            completionUniqueIdentity: "Lazarus",
+            completionVariable1: 7,
+            completionActivateQuestId: 3006);
+        var nextQuest = new AuthoritativeQuestState(
+            3006,
+            15,
+            1,
+            active: false,
+            activateOnRoute: false);
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            5,
+            levelId: 0,
+            monsterId: 126,
+            unique: true,
+            uniqueIdentity: "Lazarus");
+        var world = new DiabloWorldState(
+            combatTargets: [target],
+            quests: [quest, nextQuest]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloAttackIntent(9), 1).Succeeded);
+
+        Assert.True(quest.Completed);
+        Assert.Equal(7, quest.Variable1);
+        Assert.True(nextQuest.Active);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(

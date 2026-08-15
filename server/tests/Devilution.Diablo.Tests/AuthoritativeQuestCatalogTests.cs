@@ -110,6 +110,23 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadFollowOnActivationAndRoutePolicy()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_activate_quest_id\troute_activation\n"
+                + "3001\t1\t1\t3002\t0\n",
+            new AuthoritativeQuestTypeCatalog([
+                new AuthoritativeQuestTypeDefinition(
+                    3001, 0, "First", 1, -1, string.Empty, 0, false),
+            ]));
+
+        var quest = Assert.Single(quests);
+        Assert.Equal(3002U, quest.CompletionActivateQuestId);
+        Assert.False(quest.ActivateOnRoute);
+    }
+
+    [Fact]
     public void QuestStateCanLoadAnOptionalMonsterCompletionTrigger()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(
