@@ -60,9 +60,12 @@ All notable changes to this fork are documented below.
   hashes; the Diablo defeat rank now records difficulty + 1 for single-player.
 
 - Apply native Nightmare/Hell monster level, armor, accuracy, physical damage,
-  regeneration, and experience modifiers in the authoritative combat module
-  while retaining base content values in snapshots; Normal behavior remains
-  unchanged and unique rewards retain the native double-experience rule.
+  regeneration, experience, and initial health modifiers in the authoritative
+  combat module. Nightmare/Hell health uses the native 3x/4x formulas and
+  Diablo/Hellfire single-player/multiplayer bonuses; effective Q6 health is
+  persisted in snapshots while base content definitions remain unchanged.
+  Normal behavior remains unchanged and unique rewards retain the native
+  double-experience rule; Hell-specific resistance data remains incremental.
 
 - Add the first server-authoritative quest dialogue boundary: `TalkToQuest`
   validates an adjacent living unique encounter, activates and logs the quest,

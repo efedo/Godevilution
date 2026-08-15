@@ -765,8 +765,12 @@ Status date: 2026-08-15
   native Nightmare/Hell monster level (+15/+30), armor (+50/+80), attack
   accuracy (+85/+120), physical damage scaling, regeneration, and experience
   scaling (2/4 × base-plus-1000, with unique rewards doubled) at runtime
-  without mutating persisted base monster data. Native difficulty health and
-  Hell-specific resistance data remain a subsequent content/schema slice.
+  without mutating persisted base monster data. Initial materialization now
+  also applies native Nightmare/Hell 3x/4x health formulas with the
+  Diablo/Hellfire single-player/multiplayer bonuses; effective Q6 health is
+  persisted in snapshots while validated base monster definitions remain
+  unchanged. Hell-specific resistance data remains a subsequent
+  content/schema slice.
 
 - Native Diablo defeat now also sets a server-owned terminal victory flag,
   persists it through the transport-neutral snapshot and version-1 save
