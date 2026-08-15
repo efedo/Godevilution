@@ -68,6 +68,11 @@ Status date: 2026-08-14
 - Butcher pursuit now consults the active validated monster-type identity when
   a catalog is present; direct legacy targets retain the native-name fallback.
 
+- Mapped monster missile dispatch now resolves the active validated
+  monster-type identity before the runtime-label compatibility fallback, so
+  content can change identity without moving projectile ownership into the
+  engine.
+
 - SkeletonRanged retreat and clear-lane arrow admission now use complete
   validated tuning tuples independent of the row's native-AI label; rows
   without migrated tuning retain the native-name compatibility path, and the

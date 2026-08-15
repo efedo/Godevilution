@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
   and validated ranged tuples suppress adjacent melee fallback.
 - Select Butcher pursuit from the active monster-type identity when a validated
   catalog is present; direct legacy targets retain the native-label fallback.
+- Resolve mapped monster missiles through the active monster-type identity
+  before falling back to the runtime label, preserving legacy mappings while
+  allowing content-owned identity changes.
 - Select Zombie action, random-direction, and movement-distance behavior from
   complete validated tuning tuples rather than requiring the `Zombie` native-AI
   name; legacy rows without tuning retain native-name compatibility defaults.

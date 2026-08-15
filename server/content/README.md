@@ -386,7 +386,8 @@ identity maps to its retained native missile ID and authoritative projectile
 behavior. The mapping remains content-owned and validated; checked-in rows use
 the most specific migrated behavior, while older overlays may retain
 `Targeted` as a compatibility spelling until their projectile controllers are
-migrated.
+migrated. Mapped dispatch first resolves the active monster-type `native_ai`
+identity and then retains the runtime-label lookup as a legacy fallback.
 Schema 1.82 adds optional `attack_mode` and
 `avoidance_probability_percent` columns to `monster_missiles.tsv`. The active
 content pack now selects the native `AiRanged` or `AiRangedAvoidance` branch
