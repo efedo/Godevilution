@@ -7621,8 +7621,8 @@ public sealed class DiabloCombatCommandProcessorTests
     {
         var monster = new AuthoritativeCombatTarget(
             9,
-            0,
-            0,
+            5,
+            5,
             20,
             aggroRange: 8,
             minDamage: 3,
@@ -7642,20 +7642,58 @@ public sealed class DiabloCombatCommandProcessorTests
             ]));
         var player = CreatePlayer(
             entityId: 7,
-            positionX: 3,
-            positionY: 0,
+            positionX: 8,
+            positionY: 5,
             life: 100,
             lifeMaximum: 100);
 
-        // 5,000 ^ 9 ^ 7 = 4,998, outside the native 1,000-per-10,000
-        // distance-three ranged band; native AiRangedAvoidance round-walks.
+        // 5,002 ^ 9 ^ 7 = 4,996 selects the native far-distance Move branch.
+        processor.AdvanceTick(5_002, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.True(monster.IsMoving);
+        // The left-turn RoundWalk checks north first.
+        Assert.Equal((5, 4), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
+    public void RangedAvoidanceUsesNativeRandomWalkOnItsOrdinaryFailedRangedRoll()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5,000 ^ 9 ^ 7 = 4,998 misses the far-distance Move admission, so
+        // native AiRangedAvoidance uses its ordinary RandomWalk branch.
         processor.AdvanceTick(5_000, [player]);
 
         Assert.Empty(world.Projectiles);
         Assert.True(monster.IsMoving);
-        // Seed 4,998 selects the native left-turn branch. Its first candidate
-        // is north (out of bounds), so RoundWalk advances straight east.
-        Assert.Equal((1, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal((6, 5), (monster.FuturePositionX, monster.FuturePositionY));
     }
 
     [Fact]

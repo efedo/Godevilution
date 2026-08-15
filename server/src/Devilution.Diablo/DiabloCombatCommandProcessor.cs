@@ -6669,6 +6669,7 @@ public sealed class DiabloCombatCommandProcessor
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
+        var rangedAvoidanceUsesRoundWalk = false;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
             var infernoTuning = ResolveMonsterInfernoTuning(missile);
             if (distance >= infernoTuning.MaximumDistance)
@@ -6750,14 +6751,27 @@ public sealed class DiabloCombatCommandProcessor
                         monster,
                         player,
                         players,
-                        attackSeed);
+                        attackSeed,
+                        useRoundWalk: false);
                     return true;
                 }
                 return false;
             }
+            // Native AiRangedAvoidance enters its far-distance Move goal only
+            // on the configured far boundary and a one-in-four (one-in-eight
+            // Acid) admission. That branch uses the lower attack band and
+            // RoundWalk; the ordinary Normal branch uses the far attack band
+            // and RandomWalk when its roll fails.
+            rangedAvoidanceUsesRoundWalk = distance >= farDistance
+                && attackSeed % (uint)(4 << (missile.ProjectileBehavior
+                    == AuthoritativeProjectileBehavior.Acid ? 1 : 0)) == 0;
             var attackBand = checked(
                 chanceBase + chanceIntelligenceScale * (monster.Intelligence
-                    + (distance >= farDistance ? farIntelligenceOffset : 0)));
+                    + (rangedAvoidanceUsesRoundWalk
+                        ? 0
+                        : distance >= farDistance
+                            ? farIntelligenceOffset
+                            : 0)));
             attackBand = checked(
                 attackBand * missile.AvoidanceProbabilityPercent / 100);
             if (attackSeed % 10_000U >= (uint)Math.Min(10_000, attackBand)) {
@@ -6765,7 +6779,8 @@ public sealed class DiabloCombatCommandProcessor
                     monster,
                     player,
                     players,
-                    attackSeed);
+                    attackSeed,
+                    rangedAvoidanceUsesRoundWalk);
                 return true;
             }
         } else {
@@ -6798,7 +6813,8 @@ public sealed class DiabloCombatCommandProcessor
                     monster,
                     player,
                     players,
-                    attackSeed);
+                    attackSeed,
+                    rangedAvoidanceUsesRoundWalk);
                 return true;
             }
             if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
@@ -6965,17 +6981,16 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
-        uint seed)
+        uint seed,
+        bool useRoundWalk)
     {
-        var roundWalk = FindNativeRoundWalkStep(
-            monster,
-            player,
-            players,
-            seed);
-        if (!roundWalk.HasValue)
+        var movement = useRoundWalk
+            ? FindNativeRoundWalkStep(monster, player, players, seed)
+            : FindNativeRandomWalkStep(monster, player, players, seed);
+        if (!movement.HasValue)
             return false;
 
-        monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+        monster.BeginMovement(movement.Value.X, movement.Value.Y);
         return true;
     }
 
