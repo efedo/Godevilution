@@ -21,6 +21,10 @@ All notable changes to this fork are documented below.
 - Normalize the next five Hellfire sword base-item projections: Dagger, Sabre,
   Falchion, Broad Sword, and Long Sword.
 
+- Normalize the next five Hellfire sword base-item projections: Claymore, Broad
+  Sword, Scimitar, Bastard Sword, and Two-Handed Sword, including a distinct
+  symbol for the duplicate Hellfire Broad Sword projection.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

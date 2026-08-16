@@ -953,6 +953,11 @@ Dagger, Sabre, Falchion, Broad Sword, and Long Sword. Their stable item symbols,
 native display names, and cursor projections are validated for all unique
 definitions that reuse those bases.
 
+Schema 1.256 normalizes the next five Hellfire sword base-item projections:
+Claymore, Broad Sword, Scimitar, Bastard Sword, and Two-Handed Sword. The
+duplicate Hellfire Broad Sword receives its own stable symbol while retaining
+the native display and cursor projection.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

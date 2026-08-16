@@ -974,6 +974,12 @@ Status date: 2026-08-16
   projections for the next five Hellfire sword base-item rows: Dagger, Sabre,
   Falchion, Broad Sword, and Long Sword.
 
+- Schema 1.256 normalizes stable symbols, display names, and native cursor
+  projections for the next five Hellfire sword base-item rows: Claymore, Broad
+  Sword, Scimitar, Bastard Sword, and Two-Handed Sword. The duplicate Hellfire
+  Broad Sword uses a distinct stable symbol while retaining its native
+  projection.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 
