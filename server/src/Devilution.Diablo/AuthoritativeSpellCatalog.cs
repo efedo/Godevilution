@@ -171,6 +171,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Optional nine-cell impact order; empty preserves the native Fireball order. */
     public IReadOnlyList<(int X, int Y)> FireballExplosionOffsets { get; init; } = [];
 
+    /** Optional nine-cell burst order; empty preserves the native Elemental order. */
+    public IReadOnlyList<(int X, int Y)> ElementalBurstOffsets { get; init; } = [];
+
     /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
     public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
 
@@ -746,6 +749,16 @@ public sealed class AuthoritativeSpellCatalog
                     offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
                 throw new InvalidDataException(
                     "Fireball explosion offsets must remain within the native adjacent-cell range.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Elemental
+                && definition.ElementalBurstOffsets.Count is not (0 or 9)) {
+                throw new InvalidDataException(
+                    "Elemental burst tuning requires exactly nine offsets when configured.");
+            }
+            if (definition.ElementalBurstOffsets.Any(offset =>
+                    offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
+                throw new InvalidDataException(
+                    "Elemental burst offsets must remain within the native adjacent-cell range.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
@@ -1495,6 +1508,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Fireball explosion tuning requires Fireball projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Elemental
+                && definition.ElementalBurstOffsets.Count != 0) {
+                throw new InvalidDataException(
+                    "Elemental burst tuning requires Elemental projectile behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HolyBoltHitMonsterLevelScale != 2
                     || definition.HolyBoltMinimumHitChance != 5
@@ -2064,6 +2082,7 @@ public sealed class AuthoritativeSpellCatalog
                 "charged_bolt_path_random_range"),
             ChargedBoltPathPattern = ParseChargedBoltPathPattern(row),
             FireballExplosionOffsets = ParseFireballExplosionOffsets(row),
+            ElementalBurstOffsets = ParseElementalBurstOffsets(row),
             ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
                 "charged_bolt_hit_monster_level_scale",
                 2),
@@ -2441,6 +2460,31 @@ public sealed class AuthoritativeSpellCatalog
                 || !int.TryParse(components[1], out var y)) {
                 throw new InvalidDataException(
                     $"Spell row {row.LineNumber} contains an invalid Fireball explosion offset.");
+            }
+            offsets[index] = (x, y);
+        }
+        return offsets;
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseElementalBurstOffsets(TsvRow row)
+    {
+        if (!row.TryGet("elemental_burst_offsets", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ';',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var offsets = new (int X, int Y)[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            var components = entries[index].Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (components.Length != 2
+                || !int.TryParse(components[0], out var x)
+                || !int.TryParse(components[1], out var y)) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Elemental burst offset.");
             }
             offsets[index] = (x, y);
         }

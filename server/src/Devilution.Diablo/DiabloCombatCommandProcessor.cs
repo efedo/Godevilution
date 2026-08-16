@@ -11306,7 +11306,7 @@ public sealed class DiabloCombatCommandProcessor
 
         projectile.RemainingTicks--;
         if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
-            ApplyElementalBurst(tick, projectile, players, events);
+            ApplyElementalBurst(tick, projectile, spell, players, events);
             if (projectile.RemainingTicks == 0)
                 world.Projectiles.Remove(projectile.EntityId);
             return;
@@ -11532,6 +11532,7 @@ public sealed class DiabloCombatCommandProcessor
     private void ApplyElementalBurst(
         ulong tick,
         AuthoritativeProjectile projectile,
+        AuthoritativeSpellDefinition spell,
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
@@ -11541,7 +11542,10 @@ public sealed class DiabloCombatCommandProcessor
         var startY = projectile.PathIndex == 1
             ? projectile.ElementalOriginY
             : projectile.StartY;
-        foreach (var offset in ElementalBurstOffsets) {
+        var burstOffsets = spell.ElementalBurstOffsets.Count > 0
+            ? spell.ElementalBurstOffsets
+            : ElementalBurstOffsets;
+        foreach (var offset in burstOffsets) {
             var positionX = checked(projectile.PositionX + offset.X);
             var positionY = checked(projectile.PositionY + offset.Y);
             if (!world.HasMissileLineOfSight(

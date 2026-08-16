@@ -675,8 +675,28 @@ public sealed class AuthoritativeSpellCatalogTests
             elemental.SpellEffectScaleDivisor,
             elemental.ElementalRetargetLifetime,
             elemental.ElementalCharacterLevelDamageMultiplier));
+        Assert.Equal(
+            [(0, 0), (-1, 1), (1, -1), (1, 1), (1, 0), (0, 1), (-1, -1), (-1, 0), (0, -1)],
+            elemental.ElementalBurstOffsets);
+        var malformed = File.ReadAllText(path).Replace(
+            "0,0;-1,1;1,-1;1,1;1,0;0,1;-1,-1;-1,0;0,-1",
+            "0,bad",
+            StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             elemental with { ElementalRetargetLifetime = 254 },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            elemental with { ElementalBurstOffsets = [(0, 0)] },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            elemental with {
+                ElementalBurstOffsets = [
+                    (0, 0), (-1, 1), (1, -1), (1, 1), (1, 0),
+                    (0, 1), (-1, -1), (-1, 0), (2, 0),
+                ],
+            },
         ]));
     }
 

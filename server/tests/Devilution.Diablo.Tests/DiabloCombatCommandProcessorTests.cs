@@ -13956,6 +13956,64 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ElementalUsesValidatedBurstOffsetOrder()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            14,
+            11,
+            1000,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateElementalSpell() with {
+                    ElementalBurstOffsets = [
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0),
+                    ],
+                },
+            ]),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(31, 1)]);
+        world.Projectiles.Add(0x80000001, new AuthoritativeProjectile(
+            0x80000001,
+            player.EntityId,
+            0,
+            31,
+            player.LevelId,
+            14,
+            10,
+            14,
+            10,
+            100,
+            AuthoritativeDamageType.Fire,
+            1,
+            14) {
+            Behavior = AuthoritativeProjectileBehavior.Elemental,
+            Phase = AuthoritativeProjectilePhase.Impact,
+            ImpactLifetime = 14,
+            ResistantDamageDivisor = 4,
+            EffectiveSpellLevel = 1,
+            ElementalOriginX = player.PositionX,
+            ElementalOriginY = player.PositionY,
+        });
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(target.MaxHitPointsQ6, target.HitPointsQ6);
+    }
+
+    [Fact]
     public void GuardianSpawnsAndFiresNativeFireboltOnSixTileArc()
     {
         var target = new AuthoritativeCombatTarget(
