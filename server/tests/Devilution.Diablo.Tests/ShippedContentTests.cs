@@ -1283,17 +1283,6 @@ public sealed class ShippedContentTests
             gloom.ChargeChanceIntelligenceScale));
         Assert.Equal(18, gloom.ProjectileSpeed);
         Assert.Equal(256, gloom.ProjectileLifetime);
-        Assert.True(activation.MonsterMissiles.TryGet("Bat", 43, out var familiar));
-        Assert.Equal("FamiliarArc", familiar.MissileId);
-        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);
-        Assert.Equal(43U, familiar.MonsterId);
-        Assert.Equal(3U, familiar.SpellId);
-        Assert.Equal(AuthoritativeDamageType.Lightning, familiar.DamageType);
-        Assert.Equal(16, familiar.ProjectileSpeed);
-        Assert.Equal(2, familiar.ProjectileLifetime);
-        Assert.Equal(8, familiar.ProjectileImpactLifetime);
-        Assert.Equal(10, familiar.ProjectileDamageRandomRange);
-        Assert.True(familiar.IsPostMeleeMissile);
         Assert.True(activation.MonsterMissiles.TryGet("Counselor", 107, out var counselorFirebolt));
         Assert.Equal(("Firebolt", AuthoritativeProjectileBehavior.Firebolt), (
             counselorFirebolt.MissileId,
@@ -1404,6 +1393,18 @@ public sealed class ShippedContentTests
             combat.HellfireArmorBonusAgainstDemons,
             combat.HellfireArmorBonusAgainstUndead));
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(composed);
+        Assert.NotNull(activation.MonsterMissiles);
+        Assert.True(activation.MonsterMissiles!.TryGet("Bat", 43, out var familiar));
+        Assert.Equal("FamiliarArc", familiar.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);
+        Assert.Equal(43U, familiar.MonsterId);
+        Assert.Equal(3U, familiar.SpellId);
+        Assert.Equal(AuthoritativeDamageType.Lightning, familiar.DamageType);
+        Assert.Equal(16, familiar.ProjectileSpeed);
+        Assert.Equal(2, familiar.ProjectileLifetime);
+        Assert.Equal(8, familiar.ProjectileImpactLifetime);
+        Assert.Equal(10, familiar.ProjectileDamageRandomRange);
+        Assert.True(familiar.IsPostMeleeMissile);
         itemQuestEffects.ValidateQuests(activation.Simulation.WorldState.Quests.Values);
         Assert.Equal(
             [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],
