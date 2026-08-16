@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.248 adds the stable `store` namespace. Store stock and Adria's
+service-only world rule may carry stable symbols, which are cross-checked
+against retained numeric IDs while numeric-only rows remain compatible.
+
 Schema 1.247 adds the stable `object` namespace. World-object rows may carry
 `object_symbol` links, which are cross-checked against retained numeric IDs and
 the composed object catalog while numeric-only rows remain compatible.

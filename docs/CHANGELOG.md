@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the stable `store` namespace and optional store symbols for vendor stock
+  and Adria's service identity, with activation-time validation and numeric
+  compatibility for older packs.
+
 - Add the stable `object` namespace and optional `object_symbol` links to
   world-object content, with activation-time numeric/symbol validation and
   numeric-only compatibility for older packs.
