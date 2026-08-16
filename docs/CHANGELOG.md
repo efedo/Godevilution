@@ -17,6 +17,10 @@ All notable changes to this fork are documented below.
 - Add schema 1.280 Gargoyle adjacent-attack tuning to validated monster-type
   content, preserving the native fallback for older packs.
 
+- Add schema 1.281 Gargoyle avoidance-movement tuning to validated monster-type
+  content and keep the content-defined Gargoyle identity active when healing
+  metadata is also present.
+
 - Add additive server-owned spell display names to memorized and item-backed
   spell snapshots, sourced from validated spell-book content so Godot can
   present cast sources without maintaining a client-side spell-ID table.
