@@ -1011,6 +1011,12 @@ Status date: 2026-08-16
   Buckler. Armor rows use native body-armor placement; the Hellfire Buckler
   uses native one-handed shield placement and a distinct stable symbol.
 
+- Schema 1.263 normalizes stable symbols, native indices, display names, and
+  native cursor projections for the next five Hellfire shield/amulet rows: Kite
+  Shield, Small Shield, Large Shield, Gothic Shield, and Amulet. Shields use
+  native one-handed placement; Amulet restores the native level-8 base row and
+  cursor projection.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

@@ -598,6 +598,13 @@ Armor rows use native body-armor placement; the Hellfire Buckler uses native
 one-handed shield placement and a distinct stable symbol. Unique definitions
 1077–1082 and the later Full Plate definitions now resolve these stable bases.
 
+Schema 1.263 normalizes stable symbols, native indices, display names, and
+native cursor projections for the next five Hellfire shield/amulet rows: Kite
+Shield, Small Shield, Large Shield, Gothic Shield, and Amulet. Shields use
+native one-handed placement; Amulet restores the native level-8 base row and
+cursor projection. Unique definitions 1083–1086, 1099, and 1110 now resolve
+these stable bases.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

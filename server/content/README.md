@@ -990,6 +990,12 @@ Buckler. Heavy and light armor use native body-armor placement, while the
 Hellfire Buckler retains its native one-handed shield placement and distinct
 stable symbol; unique rows 1077–1082 now reference these identities.
 
+Schema 1.263 normalizes the next five Hellfire shield and amulet projections:
+Kite Shield, Small Shield, Large Shield, Gothic Shield, and Amulet. Shield rows
+retain native one-handed placement and shield tags; Amulet restores the native
+level-8 base row and cursor projection. Unique rows 1083–1086, 1099, and 1110
+now resolve these stable identities.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

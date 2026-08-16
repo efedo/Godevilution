@@ -50,6 +50,10 @@ All notable changes to this fork are documented below.
   including native body-armor/one-handed placement and stable unique-base
   references for unique rows 1077–1082.
 
+- Normalize the next five Hellfire shield/amulet projections: Kite Shield,
+  Small Shield, Large Shield, Gothic Shield, and Amulet, including native
+  one-handed shield placement and the corrected level-8 Amulet base row.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
