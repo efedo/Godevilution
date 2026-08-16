@@ -7383,10 +7383,14 @@ public sealed class DiabloCombatCommandProcessor
                 // successful rolls continue into the authoritative melee
                 // resolver below.
                 if (distance <= 1) {
-                    var adjacentLessMissiles = missile.ProjectileBehavior
-                        == AuthoritativeProjectileBehavior.Acid
-                        ? 1
-                        : 0;
+                    // Validated rows own the divisor; omitted rows retain the
+                    // native Acid half-band compatibility behavior.
+                    var adjacentAttackChanceDivisor = missile
+                        .RangedAvoidanceAdjacentAttackChanceDivisor > 0
+                        ? missile.RangedAvoidanceAdjacentAttackChanceDivisor
+                        : missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
+                            ? 2
+                            : 1;
                     var adjacentAttackChanceBase = missile
                         .RangedAvoidanceAdjacentAttackChanceBase > 0
                         ? missile.RangedAvoidanceAdjacentAttackChanceBase
@@ -7398,7 +7402,7 @@ public sealed class DiabloCombatCommandProcessor
                     var adjacentAttackBand = checked(
                         adjacentAttackChanceBase
                         + adjacentAttackChanceIntelligenceScale * monster.Intelligence);
-                    adjacentAttackBand >>= adjacentLessMissiles;
+                    adjacentAttackBand /= adjacentAttackChanceDivisor;
                     if (attackSeed % 10_000U
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;

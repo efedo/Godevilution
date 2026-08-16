@@ -41,14 +41,16 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
             "monster_missiles.tsv",
             "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\t"
                 + "ranged_avoidance_adjacent_attack_chance_base\t"
-                + "ranged_avoidance_adjacent_attack_chance_intelligence_scale\n"
+                + "ranged_avoidance_adjacent_attack_chance_intelligence_scale\t"
+                + "ranged_avoidance_adjacent_attack_chance_divisor\n"
                 + "Magma\tMagmaBall\tMonsterMagic\tRangedAvoidance\t"
-                + "3000\t700\n");
+                + "3000\t700\t2\n");
 
         var definition = Assert.Single(catalog.Definitions);
-        Assert.Equal((3000, 700), (
+        Assert.Equal((3000, 700, 2), (
             definition.RangedAvoidanceAdjacentAttackChanceBase,
-            definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale));
+            definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale,
+            definition.RangedAvoidanceAdjacentAttackChanceDivisor));
     }
 
     [Fact]
@@ -725,6 +727,34 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "Acid",
                     AuthoritativeProjectileBehavior.Acid,
                     ProjectileImpactLifetime: -1),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsAdjacentAttackChanceDivisorForNonAvoidanceMode()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.Ranged,
+                    RangedAvoidanceAdjacentAttackChanceDivisor: 2),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsNegativeAdjacentAttackChanceDivisor()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceAdjacentAttackChanceDivisor: -1),
             ]));
     }
 
