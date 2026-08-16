@@ -184,7 +184,11 @@ public sealed class AuthoritativeMonsterCatalog
                 row.RequiredInt32("hit_points"),
                 ReadInt32(row, "armor_class", monsterType?.ArmorClass ?? 0),
                 row.RequiredInt32("max_hit_points"),
-                row.RequiredUInt32("level_id"),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "level_id",
+                    "level_symbol"),
                 monsterId,
                 row.OptionalUInt32("drop_item_entity_id"),
                 dropItemSeed,

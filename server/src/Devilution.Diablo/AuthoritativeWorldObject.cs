@@ -97,7 +97,11 @@ public static class AuthoritativeWorldObjectCatalog
             return new AuthoritativeWorldObject(
                 row.RequiredUInt32("entity_id"),
                 row.RequiredUInt32("object_id"),
-                row.RequiredUInt32("level_id"),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "level_id",
+                    "level_symbol"),
                 row.RequiredInt32("position_x"),
                 row.RequiredInt32("position_y"),
                 row.OptionalInt32("activated") != 0,

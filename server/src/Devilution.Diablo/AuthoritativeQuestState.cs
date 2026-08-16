@@ -211,7 +211,11 @@ public static class AuthoritativeQuestCatalog
                     $"Quest row {row.LineNumber} references unknown quest type {questId}.");
             return new AuthoritativeQuestState(
                 questId,
-                row.RequiredUInt32("level_id"),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "level_id",
+                    "level_symbol"),
                 row.RequiredUInt32("required_progress"),
                 row.OptionalUInt32("progress"),
                 row.OptionalInt32("completed") != 0,

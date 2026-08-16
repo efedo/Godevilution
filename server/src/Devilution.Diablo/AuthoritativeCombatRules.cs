@@ -922,7 +922,11 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("critical_multiplier", 2),
             row.OptionalInt32("friendly_fire", 1) != 0,
             ParseGameVariant(row),
-            row.OptionalUInt32("restart_level_id"),
+            AuthoritativeLevelIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "restart_level_id",
+                "restart_level_symbol"),
             row.OptionalInt32("restart_position_x"),
             row.OptionalInt32("restart_position_y"),
             row.OptionalInt32("restart_life", 1),
