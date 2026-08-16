@@ -784,6 +784,12 @@ public sealed class AuthoritativeMonsterCatalogTests
                 HorkDemonAttackChanceBase = 28,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                HorkDemonRoundWalkChanceModulo = 4,
+            },
+        ]));
     }
 
     [Fact]
@@ -803,6 +809,18 @@ public sealed class AuthoritativeMonsterCatalogTests
             horkDemon.HorkDemonSpawnChanceIntelligenceScale,
             horkDemon.HorkDemonMovementChanceBase,
             horkDemon.HorkDemonMovementChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsHorkDemonRoundWalkChanceModuloFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\thork_demon_round_walk_chance_modulo\n"
+                + "2\t123\tHork Demon\t18\t19\t27\t120\t160\t80\t20\t35\t0\t0\t0\t0\t0\tHorkDemon\t4\n");
+
+        var horkDemon = Assert.Single(catalog.Definitions);
+        Assert.Equal(4, horkDemon.HorkDemonRoundWalkChanceModulo);
     }
 
     [Fact]

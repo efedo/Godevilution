@@ -267,6 +267,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native HorkDemon non-adjacent movement chance increase per intelligence point. */
     public int HorkDemonMovementChanceIntelligenceScale { get; init; }
 
+    /** Native HorkDemon far-distance RoundWalk admission modulo. */
+    public int HorkDemonRoundWalkChanceModulo { get; init; }
+
     /** Native Gargoyle safety-boundary base before intelligence scaling. */
     public int GargoyleSafeDistanceBase { get; init; }
 
@@ -554,6 +557,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SkeletonKingRoundWalkChanceModulo != 0
                     && (definition.NativeAi != "SkeletonKing"
                         || definition.SkeletonKingRoundWalkChanceModulo <= 0)
+                || definition.HorkDemonRoundWalkChanceModulo is < 0 or > 100
+                || definition.HorkDemonRoundWalkChanceModulo != 0
+                    && (definition.NativeAi != "HorkDemon"
+                        || definition.HorkDemonRoundWalkChanceModulo <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -916,6 +923,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 MegaIntermediateMovementChanceBase = row.OptionalInt32("mega_intermediate_movement_chance_base"),
                 MegaIntermediateMovementChanceIntelligenceScale = row.OptionalInt32("mega_intermediate_movement_chance_intelligence_scale"),
                 SkeletonKingRoundWalkChanceModulo = row.OptionalInt32("skeleton_king_round_walk_chance_modulo"),
+                HorkDemonRoundWalkChanceModulo = row.OptionalInt32("hork_demon_round_walk_chance_modulo"),
             }));
     }
 

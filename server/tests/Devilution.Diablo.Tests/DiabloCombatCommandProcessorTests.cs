@@ -2757,6 +2757,78 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkDemonUsesValidatedRoundWalkChanceModulo()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                125,
+                123,
+                "Hork Demon",
+                18,
+                19,
+                27,
+                120,
+                160,
+                80,
+                20,
+                35,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "HorkDemon",
+                HorkDemonAttackChanceBase = 28,
+                HorkDemonAttackChanceIntelligenceScale = 2,
+                HorkDemonSpawnMinimumDistance = 3,
+                HorkDemonSpawnChanceBase = 43,
+                HorkDemonSpawnChanceIntelligenceScale = 2,
+                HorkDemonMovementChanceBase = 100,
+                HorkDemonMovementChanceIntelligenceScale = 1,
+                HorkDemonRoundWalkChanceModulo = 5,
+            },
+        ]);
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(18, 12, 12));
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            120,
+            levelId: 18,
+            monsterId: 125,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            intelligence: 0);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 117,
+                    ProjectileSpeed: 8,
+                    ProjectileLifetime: 9),
+            ]),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            levelId: 18,
+            entityId: 7);
+
+        // 400 ^ 9 ^ 7 = 414: native modulo-four skips RoundWalk, while the
+        // authored modulo-five branch admits the lateral candidate order.
+        processor.AdvanceTick(400, [player]);
+
+        Assert.True(hork.IsMoving);
+        Assert.NotEqual((5, 6), (hork.FuturePositionX, hork.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void HorkDemonDefersWhenItsNativeMovementCandidatesAreBlocked()
     {
         var hork = new AuthoritativeCombatTarget(

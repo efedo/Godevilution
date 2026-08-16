@@ -5264,7 +5264,13 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        if (distance >= 5 && (actionSeed / 100U) % 4U != 0U) {
+        var roundWalkChanceModulo = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var horkDefinition) == true
+            && horkDefinition.HorkDemonRoundWalkChanceModulo > 0) {
+            roundWalkChanceModulo = horkDefinition.HorkDemonRoundWalkChanceModulo;
+        }
+        if (distance >= 5
+            && (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U) {
             var roundWalk = FindNativeRoundWalkStep(
                 monster,
                 victim,
