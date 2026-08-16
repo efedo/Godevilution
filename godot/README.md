@@ -5,6 +5,11 @@ intent to the C# server, receives complete snapshots and transient events, and
 renders the latest authoritative projection. It does not simulate gameplay or
 own persistence.
 
+The client also converts authoritative damage, healing, and experience events
+into transient floating feedback positioned from the latest snapshot. This is
+the server-backed presentation path; the native Lua floating-number mods remain
+available only to the legacy compatibility client.
+
 ## Projects
 
 - `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,

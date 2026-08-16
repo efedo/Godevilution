@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add typed Godot combat feedback for authoritative damage, healing, and
+  experience events, replacing Lua-owned floating-number presentation for the
+  server-backed client.
+
 - Add additive server-owned projectile presentation metadata so Godot no longer
   needs the canonical behavior-to-visual mapping for current peers.
 

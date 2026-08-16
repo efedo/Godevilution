@@ -120,6 +120,12 @@ staff levels and server-owned charge degradation. REPL and inspection helpers
 may remain as optional
 native diagnostics while the compatibility client exists.
 
+The Godot client now consumes authoritative damage, healing, and experience
+events through a typed combat-feedback mapper and renders transient floating
+numbers from snapshot entity positions. The bundled Lua floating-number mods
+remain available to the native compatibility client, but they no longer define
+the authoritative presentation path.
+
 ## Freeze Rules
 
 1. Preserve existing Lua names and payloads until a characterized replacement

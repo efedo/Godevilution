@@ -148,6 +148,10 @@ Status date: 2026-08-16
   metadata. Godot prefers that projection and retains behavior/phase mapping only
   as the compatibility fallback for older peers.
 
+- Godot now converts authoritative damage, healing, and experience events into
+  typed transient floating feedback positioned from authoritative entity state;
+  the native Lua floating-number mods remain compatibility-only.
+
 - The Godot client also maps authoritative status-effect identities to typed
   overlays: Infravision, Search, and Etherealize now have distinct player
   presentation while the server retains all timing, stacking, and admission
