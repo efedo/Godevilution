@@ -198,6 +198,21 @@ public sealed class StoreCatalog
         return stores.TryGetValue(storeId, out var stock) && stock.Remove(storeSlot);
     }
 
+    /** Validates direct store-stock spell identities against active spells. */
+    public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(spells);
+        foreach (var (storeId, stock) in stores) {
+            foreach (var (storeSlot, item) in stock) {
+                var spellId = item.State.SpellId;
+                if (spellId != 0
+                    && (spellId < 0 || !spells.TryGet(checked((uint)spellId), out _)))
+                    throw new InvalidDataException(
+                        $"Store {storeId} slot {storeSlot} references unknown spell {spellId}.");
+            }
+        }
+    }
+
     /** Replaces one known store's stock from a validated persistence projection. */
     public void ReplaceStore(uint storeId, IEnumerable<StoreItem> items)
     {

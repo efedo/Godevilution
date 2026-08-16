@@ -255,6 +255,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             storeTable.ToCanonicalTsv(),
             itemCatalog,
             uniqueItems);
+        if (spells is not null)
+            stores.ValidateSpellReferences(spells);
         var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
             ? StableContentIdCatalog.LoadTsv(
                 stableIdsTable.SourcePath,
