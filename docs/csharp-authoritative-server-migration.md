@@ -784,6 +784,11 @@ successful-attack delays through separate optional fields on the validated
 monster-type mapping. Older packs retain the native intelligence-scaled and
 fixed-base formulas through the compatibility fallback.
 
+Healthy Counselor-family monsters now preserve the native adjacent attack
+boundary: the server emits both stationary Flash layers with
+`2 * monster_level` magic damage and retains Counselor's post-attack delay,
+so the authoritative path no longer falls through to generic melee.
+
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.

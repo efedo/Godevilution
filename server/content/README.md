@@ -575,7 +575,10 @@ unrelated Bat rows retain their mapped-charge behavior.
 Schema 1.84 adds five native Counselor missile rows for monster IDs 107, 108,
 109, 110, and 113. They select Firebolt, Charged Bolt, Lightning, or Fireball
 from validated content; the server owns the monster-specific Charged Bolt
-controller and its player hit boundary.
+controller and its player hit boundary. Healthy Counselor-family monsters also
+retain the native adjacent Flash attack: the server emits both stationary
+Flash layers with `2 * monster_level` magic damage and keeps the native delay
+instead of falling through to generic melee.
 Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserves
 Mega's distance- and intelligence-based special-attack admission, speed-32
 Inferno controller, three-segment limit, and monster damage roll through the

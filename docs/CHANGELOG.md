@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Clarify current architecture and content documentation that schema 1.278
   completed dynamic spell-book assignment and book-cost behavior.
 
+- Preserve native adjacent Counselor Flash attacks in the authoritative server,
+  including both stationary layers, monster-level magic damage, and the native
+  post-attack delay.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

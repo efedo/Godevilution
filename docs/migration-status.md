@@ -186,6 +186,11 @@ Status date: 2026-08-16
   `counselor_move_chance_percent` monster-type field, preserving the native
   30-percent branch with compatibility fallback for older packs.
 
+- Healthy Counselor-family monsters now preserve native adjacent Flash
+  attacks: the server emits both stationary Flash layers with
+  `2 * monster_level` magic damage and keeps the native Counselor delay,
+  instead of falling through to generic melee.
+
 - Mega delegated Skeleton movement-delay admission is now validated
   `mega_delay_chance_base` and `mega_delay_chance_intelligence_scale`
   monster-type data, preserving the native 35-minus-four-times-intelligence
