@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.313 validated Counselor ranged-admission chance fields to
+  `monster_types.tsv`, preserving the native capped 50/5 fallback for older
+  mappings.
+
 - Add schema 1.312 validated Bat movement-band fields to
   `monster_types.tsv`, preserving the native 13/1/50 fallback for older
   mappings.

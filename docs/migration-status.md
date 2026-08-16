@@ -77,6 +77,11 @@ Status date: 2026-08-16
   `bat_movement_fresh_chance_bonus` monster-type fields, preserving the native
   13/1/50 bands with fallback behavior for older packs.
 
+- Counselor ranged-admission chance is now validated through
+  `counselor_attack_chance_base` and
+  `counselor_attack_chance_intelligence_scale` monster-type fields, preserving
+  the native capped 50/5 band with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1335,6 +1340,10 @@ Status date: 2026-08-16
 - Schema 1.312 externalizes Bat's long-idle and fresh-mode movement bands
   through optional monster-type data, retaining the native 13/1/50 fallback
   for older mappings.
+
+- Schema 1.313 externalizes Counselor's ranged-admission chance through
+  optional monster-type data, retaining the native capped 50/5 fallback for
+  older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
