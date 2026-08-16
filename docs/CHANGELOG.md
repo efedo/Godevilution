@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize normalized item spell-source references through optional
+  `spell_symbol`; active rows resolve stable spell IDs and reject mismatches
+  while numeric fallback remains available.
+
 - Externalize mapped monster-missile spell references through optional
   `spell_symbol`; active rows resolve stable spell IDs and reject mismatches
   while numeric fallback remains available.
