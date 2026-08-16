@@ -212,6 +212,24 @@ public static class AuthoritativeQuestCatalog
         }
     }
 
+    /** Validates explicit monster identities used by quest completion triggers.
+     * Native Diablo completion remains an implicit generated-boss target in the
+     * base pack and therefore has no required monster_types.tsv identity. */
+    public static void ValidateMonsterCompletionTargets(
+        IEnumerable<AuthoritativeQuestState> quests,
+        AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        foreach (var quest in quests) {
+            if (quest.CompletionMonsterId != 0
+                && !monsterTypes.TryGet(quest.CompletionMonsterId, out _)) {
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown completion monster {quest.CompletionMonsterId}.");
+            }
+        }
+    }
+
     /** Applies native single-player pool exclusions to the loaded quest state. */
     public static void ApplySinglePlayerPoolSelection(
         IReadOnlyList<AuthoritativeQuestState> quests,

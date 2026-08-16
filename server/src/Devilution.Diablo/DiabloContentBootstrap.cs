@@ -373,6 +373,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     additionalQuests,
                     questStatesTable.SourcePath);
         }
+
         if (world is not null
             && quests is null
             && (world.WarpTargets.Any(target => target.RequiredQuestId != 0)
@@ -382,6 +383,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (quests is not null) {
             AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
+            if (monsterTypes is not null)
+                AuthoritativeQuestCatalog.ValidateMonsterCompletionTargets(
+                    quests,
+                    monsterTypes);
             if (world is not null)
                 AuthoritativeWarpCatalog.ValidateQuestRequirements(
                     world.WarpTargets,
