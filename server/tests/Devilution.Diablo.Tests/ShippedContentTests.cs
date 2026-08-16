@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.271.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.272.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -73,6 +73,58 @@ public sealed class ShippedContentTests
             Assert.Equal(nativeIndex, item.NativeItemIndex);
             Assert.Equal(minimumArmor, item.MinArmorClass);
             Assert.Equal(maximumArmor, item.MaxArmorClass);
+            Assert.False(item.Usable);
+            Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+        }
+        var baseWeaponExpectations = new[] {
+            ("dagger", 127U, 118, 1, 4),
+            ("short_sword_standard", 2160U, 119, 2, 6),
+            ("falchion", 129U, 120, 4, 8),
+            ("scimitar", 134U, 121, 3, 7),
+            ("claymore", 132U, 122, 1, 12),
+            ("blade", 2161U, 123, 3, 8),
+            ("sabre", 128U, 124, 1, 8),
+            ("long_sword", 131U, 125, 2, 10),
+            ("broad_sword", 130U, 126, 4, 12),
+            ("bastard_sword", 135U, 127, 6, 15),
+            ("two_handed_sword", 136U, 128, 8, 16),
+            ("great_sword", 2162U, 129, 10, 20),
+            ("small_axe", 140U, 130, 2, 10),
+            ("axe", 2163U, 131, 4, 12),
+            ("large_axe", 137U, 132, 6, 16),
+            ("broad_axe", 138U, 133, 8, 20),
+            ("battle_axe", 139U, 134, 10, 25),
+            ("great_axe", 141U, 135, 12, 30),
+            ("mace", 142U, 136, 1, 8),
+            ("morning_star", 145U, 137, 1, 10),
+            ("war_hammer", 146U, 138, 5, 9),
+            ("spiked_club", 2164U, 139, 3, 6),
+            ("club", 2165U, 140, 1, 6),
+            ("flail", 144U, 141, 2, 12),
+            ("maul", 143U, 142, 6, 20),
+            ("short_bow", 124U, 143, 1, 4),
+            ("hunters_bow", 122U, 144, 2, 5),
+            ("long_bow", 123U, 145, 1, 6),
+            ("composite_bow", 2166U, 146, 3, 6),
+            ("short_battle_bow", 126U, 147, 3, 7),
+            ("long_battle_bow", 2167U, 148, 1, 10),
+            ("short_war_bow", 2168U, 149, 4, 8),
+            ("long_war_bow", 125U, 150, 1, 14),
+            ("short_staff", 149U, 151, 2, 4),
+            ("long_staff", 147U, 152, 4, 8),
+            ("composite_staff", 150U, 153, 5, 10),
+            ("quarter_staff", 151U, 154, 6, 12),
+            ("war_staff", 148U, 155, 8, 16),
+        };
+        foreach (var (symbol, itemId, nativeIndex, minimumDamage, maximumDamage) in baseWeaponExpectations) {
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            var item = baseItems.GetRequired(itemId);
+            Assert.Equal(symbol, item.StableSymbol);
+            Assert.Equal(nativeIndex, item.NativeItemIndex);
+            Assert.Equal(minimumDamage, item.MinDamage);
+            Assert.Equal(maximumDamage, item.MaxDamage);
+            Assert.Contains("Weapon", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
             Assert.False(item.Usable);
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
             Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
@@ -1105,7 +1157,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.271.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.272.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

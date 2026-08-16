@@ -47,6 +47,44 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	114	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None
 2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	27	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify
 2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	95	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify
+127	dagger	1	60	60	1	4	0	16	16	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	118	0	0	None	Dagger	Dagger	DAGGER	1	1	false			0	0	None
+2160	short_sword_standard	1	120	120	2	6	0	24	24	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	119	0	0	None	Short Sword	Sword	SHORT_SWORD	1	1	false			0	0	None
+129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	120	0	0	None	Falchion	Sword	FALCHION	2	1	false			0	0	None
+134	scimitar	1	200	200	3	7	0	28	28	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	23	0	23	121	0	0	None	Scimitar	Sword	SCIMITAR	4	1	false			0	0	None
+132	claymore	1	450	450	1	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	35	0	0	122	0	0	None	Claymore	Sword	CLAYMORE	5	1	false			0	0	None
+2161	blade	1	280	280	3	8	0	30	30	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	25	0	30	123	0	0	None	Blade	Blade	BLADE	4	1	false			0	0	None
+128	sabre	1	170	170	1	8	0	45	45	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	17	0	0	124	0	0	None	Sabre	Sabre	SABRE	1	1	false			0	0	None
+131	long_sword	1	350	350	2	10	0	40	40	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	30	125	0	0	None	Long Sword	Sword	LONG_SWORD	6	1	false			0	0	None
+130	broad_sword	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	126	0	0	None	Broad Sword	Sword	BROAD_SWORD	8	1	false			0	0	None
+135	bastard_sword	1	1000	1000	6	15	0	60	60	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	50	0	0	127	0	0	None	Bastard Sword	Sword	BASTARD_SWORD	10	1	false			0	0	None
+136	two_handed_sword	1	1800	1800	8	16	0	75	75	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	65	0	0	128	0	0	None	Two-Handed Sword	Sword	TWO_HANDED_SWORD	14	1	false			0	0	None
+2162	great_sword	1	3000	3000	10	20	0	100	100	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	75	0	0	129	0	0	None	Great Sword	Sword	GREAT_SWORD	17	1	false			0	0	None
+140	small_axe	1	150	150	2	10	0	24	24	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	0	0	0	130	0	0	None	Small Axe	Axe	SMALL_AXE	2	1	false			0	0	None
+2163	axe	1	450	450	4	12	0	32	32	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	22	0	0	131	0	0	None	Axe	Axe	AXE	4	1	false			0	0	None
+137	large_axe	1	750	750	6	16	0	40	40	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	30	0	0	132	0	0	None	Large Axe	Axe	LARGE_AXE	6	1	false			0	0	None
+138	broad_axe	1	1000	1000	8	20	0	50	50	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	50	0	0	133	0	0	None	Broad Axe	Axe	BROAD_AXE	8	1	false			0	0	None
+139	battle_axe	1	1500	1500	10	25	0	60	60	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	65	0	0	134	0	0	None	Battle Axe	Axe	BATTLE_AXE	10	1	false			0	0	None
+141	great_axe	1	2500	2500	12	30	0	75	75	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	80	0	0	135	0	0	None	Great Axe	Axe	GREAT_AXE	12	1	false			0	0	None
+142	mace	1	200	200	1	8	0	32	32	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	16	0	0	136	0	0	None	Mace	Mace	MACE	2	1	false			0	0	None
+145	morning_star	1	300	300	1	10	0	40	40	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	26	0	0	137	0	0	None	Morning Star	Mace	MORNING_STAR	3	1	false			0	0	None
+146	war_hammer	1	600	600	5	9	0	50	50	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	40	0	0	138	0	0	None	War Hammer	Hammer	WAR_HAMMER	5	1	false			0	0	None
+2164	spiked_club	1	225	225	3	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	18	0	0	139	0	0	None	Spiked Club	Club	SPIKED_CLUB	4	1	false			0	0	None
+2165	club	1	20	20	1	6	0	20	20	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	0	0	0	140	0	0	None	Club	Club	CLUB	1	1	false			0	0	None
+144	flail	1	500	500	2	12	0	36	36	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	30	0	0	141	0	0	None	Flail	Flail	FLAIL	7	1	false			0	0	None
+143	maul	1	900	900	6	20	0	50	50	1	1	1	Weapon,Mace,TwoHanded	2	1	0	0		0	55	0	0	142	0	0	None	Maul	Maul	MAUL	10	1	false			0	0	None
+124	short_bow	1	100	100	1	4	0	30	30	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	0	0	0	143	0	0	None	Short Bow	Bow	SHORT_BOW	1	1	false			0	0	None
+122	hunters_bow	1	350	350	2	5	0	40	40	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	20	0	35	144	0	0	None	Hunter's Bow	Bow	HUNTERS_BOW	3	1	false			0	0	None
+123	long_bow	1	250	250	1	6	0	35	35	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	30	145	0	0	None	Long Bow	Bow	HUNTERS_BOW	5	1	false			0	0	None
+2166	composite_bow	1	600	600	3	6	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	25	0	40	146	0	0	None	Composite Bow	Bow	COMPOSITE_BOW	7	1	false			0	0	None
+126	short_battle_bow	1	750	750	3	7	0	45	45	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	50	147	0	0	None	Short Battle Bow	Bow	SHORT_BATTLE_BOW	9	1	false			0	0	None
+2167	long_battle_bow	1	1000	1000	1	10	0	50	50	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	30	0	60	148	0	0	None	Long Battle Bow	Bow	LONG_BATTLE_BOW	11	1	false			0	0	None
+2168	short_war_bow	1	1500	1500	4	8	0	55	55	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	35	0	70	149	0	0	None	Short War Bow	Bow	SHORT_WAR_BOW	15	1	false			0	0	None
+125	long_war_bow	1	2000	2000	1	14	0	60	60	1	1	1	Weapon,Bow,TwoHanded	2	1	0	0		0	45	0	80	150	0	0	None	Long War Bow	Bow	LONG_WAR_BOW	19	1	false			0	0	None
+149	short_staff	1	30	30	2	4	0	25	25	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	151	0	0	None	Short Staff	Staff	SHORT_STAFF	1	1	false			0	0	None
+147	long_staff	1	100	100	4	8	0	35	35	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	Long Staff	Staff	LONG_STAFF	4	1	false			0	0	None
+150	composite_staff	1	500	500	5	10	0	45	45	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	Composite Staff	Staff	COMPOSITE_STAFF	6	1	false			0	0	None
+151	quarter_staff	1	1000	1000	6	12	0	55	55	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	20	0	0	154	0	0	None	Quarter Staff	Staff	SHORT_STAFF	9	1	false			0	0	None
+148	war_staff	1	1500	1500	8	16	0	75	75	1	1	1	Weapon,Staff,TwoHanded	2	1	0	0		0	30	0	0	155	0	0	None	War Staff	Staff	WAR_STAFF	12	1	false			0	0	None
 152	helm	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	50	0	0	None	Helm	Helm	HELM	8	1	false			4	6	None
 153	skull_cap	7	25	25	0	0	2	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	49	0	0	None	Skull Cap	Cap	SKULL_CAP	4	1	false			2	4	None
 154	great_helm	7	400	400	0	0	10	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	53	0	0	None	Great Helm	Helm	GREAT_HELM	20	1	false			10	15	None
