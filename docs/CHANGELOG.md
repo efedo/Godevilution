@@ -51,6 +51,9 @@ All notable changes to this fork are documented below.
 - Validate static portal levels and endpoint coordinates against the active
   world during content activation, so malformed routes fail before publication.
 
+- Reject blocked portal and level-trigger endpoints during world activation, so
+  authored transitions always land on usable movement cells.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
