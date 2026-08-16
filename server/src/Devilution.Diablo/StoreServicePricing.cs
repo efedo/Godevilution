@@ -63,7 +63,10 @@ public sealed class StoreServicePricing
     }
 
     /** Loads one service row per key and optional spell staff-cost rows. */
-    public static StoreServicePricing LoadTsv(string sourcePath, string contents)
+    public static StoreServicePricing LoadTsv(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var values = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -71,7 +74,7 @@ public sealed class StoreServicePricing
         foreach (var row in table.Rows) {
             var key = row.Required("key");
             if (key.Equals("spell_staff_cost", StringComparison.Ordinal)) {
-                var spellId = row.RequiredInt32("spell_id");
+                var spellId = ResolveSpellId(row, stableIds);
                 if (spellId < 0)
                     throw new InvalidDataException(
                         $"Store pricing table '{sourcePath}' contains a negative spell {spellId}.");
@@ -100,5 +103,38 @@ public sealed class StoreServicePricing
             Required("recharge_divisor", Default.RechargeDivisor),
             Required("mana_chunk", Default.ManaChunk),
             spellCosts);
+    }
+
+    private static int ResolveSpellId(TsvRow row, StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.RequiredInt32("spell_id");
+        if (!row.TryGet("spell_symbol", out var symbol)
+            || string.IsNullOrWhiteSpace(symbol))
+            return numericId;
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Store pricing row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Store pricing row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (resolvedId > int.MaxValue)
+            throw new InvalidDataException(
+                $"Store pricing row {row.LineNumber} resolves spell symbol '{symbol}' "
+                + $"to unsupported ID {resolvedId}.");
+        var resolvedInt = checked((int)resolvedId);
+        if (numericId != 0 && numericId != resolvedInt)
+            throw new InvalidDataException(
+                $"Store pricing row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedInt}.");
+        return resolvedInt;
     }
 }

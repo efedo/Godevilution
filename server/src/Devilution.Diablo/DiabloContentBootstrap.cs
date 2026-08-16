@@ -136,10 +136,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 + $"the Diablo module schema '{Schema}'.");
         }
 
+        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
+            ? StableContentIdCatalog.LoadTsv(
+                stableIdsTable.SourcePath,
+                stableIdsTable.ToCanonicalTsv())
+            : null;
         var pricing = content.TryGetTable("store_services.tsv", out var pricingTable)
             ? StoreServicePricing.LoadTsv(
                 pricingTable.SourcePath,
-                pricingTable.ToCanonicalTsv())
+                pricingTable.ToCanonicalTsv(),
+                stableIds)
             : fallbackPricing;
         var generationRules = content.TryGetTable(
             "item_generation.tsv",
@@ -157,11 +163,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerAnimationTable.SourcePath,
             playerAnimationTable.ToCanonicalTsv(),
             playerClasses);
-        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
-            ? StableContentIdCatalog.LoadTsv(
-                stableIdsTable.SourcePath,
-                stableIdsTable.ToCanonicalTsv())
-            : null;
         var spells = content.TryGetTable("spells.tsv", out var spellsTable)
             ? AuthoritativeSpellCatalog.LoadTsv(
                 spellsTable.SourcePath,

@@ -1,10 +1,10 @@
-key	spell_id	value
-sale_divisor		4
-normal_repair_divisor		2
-magical_repair_percent		30
-magical_repair_divisor		200
-identification_price		100
-recharge_divisor		2
-mana_chunk		64
+key	spell_id	spell_symbol	value
+sale_divisor			4
+normal_repair_divisor			2
+magical_repair_percent			30
+magical_repair_divisor			200
+identification_price			100
+recharge_divisor			2
+mana_chunk			64
 # Spell staff costs are external data; absent spells retain the legacy zero-cost fallback.
-spell_staff_cost	0	0
+spell_staff_cost	0		0
