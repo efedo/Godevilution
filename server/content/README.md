@@ -974,6 +974,10 @@ native indices, display names, cursor projections, and `Staff` generation tags
 are validated against the native table; Quarter Staff retains its native
 SHORT_STAFF cursor projection.
 
+Schema 1.260 normalizes the next five Hellfire armor projections: Helm, Skull
+Cap, Great Helm, Crown, and Rags. Helmet rows retain helmet placement while
+Rags is corrected to its native LightArmor/BodyArmor placement and cursor.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

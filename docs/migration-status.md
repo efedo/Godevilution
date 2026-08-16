@@ -994,6 +994,11 @@ Status date: 2026-08-16
   staff rows: Long Staff, War Staff, Short Staff, Composite Staff, and Quarter
   Staff. Quarter Staff retains its native `SHORT_STAFF` cursor projection.
 
+- Schema 1.260 normalizes stable symbols, native indices, display names, and
+  native cursor projections for the next five Hellfire armor rows: Helm, Skull
+  Cap, Great Helm, Crown, and Rags. Rags uses its native LightArmor/BodyArmor
+  placement while the other four rows retain helmet placement.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

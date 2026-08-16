@@ -580,6 +580,11 @@ cursor projections, and `Staff` generation tags for the next five Hellfire staff
 rows: Long Staff, War Staff, Short Staff, Composite Staff, and Quarter Staff.
 Quarter Staff retains its native `SHORT_STAFF` cursor projection.
 
+Schema 1.260 normalizes stable symbols, native indices, display names, and
+native cursor projections for the next five Hellfire armor rows: Helm, Skull
+Cap, Great Helm, Crown, and Rags. Rags uses its native LightArmor/BodyArmor
+placement while the other four rows retain helmet placement.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

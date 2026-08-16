@@ -37,6 +37,10 @@ All notable changes to this fork are documented below.
   Short Staff, Composite Staff, and Quarter Staff, retaining Quarter Staff's
   native `SHORT_STAFF` cursor projection.
 
+- Normalize the next five Hellfire armor projections: Helm, Skull Cap, Great
+  Helm, Crown, and Rags, correcting Rags to native LightArmor/BodyArmor
+  placement.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
