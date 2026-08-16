@@ -58,6 +58,44 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
     }
 
     [Fact]
+    public void ResolvesStableSetLevelSymbolsIncludingNativeZero()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_NONE", 0),
+            new StableContentId("set_level", "SL_SKELKING", 1),
+        ]);
+        var setLevels = AuthoritativeSetLevelNameCatalog.LoadTsv(
+            "set_level_names.tsv",
+            "set_level_id\tsymbol\tdisplay_name\n"
+                + "0\tSL_NONE\tnone\n"
+                + "1\tSL_SKELKING\tSkeleton King's Lair\n"
+                + "2\tSL_BONECHAMB\tChamber of Bone\n"
+                + "3\tSL_MAZE\tMaze\n"
+                + "4\tSL_POISONWATER\tPoisoned Water Supply\n"
+                + "5\tSL_VILEBETRAYER\tArchbishop Lazarus' Lair\n"
+                + "6\tSL_ARENA_CHURCH\tChurch Arena\n"
+                + "7\tSL_ARENA_HELL\tHell Arena\n"
+                + "8\tSL_ARENA_CIRCLE_OF_LIFE\tCircle of Life Arena\n",
+            stableIds);
+        var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            "quest_id\tquest_symbol\tnative_quest_id\tname\tsingle_player_level\tmultiplayer_level\tlevel_type\tset_level\tset_level_symbol\tsingle_player_only\n"
+                + "3001\tmagic_rock\t0\tThe Magic Rock\t5\t-1\t\t0\tSL_NONE\t1\n"
+                + "3013\tking_leoric\t12\tThe Curse of King Leoric\t3\t3\tDTYPE_CATHEDRAL\t1\tSL_SKELKING\t0\n",
+            setLevels,
+            new StableContentIdCatalog([
+                new StableContentId("quest", "magic_rock", 3001),
+                new StableContentId("quest", "king_leoric", 3013),
+                new StableContentId("set_level", "SL_NONE", 0),
+                new StableContentId("set_level", "SL_SKELKING", 1),
+            ]));
+
+        Assert.Equal(0, questTypes.Definitions[0].SetLevel);
+        Assert.Equal(1, questTypes.Definitions[1].SetLevel);
+        Assert.Equal(string.Empty, setLevels.GetDisplayName(0));
+    }
+
+    [Fact]
     public void RejectsQuestPoolReferencesOutsideTheQuestCatalog()
     {
         var questTypes = new AuthoritativeQuestTypeCatalog([

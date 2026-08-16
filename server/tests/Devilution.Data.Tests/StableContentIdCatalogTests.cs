@@ -41,6 +41,17 @@ public sealed class StableContentIdCatalogTests
     }
 
     [Fact]
+    public void AllowsNativeZeroForTheSetLevelNamespace()
+    {
+        var catalog = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_NONE", 0),
+        ]);
+
+        Assert.Equal(0U, catalog.Resolve("set_level", "SL_NONE"));
+        Assert.Equal("SL_NONE", catalog.Resolve(0, "set_level"));
+    }
+
+    [Fact]
     public void RejectsDuplicateSymbolAndNumericId()
     {
         Assert.Throws<InvalidDataException>(() => new StableContentIdCatalog([
