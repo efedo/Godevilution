@@ -106,6 +106,10 @@ Status date: 2026-08-16
   preserving the native 50-plus-ten-times-intelligence band with its 100
   percent cap and compatibility fallback for older packs.
 
+- SkeletonKing RoundWalk admission is now a validated
+  `skeleton_king_round_walk_chance_modulo` monster-type field, preserving the
+  native modulo-four branch with compatibility fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1254,6 +1258,10 @@ Status date: 2026-08-16
   through optional monster-type fields, retaining the native
   50-plus-ten-times-intelligence fallback and 100 percent cap for older
   mappings.
+
+- Schema 1.304 externalizes SkeletonKing's RoundWalk admission modulo through
+  optional monster-type data, retaining the native modulo-four fallback for
+  older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

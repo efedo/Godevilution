@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.303.0` schema in
+It declares its identity and `devilution.diablo@1.304.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -304,6 +304,10 @@ minimum-three, base-thirty-five, intelligence-scale-four compatibility values.
 Skeleton King summon candidates are likewise selected from complete positive
 SkeletonMelee delay and attack tuples, while rows labeled `SkeletonMelee`
 remain accepted as the legacy fallback.
+The optional `skeleton_king_round_walk_chance_modulo` column externalizes the
+native RoundWalk branch frequency. Legacy SkeletonKing rows retain the native
+modulo-four compatibility value; a positive value selects the branch modulo
+directly from validated content.
 The optional `hork_demon_attack_chance_base`,
 `hork_demon_attack_chance_intelligence_scale`,
 `hork_demon_spawn_minimum_distance`, `hork_demon_spawn_chance_base`,
@@ -1217,6 +1221,10 @@ Schema 1.303 adds optional `mega_intermediate_movement_chance_base` and
 times-intelligence intermediate-distance RandomWalk band, capped at 100,
 while older mappings retain the compatibility fallback.
 
+Schema 1.304 adds optional `skeleton_king_round_walk_chance_modulo` to
+`monster_types.tsv`. The shipped SkeletonKing row carries the native modulo-
+four RoundWalk branch, while older mappings retain the compatibility fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
@@ -1891,7 +1899,7 @@ the complete target header even when they upsert only one row.
 | `portals.tsv` | `portal_id` | Static source and destination level endpoints with optional stable `portal_symbol`, validated against the composed world geometry and walkability during activation. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; optional `drop_item_symbol` and `drop_unique_item_symbol` cross-check catalog-backed drops, and authored levels and positions are validated against active world bounds. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
-| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning, including Counselor movement-admission chance, Mega delegated delay-admission chance, and Mega intermediate movement chance. |
+| `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning, including Counselor movement-admission chance, Mega delegated delay-admission chance, Mega intermediate movement chance, and SkeletonKing RoundWalk admission modulo. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, optional Snake distance-delay admission tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; other effects retain numeric amounts. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
@@ -1931,7 +1939,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.303.0"
+    "version": "1.304.0"
   },
   "dependencyConstraints": [
     {
@@ -1963,7 +1971,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.303.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.304.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
