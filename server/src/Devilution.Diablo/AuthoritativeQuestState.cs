@@ -5,10 +5,14 @@ namespace Devilution.Diablo;
 /** Resolves optional stable quest symbols without breaking numeric legacy rows. */
 internal static class AuthoritativeQuestIdentity
 {
-    public static uint Resolve(TsvRow row, StableContentIdCatalog? stableIds)
+    public static uint Resolve(
+        TsvRow row,
+        StableContentIdCatalog? stableIds,
+        string numericColumn = "quest_id",
+        string symbolColumn = "quest_symbol")
     {
-        var numericId = row.RequiredUInt32("quest_id");
-        var symbol = ReadSymbol(row);
+        var numericId = row.RequiredUInt32(numericColumn);
+        var symbol = ReadSymbol(row, symbolColumn);
         if (symbol.Length == 0)
             return numericId;
         if (stableIds is null) {
@@ -33,11 +37,44 @@ internal static class AuthoritativeQuestIdentity
         return resolvedId;
     }
 
-    public static string ReadSymbol(TsvRow row)
-        => row.TryGet("quest_symbol", out var symbol)
+    public static string ReadSymbol(TsvRow row, string symbolColumn = "quest_symbol")
+        => row.TryGet(symbolColumn, out var symbol)
             && !string.IsNullOrWhiteSpace(symbol)
             ? symbol
             : string.Empty;
+
+    public static uint ResolveOptional(
+        TsvRow row,
+        StableContentIdCatalog? stableIds,
+        string numericColumn,
+        string symbolColumn)
+    {
+        var numericId = row.OptionalUInt32(numericColumn);
+        if (!row.TryGet(symbolColumn, out var symbol)
+            || string.IsNullOrWhiteSpace(symbol)) {
+            return numericId;
+        }
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Quest row {row.LineNumber} requires stable IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("quest", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Quest row {row.LineNumber} references unknown stable quest symbol '{symbol}'.",
+                exception);
+        }
+        if (numericId != 0 && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"Quest row {row.LineNumber} maps quest {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        return resolvedId;
+    }
 }
 
 /** Mutable server-owned progress for one quest definition. */
@@ -193,7 +230,11 @@ public static class AuthoritativeQuestCatalog
                 dialogueVariable2: row.OptionalInt32("dialogue_variable2"),
                 completionVariable1: row.OptionalInt32("completion_variable1"),
                 completionVariable2: row.OptionalInt32("completion_variable2"),
-                completionActivateQuestId: row.OptionalUInt32("completion_activate_quest_id"),
+                completionActivateQuestId: AuthoritativeQuestIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "completion_activate_quest_id",
+                    "completion_activate_quest_symbol"),
                 activateOnRoute: row.OptionalInt32("route_activation") != 0,
                 completionDiablo: row.OptionalInt32("completion_diablo") != 0,
                 completionRewardItemId: row.OptionalUInt32("completion_reward_item_id"),

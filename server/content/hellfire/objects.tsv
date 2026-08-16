@@ -1,5 +1,5 @@
-entity_id	object_id	level_id	position_x	position_y	activated	quest_id	effect_kind	effect_amount	missile_passable	breakable	destroyed	trap_armed
-2401	6001	24	20	20	0	3022	QuestSequence	1	0	0	0	0
-2402	6002	24	22	20	0	3022	QuestSequence	2	0	0	0	0
-2403	6003	24	24	20	0	3022	QuestSequence	3	0	0	0	0
-2404	6004	0	36	22	0	3017	QuestItemCompletion	43	0	0	0	0
+entity_id	object_id	level_id	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	missile_passable	breakable	destroyed	trap_armed
+2401	6001	24	20	20	0	3022	na_krul	QuestSequence	1	0	0	0	0
+2402	6002	24	22	20	0	3022	na_krul	QuestSequence	2	0	0	0	0
+2403	6003	24	24	20	0	3022	na_krul	QuestSequence	3	0	0	0	0
+2404	6004	0	36	22	0	3017	grave_matters	QuestItemCompletion	43	0	0	0	0

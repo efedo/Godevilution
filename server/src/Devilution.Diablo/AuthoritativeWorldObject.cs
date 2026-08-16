@@ -86,7 +86,10 @@ public static class AuthoritativeWorldObjectCatalog
         }
     }
 
-    public static IReadOnlyList<AuthoritativeWorldObject> LoadTsv(string sourcePath, string contents)
+    public static IReadOnlyList<AuthoritativeWorldObject> LoadTsv(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var objects = table.Rows.Select(row => new AuthoritativeWorldObject(
@@ -96,7 +99,11 @@ public static class AuthoritativeWorldObjectCatalog
             row.RequiredInt32("position_x"),
             row.RequiredInt32("position_y"),
             row.OptionalInt32("activated") != 0,
-            row.OptionalUInt32("quest_id"),
+            AuthoritativeQuestIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "quest_id",
+                "quest_symbol"),
             ParseEffectKind(row),
             row.OptionalInt32("effect_amount"),
             row.OptionalUInt32("quest_progress", 1),

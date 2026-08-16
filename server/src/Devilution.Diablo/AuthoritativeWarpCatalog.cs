@@ -75,7 +75,8 @@ public static class AuthoritativeWarpCatalog
     public static IReadOnlyList<AuthoritativeWarpTarget> LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeWorld world)
+        AuthoritativeWorld world,
+        StableContentIdCatalog? stableIds = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         var table = TsvTable.Parse(sourcePath, contents);
@@ -89,7 +90,11 @@ public static class AuthoritativeWarpCatalog
                 row.RequiredUInt32("target_level_id"),
                 row.RequiredInt32("target_x"),
                 row.RequiredInt32("target_y"),
-                row.OptionalUInt32("required_quest_id"),
+                AuthoritativeQuestIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "required_quest_id",
+                    "required_quest_symbol"),
                 row.OptionalInt32("required_quest_completed") != 0);
             if (!world.ContainsLevel(target.SourceLevelId)
                 || !world.ContainsLevel(target.TargetLevelId)) {

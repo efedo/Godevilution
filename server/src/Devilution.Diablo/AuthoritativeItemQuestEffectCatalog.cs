@@ -75,13 +75,18 @@ public sealed class AuthoritativeItemQuestEffectCatalog
 
     public static AuthoritativeItemQuestEffectCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemQuestEffectCatalog(table.Rows.Select(row =>
             new AuthoritativeItemQuestEffectDefinition(
                 row.RequiredUInt32("item_id"),
-                row.RequiredUInt32("quest_id"),
+                AuthoritativeQuestIdentity.Resolve(
+                    row,
+                    stableIds,
+                    "quest_id",
+                    "quest_symbol"),
                 ParseEffectKind(row.Required("effect_kind"), sourcePath, row.LineNumber),
                 row.OptionalInt32("effect_amount"))));
     }

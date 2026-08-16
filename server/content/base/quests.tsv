@@ -1,2 +1,2 @@
-quest_id	quest_symbol	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity	dialogue_variable1	dialogue_variable2	completion_variable1	completion_variable2	completion_activate_quest_id	route_activation	completion_diablo	completion_reward_item_id	completion_reward_item_level
-3001	magic_rock	1	3	0	0	0	0	0	0	0	0	0	NONE	0	0	0	0	0	1	0	0	0
+quest_id	quest_symbol	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity	dialogue_variable1	dialogue_variable2	completion_variable1	completion_variable2	completion_activate_quest_id	completion_activate_quest_symbol	route_activation	completion_diablo	completion_reward_item_id	completion_reward_item_level
+3001	magic_rock	1	3	0	0	0	0	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0	0

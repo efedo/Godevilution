@@ -304,7 +304,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
                          warpsTable.SourcePath,
                          warpsTable.ToCanonicalTsv(),
-                         world)) {
+                         world,
+                         stableIds)) {
                 world.AddWarpTarget(warp);
             }
         }
@@ -383,7 +384,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var objects = content.TryGetTable("objects.tsv", out var objectsTable)
             ? AuthoritativeWorldObjectCatalog.LoadTsv(
                 objectsTable.SourcePath,
-                objectsTable.ToCanonicalTsv())
+                objectsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (world is not null && objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
@@ -477,7 +479,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var itemQuestEffectsTable)
             ? AuthoritativeItemQuestEffectCatalog.LoadTsv(
                 itemQuestEffectsTable.SourcePath,
-                itemQuestEffectsTable.ToCanonicalTsv())
+                itemQuestEffectsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (itemQuestEffects is not null) {
             if (itemCatalog is null || quests is null)
