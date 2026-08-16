@@ -1112,6 +1112,10 @@ Status date: 2026-08-16
   the validated monster-missile mapping, retaining the native sequence when
   older mappings omit the optional column.
 
+- Schema 1.283 externalizes Resurrection's ordered eight-cell initial
+  placement probes in validated spell content, retaining the native probe
+  order when older mappings omit the optional column.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.

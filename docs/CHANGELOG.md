@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.282 Snake drift-pattern metadata to validated monster-missile
   content, preserving the native fallback for older mappings.
 
+- Add schema 1.283 Resurrection initial-placement metadata to validated spell
+  content, preserving the native probe order for older mappings.
+
 - Add additive server-owned spell display names to memorized and item-backed
   spell snapshots, sourced from validated spell-book content so Godot can
   present cast sources without maintaining a client-side spell-ID table.
