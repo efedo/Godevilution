@@ -17,12 +17,12 @@ Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0		3	lightning	0		Light
 Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0		25	apocalypse	0		Magic	0	15	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	40	0	1
 BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0		1	firebolt	0		Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
 Mega	InfernoControl	InfernoController	Ranged	100	0		21	inferno	0		Fire	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	5	40	10	3	5	5	1	2	0	0	1
-Bat	Rhino	BatCharge	RangedAvoidance	100	42	gloom_native_40	0		0			18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
-Bat	Lightning	MonsterMagic	Ranged	100	43	familiar_native_41	3	lightning	0		Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8
-Counselor	Firebolt	Firebolt	Ranged	100	107	counselor_native_105	1	firebolt	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	magistrate_native_106	30	charged_bolt	0		Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	LightningControl	Lightning	Ranged	100	109	cabalist_native_107	3	lightning	0		Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	Fireball	Fireball	Ranged	100	110	advocate_native_108	12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	Fireball	Fireball	Ranged	100	113	the_arch_litch_malignus_native_111	12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Zhar	Fireball	Fireball	Ranged	100	107	counselor_native_105	12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Lazarus	Fireball	Fireball	Ranged	100	113	the_arch_litch_malignus_native_111	12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Bat	Rhino	BatCharge	RangedAvoidance	100	42		0		0			18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Bat	Lightning	MonsterMagic	Ranged	100	43		3	lightning	0		Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8
+Counselor	Firebolt	Firebolt	Ranged	100	107		1	firebolt	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108		30	charged_bolt	0		Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	LightningControl	Lightning	Ranged	100	109		3	lightning	0		Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	Fireball	Fireball	Ranged	100	110		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	Fireball	Fireball	Ranged	100	113		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Zhar	Fireball	Fireball	Ranged	100	107		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Lazarus	Fireball	Fireball	Ranged	100	113		12	fireball	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1

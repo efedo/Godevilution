@@ -1,2 +1,1 @@
 warp_id	warp_symbol	source_level_id	source_level_symbol	trigger_x	trigger_y	target_level_id	target_level_symbol	target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed
-warp_id	source_level_id		trigger_x	trigger_y	target_level_id		target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed

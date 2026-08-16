@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Align the base-pack quest-state and warp overlays with the current stable
+  identity schemas, and keep base-only monster missile rows numeric-only when
+  their symbols belong to the Hellfire catalog.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
