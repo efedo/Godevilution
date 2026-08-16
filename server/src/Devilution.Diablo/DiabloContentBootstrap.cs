@@ -400,25 +400,31 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,
                 questTypesTable.ToCanonicalTsv(),
-                setLevelNames)
+                setLevelNames,
+                stableIds)
             : null;
+        if (stableIds is not null && questTypes is not null)
+            stableIds.ValidateReferences("quest", questId => questTypes.TryGet(questId, out _));
         var questPools = content.TryGetTable("quest_pools.tsv", out var questPoolsTable)
             ? AuthoritativeQuestPoolCatalog.LoadTsv(
                 questPoolsTable.SourcePath,
                 questPoolsTable.ToCanonicalTsv(),
-                questTypes)
+                questTypes,
+                stableIds)
             : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
             ? AuthoritativeQuestCatalog.LoadTsv(
                 questsTable.SourcePath,
                 questsTable.ToCanonicalTsv(),
-                questTypes)
+                questTypes,
+                stableIds)
             : null;
         if (content.TryGetTable("quest_states.tsv", out var questStatesTable)) {
             var additionalQuests = AuthoritativeQuestCatalog.LoadTsv(
                 questStatesTable.SourcePath,
                 questStatesTable.ToCanonicalTsv(),
-                questTypes);
+                questTypes,
+                stableIds);
             quests = quests is null
                 ? additionalQuests
                 : AuthoritativeQuestCatalog.Merge(

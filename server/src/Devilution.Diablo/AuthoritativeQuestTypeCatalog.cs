@@ -11,7 +11,11 @@ public sealed record AuthoritativeQuestTypeDefinition(
     int MultiplayerLevel,
     string LevelType,
     int SetLevel,
-    bool SinglePlayerOnly);
+    bool SinglePlayerOnly)
+{
+    /** Optional stable symbol resolved from content_ids.tsv. */
+    public string StableSymbol { get; init; } = string.Empty;
+}
 
 /** Validated quest metadata used to admit external quest state rows. */
 public sealed class AuthoritativeQuestTypeCatalog
@@ -47,19 +51,22 @@ public sealed class AuthoritativeQuestTypeCatalog
     public static AuthoritativeQuestTypeCatalog LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeSetLevelNameCatalog? setLevelNames = null)
+        AuthoritativeSetLevelNameCatalog? setLevelNames = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var catalog = new AuthoritativeQuestTypeCatalog(table.Rows.Select(row =>
             new AuthoritativeQuestTypeDefinition(
-                row.RequiredUInt32("quest_id"),
+                AuthoritativeQuestIdentity.Resolve(row, stableIds),
                 row.RequiredUInt32("native_quest_id"),
                 row.Required("name"),
                 row.RequiredInt32("single_player_level"),
                 row.RequiredInt32("multiplayer_level"),
                 OptionalText(row, "level_type"),
                 row.OptionalInt32("set_level", 0),
-                ParseFlag(row, "single_player_only"))));
+                ParseFlag(row, "single_player_only")) {
+                StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
+            }));
         if (setLevelNames is not null
             && catalog.Definitions.Any(definition =>
                 !setLevelNames.TryGet(definition.SetLevel, out _))) {

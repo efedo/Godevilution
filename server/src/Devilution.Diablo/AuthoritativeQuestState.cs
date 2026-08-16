@@ -2,6 +2,44 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Resolves optional stable quest symbols without breaking numeric legacy rows. */
+internal static class AuthoritativeQuestIdentity
+{
+    public static uint Resolve(TsvRow row, StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.RequiredUInt32("quest_id");
+        var symbol = ReadSymbol(row);
+        if (symbol.Length == 0)
+            return numericId;
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Quest row {row.LineNumber} requires stable IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("quest", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Quest row {row.LineNumber} references unknown stable quest symbol '{symbol}'.",
+                exception);
+        }
+        if (numericId != 0 && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"Quest row {row.LineNumber} maps quest {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        return resolvedId;
+    }
+
+    public static string ReadSymbol(TsvRow row)
+        => row.TryGet("quest_symbol", out var symbol)
+            && !string.IsNullOrWhiteSpace(symbol)
+            ? symbol
+            : string.Empty;
+}
+
 /** Mutable server-owned progress for one quest definition. */
 public sealed class AuthoritativeQuestState
 {
@@ -75,6 +113,9 @@ public sealed class AuthoritativeQuestState
         CompletionRewardItemLevel = completionRewardItemLevel;
     }
 
+    /** Optional stable symbol resolved from content_ids.tsv. */
+    public string StableSymbol { get; init; } = string.Empty;
+
     public uint QuestId { get; }
     public uint LevelId { get; set; }
     public uint Progress { get; set; }
@@ -122,11 +163,12 @@ public static class AuthoritativeQuestCatalog
     public static IReadOnlyList<AuthoritativeQuestState> LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeQuestTypeCatalog? questTypes = null)
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var quests = table.Rows.Select(row => {
-            var questId = row.RequiredUInt32("quest_id");
+            var questId = AuthoritativeQuestIdentity.Resolve(row, stableIds);
             if (questTypes is not null && !questTypes.TryGet(questId, out _))
                 throw new InvalidDataException(
                     $"Quest row {row.LineNumber} references unknown quest type {questId}.");
@@ -155,7 +197,9 @@ public static class AuthoritativeQuestCatalog
                 activateOnRoute: row.OptionalInt32("route_activation") != 0,
                 completionDiablo: row.OptionalInt32("completion_diablo") != 0,
                 completionRewardItemId: row.OptionalUInt32("completion_reward_item_id"),
-                completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level"));
+                completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level")) {
+                StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
+            };
         }).ToArray();
         if (quests.Select(quest => quest.QuestId).Distinct().Count() != quests.Length)
             throw new InvalidDataException($"Quest table '{sourcePath}' contains duplicate quest IDs.");

@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.231.0"
+    "version": "1.232.0"
   },
   "dependencyConstraints": [
     {
@@ -15,6 +15,11 @@
     }
   ],
   "overlays": [
+    {
+      "table": "content_ids.tsv",
+      "keys": ["kind", "symbol"],
+      "mode": "upsert"
+    },
     {
       "table": "combat.tsv",
       "keys": ["base_attack_damage"],

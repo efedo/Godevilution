@@ -1,14 +1,14 @@
-pool_id	quest_id
-1	3013
-1	3014
-2	3007
-2	3008
-2	3003
-3	3009
-3	3001
-3	3010
-4	3002
-4	3004
-4	3011
-5	3005
-5	3012
+pool_id	quest_id	quest_symbol
+1	3013	king_leoric
+1	3014	poisoned_water
+2	3007	butcher
+2	3008	ogdens_sign
+2	3003	gharbads_weak
+3	3009	halls_of_the_blind
+3	3001	magic_rock
+3	3010	valor
+4	3002	black_mushroom
+4	3004	zhar_the_mad
+4	3011	anvil_of_fury
+5	3005	lachdanan
+5	3012	warlord_of_blood

@@ -122,12 +122,13 @@ public sealed class AuthoritativeQuestPoolCatalog
     public static AuthoritativeQuestPoolCatalog LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeQuestTypeCatalog? questTypes = null)
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeQuestPoolCatalog(table.Rows.Select(row =>
             new AuthoritativeQuestPoolEntry(
                 row.RequiredInt32("pool_id"),
-                row.RequiredUInt32("quest_id"))), questTypes);
+                AuthoritativeQuestIdentity.Resolve(row, stableIds))), questTypes);
     }
 }
