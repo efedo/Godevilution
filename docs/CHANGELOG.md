@@ -74,6 +74,9 @@ All notable changes to this fork are documented below.
 
 - Validate direct store-stock spell identities against the active spell catalog,
   preventing malformed stock metadata from silently using a zero-spell fallback.
+
+- Validate monster-missile summon identities against active monster types,
+  preventing server-owned summon projectiles from creating unknown monsters.
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
