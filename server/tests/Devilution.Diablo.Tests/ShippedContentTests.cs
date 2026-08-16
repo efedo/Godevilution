@@ -118,6 +118,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsPortalEndpointsOutsideTheActiveWorld()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var portals = basePack.Tables.Single(table => table.SourcePath == "portals.tsv");
+        var invalidPortals = TsvTable.Parse(
+            portals.SourcePath,
+            portals.ToCanonicalTsv().Replace(
+                "1\t1\t2\t2\t2\t3\t4",
+                "1\t1\t40\t2\t2\t3\t4",
+                StringComparison.Ordinal));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == portals.SourcePath ? invalidPortals : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Portal 1 contains an endpoint outside its level", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BaseProceduralActivationCarriesTheShippedMonsterDrop()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

@@ -110,6 +110,26 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void ValidatesStaticPortalEndpointsAgainstWorldGeometry()
+    {
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\tnone\n2\t3\t3\tnone\n");
+        var portals = AuthoritativePortalCatalog.LoadTsv(
+            "portals.tsv",
+            "portal_id\tsource_level_id\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_position_x\tdestination_position_y\n"
+                + "1\t1\t1\t1\t2\t2\t2\n");
+
+        AuthoritativePortalCatalog.ValidateWorld(portals, world);
+        Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
+            [new AuthoritativePortal(2, 1, 3, 0, 2, 0, 0)],
+            world));
+        Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
+            [new AuthoritativePortal(3, 1, 0, 0, 9, 0, 0)],
+            world));
+    }
+
+    [Fact]
     public void LoadsAndValidatesMultiplayerDeathDropSuppression()
     {
         var world = AuthoritativeWorld.LoadTsv(
