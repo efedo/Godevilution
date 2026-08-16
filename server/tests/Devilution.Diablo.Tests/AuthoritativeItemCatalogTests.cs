@@ -767,6 +767,26 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void UniqueItemBaseReferencesMustResolveInTheActiveCatalog()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ]);
+        var validUniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Ember Blade", 7, 1, 3650, []),
+        ]);
+
+        validUniques.ValidateBaseItems(items);
+
+        var invalidUniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1002, "Missing Base", 8, 1, 3650, []),
+        ]);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            invalidUniques.ValidateBaseItems(items));
+        Assert.Contains("Unique item 1002 references unknown base item 8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AppliesLegacyUniqueFlagsAndSpellPower()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

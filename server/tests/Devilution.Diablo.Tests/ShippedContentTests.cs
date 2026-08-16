@@ -247,6 +247,45 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownUniqueItemBase()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var uniqueItems = basePack.Tables.Single(table => table.SourcePath == "unique_items.tsv");
+        var invalidUniqueItems = TsvTable.Parse(
+            uniqueItems.SourcePath,
+            string.Join(
+                '\n',
+                uniqueItems.ToCanonicalTsv()
+                    .Split('\n')
+                    .Select((line, index) => {
+                        if (index == 0 || !line.StartsWith("1001\t", StringComparison.Ordinal))
+                            return line;
+                        var columns = line.Split('\t');
+                        columns[2] = "9999";
+                        return string.Join('\t', columns);
+                    })));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == uniqueItems.SourcePath
+                    ? invalidUniqueItems
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Unique item 1001 references unknown base item 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
