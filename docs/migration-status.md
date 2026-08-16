@@ -105,6 +105,10 @@ Status date: 2026-08-16
   `GenerateRnd` upper bound, preserving the native range of ten for older
   mappings.
 
+- Familiar post-melee Lightning now honors the existing optional
+  `projectile_damage` missile field before applying its random-damage range,
+  preserving the legacy random roll when older mappings omit a fixed value.
+
 - AiRangedAvoidance adjacent attack admission now uses optional missile fields
   for its validated base, intelligence scale, and divisor, preserving the
   native 6,000/1,000-per-intelligence band and Acid half-band for older

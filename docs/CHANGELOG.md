@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Honor existing validated `projectile_damage` metadata for Familiar
+  post-melee Lightning mappings, preserving the configured random-damage
+  fallback when older mappings omit a fixed value.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.

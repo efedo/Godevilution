@@ -650,6 +650,8 @@ When present, the mapping's `projectile_speed`, `projectile_lifetime`, and
 `damage_type` fields override the corresponding spell transport values, and
 `projectile_damage` supplies a fixed impact value; omitted fields retain the
 native spell-backed transport and monster-damage defaults.
+The same fixed-impact override is honored by the validated Familiar
+post-melee Lightning mapping before its optional random-damage range.
 The shipped Succubus and Lazarus rows now carry the native Blood Star transport
 values (`projectile_speed=16`, `projectile_lifetime=256`) explicitly, so the
 active pack no longer depends on the spell-row transport fallback for those
@@ -2454,7 +2456,8 @@ omitted values retain the native 10/40 compatibility values.
 Schema 1.163 adds the optional `projectile_damage` column to
 `monster_missiles.tsv`. Mapped monster projectiles use the validated fixed
 impact value when present; omitted values retain behavior-specific/native
-damage derivation. The checked-in Diablo Apocalypse mapping declares its native
+damage derivation, including the Familiar post-melee Lightning random-damage
+fallback. The checked-in Diablo Apocalypse mapping declares its native
 40-point impact explicitly.
 
 Schema 1.164 adds the optional `maximum_resistance` column to `combat.tsv`.
