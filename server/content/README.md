@@ -963,6 +963,11 @@ Large Axe, Broad Axe, Battle Axe, Small Axe, and Great Axe. Their stable item
 symbols, native display names, cursor projections, and `Axe` generation tags
 are validated against the native table.
 
+Schema 1.258 normalizes the next five Hellfire mace-family projections: Mace,
+Maul, Flail, Morning Star, and War Hammer. Their stable symbols, corrected
+native indices, display names, cursor projections, and `Mace` generation tags
+are validated against native item and unique-item definitions.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

@@ -29,6 +29,10 @@ All notable changes to this fork are documented below.
   Axe, Battle Axe, Small Axe, and Great Axe, including their native `Axe`
   generation tags.
 
+- Normalize the next five Hellfire mace-family projections: Mace, Maul, Flail,
+  Morning Star, and War Hammer, including corrected native indices and `Mace`
+  generation tags.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

@@ -984,6 +984,11 @@ Status date: 2026-08-16
   projections, and `Axe` generation tags for the next five Hellfire axe
   base-item rows: Large Axe, Broad Axe, Battle Axe, Small Axe, and Great Axe.
 
+- Schema 1.258 normalizes stable symbols, corrected native indices, display
+  names, native cursor projections, and `Mace` generation tags for the next
+  five Hellfire mace-family rows: Mace, Maul, Flail, Morning Star, and War
+  Hammer.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 
