@@ -72,6 +72,11 @@ Status date: 2026-08-16
   `snake_adjacent_attack_chance_intelligence_scale`), preserving the native
   20-plus-intelligence band with fallback behavior for older packs.
 
+- Bat long-idle and fresh-mode movement admission is now validated through
+  `bat_movement_chance_base`, `bat_movement_chance_intelligence_scale`, and
+  `bat_movement_fresh_chance_bonus` monster-type fields, preserving the native
+  13/1/50 bands with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1326,6 +1331,10 @@ Status date: 2026-08-16
 - Schema 1.311 externalizes Snake's adjacent attack-admission chance through
   optional `SnakeCharge` missile data, retaining the native
   20-plus-intelligence fallback for older mappings.
+
+- Schema 1.312 externalizes Bat's long-idle and fresh-mode movement bands
+  through optional monster-type data, retaining the native 13/1/50 fallback
+  for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

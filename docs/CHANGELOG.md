@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.312 validated Bat movement-band fields to
+  `monster_types.tsv`, preserving the native 13/1/50 fallback for older
+  mappings.
+
 - Add schema 1.311 validated Snake adjacent attack-admission chance fields to
   `monster_missiles.tsv`, preserving the native 20-plus-intelligence fallback
   for older mappings.
