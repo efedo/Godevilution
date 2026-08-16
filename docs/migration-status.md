@@ -144,6 +144,10 @@ Status date: 2026-08-16
   phase after a successful player collision, while blocked, missed, and
   expired charges retain native removal behavior.
 
+- MonsterArrow travel now consumes the validated `projectile_speed` as its
+  per-tick tile-step count, while omitted values retain the native speed-one
+  fallback and lifetime behavior.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

@@ -27,6 +27,9 @@ All notable changes to this fork are documented below.
   `projectile_impact_lifetime` after a successful player impact; blocked,
   missed, and expired charges retain native removal behavior.
 
+- MonsterArrow mappings now advance up to their validated `projectile_speed`
+  tiles per simulation tick, while speed-one rows retain the native fallback.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.

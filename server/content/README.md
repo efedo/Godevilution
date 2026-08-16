@@ -603,7 +603,9 @@ mapping row supplies the native close-range retreat distance and
 selection. The controller is selected by projectile behavior, so valid content
 may use a different `native_ai` label or missile name; legacy `Targeted` rows
 remain compatible. Their validated `projectile_speed` now controls arrow travel;
-their validated `projectile_lifetime` controls the server-owned lifetime when
+each simulation tick advances up to that many tile steps, while omitted values
+retain the native speed-one fallback. Their validated `projectile_lifetime`
+controls the server-owned lifetime when
 present, and omitted values retain the native speed-one and distance-based
 lifetime fallbacks. The optional validated `damage_type` is carried into the
 impact path and applies the target's matching resistance; omitted values retain
