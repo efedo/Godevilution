@@ -677,6 +677,11 @@ indices 156–160 and the native Arena Potion at index 167. Their stable IDs
 preserve native item types, miscellaneous IDs, level gates, values, cursor
 identities, drop rates, and usability.
 
+Schema 1.276 corrects the native compatibility projections for all normalized
+fixed and spell-backed scroll rows. Their stable identities now use the actual
+native enum indices, with native gaps retained for non-scroll rows, and the
+duplicate healing-scroll alias is removed.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

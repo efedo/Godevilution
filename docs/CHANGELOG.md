@@ -40,6 +40,10 @@ All notable changes to this fork are documented below.
   item types, miscellaneous IDs, level gates, values, cursor projections, drop
   rates, and usability.
 
+- Add schema 1.276 native-compatibility corrections for all normalized fixed
+  and spell-backed scroll rows, retaining their actual native enum indices and
+  removing the duplicate healing-scroll alias.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.
