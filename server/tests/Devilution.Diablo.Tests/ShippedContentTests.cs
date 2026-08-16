@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.265.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.266.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1074,7 +1074,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.265.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.266.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1600,7 +1600,7 @@ public sealed class ShippedContentTests
             Assert.Equal(itemId, stableIds.Resolve("item", symbol));
             var rune = hellfireItems.GetRequired(itemId);
             Assert.Equal(symbol, rune.StableSymbol);
-            Assert.Equal(spellId, stableIds.Resolve("spell", spellSymbol));
+            Assert.Equal((uint)spellId, stableIds.Resolve("spell", spellSymbol));
             Assert.Equal(nativeIndex, rune.NativeItemIndex);
             Assert.Equal(cursor, rune.NativeCursorGraphic);
             Assert.Equal(miscId, rune.MiscId);
@@ -1611,6 +1611,45 @@ public sealed class ShippedContentTests
             Assert.True(rune.Usable);
             Assert.Contains("Rune", rune.GenerationTags, StringComparer.OrdinalIgnoreCase);
             Assert.True(hellfireItems.CanDropAtMonsterLevel(itemId, rune.MinimumMonsterLevel));
+        }
+        var scrollExpectations = new[] {
+            ("scroll_of_town_portal_fixed", 2111U, 28, 21, 39, 4, 200, 0),
+            ("scroll_of_resurrect_fixed", 2112U, 35, 22, 32, 1, 250, 0),
+            ("scroll_of_healing", 2113U, 92, 21, 2, 1, 50, 1),
+            ("scroll_of_search", 2114U, 93, 21, 46, 1, 50, 1),
+            ("scroll_of_lightning", 2115U, 94, 22, 3, 4, 150, 1),
+            ("scroll_of_resurrect", 2116U, 96, 22, 32, 1, 250, 1),
+            ("scroll_of_fire_wall", 2117U, 97, 22, 6, 4, 400, 1),
+            ("scroll_of_inferno", 2118U, 98, 22, 21, 1, 100, 1),
+            ("scroll_of_town_portal", 2119U, 99, 21, 39, 4, 200, 1),
+            ("scroll_of_flash", 2120U, 100, 22, 4, 6, 500, 1),
+            ("scroll_of_infravision", 2121U, 101, 21, 9, 8, 600, 1),
+            ("scroll_of_phasing", 2122U, 102, 21, 10, 6, 200, 1),
+            ("scroll_of_mana_shield", 2123U, 103, 21, 11, 8, 1200, 1),
+            ("scroll_of_flame_wave", 2124U, 104, 22, 15, 10, 650, 1),
+            ("scroll_of_fireball", 2125U, 105, 22, 12, 8, 300, 1),
+            ("scroll_of_stone_curse", 2126U, 106, 22, 8, 6, 800, 1),
+            ("scroll_of_chain_lightning", 2127U, 107, 22, 16, 10, 750, 1),
+            ("scroll_of_guardian", 2128U, 108, 22, 7, 12, 950, 1),
+            ("scroll_of_nova", 2129U, 110, 21, 18, 14, 1300, 1),
+            ("scroll_of_golem", 2130U, 111, 22, 52, 10, 1100, 1),
+            ("scroll_of_teleport", 2131U, 113, 21, 23, 14, 3000, 1),
+            ("scroll_of_apocalypse", 2132U, 114, 21, 25, 22, 2000, 1),
+        };
+        foreach (var (symbol, itemId, nativeIndex, miscId, spellId, minimumLevel, value, dropRate) in scrollExpectations) {
+            Assert.Equal(itemId, stableIds.Resolve("item", symbol));
+            var scroll = hellfireItems.GetRequired(itemId);
+            Assert.Equal(symbol, scroll.StableSymbol);
+            Assert.Equal(nativeIndex, scroll.NativeItemIndex);
+            Assert.Equal(1, scroll.NativeCursorGraphic);
+            Assert.Equal(miscId, scroll.MiscId);
+            Assert.Equal(spellId, scroll.SpellId);
+            Assert.Equal(DiabloItemSpellSourceKind.ConsumableItem, scroll.SpellSourceKind);
+            Assert.Equal(minimumLevel, scroll.MinimumMonsterLevel);
+            Assert.Equal(dropRate, scroll.DropRate);
+            Assert.Equal(value, scroll.Value);
+            Assert.True(scroll.Usable);
+            Assert.Contains("Scroll", scroll.GenerationTags, StringComparer.OrdinalIgnoreCase);
         }
         Assert.Equal(("the_undead_crown", "The Undead Crown", 82), (
             hellfireItems.GetRequired(111).StableSymbol,

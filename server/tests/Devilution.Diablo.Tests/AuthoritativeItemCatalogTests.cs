@@ -869,6 +869,27 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LegacyScrollMiscellaneousIdsPreserveNativeSourceIdentity()
+    {
+        const string header = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n";
+        var itemData = header
+            + "IDI_PORTAL\t0\tMisc\tUnequippable\tSCROLL_OF\tMisc\tNONE\tScroll of Town Portal\t\t4\t0\t0\t0\t0\t0\t0\t0\t0\t\tSCROLL\tTownPortal\ttrue\t200\n"
+            + "IDI_RESURRECT\t0\tMisc\tUnequippable\tSCROLL_OF\tMisc\tNONE\tScroll of Resurrect\t\t1\t0\t0\t0\t0\t0\t0\t0\t0\t\tSCROLLT\tResurrect\ttrue\t250\n";
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(39, 35, 0, 0, 0, 0) { NativeSpellId = 7 },
+            new AuthoritativeSpellDefinition(32, 20, 0, 0, 0, 0) { NativeSpellId = 32 },
+        ]);
+
+        var items = AuthoritativeItemCatalog.LoadLegacyTsv(
+            "itemdat.tsv",
+            itemData,
+            spellCatalog: spells);
+
+        Assert.Equal([21, 22], items.Definitions.Select(item => item.MiscId));
+        Assert.Equal([39, 32], items.Definitions.Select(item => item.SpellId));
+    }
+
+    [Fact]
     public void UnmappedLegacySpellSourcesAreRejectedWhenAStableCatalogIsActive()
     {
         const string itemData = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
