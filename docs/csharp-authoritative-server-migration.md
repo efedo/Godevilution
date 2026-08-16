@@ -688,6 +688,12 @@ blue-book cursor projection. Dynamic spell assignment and book-cost mutation
 remain a separate behavior migration because the native spell is selected when
 the item is generated.
 
+Schema 1.278 adds validated spell-book metadata for all 23 native bookable
+spells and a server-owned deterministic generator. Generated books now apply
+the native spell name, book cost, intelligence requirement, and magic-school
+cursor while selecting an eligible external template. Reading/learning books
+and wiring generation into store and world-drop flows remain follow-up work.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

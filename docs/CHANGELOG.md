@@ -49,6 +49,11 @@ All notable changes to this fork are documented below.
   identity, and the blue-book cursor projection while leaving dynamic spell
   assignment for a follow-up behavior migration.
 
+- Add schema 1.278 validated metadata for all 23 native bookable spells and a
+  deterministic server-owned generator that applies spell names, book costs,
+  intelligence requirements, and magic-school cursor projections; leave book
+  reading/learning and store/drop integration for follow-up work.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.
