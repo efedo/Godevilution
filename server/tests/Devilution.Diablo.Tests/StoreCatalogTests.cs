@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -84,6 +85,42 @@ public sealed class StoreCatalogTests
         var exception = Assert.Throws<InvalidDataException>(() =>
             invalidPricing.ValidateSpellReferences(spells));
         Assert.Contains("Store service pricing references unknown spell 8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SpellStaffPricingResolvesStableSymbolsAndRejectsMismatches()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 7),
+        ]);
+        var validPricing = StoreServicePricing.LoadTsv(
+            "store_services.tsv",
+            "key\tspell_id\tspell_symbol\tvalue\nspell_staff_cost\t7\tfireball\t100\n",
+            stableIds);
+
+        Assert.Equal(100U, validPricing.GetSpellStaffCost(7));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StoreServicePricing.LoadTsv(
+                "store_services.tsv",
+                "key\tspell_id\tspell_symbol\tvalue\nspell_staff_cost\t8\tfireball\t100\n",
+                stableIds));
+        Assert.Contains("maps spell 8 to symbol 'fireball'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SpellStaffPricingRejectsUnknownStableSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 7),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StoreServicePricing.LoadTsv(
+                "store_services.tsv",
+                "key\tspell_id\tspell_symbol\tvalue\nspell_staff_cost\t0\tmissing\t100\n",
+                stableIds));
+        Assert.Contains("references unknown stable spell symbol 'missing'", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

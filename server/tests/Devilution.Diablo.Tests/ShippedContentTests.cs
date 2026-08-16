@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.227.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.228.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -354,7 +354,7 @@ public sealed class ShippedContentTests
         var pricing = basePack.Tables.Single(table => table.SourcePath == "store_services.tsv");
         var invalidPricing = TsvTable.Parse(
             pricing.SourcePath,
-            pricing.ToCanonicalTsv() + "spell_staff_cost\t9999\t100\n");
+            pricing.ToCanonicalTsv() + "spell_staff_cost\t9999\t\t100\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -805,7 +805,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.227.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.228.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
