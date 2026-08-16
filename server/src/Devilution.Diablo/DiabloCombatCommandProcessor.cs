@@ -7041,6 +7041,9 @@ public sealed class DiabloCombatCommandProcessor
         var damageRandomRange = missile.ProjectileDamageRandomRange > 0
             ? missile.ProjectileDamageRandomRange
             : 10;
+        var damage = missile.ProjectileDamage > 0
+            ? missile.ProjectileDamage
+            : random.RandomIntBetween(1, damageRandomRange);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -7051,7 +7054,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            random.RandomIntBetween(1, damageRandomRange),
+            damage,
             missile.DamageType ?? AuthoritativeDamageType.Lightning,
             0,
             checked((uint)lifetime)) {
