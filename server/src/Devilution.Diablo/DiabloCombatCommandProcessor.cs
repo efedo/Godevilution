@@ -6661,10 +6661,7 @@ public sealed class DiabloCombatCommandProcessor
             var attackChance = Math.Min(100, monster.Intelligence + 20);
             if (actionSeed % 100U >= (uint)attackChance) {
                 monster.StartSnakeDelay(
-                    Math.Max(
-                        0,
-                        10 - monster.Intelligence
-                            + (int)((actionSeed / 100U) % 10U)));
+                    ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: true));
                 return true;
             }
             return false;
@@ -6673,10 +6670,7 @@ public sealed class DiabloCombatCommandProcessor
         var delayBand = Math.Max(0, 35 - (2 * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand) {
             monster.StartSnakeDelay(
-                Math.Max(
-                    0,
-                    15 - monster.Intelligence
-                        + (int)((actionSeed / 100U) % 10U)));
+                ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: false));
             return true;
         }
 
@@ -7495,6 +7489,39 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.HorkDemonDelayBase
             : 10;
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
+    }
+
+    private static int ResolveSnakeDelay(
+        AuthoritativeMonsterMissileDefinition? missile,
+        uint actionSeed,
+        int intelligence,
+        bool adjacent)
+    {
+        var baseDelay = adjacent
+            ? missile?.SnakeAdjacentDelayBase > 0
+                ? missile.SnakeAdjacentDelayBase
+                : 10
+            : missile?.SnakeDistantDelayBase > 0
+                ? missile.SnakeDistantDelayBase
+                : 15;
+        var intelligenceScale = adjacent
+            ? missile?.SnakeAdjacentDelayIntelligenceScale > 0
+                ? missile.SnakeAdjacentDelayIntelligenceScale
+                : 1
+            : missile?.SnakeDistantDelayIntelligenceScale > 0
+                ? missile.SnakeDistantDelayIntelligenceScale
+                : 1;
+        var randomRange = adjacent
+            ? missile?.SnakeAdjacentDelayRandomRange > 0
+                ? missile.SnakeAdjacentDelayRandomRange
+                : 10
+            : missile?.SnakeDistantDelayRandomRange > 0
+                ? missile.SnakeDistantDelayRandomRange
+                : 10;
+        return Math.Max(
+            0,
+            checked(baseDelay - intelligenceScale * intelligence
+                + (int)((actionSeed / 100U) % (uint)randomRange)));
     }
 
     private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(

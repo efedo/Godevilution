@@ -68,7 +68,19 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional HorkDemon recovery-delay base; zero preserves native behavior. */
     int HorkDemonDelayBase = 0,
     /** Optional exclusive HorkDemon recovery-delay random range. */
-    int HorkDemonDelayRandomRange = 0);
+    int HorkDemonDelayRandomRange = 0,
+    /** Optional Snake adjacent-delay base before intelligence reduction. */
+    int SnakeAdjacentDelayBase = 0,
+    /** Optional Snake adjacent-delay intelligence reduction. */
+    int SnakeAdjacentDelayIntelligenceScale = 0,
+    /** Optional exclusive Snake adjacent-delay random range. */
+    int SnakeAdjacentDelayRandomRange = 0,
+    /** Optional Snake distant-delay base before intelligence reduction. */
+    int SnakeDistantDelayBase = 0,
+    /** Optional Snake distant-delay intelligence reduction. */
+    int SnakeDistantDelayIntelligenceScale = 0,
+    /** Optional exclusive Snake distant-delay random range. */
+    int SnakeDistantDelayRandomRange = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -129,6 +141,22 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && (definition.ProjectileBehavior
                         != AuthoritativeProjectileBehavior.HorkSpawn
                         || definition.HorkDemonDelayRandomRange <= 0)
+                || definition.SnakeAdjacentDelayBase < 0
+                || definition.SnakeAdjacentDelayIntelligenceScale < 0
+                || definition.SnakeAdjacentDelayRandomRange < 0
+                || definition.SnakeDistantDelayBase < 0
+                || definition.SnakeDistantDelayIntelligenceScale < 0
+                || definition.SnakeDistantDelayRandomRange < 0
+                || (definition.SnakeAdjacentDelayBase != 0
+                    || definition.SnakeAdjacentDelayIntelligenceScale != 0
+                    || definition.SnakeAdjacentDelayRandomRange != 0
+                    || definition.SnakeDistantDelayBase != 0
+                    || definition.SnakeDistantDelayIntelligenceScale != 0
+                    || definition.SnakeDistantDelayRandomRange != 0)
+                    && (definition.ProjectileBehavior
+                        != AuthoritativeProjectileBehavior.SnakeCharge
+                        || definition.SnakeAdjacentDelayRandomRange <= 0
+                        || definition.SnakeDistantDelayRandomRange <= 0)
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
@@ -365,7 +393,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("ranged_avoidance_delay_base"),
                 row.OptionalInt32("ranged_avoidance_delay_random_range"),
                 row.OptionalInt32("hork_demon_delay_base"),
-                row.OptionalInt32("hork_demon_delay_random_range"));
+                row.OptionalInt32("hork_demon_delay_random_range"),
+                row.OptionalInt32("snake_adjacent_delay_base"),
+                row.OptionalInt32("snake_adjacent_delay_intelligence_scale"),
+                row.OptionalInt32("snake_adjacent_delay_random_range"),
+                row.OptionalInt32("snake_distant_delay_base"),
+                row.OptionalInt32("snake_distant_delay_intelligence_scale"),
+                row.OptionalInt32("snake_distant_delay_random_range"));
         }));
     }
 

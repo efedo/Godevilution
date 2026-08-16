@@ -142,6 +142,24 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedSnakeDelayBands()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tsnake_adjacent_delay_base\tsnake_adjacent_delay_intelligence_scale\tsnake_adjacent_delay_random_range\tsnake_distant_delay_base\tsnake_distant_delay_intelligence_scale\tsnake_distant_delay_random_range\n"
+                + "Snake\tRhino\tSnakeCharge\t11\t2\t12\t16\t3\t14\n");
+
+        var snake = Assert.Single(catalog.Definitions);
+        Assert.Equal((11, 2, 12, 16, 3, 14), (
+            snake.SnakeAdjacentDelayBase,
+            snake.SnakeAdjacentDelayIntelligenceScale,
+            snake.SnakeAdjacentDelayRandomRange,
+            snake.SnakeDistantDelayBase,
+            snake.SnakeDistantDelayIntelligenceScale,
+            snake.SnakeDistantDelayRandomRange));
+    }
+
+    [Fact]
     public void RejectsRangedPostAttackDelayOnAvoidanceMappings()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
@@ -179,6 +197,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 AuthoritativeProjectileBehavior.BloodStar,
                 HorkDemonDelayBase: 1,
                 HorkDemonDelayRandomRange: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsSnakeDelayBandsOnNonSnakeMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                SnakeAdjacentDelayBase: 1,
+                SnakeAdjacentDelayRandomRange: 2,
+                SnakeDistantDelayBase: 1,
+                SnakeDistantDelayRandomRange: 2),
         ]));
     }
 
@@ -232,6 +265,12 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedAvoidanceDelayRandomRange);
         Assert.Equal(0, succubus.HorkDemonDelayBase);
         Assert.Equal(0, succubus.HorkDemonDelayRandomRange);
+        Assert.Equal(0, succubus.SnakeAdjacentDelayBase);
+        Assert.Equal(0, succubus.SnakeAdjacentDelayIntelligenceScale);
+        Assert.Equal(0, succubus.SnakeAdjacentDelayRandomRange);
+        Assert.Equal(0, succubus.SnakeDistantDelayBase);
+        Assert.Equal(0, succubus.SnakeDistantDelayIntelligenceScale);
+        Assert.Equal(0, succubus.SnakeDistantDelayRandomRange);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);
