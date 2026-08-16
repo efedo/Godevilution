@@ -18,6 +18,8 @@ not turn presentation labels into gameplay state.
 Monster health bars are also projected directly from authoritative
 `MonsterSnapshot` vitality, preferring exact Q6 values and retaining a rounded
 fallback for older peers; the client never simulates or mutates monster life.
+Player life and mana bars use the same snapshot-only rule for local and remote
+players, so presentation never predicts resource changes.
 
 ## Projects
 

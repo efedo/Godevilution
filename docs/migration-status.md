@@ -29,6 +29,10 @@ Status date: 2026-08-16
   falling back to rounded legacy fields without moving combat state into the
   client.
 
+- Godot also renders local and remote player life/mana bars from authoritative
+  `PlayerSnapshot` resources; the client clamps presentation values but never
+  predicts or mutates those resources.
+
 - Combat content activation now validates the configured PvP-ear item against
   the active item catalog before constructing sessions, rejecting unknown or
   mismatched native ear projections at the data boundary.
