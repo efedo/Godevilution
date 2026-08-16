@@ -4,9 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Add schema 1.318 validated AiRangedAvoidance adjacent attack-band fields to
-  `monster_missiles.tsv`, preserving the native 6,000/1,000-per-intelligence
-  fallback and Acid half-band for older mappings.
+- Add schema 1.319 validated AiRangedAvoidance adjacent attack-band fields to
+  `monster_missiles.tsv`, including the native Acid divisor and preserving the
+  native 6,000/1,000-per-intelligence and Acid half-band fallbacks for older
+  mappings.
 
 - Add schema 1.317 validated Familiar Lightning random-damage bounds to
   `monster_missiles.tsv`, preserving the native `GenerateRnd(10)` fallback for
