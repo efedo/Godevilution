@@ -750,6 +750,12 @@ optional `hork_demon_delay_base` and `hork_demon_delay_random_range` columns
 on the validated `HorkSpawn` missile mapping. Older packs retain the native
 ten-plus-ten fallback.
 
+Schema 1.292 externalizes Snake's adjacent and distant delay bands through
+validated `snake_adjacent_delay_*` and `snake_distant_delay_*` columns on the
+`SnakeCharge` mapping. The fields preserve native intelligence reduction,
+exclusive random ranges, and zero-clamped delays while older packs retain the
+native formulas.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

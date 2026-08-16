@@ -58,6 +58,10 @@ Status date: 2026-08-16
   fields (`hork_demon_delay_base` and `hork_demon_delay_random_range`), with
   native-compatible fallback behavior for older packs.
 
+- Snake adjacent and distant delay bands are now validated `SnakeCharge`
+  missile fields, preserving native intelligence reduction and deterministic
+  zero-clamped timing while retaining fallback behavior for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.
