@@ -98,6 +98,17 @@ public static class AuthoritativePortalCatalog
                 throw new InvalidDataException(
                     $"Portal {portal.PortalId} contains an endpoint outside its level.");
             }
+            if (!world.IsWalkable(
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY)
+                || !world.IsWalkable(
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY)) {
+                throw new InvalidDataException(
+                    $"Portal {portal.PortalId} contains a blocked endpoint.");
+            }
         }
     }
 

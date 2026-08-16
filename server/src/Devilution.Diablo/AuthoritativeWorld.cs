@@ -64,6 +64,11 @@ public sealed class AuthoritativeWorld
             throw new InvalidDataException(
                 $"Warp {target.WarpId} contains a position outside its level.");
         }
+        if (!IsWalkable(target.SourceLevelId, target.TriggerX, target.TriggerY)
+            || !IsWalkable(target.TargetLevelId, target.TargetX, target.TargetY)) {
+            throw new InvalidDataException(
+                $"Warp {target.WarpId} contains a blocked endpoint.");
+        }
         if (!warpTargets.TryAdd(target.WarpId, target))
             throw new InvalidDataException($"Warp {target.WarpId} is registered more than once.");
     }
