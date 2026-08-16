@@ -61,8 +61,8 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 164	plate_mail	7	4600	4600	0	0	42	75	75	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	60	0	0	68	0	0	None	Plate Mail	Plate	FIELD_PLATE	21	1	false			42	50
 165	full_plate_mail	7	6500	6500	0	0	60	90	90	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	90	0	0	71	0	0	None	Full Plate Mail	Full Plate	FULL_PLATE_MAIL	1	1	false			60	75
 166	hellfire_buckler	7	30	30	0	0	1	16	16	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	0	0	0	72	0	0	None	Buckler	Buckler	BUCKLER	5	1	false			1	5
-167	hellfire_item_167	7	400	400	0	0	8	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	75	0	0	None	-	-	-	20	1	false			8	8
-168	hellfire_item_168	7	90	90	0	0	3	24	24	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	73	0	0	None	-	-	-	9	1	false			3	3
-169	hellfire_item_169	7	200	200	0	0	5	32	32	1	1	1	Armor,Helmet	4	2	0	0		0	40	0	0	74	0	0	None	-	-	-	14	1	false			5	5
-170	hellfire_item_170	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	80	0	0	77	0	0	None	-	-	-	1	1	true			14	14
-171	hellfire_item_171	13	1200	1200	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	-	-	-	16	1	false			0	0
+167	kite_shield	7	400	400	0	0	8	40	40	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	50	0	0	75	0	0	None	Kite Shield	Shield	KITE_SHIELD	14	1	false			8	15
+168	small_shield	7	90	90	0	0	3	24	24	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	25	0	0	73	0	0	None	Small Shield	Shield	SMALL_SHIELD	5	1	false			3	8
+169	large_shield	7	200	200	0	0	5	32	32	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	40	0	0	74	0	0	None	Large Shield	Shield	LARGE_SHIELD	9	1	false			5	10
+170	gothic_shield	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	80	0	0	77	0	0	None	Gothic Shield	Shield	GOTHIC_SHIELD	23	1	true			14	18
+171	amulet	13	1200	1200	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	Amulet	Amulet	AMULET	8	1	false			0	0

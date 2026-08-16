@@ -165,11 +165,11 @@ item	cape	163
 item	plate_mail	164
 item	full_plate_mail	165
 item	hellfire_buckler	166
-item	hellfire_item_167	167
-item	hellfire_item_168	168
-item	hellfire_item_169	169
-item	hellfire_item_170	170
-item	hellfire_item_171	171
+item	kite_shield	167
+item	small_shield	168
+item	large_shield	169
+item	gothic_shield	170
+item	amulet	171
 object	na_krul_sequence_1	6001
 object	na_krul_sequence_2	6002
 object	na_krul_sequence_3	6003

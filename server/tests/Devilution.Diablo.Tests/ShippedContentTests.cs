@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.262.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.263.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.262.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.263.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1826,6 +1826,36 @@ public sealed class ShippedContentTests
         Assert.Contains("Shield", hellfireBuckler.GenerationTags);
         Assert.Contains("OneHanded", hellfireBuckler.GenerationTags);
         Assert.DoesNotContain("Helmet", hellfireBuckler.GenerationTags);
+        Assert.Equal(("kite_shield", "Kite Shield", 113), (
+            hellfireItems.GetRequired(167).StableSymbol,
+            hellfireItems.GetRequired(167).Name,
+            hellfireItems.GetRequired(167).NativeCursorGraphic));
+        Assert.Equal(("small_shield", "Small Shield", 105), (
+            hellfireItems.GetRequired(168).StableSymbol,
+            hellfireItems.GetRequired(168).Name,
+            hellfireItems.GetRequired(168).NativeCursorGraphic));
+        Assert.Equal(("large_shield", "Large Shield", 147), (
+            hellfireItems.GetRequired(169).StableSymbol,
+            hellfireItems.GetRequired(169).Name,
+            hellfireItems.GetRequired(169).NativeCursorGraphic));
+        Assert.Equal(("gothic_shield", "Gothic Shield", 148), (
+            hellfireItems.GetRequired(170).StableSymbol,
+            hellfireItems.GetRequired(170).Name,
+            hellfireItems.GetRequired(170).NativeCursorGraphic));
+        Assert.Equal(("amulet", "Amulet", 45), (
+            hellfireItems.GetRequired(171).StableSymbol,
+            hellfireItems.GetRequired(171).Name,
+            hellfireItems.GetRequired(171).NativeCursorGraphic));
+        foreach (var itemId in new uint[] { 167, 168, 169, 170 }) {
+            var shield = hellfireItems.GetRequired(itemId);
+            Assert.Equal(1, shield.EquipLocation);
+            Assert.Contains("Shield", shield.GenerationTags);
+            Assert.Contains("OneHanded", shield.GenerationTags);
+            Assert.DoesNotContain("Helmet", shield.GenerationTags);
+        }
+        var amulet = hellfireItems.GetRequired(171);
+        Assert.Equal(6, amulet.EquipLocation);
+        Assert.Contains("Amulet", amulet.GenerationTags);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
@@ -2818,7 +2848,7 @@ public sealed class ShippedContentTests
         Assert.Equal(255, dragonsBreach.Durability);
         Assert.Equal(255, dragonsBreach.MaxDurability);
         Assert.Equal(50, dragonsBreach.MinimumStrength);
-        Assert.Equal(4, dragonsBreach.EquipLocation);
+        Assert.Equal(1, dragonsBreach.EquipLocation);
         Assert.Equal(25, dragonsBreach.PlusFireResistance);
         Assert.Equal(5, dragonsBreach.PlusStrength);
         Assert.Equal(-5, dragonsBreach.PlusMagic);
@@ -2830,7 +2860,7 @@ public sealed class ShippedContentTests
         Assert.Equal(60, blackoakShield.Durability);
         Assert.Equal(60, blackoakShield.MaxDurability);
         Assert.Equal(25, blackoakShield.MinimumStrength);
-        Assert.Equal(4, blackoakShield.EquipLocation);
+        Assert.Equal(1, blackoakShield.EquipLocation);
         Assert.Equal(10, blackoakShield.PlusDexterity);
         Assert.Equal(-10, blackoakShield.PlusVitality);
         Assert.Equal(-1, blackoakShield.PlusLight);
@@ -2842,7 +2872,7 @@ public sealed class ShippedContentTests
         Assert.Equal(96, holyDefender.Durability);
         Assert.Equal(96, holyDefender.MaxDurability);
         Assert.Equal(40, holyDefender.MinimumStrength);
-        Assert.Equal(4, holyDefender.EquipLocation);
+        Assert.Equal(1, holyDefender.EquipLocation);
         Assert.Equal(-2, holyDefender.PlusGetHit);
         Assert.Equal(20, holyDefender.PlusFireResistance);
         Assert.NotEqual(0U, holyDefender.Flags & 0x01000000U);
@@ -2854,7 +2884,7 @@ public sealed class ShippedContentTests
         Assert.Equal(255, stormshield.Durability);
         Assert.Equal(255, stormshield.MaxDurability);
         Assert.Equal(80, stormshield.MinimumStrength);
-        Assert.Equal(4, stormshield.EquipLocation);
+        Assert.Equal(1, stormshield.EquipLocation);
         Assert.Equal(4, stormshield.PlusGetHit);
         Assert.Equal(10, stormshield.PlusStrength);
         Assert.Equal(50, stormshield.PlusLightningResistance);

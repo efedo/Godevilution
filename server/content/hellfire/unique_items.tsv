@@ -332,27 +332,27 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	STR	2	2	SPLIT_SKULL_SHIELD
 1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	LIGHT_CURSE	1	1	SPLIT_SKULL_SHIELD
 1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	SETDUR	15	15	SPLIT_SKULL_SHIELD
-1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	FIRERES	25	25	DRAGONS_BREACH
-1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	STR	5	5	DRAGONS_BREACH
-1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	SETAC	20	20	DRAGONS_BREACH
-1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	MAG_CURSE	5	5	DRAGONS_BREACH
-1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	INDESTRUCTIBLE	0	0	DRAGONS_BREACH
-1084	blackoak_shield	Blackoak Shield	168	hellfire_item_168	4	5725	DEX	10	10	BLACKOAK_SHIELD
-1084	blackoak_shield	Blackoak Shield	168	hellfire_item_168	4	5725	VIT_CURSE	10	10	BLACKOAK_SHIELD
-1084	blackoak_shield	Blackoak Shield	168	hellfire_item_168	4	5725	SETAC	18	18	BLACKOAK_SHIELD
-1084	blackoak_shield	Blackoak Shield	168	hellfire_item_168	4	5725	LIGHT_CURSE	1	1	BLACKOAK_SHIELD
-1084	blackoak_shield	Blackoak Shield	168	hellfire_item_168	4	5725	DUR	150	150	BLACKOAK_SHIELD
-1085	holy_defender	Holy Defender	169	hellfire_item_169	10	13800	SETAC	15	15	BLACKOAK_SHIELD
-1085	holy_defender	Holy Defender	169	hellfire_item_169	10	13800	GETHIT	2	2	BLACKOAK_SHIELD
-1085	holy_defender	Holy Defender	169	hellfire_item_169	10	13800	FIRERES	20	20	BLACKOAK_SHIELD
-1085	holy_defender	Holy Defender	169	hellfire_item_169	10	13800	DUR	200	200	BLACKOAK_SHIELD
-1085	holy_defender	Holy Defender	169	hellfire_item_169	10	13800	FASTBLOCK	1	1	BLACKOAK_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	SETAC	40	40	GOTHIC_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	GETHIT_CURSE	4	4	GOTHIC_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	STR	10	10	GOTHIC_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	INDESTRUCTIBLE	0	0	GOTHIC_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	FASTBLOCK	1	1	GOTHIC_SHIELD
-1086	stormshield	Stormshield	170	hellfire_item_170	24	49000	LIGHTRES	50	50	GOTHIC_SHIELD
+1083	dragon_s_breach	Dragon's Breach	167	kite_shield	2	19200	FIRERES	25	25	DRAGONS_BREACH
+1083	dragon_s_breach	Dragon's Breach	167	kite_shield	2	19200	STR	5	5	DRAGONS_BREACH
+1083	dragon_s_breach	Dragon's Breach	167	kite_shield	2	19200	SETAC	20	20	DRAGONS_BREACH
+1083	dragon_s_breach	Dragon's Breach	167	kite_shield	2	19200	MAG_CURSE	5	5	DRAGONS_BREACH
+1083	dragon_s_breach	Dragon's Breach	167	kite_shield	2	19200	INDESTRUCTIBLE	0	0	DRAGONS_BREACH
+1084	blackoak_shield	Blackoak Shield	168	small_shield	4	5725	DEX	10	10	BLACKOAK_SHIELD
+1084	blackoak_shield	Blackoak Shield	168	small_shield	4	5725	VIT_CURSE	10	10	BLACKOAK_SHIELD
+1084	blackoak_shield	Blackoak Shield	168	small_shield	4	5725	SETAC	18	18	BLACKOAK_SHIELD
+1084	blackoak_shield	Blackoak Shield	168	small_shield	4	5725	LIGHT_CURSE	1	1	BLACKOAK_SHIELD
+1084	blackoak_shield	Blackoak Shield	168	small_shield	4	5725	DUR	150	150	BLACKOAK_SHIELD
+1085	holy_defender	Holy Defender	169	large_shield	10	13800	SETAC	15	15	BLACKOAK_SHIELD
+1085	holy_defender	Holy Defender	169	large_shield	10	13800	GETHIT	2	2	BLACKOAK_SHIELD
+1085	holy_defender	Holy Defender	169	large_shield	10	13800	FIRERES	20	20	BLACKOAK_SHIELD
+1085	holy_defender	Holy Defender	169	large_shield	10	13800	DUR	200	200	BLACKOAK_SHIELD
+1085	holy_defender	Holy Defender	169	large_shield	10	13800	FASTBLOCK	1	1	BLACKOAK_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	SETAC	40	40	GOTHIC_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	GETHIT_CURSE	4	4	GOTHIC_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	STR	10	10	GOTHIC_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	INDESTRUCTIBLE	0	0	GOTHIC_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	FASTBLOCK	1	1	GOTHIC_SHIELD
+1086	stormshield	Stormshield	170	gothic_shield	24	49000	LIGHTRES	50	50	GOTHIC_SHIELD
 1087	bramble	Bramble	113	hellfire_ring_base	1	1000	ATTRIBS_CURSE	2	2	BRAMBLE
 1087	bramble	Bramble	113	hellfire_ring_base	1	1000	DAMMOD	3	3	BRAMBLE
 1087	bramble	Bramble	113	hellfire_ring_base	1	1000	MANA	10	10	BRAMBLE
@@ -387,8 +387,8 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	LIGHTRES	60	60	-
 1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	FIRERES_CURSE	30	30	-
 1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	-
-1099	amulet_of_warding	Amulet of Warding	171	hellfire_item_171	12	30000	ALLRES	40	40	-
-1099	amulet_of_warding	Amulet of Warding	171	hellfire_item_171	12	30000	LIFE_CURSE	100	100	-
+1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	ALLRES	40	40	-
+1099	amulet_of_warding	Amulet of Warding	171	amulet	12	30000	LIFE_CURSE	100	100	-
 1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	MULT_ARROWS	3	3	-
 1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	SETDAM	1	2	-
 1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	FASTATTACK	1	1	-
@@ -426,5 +426,5 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	ACUNDEAD	0	0	-
 1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	SETAC	80	80	-
 1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	ACDEMON	0	0	-
-1110	acolyte_s_amulet	Acolyte's Amulet	171	hellfire_item_171	10	10000	MANATOLIFE	50	50	-
+1110	acolyte_s_amulet	Acolyte's Amulet	171	amulet	10	10000	MANATOLIFE	50	50	-
 1111	gladiator_s_ring	Gladiator's Ring	113	hellfire_ring_base	10	10000	LIFETOMANA	40	40	-
