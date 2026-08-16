@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize direct store spell references through optional `spell_symbol`
+  values in `stores.tsv`; activated rows reject numeric/symbol mismatches while
+  numeric fallback remains available.
+
 - Externalize the Jester ten-way dispatch list through optional
   `jester_spell_symbols` values in `spells.tsv`; activated rows reject
   numeric/symbol mismatches while numeric fallback remains available.

@@ -56,6 +56,10 @@ Status date: 2026-08-15
   the stable spell namespace. Activated lists reject symbol/numeric mismatches,
   while older spell rows retain numeric-ID fallback.
 
+- Direct store spell rows now optionally resolve `spell_symbol` through the
+  stable spell namespace. Activated rows reject symbol/numeric mismatches,
+  while older store tables retain numeric-ID fallback.
+
 - Stable level and portal symbols are now cross-validated against active world
   and portal catalogs during content activation, without removing legacy
   no-catalog fallbacks.
@@ -853,13 +857,17 @@ Status date: 2026-08-15
 - Schema 1.222 adds the Adria service-only store identity to `world_rules.tsv`;
   activation rejects zero and stock-vendor collisions.
 
-- Schema 1.228 adds optional `spell_symbol` to `store_services.tsv`; spell-staff
-  pricing rows resolve stable spell IDs and reject numeric/symbol mismatches
-  while older rows retain numeric fallback.
+- Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
+  rows resolve stable spell IDs and reject numeric/symbol mismatches while
+  older rows retain numeric fallback.
 
 - Schema 1.229 adds optional `jester_spell_symbols` to Jester rows in
   `spells.tsv`; dispatch entries resolve stable spell IDs and reject
   numeric/symbol mismatches while older rows retain numeric fallback.
+
+- Schema 1.228 adds optional `spell_symbol` to `store_services.tsv`; spell-staff
+  pricing rows resolve stable spell IDs and reject numeric/symbol mismatches
+  while older rows retain numeric fallback.
 
 - Schema 1.227 adds optional `spell_symbol` to `spells.tsv`; active rows resolve
   stable spell IDs and reject numeric/symbol mismatches while older rows retain
