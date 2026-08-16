@@ -210,6 +210,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Gargoyle adjacent-attack chance increase per intelligence point. */
     public int GargoyleAttackChanceIntelligenceScale { get; init; }
 
+    /** Native Gargoyle avoidance-movement chance base before intelligence scaling. */
+    public int GargoyleMovementChanceBase { get; init; }
+
+    /** Native Gargoyle avoidance-movement chance increase per intelligence point. */
+    public int GargoyleMovementChanceIntelligenceScale { get; init; }
+
     /** Native Gargoyle wounded-health threshold for self-healing. */
     public int GargoyleHealingHealthThresholdPercent { get; init; }
 
@@ -312,6 +318,8 @@ public sealed record AuthoritativeMonsterTypeDefinition(
             && GargoyleSafeDistanceIntelligenceScale > 0
             || GargoyleAttackChanceBase > 0
             && GargoyleAttackChanceIntelligenceScale > 0
+            || GargoyleMovementChanceBase > 0
+            && GargoyleMovementChanceIntelligenceScale > 0
             || ScavengerHealingDurationTicks > 0
             && ScavengerCorpseSearchRadius > 0
             && ScavengerHellfireHealingDivisor > 0
@@ -516,6 +524,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.GargoyleAttackChanceIntelligenceScale != 0)
                     && (definition.GargoyleAttackChanceBase <= 0
                         || definition.GargoyleAttackChanceIntelligenceScale <= 0))
+                || definition.GargoyleMovementChanceBase is < 0 or > 100
+                || definition.GargoyleMovementChanceIntelligenceScale is < 0 or > 100
+                || ((definition.GargoyleMovementChanceBase != 0
+                        || definition.GargoyleMovementChanceIntelligenceScale != 0)
+                    && (definition.GargoyleMovementChanceBase <= 0
+                        || definition.GargoyleMovementChanceIntelligenceScale <= 0))
                 || definition.GargoyleHealingHealthThresholdPercent is < 0 or > 100
                 || definition.GargoyleHealDivisorMultiplier is < 0 or > 256
                 || definition.GargoyleHealDivisorRandomRange is < 0 or > 256
@@ -703,6 +717,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GargoyleSafeDistanceIntelligenceScale = row.OptionalInt32("gargoyle_safe_distance_intelligence_scale"),
                 GargoyleAttackChanceBase = row.OptionalInt32("gargoyle_attack_chance_base"),
                 GargoyleAttackChanceIntelligenceScale = row.OptionalInt32("gargoyle_attack_chance_intelligence_scale"),
+                GargoyleMovementChanceBase = row.OptionalInt32("gargoyle_movement_chance_base"),
+                GargoyleMovementChanceIntelligenceScale = row.OptionalInt32("gargoyle_movement_chance_intelligence_scale"),
                 GargoyleHealingHealthThresholdPercent = row.OptionalInt32("gargoyle_healing_health_threshold_percent"),
                 GargoyleHealDivisorMultiplier = row.OptionalInt32("gargoyle_heal_divisor_multiplier"),
                 GargoyleHealDivisorRandomRange = row.OptionalInt32("gargoyle_heal_divisor_random_range"),

@@ -5041,6 +5041,60 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiUsesContentSelectedAvoidanceMovementWhenHealingMetadataIsPresent()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Gargoyle",
+                0,
+                0,
+                9,
+                60,
+                90,
+                45,
+                10,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Gargoyle",
+                GargoyleSafeDistanceBase = 2,
+                GargoyleSafeDistanceIntelligenceScale = 1,
+                GargoyleMovementChanceBase = 10,
+                GargoyleMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 1,
+            aggroRange: 5,
+            monsterId: 1,
+            nativeAi: "Fallen",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 6 ^ 9 ^ 7 = 8: inside the content-selected movement band. The
+        // validated Gargoyle healing metadata must not suppress movement.
+        processor.AdvanceTick(6, [player]);
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void GargoyleAiDefersWhenNativeAvoidanceCandidatesAreBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

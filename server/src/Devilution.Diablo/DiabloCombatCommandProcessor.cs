@@ -6405,7 +6405,7 @@ public sealed class DiabloCombatCommandProcessor
         ulong tick,
         int distance)
     {
-        if (!UsesNativeAi(monster, "Gargoyle") || distance <= 1)
+        if (!HasGargoyleAi(monster) || distance <= 1)
             return false;
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
@@ -6417,7 +6417,11 @@ public sealed class DiabloCombatCommandProcessor
                 actionSeed))
             return true;
 
-        var movementChance = GetAiAvoidanceMovementChance(monster, 28, 2);
+        var movementTuning = GetGargoyleMovementTuning(monster);
+        var movementChance = GetAiAvoidanceMovementChance(
+            monster,
+            movementTuning?.ChanceBase ?? 28,
+            movementTuning?.IntelligenceScale ?? 2);
         if (actionSeed % 100U >= (uint)movementChance)
         {
             monster.AdvanceAvoidanceMovementIdle();
@@ -6438,6 +6442,26 @@ public sealed class DiabloCombatCommandProcessor
             monster.AdvanceAvoidanceMovementIdle();
         }
         return true;
+    }
+
+    private bool HasGargoyleAi(AuthoritativeCombatTarget target)
+        => target.NativeAi == "Gargoyle"
+            || monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.NativeAi == "Gargoyle";
+
+    private (int ChanceBase, int IntelligenceScale)? GetGargoyleMovementTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.GargoyleMovementChanceBase > 0
+            && definition.GargoyleMovementChanceIntelligenceScale > 0) {
+            return (
+                definition.GargoyleMovementChanceBase,
+                definition.GargoyleMovementChanceIntelligenceScale);
+        }
+        return HasGargoyleAi(target)
+            ? (28, 2)
+            : null;
     }
 
     /** Native GargoyleAi retreats from a wounded player before healing. */
