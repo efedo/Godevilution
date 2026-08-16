@@ -15,6 +15,10 @@ consumable, and class ability as a selectable spell source. Selection is keyed
 by the authoritative source identity, so reconnects and snapshot updates do
 not turn presentation labels into gameplay state.
 
+Monster health bars are also projected directly from authoritative
+`MonsterSnapshot` vitality, preferring exact Q6 values and retaining a rounded
+fallback for older peers; the client never simulates or mutates monster life.
+
 ## Projects
 
 - `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,

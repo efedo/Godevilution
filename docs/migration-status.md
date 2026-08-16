@@ -24,6 +24,11 @@ Status date: 2026-08-16
 
 ## Implemented authoritative systems
 
+- The Godot world presentation now renders server-owned monster health bars
+  from authoritative `MonsterSnapshot` vitality, preferring exact Q6 values and
+  falling back to rounded legacy fields without moving combat state into the
+  client.
+
 - Combat content activation now validates the configured PvP-ear item against
   the active item catalog before constructing sessions, rejecting unknown or
   mismatched native ear projections at the data boundary.
