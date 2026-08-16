@@ -52,6 +52,10 @@ Status date: 2026-08-15
   stable spell namespace. Activated rows reject symbol/numeric mismatches,
   while older pricing tables retain numeric-ID fallback.
 
+- Jester dispatch lists now optionally resolve `jester_spell_symbols` through
+  the stable spell namespace. Activated lists reject symbol/numeric mismatches,
+  while older spell rows retain numeric-ID fallback.
+
 - Stable level and portal symbols are now cross-validated against active world
   and portal catalogs during content activation, without removing legacy
   no-catalog fallbacks.
@@ -852,6 +856,10 @@ Status date: 2026-08-15
 - Schema 1.228 adds optional `spell_symbol` to `store_services.tsv`; spell-staff
   pricing rows resolve stable spell IDs and reject numeric/symbol mismatches
   while older rows retain numeric fallback.
+
+- Schema 1.229 adds optional `jester_spell_symbols` to Jester rows in
+  `spells.tsv`; dispatch entries resolve stable spell IDs and reject
+  numeric/symbol mismatches while older rows retain numeric fallback.
 
 - Schema 1.227 adds optional `spell_symbol` to `spells.tsv`; active rows resolve
   stable spell IDs and reject numeric/symbol mismatches while older rows retain
