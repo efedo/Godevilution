@@ -407,6 +407,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        if (stableIds is not null && objects is not null)
+            stableIds.ValidateReferences(
+                "object",
+                objectId => objects.Any(@object => @object.ObjectId == objectId));
         if (world is not null && objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         if (objects is not null)

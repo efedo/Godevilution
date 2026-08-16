@@ -170,6 +170,10 @@ item	hellfire_item_168	168
 item	hellfire_item_169	169
 item	hellfire_item_170	170
 item	hellfire_item_171	171
+object	na_krul_sequence_1	6001
+object	na_krul_sequence_2	6002
+object	na_krul_sequence_3	6003
+object	grave_matters_cathedral_map	6004
 quest	grave_matters	3017
 quest	farmers_orchard	3018
 quest	little_girl	3019

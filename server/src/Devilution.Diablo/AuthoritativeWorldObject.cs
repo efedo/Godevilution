@@ -96,7 +96,7 @@ public static class AuthoritativeWorldObjectCatalog
             var effectKind = ParseEffectKind(row);
             return new AuthoritativeWorldObject(
                 row.RequiredUInt32("entity_id"),
-                row.RequiredUInt32("object_id"),
+                AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
                 AuthoritativeLevelIdentity.ResolveOptional(
                     row,
                     stableIds,
