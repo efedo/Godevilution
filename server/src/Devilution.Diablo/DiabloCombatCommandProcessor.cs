@@ -10741,7 +10741,11 @@ public sealed class DiabloCombatCommandProcessor
         projectile.RemainingTicks = checked((uint)projectile.ImpactLifetime);
         projectile.VelocityX = 0;
         projectile.VelocityY = 0;
-        foreach (var offset in FireballExplosionOffsets) {
+        var explosionOffsets = spells.TryGet(projectile.SpellId, out var spell)
+            && spell.FireballExplosionOffsets.Count > 0
+            ? spell.FireballExplosionOffsets
+            : FireballExplosionOffsets;
+        foreach (var offset in explosionOffsets) {
             var positionX = checked(projectile.PositionX + offset.X);
             var positionY = checked(projectile.PositionY + offset.Y);
             if (IsFireballExplosionBlocked(projectile, positionX, positionY))

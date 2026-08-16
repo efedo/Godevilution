@@ -757,6 +757,15 @@ public sealed class AuthoritativeSpellCatalogTests
             fireball.AreaRadius,
             fireball.ProjectileImpactLifetime,
             fireball.ResistantDamageDivisor));
+        Assert.Equal(
+            [(0, 0), (0, 1), (0, -1), (1, 0), (1, -1), (1, 1), (-1, 0), (-1, 1), (-1, -1)],
+            fireball.FireballExplosionOffsets);
+        var malformed = File.ReadAllText(path).Replace(
+            "0,0;0,1;0,-1;1,0;1,-1;1,1;-1,0;-1,1;-1,-1",
+            "0,bad",
+            StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([
                 fireball with { ProjectileSpeedMaximumBonus = 1 },
@@ -772,6 +781,19 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([
                 fireball with { ProjectileSpeed = 500 },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                fireball with { FireballExplosionOffsets = [(0, 0)] },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                fireball with {
+                    FireballExplosionOffsets = [
+                        (0, 0), (0, 1), (0, -1), (1, 0), (1, -1),
+                        (1, 1), (-1, 0), (-1, 1), (2, 0),
+                    ],
+                },
             ]));
     }
 

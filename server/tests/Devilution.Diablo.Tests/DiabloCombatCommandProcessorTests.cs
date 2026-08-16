@@ -14484,6 +14484,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireballUsesValidatedExplosionOffsetOrder()
+    {
+        var directTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var omittedSplashTarget = new AuthoritativeCombatTarget(
+            10,
+            1,
+            1,
+            200,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [directTarget, omittedSplashTarget]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateFireballSpell() with {
+                    FireballExplosionOffsets = [
+                        (0, 0), (0, -1), (1, 0), (1, -1), (1, 1),
+                        (-1, 0), (-1, 1), (-1, -1), (-1, -1),
+                    ],
+                },
+            ]),
+            random: new DiabloRandom(0x12345678),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 12,
+            abilitySpellId: 12,
+            memorizedSpells: [new MemorizedSpellState(12, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(12, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        _ = processor.AdvanceTick(2, [player]);
+
+        Assert.True(directTarget.HitPointsQ6 < DiabloFixedPointQ6.FromWhole(200));
+        Assert.Equal(DiabloFixedPointQ6.FromWhole(200), omittedSplashTarget.HitPointsQ6);
+    }
+
+    [Fact]
     public void RuneOfFireResolvesAnImmediateBigExplosionAndConsumesTheRune()
     {
         var target = new AuthoritativeCombatTarget(

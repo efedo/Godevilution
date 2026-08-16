@@ -168,6 +168,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Optional 16-entry steering pattern; empty preserves the native pattern. */
     public IReadOnlyList<int> ChargedBoltPathPattern { get; init; } = [];
 
+    /** Optional nine-cell impact order; empty preserves the native Fireball order. */
+    public IReadOnlyList<(int X, int Y)> FireballExplosionOffsets { get; init; } = [];
+
     /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
     public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
 
@@ -733,6 +736,16 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ChargedBoltPathPattern.Any(turn => turn is < -1 or > 1)) {
                 throw new InvalidDataException(
                     "Charged Bolt path steering entries must be -1, 0, or 1.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Fireball
+                && definition.FireballExplosionOffsets.Count is not (0 or 9)) {
+                throw new InvalidDataException(
+                    "Fireball explosion tuning requires exactly nine offsets when configured.");
+            }
+            if (definition.FireballExplosionOffsets.Any(offset =>
+                    offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
+                throw new InvalidDataException(
+                    "Fireball explosion offsets must remain within the native adjacent-cell range.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
@@ -1477,6 +1490,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Charged Bolt tuning columns require ChargedBolt projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Fireball
+                && definition.FireballExplosionOffsets.Count != 0) {
+                throw new InvalidDataException(
+                    "Fireball explosion tuning requires Fireball projectile behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HolyBoltHitMonsterLevelScale != 2
                     || definition.HolyBoltMinimumHitChance != 5
@@ -2045,6 +2063,7 @@ public sealed class AuthoritativeSpellCatalog
             ChargedBoltPathRandomRange = row.OptionalInt32(
                 "charged_bolt_path_random_range"),
             ChargedBoltPathPattern = ParseChargedBoltPathPattern(row),
+            FireballExplosionOffsets = ParseFireballExplosionOffsets(row),
             ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
                 "charged_bolt_hit_monster_level_scale",
                 2),
@@ -2401,6 +2420,31 @@ public sealed class AuthoritativeSpellCatalog
                     $"Spell row {row.LineNumber} contains an invalid Charged Bolt path steering entry.");
         }
         return pattern;
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseFireballExplosionOffsets(TsvRow row)
+    {
+        if (!row.TryGet("fireball_explosion_offsets", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ';',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var offsets = new (int X, int Y)[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            var components = entries[index].Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (components.Length != 2
+                || !int.TryParse(components[0], out var x)
+                || !int.TryParse(components[1], out var y)) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Fireball explosion offset.");
+            }
+            offsets[index] = (x, y);
+        }
+        return offsets;
     }
 
     private static AuthoritativeProjectileBehavior ParseProjectileBehavior(TsvRow row)
