@@ -325,6 +325,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 portalsTable.SourcePath,
                 portalsTable.ToCanonicalTsv())
             : null;
+        if (world is not null && portals is not null)
+            AuthoritativePortalCatalog.ValidateWorld(portals, world);
         var objects = content.TryGetTable("objects.tsv", out var objectsTable)
             ? AuthoritativeWorldObjectCatalog.LoadTsv(
                 objectsTable.SourcePath,

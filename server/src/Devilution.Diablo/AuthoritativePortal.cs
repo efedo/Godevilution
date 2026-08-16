@@ -74,6 +74,33 @@ public sealed record DiabloPortalState(
 /** External portal definitions used to validate level transitions. */
 public static class AuthoritativePortalCatalog
 {
+    /** Validates static portal levels and endpoint coordinates against world geometry. */
+    public static void ValidateWorld(
+        IEnumerable<AuthoritativePortal> portals,
+        AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(portals);
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var portal in portals) {
+            if (!world.ContainsLevel(portal.SourceLevelId)
+                || !world.ContainsLevel(portal.DestinationLevelId)) {
+                throw new InvalidDataException(
+                    $"Portal {portal.PortalId} references an unknown source or destination level.");
+            }
+            if (!world.ContainsPosition(
+                    portal.SourceLevelId,
+                    portal.SourcePositionX,
+                    portal.SourcePositionY)
+                || !world.ContainsPosition(
+                    portal.DestinationLevelId,
+                    portal.DestinationPositionX,
+                    portal.DestinationPositionY)) {
+                throw new InvalidDataException(
+                    $"Portal {portal.PortalId} contains an endpoint outside its level.");
+            }
+        }
+    }
+
     public static IReadOnlyList<AuthoritativePortal> LoadTsv(string sourcePath, string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
