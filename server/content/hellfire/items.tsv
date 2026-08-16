@@ -75,3 +75,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None
 2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	None
 2143	blood_stone	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	21	0	0	None	Blood Stone	Blood Stone	BLOOD_STONE	0	0	false			0	0	None
+2144	potion_of_full_healing_fixed	0	150	150	0	0	0	0	0	1	1	1	Misc,Belt	7	3	2	0		0	0	0	0	29	0	0	None	Potion of Full Healing	Potion of Full Healing	POTION_OF_FULL_HEALING	1	0	true			0	0	None
+2145	potion_of_full_mana_fixed	0	150	150	0	0	0	0	0	1	1	1	Misc,Belt	7	3	7	0		0	0	0	0	30	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	0	true			0	0	None
+2146	potion_healing_hellfire	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	3	0		0	0	0	0	77	0	0	None	Potion of Healing	Potion of Healing	POTION_OF_HEALING	1	1	true			0	0	None
+2147	potion_of_full_healing	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	2	0		0	0	0	0	78	0	0	None	Potion of Full Healing	Potion of Full Healing	POTION_OF_FULL_HEALING	1	1	true			0	0	None
+2148	potion_mana_hellfire	0	50	50	0	0	0	0	0	1	1	0	Misc,Belt	7	3	6	0		0	0	0	0	79	0	0	None	Potion of Mana	Potion of Mana	POTION_OF_MANA	1	1	true			0	0	None
+2149	potion_of_full_mana	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	7	0		0	0	0	0	80	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	1	true			0	0	None
+2150	potion_of_rejuvenation	0	120	120	0	0	0	0	0	1	1	0	Misc,Belt	7	3	19	0		0	0	0	0	81	0	0	None	Potion of Rejuvenation	Potion of Rejuvenation	POTION_OF_REJUVENATION	3	1	true			0	0	None
+2151	potion_of_full_rejuvenation	0	600	600	0	0	0	0	0	1	1	0	Misc,Belt	7	3	20	0		0	0	0	0	82	0	0	None	Potion of Full Rejuvenation	Potion of Full Rejuvenation	POTION_OF_FULL_REJUVENATION	7	1	true			0	0	None

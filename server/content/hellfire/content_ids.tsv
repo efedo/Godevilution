@@ -335,6 +335,14 @@ item	brain	2140
 item	fungal_tome	2141
 item	spectral_elixir	2142
 item	blood_stone	2143
+item	potion_of_full_healing_fixed	2144
+item	potion_of_full_mana_fixed	2145
+item	potion_healing_hellfire	2146
+item	potion_of_full_healing	2147
+item	potion_mana_hellfire	2148
+item	potion_of_full_mana	2149
+item	potion_of_rejuvenation	2150
+item	potion_of_full_rejuvenation	2151
 level	caves	3
 level	hell	4
 level	hellfire_level_9	9
