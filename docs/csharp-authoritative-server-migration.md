@@ -591,6 +591,13 @@ Leather Armor, Cloak, Leather Armor, Robe, and Chain Mail. These rows use
 native body-armor placement; Chain Mail corrects the retained native index to
 `64` and the native `CHAIN_MAIL` cursor identity.
 
+Schema 1.262 normalizes stable symbols, native indices, display names, and
+native cursor projections for the next five Hellfire armor/shield rows: Breast
+Plate, Cape, Plate Mail, Full Plate Mail, and the duplicate Hellfire Buckler.
+Armor rows use native body-armor placement; the Hellfire Buckler uses native
+one-handed shield placement and a distinct stable symbol. Unique definitions
+1077–1082 and the later Full Plate definitions now resolve these stable bases.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

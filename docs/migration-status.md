@@ -1005,6 +1005,12 @@ Status date: 2026-08-16
   native body-armor placement; Chain Mail corrects the retained native index
   to `64` and the native `CHAIN_MAIL` cursor identity.
 
+- Schema 1.262 normalizes stable symbols, native indices, display names, and
+  native cursor projections for the next five Hellfire armor/shield rows:
+  Breast Plate, Cape, Plate Mail, Full Plate Mail, and the duplicate Hellfire
+  Buckler. Armor rows use native body-armor placement; the Hellfire Buckler
+  uses native one-handed shield placement and a distinct stable symbol.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

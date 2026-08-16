@@ -45,6 +45,11 @@ All notable changes to this fork are documented below.
   Cloak, Leather Armor, Robe, and Chain Mail, including native body-armor
   placement and the corrected Chain Mail native index and cursor identity.
 
+- Normalize the next five Hellfire armor/shield projections: Breast Plate,
+  Cape, Plate Mail, Full Plate Mail, and the duplicate Hellfire Buckler,
+  including native body-armor/one-handed placement and stable unique-base
+  references for unique rows 1077–1082.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
