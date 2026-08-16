@@ -196,4 +196,37 @@ public sealed class StoreCatalogTests
             stableIds: stableIds));
         Assert.Contains("maps spell 8 to symbol 'fireball'", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void GeneratesDynamicBookStockFromAValidatedBookTemplate()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        var catalog = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\titem_id\titem_level\n"
+                + "1\t0\t42\t100\t114\t1\n",
+            items,
+            spellBooks: books);
+
+        var item = Assert.Single(catalog.GetItems(1));
+        Assert.Equal(7, item.State.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, item.State.ItemActionKind);
+        Assert.Equal("Book of Firebolt", item.State.BaseName);
+        Assert.Equal(100, item.State.Value);
+    }
 }

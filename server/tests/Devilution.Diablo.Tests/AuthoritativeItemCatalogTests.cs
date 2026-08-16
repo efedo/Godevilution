@@ -429,6 +429,35 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void GeneratesDynamicSpellBookWhenAWorldDropReferencesABookTemplate()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        var first = items.GenerateDrop(114, 42, 1, spellBooks: books);
+        var second = items.GenerateDrop(114, 42, 1, spellBooks: books);
+
+        Assert.Equal(first, second);
+        Assert.Equal(7, first.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, first.ItemActionKind);
+        Assert.Equal("Book of Firebolt", first.BaseName);
+        Assert.Equal(100, first.Value);
+    }
+
+    [Fact]
     public void CatalogExposesNativeMonsterDropEligibility()
     {
         var catalog = new AuthoritativeItemCatalog([

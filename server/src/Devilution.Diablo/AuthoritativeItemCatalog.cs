@@ -288,12 +288,15 @@ public sealed class AuthoritativeItemCatalog
         uint itemSeed,
         int monsterLevel,
         bool onlyGood = false,
-        int? uniqueChancePercent = null)
+        int? uniqueChancePercent = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         if (!TryGet(itemId, out var definition))
             throw new InvalidDataException($"Item {itemId} is not present in the authoritative catalog.");
         if (itemSeed == 0)
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
+        if (spellBooks is not null && spellBooks.IsBookTemplate(this, itemId))
+            return spellBooks.GenerateRandom(this, itemSeed, monsterLevel);
         if (affixes is null || !affixes.UsesLegacyRandom || monsterLevel <= 0)
             return definition.Generate(itemSeed);
 

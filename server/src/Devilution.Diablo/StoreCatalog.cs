@@ -151,7 +151,8 @@ public sealed class StoreCatalog
         string contents,
         AuthoritativeItemCatalog? itemCatalog = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var catalog = new StoreCatalog();
@@ -162,7 +163,7 @@ public sealed class StoreCatalog
                 row.RequiredUInt32("store_slot"),
                 row.RequiredUInt32("item_seed"),
                 row.RequiredUInt32("price"),
-                ParseItemState(row, itemCatalog, uniqueItems, stableIds))));
+                ParseItemState(row, itemCatalog, uniqueItems, stableIds, spellBooks))));
         }
         if (!catalog.stores.Any())
             throw new InvalidDataException($"Store table '{sourcePath}' does not contain any stores.");
@@ -250,7 +251,8 @@ public sealed class StoreCatalog
         TsvRow row,
         AuthoritativeItemCatalog? itemCatalog,
         AuthoritativeUniqueItemCatalog? uniqueItems,
-        StableContentIdCatalog? stableIds)
+        StableContentIdCatalog? stableIds,
+        AuthoritativeSpellBookCatalog? spellBooks)
     {
         var hasUniqueItemId = row.TryGet("unique_item_id", out var uniqueId)
             && !string.IsNullOrWhiteSpace(uniqueId);
@@ -267,11 +269,22 @@ public sealed class StoreCatalog
                 row.RequiredUInt32("item_seed"),
                 row.OptionalInt32("item_level", 1));
         if (itemCatalog is not null && row.TryGet("item_id", out var itemId)
-            && !string.IsNullOrWhiteSpace(itemId))
-            return itemCatalog.Generate(
-                AuthoritativeItemIdentity.Resolve(row, stableIds),
-                row.RequiredUInt32("item_seed"),
-                row.OptionalInt32("item_level"));
+            && !string.IsNullOrWhiteSpace(itemId)) {
+            var resolvedItemId = AuthoritativeItemIdentity.Resolve(row, stableIds);
+            var itemSeed = row.RequiredUInt32("item_seed");
+            var itemLevel = row.OptionalInt32("item_level");
+            if (spellBooks is not null
+                && spellBooks.IsBookTemplate(itemCatalog, resolvedItemId)) {
+                var spellId = ResolveSpellId(row, stableIds);
+                if (spellId < 0)
+                    throw new InvalidDataException(
+                        $"Store row {row.LineNumber} contains a negative book spell {spellId}.");
+                return spellId == 0
+                    ? spellBooks.GenerateRandom(itemCatalog, itemSeed, itemLevel)
+                    : spellBooks.Generate(itemCatalog, checked((uint)spellId), itemSeed, itemLevel);
+            }
+            return itemCatalog.Generate(resolvedItemId, itemSeed, itemLevel);
+        }
         return AuthoritativeItemState.Empty with {
             CreateInfo = row.OptionalUInt32("create_info"),
             ItemType = row.OptionalInt32("item_type", -1),

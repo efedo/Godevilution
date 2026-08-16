@@ -86,7 +86,8 @@ public sealed class AuthoritativeMonsterCatalog
         AuthoritativeItemCatalog? itemCatalog = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var targets = table.Rows.Select(row => {
@@ -163,7 +164,8 @@ public sealed class AuthoritativeMonsterCatalog
                         dropItemId,
                         dropItemSeed,
                         row.OptionalInt32("drop_item_level"),
-                        row.OptionalInt32("drop_only_good") != 0);
+                        row.OptionalInt32("drop_only_good") != 0,
+                        spellBooks: spellBooks);
             }
             var fireResistance = row.TryGet("fire_resistance", out _)
                 ? row.OptionalInt32("fire_resistance")

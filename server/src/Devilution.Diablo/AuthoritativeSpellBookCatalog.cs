@@ -63,6 +63,14 @@ public sealed class AuthoritativeSpellBookCatalog
     public bool TryGet(uint spellId, out AuthoritativeSpellBookDefinition definition)
         => definitions.TryGetValue(spellId, out definition!);
 
+    /** Returns whether an item definition is one of the native book templates. */
+    public bool IsBookTemplate(AuthoritativeItemCatalog items, uint itemId)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        return items.TryGet(itemId, out var definition)
+            && IsBookTemplate(definition);
+    }
+
     /** Validates spell references and discovers the native book templates. */
     public void Validate(
         AuthoritativeSpellCatalog spells,
@@ -125,6 +133,30 @@ public sealed class AuthoritativeSpellBookCatalog
         };
     }
 
+    /** Generates a deterministic native-style book by selecting an eligible spell. */
+    public AuthoritativeItemState GenerateRandom(
+        AuthoritativeItemCatalog items,
+        uint itemSeed,
+        int itemLevel = 1)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        if (itemSeed == 0)
+            throw new ArgumentOutOfRangeException(nameof(itemSeed));
+        if (itemLevel < 0)
+            throw new ArgumentOutOfRangeException(nameof(itemLevel));
+
+        var maximumNativeLevel = Math.Max(1, itemLevel);
+        var eligible = Definitions
+            .Where(definition => definition.BookLevel <= maximumNativeLevel)
+            .ToArray();
+        if (eligible.Length == 0)
+            throw new InvalidDataException(
+                $"No spell is eligible for a book at item level {itemLevel}.");
+
+        var spell = eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Length)];
+        return Generate(items, spell.SpellId, itemSeed, itemLevel);
+    }
+
     public static AuthoritativeSpellBookCatalog LoadTsv(
         string sourcePath,
         string contents,
@@ -177,12 +209,15 @@ public sealed class AuthoritativeSpellBookCatalog
             $"Spell-book row {row.LineNumber} contains unknown magic type '{value}'.");
     }
 
+    private static bool IsBookTemplate(AuthoritativeItemDefinition definition)
+        => definition.MiscId == BookMiscId
+            && definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase);
+
     private static IReadOnlyList<(uint ItemId, AuthoritativeItemDefinition Definition)> GetBookTemplates(
         AuthoritativeItemCatalog items)
     {
         return items.Definitions
-            .Where(definition => definition.MiscId == BookMiscId
-                && definition.GenerationTags.Contains("Book", StringComparer.OrdinalIgnoreCase))
+            .Where(IsBookTemplate)
             .OrderBy(definition => definition.MinimumMonsterLevel)
             .ThenBy(definition => definition.ItemId)
             .Select(definition => (definition.ItemId, definition))

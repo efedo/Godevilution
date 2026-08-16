@@ -27,13 +27,15 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     private readonly AuthoritativeLevelGenerationCatalog levelGeneration;
     private readonly AuthoritativeItemCatalog? itemCatalog;
     private readonly AuthoritativeMonsterCatalog? monsterCatalog;
+    private readonly AuthoritativeSpellBookCatalog? spellBooks;
 
     public AuthoritativeMonsterSpawnPlanner(
         AuthoritativeWorld world,
         AuthoritativeMonsterTypeCatalog monsterTypes,
         AuthoritativeLevelGenerationCatalog levelGeneration,
         AuthoritativeItemCatalog? itemCatalog = null,
-        AuthoritativeMonsterCatalog? monsterCatalog = null)
+        AuthoritativeMonsterCatalog? monsterCatalog = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.monsterTypes = monsterTypes
@@ -42,6 +44,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             ?? throw new ArgumentNullException(nameof(levelGeneration));
         this.itemCatalog = itemCatalog;
         this.monsterCatalog = monsterCatalog;
+        this.spellBooks = spellBooks;
     }
 
     /** Plans bounded deterministic placements while avoiding reserved cells. */
@@ -243,7 +246,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     dropDefinition.DropItemId,
                     dropSeed,
                     dropDefinition.ItemLevel,
-                    dropDefinition.OnlyGood);
+                    dropDefinition.OnlyGood,
+                    spellBooks: spellBooks);
             var monsterEntityId = checked(firstEntityId + (uint)index);
             dropEntityId = monsterEntityId >= FirstGeneratedMonsterEntityId
                 ? checked(FirstGeneratedDropEntityId

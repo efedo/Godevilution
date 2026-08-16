@@ -319,6 +319,55 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
         Assert.True(second.IsDiablo);
     }
 
+    [Fact]
+    public void GeneratesDynamicSpellBookForAProceduralWorldDrop()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 3),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        var monsters = new AuthoritativeMonsterCatalog(
+            [],
+            [new AuthoritativeMonsterDropDefinition(2, 114, 0, 1, false, false, false)]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 4, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            generation,
+            items,
+            monsters,
+            books);
+
+        var first = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+        var second = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+
+        Assert.NotNull(first.Drop);
+        Assert.Equal(first.Drop.State, second.Drop!.State);
+        Assert.Equal(7, first.Drop!.State.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, first.Drop.State.ItemActionKind);
+        Assert.Equal("Book of Firebolt", first.Drop.State.BaseName);
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
         int minimumLevel,

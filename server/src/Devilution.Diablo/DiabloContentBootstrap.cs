@@ -314,7 +314,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             storeTable.ToCanonicalTsv(),
             itemCatalog,
             uniqueItems,
-            stableIds);
+            stableIds,
+            spellBooks);
         if (stableIds is not null)
             stableIds.ValidateReferences(
                 "store",
@@ -395,7 +396,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 itemCatalog,
                 uniqueItems,
                 monsterTypes,
-                stableIds)
+                stableIds,
+                spellBooks)
             : null;
         if (world is not null && monsters is not null)
             AuthoritativeMonsterCatalog.ValidateWorld(monsters.Targets, world);
@@ -558,7 +560,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monsterTypes,
                 levelGeneration,
                 itemCatalog,
-                monsters)
+                monsters,
+                spellBooks)
             : null;
         IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = monsters?.Targets;
         if (monsterSpawns is not null) {

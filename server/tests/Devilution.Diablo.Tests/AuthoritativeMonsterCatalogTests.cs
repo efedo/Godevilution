@@ -1166,6 +1166,37 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void GeneratesDynamicSpellBookForAStaticWorldDrop()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t100\t114\t1\n",
+            items,
+            spellBooks: books);
+
+        var state = Assert.Single(catalog.Targets).Drop!.State;
+        Assert.Equal(7, state.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, state.ItemActionKind);
+        Assert.Equal("Book of Firebolt", state.BaseName);
+    }
+
+    [Fact]
     public void ResolvesStableMonsterDropItemSymbol()
     {
         var stableIds = new StableContentIdCatalog([
