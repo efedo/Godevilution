@@ -702,6 +702,10 @@ into the same validated monster-type content and keeps that identity active when
 other Gargoyle tuning is present, with the legacy fallback retained for older
 packs.
 
+Schema 1.282 externalizes Snake's native six-step lateral drift pattern in the
+validated monster-missile mapping while retaining the native sequence for older
+packs that omit the optional column.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

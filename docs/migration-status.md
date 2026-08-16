@@ -1108,6 +1108,10 @@ Status date: 2026-08-16
   pair and makes the validated Gargoyle identity authoritative when its other
   tuning rows are present, while preserving older-pack fallback behavior.
 
+- Schema 1.282 externalizes Snake's native six-step lateral drift pattern in
+  the validated monster-missile mapping, retaining the native sequence when
+  older mappings omit the optional column.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.
