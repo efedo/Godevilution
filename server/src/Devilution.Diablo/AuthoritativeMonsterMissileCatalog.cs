@@ -222,6 +222,18 @@ public sealed class AuthoritativeMonsterMissileCatalog
         }
     }
 
+    /** Validates summoned monster identities against the active monster catalog. */
+    public void ValidateSpawnMonsterReferences(AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        foreach (var definition in Definitions.Where(definition => definition.SpawnMonsterId != 0)) {
+            if (!monsterTypes.TryGet(definition.SpawnMonsterId, out _))
+                throw new InvalidDataException(
+                    $"Monster missile '{definition.NativeAi}'/{definition.MissileId} "
+                    + $"references unknown spawn monster {definition.SpawnMonsterId}.");
+        }
+    }
+
     public static AuthoritativeMonsterMissileCatalog LoadTsv(
         string sourcePath,
         string contents)
