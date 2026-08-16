@@ -169,6 +169,40 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ValidatesConfiguredSpawnMonsterReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspawn_monster_id\n"
+                + "HorkDemon\tHorkSpawn\tHorkSpawn\t117\n");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                117, 117, "Spawn", 1, 16, 1, 1, 1, 1, 1, 1, 1, 1,
+                false, false, false),
+        ]);
+
+        catalog.ValidateSpawnMonsterReferences(monsterTypes);
+    }
+
+    [Fact]
+    public void RejectsUnknownConfiguredSpawnMonsterReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspawn_monster_id\n"
+                + "HorkDemon\tHorkSpawn\tHorkSpawn\t117\n");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1, 1, "Other", 1, 16, 1, 1, 1, 1, 1, 1, 1, 1,
+                false, false, false),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            catalog.ValidateSpawnMonsterReferences(monsterTypes));
+        Assert.Contains("references unknown spawn monster 117", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsExplicitMonsterArrowBehavior()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
