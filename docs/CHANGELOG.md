@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.305 validated Hork Demon RoundWalk admission modulo to
+  `monster_types.tsv`, preserving the native modulo-four fallback for older
+  mappings.
+
 - Add schema 1.304 validated SkeletonKing RoundWalk admission modulo to
   `monster_types.tsv`, preserving the native modulo-four fallback for older
   mappings.
