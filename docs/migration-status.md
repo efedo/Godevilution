@@ -90,6 +90,11 @@ Status date: 2026-08-16
   `fat_movement_fresh_chance_bonus` monster-type field, preserving the native
   50-point bonus with fallback behavior for older packs.
 
+- Rhino ordinary movement admission is now validated through the
+  `rhino_movement_chance_base`, `rhino_movement_chance_intelligence_scale`, and
+  `rhino_movement_fresh_chance_bonus` monster-type fields, preserving the native
+  33/2/50 bands with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -517,10 +522,10 @@ Status date: 2026-08-16
   canonical hashes.
 
 - Native Rhino ordinary movement now preserves its `var1`/`var2`-compatible
-  counter and `AiDelay` countdown. Long-idle/fresh-mode movement and failed
-  admissions remain server-owned through snapshots, optional protocol fields
-  73-75, saves, and canonical hashes; far-distance Move goals remain in
-  fields 60-61.
+  counter and `AiDelay` countdown. Validated 33/2/50 long-idle/fresh-mode
+  bands (with the native fallback) and failed admissions remain server-owned
+  through snapshots, optional protocol fields 73-75, saves, and canonical
+  hashes; far-distance Move goals remain in fields 60-61.
 
 - Native Leoric/Skeleton King `AiDelay` is now a server-owned countdown after
   failed movement admissions. The countdown persists through snapshots,
@@ -1361,6 +1366,9 @@ Status date: 2026-08-16
 - Schema 1.315 externalizes the Fat/Overlord fresh-mode movement bonus through
   optional monster-type data, retaining the native 50-point fallback for older
   mappings.
+
+- Schema 1.316 externalizes Rhino's ordinary movement bands through optional
+  monster-type data, retaining the native 33/2/50 fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

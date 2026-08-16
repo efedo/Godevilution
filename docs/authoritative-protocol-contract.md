@@ -326,8 +326,10 @@ mappings; older peers may omit these fields.
 Optional `MonsterSnapshot` fields 73-74 carry the native Rhino
 `var2`-compatible idle counter and `var1`-compatible movement value. Field 75
 carries the remaining native Rhino `AiDelay` countdown. The server owns these
-ordinary movement and delay decisions; older peers may omit the fields while
-Rhino far-distance Move goal state remains in fields 60-61.
+ordinary movement and delay decisions, applying the validated 33/2/50
+long-idle and fresh-mode bands with the native fallback for older mappings;
+older peers may omit the fields while Rhino far-distance Move goal state
+remains in fields 60-61.
 
 Optional `MonsterSnapshot.skeleton_king_delay_ticks` field 76 carries the
 remaining native Leoric/Skeleton King `AiDelay` countdown. It is server-owned,

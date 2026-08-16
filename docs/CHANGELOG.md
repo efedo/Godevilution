@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.316 validated Rhino ordinary movement bands to
+  `monster_types.tsv`, preserving the native 33/2/50 fallback for older
+  mappings.
+
 - Add schema 1.315 validated Fat/Overlord fresh-mode movement bonus to
   `monster_types.tsv`, preserving the native 50-point fallback for older
   mappings.
@@ -597,9 +601,10 @@ All notable changes to this fork are documented below.
   optional protocol fields 71-72, snapshots, saves, and the canonical hash.
 
 - Preserve native Rhino ordinary movement state: the server now carries its
-  `var1`/`var2`-compatible counter, applies the long-idle 33% and fresh-mode
-  83% bands, starts the native delay countdown on failed admissions, and
-  persists movement and delay state through optional protocol fields 73-75.
+  `var1`/`var2`-compatible counter, applies validated 33/2/50 long-idle and
+  fresh-mode bands with the native fallback, starts the native delay countdown
+  on failed admissions, and persists movement and delay state through optional
+  protocol fields 73-75.
 
 - Preserve native Leoric/Skeleton King `AiDelay` state: failed movement
   admissions now start a server-owned countdown, which persists through
