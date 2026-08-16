@@ -1931,6 +1931,22 @@ public sealed class AuthoritativeSpellCatalog
 
     public bool TryGet(uint spellId, out AuthoritativeSpellDefinition definition) => spells.TryGetValue(spellId, out definition!);
 
+    /** Validates stable spell symbols against active spells and class abilities. */
+    public void ValidateStableReferences(
+        StableContentIdCatalog stableIds,
+        IEnumerable<uint>? additionalAbilityIds = null)
+    {
+        ArgumentNullException.ThrowIfNull(stableIds);
+        var activeAbilityIds = additionalAbilityIds?.ToHashSet() ?? [];
+        foreach (var entry in stableIds.Entries.Where(entry =>
+                     string.Equals(entry.Kind, "spell", StringComparison.Ordinal))) {
+            if (!TryGet(entry.NumericId, out _)
+                && !activeAbilityIds.Contains(entry.NumericId))
+                throw new InvalidDataException(
+                    $"Stable spell symbol '{entry.Symbol}' references unknown spell {entry.NumericId}.");
+        }
+    }
+
     /** Resolves a native source identity to its stable authoritative spell row. */
     public bool TryGetByNativeId(uint nativeSpellId, out AuthoritativeSpellDefinition definition)
         => nativeSpells.TryGetValue(nativeSpellId, out definition!);

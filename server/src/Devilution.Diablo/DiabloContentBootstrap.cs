@@ -263,10 +263,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIdsTable.SourcePath,
                 stableIdsTable.ToCanonicalTsv())
             : null;
-        var identifyAbilitySpellId = stableIds?.Resolve("spell", "identify") ?? 0;
-        var repairAbilitySpellId = stableIds?.Resolve("spell", "repair") ?? 0;
-        var rechargeAbilitySpellId = stableIds?.Resolve("spell", "recharge") ?? 0;
-        var trapDisarmAbilitySpellId = stableIds?.Resolve("spell", "trap_disarm") ?? 0;
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
@@ -290,6 +286,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null && levelGeneration is not null)
             levelGeneration.ValidateWorld(world);
         playerLoadouts.ValidateCastSources(spells);
+        if (spells is not null && stableIds is not null)
+            spells.ValidateStableReferences(
+                stableIds,
+                playerLoadouts.Definitions.Select(definition => definition.AbilitySpellId));
+        var identifyAbilitySpellId = stableIds?.Resolve("spell", "identify") ?? 0;
+        var repairAbilitySpellId = stableIds?.Resolve("spell", "repair") ?? 0;
+        var rechargeAbilitySpellId = stableIds?.Resolve("spell", "recharge") ?? 0;
+        var trapDisarmAbilitySpellId = stableIds?.Resolve("spell", "trap_disarm") ?? 0;
         if (spells is not null)
             itemCatalog!.ValidateSpellReferences(spells);
         if (world is not null)
