@@ -31,7 +31,8 @@ public sealed record DiabloContentActivation
         AuthoritativeSetLevelNameCatalog? setLevelNames = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
-        uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId)
+        uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId,
+        AuthoritativeWorldRules? worldRules = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -49,6 +50,7 @@ public sealed record DiabloContentActivation
         MonsterSpawnPlanner = monsterSpawnPlanner;
         MonsterMissiles = monsterMissiles;
         AdriaStoreId = adriaStoreId;
+        WorldRules = worldRules ?? AuthoritativeWorldRules.NativeDefaults;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -80,6 +82,9 @@ public sealed record DiabloContentActivation
 
     /** Service-only store identity supplied by the active world rules. */
     public uint AdriaStoreId { get; }
+
+    /** Validated world identities and optional Town Portal destination geometry. */
+    public AuthoritativeWorldRules WorldRules { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -505,6 +510,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var rules = new DiabloStoreRules(pricing, itemCatalog);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
+            WorldRules = worldRules,
             CombatTargets = combatTargets,
             Portals = portals,
             Objects = objects,
@@ -544,7 +550,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelNames,
             monsterSpawnPlanner,
             monsterMissiles,
-            worldRules.AdriaStoreId);
+            worldRules.AdriaStoreId,
+            worldRules);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

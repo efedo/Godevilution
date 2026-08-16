@@ -30,6 +30,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeWorld? World { get; init; }
 
+    /** Optional active world-owned identities and Town Portal geometry. */
+    public AuthoritativeWorldRules? WorldRules { get; init; }
+
     public int FallbackWidth { get; init; } = 40;
 
     public int FallbackHeight { get; init; } = 40;
@@ -147,6 +150,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
             new AuthoritativeSpellDefinition(2, 3, 0, 1, 10, 1),
         ]);
+        options.WorldRules?.Validate();
         var combatRules = options.CombatRules ?? new AuthoritativeCombatRules(10, 1, 100);
         if (options.Items is not null)
             combatRules.ValidateItems(options.Items);
@@ -207,7 +211,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.MonsterMissiles,
                 options.MonsterSpawnPlanner,
                 options.MonsterTypes,
-                options.Difficulty),
+                options.Difficulty,
+                options.WorldRules),
             spells,
             random,
             combatRules,

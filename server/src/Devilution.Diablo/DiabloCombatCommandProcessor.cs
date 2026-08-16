@@ -26,6 +26,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
+    private readonly AuthoritativeWorldRules? worldRules;
     private IReadOnlyList<AuthoritativePlayerState> activePlayers = [];
     private uint nextWorldItemEntityId = 0x40000000;
     private uint nextMonsterEntityId = 0x10000000;
@@ -137,7 +138,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        AuthoritativeWorldRules? worldRules = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -158,6 +160,7 @@ public sealed class DiabloCombatCommandProcessor
         this.monsterMissiles = monsterMissiles;
         this.monsterSpawnPlanner = monsterSpawnPlanner;
         this.monsterTypes = monsterTypes;
+        this.worldRules = worldRules?.Validate();
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
         if (useNativePlayerActionTiming && playerAnimations is null) {
@@ -169,6 +172,26 @@ public sealed class DiabloCombatCommandProcessor
 
     private int GetDifficultyLevelOffset()
         => rules.DifficultyRules.GetLevelOffset(difficulty);
+
+    private int GetTownPortalDestinationPositionX(AuthoritativeSpellDefinition spell)
+        => worldRules?.HasTownPortalDestinationGeometry == true
+            ? worldRules.TownPortalDestinationPositionX
+            : spell.TownPortalDestinationPositionX;
+
+    private int GetTownPortalDestinationPositionY(AuthoritativeSpellDefinition spell)
+        => worldRules?.HasTownPortalDestinationGeometry == true
+            ? worldRules.TownPortalDestinationPositionY
+            : spell.TownPortalDestinationPositionY;
+
+    private int GetTownPortalDestinationSlotCount(AuthoritativeSpellDefinition spell)
+        => worldRules?.HasTownPortalDestinationGeometry == true
+            ? worldRules.TownPortalDestinationSlotCount
+            : spell.TownPortalDestinationSlotCount;
+
+    private int GetTownPortalDestinationSlotSpacing(AuthoritativeSpellDefinition spell)
+        => worldRules?.HasTownPortalDestinationGeometry == true
+            ? worldRules.TownPortalDestinationSlotSpacing
+            : spell.TownPortalDestinationSlotSpacing;
 
     private int GetDifficultyToHitBonus()
         => rules.DifficultyRules.GetToHitBonus(difficulty);
@@ -1818,10 +1841,10 @@ public sealed class DiabloCombatCommandProcessor
                 applyEffects: false,
                 searchRadius: spell.TownPortalSearchRadius,
                 lifetime: spell.TownPortalLifetime,
-                destinationPositionX: spell.TownPortalDestinationPositionX,
-                destinationPositionY: spell.TownPortalDestinationPositionY,
-                destinationSlotCount: spell.TownPortalDestinationSlotCount,
-                destinationSlotSpacing: spell.TownPortalDestinationSlotSpacing);
+                destinationPositionX: GetTownPortalDestinationPositionX(spell),
+                destinationPositionY: GetTownPortalDestinationPositionY(spell),
+                destinationSlotCount: GetTownPortalDestinationSlotCount(spell),
+                destinationSlotSpacing: GetTownPortalDestinationSlotSpacing(spell));
             if (!townPortalValidation.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalValidation.Failure ?? DiabloRuleFailure.InvalidTarget);
@@ -1943,10 +1966,10 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 searchRadius: spell.TownPortalSearchRadius,
                 lifetime: spell.TownPortalLifetime,
-                destinationPositionX: spell.TownPortalDestinationPositionX,
-                destinationPositionY: spell.TownPortalDestinationPositionY,
-                destinationSlotCount: spell.TownPortalDestinationSlotCount,
-                destinationSlotSpacing: spell.TownPortalDestinationSlotSpacing);
+                destinationPositionX: GetTownPortalDestinationPositionX(spell),
+                destinationPositionY: GetTownPortalDestinationPositionY(spell),
+                destinationSlotCount: GetTownPortalDestinationSlotCount(spell),
+                destinationSlotSpacing: GetTownPortalDestinationSlotSpacing(spell));
             if (!townPortalResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     townPortalResult.Failure ?? DiabloRuleFailure.Malformed);
