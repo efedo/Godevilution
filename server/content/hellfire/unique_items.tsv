@@ -136,43 +136,43 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1037	the_grandfather	The Grandfather	136	two_handed_sword	27	119800	TOHIT	20	20	THE_GRANDFATHER
 1037	the_grandfather	The Grandfather	136	two_handed_sword	27	119800	DAMP	70	70	THE_GRANDFATHER
 1037	the_grandfather	The Grandfather	136	two_handed_sword	27	119800	LIFE	20	20	THE_GRANDFATHER
-1038	the_mangler	The Mangler	137	hellfire_item_137	2	2850	DAMP	200	200	AXE
-1038	the_mangler	The Mangler	137	hellfire_item_137	2	2850	DEX_CURSE	5	5	AXE
-1038	the_mangler	The Mangler	137	hellfire_item_137	2	2850	MAG_CURSE	5	5	AXE
-1038	the_mangler	The Mangler	137	hellfire_item_137	2	2850	MANA_CURSE	10	10	AXE
-1039	sharp_beak	Sharp Beak	137	hellfire_item_137	2	2850	LIFE	20	20	GREAT_AXE
-1039	sharp_beak	Sharp Beak	137	hellfire_item_137	2	2850	MAG_CURSE	10	10	GREAT_AXE
-1039	sharp_beak	Sharp Beak	137	hellfire_item_137	2	2850	MANA_CURSE	10	10	GREAT_AXE
-1040	bloodslayer	BloodSlayer	138	hellfire_item_138	3	2500	DAMP	100	100	AXE
-1040	bloodslayer	BloodSlayer	138	hellfire_item_138	3	2500	3XDAMVDEM	0	0	AXE
-1040	bloodslayer	BloodSlayer	138	hellfire_item_138	3	2500	ATTRIBS_CURSE	5	5	AXE
-1040	bloodslayer	BloodSlayer	138	hellfire_item_138	3	2500	SPLLVLADD	-1	-1	AXE
-1041	the_celestial_axe	The Celestial Axe	139	hellfire_item_139	4	14100	NOMINSTR	0	0	-
-1041	the_celestial_axe	The Celestial Axe	139	hellfire_item_139	4	14100	TOHIT	15	15	-
-1041	the_celestial_axe	The Celestial Axe	139	hellfire_item_139	4	14100	LIFE	15	15	-
-1041	the_celestial_axe	The Celestial Axe	139	hellfire_item_139	4	14100	STR_CURSE	15	15	-
-1042	wicked_axe	Wicked Axe	137	hellfire_item_137	5	31150	TOHIT	30	30	GREAT_AXE
-1042	wicked_axe	Wicked Axe	137	hellfire_item_137	5	31150	DEX	10	10	GREAT_AXE
-1042	wicked_axe	Wicked Axe	137	hellfire_item_137	5	31150	VIT_CURSE	10	10	GREAT_AXE
-1042	wicked_axe	Wicked Axe	137	hellfire_item_137	5	31150	GETHIT	1	6	GREAT_AXE
-1042	wicked_axe	Wicked Axe	137	hellfire_item_137	5	31150	INDESTRUCTIBLE	0	0	GREAT_AXE
-1043	stonecleaver	Stonecleaver	138	hellfire_item_138	7	23900	LIFE	30	30	STONECLEAVER
-1043	stonecleaver	Stonecleaver	138	hellfire_item_138	7	23900	TOHIT	20	20	STONECLEAVER
-1043	stonecleaver	Stonecleaver	138	hellfire_item_138	7	23900	DAMP	50	50	STONECLEAVER
-1043	stonecleaver	Stonecleaver	138	hellfire_item_138	7	23900	LIGHTRES	40	40	STONECLEAVER
-1044	aguinara_s_hatchet	Aguinara's Hatchet	140	hellfire_item_140	12	24800	SPLLVLADD	1	1	-
-1044	aguinara_s_hatchet	Aguinara's Hatchet	140	hellfire_item_140	12	24800	MAG	10	10	-
-1044	aguinara_s_hatchet	Aguinara's Hatchet	140	hellfire_item_140	12	24800	MAGICRES	80	80	-
-1045	hellslayer	Hellslayer	139	hellfire_item_139	15	26200	STR	8	8	-
-1045	hellslayer	Hellslayer	139	hellfire_item_139	15	26200	VIT	8	8	-
-1045	hellslayer	Hellslayer	139	hellfire_item_139	15	26200	DAMP	100	100	-
-1045	hellslayer	Hellslayer	139	hellfire_item_139	15	26200	LIFE	25	25	-
-1045	hellslayer	Hellslayer	139	hellfire_item_139	15	26200	MANA_CURSE	25	25	-
-1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	hellfire_item_141	25	58000	DAMP	200	200	MESSERSCHMIDTS_REAVER
-1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	hellfire_item_141	25	58000	DAMMOD	15	15	MESSERSCHMIDTS_REAVER
-1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	hellfire_item_141	25	58000	ATTRIBS	5	5	MESSERSCHMIDTS_REAVER
-1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	hellfire_item_141	25	58000	LIFE_CURSE	50	50	MESSERSCHMIDTS_REAVER
-1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	hellfire_item_141	25	58000	FIREDAM	2	12	MESSERSCHMIDTS_REAVER
+1038	the_mangler	The Mangler	137	large_axe	2	2850	DAMP	200	200	AXE
+1038	the_mangler	The Mangler	137	large_axe	2	2850	DEX_CURSE	5	5	AXE
+1038	the_mangler	The Mangler	137	large_axe	2	2850	MAG_CURSE	5	5	AXE
+1038	the_mangler	The Mangler	137	large_axe	2	2850	MANA_CURSE	10	10	AXE
+1039	sharp_beak	Sharp Beak	137	large_axe	2	2850	LIFE	20	20	GREAT_AXE
+1039	sharp_beak	Sharp Beak	137	large_axe	2	2850	MAG_CURSE	10	10	GREAT_AXE
+1039	sharp_beak	Sharp Beak	137	large_axe	2	2850	MANA_CURSE	10	10	GREAT_AXE
+1040	bloodslayer	BloodSlayer	138	broad_axe	3	2500	DAMP	100	100	AXE
+1040	bloodslayer	BloodSlayer	138	broad_axe	3	2500	3XDAMVDEM	0	0	AXE
+1040	bloodslayer	BloodSlayer	138	broad_axe	3	2500	ATTRIBS_CURSE	5	5	AXE
+1040	bloodslayer	BloodSlayer	138	broad_axe	3	2500	SPLLVLADD	-1	-1	AXE
+1041	the_celestial_axe	The Celestial Axe	139	battle_axe	4	14100	NOMINSTR	0	0	-
+1041	the_celestial_axe	The Celestial Axe	139	battle_axe	4	14100	TOHIT	15	15	-
+1041	the_celestial_axe	The Celestial Axe	139	battle_axe	4	14100	LIFE	15	15	-
+1041	the_celestial_axe	The Celestial Axe	139	battle_axe	4	14100	STR_CURSE	15	15	-
+1042	wicked_axe	Wicked Axe	137	large_axe	5	31150	TOHIT	30	30	GREAT_AXE
+1042	wicked_axe	Wicked Axe	137	large_axe	5	31150	DEX	10	10	GREAT_AXE
+1042	wicked_axe	Wicked Axe	137	large_axe	5	31150	VIT_CURSE	10	10	GREAT_AXE
+1042	wicked_axe	Wicked Axe	137	large_axe	5	31150	GETHIT	1	6	GREAT_AXE
+1042	wicked_axe	Wicked Axe	137	large_axe	5	31150	INDESTRUCTIBLE	0	0	GREAT_AXE
+1043	stonecleaver	Stonecleaver	138	broad_axe	7	23900	LIFE	30	30	STONECLEAVER
+1043	stonecleaver	Stonecleaver	138	broad_axe	7	23900	TOHIT	20	20	STONECLEAVER
+1043	stonecleaver	Stonecleaver	138	broad_axe	7	23900	DAMP	50	50	STONECLEAVER
+1043	stonecleaver	Stonecleaver	138	broad_axe	7	23900	LIGHTRES	40	40	STONECLEAVER
+1044	aguinara_s_hatchet	Aguinara's Hatchet	140	small_axe	12	24800	SPLLVLADD	1	1	-
+1044	aguinara_s_hatchet	Aguinara's Hatchet	140	small_axe	12	24800	MAG	10	10	-
+1044	aguinara_s_hatchet	Aguinara's Hatchet	140	small_axe	12	24800	MAGICRES	80	80	-
+1045	hellslayer	Hellslayer	139	battle_axe	15	26200	STR	8	8	-
+1045	hellslayer	Hellslayer	139	battle_axe	15	26200	VIT	8	8	-
+1045	hellslayer	Hellslayer	139	battle_axe	15	26200	DAMP	100	100	-
+1045	hellslayer	Hellslayer	139	battle_axe	15	26200	LIFE	25	25	-
+1045	hellslayer	Hellslayer	139	battle_axe	15	26200	MANA_CURSE	25	25	-
+1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	DAMP	200	200	MESSERSCHMIDTS_REAVER
+1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	DAMMOD	15	15	MESSERSCHMIDTS_REAVER
+1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	ATTRIBS	5	5	MESSERSCHMIDTS_REAVER
+1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	LIFE_CURSE	50	50	MESSERSCHMIDTS_REAVER
+1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	FIREDAM	2	12	MESSERSCHMIDTS_REAVER
 1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	ATTRIBS	2	2	-
 1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	INDESTRUCTIBLE	0	0	-
 1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	ALLRES	15	15	-
