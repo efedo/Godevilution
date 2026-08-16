@@ -282,7 +282,12 @@ public sealed class StoreCatalog
                     throw new InvalidDataException(
                         $"Store row {row.LineNumber} contains a negative book spell {spellId}.");
                 return spellId == 0
-                    ? spellBooks.GenerateRandom(itemCatalog, itemSeed, itemLevel, gameMode)
+                    ? spellBooks.GenerateRandom(
+                        itemCatalog,
+                        itemSeed,
+                        itemLevel,
+                        gameMode,
+                        resolvedItemId)
                     : spellBooks.Generate(itemCatalog, checked((uint)spellId), itemSeed, itemLevel);
             }
             return itemCatalog.Generate(resolvedItemId, itemSeed, itemLevel);

@@ -13739,7 +13739,8 @@ public sealed class DiabloCombatCommandProcessor
                 items,
                 itemSeed,
                 quest.CompletionRewardItemLevel,
-                gameMode)
+                gameMode,
+                quest.CompletionRewardItemId)
             : items.Generate(
                 quest.CompletionRewardItemId,
                 itemSeed,

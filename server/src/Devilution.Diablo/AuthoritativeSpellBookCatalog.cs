@@ -146,16 +146,22 @@ public sealed class AuthoritativeSpellBookCatalog
             throw new InvalidDataException(
                 $"Spell {spellId} is not available as a dynamic book.");
 
-        var templates = GetBookTemplates(items);
-        var maximumNativeLevel = Math.Max(1, itemLevel) * 2;
-        var eligible = templates
-            .Where(template => template.Definition.MinimumMonsterLevel <= maximumNativeLevel)
-            .ToArray();
-        if (eligible.Length == 0)
+        var eligible = GetEligibleBookTemplates(items, itemLevel);
+        if (eligible.Count == 0)
             throw new InvalidDataException(
                 $"No spell-book template is eligible at item level {itemLevel}.");
 
-        var template = eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Length)];
+        var template = eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Count)];
+        return GenerateFromTemplate(items, spellId, itemSeed, book, template);
+    }
+
+    private static AuthoritativeItemState GenerateFromTemplate(
+        AuthoritativeItemCatalog items,
+        uint spellId,
+        uint itemSeed,
+        AuthoritativeSpellBookDefinition book,
+        (uint ItemId, AuthoritativeItemDefinition Definition) template)
+    {
         var state = items.Generate(template.ItemId, itemSeed);
         var value = checked(state.Value + book.BookCost);
         var name = $"Book of {book.DisplayName}";
@@ -176,7 +182,8 @@ public sealed class AuthoritativeSpellBookCatalog
         AuthoritativeItemCatalog items,
         uint itemSeed,
         int itemLevel = 1,
-        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        uint? templateItemId = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         if (itemSeed == 0)
@@ -196,7 +203,26 @@ public sealed class AuthoritativeSpellBookCatalog
                 $"No spell is eligible for a book at item level {itemLevel}.");
 
         var spell = SelectRandomSpell(eligible, itemSeed);
+        if (templateItemId is uint requestedTemplateItemId)
+        {
+            var template = GetEligibleBookTemplates(items, itemLevel)
+                .SingleOrDefault(candidate => candidate.ItemId == requestedTemplateItemId);
+            if (template.ItemId == 0)
+                throw new InvalidDataException(
+                    $"Spell-book template {requestedTemplateItemId} is not eligible at item level {itemLevel}.");
+            return GenerateFromTemplate(items, spell.SpellId, itemSeed, spell, template);
+        }
         return Generate(items, spell.SpellId, itemSeed, itemLevel);
+    }
+
+    private static IReadOnlyList<(uint ItemId, AuthoritativeItemDefinition Definition)> GetEligibleBookTemplates(
+        AuthoritativeItemCatalog items,
+        int itemLevel)
+    {
+        var maximumNativeLevel = Math.Max(1, itemLevel) * 2;
+        return GetBookTemplates(items)
+            .Where(template => template.Definition.MinimumMonsterLevel <= maximumNativeLevel)
+            .ToArray();
     }
 
     private bool IsAvailableInGameMode(

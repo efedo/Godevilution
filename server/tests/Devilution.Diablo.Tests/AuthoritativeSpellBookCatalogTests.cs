@@ -100,6 +100,38 @@ public sealed class AuthoritativeSpellBookCatalogTests
         Assert.Contains(3, multiplayerSpellIds);
     }
 
+    [Fact]
+    public void DropGenerationRetainsTheRequestedBookTemplate()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                MinimumMonsterLevel = 2,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+            new AuthoritativeItemDefinition(115, 6, 80, 80, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                MinimumMonsterLevel = 8,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+
+        var state = items.GenerateDrop(115, 42, 4, spellBooks: books);
+
+        Assert.Equal(115, state.ItemIndex);
+        Assert.Equal(105, state.Value);
+        Assert.Equal(7, state.SpellId);
+    }
+
     private static AuthoritativeItemCatalog CreateBookTemplateCatalog()
     {
         return new AuthoritativeItemCatalog([
