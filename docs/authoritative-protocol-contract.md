@@ -667,6 +667,11 @@ local creation state. When either field contains state, canonical hashing adds
 the tagged `godevilution-player-spells-v1` section; an entirely empty spell
 projection adds nothing so older state hashes remain unchanged.
 
+Item-backed spell sources retain their existing `ItemStateSnapshot` identity and
+source-kind fields. Additive `spell_display_name` metadata carries the
+server-owned content name when the active spell-book catalog provides one;
+empty preserves compatibility for older snapshots and non-booked spells.
+
 `PlayerSnapshot.hostile_mode` field 22 is the inverse of native friendly mode.
 Its absent/false Protobuf default therefore preserves friendly behavior for
 older peers and saves. A true value adds the tagged

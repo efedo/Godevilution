@@ -173,9 +173,10 @@ the tile. It then validates friendly-fire, range, and missile line of sight,
 owning projectile impact, resistance, blocking, damage, and death handling.
 
 The cast cursor now exposes every source present in the authoritative snapshot.
-Memorized spells use server-provided content names when available (with a
-numeric compatibility fallback), while the charged left-hand staff, inventory
-consumables, belt consumables, and the class ability appear in stable order;
+Memorized spells and item-backed spell sources use server-provided content names
+when available (with a numeric compatibility fallback), while the charged
+left-hand staff, inventory consumables, belt consumables, and the class ability
+appear in stable order;
 `Q` and `E` cycle the selected source, and the HUD shows the active selection.
 This changes only
 which explicit source the client requests. The server still validates ownership,

@@ -120,8 +120,9 @@ Windows toolchain command.
 - `ItemStateSnapshot.spell_source_kind` is the server-projected classification
   of an item-backed spell source (`CHARGED_ITEM` or `CONSUMABLE_ITEM`). Godot
   uses it to enumerate cast sources and does not infer staffs, scrolls, or
-  runes from native miscellaneous IDs. Unspecified preserves compatibility for
-  older snapshots and non-spell items.
+  runes from native miscellaneous IDs. `ItemStateSnapshot.spell_display_name`
+  is additive server-owned presentation metadata for those sources; an empty
+  value preserves compatibility for older snapshots and non-booked spells.
 - Spell state extends the canonical player hash only when the ability is
   nonzero or the learned-spell list is nonempty. The tagged
   `godevilution-player-spells-v1` suffix preserves every pre-extension hash for
