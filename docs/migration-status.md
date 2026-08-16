@@ -78,6 +78,10 @@ Status date: 2026-08-16
   validated monster-type fields, preserving native intelligence reduction
   and deterministic exclusive random ranges for older packs.
 
+- Shared AiAvoidance failed-RoundWalk delays are now validated monster-type
+  fields for GoatMelee and Gargoyle, retaining the native exclusive random
+  range through compatibility fallback for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

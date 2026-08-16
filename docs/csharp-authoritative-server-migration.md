@@ -775,6 +775,11 @@ delays through optional `skeleton_melee_*_delay_*` columns on the validated
 monster-type mapping. Older packs retain the native 15/10 base, 2-point
 intelligence reduction, and ten-wide random formulas.
 
+Schema 1.297 externalizes the shared AiAvoidance failed-RoundWalk delay
+through optional `avoidance_delay_base` and `avoidance_delay_random_range`
+columns on the validated monster-type mapping. Older packs retain the native
+ten-plus-ten formula through the compatibility fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

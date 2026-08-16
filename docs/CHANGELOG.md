@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.297 validated AiAvoidance RoundWalk-failure delay tuning to
+  `monster_types.tsv`, preserving the native base-plus-exclusive-random delay
+  for older mappings.
+
 - Add schema 1.296 validated SkeletonMelee movement and failed-adjacent-
   attack delay bands to `monster_types.tsv`, preserving the native
   intelligence reduction and exclusive random ranges for older mappings.
