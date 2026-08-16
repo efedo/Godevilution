@@ -435,6 +435,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownStableSpellReference()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var stableIds = basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv");
+        var invalidStableIds = TsvTable.Parse(
+            stableIds.SourcePath,
+            "kind\tsymbol\tnumeric_id\n"
+                + "spell\tidentify\t9999\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == stableIds.SourcePath
+                    ? invalidStableIds
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("symbol 'identify' references unknown spell 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

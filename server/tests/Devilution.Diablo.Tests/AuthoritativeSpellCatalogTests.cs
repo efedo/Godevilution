@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -23,6 +24,47 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(49, (int)AuthoritativeProjectileBehavior.Etherealize);
         Assert.Equal(58, (int)AuthoritativeProjectileBehavior.WeaponArrow);
         Assert.Equal(59, (int)AuthoritativeProjectileBehavior.MonsterArrow);
+    }
+
+    [Fact]
+    public void ValidatesStableSpellReferences()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
+        ]);
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "firebolt", 1),
+        ]);
+
+        spells.ValidateStableReferences(stableIds);
+    }
+
+    [Fact]
+    public void AcceptsStableReferenceForAnActiveClassAbility()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
+        ]);
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "repair", 26),
+        ]);
+
+        spells.ValidateStableReferences(stableIds, [26]);
+    }
+
+    [Fact]
+    public void RejectsUnknownStableSpellReferences()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
+        ]);
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "missing", 9999),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            spells.ValidateStableReferences(stableIds));
+        Assert.Contains("symbol 'missing' references unknown spell 9999", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
