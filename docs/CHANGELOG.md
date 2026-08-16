@@ -68,6 +68,9 @@ All notable changes to this fork are documented below.
 
 - Validate normalized unique-item base references against the active item
   catalog, preventing late generation failures from malformed content.
+
+- Validate non-zero store spell-staff pricing identities against the active
+  spell catalog while preserving the native zero-cost fallback row.
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
