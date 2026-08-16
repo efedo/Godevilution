@@ -207,6 +207,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Fat movement admission chance increase per intelligence point. */
     public int FatMovementChanceIntelligenceScale { get; init; }
 
+    /** Native Fat fresh-mode movement chance bonus. */
+    public int FatMovementFreshChanceBonus { get; init; }
+
     /** Native Fat adjacent attack chance base before intelligence scaling. */
     public int FatAttackChanceBase { get; init; }
 
@@ -655,6 +658,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.GoatMeleeSpecialChanceGroupPeriod <= 0))
                 || definition.FatMovementChanceBase is < 0 or > 100
                 || definition.FatMovementChanceIntelligenceScale is < 0 or > 100
+                || definition.FatMovementFreshChanceBonus is < 0 or > 100
                 || ((definition.FatMovementChanceBase != 0
                         || definition.FatMovementChanceIntelligenceScale != 0)
                     && (definition.FatMovementChanceBase <= 0
@@ -938,6 +942,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 GoatMeleeSpecialChanceGroupPeriod = row.OptionalInt32("goat_melee_special_chance_group_period"),
                 FatMovementChanceBase = row.OptionalInt32("fat_movement_chance_base"),
                 FatMovementChanceIntelligenceScale = row.OptionalInt32("fat_movement_chance_intelligence_scale"),
+                FatMovementFreshChanceBonus = row.OptionalInt32("fat_movement_fresh_chance_bonus"),
                 FatAttackChanceBase = row.OptionalInt32("fat_attack_chance_base"),
                 FatAttackChanceIntelligenceScale = row.OptionalInt32("fat_attack_chance_intelligence_scale"),
                 FatSpecialChanceBase = row.OptionalInt32("fat_special_chance_base"),

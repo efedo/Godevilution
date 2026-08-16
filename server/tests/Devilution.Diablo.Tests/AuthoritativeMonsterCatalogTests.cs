@@ -588,6 +588,11 @@ public sealed class AuthoritativeMonsterCatalogTests
                 FatAttackChanceBase = 20,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                FatMovementFreshChanceBonus = 101,
+            },
+        ]));
     }
 
     [Fact]
@@ -595,13 +600,14 @@ public sealed class AuthoritativeMonsterCatalogTests
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
-            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tfat_movement_chance_base\tfat_movement_chance_intelligence_scale\n"
-                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t22\t5\n");
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tfat_movement_chance_base\tfat_movement_chance_intelligence_scale\tfat_movement_fresh_chance_bonus\n"
+                + "2\t0\tOverlord\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tFallen\t22\t5\t50\n");
 
         var fat = Assert.Single(catalog.Definitions);
-        Assert.Equal((22, 5), (
+        Assert.Equal((22, 5, 50), (
             fat.FatMovementChanceBase,
-            fat.FatMovementChanceIntelligenceScale));
+            fat.FatMovementChanceIntelligenceScale,
+            fat.FatMovementFreshChanceBonus));
     }
 
     [Fact]

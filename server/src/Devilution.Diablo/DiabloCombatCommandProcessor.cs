@@ -5133,7 +5133,8 @@ public sealed class DiabloCombatCommandProcessor
         var movementChance = GetFatMovementChance(
             monster,
             fatTuning.Value.ChanceBase,
-            fatTuning.Value.IntelligenceScale);
+            fatTuning.Value.IntelligenceScale,
+            GetFatMovementFreshChanceBonus(monster));
         if (actionSeed % 100U >= (uint)movementChance) {
             monster.AdvanceFatMovementIdle();
             return true;
@@ -7864,7 +7865,8 @@ public sealed class DiabloCombatCommandProcessor
     private static int GetFatMovementChance(
         AuthoritativeCombatTarget monster,
         int chanceBase,
-        int intelligenceScale)
+        int intelligenceScale,
+        int freshChanceBonus)
     {
         var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
         var movementChance = monster.FatMovementIdleTicks == -1
@@ -7873,9 +7875,19 @@ public sealed class DiabloCombatCommandProcessor
                 ? longIdleChance
                 : monster.FatMovementIdleTicks == 0
                     && monster.FatMovementMode is >= 1 and <= 3
-                    ? longIdleChance + 50
+                    ? longIdleChance + freshChanceBonus
                     : 0;
         return Math.Min(100, movementChance);
+    }
+
+    /** Native Fat fresh-mode bonus with a compatibility fallback for older packs. */
+    private int GetFatMovementFreshChanceBonus(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.FatMovementFreshChanceBonus > 0)
+            return definition.FatMovementFreshChanceBonus;
+        return 50;
     }
 
     /** Native AiRangedAvoidance ordinary movement admission across var2 bands. */

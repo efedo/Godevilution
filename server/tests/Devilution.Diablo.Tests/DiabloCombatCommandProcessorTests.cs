@@ -5019,6 +5019,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FatAiUsesValidatedFreshMovementBonus()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                52,
+                "Overlord",
+                0,
+                0,
+                15,
+                80,
+                120,
+                30,
+                8,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Fat",
+                FatMovementChanceBase = 10,
+                FatMovementChanceIntelligenceScale = 1,
+                FatMovementFreshChanceBonus = 100,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            monsterId: 1,
+            nativeAi: "Fat",
+            intelligence: 0,
+            fatMovementIdleTicks: 0,
+            fatMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 2,000 ^ 9 ^ 7 = 2,014: a ten-percent long-idle band plus the
+        // validated 100-point fresh bonus admits this movement.
+        processor.AdvanceTick(2_000, [player]);
+
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void FatAiDefersInsideItsNativeMiddleMovementBand()
     {
         var monster = new AuthoritativeCombatTarget(
