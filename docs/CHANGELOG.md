@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize class-skill and starting-spell references through optional stable
+  spell symbols in `class_loadouts.tsv`; activated packs cross-check symbols
+  against numeric compatibility IDs while older loadout schemas remain valid.
+
 - Externalize Town Portal destination slot geometry through validated
   `world_rules.tsv`; active packs own placement while packs without the new
   columns retain legacy spell-row tuning. Activated geometry is also checked

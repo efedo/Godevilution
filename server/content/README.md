@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.223.0` schema in
+It declares its identity and `devilution.diablo@1.224.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -934,7 +934,8 @@ optional host `--starting-life` and `--starting-mana` values are explicit Q6
 development overrides. They are not content defaults.
 
 `class_loadouts.tsv` defines one complete starting wallet, stable class-skill
-ID, semantic `ability_kind`, and optional learned spell/level for every active class. Its companion
+ID, optional stable `ability_spell_symbol`, semantic `ability_kind`, and optional
+learned spell/level with `starting_spell_symbol` for every active class. Its companion
 `class_loadout_items.tsv` gives each starting item a contiguous per-class order,
 stable `item_id`, exact `Inventory`, `Equipment`, or `Belt` location, and native
 slot or inventory-grid anchor. Activation rejects missing classes, unknown
@@ -948,7 +949,10 @@ interactions such as repair, recharge, or trap disarm. New-session item seeds
 are derived deterministically from the session, class, order, and item ID; they
 are server-owned and unique within the loadout.
 
-`ability_kind` identifies the content-owned semantic role of a class skill
+`ability_spell_symbol` and `starting_spell_symbol` resolve through the active
+`content_ids.tsv` `spell` namespace. Activated packs cross-check each symbol
+against its numeric compatibility column; older tables without the symbol
+columns retain numeric-ID behavior. `ability_kind` identifies the content-owned semantic role of a class skill
 (`Repair`, `TrapDisarm`, `Recharge`, `Search`, `Identify`, or `Rage`) so
 presentation clients do not infer behavior from numeric spell IDs. The server
 still validates and admits the stable `ability_spell_id` independently.
@@ -1476,7 +1480,7 @@ the complete target header even when they upsert only one row.
 | --- | --- | --- |
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, and FastBlock timing. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
-| `class_loadouts.tsv` | `class_id` | Starting Gold, class-skill identity and semantic role, and optional learned spell/level. |
+| `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here, spell-kind entries are validated against active spells or class abilities, and level/portal entries are validated against their active catalogs during activation. |
@@ -1526,7 +1530,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.223.0"
+      "version": "1.224.0"
   },
   "dependencyConstraints": [
     {
@@ -1558,7 +1562,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.223.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.224.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2115,7 +2119,10 @@ through the existing authoritative object-interaction path.
 Schema 1.220 adds optional quest gates to `warps.tsv`; the Hellfire crypt
 entrance is now a server-owned trigger that remains closed until Grave Matters
 is completed.
-Schema 1.223 adds Town Portal destination geometry columns to
+Schema 1.224 adds optional `ability_spell_symbol` and `starting_spell_symbol`
+columns to `class_loadouts.tsv`. Active packs resolve these through the stable
+spell namespace and reject numeric/symbol mismatches; older loadout schemas
+retain numeric-ID compatibility. Schema 1.223 adds Town Portal destination geometry columns to
 `world_rules.tsv`; active packs now own the destination slot layout used by
 the authoritative cast path, and activation validates every slot against the
 town level's bounds and walkability. Schema 1.222 adds the `adria_store_id` column to

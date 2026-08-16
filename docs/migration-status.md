@@ -31,6 +31,11 @@ Status date: 2026-08-15
 - Stable spell symbols in `content_ids.tsv` are now cross-validated against
   the active spell catalog before ability IDs are published to a session.
 
+- Class loadouts now optionally resolve `ability_spell_symbol` and
+  `starting_spell_symbol` through the stable spell namespace. Activated packs
+  reject symbol/numeric mismatches, while legacy loadout schemas retain their
+  numeric-ID fallback.
+
 - Stable level and portal symbols are now cross-validated against active world
   and portal catalogs during content activation, without removing legacy
   no-catalog fallbacks.
@@ -827,6 +832,10 @@ Status date: 2026-08-15
 
 - Schema 1.222 adds the Adria service-only store identity to `world_rules.tsv`;
   activation rejects zero and stock-vendor collisions.
+
+- Schema 1.224 adds optional class-loadout spell symbols for class abilities and
+  starting memorized spells; activated packs cross-check those symbols against
+  numeric compatibility IDs, while older loadout schemas retain their fallback.
 
 - Schema 1.223 adds optional Town Portal destination coordinates and slot
   layout to `world_rules.tsv`; packs without those columns retain spell-row

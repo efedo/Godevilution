@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.224 adds optional stable spell symbols to `class_loadouts.tsv` for
+class abilities and starting memorized spells. Activated packs resolve symbols
+through `content_ids.tsv` and reject mismatches with retained numeric
+compatibility IDs; older loadout schemas remain supported.
+
 Schema 1.223 adds Town Portal destination coordinates and slot layout to
 `world_rules.tsv`. The active world contract now controls portal placement;
 packs without those columns retain the prior spell-row tuning. Activated packs
