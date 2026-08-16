@@ -148,6 +148,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsObjectPositionsOutsideTheActiveWorld()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var objects = basePack.Tables.Single(table => table.SourcePath == "objects.tsv");
+        var invalidObjects = TsvTable.Parse(
+            objects.SourcePath,
+            objects.ToCanonicalTsv().Replace(
+                "2001\t1\t1\t4\t4",
+                "2001\t1\t1\t40\t4",
+                StringComparison.Ordinal));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == objects.SourcePath ? invalidObjects : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Object 2001 contains a position outside its level", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BaseProceduralActivationCarriesTheShippedMonsterDrop()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

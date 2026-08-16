@@ -226,6 +226,26 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void ValidatesObjectLevelsAndPositionsAgainstWorldBounds()
+    {
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\tnone\n");
+        var objects = AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\n"
+                + "20\t4\t1\t2\t2\n");
+
+        AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWorldObjectCatalog.ValidateWorld(
+            [new AuthoritativeWorldObject(21, 4, 9, 0, 0)],
+            world));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWorldObjectCatalog.ValidateWorld(
+            [new AuthoritativeWorldObject(22, 4, 1, 3, 0)],
+            world));
+    }
+
+    [Fact]
     public void LoadsExternalArmedTrapState()
     {
         const string header = "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\ttrap_armed\n";
