@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
+  Grey Suit quest items with stable symbols, native item indices, and cursor
+  projections while retaining the legacy item-table fallback.
+
 - Add the stable `warp` namespace and optional `warp_symbol` links to static
   level-trigger routes, with activation-time checks and numeric fallback.
 

@@ -954,6 +954,10 @@ Status date: 2026-08-16
   and combat restart links through `level_symbol` columns. Numeric-only rows
   remain compatible while links are checked against the composed world.
 
+- Schema 1.251 adds normalized stable Hellfire quest-item definitions for Rune
+  Bomb, Theodore, Auric Amulet, Brown Suit, and Grey Suit while preserving their
+  native item-index and cursor projections.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

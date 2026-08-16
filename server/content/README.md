@@ -928,6 +928,11 @@ Schema 1.250 adds the stable `warp` namespace. Static level-trigger rows may
 carry `warp_symbol` values resolved through `content_ids.tsv`; numeric-only
 routes remain compatible while active symbols are cross-checked.
 
+Schema 1.251 adds normalized stable definitions for the Hellfire quest items
+Rune Bomb, Theodore, Auric Amulet, Brown Suit, and Grey Suit. Their native item
+indices and cursor projections remain explicit compatibility metadata, while
+older packs may continue to use the legacy `itemdat.tsv` fallback.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
