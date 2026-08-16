@@ -693,8 +693,10 @@ spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
 cursor while selecting an eligible external template. `ReadBookRequested` now
 owns native intelligence gating, learned-spell level mutation, mana refund, and
-book consumption through the shared protocol; store and world-drop generation
-integration remain follow-up work.
+book consumption through the shared protocol. Store rows and both static and
+procedural monster-drop rows now pass native book templates through that same
+generator, so the server owns dynamic spell selection, names, costs, and cursor
+projections before stock or world-item snapshots are emitted.
 
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric

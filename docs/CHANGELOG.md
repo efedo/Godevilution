@@ -55,7 +55,9 @@ All notable changes to this fork are documented below.
 
 - Add the shared `ReadBookRequested` command with server-owned native
   intelligence gating, learned-spell level mutation, mana refund, and book
-  consumption; store and world-drop generation integration remains pending.
+  consumption. Store rows and static/procedural monster drops now invoke the
+  same deterministic dynamic-book generator before emitting authoritative item
+  state.
 
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
