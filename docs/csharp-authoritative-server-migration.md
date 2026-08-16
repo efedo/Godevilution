@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.247 adds the stable `object` namespace. World-object rows may carry
+`object_symbol` links, which are cross-checked against retained numeric IDs and
+the composed object catalog while numeric-only rows remain compatible.
+
 Schema 1.246 adds the stable `set_level` namespace. Set-level definitions and
 quest-type links can resolve `set_level_symbol` values, including native
 `SL_NONE` ID zero, while preserving numeric projections.

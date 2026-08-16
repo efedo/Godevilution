@@ -32,6 +32,10 @@ Status date: 2026-08-16
   cross-validated against their active catalogs before IDs are published to a
   session.
 
+- World-object rows now optionally resolve stable `object_symbol` values
+  through `content_ids.tsv`; activation validates those identities against the
+  composed object catalog while numeric-only rows remain compatible.
+
 - Quest types, quest state rows, and single-player quest pools now optionally
   resolve stable `quest_symbol` values through `content_ids.tsv`; activated
   rows reject numeric/symbol mismatches while numeric-only legacy rows remain
@@ -936,6 +940,9 @@ Status date: 2026-08-16
 - Schema 1.245 extends stable level symbols to authored monster, object, quest,
   and combat restart links through `level_symbol` columns. Numeric-only rows
   remain compatible while links are checked against the composed world.
+
+- Schema 1.247 adds the stable `object` namespace and optional `object_symbol`
+  world-object links, preserving numeric-only compatibility.
 
 - Schema 1.246 adds the stable `set_level` namespace and optional
   `set_level_symbol` quest-type links, preserving native `SL_NONE` ID zero and
