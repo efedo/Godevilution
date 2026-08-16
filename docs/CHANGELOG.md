@@ -34,6 +34,9 @@ All notable changes to this fork are documented below.
   into every emitted segment, while omitted values retain the native random
   monster-damage roll.
 
+- MonsterArrow mappings now honor validated `projectile_damage` after ranged
+  hit admission, while omitted values retain native damage derivation.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.
