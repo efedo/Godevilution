@@ -897,10 +897,22 @@ public sealed class AuthoritativeCombatRules
     public static AuthoritativeCombatRules LoadTsv(
         string sourcePath,
         string contents,
-        uint townLevelId = AuthoritativePortalRules.TownLevelId)
+        uint townLevelId = AuthoritativePortalRules.TownLevelId,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var row = table.Rows.Single();
+        var hasPvpEarItemId = row.TryGet("pvp_ear_item_id", out var pvpEarItemValue)
+            && !string.IsNullOrWhiteSpace(pvpEarItemValue);
+        var hasPvpEarItemSymbol = row.TryGet("pvp_ear_item_symbol", out var pvpEarItemSymbol)
+            && !string.IsNullOrWhiteSpace(pvpEarItemSymbol);
+        var pvpEarItemId = hasPvpEarItemId || hasPvpEarItemSymbol
+            ? AuthoritativeItemIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "pvp_ear_item_id",
+                "pvp_ear_item_symbol")
+            : 24U;
         return new AuthoritativeCombatRules(
             row.RequiredInt32("base_attack_damage"),
             row.RequiredInt32("minimum_damage"),
@@ -921,7 +933,7 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("death_gold_item_type", 11),
             row.OptionalInt32("death_gold_item_index"),
             row.OptionalInt32("death_drop_search_radius", 50),
-            row.OptionalUInt32("pvp_ear_item_id", 24),
+            pvpEarItemId,
             row.OptionalInt32("monster_melee_minimum_hit_chance", 15),
             row.OptionalInt32("monster_ranged_minimum_hit_chance", 10),
             row.OptionalInt32("monster_minimum_hit_chance_level_14", 20),

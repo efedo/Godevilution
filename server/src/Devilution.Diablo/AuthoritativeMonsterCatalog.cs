@@ -85,7 +85,8 @@ public sealed class AuthoritativeMonsterCatalog
         string contents,
         AuthoritativeItemCatalog? itemCatalog = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
-        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var targets = table.Rows.Select(row => {
@@ -135,7 +136,11 @@ public sealed class AuthoritativeMonsterCatalog
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
             }
-            var dropItemId = row.OptionalUInt32("drop_item_id");
+            var dropItemId = AuthoritativeItemIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "drop_item_id",
+                "drop_item_symbol");
             var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
             var dropItemSeed = row.OptionalUInt32("drop_item_seed");
             AuthoritativeItemState? dropItemState = null;
@@ -224,14 +229,20 @@ public sealed class AuthoritativeMonsterCatalog
                 knockback: knockback);
         }).ToArray();
         var dropDefinitions = table.Rows
-            .Select(ParseDropDefinition)
+            .Select(row => ParseDropDefinition(row, stableIds))
             .OfType<AuthoritativeMonsterDropDefinition>();
         return new AuthoritativeMonsterCatalog(targets, dropDefinitions);
     }
 
-    private static AuthoritativeMonsterDropDefinition? ParseDropDefinition(TsvRow row)
+    private static AuthoritativeMonsterDropDefinition? ParseDropDefinition(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
     {
-        var dropItemId = row.OptionalUInt32("drop_item_id");
+        var dropItemId = AuthoritativeItemIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "drop_item_id",
+            "drop_item_symbol");
         var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
         var monsterUnique = ReadFlag(row, "unique", false);
         var monsterDiablo = ReadFlag(row, "diablo", false);

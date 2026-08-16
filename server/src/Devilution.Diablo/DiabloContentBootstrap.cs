@@ -229,7 +229,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var itemCombinationsTable)
             ? AuthoritativeItemCombinationCatalog.LoadTsv(
                 itemCombinationsTable.SourcePath,
-                itemCombinationsTable.ToCanonicalTsv())
+                itemCombinationsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         itemCombinations?.ValidateItems(itemCatalog);
         var worldRules = content.TryGetTable("world_rules.tsv", out var worldRulesTable)
@@ -241,7 +242,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeCombatRules.LoadTsv(
                 combatTable.SourcePath,
                 combatTable.ToCanonicalTsv(),
-                worldRules.TownLevelId)
+                worldRules.TownLevelId,
+                stableIds)
             : new AuthoritativeCombatRules(
                 10,
                 1,
@@ -353,7 +355,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 monstersTable.ToCanonicalTsv(),
                 itemCatalog,
                 uniqueItems,
-                monsterTypes)
+                monsterTypes,
+                stableIds)
             : null;
         if (world is not null && monsters is not null)
             AuthoritativeMonsterCatalog.ValidateWorld(monsters.Targets, world);

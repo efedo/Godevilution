@@ -52,31 +52,64 @@ public sealed class AuthoritativeItemCombinationCatalog
 
     public static AuthoritativeItemCombinationCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemCombinationCatalog(table.Rows.Select(row =>
             new AuthoritativeItemCombinationDefinition(
-                row.RequiredUInt32("result_item_id"),
-                ParseRequiredItemIds(row.Required("required_item_ids"), sourcePath, row.LineNumber))));
+                AuthoritativeItemIdentity.Resolve(
+                    row,
+                    stableIds,
+                    "result_item_id",
+                    "result_item_symbol"),
+                ParseRequiredItemIds(row, sourcePath, stableIds))));
     }
 
     private static IReadOnlyList<uint> ParseRequiredItemIds(
-        string value,
+        TsvRow row,
         string sourcePath,
-        int lineNumber)
+        StableContentIdCatalog? stableIds)
     {
+        var value = row.Required("required_item_ids");
         var values = value.Split(
                 ',',
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(token => uint.TryParse(token, out var itemId) && itemId != 0
                 ? itemId
                 : throw new InvalidDataException(
-                    $"Item combination table '{sourcePath}' has an invalid item ID '{token}' on line {lineNumber}."))
+                    $"Item combination table '{sourcePath}' has an invalid item ID '{token}' on line {row.LineNumber}."))
             .ToArray();
         if (values.Length < 2)
             throw new InvalidDataException(
-                $"Item combination table '{sourcePath}' requires at least two input items on line {lineNumber}.");
+                $"Item combination table '{sourcePath}' requires at least two input items on line {row.LineNumber}.");
+        if (!row.TryGet("required_item_symbols", out var symbols)
+            || string.IsNullOrWhiteSpace(symbols))
+            return values;
+        var symbolValues = symbols.Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToArray();
+        if (symbolValues.Length != values.Length)
+            throw new InvalidDataException(
+                $"Item combination table '{sourcePath}' has mismatched numeric and symbolic input counts on line {row.LineNumber}.");
+        for (var index = 0; index < values.Length; index++) {
+            uint resolved;
+            if (stableIds is null) {
+                resolved = values[index];
+            } else {
+                try {
+                    resolved = stableIds.Resolve("item", symbolValues[index]);
+                } catch (KeyNotFoundException exception) {
+                    throw new InvalidDataException(
+                        $"Item combination table '{sourcePath}' references unknown stable item symbol '{symbolValues[index]}' on line {row.LineNumber}.",
+                        exception);
+                }
+            }
+            if (values[index] != resolved)
+                throw new InvalidDataException(
+                    $"Item combination table '{sourcePath}' maps item {values[index]} to symbol '{symbolValues[index]}', which resolves to {resolved} on line {row.LineNumber}.");
+        }
         return values;
     }
 }

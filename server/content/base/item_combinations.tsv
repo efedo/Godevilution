@@ -1,2 +1,2 @@
-result_item_id	required_item_ids
-2004	2001,2002,2003
+result_item_id	result_item_symbol	required_item_ids	required_item_symbols
+2004	reconstructed_note	2001,2002,2003	torn_note_1,torn_note_2,torn_note_3

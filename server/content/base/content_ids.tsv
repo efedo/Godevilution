@@ -12,6 +12,11 @@ item	dagger_starting	109
 item	spiked_club_starting	110
 item	short_sword	1
 item	buckler	2
+item	ear	24
+item	torn_note_1	2001
+item	torn_note_2	2002
+item	torn_note_3	2003
+item	reconstructed_note	2004
 level	town	1
 level	dungeon	2
 portal	cathedral_entrance	1
