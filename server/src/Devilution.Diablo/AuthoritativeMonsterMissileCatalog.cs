@@ -100,7 +100,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional AiRangedAvoidance adjacent attack chance per intelligence per 10,000. */
     int RangedAvoidanceAdjacentAttackChanceIntelligenceScale = 0,
     /** Optional divisor for the AiRangedAvoidance adjacent attack chance band. */
-    int RangedAvoidanceAdjacentAttackChanceDivisor = 0)
+    int RangedAvoidanceAdjacentAttackChanceDivisor = 0,
+    /** Optional explicit post-melee projectile controller identity. */
+    bool IsPostMeleeMissile = false)
 {
     /** Optional AiRangedAvoidance far-distance movement-goal admission modulo. */
     public int RangedAvoidanceMovementChanceModulo { get; init; }
@@ -143,6 +145,10 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.RangedAvoidanceAdjacentAttackChanceBase is < 0 or > 10_000
                 || definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale is < 0 or > 10_000
                 || definition.RangedAvoidanceAdjacentAttackChanceDivisor is < 0 or > 100
+                || definition.IsPostMeleeMissile
+                    && (definition.MonsterId == 0
+                        || definition.ProjectileBehavior
+                            != AuthoritativeProjectileBehavior.MonsterMagic)
                 || definition.SnakeDriftPattern is not null
                     && definition.SnakeDriftPattern.Any(rotation => rotation is < -4 or > 4)
                 || definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
@@ -509,8 +515,19 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     "ranged_avoidance_adjacent_attack_chance_intelligence_scale"),
                 RangedAvoidanceAdjacentAttackChanceDivisor = row.OptionalInt32(
                     "ranged_avoidance_adjacent_attack_chance_divisor"),
+                IsPostMeleeMissile = ParseOptionalBoolean(row, "post_melee_missile"),
             };
         }));
+    }
+
+    private static bool ParseOptionalBoolean(TsvRow row, string column)
+    {
+        if (!row.TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
+            return false;
+        if (bool.TryParse(value, out var result))
+            return result;
+        throw new InvalidDataException(
+            $"TSV row {row.LineNumber} contains an invalid boolean '{value}' in '{column}'.");
     }
 
     private static IReadOnlyList<int>? ParseSnakeDriftPattern(TsvRow row)

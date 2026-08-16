@@ -596,11 +596,11 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\tspell_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_impact_lifetime\n"
-                + "Bat\tLightning\tMonsterMagic\t43\t3\tLightning\t16\t2\t8\n");
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\tspell_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_impact_lifetime\tpost_melee_missile\n"
+                + "Bat\tFamiliarArc\tMonsterMagic\t43\t3\tLightning\t16\t2\t8\ttrue\n");
 
         Assert.True(catalog.TryGet("Bat", 43, out var familiar));
-        Assert.Equal("Lightning", familiar.MissileId);
+        Assert.Equal("FamiliarArc", familiar.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);
         Assert.Equal(3U, familiar.SpellId);
         Assert.Equal(AuthoritativeDamageType.Lightning, familiar.DamageType);
@@ -608,6 +608,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
             familiar.ProjectileSpeed,
             familiar.ProjectileLifetime,
             familiar.ProjectileImpactLifetime));
+        Assert.True(familiar.IsPostMeleeMissile);
+    }
+
+    [Fact]
+    public void RejectsPostMeleeMissileForNonMagicProjectile()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "FamiliarArc",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    MonsterId: 43,
+                    IsPostMeleeMissile: true),
+            ]));
     }
 
     [Fact]

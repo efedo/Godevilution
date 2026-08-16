@@ -7557,7 +7557,7 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
                     "Bat",
-                    "Lightning",
+                    "FamiliarArc",
                     AuthoritativeProjectileBehavior.MonsterMagic,
                     MonsterId: 43,
                     SpellId: 3,
@@ -7565,7 +7565,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     ProjectileSpeed: 16,
                     ProjectileLifetime: 2,
                     ProjectileImpactLifetime: 8,
-                    ProjectileDamageRandomRange: 4),
+                    ProjectileDamageRandomRange: 4,
+                    IsPostMeleeMissile: true),
             ]));
         var player = CreatePlayer(
             entityId: 7,

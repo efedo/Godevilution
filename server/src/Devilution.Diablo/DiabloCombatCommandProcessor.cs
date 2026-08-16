@@ -7014,7 +7014,8 @@ public sealed class DiabloCombatCommandProcessor
 
     private static bool IsFamiliarLightningMissile(
         AuthoritativeMonsterMissileDefinition missile)
-        => missile.MonsterId != 0
+        => missile.IsPostMeleeMissile
+            || missile.MonsterId != 0
             && missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
             && missile.MissileId == "Lightning";
 
