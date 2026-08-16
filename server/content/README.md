@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.244 adds the stable `level` namespace. `levels.tsv`, warps, portals,
+and Town Portal world rules may carry level symbols; activation cross-checks
+them against the retained numeric level IDs and geometry. Numeric-only level
+links remain compatible.
+
 Schema 1.243 adds the stable `class` namespace. Class definitions and
 class-keyed loadout and animation rows may carry `class_symbol`; native class
 ID zero remains valid and symbolic references are cross-checked at activation.

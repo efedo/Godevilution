@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.244 adds the stable `level` namespace. Level definitions, warps,
+portals, and Town Portal world rules may resolve symbolic level identities
+while retaining numeric compatibility projections and geometry validation.
+
 Schema 1.243 adds the stable `class` namespace. Class definitions and
 class-keyed loadout and animation rows may carry `class_symbol`; native class
 ID zero is retained and symbolic references are validated at activation.

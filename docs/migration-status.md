@@ -929,6 +929,10 @@ Status date: 2026-08-16
   animation rows may carry `class_symbol`, including the valid native class
   ID zero; numeric-only rows remain compatible.
 
+- Schema 1.244 adds the stable `level` namespace to level definitions, warps,
+  portals, and Town Portal world rules. Symbolic links are cross-checked
+  against active geometry while numeric-only links remain compatible.
+
 - Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
   shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
   compatible for older external packs.
