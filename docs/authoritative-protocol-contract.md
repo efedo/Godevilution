@@ -657,7 +657,9 @@ placement, sale top-off/new-pile placement, and transactional capacity checks;
 aggregate-only compatibility participants retain the older wallet path.
 
 `PlayerSnapshot.ability_spell_id` field 20 carries the class skill and repeated
-`memorized_spells` field 21 carries learned spell IDs and levels. The server
+`memorized_spells` field 21 carries learned spell IDs and levels. Each learned
+spell may also carry additive server-owned `display_name` metadata from the
+active validated spell-book catalog; older peers may ignore it. The server
 validates native bounds and uniqueness, saves this state, and sorts learned
 spells for protocol and hash projection. Native compatibility clients rebuild
 their ability and memorized-spell masks from the snapshot rather than retaining

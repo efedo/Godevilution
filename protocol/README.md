@@ -107,9 +107,12 @@ Windows toolchain command.
   incoming Q6 damage to mana, reverses the reduction on depletion, and clears
   the flag on exact depletion or level-changing transitions.
 - `PlayerSnapshot.ability_spell_id` is the native-compatible class skill and
-  `memorized_spells` carries stable spell IDs with nonzero levels. The list is
-  canonicalized by spell ID. Native peers reject IDs above their supported
-  spell range and rebuild their ability/learned-spell masks from each snapshot.
+  `memorized_spells` carries stable spell IDs with nonzero levels. Each learned
+  spell may also carry an additive server-owned `display_name` from the active
+  validated content pack; older peers can ignore it and continue using the ID.
+  The list is canonicalized by spell ID. Native peers reject IDs above their
+  supported spell range and rebuild their ability/learned-spell masks from each
+  snapshot.
 - `PlayerSnapshot.ability_kind` is the additive semantic class-skill role from
   validated loadout content. Godot uses it for typed presentation and service
   intents instead of inferring class behavior from numeric spell IDs; an

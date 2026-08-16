@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add additive server-owned spell display names to memorized-spell snapshots,
+  sourced from validated spell-book content so Godot can present learned spells
+  without maintaining a client-side spell-ID table.
+
 - Add schema 1.267 Identify item-action metadata and server-authoritative
   consumable scroll handling, while keeping the Bard class ability distinct.
 
