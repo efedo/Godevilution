@@ -2346,6 +2346,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingUsesValidatedMovementChanceTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                51,
+                50,
+                "Skeleton King",
+                4,
+                4,
+                9,
+                140,
+                140,
+                70,
+                6,
+                16,
+                0,
+                0,
+                true,
+                true,
+                false) {
+                NativeAi = "SkeletonKing",
+                SkeletonKingMovementChanceBase = 1,
+                SkeletonKingMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            monsterId: 51,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7);
+
+        // 26 ^ 9 ^ 7 = 20: the configured one-percent movement band rejects
+        // this roll and enters the native delay branch.
+        processor.AdvanceTick(26, [player]);
+
+        Assert.False(king.IsMoving);
+        Assert.Equal(10, king.SkeletonKingDelayTicks);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedSummonChanceTuning()
     {
         var nativeWorld = new AuthoritativeWorld();

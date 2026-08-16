@@ -222,6 +222,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonKing movement-delay exclusive random range. */
     public int SkeletonKingDelayRandomRange { get; init; }
 
+    /** Native SkeletonKing movement admission chance base. */
+    public int SkeletonKingMovementChanceBase { get; init; }
+
+    /** Native SkeletonKing movement admission chance increase per intelligence point. */
+    public int SkeletonKingMovementChanceIntelligenceScale { get; init; }
+
     /** Native HorkDemon adjacent attack chance base before intelligence scaling. */
     public int HorkDemonAttackChanceBase { get; init; }
 
@@ -587,6 +593,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     || definition.SkeletonKingDelayRandomRange != 0)
                     && (definition.NativeAi != "SkeletonKing"
                         || definition.SkeletonKingDelayRandomRange <= 0)
+                || definition.SkeletonKingMovementChanceBase is < 0 or > 100
+                || definition.SkeletonKingMovementChanceIntelligenceScale is < 0 or > 100
+                || (definition.SkeletonKingMovementChanceBase != 0
+                    || definition.SkeletonKingMovementChanceIntelligenceScale != 0)
+                    && (definition.NativeAi != "SkeletonKing"
+                        || definition.SkeletonKingMovementChanceBase <= 0
+                        || definition.SkeletonKingMovementChanceIntelligenceScale <= 0)
                 || definition.RhinoDelayBase < 0
                 || definition.RhinoDelayRandomRange < 0
                 || (definition.RhinoDelayBase != 0
@@ -810,6 +823,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonKingSummonChanceIntelligenceScale = row.OptionalInt32("skeleton_king_summon_chance_intelligence_scale"),
                 SkeletonKingDelayBase = row.OptionalInt32("skeleton_king_delay_base"),
                 SkeletonKingDelayRandomRange = row.OptionalInt32("skeleton_king_delay_random_range"),
+                SkeletonKingMovementChanceBase = row.OptionalInt32("skeleton_king_movement_chance_base"),
+                SkeletonKingMovementChanceIntelligenceScale = row.OptionalInt32("skeleton_king_movement_chance_intelligence_scale"),
                 HorkDemonAttackChanceBase = row.OptionalInt32("hork_demon_attack_chance_base"),
                 HorkDemonAttackChanceIntelligenceScale = row.OptionalInt32("hork_demon_attack_chance_intelligence_scale"),
                 HorkDemonSpawnMinimumDistance = row.OptionalInt32("hork_demon_spawn_minimum_distance"),

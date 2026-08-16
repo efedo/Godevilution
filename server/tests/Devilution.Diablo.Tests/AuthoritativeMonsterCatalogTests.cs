@@ -653,6 +653,20 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsContentSelectedSkeletonKingMovementChanceTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_king_movement_chance_base\tskeleton_king_movement_chance_intelligence_scale\n"
+                + "51\t50\tSkeleton King\t4\t4\t9\t140\t140\t70\t6\t16\t0\t0\t1\t1\t0\tSkeletonKing\t25\t1\n");
+
+        var king = Assert.Single(catalog.Definitions);
+        Assert.Equal((25, 1), (
+            king.SkeletonKingMovementChanceBase,
+            king.SkeletonKingMovementChanceIntelligenceScale));
+    }
+
+    [Fact]
     public void RejectsInvalidSkeletonKingDelayTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -665,6 +679,20 @@ public sealed class AuthoritativeMonsterCatalogTests
             CreateType(1, 1, 1) with {
                 NativeAi = "SkeletonKing",
                 SkeletonKingDelayBase = 7,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "SkeletonKing",
+                SkeletonKingMovementChanceBase = 25,
+                SkeletonKingMovementChanceIntelligenceScale = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                SkeletonKingMovementChanceBase = 25,
+                SkeletonKingMovementChanceIntelligenceScale = 1,
             },
         ]));
     }

@@ -6100,7 +6100,11 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
-        var movementChance = Math.Min(100, target.Intelligence + 25);
+        var movementTuning = GetSkeletonKingMovementTuning(target);
+        var movementChance = Math.Min(
+            100,
+            (movementTuning?.ChanceBase ?? 25)
+                + (movementTuning?.IntelligenceScale ?? 1) * target.Intelligence);
         if (actionSeed % 100U >= (uint)movementChance) {
             target.StartSkeletonKingDelay(ResolveSkeletonKingDelay(target, actionSeed));
             return true;
@@ -6171,6 +6175,21 @@ public sealed class DiabloCombatCommandProcessor
             randomRange = definition.SkeletonKingDelayRandomRange;
         }
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
+    }
+
+    private (int ChanceBase, int IntelligenceScale)? GetSkeletonKingMovementTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonKingMovementChanceBase > 0
+            && definition.SkeletonKingMovementChanceIntelligenceScale > 0) {
+            return (
+                definition.SkeletonKingMovementChanceBase,
+                definition.SkeletonKingMovementChanceIntelligenceScale);
+        }
+        return UsesNativeAi(target, "SkeletonKing")
+            ? (25, 1)
+            : null;
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
