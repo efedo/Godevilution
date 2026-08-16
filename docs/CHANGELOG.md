@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.291 validated HorkDemon recovery-delay tuning to the
+  `HorkSpawn` row in `monster_missiles.tsv`, preserving the native
+  base-plus-exclusive-random delay for older mappings.
+
 - Add schema 1.290 validated RangedAvoidance recovery-delay tuning to
   `monster_missiles.tsv`, preserving the native base-plus-exclusive-random
   delay for older mappings that omit the optional columns.

@@ -54,6 +54,10 @@ Status date: 2026-08-16
   retaining the native fallback for older packs and carrying the active values
   in the shipped base mappings.
 
+- Hellfire HorkDemon recovery delays are now validated `HorkSpawn` missile
+  fields (`hork_demon_delay_base` and `hork_demon_delay_random_range`), with
+  native-compatible fallback behavior for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.
