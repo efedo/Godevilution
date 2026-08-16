@@ -6384,6 +6384,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterArrowUsesConfiguredProjectileSpeedForTravel()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            toHit: 100,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog(
+                "SkeletonRanged",
+                projectileSpeed: 3,
+                projectileLifetime: 9));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 14 ^ 9 ^ 7 = 0, inside the native 3 + 2 * intelligence band.
+        processor.AdvanceTick(14, [player]);
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((4, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.Equal(100, player.Life);
+
+        processor.AdvanceTick(15, [player]);
+
+        Assert.Equal((7, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.Equal(98, player.Life);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, arrow.Phase);
+        processor.AdvanceTick(16, [player]);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MonsterArrowUsesConfiguredDamageTypeAndPlayerResistance()
     {
         var monster = new AuthoritativeCombatTarget(

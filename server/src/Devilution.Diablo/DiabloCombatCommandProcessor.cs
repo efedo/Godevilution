@@ -9368,33 +9368,39 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var nextX = projectile.PositionX
-            + Math.Sign(projectile.TargetX - projectile.PositionX);
-        var nextY = projectile.PositionY
-            + Math.Sign(projectile.TargetY - projectile.PositionY);
-        if (!world.ContainsPosition(projectile.LevelId, nextX, nextY)
-            || world.IsMissileBlocked(projectile.LevelId, nextX, nextY)) {
-            world.Projectiles.Remove(projectile.EntityId);
-            return;
-        }
-
-        projectile.PositionX = nextX;
-        projectile.PositionY = nextY;
-        projectile.RemainingTicks--;
-        var target = FindProjectilePlayer(
-            projectile,
-            players,
-            nextX,
-            nextY);
-        if (target is not null) {
-            ResolveMonsterArrowImpact(tick, projectile, target, players, events);
-            if (projectile.ImpactLifetime > 0)
-                EnterProjectileImpact(projectile);
-            else
+        var travelSteps = Math.Max(1, projectile.Speed);
+        for (var step = 0; step < travelSteps; step++) {
+            var nextX = projectile.PositionX
+                + Math.Sign(projectile.TargetX - projectile.PositionX);
+            var nextY = projectile.PositionY
+                + Math.Sign(projectile.TargetY - projectile.PositionY);
+            if (!world.ContainsPosition(projectile.LevelId, nextX, nextY)
+                || world.IsMissileBlocked(projectile.LevelId, nextX, nextY)) {
                 world.Projectiles.Remove(projectile.EntityId);
-            return;
+                return;
+            }
+
+            projectile.PositionX = nextX;
+            projectile.PositionY = nextY;
+            var target = FindProjectilePlayer(
+                projectile,
+                players,
+                nextX,
+                nextY);
+            if (target is not null) {
+                ResolveMonsterArrowImpact(tick, projectile, target, players, events);
+                if (projectile.ImpactLifetime > 0)
+                    EnterProjectileImpact(projectile);
+                else
+                    world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+
+            if (nextX == projectile.TargetX && nextY == projectile.TargetY)
+                break;
         }
 
+        projectile.RemainingTicks--;
         if (projectile.RemainingTicks == 0)
             world.Projectiles.Remove(projectile.EntityId);
     }
