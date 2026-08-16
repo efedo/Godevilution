@@ -1017,6 +1017,11 @@ Status date: 2026-08-16
   native one-handed placement; Amulet restores the native level-8 base row and
   cursor projection.
 
+- Schema 1.264 normalizes the Hellfire Sorcerer starting staff overlay. The
+  `hellfire_staff_charged_bolt` row retains its native short-staff identity and
+  Hellfire Firebolt charged-item behavior while restoring native display and
+  cursor projections plus the stable `firebolt` spell reference.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

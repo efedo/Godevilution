@@ -54,6 +54,10 @@ All notable changes to this fork are documented below.
   Small Shield, Large Shield, Gothic Shield, and Amulet, including native
   one-handed shield placement and the corrected level-8 Amulet base row.
 
+- Normalize the Hellfire Sorcerer starting staff overlay with native short-staff
+  presentation and a stable `firebolt` spell reference while preserving its
+  Hellfire charged-item behavior.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

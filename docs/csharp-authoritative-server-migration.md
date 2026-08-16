@@ -605,6 +605,11 @@ native one-handed placement; Amulet restores the native level-8 base row and
 cursor projection. Unique definitions 1083–1086, 1099, and 1110 now resolve
 these stable bases.
 
+Schema 1.264 normalizes the Hellfire Sorcerer starting staff overlay. The
+`hellfire_staff_charged_bolt` row retains its native short-staff identity and
+Hellfire Firebolt charged-item behavior while restoring the native display and
+cursor projections and the stable `firebolt` spell reference.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
