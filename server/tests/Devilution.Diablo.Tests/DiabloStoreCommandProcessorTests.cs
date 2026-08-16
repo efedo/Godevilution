@@ -577,6 +577,25 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void UsesConfiguredAdriaServiceStoreIdentity()
+    {
+        var player = CreatePlayer(gold: 1000, mana: 32, manaMaximum: 640);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            adriaStoreId: 73);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloOpenStoreIntent(73),
+            0).Succeeded);
+        Assert.True(processor.Execute(player, new DiabloRefillManaIntent(), 1).Succeeded);
+        Assert.Equal(640, player.Mana);
+
+        player.ActiveStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
+        Assert.False(processor.Execute(player, new DiabloRefillManaIntent(), 2).Succeeded);
+    }
+
+    [Fact]
     public void MovingHellfireConversionItemInAndOutOfEquipmentRecalculatesResources()
     {
         var item = new OwnedStoreItem(
