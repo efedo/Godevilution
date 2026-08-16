@@ -1128,6 +1128,10 @@ Status date: 2026-08-16
   validated spell content, retaining the native burst order when older
   mappings omit the optional column.
 
+- Schema 1.287 externalizes Flash's ordered bottom and top layer offsets in
+  validated spell content, retaining the native layer orders when older
+  mappings omit the optional columns.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.
