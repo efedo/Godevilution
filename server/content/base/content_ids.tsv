@@ -2,11 +2,14 @@ kind	symbol	numeric_id
 level	town	1
 level	dungeon	2
 portal	cathedral_entrance	1
+ability	identify	5
+ability	repair	26
+ability	recharge	27
+ability	trap_disarm	28
+ability	search	46
+ability	rage	22
 spell	firebolt	1
 spell	blood_star	36
-spell	identify	5
-spell	repair	26
-spell	recharge	27
 spell	healing	2
 spell	lightning	3
 spell	flash	4
@@ -22,6 +25,7 @@ spell	resurrection	32
 spell	telekinesis	33
 spell	heal_other	34
 spell	bone_spirit	38
+spell	holy_bolt	5
 spell	teleport	23
 spell	search	46
 spell	fire_wall	6
@@ -43,4 +47,3 @@ spell	lightning_wall	50
 spell	nova	18
 spell	golem	52
 spell	etherealize	53
-spell	trap_disarm	28

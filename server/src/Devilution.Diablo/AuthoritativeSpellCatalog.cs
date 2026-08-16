@@ -1931,19 +1931,30 @@ public sealed class AuthoritativeSpellCatalog
 
     public bool TryGet(uint spellId, out AuthoritativeSpellDefinition definition) => spells.TryGetValue(spellId, out definition!);
 
-    /** Validates stable spell symbols against active spells and class abilities. */
+    /** Validates stable spell and class-ability symbols against active catalogs. */
     public void ValidateStableReferences(
         StableContentIdCatalog stableIds,
         IEnumerable<uint>? additionalAbilityIds = null)
     {
         ArgumentNullException.ThrowIfNull(stableIds);
         var activeAbilityIds = additionalAbilityIds?.ToHashSet() ?? [];
-        foreach (var entry in stableIds.Entries.Where(entry =>
-                     string.Equals(entry.Kind, "spell", StringComparison.Ordinal))) {
-            if (!TryGet(entry.NumericId, out _)
-                && !activeAbilityIds.Contains(entry.NumericId))
+        foreach (var entry in stableIds.Entries) {
+            if (string.Equals(entry.Kind, "ability", StringComparison.Ordinal)) {
+                // Search, Rage, and Identify are dual-role native identities:
+                // partial class-loadout overlays may omit their capability row
+                // while the corresponding active spell remains available.
+                if (!activeAbilityIds.Contains(entry.NumericId)
+                    && !TryGet(entry.NumericId, out _))
+                    throw new InvalidDataException(
+                        $"Stable ability symbol '{entry.Symbol}' references unknown ability {entry.NumericId}.");
+                continue;
+            }
+            if (string.Equals(entry.Kind, "spell", StringComparison.Ordinal)
+                && !TryGet(entry.NumericId, out _)
+                && !activeAbilityIds.Contains(entry.NumericId)) {
                 throw new InvalidDataException(
                     $"Stable spell symbol '{entry.Symbol}' references unknown spell {entry.NumericId}.");
+            }
         }
     }
 

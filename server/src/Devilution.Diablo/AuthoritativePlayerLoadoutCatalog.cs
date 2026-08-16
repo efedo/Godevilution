@@ -329,12 +329,14 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                     row,
                     "ability_spell_id",
                     hasSymbols ? "ability_spell_symbol" : null,
-                    stableIds),
+                    stableIds,
+                    "ability"),
                 ResolveSpellId(
                     row,
                     "starting_spell_id",
                     hasSymbols ? "starting_spell_symbol" : null,
-                    stableIds),
+                    stableIds,
+                    "spell"),
                 row.RequiredUInt32("starting_spell_level"),
                 itemsByClass.GetValueOrDefault(classId) ?? []) {
                 AbilityKind = hasAbilityKind || hasSymbols
@@ -361,7 +363,8 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         TsvRow row,
         string numericColumn,
         string? symbolColumn,
-        StableContentIdCatalog? stableIds)
+        StableContentIdCatalog? stableIds,
+        string stableKind)
     {
         var numericId = row.RequiredUInt32(numericColumn);
         if (symbolColumn is null
@@ -379,15 +382,18 @@ public sealed class AuthoritativePlayerLoadoutCatalog
 
         uint resolvedId;
         try {
-            resolvedId = stableIds.Resolve("spell", symbol);
+            resolvedId = stableIds.Resolve(stableKind, symbol);
         } catch (KeyNotFoundException exception) {
-            throw new InvalidDataException(
-                $"Class loadout row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
-                exception);
+            if (!string.Equals(stableKind, "ability", StringComparison.Ordinal)
+                || !stableIds.TryResolve("spell", symbol, out resolvedId)) {
+                throw new InvalidDataException(
+                    $"Class loadout row {row.LineNumber} references unknown stable {stableKind} symbol '{symbol}'.",
+                    exception);
+            }
         }
         if (numericId != 0 && numericId != resolvedId) {
             throw new InvalidDataException(
-                $"Class loadout row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                $"Class loadout row {row.LineNumber} maps {stableKind} {numericId} to symbol '{symbol}', "
                 + $"which resolves to {resolvedId}.");
         }
         return resolvedId;

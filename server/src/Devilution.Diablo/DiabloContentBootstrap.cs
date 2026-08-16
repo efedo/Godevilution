@@ -315,10 +315,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             spells.ValidateStableReferences(
                 stableIds,
                 playerLoadouts.Definitions.Select(definition => definition.AbilitySpellId));
-        var identifyAbilitySpellId = stableIds?.Resolve("spell", "identify") ?? 0;
-        var repairAbilitySpellId = stableIds?.Resolve("spell", "repair") ?? 0;
-        var rechargeAbilitySpellId = stableIds?.Resolve("spell", "recharge") ?? 0;
-        var trapDisarmAbilitySpellId = stableIds?.Resolve("spell", "trap_disarm") ?? 0;
+        var identifyAbilitySpellId = ResolveAbilityId(stableIds, "identify");
+        var repairAbilitySpellId = ResolveAbilityId(stableIds, "repair");
+        var rechargeAbilitySpellId = ResolveAbilityId(stableIds, "recharge");
+        var trapDisarmAbilitySpellId = ResolveAbilityId(stableIds, "trap_disarm");
         if (spells is not null)
             itemCatalog!.ValidateSpellReferences(spells);
         if (world is not null)
@@ -588,5 +588,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         return reserved;
+    }
+
+    private static uint ResolveAbilityId(StableContentIdCatalog? stableIds, string symbol)
+    {
+        if (stableIds is null)
+            return 0;
+        return stableIds.TryResolve("ability", symbol, out var abilityId)
+            ? abilityId
+            : stableIds.Resolve("spell", symbol);
     }
 }
