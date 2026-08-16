@@ -921,6 +921,9 @@ internal static class DiabloProtocolMapper
             SpellSourceKind = source.SpellSourceKind == ItemSpellSourceKind.Unspecified
                 ? null
                 : (DiabloItemSpellSourceKind)source.SpellSourceKind,
+            ItemActionKind = source.ItemActionKind == ItemActionKind.Unspecified
+                ? DiabloItemActionKind.None
+                : (DiabloItemActionKind)source.ItemActionKind,
             ItemIndex = source.ItemIndex,
             Charges = source.Charges,
             MaxCharges = source.MaxCharges,
@@ -1041,6 +1044,7 @@ internal static class DiabloProtocolMapper
             IdentifiedName = state.IdentifiedName,
             SpellSourceKind = (ItemSpellSourceKind)(state.SpellSourceKind
                 ?? DiabloCastSourceRules.ClassifyItem(state, spells)),
+            ItemActionKind = (ItemActionKind)state.ItemActionKind,
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;

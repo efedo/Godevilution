@@ -468,6 +468,70 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void IdentifyScrollIdentifiesMagicalItemAndConsumesOnlyTheSourceScroll()
+    {
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with { Magical = 1, Identified = false });
+        var scroll = new OwnedStoreItem(
+            0,
+            0,
+            43,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.Identify,
+                MiscId = 21,
+            });
+        var player = CreatePlayer(gold: 500, inventory: [target, scroll]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloIdentifyItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded);
+        var remaining = Assert.Single(player.Inventory);
+        Assert.True(remaining.State.Identified);
+        Assert.Equal(42U, remaining.ItemSeed);
+        Assert.Equal(500U, player.Gold);
+        Assert.Null(player.ActiveStoreId);
+    }
+
+    [Fact]
+    public void IdentifyScrollRejectsNonActionSource()
+    {
+        var target = new OwnedStoreItem(0, 0, 42, 100, 0,
+            AuthoritativeItemState.Empty with { Magical = 1 });
+        var source = new OwnedStoreItem(0, 0, 43, 100, 0, AuthoritativeItemState.Empty);
+        var player = CreatePlayer(inventory: [target, source]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloIdentifyItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0,
+                DiabloItemServiceSourceKind.ConsumableItem,
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.False(player.Inventory[0].State.Identified);
+        Assert.Equal(2, player.Inventory.Count);
+    }
+
+    [Fact]
     public void IdentifyAbilityRejectsPlayerWithoutTheConfiguredClassSkill()
     {
         const uint identifySpellId = 5;

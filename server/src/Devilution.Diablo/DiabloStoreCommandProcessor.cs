@@ -361,13 +361,14 @@ public sealed class DiabloStoreCommandProcessor
         if (!Enum.IsDefined(intent.Source))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var isClassAbility = intent.Source == DiabloItemServiceSourceKind.ClassAbility;
+        var isConsumableItem = intent.Source == DiabloItemServiceSourceKind.ConsumableItem;
         if (isClassAbility) {
             if (!player.HasAbility(
                     DiabloPlayerAbilityKind.Identify,
                     identifyAbilitySpellId)) {
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
             }
-        } else if (player.ActiveStoreId is null) {
+        } else if (!isConsumableItem && player.ActiveStoreId is null) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!TryGetItem(
@@ -381,11 +382,21 @@ public sealed class DiabloStoreCommandProcessor
             ? item.State.Deleted
                 ? DiabloRuleFailure.InvalidTarget
                 : (DiabloRuleFailure?)null
-            : rules.ValidateIdentification(item, player.Gold);
+            : isConsumableItem
+                ? ValidateConsumableIdentification(player, intent, item)
+                : rules.ValidateIdentification(item, player.Gold);
         if (rejection.HasValue)
             return DiabloIntentResult.Rejected(rejection.Value);
+        if (isConsumableItem
+            && intent.SourceItem is { } sourceReference
+            && SameLocation(sourceReference, intent.Item ?? new DiabloPlayerItemReference(
+                DiabloPlayerItemLocation.Inventory,
+                intent.LegacyInventoryIndex))) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
         var hasGoldTopology = false;
         if (!isClassAbility
+            && !isConsumableItem
             && !TryResolveGoldTopology(player, out hasGoldTopology)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
         }
@@ -398,9 +409,36 @@ public sealed class DiabloStoreCommandProcessor
         if (isClassAbility)
             return DiabloIntentResult.Accepted;
 
+        if (isConsumableItem) {
+            RemoveItem(
+                player,
+                intent.SourceItem,
+                uint.MaxValue);
+            return DiabloIntentResult.Accepted;
+        }
+
         if (!SpendGold(player, rules.GetIdentificationPrice(item), hasGoldTopology))
             throw new InvalidOperationException("Validated identification Gold could not be removed.");
         return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloRuleFailure? ValidateConsumableIdentification(
+        AuthoritativePlayerState player,
+        DiabloIdentifyItemIntent intent,
+        OwnedStoreItem target)
+    {
+        if (intent.SourceItem is not { } sourceReference
+            || !DiabloPlayerItemAccess.TryGet(player, sourceReference, out var source)
+            || source.State.Deleted
+            || source.State.ItemActionKind != DiabloItemActionKind.Identify
+            || sourceReference.Location is not (DiabloPlayerItemLocation.Inventory
+                or DiabloPlayerItemLocation.Belt))
+            return DiabloRuleFailure.NotAllowed;
+        if (target.State.Deleted || target.State.Magical == 0)
+            return DiabloRuleFailure.InvalidTarget;
+        return target.State.Identified
+            ? DiabloRuleFailure.NotAllowed
+            : null;
     }
 
     private DiabloIntentResult RefillMana(AuthoritativePlayerState player)

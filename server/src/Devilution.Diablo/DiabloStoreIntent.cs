@@ -38,12 +38,14 @@ public enum DiabloItemServiceSourceKind
 {
     Vendor,
     ClassAbility,
+    ConsumableItem,
 }
 
 public sealed record DiabloIdentifyItemIntent(
     DiabloPlayerItemReference? Item,
     uint LegacyInventoryIndex,
-    DiabloItemServiceSourceKind Source = DiabloItemServiceSourceKind.Vendor) : DiabloStoreIntent;
+    DiabloItemServiceSourceKind Source = DiabloItemServiceSourceKind.Vendor,
+    DiabloPlayerItemReference? SourceItem = null) : DiabloStoreIntent;
 
 public sealed record DiabloRefillManaIntent : DiabloStoreIntent;
 

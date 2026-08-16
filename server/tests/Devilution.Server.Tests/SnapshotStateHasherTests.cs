@@ -459,6 +459,27 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ItemActionKindChangesTheStateHash()
+    {
+        var first = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Inventory = {
+                        new ItemSnapshot { State = new ItemStateSnapshot { ItemIndex = 27 } },
+                    },
+                },
+            },
+        };
+        var changed = first.Clone();
+        changed.Players[0].Inventory[0].State.ItemActionKind = ItemActionKind.Identify;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(first),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void MonsterProjectionChangesTheStateHashAndIgnoresInputOrder()
     {
         var first = new Snapshot {

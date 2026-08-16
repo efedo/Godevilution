@@ -193,6 +193,8 @@ public partial class HudPresentation : CanvasLayer
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
         var hasIdentifyAbility = player?.AbilityKind == PlayerAbilityKind.Identify;
+        var hasIdentifyScroll = player?.Inventory.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true
+            || player?.Belt.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true;
         var hasRepairAbility = player?.AbilityKind == PlayerAbilityKind.Repair;
         var hasRechargeAbility = player?.AbilityKind == PlayerAbilityKind.Recharge;
         var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
@@ -214,10 +216,12 @@ public partial class HudPresentation : CanvasLayer
             || (activeStore is null && !hasRechargeAbility);
         identifySelected.Text = activeStore is null && hasIdentifyAbility
             ? "Identify selected (Bard)"
+            : activeStore is null && hasIdentifyScroll
+                ? "Identify selected (Scroll)"
             : "Identify selected";
         identifySelected.Disabled = !connected
             || !hasSelectedInventory
-            || (activeStore is null && !hasIdentifyAbility);
+            || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;

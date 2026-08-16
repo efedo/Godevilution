@@ -732,6 +732,10 @@ public static class SnapshotStateHasher
             hasher.AppendString("godevilution-item-spell-source-kind-v1");
             hasher.AppendInt32((int)state.SpellSourceKind);
         }
+        if (state.ItemActionKind != ItemActionKind.Unspecified) {
+            hasher.AppendString("godevilution-item-action-kind-v1");
+            hasher.AppendInt32((int)state.ItemActionKind);
+        }
         hasher.AppendInt32(state.ItemIndex);
         hasher.AppendInt32(state.Charges);
         hasher.AppendInt32(state.MaxCharges);

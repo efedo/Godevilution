@@ -532,9 +532,13 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
                 CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
         }
+        if (!TryMapItemReference(request.SourceItem, out var sourceItem)) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
         return ExecuteStoreIntent(
             player,
-            new DiabloIdentifyItemIntent(item, request.InventoryIndex, source),
+            new DiabloIdentifyItemIntent(item, request.InventoryIndex, source, sourceItem),
             appliedTick);
     }
 
@@ -583,6 +587,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         mapped = source switch {
             ItemServiceSourceKind.Unspecified => DiabloItemServiceSourceKind.Vendor,
             ItemServiceSourceKind.ClassAbility => DiabloItemServiceSourceKind.ClassAbility,
+            ItemServiceSourceKind.ConsumableItem => DiabloItemServiceSourceKind.ConsumableItem,
             _ => (DiabloItemServiceSourceKind)(-1),
         };
         return Enum.IsDefined(mapped);

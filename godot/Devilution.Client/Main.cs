@@ -41,12 +41,19 @@ public partial class Main : Node2D
                 Source = ResolveItemServiceSource(PlayerAbilityKind.Recharge),
             },
         });
-        hud.IdentifyItemRequested += inventoryIndex => QueueIfConnected(new Command {
-            IdentifyItemRequested = new IdentifyItemRequested {
+        hud.IdentifyItemRequested += inventoryIndex => {
+            var source = ResolveItemServiceSource(PlayerAbilityKind.Identify);
+            var request = new IdentifyItemRequested {
                 InventoryIndex = inventoryIndex,
-                Source = ResolveItemServiceSource(PlayerAbilityKind.Identify),
-            },
-        });
+                Source = source,
+            };
+            if (source == ItemServiceSourceKind.ConsumableItem) {
+                var sourceItem = ResolveIdentifyScrollReference();
+                if (sourceItem is not null)
+                    request.SourceItem = sourceItem;
+            }
+            QueueIfConnected(new Command { IdentifyItemRequested = request });
+        };
         hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
             DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = entityId },
         });
@@ -236,7 +243,31 @@ public partial class Main : Node2D
         var player = model.Snapshot?.Players.FirstOrDefault();
         return player?.ActiveStoreId == 0 && player.AbilityKind == abilityKind
             ? ItemServiceSourceKind.ClassAbility
+            : abilityKind == PlayerAbilityKind.Identify && ResolveIdentifyScrollReference() is not null
+                ? ItemServiceSourceKind.ConsumableItem
             : ItemServiceSourceKind.Unspecified;
+    }
+
+    private PlayerItemReference? ResolveIdentifyScrollReference()
+    {
+        var player = model.Snapshot?.Players.FirstOrDefault();
+        if (player is null)
+            return null;
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            if (player.Inventory[index].State?.ItemActionKind == ItemActionKind.Identify)
+                return new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)index),
+                };
+        }
+        for (var index = 0; index < player.Belt.Count; index++) {
+            if (player.Belt[index].State?.ItemActionKind == ItemActionKind.Identify)
+                return new PlayerItemReference {
+                    Location = PlayerItemLocation.Belt,
+                    Slot = checked((uint)index),
+                };
+        }
+        return null;
     }
 
     private CastRequested? CreateCastRequest(Vector2I target)

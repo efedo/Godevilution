@@ -341,6 +341,44 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolIdentifyScrollCarriesAndConsumesTheAuthoritativeSourceReference()
+    {
+        var target = new OwnedStoreItem(0, 0, 42, 100, 0,
+            AuthoritativeItemState.Empty with { Magical = 1 });
+        var scroll = new OwnedStoreItem(0, 0, 43, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.Identify,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventory: [target, scroll]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            IdentifyItemRequested = new IdentifyItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+                Source = ItemServiceSourceKind.ConsumableItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 1,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        var remaining = Assert.Single(player.Inventory);
+        Assert.True(remaining.State.Identified);
+        Assert.Equal(42U, remaining.ItemSeed);
+        Assert.Equal(0U, player.Gold);
+    }
+
+    [Fact]
     public void ProtocolRepairAbilityUsesAuthoritativeClassSkillAndNativeRandomRule()
     {
         const uint repairSpellId = 26;
