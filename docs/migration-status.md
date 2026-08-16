@@ -33,6 +33,10 @@ Status date: 2026-08-16
   `PlayerSnapshot` resources; the client clamps presentation values but never
   predicts or mutates those resources.
 
+- The client protocol model rejects impossible player life/mana and monster
+  vitality bounds before publishing a snapshot to presentation; visual
+  clamping remains defensive and never replaces authoritative validation.
+
 - Combat content activation now validates the configured PvP-ear item against
   the active item catalog before constructing sessions, rejecting unknown or
   mismatched native ear projections at the data boundary.

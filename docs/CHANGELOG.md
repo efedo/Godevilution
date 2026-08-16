@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reject impossible authoritative player-resource and monster-vitality bounds
+  at the Godot protocol boundary before presentation consumes snapshots.
+
 - Add typed Godot combat feedback for authoritative damage, healing, and
   experience events, replacing Lua-owned floating-number presentation for the
   server-backed client.

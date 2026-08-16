@@ -21,6 +21,10 @@ fallback for older peers; the client never simulates or mutates monster life.
 Player life and mana bars use the same snapshot-only rule for local and remote
 players, so presentation never predicts resource changes.
 
+The protocol model rejects contradictory player-resource and monster-vitality
+values before Godot consumes a snapshot; presentation clamping is defensive
+only.
+
 ## Projects
 
 - `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,
