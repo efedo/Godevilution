@@ -288,6 +288,35 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateResolvesStableCompletionRewardItemSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "cathedral_map", 43),
+        ]);
+        var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_reward_item_id\tcompletion_reward_item_symbol\n"
+                + "3021\t17\t1\t43\tcathedral_map\n",
+            stableIds: stableIds));
+
+        Assert.Equal(43U, quest.CompletionRewardItemId);
+    }
+
+    [Fact]
+    public void QuestStateRejectsStableCompletionRewardItemNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "cathedral_map", 43),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_reward_item_id\tcompletion_reward_item_symbol\n"
+                + "3021\t17\t1\t44\tcathedral_map\n",
+            stableIds: stableIds));
+    }
+
+    [Fact]
     public void CompletionRewardItemsMustResolveInTheActiveItemCatalog()
     {
         var quest = new AuthoritativeQuestState(

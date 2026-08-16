@@ -7,6 +7,37 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeItemQuestEffectCatalogTests
 {
     [Fact]
+    public void ResolvesStableItemSymbolForItemEffect()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "cathedral_map", 43),
+            new StableContentId("quest", "grave_matters", 3017),
+        ]);
+        var catalog = AuthoritativeItemQuestEffectCatalog.LoadTsv(
+            "item_quest_effects.tsv",
+            "item_id\titem_symbol\tquest_id\tquest_symbol\teffect_kind\teffect_amount\n"
+                + "43\tcathedral_map\t3017\tgrave_matters\tActivateQuest\t1\n",
+            stableIds);
+
+        Assert.Equal(43U, Assert.Single(catalog.Definitions).ItemId);
+    }
+
+    [Fact]
+    public void RejectsStableItemSymbolNumericMismatchForItemEffect()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "cathedral_map", 43),
+            new StableContentId("quest", "grave_matters", 3017),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemQuestEffectCatalog.LoadTsv(
+            "item_quest_effects.tsv",
+            "item_id\titem_symbol\tquest_id\tquest_symbol\teffect_kind\teffect_amount\n"
+                + "44\tcathedral_map\t3017\tgrave_matters\tActivateQuest\t1\n",
+            stableIds));
+    }
+
+    [Fact]
     public void ResolvesStableQuestSymbolForItemEffect()
     {
         var stableIds = new StableContentIdCatalog([

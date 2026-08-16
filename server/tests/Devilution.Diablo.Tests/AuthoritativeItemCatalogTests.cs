@@ -285,6 +285,43 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void StoreRowsResolveStableItemSymbols()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 100, 0, 0, 0, 3, 9, 1, 1, true),
+        ]);
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+        var catalog = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\titem_id\titem_symbol\n"
+                + "1\t0\t42\t75\t7\tshort_sword\n",
+            items,
+            stableIds: stableIds);
+
+        Assert.Equal(7, Assert.Single(catalog.GetItems(1)).State.ItemIndex);
+    }
+
+    [Fact]
+    public void StoreRowsRejectStableItemSymbolNumericMismatch()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 100, 0, 0, 0, 3, 9, 1, 1, true),
+        ]);
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\titem_id\titem_symbol\n"
+                + "1\t0\t42\t75\t8\tshort_sword\n",
+            items,
+            stableIds: stableIds));
+    }
+
+    [Fact]
     public void RejectsDuplicateItemDefinitions()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeItemCatalog([
@@ -455,6 +492,35 @@ public sealed class AuthoritativeItemCatalogTests
         Assert.Equal(106, item.NativeCursorGraphic);
         Assert.Equal(10, item.PlusToHit);
         Assert.InRange(item.FireMinDamage, 1, 10);
+    }
+
+    [Fact]
+    public void UniqueItemsResolveStableBaseItemSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+        var uniques = AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            "unique_id\tname\tbase_item_id\tbase_item_symbol\tmin_level\tvalue\tpower\tvalue1\tvalue2\n"
+                + "1001\tEmber Blade\t7\tshort_sword\t1\t3650\tTOHIT\t10\t10\n",
+            stableIds: stableIds);
+
+        Assert.Equal(7U, Assert.Single(uniques.Definitions).BaseItemId);
+    }
+
+    [Fact]
+    public void UniqueItemsRejectStableBaseItemNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            "unique_id\tname\tbase_item_id\tbase_item_symbol\tmin_level\tvalue\tpower\tvalue1\tvalue2\n"
+                + "1001\tEmber Blade\t8\tshort_sword\t1\t3650\tTOHIT\t10\t10\n",
+            stableIds: stableIds));
     }
 
     [Fact]
