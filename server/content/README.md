@@ -1207,8 +1207,8 @@ tile. Activation validates both levels and all coordinates; runtime selection
 is nearest-trigger first, then stable warp ID, with the native five-cell
 destination crawl applied by the server. Optional quest-gate columns keep
 native entrances such as the Hellfire crypt closed until their linked quest is
-completed; activation rejects missing quest catalogs and unknown quest
-identities before publishing the candidate ruleset.
+completed; authored quest-linked objects and triggers reject missing quest
+catalogs and unknown quest identities before publishing the candidate ruleset.
 
 The current base `spells.tsv` implements spell IDs `1` through `6`, Stone Curse
 spell ID `8`, Infravision spell ID `9`, Phasing spell ID `10`, Mana Shield spell

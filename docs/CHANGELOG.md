@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
   during content activation, so malformed external packs fail before
   publication.
 
+- Validate quest identities referenced by authored world objects during content
+  activation, including rejection when a quest catalog is missing.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
