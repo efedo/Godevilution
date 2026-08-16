@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.220.0` schema in
+It declares its identity and `devilution.diablo@1.221.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -18,7 +18,7 @@ and deterministic catalog rules are owned by `Devilution.Diablo`; the server
 only composes the selected content and module.
 
 The normalized TSV files define stable IDs and authoritative rules for player
-classes, animation timing, initial loadouts, levels, items, affixes, stores and
+classes, animation timing, initial loadouts, levels, world rules, items, affixes, stores and
 services, spells, combat, monsters, portals, objects, and quests. Legacy `itemdat.tsv` and
 `unique_itemdat.tsv` are compatibility fallbacks; normalized `items.tsv` and
 `unique_items.tsv` take precedence so stable IDs are not replaced by source-row
@@ -1525,7 +1525,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.220.0"
+      "version": "1.221.0"
   },
   "dependencyConstraints": [
     {
@@ -1557,7 +1557,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.220.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.221.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2114,3 +2114,7 @@ through the existing authoritative object-interaction path.
 Schema 1.220 adds optional quest gates to `warps.tsv`; the Hellfire crypt
 entrance is now a server-owned trigger that remains closed until Grave Matters
 is completed.
+Schema 1.221 adds `world_rules.tsv`, which externalizes the town level identity
+used by Town Portal and Warp admission. The checked-in base row retains native
+level `0`; activation rejects a town identity absent from the active world, while
+packs without the table retain the legacy default.

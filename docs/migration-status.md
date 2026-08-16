@@ -35,6 +35,11 @@ Status date: 2026-08-15
   and portal catalogs during content activation, without removing legacy
   no-catalog fallbacks.
 
+- The town level identity used by Town Portal and Warp is now externalized in
+  validated `world_rules.tsv` content. Active packs must point to a level in
+  the externalized world; callers without world-rule content retain native
+  level `0` compatibility.
+
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
   spell, arrow, beam, impact, and movement-transition families without moving

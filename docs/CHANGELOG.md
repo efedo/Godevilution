@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize the authoritative town level identity through validated
+  `world_rules.tsv`. Town Portal and Warp now use the active content value,
+  activation rejects identities absent from the externalized world, and packs
+  without the table retain the native level-0 compatibility default.
+
 - Validate optional `monster_missiles.tsv` `monster_id` selectors against the
   active monster-type catalog during content activation, preventing
   monster-specific projectile rows from becoming silently unreachable.
