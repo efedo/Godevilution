@@ -82,6 +82,10 @@ Status date: 2026-08-16
   fields for GoatMelee and Gargoyle, retaining the native exclusive random
   range through compatibility fallback for older packs.
 
+- Counselor failed-ranged-admission and successful-attack delays are now
+  separate validated monster-type fields, preserving their distinct native
+  intelligence-scaled and fixed-base formulas.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.
