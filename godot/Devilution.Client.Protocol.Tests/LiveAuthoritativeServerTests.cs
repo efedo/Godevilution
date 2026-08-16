@@ -228,6 +228,18 @@ public sealed class LiveAuthoritativeServerTests
 
         var model = new AuthoritativeClientModel();
         model.Apply(victimInitial);
+
+        var friendlyModeSequence = attackerClient.Queue(new Command {
+            SetFriendlyModeRequested = new SetFriendlyModeRequested {
+                FriendlyMode = false,
+            },
+        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+        await attackerClient.PollAsync(TestContext.Current.CancellationToken);
+        var friendlyModeAcknowledgement = await WaitForAcknowledgementAsync(
+            attackerClient,
+            friendlyModeSequence);
+        Assert.Equal(CommandStatus.Accepted, friendlyModeAcknowledgement.Status);
+
         var sequence = attackerClient.Queue(new Command {
             AttackRequested = new AttackRequested {
                 TargetEntityId = victim.EntityId,
@@ -254,11 +266,11 @@ public sealed class LiveAuthoritativeServerTests
         var resolved = await WaitForMessageAsync(
             attackerClient,
             message => message.Snapshot?.Players.Single(
-                player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
-                || message.Events?.Events.Any(gameEvent =>
-                    gameEvent.Damage is not null
-                    && gameEvent.Damage.TargetEntityId == victim.EntityId
-                    && gameEvent.Damage.Amount > 0) == true);
+                    player => player.EntityId == victim.EntityId).Life < victimLifeBeforeImpact
+                    || message.Events?.Events.Any(gameEvent =>
+                        gameEvent.Damage is not null
+                        && gameEvent.Damage.TargetEntityId == victim.EntityId
+                        && gameEvent.Damage.Amount > 0) == true);
         if (resolved.Snapshot is not null) {
             Assert.True(
                 resolved.Snapshot.Players.Single(player => player.EntityId == victim.EntityId).Life
@@ -462,7 +474,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -592,7 +604,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -764,7 +776,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -901,7 +913,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1038,7 +1050,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1411,7 +1423,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1601,7 +1613,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2009,7 +2021,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2081,7 +2093,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.253.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.254.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
