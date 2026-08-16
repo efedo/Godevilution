@@ -58,6 +58,10 @@ All notable changes to this fork are documented below.
   presentation and a stable `firebolt` spell reference while preserving its
   Hellfire charged-item behavior.
 
+- Refresh migration status to record all six cursor-driven class capabilities as
+  server-owned and covered, leaving native spell, quest, map, and client work as
+  the remaining external-content priorities.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
