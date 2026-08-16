@@ -8473,16 +8473,9 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var hasMoveGoal = monster.RhinoMovementTicks >= 0;
-        var movementGoalMinimumDistance = 5;
-        var movementGoalChanceModulo = 4;
-        if (monsterTypes?.TryGet(monster.MonsterId, out var rhinoDefinition) == true
-            && rhinoDefinition.RhinoMovementGoalMinimumDistance > 0
-            && rhinoDefinition.RhinoMovementGoalChanceModulo > 0) {
-            movementGoalMinimumDistance = rhinoDefinition.RhinoMovementGoalMinimumDistance;
-            movementGoalChanceModulo = rhinoDefinition.RhinoMovementGoalChanceModulo;
-        }
-        var startsMoveGoal = distance >= movementGoalMinimumDistance
-            && (attackSeed / 100U) % (uint)movementGoalChanceModulo != 0U;
+        var movementGoalTuning = GetRhinoMovementGoalTuning(monster);
+        var startsMoveGoal = distance >= movementGoalTuning.MinimumDistance
+            && (attackSeed / 100U) % (uint)movementGoalTuning.ChanceModulo != 0U;
         if (hasMoveGoal || startsMoveGoal) {
             if (!hasMoveGoal)
                 monster.StartRhinoMovement((int)((attackSeed / 100U) % 2U));
@@ -8514,13 +8507,14 @@ public sealed class DiabloCombatCommandProcessor
 
         if (distance < rhinoTuning.Value.MinimumDistance
             || GetEffectiveMonsterToHit(monster, special: true) <= 0
-            || GetEffectiveMonsterDamageRange(monster, special: true).Maximum <= 0)
+            || GetEffectiveMonsterDamageRange(monster, special: true).Maximum <= 0) {
             return TryAdvanceRhinoMovementFallback(
                 monster,
                 player,
                 players,
                 attackSeed,
                 distance);
+        }
 
         var chargeChance = Math.Min(
             100,
@@ -8604,7 +8598,9 @@ public sealed class DiabloCombatCommandProcessor
         uint seed,
         int distance)
     {
-        if (distance >= 5 && (seed / 100U) % 4U != 0U) {
+        var movementGoalTuning = GetRhinoMovementGoalTuning(monster);
+        if (distance >= movementGoalTuning.MinimumDistance
+            && (seed / 100U) % (uint)movementGoalTuning.ChanceModulo != 0U) {
             var roundWalk = FindNativeRoundWalkStep(
                 monster,
                 player,
@@ -8679,6 +8675,19 @@ public sealed class DiabloCombatCommandProcessor
                     : 50);
         }
         return (33, 2, 50);
+    }
+
+    private (int MinimumDistance, int ChanceModulo) GetRhinoMovementGoalTuning(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.RhinoMovementGoalMinimumDistance > 0
+            && definition.RhinoMovementGoalChanceModulo > 0) {
+            return (
+                definition.RhinoMovementGoalMinimumDistance,
+                definition.RhinoMovementGoalChanceModulo);
+        }
+        return (5, 4);
     }
 
     private (int MinimumDistance, int ChanceBase, int IntelligenceScale)? GetRhinoTuning(

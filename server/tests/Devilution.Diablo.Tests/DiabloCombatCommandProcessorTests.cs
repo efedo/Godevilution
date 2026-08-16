@@ -6015,6 +6015,70 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesValidatedMovementGoalGateAfterChargeMiss()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                64,
+                "Horned Demon",
+                0,
+                0,
+                13,
+                40,
+                80,
+                35,
+                2,
+                16,
+                5,
+                32,
+                false,
+                false,
+                false) {
+                NativeAi = "Rhino",
+                RhinoChargeMinimumDistance = 10,
+                RhinoChargeChanceBase = 1,
+                RhinoChargeChanceIntelligenceScale = 1,
+                RhinoMovementChanceBase = 1,
+                RhinoMovementChanceIntelligenceScale = 1,
+                RhinoMovementGoalMinimumDistance = 5,
+                RhinoMovementGoalChanceModulo = 5,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 1,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            rhinoMovementIdleTicks: 10,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1,014 ^ 9 ^ 7 = 1,000: authored modulo-five suppresses the Move
+        // goal in both branches, while the legacy modulo-four fallback would
+        // admit its RoundWalk before the ordinary middle-band roll.
+        processor.AdvanceTick(1_014, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.RhinoMovementIdleTicks);
+        Assert.Equal(15, monster.RhinoDelayTicks);
+    }
+
+    [Fact]
     public void RhinoAiCarriesItsNativeMoveGoalAcrossTicks()
     {
         var monster = new AuthoritativeCombatTarget(
