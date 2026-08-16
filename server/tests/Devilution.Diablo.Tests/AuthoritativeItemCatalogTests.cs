@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,35 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeItemCatalogTests
 {
+    [Fact]
+    public void ResolvesNormalizedItemSpellIdsThroughStableContentIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "charged_bolt", 30),
+        ]);
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tspell_id\tspell_symbol\n"
+                + "7\t1\t75\t100\t30\tcharged_bolt\n",
+            stableIds: stableIds);
+
+        Assert.Equal(30, catalog.GetRequired(7).SpellId);
+    }
+
+    [Fact]
+    public void RejectsNormalizedItemSpellIdNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "charged_bolt", 30),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tspell_id\tspell_symbol\n"
+                + "7\t1\t75\t100\t3\tcharged_bolt\n",
+            stableIds: stableIds));
+    }
+
     [Fact]
     public void GeneratesProtocolItemStateFromExternalDefinition()
     {

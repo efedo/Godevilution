@@ -440,7 +440,7 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
                     fields[12] = "Armor,BodyArmor";
                     fields[13] = "1";
                     fields[14] = "2";
-                    fields[21] = "199";
+                    fields[22] = "199";
                     return string.Join('\t', fields);
                 })) + "\r\n";
         var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", customItems);
