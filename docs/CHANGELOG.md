@@ -59,6 +59,9 @@ All notable changes to this fork are documented below.
 
 - Validate explicit quest monster completion IDs against active monster types,
   while preserving the base pack's native implicit Diablo-boss completion path.
+
+- Validate authored monster levels and positions against active world bounds,
+  preventing malformed static encounters from entering the authoritative world.
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
