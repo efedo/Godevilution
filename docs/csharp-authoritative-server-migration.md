@@ -691,8 +691,10 @@ the item is generated.
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
-cursor while selecting an eligible external template. Reading/learning books
-and wiring generation into store and world-drop flows remain follow-up work.
+cursor while selecting an eligible external template. `ReadBookRequested` now
+owns native intelligence gating, learned-spell level mutation, mana refund, and
+book consumption through the shared protocol; store and world-drop generation
+integration remain follow-up work.
 
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric

@@ -51,8 +51,11 @@ All notable changes to this fork are documented below.
 
 - Add schema 1.278 validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator that applies spell names, book costs,
-  intelligence requirements, and magic-school cursor projections; leave book
-  reading/learning and store/drop integration for follow-up work.
+  intelligence requirements, and magic-school cursor projections.
+
+- Add the shared `ReadBookRequested` command with server-owned native
+  intelligence gating, learned-spell level mutation, mana refund, and book
+  consumption; store and world-drop generation integration remains pending.
 
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when

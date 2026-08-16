@@ -60,6 +60,11 @@ Windows toolchain command.
   skill from paid vendor recharge. Value zero retains vendor behavior; the
   class source authorizes only the server-owned native charge-restoration and
   maximum-charge-loss rule for the exact selected staff.
+- `ReadBookRequested` consumes an exact owned book reference (or the legacy
+  inventory index), validates the server-projected readable-book action and
+  native intelligence requirement, then owns spell learning, level increases,
+  native mana refund, and book consumption. Clients never mutate learned-spell
+  state locally.
 - `ClientHello.requested_character_class_id` is an optional new-session
   selection from the active game module's validated catalog. When it is absent,
   the module selects its content default. Existing in-memory or restored save
