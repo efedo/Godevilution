@@ -337,8 +337,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var monsterTypes = content.TryGetTable("monster_types.tsv", out var monsterTypesTable)
             ? AuthoritativeMonsterTypeCatalog.LoadTsv(
                 monsterTypesTable.SourcePath,
-                monsterTypesTable.ToCanonicalTsv())
+                monsterTypesTable.ToCanonicalTsv(),
+                stableIds)
             : null;
+        if (stableIds is not null && monsterTypes is not null)
+            stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
         var monsterMissiles = content.TryGetTable(
             "monster_missiles.tsv",
             out var monsterMissilesTable)
@@ -369,7 +372,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var uniqueMonstersTable)
             ? AuthoritativeUniqueMonsterCatalog.LoadTsv(
                 uniqueMonstersTable.SourcePath,
-                uniqueMonstersTable.ToCanonicalTsv())
+                uniqueMonstersTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (uniqueMonsters is not null) {
             if (monsters is null)

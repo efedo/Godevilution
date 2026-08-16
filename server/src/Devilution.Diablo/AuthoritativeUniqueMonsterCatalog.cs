@@ -54,13 +54,14 @@ public sealed class AuthoritativeUniqueMonsterCatalog
 
     public static AuthoritativeUniqueMonsterCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeUniqueMonsterCatalog(table.Rows.Select(row =>
             new AuthoritativeUniqueMonsterDefinition(
                 row.RequiredUInt32("entity_id"),
-                row.RequiredUInt32("monster_id"),
+                AuthoritativeMonsterIdentity.Resolve(row, stableIds),
                 row.Required("identity"))));
     }
 }

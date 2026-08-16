@@ -1,9 +1,9 @@
-quest_id	quest_symbol	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_unique_identity	dialogue_variable1	dialogue_variable2	completion_variable1	completion_variable2	completion_activate_quest_id	completion_activate_quest_symbol	route_activation	completion_diablo	completion_reward_item_id	completion_reward_item_symbol	completion_reward_item_level
-3017	grave_matters	17	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
-3018	farmers_orchard	9	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
-3019	little_girl	17	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
-3020	wandering_trader	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
-3021	defiler	17	1	0	0	0	1	0	0	0	0	0	Defiler	0	0	0	0	0		1	0	43	cathedral_map	0
-3022	na_krul	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0	3	0	0		1	0	0		0
-3023	cornerstone	21	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
-3024	jerseys_jersey	9	1	0	0	0	1	0	0	0	0	0	NONE	0	0	0	0	0		1	0	0		0
+quest_id	quest_symbol	level_id	required_progress	progress	completed	unavailable	initial	logged	variable1	variable2	message_id	completion_monster_id	completion_monster_symbol	completion_unique_identity	dialogue_variable1	dialogue_variable2	completion_variable1	completion_variable2	completion_activate_quest_id	completion_activate_quest_symbol	route_activation	completion_diablo	completion_reward_item_id	completion_reward_item_symbol	completion_reward_item_level
+3017	grave_matters	17	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0
+3018	farmers_orchard	9	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0
+3019	little_girl	17	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0
+3020	wandering_trader	21	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0
+3021	defiler	17	1	0	0	0	1	0	0	0	0	0		Defiler	0	0	0	0	0		1	0	43	cathedral_map	0
+3022	na_krul	21	1	0	0	0	1	0	0	0	0	0		NONE	0	0	3	0	0		1	0	0		0
+3023	cornerstone	21	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0
+3024	jerseys_jersey	9	1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		1	0	0		0

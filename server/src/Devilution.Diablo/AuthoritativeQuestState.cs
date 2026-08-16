@@ -221,7 +221,11 @@ public static class AuthoritativeQuestCatalog
                 variable1: row.OptionalInt32("variable1"),
                 variable2: row.OptionalInt32("variable2"),
                 messageId: row.OptionalInt32("message_id"),
-                completionMonsterId: row.OptionalUInt32("completion_monster_id"),
+                completionMonsterId: AuthoritativeMonsterIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "completion_monster_id",
+                    "completion_monster_symbol"),
                 completionUniqueIdentity: row.TryGet("completion_unique_identity", out var uniqueIdentity)
                     && !string.Equals(uniqueIdentity, "NONE", StringComparison.OrdinalIgnoreCase)
                     ? uniqueIdentity

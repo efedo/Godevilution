@@ -90,7 +90,7 @@ public sealed class AuthoritativeMonsterCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var targets = table.Rows.Select(row => {
-            var monsterId = row.RequiredUInt32("monster_id");
+            var monsterId = AuthoritativeMonsterIdentity.Resolve(row, stableIds);
             AuthoritativeMonsterTypeDefinition? monsterType = null;
             if (monsterTypes is not null) {
                 if (!monsterTypes.TryGet(monsterId, out var resolvedMonsterType))
@@ -269,7 +269,7 @@ public sealed class AuthoritativeMonsterCatalog
             throw new InvalidDataException(
                 $"Monster row {row.LineNumber} has a negative drop item level.");
         return new AuthoritativeMonsterDropDefinition(
-            row.RequiredUInt32("monster_id"),
+            AuthoritativeMonsterIdentity.Resolve(row, stableIds),
             dropItemId,
             dropUniqueItemId,
             itemLevel,

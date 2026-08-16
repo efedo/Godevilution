@@ -21,6 +21,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     bool Undead,
     bool BerserkImmune)
 {
+    /** Stable content symbol retained alongside the numeric compatibility ID. */
+    public string StableSymbol { get; init; } = string.Empty;
+
     /** Native monster class capability used by demon-specific equipment. */
     public bool Demon { get; init; }
 
@@ -594,12 +597,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
 
     public static AuthoritativeMonsterTypeCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeMonsterTypeCatalog(table.Rows.Select(row =>
             new AuthoritativeMonsterTypeDefinition(
-                row.RequiredUInt32("monster_id"),
+                AuthoritativeMonsterIdentity.Resolve(row, stableIds),
                 row.RequiredUInt32("native_monster_id"),
                 row.Required("name"),
                 row.RequiredInt32("minimum_dungeon_level"),
@@ -615,6 +619,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 ParseFlag(row, "stone_curse_immune"),
                 ParseFlag(row, "undead"),
                 ParseFlag(row, "berserk_immune")) {
+                StableSymbol = AuthoritativeMonsterIdentity.ReadSymbol(row),
                 Demon = ParseFlag(row, "demon"),
                 Animal = ParseFlag(row, "animal"),
                 Knockback = ParseFlag(row, "knockback"),
