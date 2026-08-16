@@ -372,6 +372,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Rhino charge chance increase per intelligence point. */
     public int RhinoChargeChanceIntelligenceScale { get; init; }
 
+    /** Native Rhino ordinary movement admission chance base before intelligence scaling. */
+    public int RhinoMovementChanceBase { get; init; }
+
+    /** Native Rhino ordinary movement admission chance increase per intelligence point. */
+    public int RhinoMovementChanceIntelligenceScale { get; init; }
+
+    /** Native Rhino fresh-mode movement chance bonus. */
+    public int RhinoMovementFreshChanceBonus { get; init; }
+
     /** Native Rhino movement-goal minimum distance. */
     public int RhinoMovementGoalMinimumDistance { get; init; }
 
@@ -451,7 +460,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
             && CounselorAttackChanceIntelligenceScale > 0
             || RhinoChargeMinimumDistance > 0
             && RhinoChargeChanceBase > 0
-            && RhinoChargeChanceIntelligenceScale > 0;
+            && RhinoChargeChanceIntelligenceScale > 0
+            || RhinoMovementChanceBase > 0
+            && RhinoMovementChanceIntelligenceScale > 0;
 }
 
 /** Validated monster type metadata used to admit external encounter rows. */
@@ -819,6 +830,16 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.RhinoChargeMinimumDistance <= 0
                         || definition.RhinoChargeChanceBase <= 0
                         || definition.RhinoChargeChanceIntelligenceScale <= 0))
+                || definition.RhinoMovementChanceBase is < 0 or > 100
+                || definition.RhinoMovementChanceIntelligenceScale is < 0 or > 100
+                || definition.RhinoMovementFreshChanceBonus is < 0 or > 100
+                || ((definition.RhinoMovementChanceBase != 0
+                        || definition.RhinoMovementChanceIntelligenceScale != 0)
+                    && (definition.RhinoMovementChanceBase <= 0
+                        || definition.RhinoMovementChanceIntelligenceScale <= 0))
+                || (definition.RhinoMovementFreshChanceBonus != 0
+                    && (definition.RhinoMovementChanceBase <= 0
+                        || definition.RhinoMovementChanceIntelligenceScale <= 0))
                 || definition.RhinoMovementGoalMinimumDistance is < 0 or > 100
                 || definition.RhinoMovementGoalChanceModulo is < 0 or > 100
                 || (definition.RhinoMovementGoalMinimumDistance != 0
@@ -993,6 +1014,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 RhinoChargeMinimumDistance = row.OptionalInt32("rhino_charge_minimum_distance"),
                 RhinoChargeChanceBase = row.OptionalInt32("rhino_charge_chance_base"),
                 RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
+                RhinoMovementChanceBase = row.OptionalInt32("rhino_movement_chance_base"),
+                RhinoMovementChanceIntelligenceScale = row.OptionalInt32("rhino_movement_chance_intelligence_scale"),
+                RhinoMovementFreshChanceBonus = row.OptionalInt32("rhino_movement_fresh_chance_bonus"),
                 RhinoMovementGoalMinimumDistance = row.OptionalInt32("rhino_movement_goal_minimum_distance"),
                 RhinoMovementGoalChanceModulo = row.OptionalInt32("rhino_movement_goal_chance_modulo"),
                 RhinoDelayBase = row.OptionalInt32("rhino_delay_base"),

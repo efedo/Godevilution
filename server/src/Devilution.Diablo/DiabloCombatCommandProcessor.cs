@@ -8619,7 +8619,12 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var movementChance = GetRhinoMovementChance(monster);
+        var movementTuning = GetRhinoMovementTuning(monster);
+        var movementChance = GetRhinoMovementChance(
+            monster,
+            movementTuning.ChanceBase,
+            movementTuning.IntelligenceScale,
+            movementTuning.FreshChanceBonus);
         if ((seed / 100U) % 100U < (uint)movementChance) {
             var randomWalk = FindNativeRandomWalkStep(
                 monster,
@@ -8642,17 +8647,38 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Native Rhino ordinary movement admission across var2 bands. */
-    private static int GetRhinoMovementChance(AuthoritativeCombatTarget monster)
+    private static int GetRhinoMovementChance(
+        AuthoritativeCombatTarget monster,
+        int chanceBase,
+        int intelligenceScale,
+        int freshChanceBonus)
     {
+        var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
         var movementChance = monster.RhinoMovementIdleTicks == -1
-            ? 33 + (2 * monster.Intelligence)
+            ? longIdleChance
             : monster.RhinoMovementIdleTicks > 20
-                ? 33 + (2 * monster.Intelligence)
+                ? longIdleChance
                 : monster.RhinoMovementIdleTicks == 0
                     && monster.RhinoMovementMode is >= 1 and <= 3
-                    ? 83 + (2 * monster.Intelligence)
+                    ? longIdleChance + freshChanceBonus
                     : 0;
         return Math.Min(100, movementChance);
+    }
+
+    private (int ChanceBase, int IntelligenceScale, int FreshChanceBonus)
+        GetRhinoMovementTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.RhinoMovementChanceBase > 0
+            && definition.RhinoMovementChanceIntelligenceScale > 0) {
+            return (
+                definition.RhinoMovementChanceBase,
+                definition.RhinoMovementChanceIntelligenceScale,
+                definition.RhinoMovementFreshChanceBonus > 0
+                    ? definition.RhinoMovementFreshChanceBonus
+                    : 50);
+        }
+        return (33, 2, 50);
     }
 
     private (int MinimumDistance, int ChanceBase, int IntelligenceScale)? GetRhinoTuning(

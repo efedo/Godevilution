@@ -6113,6 +6113,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesValidatedFreshMovementBonus()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                64,
+                "Horned Demon",
+                0,
+                0,
+                13,
+                40,
+                80,
+                35,
+                2,
+                16,
+                5,
+                32,
+                false,
+                false,
+                false) {
+                NativeAi = "Rhino",
+                RhinoChargeMinimumDistance = 10,
+                RhinoChargeChanceBase = 1,
+                RhinoChargeChanceIntelligenceScale = 1,
+                RhinoMovementChanceBase = 1,
+                RhinoMovementChanceIntelligenceScale = 1,
+                RhinoMovementFreshChanceBonus = 100,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 1,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            rhinoMovementIdleTicks: 0,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 6,000 ^ 9 ^ 7 = 6,014: movement roll 60 misses the native 33 +
+        // 2 * intelligence fallback but is admitted by the validated bonus.
+        processor.AdvanceTick(6_000, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(0, monster.RhinoMovementIdleTicks);
+    }
+
+    [Fact]
     public void RhinoAiStartsItsNativeDelayInsideTheMiddleMovementBand()
     {
         var monster = new AuthoritativeCombatTarget(

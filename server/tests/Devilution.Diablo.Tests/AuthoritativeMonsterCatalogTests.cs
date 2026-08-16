@@ -1079,6 +1079,23 @@ public sealed class AuthoritativeMonsterCatalogTests
                 RhinoMovementGoalChanceModulo = 4,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                RhinoMovementChanceBase = 101,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Rhino",
+                RhinoMovementChanceBase = 33,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Rhino",
+                RhinoMovementFreshChanceBonus = 50,
+            },
+        ]));
     }
 
     [Fact]
@@ -1094,6 +1111,21 @@ public sealed class AuthoritativeMonsterCatalogTests
             rhino.RhinoChargeMinimumDistance,
             rhino.RhinoChargeChanceBase,
             rhino.RhinoChargeChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsRhinoMovementTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\trhino_movement_chance_base\trhino_movement_chance_intelligence_scale\trhino_movement_fresh_chance_bonus\n"
+                + "66\t64\tHorned Demon\t7\t9\t13\t40\t80\t35\t2\t16\t5\t32\t0\t0\t0\tRhino\t33\t2\t50\n");
+
+        var rhino = Assert.Single(catalog.Definitions);
+        Assert.Equal((33, 2, 50), (
+            rhino.RhinoMovementChanceBase,
+            rhino.RhinoMovementChanceIntelligenceScale,
+            rhino.RhinoMovementFreshChanceBonus));
     }
 
     [Fact]

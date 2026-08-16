@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.315.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.316.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1332,7 +1332,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.315.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.316.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1643,6 +1643,14 @@ public sealed class ShippedContentTests
                 definition.RhinoChargeMinimumDistance,
                 definition.RhinoChargeChanceBase,
                 definition.RhinoChargeChanceIntelligenceScale))
+            .Distinct()
+            .Single());
+        Assert.Equal((33, 2, 50), monsterTypes.Definitions
+            .Where(definition => definition.NativeAi == "Rhino")
+            .Select(definition => (
+                definition.RhinoMovementChanceBase,
+                definition.RhinoMovementChanceIntelligenceScale,
+                definition.RhinoMovementFreshChanceBonus))
             .Distinct()
             .Single());
         Assert.Equal(
