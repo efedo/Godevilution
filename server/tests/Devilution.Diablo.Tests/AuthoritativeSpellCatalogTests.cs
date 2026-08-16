@@ -885,8 +885,28 @@ public sealed class AuthoritativeSpellCatalogTests
             flash.CharacterLevelDamageDivisor,
             flash.SpellEffectScaleDivisor,
             flash.PostScaleDamagePercent));
+        Assert.Equal(
+            [(-1, 0), (0, 0), (1, 0), (-1, 1), (0, 1), (1, 1)],
+            flash.FlashBottomOffsets);
+        Assert.Equal([(-1, -1), (0, -1), (1, -1)], flash.FlashTopOffsets);
+        var malformed = File.ReadAllText(path).Replace(
+            "-1,0;0,0;1,0;-1,1;0,1;1,1",
+            "0,bad",
+            StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(path, malformed));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([flash with { SpellEffectScaleDivisor = 0 }]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                flash with { FlashBottomOffsets = [(0, 0)] },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                flash with {
+                    FlashTopOffsets = [(-1, -1), (0, -1), (2, -1)],
+                },
+            ]));
     }
 
     [Fact]

@@ -14840,6 +14840,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FlashUsesValidatedBottomLayerOffsetOrder()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            4,
+            5,
+            1000,
+            monsterLevel: 1,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateFlashSpell() with {
+                    FlashBottomOffsets = [
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                    ],
+                },
+            ]),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            characterClassId: 2);
+        world.Projectiles.Add(0x80000001, new AuthoritativeProjectile(
+            0x80000001,
+            player.EntityId,
+            0,
+            4,
+            player.LevelId,
+            5,
+            5,
+            5,
+            5,
+            100,
+            AuthoritativeDamageType.Magic,
+            1,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.FlashBottom,
+            ResistantDamageDivisor = 4,
+        });
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(target.MaxHitPointsQ6, target.HitPointsQ6);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void FlashLayersRepeatNativeQ6CollisionAcrossTheirDisjointTiles()
     {
         var bottomTarget = new AuthoritativeCombatTarget(

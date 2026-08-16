@@ -11715,8 +11715,8 @@ public sealed class DiabloCombatCommandProcessor
     {
         projectile.RemainingTicks--;
         var offsets = projectile.Behavior == AuthoritativeProjectileBehavior.FlashBottom
-            ? FlashBottomOffsets
-            : FlashTopOffsets;
+            ? GetFlashOffsets(projectile.SpellId, bottom: true)
+            : GetFlashOffsets(projectile.SpellId, bottom: false);
         foreach (var offset in offsets) {
             var positionX = checked(projectile.PositionX + offset.X);
             var positionY = checked(projectile.PositionY + offset.Y);
@@ -11753,6 +11753,18 @@ public sealed class DiabloCombatCommandProcessor
 
         if (projectile.RemainingTicks == 0)
             world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    private IReadOnlyList<(int X, int Y)> GetFlashOffsets(uint spellId, bool bottom)
+    {
+        if (spells.TryGet(spellId, out var spell)) {
+            var configuredOffsets = bottom
+                ? spell.FlashBottomOffsets
+                : spell.FlashTopOffsets;
+            if (configuredOffsets.Count > 0)
+                return configuredOffsets;
+        }
+        return bottom ? FlashBottomOffsets : FlashTopOffsets;
     }
 
     private static void EnterProjectileImpact(AuthoritativeProjectile projectile)

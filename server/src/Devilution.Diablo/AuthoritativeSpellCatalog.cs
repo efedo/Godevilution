@@ -174,6 +174,12 @@ public sealed record AuthoritativeSpellDefinition(
     /** Optional nine-cell burst order; empty preserves the native Elemental order. */
     public IReadOnlyList<(int X, int Y)> ElementalBurstOffsets { get; init; } = [];
 
+    /** Optional six-cell lower Flash layer order; empty preserves the native order. */
+    public IReadOnlyList<(int X, int Y)> FlashBottomOffsets { get; init; } = [];
+
+    /** Optional three-cell upper Flash layer order; empty preserves the native order. */
+    public IReadOnlyList<(int X, int Y)> FlashTopOffsets { get; init; } = [];
+
     /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
     public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
 
@@ -759,6 +765,23 @@ public sealed class AuthoritativeSpellCatalog
                     offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
                 throw new InvalidDataException(
                     "Elemental burst offsets must remain within the native adjacent-cell range.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Flash
+                && definition.FlashBottomOffsets.Count is not (0 or 6)) {
+                throw new InvalidDataException(
+                    "Flash bottom-layer tuning requires exactly six offsets when configured.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Flash
+                && definition.FlashTopOffsets.Count is not (0 or 3)) {
+                throw new InvalidDataException(
+                    "Flash top-layer tuning requires exactly three offsets when configured.");
+            }
+            if (definition.FlashBottomOffsets.Any(offset =>
+                    offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)
+                || definition.FlashTopOffsets.Any(offset =>
+                    offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
+                throw new InvalidDataException(
+                    "Flash layer offsets must remain within the native adjacent-cell range.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
@@ -1513,6 +1536,12 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Elemental burst tuning requires Elemental projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Flash
+                && (definition.FlashBottomOffsets.Count != 0
+                    || definition.FlashTopOffsets.Count != 0)) {
+                throw new InvalidDataException(
+                    "Flash layer tuning requires Flash projectile behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HolyBoltHitMonsterLevelScale != 2
                     || definition.HolyBoltMinimumHitChance != 5
@@ -2083,6 +2112,8 @@ public sealed class AuthoritativeSpellCatalog
             ChargedBoltPathPattern = ParseChargedBoltPathPattern(row),
             FireballExplosionOffsets = ParseFireballExplosionOffsets(row),
             ElementalBurstOffsets = ParseElementalBurstOffsets(row),
+            FlashBottomOffsets = ParseFlashLayerOffsets(row, "flash_bottom_offsets", "Flash bottom-layer"),
+            FlashTopOffsets = ParseFlashLayerOffsets(row, "flash_top_offsets", "Flash top-layer"),
             ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
                 "charged_bolt_hit_monster_level_scale",
                 2),
@@ -2485,6 +2516,34 @@ public sealed class AuthoritativeSpellCatalog
                 || !int.TryParse(components[1], out var y)) {
                 throw new InvalidDataException(
                     $"Spell row {row.LineNumber} contains an invalid Elemental burst offset.");
+            }
+            offsets[index] = (x, y);
+        }
+        return offsets;
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseFlashLayerOffsets(
+        TsvRow row,
+        string columnName,
+        string description)
+    {
+        if (!row.TryGet(columnName, out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ';',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var offsets = new (int X, int Y)[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            var components = entries[index].Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (components.Length != 2
+                || !int.TryParse(components[0], out var x)
+                || !int.TryParse(components[1], out var y)) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid {description} offset.");
             }
             offsets[index] = (x, y);
         }
