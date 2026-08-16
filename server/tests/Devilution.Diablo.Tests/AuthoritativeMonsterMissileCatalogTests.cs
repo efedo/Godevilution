@@ -116,6 +116,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedRangedAvoidanceRecoveryDelayTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tranged_avoidance_delay_base\tranged_avoidance_delay_random_range\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t7\t11\n");
+
+        var acid = Assert.Single(catalog.Definitions);
+        Assert.Equal(7, acid.RangedAvoidanceDelayBase);
+        Assert.Equal(11, acid.RangedAvoidanceDelayRandomRange);
+    }
+
+    [Fact]
     public void RejectsRangedPostAttackDelayOnAvoidanceMappings()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
@@ -126,6 +139,20 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
                 RangedDelayBase: 1,
                 RangedDelayRandomRange: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsRangedAvoidanceRecoveryDelayOnOrdinaryRangedMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                AuthoritativeMonsterRangedAttackMode.Ranged,
+                RangedAvoidanceDelayBase: 1,
+                RangedAvoidanceDelayRandomRange: 2),
         ]));
     }
 
@@ -175,6 +202,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.ProjectileImpactLifetime);
         Assert.Equal(0, succubus.RangedDelayBase);
         Assert.Equal(0, succubus.RangedDelayRandomRange);
+        Assert.Equal(0, succubus.RangedAvoidanceDelayBase);
+        Assert.Equal(0, succubus.RangedAvoidanceDelayRandomRange);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);

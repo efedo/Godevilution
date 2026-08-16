@@ -7227,7 +7227,7 @@ public sealed class DiabloCombatCommandProcessor
                         useRoundWalk: false);
                     if (!moved)
                         monster.StartRangedAvoidanceDelay(
-                            5 + (int)((attackSeed / 200U) % 10U));
+                            ResolveRangedAvoidanceDelay(missile, attackSeed));
                     return true;
                 }
                 return false;
@@ -7274,7 +7274,7 @@ public sealed class DiabloCombatCommandProcessor
                     rangedAvoidanceRoundWalkTurn);
                 if (!moved)
                     monster.StartRangedAvoidanceDelay(
-                        5 + (int)((attackSeed / 200U) % 10U));
+                        ResolveRangedAvoidanceDelay(missile, attackSeed));
                 return true;
             }
         } else {
@@ -7312,7 +7312,7 @@ public sealed class DiabloCombatCommandProcessor
                     rangedAvoidanceRoundWalkTurn);
                 if (!moved)
                     monster.StartRangedAvoidanceDelay(
-                        5 + (int)((attackSeed / 200U) % 10U));
+                        ResolveRangedAvoidanceDelay(missile, attackSeed));
                 return true;
             }
             if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
@@ -7468,6 +7468,19 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.RangedDelayRandomRange
             : 20;
         var delayBase = missile?.RangedDelayBase ?? 0;
+        return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    private static int ResolveRangedAvoidanceDelay(
+        AuthoritativeMonsterMissileDefinition? missile,
+        uint attackSeed)
+    {
+        var randomRange = missile?.RangedAvoidanceDelayRandomRange > 0
+            ? missile.RangedAvoidanceDelayRandomRange
+            : 10;
+        var delayBase = missile?.RangedAvoidanceDelayBase > 0
+            ? missile.RangedAvoidanceDelayBase
+            : 5;
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
     }
 

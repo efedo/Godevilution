@@ -60,7 +60,11 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional post-shot Ranged delay base; zero preserves the native base. */
     int RangedDelayBase = 0,
     /** Optional exclusive post-shot Ranged delay random range. */
-    int RangedDelayRandomRange = 0);
+    int RangedDelayRandomRange = 0,
+    /** Optional RangedAvoidance recovery-delay base; zero preserves native behavior. */
+    int RangedAvoidanceDelayBase = 0,
+    /** Optional exclusive RangedAvoidance recovery-delay random range. */
+    int RangedAvoidanceDelayRandomRange = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -107,6 +111,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     || definition.RangedDelayRandomRange != 0)
                     && (definition.AttackMode != AuthoritativeMonsterRangedAttackMode.Ranged
                         || definition.RangedDelayRandomRange <= 0)
+                || definition.RangedAvoidanceDelayBase < 0
+                || definition.RangedAvoidanceDelayRandomRange < 0
+                || (definition.RangedAvoidanceDelayBase != 0
+                    || definition.RangedAvoidanceDelayRandomRange != 0)
+                    && (definition.AttackMode
+                        != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+                        || definition.RangedAvoidanceDelayRandomRange <= 0)
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
@@ -339,7 +350,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("projectile_impact_lifetime"),
                 ParseSnakeDriftPattern(row),
                 row.OptionalInt32("ranged_delay_base"),
-                row.OptionalInt32("ranged_delay_random_range"));
+                row.OptionalInt32("ranged_delay_random_range"),
+                row.OptionalInt32("ranged_avoidance_delay_base"),
+                row.OptionalInt32("ranged_avoidance_delay_random_range"));
         }));
     }
 
