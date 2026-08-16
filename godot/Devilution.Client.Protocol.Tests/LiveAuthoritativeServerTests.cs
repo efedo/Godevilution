@@ -1271,6 +1271,9 @@ public sealed class LiveAuthoritativeServerTests
 
         Assert.Equal(1, staff.State.SpellId);
         Assert.Equal(166, staff.State.ItemIndex);
+        Assert.Equal("Short Staff of Charged Bolt", staff.State.BaseName);
+        Assert.Equal("Short Staff of Charged Bolt", staff.State.IdentifiedName);
+        Assert.Equal(109, staff.State.NativeCursorGraphic);
         Assert.Equal(40, staff.State.Charges);
         Assert.Equal(40, staff.State.MaxCharges);
         Assert.Equal(ItemSpellSourceKind.ChargedItem, staff.State.SpellSourceKind);
