@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.306 validated shared AiAvoidance Move-goal gate fields to
+  `monster_types.tsv`, preserving the native minimum-four/modulo-four fallback
+  for older mappings.
+
 - Add schema 1.305 validated Hork Demon RoundWalk admission modulo to
   `monster_types.tsv`, preserving the native modulo-four fallback for older
   mappings.

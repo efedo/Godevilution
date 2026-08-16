@@ -114,6 +114,12 @@ Status date: 2026-08-16
   `hork_demon_round_walk_chance_modulo` monster-type field, preserving the
   native modulo-four branch with compatibility fallback for older packs.
 
+- Shared AiAvoidance Move-goal admission is now validated through
+  `ai_avoidance_movement_minimum_distance` and
+  `ai_avoidance_movement_chance_modulo` monster-type fields, preserving the
+  native minimum-four/modulo-four gate with compatibility fallback for older
+  packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1270,6 +1276,10 @@ Status date: 2026-08-16
 - Schema 1.305 externalizes Hork Demon's far-distance RoundWalk admission
   modulo through optional monster-type data, retaining the native modulo-four
   fallback for older mappings.
+
+- Schema 1.306 externalizes the shared AiAvoidance Move-goal distance and
+  modulo gate through optional monster-type data, retaining the native
+  minimum-four/modulo-four fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
