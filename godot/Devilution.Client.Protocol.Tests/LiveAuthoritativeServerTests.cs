@@ -462,7 +462,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -482,7 +482,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t34\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t100\t27\t\tNone\t34\t\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -592,7 +592,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -612,7 +612,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t1\t1\n3\t100\t22\tNone\t32\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t100\t27\t\tNone\t1\t\t1\n3\t100\t22\t\tNone\t32\t\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -764,7 +764,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -784,7 +784,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t30\t2\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t100\t27\t\tNone\t30\t\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -901,7 +901,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -921,7 +921,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tNone\t38\t2\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t100\t27\t\tNone\t38\t\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -1038,7 +1038,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1411,7 +1411,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1601,7 +1601,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1621,7 +1621,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tstarting_gold\tability_spell_id\tability_kind\tstarting_spell_id\tstarting_spell_level\n2\t100\t27\tRecharge\t53\t1\n",
+                "class_id\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t100\t27\t\tRecharge\t53\t\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -2009,7 +2009,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2081,7 +2081,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.223.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.224.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",

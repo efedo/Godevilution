@@ -93,6 +93,47 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void SymbolicLoadoutSpellIdsResolveThroughStableContentIds()
+    {
+        var root = FindRepositoryRoot();
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            LoadClasses(root),
+            LoadItems(root),
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"),
+            LoadStableIds(root));
+
+        Assert.Equal(
+            [26U, 28U, 27U, 46U, 5U, 22U],
+            catalog.Definitions.Select(definition => definition.AbilitySpellId));
+        Assert.Equal(
+            1U,
+            Assert.Single(catalog.Definitions, definition => definition.ClassId == 2)
+                .StartingSpellId);
+    }
+
+    [Fact]
+    public void SymbolicLoadoutSpellIdsRejectNumericMismatch()
+    {
+        var root = FindRepositoryRoot();
+        var loadouts = ReadBase(root, "class_loadouts.tsv")
+            .Replace("26\trepair", "25\trepair", StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            LoadClasses(root),
+            LoadItems(root),
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            loadouts,
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"),
+            LoadStableIds(root)));
+    }
+
+    [Fact]
     public void SessionOwnedSeedsAreStableUniqueAndSessionSpecific()
     {
         var catalog = LoadShippedCatalog();
@@ -437,9 +478,16 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         var combatRules = LoadCombatRules(root);
         var current = ReadBase(root, "class_loadouts.tsv")
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(line => string.Join(
-                '\t',
-                line.Split('\t').Where((_, index) => index != 3)))
+            .Select(line => {
+                var fields = line.Split('\t');
+                return string.Join('\t', [
+                    fields[0],
+                    fields[1],
+                    fields[2],
+                    fields[5],
+                    fields[7],
+                ]);
+            })
             .ToArray();
         var legacy = string.Join("\r\n", current) + "\r\n";
 
@@ -498,6 +546,13 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
         return AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
             ReadBase(root, "combat.tsv"));
+    }
+
+    private static StableContentIdCatalog LoadStableIds(string root)
+    {
+        return StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            ReadBase(root, "content_ids.tsv"));
     }
 
     private static string ReadBase(string root, string fileName)

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.223.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.224.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -503,8 +503,10 @@ public sealed class ShippedContentTests
         var stableIds = basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv");
         var invalidStableIds = TsvTable.Parse(
             stableIds.SourcePath,
-            "kind\tsymbol\tnumeric_id\n"
-                + "spell\tidentify\t9999\n");
+            stableIds.ToCanonicalTsv().Replace(
+                "spell\tidentify\t5",
+                "spell\tidentify\t9999",
+                StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -522,7 +524,10 @@ public sealed class ShippedContentTests
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
 
-        Assert.Contains("symbol 'identify' references unknown spell 9999", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "maps spell 5 to symbol 'identify', which resolves to 9999",
+            exception.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -800,7 +805,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.223.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.224.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
