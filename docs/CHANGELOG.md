@@ -54,6 +54,9 @@ All notable changes to this fork are documented below.
 - Reject blocked portal and level-trigger endpoints during world activation, so
   authored transitions always land on usable movement cells.
 
+- Validate authored object levels and positions against active world bounds,
+  preventing malformed object placements from surviving content activation.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
