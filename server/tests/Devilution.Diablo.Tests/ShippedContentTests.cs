@@ -48,7 +48,36 @@ public sealed class ShippedContentTests
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
 
-        Assert.Contains("Quest-gated warps require an active quest catalog", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("Quest-gated warps and objects require an active quest catalog", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsQuestLinkedObjectsWithoutAQuestCatalog()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var objects = basePack.Tables.Single(table => table.SourcePath == "objects.tsv");
+        var questLinkedObjects = TsvTable.Parse(
+            objects.SourcePath,
+            objects.ToCanonicalTsv()
+                + "9001\t6001\t0\t0\t0\t0\t3017\tNone\t0\t1\t0\t0\t0\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath is not "quests.tsv" and not "quest_states.tsv")
+                .Select(table => table.SourcePath == objects.SourcePath ? questLinkedObjects : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Quest-gated warps and objects require an active quest catalog", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

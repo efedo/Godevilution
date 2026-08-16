@@ -224,6 +224,9 @@ public sealed class AuthoritativeWorldTests
         Assert.Equal(AuthoritativeObjectEffectKind.QuestSequence, @object.EffectKind);
         Assert.Equal(1, @object.EffectAmount);
         Assert.Equal(3022U, @object.QuestId);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWorldObjectCatalog.ValidateQuestRequirements(
+            objects,
+            [new AuthoritativeQuestState(3023, 24, 1)]));
     }
 
     [Fact]
