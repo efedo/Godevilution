@@ -66,6 +66,25 @@ public sealed record AuthoritativeWorldRules(
             throw new InvalidDataException(
                 $"World rules reference unknown town level {TownLevelId}.");
         }
+        if (!HasTownPortalDestinationGeometry)
+            return;
+
+        for (var slot = 0; slot < TownPortalDestinationSlotCount; slot++) {
+            var positionX = checked(
+                (long)TownPortalDestinationPositionX
+                + (long)slot * TownPortalDestinationSlotSpacing);
+            if (positionX > int.MaxValue
+                || !world.ContainsPosition(TownLevelId, (int)positionX, TownPortalDestinationPositionY)) {
+                throw new InvalidDataException(
+                    $"World rules Town Portal destination slot {slot} is outside town level "
+                    + $"{TownLevelId}.");
+            }
+            if (!world.IsWalkable(TownLevelId, (int)positionX, TownPortalDestinationPositionY)) {
+                throw new InvalidDataException(
+                    $"World rules Town Portal destination slot {slot} is blocked in town level "
+                    + $"{TownLevelId}.");
+            }
+        }
     }
 
     /** Ensures active content cannot create invalid destination slot geometry. */
