@@ -194,15 +194,22 @@ public static class AuthoritativeQuestCatalog
                     $"Quest state table '{additionalSourcePath}' contains duplicate quest ID {quest.QuestId}.");
             result.Add(quest);
         }
-        var mergedQuestIds = result.Select(quest => quest.QuestId).ToHashSet();
-        foreach (var quest in result) {
-            if (quest.CompletionActivateQuestId != 0
-                && !mergedQuestIds.Contains(quest.CompletionActivateQuestId)) {
+        ValidateActivationTargets(result);
+        return result;
+    }
+
+    /** Validates follow-on quest identities for any active quest table. */
+    public static void ValidateActivationTargets(
+        IEnumerable<AuthoritativeQuestState> quests)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        var values = quests.ToArray();
+        var questIds = values.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var quest in values.Where(quest => quest.CompletionActivateQuestId != 0)) {
+            if (!questIds.Contains(quest.CompletionActivateQuestId))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} activates unknown quest {quest.CompletionActivateQuestId}.");
-            }
         }
-        return result;
     }
 
     /** Applies native single-player pool exclusions to the loaded quest state. */

@@ -377,6 +377,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 "Quest-gated warps and objects require an active quest catalog.");
         }
         if (quests is not null) {
+            AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
             if (world is not null)
                 AuthoritativeWarpCatalog.ValidateQuestRequirements(
                     world.WarpTargets,
