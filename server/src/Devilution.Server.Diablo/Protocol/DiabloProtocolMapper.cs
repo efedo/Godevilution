@@ -11,6 +11,7 @@ internal static class DiabloProtocolMapper
         IReadOnlyList<StorePlayerSnapshot>? participants = null,
         bool revealTraps = true,
         AuthoritativeSpellCatalog? spells = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null,
         IReadOnlyList<AuthoritativeLevel>? levelGeometry = null)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -38,7 +39,7 @@ internal static class DiabloProtocolMapper
             Difficulty = ToProtocolDifficulty(source.Difficulty),
         };
         foreach (var participant in projectedParticipants)
-            snapshot.Players.Add(ToProtocolPlayer(participant, spells));
+            snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks));
 
         foreach (var monster in source.Monsters) {
             snapshot.Monsters.Add(new MonsterSnapshot {
@@ -282,7 +283,8 @@ internal static class DiabloProtocolMapper
 
     private static PlayerSnapshot ToProtocolPlayer(
         StorePlayerSnapshot state,
-        AuthoritativeSpellCatalog? spells)
+        AuthoritativeSpellCatalog? spells,
+        AuthoritativeSpellBookCatalog? spellBooks)
     {
         var player = new PlayerSnapshot {
             EntityId = state.EntityId,
@@ -321,6 +323,10 @@ internal static class DiabloProtocolMapper
             player.MemorizedSpells.Add(new PlayerSpellLevelSnapshot {
                 SpellId = spell.SpellId,
                 Level = spell.Level,
+                DisplayName = spellBooks is not null
+                    && spellBooks.TryGet(spell.SpellId, out var book)
+                    ? book.DisplayName
+                    : string.Empty,
             });
         }
         if (state.CurrentAction is not null)

@@ -228,7 +228,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.GameMode,
             options.Items,
             options.Difficulty,
-            options.MonsterTypes);
+            options.MonsterTypes,
+            options.SpellBooks);
     }
 }
 
@@ -269,7 +270,8 @@ public sealed partial class DiabloSimulation
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
-        AuthoritativeMonsterTypeCatalog? monsterTypes = null)
+        AuthoritativeMonsterTypeCatalog? monsterTypes = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -290,6 +292,7 @@ public sealed partial class DiabloSimulation
             : throw new ArgumentOutOfRangeException(nameof(difficulty));
         Items = items;
         this.monsterTypes = monsterTypes;
+        SpellBooks = spellBooks;
         ReconcileProceduralSpawnState();
     }
 
@@ -301,6 +304,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated spell catalog used for protocol source classification. */
     public AuthoritativeSpellCatalog Spells { get; }
+
+    /** Validated native dynamic spell-book metadata used for presentation names. */
+    public AuthoritativeSpellBookCatalog? SpellBooks { get; }
 
     /** Validated content rules governing this Diablo simulation instance. */
     public AuthoritativeCombatRules CombatRules { get; }

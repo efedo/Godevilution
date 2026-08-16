@@ -468,6 +468,9 @@ message PlayerActionSnapshot {
 message PlayerSpellLevelSnapshot {
 	uint32 spell_id = 1;
 	uint32 level = 2;
+	// Optional server-owned display metadata from the active content pack.
+	// Older peers may ignore this additive field and continue using spell_id.
+	string display_name = 3;
 }
 
 message MonsterSnapshot {

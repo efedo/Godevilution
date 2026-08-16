@@ -31,7 +31,9 @@ public static class AuthoritativeSpellSourceSelector
                      .ThenBy(spell => spell.Level)) {
             sources.Add(new AuthoritativeSpellSource(
                 $"memorized:{spell.SpellId}:{spell.Level}",
-                $"Spell {spell.SpellId} (level {spell.Level})",
+                string.IsNullOrWhiteSpace(spell.DisplayName)
+                    ? $"Spell {spell.SpellId} (level {spell.Level})"
+                    : $"{spell.DisplayName} (level {spell.Level})",
                 spell.SpellId,
                 spell.Level,
                 CastSourceKind.MemorizedSpell,

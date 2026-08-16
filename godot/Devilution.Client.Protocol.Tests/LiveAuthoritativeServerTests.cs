@@ -30,6 +30,7 @@ public sealed class LiveAuthoritativeServerTests
         var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
         model.Apply(initial);
         var player = model.Snapshot!.Players.Single();
+        Assert.Equal("Firebolt", Assert.Single(player.MemorizedSpells).DisplayName);
         var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
 
         var moveSequence = client.Queue(new Command {
