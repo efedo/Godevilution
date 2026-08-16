@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.224.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.225.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -805,7 +805,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.224.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.225.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2643,6 +2643,9 @@ public sealed class ShippedContentTests
         Assert.Equal(28U, stableIds.Resolve("spell", "trap_disarm"));
         Assert.Equal(30U, stableIds.Resolve("spell", "charged_bolt"));
         Assert.Equal(46U, stableIds.Resolve("spell", "search"));
+        Assert.Equal(36U, stableIds.Resolve("spell", "blood_star"));
+        Assert.Equal(21U, stableIds.Resolve("spell", "inferno"));
+        Assert.Equal(25U, stableIds.Resolve("spell", "apocalypse"));
 
         var module = new DiabloModule();
         var registry = new GameplayModuleRegistry();

@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -20,6 +21,35 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(AuthoritativeProjectileBehavior.BloodStar, succubus.ProjectileBehavior);
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.Ranged, succubus.AttackMode);
         Assert.Equal(100, succubus.AvoidanceProbabilityPercent);
+    }
+
+    [Fact]
+    public void ResolvesSymbolicMissileSpellIdsThroughStableContentIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 12),
+        ]);
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspell_id\tspell_symbol\n"
+                + "Counselor\tFireball\tFireball\t12\tfireball\n",
+            stableIds);
+
+        Assert.Equal(12U, Assert.Single(catalog.Definitions).SpellId);
+    }
+
+    [Fact]
+    public void RejectsSymbolicMissileSpellIdNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 12),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspell_id\tspell_symbol\n"
+                + "Counselor\tFireball\tFireball\t3\tfireball\n",
+            stableIds));
     }
 
     [Fact]
