@@ -100,6 +100,12 @@ Status date: 2026-08-16
   monster-type data, preserving the native 35-minus-four-times-intelligence
   band with compatibility fallback for older packs.
 
+- Mega intermediate-distance RandomWalk admission is now validated
+  `mega_intermediate_movement_chance_base` and
+  `mega_intermediate_movement_chance_intelligence_scale` monster-type data,
+  preserving the native 50-plus-ten-times-intelligence band with its 100
+  percent cap and compatibility fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1243,6 +1249,11 @@ Status date: 2026-08-16
 - Schema 1.302 externalizes Mega's delegated Skeleton delay-admission chance
   through optional monster-type fields, retaining the native
   35-minus-four-times-intelligence fallback for older mappings.
+
+- Schema 1.303 externalizes Mega's intermediate-distance movement admission
+  through optional monster-type fields, retaining the native
+  50-plus-ten-times-intelligence fallback and 100 percent cap for older
+  mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
