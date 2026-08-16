@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.245 extends stable level symbols to authored monster, object, quest,
+and combat restart links through `level_symbol` columns; activation checks
+those links against the composed world while preserving numeric projections.
+
 Schema 1.244 adds the stable `level` namespace. Level definitions, warps,
 portals, and Town Portal world rules may resolve symbolic level identities
 while retaining numeric compatibility projections and geometry validation.

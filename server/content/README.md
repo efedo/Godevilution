@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.245 extends the stable `level` namespace to authored monster,
+object, quest, and combat restart links through `level_symbol` columns.
+Numeric-only level references remain compatible while active symbols are
+cross-checked against the composed world.
+
 Schema 1.244 adds the stable `level` namespace. `levels.tsv`, warps, portals,
 and Town Portal world rules may carry level symbols; activation cross-checks
 them against the retained numeric level IDs and geometry. Numeric-only level
