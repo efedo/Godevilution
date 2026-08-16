@@ -38,6 +38,9 @@ Status date: 2026-08-16
   allocators skip occupied portal/corpse/player IDs, while identity-neutral
   version-1 saves preserve their zero player ID until import.
 
+- All 22 checked-in base and Hellfire replay fixtures now bind the active
+  content-manifest identities; the full 307-test server assembly passes again.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

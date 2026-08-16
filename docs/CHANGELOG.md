@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh all 22 checked-in base and Hellfire replay fixture manifest hashes to
+  the active content identities, restoring the full server replay gate.
+
 - Reject impossible authoritative player-resource and monster-vitality bounds
   at the Godot protocol boundary before presentation consumes snapshots.
 
