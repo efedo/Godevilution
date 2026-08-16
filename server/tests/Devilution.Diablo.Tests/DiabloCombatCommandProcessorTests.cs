@@ -5806,6 +5806,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesValidatedDelayTuningInsideTheMiddleMovementBand()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                66,
+                64,
+                "Horned Demon",
+                7,
+                9,
+                13,
+                40,
+                80,
+                35,
+                2,
+                16,
+                5,
+                32,
+                false,
+                false,
+                false) {
+                NativeAi = "Rhino",
+                AggroRange = 8,
+                RhinoChargeMinimumDistance = 5,
+                RhinoChargeChanceBase = 43,
+                RhinoChargeChanceIntelligenceScale = 2,
+                RhinoDelayBase = 8,
+                RhinoDelayRandomRange = 4,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            attackDamage: 1,
+            monsterId: 66,
+            aggroRange: 8,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            intelligence: 0,
+            rhinoMovementIdleTicks: 10,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(3_296, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.RhinoMovementIdleTicks);
+        Assert.Equal(8, monster.RhinoDelayTicks);
+    }
+
+    [Fact]
     public void SkeletonRangedAiFiresAnAuthoritativeArrowAcrossAClearLane()
     {
         var monster = new AuthoritativeCombatTarget(

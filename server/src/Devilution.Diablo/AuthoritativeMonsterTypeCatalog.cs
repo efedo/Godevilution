@@ -276,6 +276,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Rhino charge chance increase per intelligence point. */
     public int RhinoChargeChanceIntelligenceScale { get; init; }
 
+    /** Native Rhino recovery-delay base before its exclusive random range. */
+    public int RhinoDelayBase { get; init; }
+
+    /** Native Rhino recovery-delay exclusive random range. */
+    public int RhinoDelayRandomRange { get; init; }
+
     /** True when any complete migrated AI controller tuple is present. */
     public bool HasCompleteAiTuning
         => FallenFearRadius > 0
@@ -503,6 +509,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     || definition.SkeletonKingDelayRandomRange != 0)
                     && (definition.NativeAi != "SkeletonKing"
                         || definition.SkeletonKingDelayRandomRange <= 0)
+                || definition.RhinoDelayBase < 0
+                || definition.RhinoDelayRandomRange < 0
+                || (definition.RhinoDelayBase != 0
+                    || definition.RhinoDelayRandomRange != 0)
+                    && (definition.NativeAi != "Rhino"
+                        || definition.RhinoDelayRandomRange <= 0)
                 || definition.HorkDemonAttackChanceBase is < 0 or > 100
                 || definition.HorkDemonAttackChanceIntelligenceScale is < 0 or > 100
                 || definition.HorkDemonSpawnMinimumDistance is < 0 or > 64
@@ -751,6 +763,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 RhinoChargeMinimumDistance = row.OptionalInt32("rhino_charge_minimum_distance"),
                 RhinoChargeChanceBase = row.OptionalInt32("rhino_charge_chance_base"),
                 RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
+                RhinoDelayBase = row.OptionalInt32("rhino_delay_base"),
+                RhinoDelayRandomRange = row.OptionalInt32("rhino_delay_random_range"),
             }));
     }
 

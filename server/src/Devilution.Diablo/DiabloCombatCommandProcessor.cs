@@ -8366,7 +8366,7 @@ public sealed class DiabloCombatCommandProcessor
             }
         } else {
             monster.AdvanceRhinoMovementIdle();
-            monster.StartRhinoDelay(10 + (int)((seed / 200U) % 10U));
+            monster.StartRhinoDelay(ResolveRhinoDelay(monster, seed));
         }
         return true;
     }
@@ -8401,6 +8401,21 @@ public sealed class DiabloCombatCommandProcessor
         return UsesNativeAi(target, "Rhino")
             ? (5, 43, 2)
             : null;
+    }
+
+    private int ResolveRhinoDelay(
+        AuthoritativeCombatTarget target,
+        uint seed)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.RhinoDelayBase > 0
+            && definition.RhinoDelayRandomRange > 0) {
+            delayBase = definition.RhinoDelayBase;
+            randomRange = definition.RhinoDelayRandomRange;
+        }
+        return checked(delayBase + (int)((seed / 200U) % (uint)randomRange));
     }
 
     private (int X, int Y)? FindRhinoChargeDestination(
