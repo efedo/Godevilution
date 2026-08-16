@@ -7,6 +7,35 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeSpellCatalogTests
 {
     [Fact]
+    public void ResolvesSymbolicSpellIdsThroughStableContentIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 12),
+        ]);
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tspell_symbol\tmana_cost\n"
+                + "12\tfireball\t16\n",
+            stableIds);
+
+        Assert.True(catalog.TryGet(12, out _));
+    }
+
+    [Fact]
+    public void RejectsSymbolicSpellIdNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 12),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tspell_symbol\tmana_cost\n"
+                + "3\tfireball\t16\n",
+            stableIds));
+    }
+
+    [Fact]
     public void ProjectileBehaviorValuesRemainProtocolCompatible()
     {
         Assert.Equal(16, (int)AuthoritativeProjectileBehavior.Fireball);
