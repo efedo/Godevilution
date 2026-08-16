@@ -39,7 +39,7 @@ Status date: 2026-08-16
   version-1 saves preserve their zero player ID until import.
 
 - All 22 checked-in base and Hellfire replay fixtures now bind the active
-  content-manifest identities; the full 307-test server assembly passes again.
+  content-manifest identities; the full 308-test server assembly passes again.
 
 - Host shutdown now disposes the active authoritative adapter as well as
   drained retired generations, closing the ruleset lifecycle ownership gap.
@@ -104,6 +104,10 @@ Status date: 2026-08-16
   `projectile_damage_random_range` missile field for its native
   `GenerateRnd` upper bound, preserving the native range of ten for older
   mappings.
+
+- AiRangedAvoidance adjacent attack admission now uses optional missile fields
+  for its validated base and intelligence scale, preserving the native
+  6,000/1,000-per-intelligence band and Acid half-band for older mappings.
 
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
@@ -1383,6 +1387,10 @@ Status date: 2026-08-16
 - Schema 1.317 externalizes Familiar Lightning's native random-damage upper
   bound through optional missile data, retaining the native `GenerateRnd(10)`
   fallback for older mappings.
+
+- Schema 1.318 externalizes AiRangedAvoidance's adjacent attack-admission band
+  through optional missile data, retaining the native 6,000/1,000 fallback and
+  Acid half-band for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
