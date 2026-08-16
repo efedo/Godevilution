@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.272.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.273.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -73,6 +73,31 @@ public sealed class ShippedContentTests
             Assert.Equal(nativeIndex, item.NativeItemIndex);
             Assert.Equal(minimumArmor, item.MinArmorClass);
             Assert.Equal(maximumArmor, item.MaxArmorClass);
+            Assert.False(item.Usable);
+            Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+        }
+        var baseRemainingArmorExpectations = new[] {
+            ("cap", 2169U, 48, 1, 3),
+            ("full_helm", 2170U, 51, 6, 8),
+            ("quilted_armor", 2171U, 58, 7, 10),
+            ("hard_leather_armor", 2172U, 60, 11, 14),
+            ("ring_mail", 2173U, 62, 17, 20),
+            ("scale_mail", 2174U, 64, 23, 28),
+            ("splint_mail", 2175U, 66, 30, 35),
+            ("field_plate", 2176U, 68, 40, 45),
+            ("gothic_plate", 2177U, 69, 50, 60),
+            ("buckler_standard", 2178U, 71, 1, 5),
+            ("tower_shield", 2179U, 75, 12, 20),
+        };
+        foreach (var (symbol, itemId, nativeIndex, minimumArmor, maximumArmor) in baseRemainingArmorExpectations) {
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            var item = baseItems.GetRequired(itemId);
+            Assert.Equal(symbol, item.StableSymbol);
+            Assert.Equal(nativeIndex, item.NativeItemIndex);
+            Assert.Equal(minimumArmor, item.MinArmorClass);
+            Assert.Equal(maximumArmor, item.MaxArmorClass);
+            Assert.Contains("Armor", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
             Assert.False(item.Usable);
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
             Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
@@ -1157,7 +1182,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.272.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.273.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

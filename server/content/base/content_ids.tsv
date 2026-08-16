@@ -59,6 +59,17 @@ item	kite_shield	167
 item	small_shield	168
 item	large_shield	169
 item	gothic_shield	170
+item	cap	2169
+item	full_helm	2170
+item	quilted_armor	2171
+item	hard_leather_armor	2172
+item	ring_mail	2173
+item	scale_mail	2174
+item	splint_mail	2175
+item	field_plate	2176
+item	gothic_plate	2177
+item	buckler_standard	2178
+item	tower_shield	2179
 item	ear	24
 item	gold	25
 item	short_sword_starting	100
