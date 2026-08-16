@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -15,6 +16,21 @@ public sealed class AuthoritativeWorldRulesTests
         Assert.Equal(7U, rules.TownLevelId);
         Assert.Equal(73U, rules.AdriaStoreId);
         Assert.False(rules.HasTownPortalDestinationGeometry);
+    }
+
+    [Fact]
+    public void ResolvesStableTownLevelSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "town", 0),
+        ]);
+        var rules = AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            "town_level_id\ttown_level_symbol\tadria_store_id\n0\ttown\t73\n",
+            stableIds);
+
+        Assert.Equal(0U, rules.TownLevelId);
+        Assert.Equal(73U, rules.AdriaStoreId);
     }
 
     [Fact]

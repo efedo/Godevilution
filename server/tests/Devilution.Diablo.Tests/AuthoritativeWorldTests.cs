@@ -8,6 +8,52 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeWorldTests
 {
     [Fact]
+    public void ResolvesStableLevelSymbolsIncludingNativeTownZero()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "town", 0),
+            new StableContentId("level", "cathedral", 1),
+        ]);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\tlevel_symbol\twidth\theight\tblocked_cells\tdefault_start\n"
+                + "0\ttown\t3\t3\tnone\t0\n"
+                + "1\tcathedral\t3\t3\tnone\t1\n",
+            stableIds);
+
+        Assert.Equal("cathedral", Assert.Single(world.Levels, level => level.IsDefaultStart).StableSymbol);
+        Assert.Equal(1U, world.DefaultStartingLevelId);
+    }
+
+    [Fact]
+    public void WarpAndPortalLevelSymbolsResolveAgainstStableIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "town", 0),
+            new StableContentId("level", "cathedral", 1),
+        ]);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\tlevel_symbol\twidth\theight\tblocked_cells\n"
+                + "0\ttown\t3\t3\tnone\n"
+                + "1\tcathedral\t3\t3\tnone\n",
+            stableIds);
+        var warp = Assert.Single(AuthoritativeWarpCatalog.LoadTsv(
+            "warps.tsv",
+            "warp_id\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\n"
+                + "7\t0\ttown\t1\t1\t0\ttown\t2\t2\n",
+            world,
+            stableIds));
+        var portal = Assert.Single(AuthoritativePortalCatalog.LoadTsv(
+            "portals.tsv",
+            "portal_id\tsource_level_id\tsource_level_symbol\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_level_symbol\tdestination_position_x\tdestination_position_y\n"
+                + "1\t0\ttown\t1\t1\t1\tcathedral\t2\t2\n",
+            stableIds));
+
+        Assert.Equal(0U, warp.SourceLevelId);
+        Assert.Equal(1U, portal.DestinationLevelId);
+    }
+    [Fact]
     public void ResolvesStableQuestSymbolsForWarpAndObjectLinks()
     {
         var stableIds = new StableContentIdCatalog([
