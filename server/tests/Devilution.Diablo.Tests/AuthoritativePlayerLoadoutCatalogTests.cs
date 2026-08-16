@@ -116,6 +116,46 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void SymbolicLoadoutItemIdsResolveThroughStableContentIds()
+    {
+        var root = FindRepositoryRoot();
+        var items = ReadBase(root, "class_loadout_items.tsv");
+
+        var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            LoadClasses(root),
+            LoadItems(root),
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            items,
+            LoadStableIds(root));
+
+        var warrior = Assert.Single(catalog.Definitions, definition => definition.ClassId == 0);
+        Assert.Equal(
+            [100U, 101U, 102U, 105U, 105U],
+            warrior.Items.Select(item => item.ItemId));
+    }
+
+    [Fact]
+    public void SymbolicLoadoutItemIdsRejectNumericMismatch()
+    {
+        var root = FindRepositoryRoot();
+        var items = ReadBase(root, "class_loadout_items.tsv")
+            .Replace("100\tshort_sword_starting", "101\tshort_sword_starting", StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
+            LoadClasses(root),
+            LoadItems(root),
+            LoadCombatRules(root),
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"),
+            "class_loadout_items.tsv",
+            items,
+            LoadStableIds(root)));
+    }
+
+    [Fact]
     public void SymbolicLoadoutSpellIdsRejectNumericMismatch()
     {
         var root = FindRepositoryRoot();

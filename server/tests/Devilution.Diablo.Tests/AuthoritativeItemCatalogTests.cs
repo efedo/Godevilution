@@ -7,6 +7,36 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeItemCatalogTests
 {
     [Fact]
+    public void ResolvesNormalizedItemIdsThroughStableContentIds()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_symbol\titem_type\tvalue\tidentified_value\n"
+                + "7\tshort_sword\t1\t75\t100\n",
+            stableIds: stableIds);
+
+        Assert.Equal(7U, catalog.GetRequired(7).ItemId);
+        Assert.Equal("short_sword", catalog.GetRequired(7).StableSymbol);
+    }
+
+    [Fact]
+    public void RejectsNormalizedItemIdNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_symbol\titem_type\tvalue\tidentified_value\n"
+                + "8\tshort_sword\t1\t75\t100\n",
+            stableIds: stableIds));
+    }
+
+    [Fact]
     public void ResolvesNormalizedItemSpellIdsThroughStableContentIds()
     {
         var stableIds = new StableContentIdCatalog([
