@@ -153,6 +153,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Mega delegated Skeleton movement-delay chance reduction per intelligence. */
     public int MegaDelayChanceIntelligenceScale { get; init; }
 
+    /** Native Mega intermediate-distance movement chance base before intelligence scaling. */
+    public int MegaIntermediateMovementChanceBase { get; init; }
+
+    /** Native Mega intermediate-distance movement chance increase per intelligence. */
+    public int MegaIntermediateMovementChanceIntelligenceScale { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -534,6 +540,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.NativeAi != "Mega"
                         || definition.MegaDelayChanceBase <= 0
                         || definition.MegaDelayChanceIntelligenceScale <= 0)
+                || definition.MegaIntermediateMovementChanceBase is < 0 or > 100
+                || definition.MegaIntermediateMovementChanceIntelligenceScale is < 0 or > 100
+                || (definition.MegaIntermediateMovementChanceBase != 0
+                    || definition.MegaIntermediateMovementChanceIntelligenceScale != 0)
+                    && (definition.NativeAi != "Mega"
+                        || definition.MegaIntermediateMovementChanceBase <= 0
+                        || definition.MegaIntermediateMovementChanceIntelligenceScale <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -893,6 +906,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 CounselorMoveChancePercent = row.OptionalInt32("counselor_move_chance_percent"),
                 MegaDelayChanceBase = row.OptionalInt32("mega_delay_chance_base"),
                 MegaDelayChanceIntelligenceScale = row.OptionalInt32("mega_delay_chance_intelligence_scale"),
+                MegaIntermediateMovementChanceBase = row.OptionalInt32("mega_intermediate_movement_chance_base"),
+                MegaIntermediateMovementChanceIntelligenceScale = row.OptionalInt32("mega_intermediate_movement_chance_intelligence_scale"),
             }));
     }
 

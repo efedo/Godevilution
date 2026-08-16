@@ -8407,6 +8407,81 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiUsesValidatedIntermediateMovementChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            monsterId: 1,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                85,
+                "Slayer",
+                1,
+                16,
+                20,
+                120,
+                140,
+                60,
+                12,
+                20,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Mega",
+                MegaIntermediateMovementChanceBase = 100,
+                MegaIntermediateMovementChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    InfernoMaximumDistance: 5,
+                    InfernoAdjacentChanceBase: 40,
+                    InfernoAdjacentChanceIntelligenceScale: 10,
+                    InfernoRangedFarDistance: 3,
+                    InfernoRangedChanceBase: 1,
+                    InfernoRangedChanceIntelligenceScale: 1,
+                    InfernoRangedFarIntelligenceOffset: 1,
+                    InfernoAdjacentChoiceModulo: 2),
+            ]),
+            monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5100 ^ 14 ^ 7 = 5109: outside the native 50-percent band. The
+        // authored 100-percent band must still admit the RandomWalk branch.
+        processor.AdvanceTick(5100, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(10, monster.MegaDelayTicks);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MegaAiDefersAfterAnIntermediateInfernoMissWhenRandomWalkRollFails()
     {
         var monster = new AuthoritativeCombatTarget(

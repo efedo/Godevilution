@@ -5360,9 +5360,18 @@ public sealed class DiabloCombatCommandProcessor
         if (!UsesNativeAi(monster, "Mega") || distance < 2)
             return false;
 
+        var movementChanceBase = 50;
+        var movementChanceIntelligenceScale = 10;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var megaDefinition) == true
+            && megaDefinition.MegaIntermediateMovementChanceBase > 0
+            && megaDefinition.MegaIntermediateMovementChanceIntelligenceScale > 0) {
+            movementChanceBase = megaDefinition.MegaIntermediateMovementChanceBase;
+            movementChanceIntelligenceScale = megaDefinition.MegaIntermediateMovementChanceIntelligenceScale;
+        }
         var movementChance = Math.Min(
             100,
-            2 * (5 * monster.Intelligence + 25));
+            movementChanceBase
+                + (movementChanceIntelligenceScale * monster.Intelligence));
         if ((seed / 100U) % 100U >= (uint)movementChance)
             return false;
 

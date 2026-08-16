@@ -371,6 +371,20 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsMegaIntermediateMovementChanceTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tmega_intermediate_movement_chance_base\tmega_intermediate_movement_chance_intelligence_scale\n"
+                + "2\t0\tSlayer\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tMega\t50\t10\n");
+
+        var mega = Assert.Single(catalog.Definitions);
+        Assert.Equal((50, 10), (
+            mega.MegaIntermediateMovementChanceBase,
+            mega.MegaIntermediateMovementChanceIntelligenceScale));
+    }
+
+    [Fact]
     public void RejectsInvalidGoatMeleeTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -448,6 +462,13 @@ public sealed class AuthoritativeMonsterCatalogTests
                 NativeAi = "Zombie",
                 MegaDelayChanceBase = 35,
                 MegaDelayChanceIntelligenceScale = 4,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                MegaIntermediateMovementChanceBase = 50,
+                MegaIntermediateMovementChanceIntelligenceScale = 10,
             },
         ]));
     }
