@@ -388,7 +388,8 @@ class-armor adjustments; legacy rows retain the 40/20 compatibility values.
 ear. The optional `pvp_ear_native_item_index` and `pvp_ear_misc_id` columns
 select the native item-index and miscellaneous-ID projection, defaulting to
 23 and 44 for legacy rows; activation requires the normalized ear definition to
-match those configured values. Activation also requires a walkable restart
+ match those configured values and rejects an unknown `pvp_ear_item_id` before
+ runtime construction. Activation also requires a walkable restart
 destination and validates all death-drop bounds. For canonical
 inventory-backed Gold, the Diablo module applies the
 native two-pass stack-removal order, preserves whole-stack seeds, generates a

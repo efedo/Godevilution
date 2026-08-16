@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   active monster-type catalog during content activation, preventing
   monster-specific projectile rows from becoming silently unreachable.
 
+- Invoke combat-content validation during activation and reject unknown
+  `combat.tsv` `pvp_ear_item_id` references before a session can construct a
+  player-kill ear.
+
 - Externalize native Nightmare/Hell level, accuracy, armor, damage, experience,
   and initial-health modifiers through validated `combat.tsv` difficulty
   columns, preserving the native distinct Nightmare and Hell damage formulas

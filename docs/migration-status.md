@@ -24,6 +24,10 @@ Status date: 2026-08-15
 
 ## Implemented authoritative systems
 
+- Combat content activation now validates the configured PvP-ear item against
+  the active item catalog before constructing sessions, rejecting unknown or
+  mismatched native ear projections at the data boundary.
+
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
   spell, arrow, beam, impact, and movement-transition families without moving
