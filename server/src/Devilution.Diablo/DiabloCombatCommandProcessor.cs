@@ -10220,6 +10220,12 @@ public sealed class DiabloCombatCommandProcessor
                     + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
                         * DiabloFixedPointQ6.Scale,
                 DiabloFixedPointQ6.Scale));
+        var resistance = GetPlayerResistance(
+            target,
+            targetClass,
+            projectile.DamageType);
+        if (resistance > 0)
+            damageQ6 -= damageQ6 * resistance / 100;
         var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
         if (damageResult.IncomingDamageQ6 > 0) {
             events.Add(new DiabloDirectedGameplayEvent(

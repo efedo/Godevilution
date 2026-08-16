@@ -6810,6 +6810,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeChargeUsesConfiguredDamageTypeAndPlayerResistance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "FireCharge",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    DamageType: AuthoritativeDamageType.Fire),
+            ]));
+        var fireResistantArmor = AuthoritativeItemState.Empty with {
+            StatFlag = true,
+            PlusFireResistance = 50,
+        };
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 6_400,
+            lifeMaximum: 6_400,
+            characterLevel: 1,
+            equipment: [new EquippedStoreItem(3, 99, fireResistantArmor)]);
+
+        processor.AdvanceTick(1, [player]);
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(98 * DiabloFixedPointQ6.Scale, player.Life);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.AmountQ6 == 2 * DiabloFixedPointQ6.Scale);
+    }
+
+    [Fact]
     public void SnakeAiDriftsWhenChargeDistanceIsNotMet()
     {
         var monster = new AuthoritativeCombatTarget(
