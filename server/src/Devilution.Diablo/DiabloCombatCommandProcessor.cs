@@ -6760,7 +6760,7 @@ public sealed class DiabloCombatCommandProcessor
                     monster.PositionY,
                     player.PositionX,
                     player.PositionY,
-                    0,
+                    missile.ProjectileDamage,
                     missile.DamageType ?? AuthoritativeDamageType.Physical,
                     0,
                     checked((uint)chargeProjectileTuning.Lifetime)) {
@@ -10214,9 +10214,12 @@ public sealed class DiabloCombatCommandProcessor
         var specialDamageRange = GetEffectiveMonsterDamageRange(monster, special: true);
         var damageQ6 = checked(
             Math.Max(
-                random.RandomIntBetween(
-                    checked(specialDamageRange.Minimum * DiabloFixedPointQ6.Scale),
-                    checked(specialDamageRange.Maximum * DiabloFixedPointQ6.Scale))
+                checked((projectile.Damage > 0
+                        ? projectile.Damage
+                        : random.RandomIntBetween(
+                            specialDamageRange.Minimum,
+                            specialDamageRange.Maximum))
+                    * DiabloFixedPointQ6.Scale)
                     + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
                         * DiabloFixedPointQ6.Scale,
                 DiabloFixedPointQ6.Scale));

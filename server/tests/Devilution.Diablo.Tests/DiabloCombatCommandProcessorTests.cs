@@ -6834,7 +6834,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     "Snake",
                     "FireCharge",
                     AuthoritativeProjectileBehavior.SnakeCharge,
-                    DamageType: AuthoritativeDamageType.Fire),
+                    DamageType: AuthoritativeDamageType.Fire,
+                    ProjectileDamage: 8),
             ]));
         var fireResistantArmor = AuthoritativeItemState.Empty with {
             StatFlag = true,
@@ -6855,13 +6856,13 @@ public sealed class DiabloCombatCommandProcessorTests
             deliveries.AddRange(processor.AdvanceTick(tick, [player]));
 
         Assert.Empty(world.Projectiles);
-        Assert.Equal(98 * DiabloFixedPointQ6.Scale, player.Life);
+        Assert.Equal(96 * DiabloFixedPointQ6.Scale, player.Life);
         Assert.Contains(
             deliveries,
             delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
                 && delivery.Event.SourceEntityId == 9
                 && delivery.Event.TargetEntityId == 7
-                && delivery.Event.AmountQ6 == 2 * DiabloFixedPointQ6.Scale);
+                && delivery.Event.AmountQ6 == 4 * DiabloFixedPointQ6.Scale);
     }
 
     [Fact]
