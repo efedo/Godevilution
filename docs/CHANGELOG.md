@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   catalog during activation, preventing stable ability symbols from resolving
   to unreachable spell definitions.
 
+- Validate stable `level` and `portal` identities from `content_ids.tsv` against
+  their active world and portal catalogs while retaining legacy behavior when
+  those catalogs are absent.
+
 - Externalize native Nightmare/Hell level, accuracy, armor, damage, experience,
   and initial-health modifiers through validated `combat.tsv` difficulty
   columns, preserving the native distinct Nightmare and Hell damage formulas
