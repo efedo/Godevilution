@@ -538,6 +538,12 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.234 adds the stable `item` namespace to the base and Hellfire packs.
+Starting loadout rows now carry optional `item_symbol` values; activation
+cross-checks them against the retained numeric item IDs while older numeric-only
+loadout tables remain compatible. Active stable item entries are validated
+against the composed item catalog before publication.
+
 Schema 1.233 extends stable `quest` symbols to warp gates, linked objects, item
 quest effects, and follow-on quest activation. Numeric-only links remain
 compatible while activated rows reject mismatches.

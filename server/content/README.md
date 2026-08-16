@@ -924,6 +924,12 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.234 adds the stable `item` namespace to the shipped base and Hellfire
+packs. `class_loadout_items.tsv` accepts an optional `item_symbol`; activation
+resolves it through `content_ids.tsv`, rejects numeric/symbol mismatches, and
+validates every active stable item entry against `items.tsv`. Numeric-only rows
+remain compatible.
+
 Schema 1.233 extends the same optional `quest` symbols to warp gates, linked
 objects, item quest effects, and follow-on quest activation. Each authored link
 rejects numeric/symbol mismatches while retaining numeric-only compatibility.
@@ -946,8 +952,9 @@ development overrides. They are not content defaults.
 ID, optional stable `ability_spell_symbol`, semantic `ability_kind`, and optional
 learned spell/level with `starting_spell_symbol` for every active class. Its companion
 `class_loadout_items.tsv` gives each starting item a contiguous per-class order,
-stable `item_id`, exact `Inventory`, `Equipment`, or `Belt` location, and native
-slot or inventory-grid anchor. Activation rejects missing classes, unknown
+stable `item_id` plus optional `item_symbol`, exact `Inventory`, `Equipment`, or
+`Belt` location, and native slot or inventory-grid anchor. Activation rejects
+missing classes, unknown
 items, invalid stable spell bounds, unusable equipment, duplicate slots,
 two-handed/off-hand conflicts, belt-ineligible items, overlapping inventory
 footprints, more than five starting items, and any directly castable starting
@@ -966,6 +973,9 @@ retain numeric-ID behavior. `ability_kind` identifies the content-owned semantic
 (`Repair`, `TrapDisarm`, `Recharge`, `Search`, `Identify`, or `Rage`) so
 presentation clients do not infer behavior from numeric spell IDs. The server
 still validates and admits the stable `ability_spell_id` independently.
+`item_symbol` resolves through the active `content_ids.tsv` `item` namespace and
+is cross-checked against `item_id`; loadout tables without that column retain
+numeric-only behavior.
 `ability_spell_id` and `starting_spell_id` use the stable authoritative
 `spells.tsv` identity, not the legacy native `SpellID` ceiling. This allows a
 content pack to expose stable rows such as Etherealize `53` while native
@@ -1491,9 +1501,9 @@ the complete target header even when they upsert only one row.
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, and FastBlock timing. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
 | `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
-| `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
+| `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with optional stable `item_symbol` cross-checks. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
-| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; quest identities and class capabilities such as `ability:trap_disarm` are declared separately from spell identities, and quest, spell, level, and portal entries are validated against their active catalogs during activation. |
+| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, quest, and class capabilities such as `ability:trap_disarm` are declared separately from spell identities, and item, quest, spell, level, and portal entries are validated against their active catalogs during activation. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1510,7 +1520,7 @@ the complete target header even when they upsert only one row.
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources with optional stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, and Golem summon formula terms. |
-| `items.tsv` | `item_id` | Normalized item identity, explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
+| `items.tsv` | `item_id` | Normalized item identity validated against the stable `item` namespace when referenced by active pack IDs, explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
 | `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `quest_symbol`, including native quest activation, completion, and `_qvar1` updates. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |

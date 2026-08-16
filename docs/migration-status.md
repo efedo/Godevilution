@@ -41,6 +41,10 @@ Status date: 2026-08-16
   now resolve optional stable quest symbols through the same namespace, with
   activation-time mismatch checks and numeric-only fallback.
 
+- Starting loadout item rows now resolve optional `item_symbol` values through
+  the stable item namespace. Activated packs cross-check numeric and symbolic
+  identities, validate the active item entries, and retain numeric-only fallback.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -877,6 +881,9 @@ Status date: 2026-08-16
 
 - Schema 1.233 extends optional quest symbols to warp gates, linked objects,
   item quest effects, and follow-on quest activation.
+
+- Schema 1.234 adds optional `item_symbol` to `class_loadout_items.tsv` and
+  validates the shipped stable `item` entries against the active item catalog.
 
 - Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
   rows resolve stable spell IDs and reject numeric/symbol mismatches while
