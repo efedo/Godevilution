@@ -8289,6 +8289,69 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HealthyCounselorUsesNativeAdjacentFlashLayersInsteadOfMelee()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            maxHitPoints: 20,
+            monsterLevel: 5,
+            aggroRange: 8,
+            levelId: 1,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([CreateFlashSpell()]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 0,
+            levelId: 1,
+            life: 6_400,
+            lifeMaximum: 6_400);
+
+        // 1 ^ 9 ^ 7 = 15: the native 20-percent adjacent admission passes.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(1U, player.LevelId);
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.All(
+            world.Projectiles.Values,
+            projectile => {
+                Assert.Contains(
+                    projectile.Behavior,
+                    new[] {
+                        AuthoritativeProjectileBehavior.FlashBottom,
+                        AuthoritativeProjectileBehavior.FlashTop,
+                    });
+                Assert.Equal(monster.EntityId, projectile.SourceEntityId);
+                Assert.Equal(1U, projectile.LevelId);
+                Assert.Equal((1, 1), (projectile.PositionX, projectile.PositionY));
+                Assert.Equal(10, projectile.Damage);
+                Assert.Equal(18U, projectile.RemainingTicks);
+            });
+        Assert.Equal(6_400 - 10 * DiabloFixedPointQ6.Scale, player.Life);
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == monster.EntityId
+                && delivery.Event.TargetEntityId == player.EntityId
+                && delivery.Event.AmountQ6 == 10 * DiabloFixedPointQ6.Scale);
+        Assert.Equal(0, monster.CounselorRetreatTicks);
+        Assert.Equal(5, monster.CounselorDelayTicks);
+    }
+
+    [Fact]
     public void CounselorUsesNativeRangedAdmissionBeforeItsMappedMissile()
     {
         var monster = new AuthoritativeCombatTarget(

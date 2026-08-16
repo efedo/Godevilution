@@ -3941,6 +3941,48 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
+    /** Native CounselorAi emits fixed-damage Flash layers from the monster. */
+    private void CreateMonsterFlashLayers(AuthoritativeCombatTarget monster)
+    {
+        const uint flashSpellId = 4;
+        var hasFlashSpell = spells.TryGet(flashSpellId, out var flashSpell);
+        var damageType = hasFlashSpell
+            ? flashSpell.DamageType
+            : AuthoritativeDamageType.Magic;
+        var areaRadius = hasFlashSpell ? flashSpell.AreaRadius : 1;
+        var lifetime = hasFlashSpell && flashSpell.ProjectileLifetime > 0
+            ? flashSpell.ProjectileLifetime
+            : 19;
+        var damage = checked(GetEffectiveMonsterLevel(monster) * 2);
+
+        foreach (var behavior in new[] {
+                     AuthoritativeProjectileBehavior.FlashBottom,
+                     AuthoritativeProjectileBehavior.FlashTop,
+                 }) {
+            var projectileEntityId = AllocateProjectileEntityId();
+            world.Projectiles.Add(
+                projectileEntityId,
+                new AuthoritativeProjectile(
+                    projectileEntityId,
+                    monster.EntityId,
+                    0,
+                    flashSpellId,
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    monster.PositionX,
+                    monster.PositionY,
+                    damage,
+                    damageType,
+                    areaRadius,
+                    checked((uint)lifetime),
+                    allowZeroSpellId: true) {
+                    Behavior = behavior,
+                    ResistantDamageDivisor = 1,
+                });
+        }
+    }
+
     private int GenerateFlashDamage(
         AuthoritativePlayerState player,
         AuthoritativeSpellDefinition spell,
@@ -5476,14 +5518,30 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        // CounselorAi compares whole native hit points against the integer
-        // half-health threshold before entering MonsterGoal::Retreat.
-        if (distance > 1 || monster.HitPoints >= monster.MaxHitPoints / 2)
+        if (distance > 1)
             return false;
 
-        // Native goalVar1 starts at zero and admits four RandomWalk calls
-        // (0, 1, 2, and 3) on subsequent active AI ticks.
-        monster.StartCounselorRetreat(4);
+        // CounselorAi compares whole native hit points against the integer
+        // half-health threshold before entering MonsterGoal::Retreat.
+        if (monster.HitPoints < monster.MaxHitPoints / 2) {
+            // Native goalVar1 starts at zero and admits four RandomWalk calls
+            // (0, 1, 2, and 3) on subsequent active AI ticks.
+            monster.StartCounselorRetreat(4);
+            return true;
+        }
+
+        // Native CounselorAi uses its adjacent ranged attack to emit the two
+        // stationary Flash layers; it never falls through to generic melee.
+        var adjacentAttackSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+        var adjacentAttackChance = Math.Min(100, 20 + (2 * monster.Intelligence));
+        if (adjacentAttackSeed % 100U < (uint)adjacentAttackChance) {
+            CreateMonsterFlashLayers(monster);
+            monster.StartCounselorDelay(
+                ResolveCounselorAttackDelay(monster, adjacentAttackSeed));
+        } else {
+            monster.StartCounselorDelay(
+                ResolveCounselorDelay(monster, adjacentAttackSeed));
+        }
         return true;
     }
 
@@ -12223,12 +12281,24 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     events);
             } else if (playerTarget is not null) {
-                _ = TryResolvePersistentShiftedProjectilePlayerHit(
-                    tick,
-                    projectile,
-                    playerTarget,
-                    players,
-                    events);
+                var isMonsterOwnedFlash = world.CombatTargets.ContainsKey(projectile.SourceEntityId)
+                    && !players.Any(player => IsProjectileOwner(projectile, player));
+                if (isMonsterOwnedFlash) {
+                    _ = TryResolveMonsterMagicProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events,
+                        damageShifted: true);
+                } else {
+                    _ = TryResolvePersistentShiftedProjectilePlayerHit(
+                        tick,
+                        projectile,
+                        playerTarget,
+                        players,
+                        events);
+                }
             }
 
             if (world.TryGetMissileBlockingObject(
