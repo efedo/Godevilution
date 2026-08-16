@@ -1283,6 +1283,17 @@ public sealed class ShippedContentTests
             gloom.ChargeChanceIntelligenceScale));
         Assert.Equal(18, gloom.ProjectileSpeed);
         Assert.Equal(256, gloom.ProjectileLifetime);
+        Assert.True(activation.MonsterMissiles.TryGet("Bat", 43, out var familiar));
+        Assert.Equal("FamiliarArc", familiar.MissileId);
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, familiar.ProjectileBehavior);
+        Assert.Equal(43U, familiar.MonsterId);
+        Assert.Equal(3U, familiar.SpellId);
+        Assert.Equal(AuthoritativeDamageType.Lightning, familiar.DamageType);
+        Assert.Equal(16, familiar.ProjectileSpeed);
+        Assert.Equal(2, familiar.ProjectileLifetime);
+        Assert.Equal(8, familiar.ProjectileImpactLifetime);
+        Assert.Equal(10, familiar.ProjectileDamageRandomRange);
+        Assert.True(familiar.IsPostMeleeMissile);
         Assert.True(activation.MonsterMissiles.TryGet("Counselor", 107, out var counselorFirebolt));
         Assert.Equal(("Firebolt", AuthoritativeProjectileBehavior.Firebolt), (
             counselorFirebolt.MissileId,
