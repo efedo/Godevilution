@@ -45,6 +45,10 @@ Status date: 2026-08-16
   the stable item namespace. Activated packs cross-check numeric and symbolic
   identities, validate the active item entries, and retain numeric-only fallback.
 
+- Store stock, unique-item base references, quest completion rewards, and item
+  quest effects now resolve optional stable item symbols with numeric-only
+  fallback and activation-time mismatch checks.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -884,6 +888,9 @@ Status date: 2026-08-16
 
 - Schema 1.234 adds optional `item_symbol` to `class_loadout_items.tsv` and
   validates the shipped stable `item` entries against the active item catalog.
+
+- Schema 1.235 extends optional item symbols to `stores.tsv`,
+  `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
 
 - Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
   rows resolve stable spell IDs and reject numeric/symbol mismatches while
