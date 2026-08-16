@@ -14059,6 +14059,65 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(bolt.Damage > 0);
     }
 
+    [Fact]
+    public void GuardianUsesValidatedArcOffsetOrder()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            16,
+            10,
+            1000,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateGuardianSpell() with {
+                    GuardianArcOffsets = [
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                        (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0),
+                    ],
+                },
+            ]),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            entityId: 7,
+            characterClassId: 2);
+        world.Projectiles.Add(0x80000001, new AuthoritativeProjectile(
+            0x80000001,
+            player.EntityId,
+            0,
+            7,
+            player.LevelId,
+            10,
+            10,
+            10,
+            10,
+            0,
+            AuthoritativeDamageType.Fire,
+            0,
+            17) {
+            Behavior = AuthoritativeProjectileBehavior.GuardianController,
+            EffectiveSpellLevel = 1,
+        });
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Single(world.Projectiles);
+        Assert.DoesNotContain(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt);
+    }
+
     private static AuthoritativeSpellDefinition CreateFireWallSpell()
     {
         return new AuthoritativeSpellDefinition(6, 28, 0, 0, 0, 0) {

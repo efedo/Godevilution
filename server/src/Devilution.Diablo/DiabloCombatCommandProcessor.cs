@@ -11408,7 +11408,10 @@ public sealed class DiabloCombatCommandProcessor
             return;
 
         var position = (X: controller.PositionX, Y: controller.PositionY);
-        foreach (var offset in GuardianArc) {
+        var arcOffsets = spell.GuardianArcOffsets.Count > 0
+            ? spell.GuardianArcOffsets
+            : GuardianArc;
+        foreach (var offset in arcOffsets) {
             var candidates = new[] {
                 (X: position.X + offset.X, Y: position.Y + offset.Y),
                 (X: position.X + offset.Y, Y: position.Y + offset.X),

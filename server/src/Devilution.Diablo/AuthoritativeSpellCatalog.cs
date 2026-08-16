@@ -180,6 +180,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Optional three-cell upper Flash layer order; empty preserves the native order. */
     public IReadOnlyList<(int X, int Y)> FlashTopOffsets { get; init; } = [];
 
+    /** Optional 48-cell Guardian firing arc; empty preserves the native order. */
+    public IReadOnlyList<(int X, int Y)> GuardianArcOffsets { get; init; } = [];
+
     /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
     public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
 
@@ -782,6 +785,16 @@ public sealed class AuthoritativeSpellCatalog
                     offset.X is < -1 or > 1 || offset.Y is < -1 or > 1)) {
                 throw new InvalidDataException(
                     "Flash layer offsets must remain within the native adjacent-cell range.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.GuardianController
+                && definition.GuardianArcOffsets.Count is not (0 or 48)) {
+                throw new InvalidDataException(
+                    "Guardian arc tuning requires exactly 48 offsets when configured.");
+            }
+            if (definition.GuardianArcOffsets.Any(offset =>
+                    offset.X is < 0 or > 6 || offset.Y is < 0 or > 6)) {
+                throw new InvalidDataException(
+                    "Guardian arc offsets must remain within the native six-cell range.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
@@ -1542,6 +1555,11 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Flash layer tuning requires Flash projectile behavior.");
             }
+            if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.GuardianController
+                && definition.GuardianArcOffsets.Count != 0) {
+                throw new InvalidDataException(
+                    "Guardian arc tuning requires Guardian projectile behavior.");
+            }
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.HolyBolt
                 && (definition.HolyBoltHitMonsterLevelScale != 2
                     || definition.HolyBoltMinimumHitChance != 5
@@ -2114,6 +2132,7 @@ public sealed class AuthoritativeSpellCatalog
             ElementalBurstOffsets = ParseElementalBurstOffsets(row),
             FlashBottomOffsets = ParseFlashLayerOffsets(row, "flash_bottom_offsets", "Flash bottom-layer"),
             FlashTopOffsets = ParseFlashLayerOffsets(row, "flash_top_offsets", "Flash top-layer"),
+            GuardianArcOffsets = ParseGuardianArcOffsets(row),
             ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
                 "charged_bolt_hit_monster_level_scale",
                 2),
@@ -2544,6 +2563,31 @@ public sealed class AuthoritativeSpellCatalog
                 || !int.TryParse(components[1], out var y)) {
                 throw new InvalidDataException(
                     $"Spell row {row.LineNumber} contains an invalid {description} offset.");
+            }
+            offsets[index] = (x, y);
+        }
+        return offsets;
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseGuardianArcOffsets(TsvRow row)
+    {
+        if (!row.TryGet("guardian_arc_offsets", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ';',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var offsets = new (int X, int Y)[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            var components = entries[index].Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (components.Length != 2
+                || !int.TryParse(components[0], out var x)
+                || !int.TryParse(components[1], out var y)) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Guardian arc offset.");
             }
             offsets[index] = (x, y);
         }
