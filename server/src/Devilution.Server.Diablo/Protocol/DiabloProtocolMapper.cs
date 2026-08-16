@@ -136,7 +136,7 @@ internal static class DiabloProtocolMapper
                 PositionY = item.PositionY,
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
-                State = ToProtocolItemState(item.State, spells),
+                State = ToProtocolItemState(item.State, spells, spellBooks),
             });
         }
         foreach (var @object in source.Objects) {
@@ -271,7 +271,7 @@ internal static class DiabloProtocolMapper
                     StoreSlot = item.StoreSlot,
                     ItemSeed = item.ItemSeed,
                     Price = item.Price,
-                    State = ToProtocolItemState(item.State, spells),
+                    State = ToProtocolItemState(item.State, spells, spellBooks),
                 });
             }
             snapshot.ActiveStore = store;
@@ -346,7 +346,7 @@ internal static class DiabloProtocolMapper
                 ItemSeed = item.ItemSeed,
                 Price = item.Price,
                 PurchasedAtTick = item.PurchasedAtTick,
-                State = ToProtocolItemState(item.State, spells),
+                State = ToProtocolItemState(item.State, spells, spellBooks),
             });
         }
         if (state.HeldItem is { } heldItem) {
@@ -356,21 +356,21 @@ internal static class DiabloProtocolMapper
                 ItemSeed = heldItem.ItemSeed,
                 Price = heldItem.Price,
                 PurchasedAtTick = heldItem.PurchasedAtTick,
-                State = ToProtocolItemState(heldItem.State, spells),
+                State = ToProtocolItemState(heldItem.State, spells, spellBooks),
             };
         }
         foreach (var item in state.Equipment) {
             player.Equipment.Add(new EquippedItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State, spells),
+                State = ToProtocolItemState(item.State, spells, spellBooks),
             });
         }
         foreach (var item in state.Belt) {
             player.Belt.Add(new BeltItemSnapshot {
                 Slot = item.Slot,
                 ItemSeed = item.ItemSeed,
-                State = ToProtocolItemState(item.State, spells),
+                State = ToProtocolItemState(item.State, spells, spellBooks),
             });
         }
         player.InventoryGrid.Add(state.InventoryGrid);
@@ -983,7 +983,8 @@ internal static class DiabloProtocolMapper
 
     private static ItemStateSnapshot ToProtocolItemState(
         AuthoritativeItemState state,
-        AuthoritativeSpellCatalog? spells)
+        AuthoritativeSpellCatalog? spells,
+        AuthoritativeSpellBookCatalog? spellBooks)
     {
         var snapshot = new ItemStateSnapshot {
             CreateInfo = state.CreateInfo,
@@ -1051,6 +1052,11 @@ internal static class DiabloProtocolMapper
             SpellSourceKind = (ItemSpellSourceKind)(state.SpellSourceKind
                 ?? DiabloCastSourceRules.ClassifyItem(state, spells)),
             ItemActionKind = (ItemActionKind)state.ItemActionKind,
+            SpellDisplayName = state.SpellId > 0
+                && spellBooks is not null
+                && spellBooks.TryGet(checked((uint)state.SpellId), out var book)
+                ? book.DisplayName
+                : string.Empty,
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;

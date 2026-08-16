@@ -27,6 +27,7 @@ public sealed class ClientModelTests
                                 SpellId = 30,
                                 Charges = 3,
                                 MiscId = 23,
+                                SpellDisplayName = "Charged Bolt",
                                 SpellSourceKind = ItemSpellSourceKind.ChargedItem,
                             },
                         },
@@ -48,6 +49,7 @@ public sealed class ClientModelTests
                             State = new ItemStateSnapshot {
                                 SpellId = 33,
                                 MiscId = 22,
+                                SpellDisplayName = "Telekinesis",
                                 SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
                             },
                         },
@@ -64,6 +66,7 @@ public sealed class ClientModelTests
         Assert.Equal(CastSourceKind.MemorizedSpell, sources[0].Kind);
         Assert.Equal("Firebolt (level 1)", sources[0].DisplayName);
         Assert.Equal(CastSourceKind.ChargedItem, sources[2].Kind);
+        Assert.Equal("Charged Bolt (staff, 3 charges)", sources[2].DisplayName);
         Assert.Equal(PlayerItemLocation.Equipment, sources[2].SourceItem!.Location);
         Assert.Equal(4U, sources[2].SourceItem!.Slot);
         Assert.Equal(CastSourceKind.ConsumableItem, sources[3].Kind);

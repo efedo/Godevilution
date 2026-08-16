@@ -31,6 +31,8 @@ public sealed class LiveAuthoritativeServerTests
         model.Apply(initial);
         var player = model.Snapshot!.Players.Single();
         Assert.Equal("Firebolt", Assert.Single(player.MemorizedSpells).DisplayName);
+        var chargedStaff = Assert.Single(player.Equipment, item => item.State?.SpellId == 30);
+        Assert.Equal("Charged Bolt", chargedStaff.State!.SpellDisplayName);
         var monster = model.Snapshot.Monsters.Single(monster => monster.Alive);
 
         var moveSequence = client.Queue(new Command {

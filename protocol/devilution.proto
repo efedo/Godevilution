@@ -827,6 +827,8 @@ message ItemStateSnapshot {
 	int32 life_to_mana_percent = 63;
 	ItemSpellSourceKind spell_source_kind = 64;
 	ItemActionKind item_action_kind = 65;
+	// Optional server-owned spell presentation metadata for item-backed sources.
+	string spell_display_name = 66;
 }
 
 message PlayerAttributesSnapshot {

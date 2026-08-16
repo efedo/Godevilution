@@ -52,7 +52,7 @@ public static class AuthoritativeSpellSourceSelector
             AddItemSource(
                 sources,
                 $"equipment:{staff.Slot}:{staff.ItemSeed}",
-                $"Spell {staff.State!.SpellId} (staff, {staff.State.Charges} charges)",
+                FormatItemSpellName(staff.State!, $"staff, {staff.State.Charges} charges"),
                 (uint)staff.State.SpellId,
                 CastSourceKind.ChargedItem,
                 new PlayerItemReference {
@@ -68,7 +68,7 @@ public static class AuthoritativeSpellSourceSelector
             AddItemSource(
                 sources,
                 $"inventory:{index}",
-                $"Spell {item.State!.SpellId} (inventory)",
+                FormatItemSpellName(item.State!, "inventory"),
                 (uint)item.State.SpellId,
                 CastSourceKind.ConsumableItem,
                 new PlayerItemReference {
@@ -83,7 +83,7 @@ public static class AuthoritativeSpellSourceSelector
             AddItemSource(
                 sources,
                 $"belt:{item.Slot}",
-                $"Spell {item.State!.SpellId} (belt)",
+                FormatItemSpellName(item.State!, "belt"),
                 (uint)item.State.SpellId,
                 CastSourceKind.ConsumableItem,
                 new PlayerItemReference {
@@ -158,5 +158,13 @@ public static class AuthoritativeSpellSourceSelector
     private static bool IsSpellConsumable(ItemStateSnapshot? state)
     {
         return state is { SpellId: > 0, SpellSourceKind: ItemSpellSourceKind.ConsumableItem };
+    }
+
+    private static string FormatItemSpellName(ItemStateSnapshot state, string source)
+    {
+        var name = string.IsNullOrWhiteSpace(state.SpellDisplayName)
+            ? $"Spell {state.SpellId}"
+            : state.SpellDisplayName;
+        return $"{name} ({source})";
     }
 }
