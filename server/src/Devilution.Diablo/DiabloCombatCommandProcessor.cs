@@ -5264,7 +5264,7 @@ public sealed class DiabloCombatCommandProcessor
                     * monster.Intelligence));
         if (actionSeed % 100U >= (uint)movementChance) {
             monster.StartHorkDemonDelay(
-                10 + (int)((actionSeed / 200U) % 10U));
+                ResolveHorkDemonDelay(missile, actionSeed));
             return true;
         }
 
@@ -7482,6 +7482,19 @@ public sealed class DiabloCombatCommandProcessor
             ? missile.RangedAvoidanceDelayBase
             : 5;
         return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
+    }
+
+    private static int ResolveHorkDemonDelay(
+        AuthoritativeMonsterMissileDefinition? missile,
+        uint actionSeed)
+    {
+        var randomRange = missile?.HorkDemonDelayRandomRange > 0
+            ? missile.HorkDemonDelayRandomRange
+            : 10;
+        var delayBase = missile?.HorkDemonDelayBase > 0
+            ? missile.HorkDemonDelayBase
+            : 10;
+        return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
     }
 
     private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(

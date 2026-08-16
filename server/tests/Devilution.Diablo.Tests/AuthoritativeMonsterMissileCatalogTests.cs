@@ -129,6 +129,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedHorkDemonRecoveryDelayTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tspawn_monster_id\thork_demon_delay_base\thork_demon_delay_random_range\n"
+                + "HorkDemon\tHorkSpawn\tHorkSpawn\t117\t12\t13\n");
+
+        var horkDemon = Assert.Single(catalog.Definitions);
+        Assert.Equal(12, horkDemon.HorkDemonDelayBase);
+        Assert.Equal(13, horkDemon.HorkDemonDelayRandomRange);
+    }
+
+    [Fact]
     public void RejectsRangedPostAttackDelayOnAvoidanceMappings()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
@@ -153,6 +166,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 AuthoritativeMonsterRangedAttackMode.Ranged,
                 RangedAvoidanceDelayBase: 1,
                 RangedAvoidanceDelayRandomRange: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsHorkDemonRecoveryDelayOnNonHorkMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                HorkDemonDelayBase: 1,
+                HorkDemonDelayRandomRange: 2),
         ]));
     }
 
@@ -204,6 +230,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedDelayRandomRange);
         Assert.Equal(0, succubus.RangedAvoidanceDelayBase);
         Assert.Equal(0, succubus.RangedAvoidanceDelayRandomRange);
+        Assert.Equal(0, succubus.HorkDemonDelayBase);
+        Assert.Equal(0, succubus.HorkDemonDelayRandomRange);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);

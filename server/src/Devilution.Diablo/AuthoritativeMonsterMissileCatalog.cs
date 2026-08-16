@@ -64,7 +64,11 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional RangedAvoidance recovery-delay base; zero preserves native behavior. */
     int RangedAvoidanceDelayBase = 0,
     /** Optional exclusive RangedAvoidance recovery-delay random range. */
-    int RangedAvoidanceDelayRandomRange = 0);
+    int RangedAvoidanceDelayRandomRange = 0,
+    /** Optional HorkDemon recovery-delay base; zero preserves native behavior. */
+    int HorkDemonDelayBase = 0,
+    /** Optional exclusive HorkDemon recovery-delay random range. */
+    int HorkDemonDelayRandomRange = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -118,6 +122,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && (definition.AttackMode
                         != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
                         || definition.RangedAvoidanceDelayRandomRange <= 0)
+                || definition.HorkDemonDelayBase < 0
+                || definition.HorkDemonDelayRandomRange < 0
+                || (definition.HorkDemonDelayBase != 0
+                    || definition.HorkDemonDelayRandomRange != 0)
+                    && (definition.ProjectileBehavior
+                        != AuthoritativeProjectileBehavior.HorkSpawn
+                        || definition.HorkDemonDelayRandomRange <= 0)
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
@@ -352,7 +363,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("ranged_delay_base"),
                 row.OptionalInt32("ranged_delay_random_range"),
                 row.OptionalInt32("ranged_avoidance_delay_base"),
-                row.OptionalInt32("ranged_avoidance_delay_random_range"));
+                row.OptionalInt32("ranged_avoidance_delay_random_range"),
+                row.OptionalInt32("hork_demon_delay_base"),
+                row.OptionalInt32("hork_demon_delay_random_range"));
         }));
     }
 
