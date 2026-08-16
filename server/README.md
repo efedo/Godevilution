@@ -42,7 +42,11 @@ facing; Fireball's native two-roll level scaling, level-capped speed, swept
 direct collision, geometry-gated 3x3 splash, and persistent explosion;
 Resurrection's other-player
 targeting, native placement, resource reset, and timed beam; and the broader Charged Bolt
-creation/collision/PvP timelines. Remaining spells are still migration work.
+creation/collision/PvP timelines. The external spell catalog now carries the
+validated identities and behavior selections for the current direct-cast slice,
+including the Hellfire spell controllers listed in the content reference. Full
+legacy parity and edge-case coverage remain incremental work rather than a
+client-side responsibility.
 The Bard's cursor-driven Identify skill is modeled separately as a typed item
 service: the server validates the content-selected class ability and exact
 owned item, applies identification without a store or Gold cost, and preserves

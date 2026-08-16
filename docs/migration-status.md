@@ -1100,6 +1100,10 @@ Status date: 2026-08-16
   server-owned spell catalog name, falling back to spell-book metadata where
   applicable.
 
+- Schema 1.280 externalizes the native Gargoyle adjacent-attack admission pair
+  into validated monster-type content. Checked-in Hellfire Gargoyle rows carry
+  the native values; older packs retain the compatibility fallback.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.

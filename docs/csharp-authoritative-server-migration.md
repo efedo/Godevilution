@@ -693,6 +693,10 @@ row. Memorized, charged-item, and consumable-item protocol projections consume
 those server-owned names, with spell-book metadata retained as the compatibility
 fallback for bookable rows.
 
+Schema 1.280 externalizes the native Gargoyle adjacent-attack admission pair
+into validated `monster_types.tsv` content. Checked-in Hellfire identities carry
+the native values, while older packs retain the compatibility fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
