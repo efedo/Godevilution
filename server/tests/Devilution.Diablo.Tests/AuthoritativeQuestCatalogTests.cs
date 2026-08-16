@@ -206,6 +206,21 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestCompletionMonsterCanUseStableSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "butcher", 12),
+        ]);
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_monster_id\tcompletion_monster_symbol\n"
+                + "3001\t1\t1\t0\tbutcher\n",
+            stableIds: stableIds);
+
+        Assert.Equal(12U, Assert.Single(quests).CompletionMonsterId);
+    }
+
+    [Fact]
     public void QuestCompletionTargetsResolveAgainstMonsterTypes()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

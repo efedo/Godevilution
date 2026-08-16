@@ -52,6 +52,39 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void ResolvesStableMonsterSymbolForTypeRows()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "zombie", 2),
+        ]);
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tmonster_symbol\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\n"
+                + "0\tzombie\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\n",
+            stableIds);
+
+        var zombie = Assert.Single(catalog.Definitions);
+        Assert.Equal(2U, zombie.MonsterId);
+        Assert.Equal("zombie", zombie.StableSymbol);
+    }
+
+    [Fact]
+    public void RejectsStableMonsterSymbolNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "zombie", 2),
+        ]);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterTypeCatalog.LoadTsv(
+                "monster_types.tsv",
+                "monster_id\tmonster_symbol\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\n"
+                    + "3\tzombie\t0\tZombie\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\n",
+                stableIds));
+
+        Assert.Contains("maps monster 3 to symbol 'zombie', which resolves to 2", exception.Message);
+    }
+
+    [Fact]
     public void RejectsOutOfRangeAggroRadius()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -1016,6 +1049,21 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Equal(2U, target.LevelId);
         Assert.Equal(25, target.MaxHitPoints);
         Assert.False(target.StoneCurseImmune);
+    }
+
+    [Fact]
+    public void EncounterRowsResolveStableMonsterSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "zombie", 2),
+        ]);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tmonster_symbol\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t0\tzombie\t2\t4\t5\t20\t25\t3\n",
+            stableIds: stableIds);
+
+        Assert.Equal(2U, Assert.Single(catalog.Targets).MonsterId);
     }
 
     [Fact]

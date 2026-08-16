@@ -215,6 +215,23 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ResolvesStableSymbolsForMonsterSelectorAndSpawnReferences()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("monster", "bat", 42),
+            new StableContentId("monster", "summoned", 117),
+        ]);
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\tmonster_symbol\tspawn_monster_id\tspawn_monster_symbol\n"
+                + "Bat\tRhino\tBatCharge\t0\tbat\t0\tsummoned\n",
+            stableIds);
+
+        Assert.True(catalog.TryGet("Bat", 42, out var definition));
+        Assert.Equal(117U, definition.SpawnMonsterId);
+    }
+
+    [Fact]
     public void RejectsUnknownConfiguredMonsterSelectorReferences()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
