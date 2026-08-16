@@ -672,6 +672,11 @@ native indices 77–90 plus the native healing scroll at index 91. Their stable
 IDs preserve native miscellaneous IDs, values, level gates, drop rates, cursor
 identities, usability, and the healing scroll's consumable spell source.
 
+Schema 1.275 externalizes the generic base ring and amulet rows at native
+indices 156–160 and the native Arena Potion at index 167. Their stable IDs
+preserve native item types, miscellaneous IDs, level gates, values, cursor
+identities, drop rates, and usability.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

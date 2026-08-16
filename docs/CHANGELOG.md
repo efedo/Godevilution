@@ -35,6 +35,11 @@ All notable changes to this fork are documented below.
   preserving miscellaneous IDs, values, level gates, drop rates, cursor
   projections, usability, and the scroll's consumable spell source.
 
+- Add schema 1.275 stable identities for the generic base ring and amulet rows
+  (native indices 156–160) and the native Arena Potion at index 167, preserving
+  item types, miscellaneous IDs, level gates, values, cursor projections, drop
+  rates, and usability.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.
