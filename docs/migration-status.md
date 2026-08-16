@@ -1120,6 +1120,10 @@ Status date: 2026-08-16
   in validated spell content, retaining the native sequence when older
   mappings omit the optional column.
 
+- Schema 1.285 externalizes Fireball's ordered nine-cell impact offsets in
+  validated spell content, retaining the native impact order when older
+  mappings omit the optional column.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.
