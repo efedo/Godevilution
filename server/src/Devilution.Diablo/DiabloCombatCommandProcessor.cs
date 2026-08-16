@@ -7594,7 +7594,8 @@ public sealed class DiabloCombatCommandProcessor
                 speed,
                 lifetime,
                 impactLifetime,
-                damageType)
+                damageType,
+                missile.ProjectileDamage)
             : new AuthoritativeProjectile(
                 AllocateProjectileEntityId(),
                 monster.EntityId,
@@ -8068,7 +8069,8 @@ public sealed class DiabloCombatCommandProcessor
         int speed,
         int lifetime,
         int impactLifetime,
-        AuthoritativeDamageType damageType)
+        AuthoritativeDamageType damageType,
+        int damage)
     {
         var direction = GetDirection(
             monster.PositionX,
@@ -8098,7 +8100,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            0,
+            damage,
             damageType,
             0,
             checked((uint)lifetime)) {
@@ -10802,10 +10804,13 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
-        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
-        var damage = random.RandomIntBetween(
-            damageRange.Minimum,
-            damageRange.Maximum);
+        var damage = controller.Damage;
+        if (damage <= 0) {
+            var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
+            damage = random.RandomIntBetween(
+                damageRange.Minimum,
+                damageRange.Maximum);
+        }
         var segmentLifetime = checked(
             5 * damage + spell.SecondaryProjectileLifetime);
         var segmentEntityId = AllocateProjectileEntityId();

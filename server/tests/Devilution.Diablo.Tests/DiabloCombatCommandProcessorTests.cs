@@ -9246,6 +9246,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaInfernoUsesConfiguredProjectileDamageForEachSegment()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateInfernoSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "FixedInferno",
+                    AuthoritativeProjectileBehavior.InfernoController,
+                    ProjectileDamage: 7),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var controller = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoController);
+        Assert.Equal(7, controller.Damage);
+        var segment = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.InfernoSegment);
+        Assert.Equal(7, segment.Damage);
+        Assert.Equal(54U, segment.RemainingTicks);
+    }
+
+    [Fact]
     public void MegaAiDefersInfernoAtNativeSkeletonFallbackDistance()
     {
         var monster = new AuthoritativeCombatTarget(
