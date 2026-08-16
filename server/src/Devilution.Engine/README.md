@@ -21,6 +21,8 @@ The engine currently owns:
 - capability lookup used by hosts to construct a game simulation;
 - deterministic generic session/state coordination, reverse participant lookup,
   and per-session transient-event queues;
+- bounded deterministic grid navigation with caller-supplied walkability and
+  occupancy predicates, so game modules do not own reusable path-search logic;
 - serialized participant operations, exactly-once deterministic tick advancement,
   module-supplied lifecycle hooks, and directed event routing.
 
