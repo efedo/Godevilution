@@ -4069,6 +4069,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonMeleeAiUsesValidatedMovementDelayBandTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            10,
+            monsterId: 1,
+            levelId: 0,
+            attackDamage: 3,
+            aggroRange: 5,
+            nativeAi: "SkeletonMelee",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Skeleton",
+                1,
+                16,
+                1,
+                1,
+                10,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonMelee",
+                SkeletonMeleeDelayChanceBase = 100,
+                SkeletonMeleeDelayChanceIntelligenceScale = 1,
+                SkeletonMeleeMovementDelayBase = 9,
+                SkeletonMeleeMovementDelayIntelligenceScale = 1,
+                SkeletonMeleeMovementDelayRandomRange = 4,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(life: 20, lifeMaximum: 20, entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(9, monster.SkeletonMeleeDelayTicks);
+    }
+
+    [Fact]
     public void NativeAiFallbackUsesValidatedMonsterIdentityBeforeRuntimeLabel()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -10478,6 +10528,9 @@ public sealed class DiabloCombatCommandProcessorTests
                 NativeAi = "Fallen",
                 SkeletonMeleeAttackChanceBase = 10,
                 SkeletonMeleeAttackChanceIntelligenceScale = 1,
+                SkeletonMeleeAttackDelayBase = 6,
+                SkeletonMeleeAttackDelayIntelligenceScale = 1,
+                SkeletonMeleeAttackDelayRandomRange = 4,
             },
         ]);
         var world = new DiabloWorldState(combatTargets: [monster]);
@@ -10496,6 +10549,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.Empty(deliveries);
         Assert.Equal(100, player.Life);
+        Assert.Equal(6, monster.SkeletonMeleeDelayTicks);
     }
 
     [Fact]

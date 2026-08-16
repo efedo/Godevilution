@@ -105,6 +105,24 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonMelee movement-delay chance reduction per intelligence point. */
     public int SkeletonMeleeDelayChanceIntelligenceScale { get; init; }
 
+    /** Native SkeletonMelee movement-delay base before intelligence reduction. */
+    public int SkeletonMeleeMovementDelayBase { get; init; }
+
+    /** Native SkeletonMelee movement-delay reduction per intelligence point. */
+    public int SkeletonMeleeMovementDelayIntelligenceScale { get; init; }
+
+    /** Native SkeletonMelee movement-delay exclusive random range. */
+    public int SkeletonMeleeMovementDelayRandomRange { get; init; }
+
+    /** Native SkeletonMelee failed-adjacent-attack delay base before intelligence reduction. */
+    public int SkeletonMeleeAttackDelayBase { get; init; }
+
+    /** Native SkeletonMelee failed-adjacent-attack delay reduction per intelligence point. */
+    public int SkeletonMeleeAttackDelayIntelligenceScale { get; init; }
+
+    /** Native SkeletonMelee failed-adjacent-attack delay exclusive random range. */
+    public int SkeletonMeleeAttackDelayRandomRange { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -431,6 +449,22 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.SkeletonMeleeDelayChanceIntelligenceScale != 0)
                     && (definition.SkeletonMeleeDelayChanceBase <= 0
                         || definition.SkeletonMeleeDelayChanceIntelligenceScale <= 0))
+                || definition.SkeletonMeleeMovementDelayBase < 0
+                || definition.SkeletonMeleeMovementDelayIntelligenceScale < 0
+                || definition.SkeletonMeleeMovementDelayRandomRange < 0
+                || (definition.SkeletonMeleeMovementDelayBase != 0
+                    || definition.SkeletonMeleeMovementDelayIntelligenceScale != 0
+                    || definition.SkeletonMeleeMovementDelayRandomRange != 0)
+                    && (definition.NativeAi is not ("SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord")
+                        || definition.SkeletonMeleeMovementDelayRandomRange <= 0)
+                || definition.SkeletonMeleeAttackDelayBase < 0
+                || definition.SkeletonMeleeAttackDelayIntelligenceScale < 0
+                || definition.SkeletonMeleeAttackDelayRandomRange < 0
+                || (definition.SkeletonMeleeAttackDelayBase != 0
+                    || definition.SkeletonMeleeAttackDelayIntelligenceScale != 0
+                    || definition.SkeletonMeleeAttackDelayRandomRange != 0)
+                    && (definition.NativeAi is not ("SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord")
+                        || definition.SkeletonMeleeAttackDelayRandomRange <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -765,6 +799,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
                 RhinoDelayBase = row.OptionalInt32("rhino_delay_base"),
                 RhinoDelayRandomRange = row.OptionalInt32("rhino_delay_random_range"),
+                SkeletonMeleeMovementDelayBase = row.OptionalInt32("skeleton_melee_movement_delay_base"),
+                SkeletonMeleeMovementDelayIntelligenceScale = row.OptionalInt32("skeleton_melee_movement_delay_intelligence_scale"),
+                SkeletonMeleeMovementDelayRandomRange = row.OptionalInt32("skeleton_melee_movement_delay_random_range"),
+                SkeletonMeleeAttackDelayBase = row.OptionalInt32("skeleton_melee_attack_delay_base"),
+                SkeletonMeleeAttackDelayIntelligenceScale = row.OptionalInt32("skeleton_melee_attack_delay_intelligence_scale"),
+                SkeletonMeleeAttackDelayRandomRange = row.OptionalInt32("skeleton_melee_attack_delay_random_range"),
             }));
     }
 

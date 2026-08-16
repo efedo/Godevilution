@@ -262,6 +262,20 @@ public sealed class AuthoritativeMonsterCatalogTests
                 SkeletonMeleeAttackChanceBase = 20,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "SkeletonMelee",
+                SkeletonMeleeMovementDelayBase = 15,
+                SkeletonMeleeMovementDelayRandomRange = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                SkeletonMeleeAttackDelayBase = 10,
+                SkeletonMeleeAttackDelayRandomRange = 10,
+            },
+        ]));
     }
 
     [Fact]
@@ -290,6 +304,24 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Equal((21, 3), (
             skeleton.SkeletonMeleeAttackChanceBase,
             skeleton.SkeletonMeleeAttackChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsSkeletonMeleeDelayBandTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_melee_movement_delay_base\tskeleton_melee_movement_delay_intelligence_scale\tskeleton_melee_movement_delay_random_range\tskeleton_melee_attack_delay_base\tskeleton_melee_attack_delay_intelligence_scale\tskeleton_melee_attack_delay_random_range\n"
+                + "2\t0\tSkeleton\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tSkeletonMelee\t15\t2\t10\t10\t2\t10\n");
+
+        var skeleton = Assert.Single(catalog.Definitions);
+        Assert.Equal((15, 2, 10, 10, 2, 10), (
+            skeleton.SkeletonMeleeMovementDelayBase,
+            skeleton.SkeletonMeleeMovementDelayIntelligenceScale,
+            skeleton.SkeletonMeleeMovementDelayRandomRange,
+            skeleton.SkeletonMeleeAttackDelayBase,
+            skeleton.SkeletonMeleeAttackDelayIntelligenceScale,
+            skeleton.SkeletonMeleeAttackDelayRandomRange));
     }
 
     [Fact]

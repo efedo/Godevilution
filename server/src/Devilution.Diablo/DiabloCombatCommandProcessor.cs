@@ -4670,10 +4670,8 @@ public sealed class DiabloCombatCommandProcessor
                         skeletonMeleeAttackTuning.Value.ChanceBase
                             + (skeletonMeleeAttackTuning.Value.IntelligenceScale
                                 * target.Intelligence))) {
-                    target.StartSkeletonMeleeDelay(Math.Max(
-                        0,
-                        (2 * (5 - target.Intelligence))
-                            + (int)((attackSeed / 100U) % 10U)));
+                    target.StartSkeletonMeleeDelay(
+                        ResolveSkeletonMeleeAttackDelay(target, attackSeed));
                     continue;
                 }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
@@ -5002,10 +5000,8 @@ public sealed class DiabloCombatCommandProcessor
             skeletonTuning.Value.ChanceBase
                 - (skeletonTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand) {
-            monster.StartSkeletonMeleeDelay(Math.Max(
-                0,
-                15 - (2 * monster.Intelligence)
-                    + (int)((actionSeed / 100U) % 10U)));
+            monster.StartSkeletonMeleeDelay(
+                ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
             return true;
         }
 
@@ -5324,10 +5320,7 @@ public sealed class DiabloCombatCommandProcessor
         var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand) {
             monster.StartSkeletonMeleeDelay(
-                Math.Max(
-                    0,
-                    15 - (2 * monster.Intelligence)
-                        + (int)((actionSeed / 100U) % 10U)));
+                ResolveSkeletonMeleeMovementDelay(monster, actionSeed));
             return true;
         }
 
@@ -5813,6 +5806,52 @@ public sealed class DiabloCombatCommandProcessor
         return UsesNativeSkeletonAi(target)
             ? (20, 2)
             : null;
+    }
+
+    private int ResolveSkeletonMeleeMovementDelay(
+        AuthoritativeCombatTarget target,
+        uint actionSeed)
+    {
+        var delayBase = 15;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonMeleeMovementDelayRandomRange > 0) {
+            delayBase = definition.SkeletonMeleeMovementDelayBase > 0
+                ? definition.SkeletonMeleeMovementDelayBase
+                : delayBase;
+            intelligenceScale = definition.SkeletonMeleeMovementDelayIntelligenceScale > 0
+                ? definition.SkeletonMeleeMovementDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.SkeletonMeleeMovementDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + (int)((actionSeed / 100U) % (uint)randomRange)));
+    }
+
+    private int ResolveSkeletonMeleeAttackDelay(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        var delayBase = 10;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonMeleeAttackDelayRandomRange > 0) {
+            delayBase = definition.SkeletonMeleeAttackDelayBase > 0
+                ? definition.SkeletonMeleeAttackDelayBase
+                : delayBase;
+            intelligenceScale = definition.SkeletonMeleeAttackDelayIntelligenceScale > 0
+                ? definition.SkeletonMeleeAttackDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.SkeletonMeleeAttackDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + (int)((attackSeed / 100U) % (uint)randomRange)));
     }
 
     /** FallenAi delegates its normal state to the native SkeletonAi controller. */
