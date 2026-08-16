@@ -718,6 +718,10 @@ Schema 1.285 externalizes Fireball's ordered nine-cell impact offsets in
 validated spell content while retaining the native impact order for older packs
 that omit the optional column.
 
+Schema 1.286 externalizes Elemental's ordered nine-cell burst offsets in
+validated spell content while retaining the native burst order for older packs
+that omit the optional column.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
