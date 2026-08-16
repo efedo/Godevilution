@@ -978,6 +978,12 @@ Schema 1.260 normalizes the next five Hellfire armor projections: Helm, Skull
 Cap, Great Helm, Crown, and Rags. Helmet rows retain helmet placement while
 Rags is corrected to its native LightArmor/BodyArmor placement and cursor.
 
+Schema 1.261 normalizes the next five Hellfire armor projections: Studded
+Leather Armor, Cloak, Leather Armor, Robe, and Chain Mail. Their stable
+symbols, native indices, display names, cursor projections, and body-armor
+placement are validated against the native item and unique-item tables;
+Chain Mail corrects the retained native index from Ring Mail to `64`.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

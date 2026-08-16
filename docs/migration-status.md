@@ -999,6 +999,12 @@ Status date: 2026-08-16
   Cap, Great Helm, Crown, and Rags. Rags uses its native LightArmor/BodyArmor
   placement while the other four rows retain helmet placement.
 
+- Schema 1.261 normalizes stable symbols, native indices, display names, and
+  native cursor projections for the next five Hellfire armor rows: Studded
+  Leather Armor, Cloak, Leather Armor, Robe, and Chain Mail. These rows use
+  native body-armor placement; Chain Mail corrects the retained native index
+  to `64` and the native `CHAIN_MAIL` cursor identity.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

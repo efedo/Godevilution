@@ -41,6 +41,10 @@ All notable changes to this fork are documented below.
   Helm, Crown, and Rags, correcting Rags to native LightArmor/BodyArmor
   placement.
 
+- Normalize the next five Hellfire armor projections: Studded Leather Armor,
+  Cloak, Leather Armor, Robe, and Chain Mail, including native body-armor
+  placement and the corrected Chain Mail native index and cursor identity.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
