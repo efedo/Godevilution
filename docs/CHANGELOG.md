@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Activate the validated Hellfire Familiar post-melee Lightning mapping in
+  `monster_missiles.tsv`, including its native transport, impact lifetime, and
+  `GenerateRnd(10)` damage bound.
+
 - Honor existing validated `projectile_damage` metadata for Familiar
   post-melee Lightning mappings, preserving the configured random-damage
   fallback when older mappings omit a fixed value.

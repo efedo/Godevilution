@@ -109,6 +109,10 @@ Status date: 2026-08-16
   `projectile_damage` missile field before applying its random-damage range,
   preserving the legacy random roll when older mappings omit a fixed value.
 
+- The Hellfire pack now activates Familiar's validated `Bat`/monster-43
+  post-melee Lightning mapping, so the shipped composition owns its native
+  transport, eight-tick impact phase, and `GenerateRnd(10)` damage bound.
+
 - AiRangedAvoidance adjacent attack admission now uses optional missile fields
   for its validated base, intelligence scale, and divisor, preserving the
   native 6,000/1,000-per-intelligence band and Acid half-band for older
