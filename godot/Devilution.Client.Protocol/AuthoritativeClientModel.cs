@@ -56,6 +56,7 @@ public sealed class AuthoritativeClientModel
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid player ability kind.");
                 }
+                ValidatePlayerResources(player);
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
                         && player.CombatModeEndTick != 0)
@@ -75,6 +76,8 @@ public sealed class AuthoritativeClientModel
                 ValidateStatusEffects(player);
                 ValidatePlayerAction(player);
             }
+            foreach (var monster in message.Snapshot.Monsters)
+                ValidateMonsterVitality(monster);
             foreach (var item in message.Snapshot.WorldItems) {
                 if (item.EntityId == 0
                     || !HasValidItemIdentity(item.ItemSeed, item.State)) {
@@ -248,6 +251,33 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     "The authoritative snapshot contains invalid status-effect state.");
             }
+        }
+    }
+
+    private static void ValidatePlayerResources(PlayerSnapshot player)
+    {
+        if (player.Life < 0
+            || player.LifeMaximum < 0
+            || player.LifeMaximum > 0 && player.Life > player.LifeMaximum
+            || player.Mana < 0
+            || player.ManaMaximum < 0
+            || player.ManaMaximum > 0 && player.Mana > player.ManaMaximum) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid player resources.");
+        }
+    }
+
+    private static void ValidateMonsterVitality(MonsterSnapshot monster)
+    {
+        if (monster.EntityId == 0
+            || monster.HitPoints < 0
+            || monster.MaxHitPoints < 0
+            || monster.MaxHitPoints > 0 && monster.HitPoints > monster.MaxHitPoints
+            || monster.HitPointsQ6 < 0
+            || monster.MaxHitPointsQ6 < 0
+            || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid monster vitality.");
         }
     }
 

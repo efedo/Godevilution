@@ -425,6 +425,68 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsImpossibleAuthoritativePlayerResources()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    Life = 30,
+                    LifeMaximum = 40,
+                    Mana = 10,
+                    ManaMaximum = 20,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<PlayerSnapshot>[] {
+            player => player.Life = 41,
+            player => player.Mana = 21,
+            player => player.Life = -1,
+            player => player.ManaMaximum = -1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Players[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
+    public void RejectsImpossibleAuthoritativeMonsterVitality()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 9,
+                    Alive = true,
+                    HitPoints = 3,
+                    MaxHitPoints = 5,
+                    HitPointsQ6 = 192,
+                    MaxHitPointsQ6 = 320,
+                },
+            },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<MonsterSnapshot>[] {
+            monster => monster.HitPoints = 6,
+            monster => monster.HitPointsQ6 = 321,
+            monster => monster.MaxHitPoints = 2,
+            monster => monster.HitPoints = -1,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid.Monsters[0]);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void ValidatesAndRetainsAuthoritativePlayerFacing()
     {
         var model = new AuthoritativeClientModel();
