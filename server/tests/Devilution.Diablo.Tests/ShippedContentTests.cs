@@ -1210,6 +1210,7 @@ public sealed class ShippedContentTests
         Assert.Equal("Acid", acid.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acid.ProjectileBehavior);
         Assert.Equal(AuthoritativeDamageType.Acid, acid.DamageType);
+        Assert.Equal(16, acid.ProjectileSpeed);
         Assert.Equal(20, acid.ProjectileLifetimeBase);
         Assert.Equal(5, acid.ProjectileLifetimeIntelligenceScale);
         Assert.Equal(15, acid.PuddleDurationRandomRange);
@@ -1229,6 +1230,7 @@ public sealed class ShippedContentTests
         Assert.True(activation.MonsterMissiles.TryGet("AcidUnique", out var acidUnique));
         Assert.Equal("Acid", acidUnique.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
+        Assert.Equal(16, acidUnique.ProjectileSpeed);
         Assert.Equal(20, acidUnique.ProjectileLifetimeBase);
         Assert.Equal(5, acidUnique.ProjectileLifetimeIntelligenceScale);
         Assert.Equal(15, acidUnique.PuddleDurationRandomRange);
