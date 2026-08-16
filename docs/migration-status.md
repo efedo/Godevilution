@@ -40,6 +40,10 @@ Status date: 2026-08-15
   the externalized world; callers without world-rule content retain native
   level `0` compatibility.
 
+- Adria's service-only store identity is now externalized in the same
+  validated `world_rules.tsv` contract. Activation rejects collisions with
+  stock vendor IDs, while compatibility callers retain native store `10`.
+
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
   spell, arrow, beam, impact, and movement-transition families without moving

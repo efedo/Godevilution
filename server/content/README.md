@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.221.0` schema in
+It declares its identity and `devilution.diablo@1.222.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1481,6 +1481,7 @@ the complete target header even when they upsert only one row.
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here, spell-kind entries are validated against active spells or class abilities, and level/portal entries are validated against their active catalogs during activation. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
+| `world_rules.tsv` | singleton | External town-level identity and Adria service-only store identity; activation validates the level and rejects zero or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id` and `required_quest_completed` gates; endpoints must be in bounds and walkable. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints, validated against the composed world geometry and walkability during activation. |
@@ -1525,7 +1526,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.221.0"
+      "version": "1.222.0"
   },
   "dependencyConstraints": [
     {
@@ -1557,7 +1558,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.221.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.222.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2114,7 +2115,9 @@ through the existing authoritative object-interaction path.
 Schema 1.220 adds optional quest gates to `warps.tsv`; the Hellfire crypt
 entrance is now a server-owned trigger that remains closed until Grave Matters
 is completed.
-Schema 1.221 adds `world_rules.tsv`, which externalizes the town level identity
-used by Town Portal and Warp admission. The checked-in base row retains native
-level `0`; activation rejects a town identity absent from the active world, while
-packs without the table retain the legacy default.
+Schema 1.222 adds the `adria_store_id` column to `world_rules.tsv`. It
+externalizes the service-only store identity used by Adria's mana action;
+activation rejects zero or stock-vendor collisions. The checked-in base row
+retains native store `10`, while packs without the table retain the legacy
+default. Schema 1.221 introduced the table and its externalized town-level
+identity used by Town Portal and Warp admission.

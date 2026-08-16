@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.222 adds the `adria_store_id` column to `world_rules.tsv`. The active
+pack now owns Adria's service-only store identity; activation rejects zero or
+stock-vendor collisions, and callers without world rules retain native store
+`10` compatibility.
+
 Schema 0.66 adds validated `quest_pools.tsv` and `set_level_names.tsv` catalogs.
 Quest type rows now retain native `SL_*` identities, and activation validates
 pool references against the stable quest catalog before exposing the metadata

@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Adria's service-only store identity through validated
+  `world_rules.tsv`. The authoritative store processor now uses the active
+  content value, rejects collisions with stock vendor IDs, and retains native
+  store `10` when no world-rules table is supplied.
+
 - Externalize the authoritative town level identity through validated
   `world_rules.tsv`. Town Portal and Warp now use the active content value,
   activation rejects identities absent from the externalized world, and packs
