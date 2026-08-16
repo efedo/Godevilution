@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.315 validated Fat/Overlord fresh-mode movement bonus to
+  `monster_types.tsv`, preserving the native 50-point fallback for older
+  mappings.
+
 - Add schema 1.314 validated AiAvoidance fresh-mode movement bonus to
   `monster_types.tsv`, preserving the native 50-point fallback for older
   mappings.

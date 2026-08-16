@@ -86,6 +86,10 @@ Status date: 2026-08-16
   the `ai_avoidance_movement_fresh_chance_bonus` monster-type field, preserving
   the native 50-point bonus with fallback behavior for older packs.
 
+- Fat/Overlord fresh-mode movement admission is now validated through the
+  `fat_movement_fresh_chance_bonus` monster-type field, preserving the native
+  50-point bonus with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1353,6 +1357,10 @@ Status date: 2026-08-16
 - Schema 1.314 externalizes the shared AiAvoidance fresh-mode movement bonus
   through optional monster-type data, retaining the native 50-point fallback
   for older mappings.
+
+- Schema 1.315 externalizes the Fat/Overlord fresh-mode movement bonus through
+  optional monster-type data, retaining the native 50-point fallback for older
+  mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

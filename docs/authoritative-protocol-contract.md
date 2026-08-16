@@ -319,8 +319,9 @@ older peers may omit these fields and clients never execute the AI.
 
 Optional `MonsterSnapshot` fields 71-72 carry the native Fat/Overlord
 `var2`-compatible idle counter and `var1`-compatible movement value. The
-server applies the `20 + 4*intelligence` long-idle and `70 + 4*intelligence`
-fresh-mode `RandomWalk` admissions; older peers may omit these fields.
+server applies the validated base and intelligence-scale long-idle admission
+and fresh-mode bonus, retaining the native 20/4/50 fallback for older
+mappings; older peers may omit these fields.
 
 Optional `MonsterSnapshot` fields 73-74 carry the native Rhino
 `var2`-compatible idle counter and `var1`-compatible movement value. Field 75
