@@ -540,7 +540,8 @@ Recent content slices
 
 Schema 1.223 adds Town Portal destination coordinates and slot layout to
 `world_rules.tsv`. The active world contract now controls portal placement;
-packs without those columns retain the prior spell-row tuning.
+packs without those columns retain the prior spell-row tuning. Activated packs
+must place every generated destination slot inside a walkable town cell.
 
 Schema 1.222 adds the `adria_store_id` column to `world_rules.tsv`. The active
 pack now owns Adria's service-only store identity; activation rejects zero or

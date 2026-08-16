@@ -1481,7 +1481,7 @@ the complete target header even when they upsert only one row.
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `spell:trap_disarm` are declared here, spell-kind entries are validated against active spells or class abilities, and level/portal entries are validated against their active catalogs during activation. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
-| `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level and rejects zero or stock-vendor service IDs. |
+| `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id` and `required_quest_completed` gates; endpoints must be in bounds and walkable. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints, validated against the composed world geometry and walkability during activation. |
@@ -2117,7 +2117,8 @@ entrance is now a server-owned trigger that remains closed until Grave Matters
 is completed.
 Schema 1.223 adds Town Portal destination geometry columns to
 `world_rules.tsv`; active packs now own the destination slot layout used by
-the authoritative cast path. Schema 1.222 adds the `adria_store_id` column to
+the authoritative cast path, and activation validates every slot against the
+town level's bounds and walkability. Schema 1.222 adds the `adria_store_id` column to
 the same table. It
 externalizes the service-only store identity used by Adria's mana action;
 activation rejects zero or stock-vendor collisions. The checked-in base row

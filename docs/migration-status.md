@@ -46,7 +46,9 @@ Status date: 2026-08-15
 
 - Town Portal destination coordinates and slot layout are now optionally owned
   by validated `world_rules.tsv` content. Packs without the geometry columns
-  retain their existing spell-row destination behavior.
+  retain their existing spell-row destination behavior. When present, every
+  configured slot is checked against the activated town level for bounds and
+  walkability before content activation completes.
 
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
