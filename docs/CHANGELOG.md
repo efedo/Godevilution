@@ -62,6 +62,9 @@ All notable changes to this fork are documented below.
 
 - Validate authored monster levels and positions against active world bounds,
   preventing malformed static encounters from entering the authoritative world.
+
+- Validate normalized item spell identities against the active spell catalog,
+  preventing charged or consumable items from referencing inert spells.
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
