@@ -72,6 +72,16 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         "starting_spell_id",
         "starting_spell_level",
     ];
+    private static readonly IReadOnlyList<string> SymbolicLoadoutColumns = [
+        "class_id",
+        "starting_gold",
+        "ability_spell_id",
+        "ability_spell_symbol",
+        "ability_kind",
+        "starting_spell_id",
+        "starting_spell_symbol",
+        "starting_spell_level",
+    ];
     private static readonly IReadOnlyList<string> ItemColumns = [
         "class_id",
         "item_order",
@@ -277,14 +287,19 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         string loadoutSourcePath,
         string loadoutContents,
         string itemSourcePath,
-        string itemContents)
+        string itemContents,
+        StableContentIdCatalog? stableIds = null)
     {
         var loadoutTable = TsvTable.Parse(loadoutSourcePath, loadoutContents);
         var itemTable = TsvTable.Parse(itemSourcePath, itemContents);
         var hasAbilityKind = loadoutTable.Columns.SequenceEqual(
             CurrentLoadoutColumns,
             StringComparer.Ordinal);
-        if (!hasAbilityKind
+        var hasSymbols = loadoutTable.Columns.SequenceEqual(
+            SymbolicLoadoutColumns,
+            StringComparer.Ordinal);
+        if (!hasSymbols
+            && !hasAbilityKind
             && !loadoutTable.Columns.SequenceEqual(LoadoutColumns, StringComparer.Ordinal)
             || !itemTable.Columns.SequenceEqual(ItemColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
@@ -310,11 +325,19 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             return new AuthoritativePlayerLoadoutDefinition(
                 classId,
                 row.RequiredUInt32("starting_gold"),
-                row.RequiredUInt32("ability_spell_id"),
-                row.RequiredUInt32("starting_spell_id"),
+                ResolveSpellId(
+                    row,
+                    "ability_spell_id",
+                    hasSymbols ? "ability_spell_symbol" : null,
+                    stableIds),
+                ResolveSpellId(
+                    row,
+                    "starting_spell_id",
+                    hasSymbols ? "starting_spell_symbol" : null,
+                    stableIds),
                 row.RequiredUInt32("starting_spell_level"),
                 itemsByClass.GetValueOrDefault(classId) ?? []) {
-                AbilityKind = hasAbilityKind
+                AbilityKind = hasAbilityKind || hasSymbols
                     ? ParseAbilityKind(row)
                     : DiabloPlayerAbilityKind.None,
             };
@@ -332,6 +355,42 @@ public sealed class AuthoritativePlayerLoadoutCatalog
             items,
             combatRules,
             definitions);
+    }
+
+    private static uint ResolveSpellId(
+        TsvRow row,
+        string numericColumn,
+        string? symbolColumn,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.RequiredUInt32(numericColumn);
+        if (symbolColumn is null
+            || !row.TryGet(symbolColumn, out var symbol)
+            || string.IsNullOrWhiteSpace(symbol)) {
+            return numericId;
+        }
+        if (stableIds is null) {
+            if (numericId == 0) {
+                throw new InvalidDataException(
+                    $"Class loadout row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            }
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Class loadout row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (numericId != 0 && numericId != resolvedId) {
+            throw new InvalidDataException(
+                $"Class loadout row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        }
+        return resolvedId;
     }
 
     private static DiabloPlayerAbilityKind ParseAbilityKind(TsvRow row)

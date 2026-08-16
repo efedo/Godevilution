@@ -240,6 +240,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 100,
                 townLevelId: worldRules.TownLevelId);
         combatRules.ValidateItems(itemCatalog);
+        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
+            ? StableContentIdCatalog.LoadTsv(
+                stableIdsTable.SourcePath,
+                stableIdsTable.ToCanonicalTsv())
+            : null;
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
             "class_loadout_items.tsv");
@@ -250,7 +255,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerLoadoutTable.SourcePath,
             playerLoadoutTable.ToCanonicalTsv(),
             playerLoadoutItemTable.SourcePath,
-            playerLoadoutItemTable.ToCanonicalTsv());
+            playerLoadoutItemTable.ToCanonicalTsv(),
+            stableIds);
 
         var uniqueItems = content.TryGetTable("unique_items.tsv", out var uniqueTable)
             ? AuthoritativeUniqueItemCatalog.LoadTsv(
@@ -279,11 +285,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         worldRules.ValidateStores(stores);
         if (spells is not null)
             stores.ValidateSpellReferences(spells);
-        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
-            ? StableContentIdCatalog.LoadTsv(
-                stableIdsTable.SourcePath,
-                stableIdsTable.ToCanonicalTsv())
-            : null;
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
