@@ -208,6 +208,45 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownNormalizedItemSpell()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var items = basePack.Tables.Single(table => table.SourcePath == "items.tsv");
+        var invalidItems = TsvTable.Parse(
+            items.SourcePath,
+            string.Join(
+                '\n',
+                items.ToCanonicalTsv()
+                    .Split('\n')
+                    .Select((line, index) => {
+                        if (index == 0 || !line.StartsWith("107\t", StringComparison.Ordinal))
+                            return line;
+                        var columns = line.Split('\t');
+                        columns[16] = "9999";
+                        return string.Join('\t', columns);
+                    })));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == items.SourcePath
+                    ? invalidItems
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Item 107 references unknown spell 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

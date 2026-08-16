@@ -642,6 +642,59 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void NormalizedItemSpellReferencesMustResolveInTheActiveCatalog()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0),
+        ]);
+        var validItems = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                7,
+                10,
+                75,
+                75,
+                0,
+                0,
+                0,
+                20,
+                20,
+                1,
+                1,
+                true)
+            {
+                SpellId = 7,
+                SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+            },
+        ]);
+
+        validItems.ValidateSpellReferences(spells);
+
+        var invalidItems = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                8,
+                10,
+                75,
+                75,
+                0,
+                0,
+                0,
+                20,
+                20,
+                1,
+                1,
+                true)
+            {
+                SpellId = 8,
+                SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            invalidItems.ValidateSpellReferences(spells));
+        Assert.Contains("Item 8 references unknown spell 8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LegacyRuneMiscellaneousIdsPreserveNativeSourceIdentity()
     {
         const string header = "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n";
