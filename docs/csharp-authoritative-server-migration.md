@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.228 adds an optional `spell_symbol` to `store_services.tsv` spell-staff
+pricing rows. Activated rows resolve the stable spell namespace and reject
+mismatches with the retained numeric ID; older rows remain compatible through
+numeric fallback.
+
 Schema 1.227 adds an optional `spell_symbol` to every shipped `spells.tsv` row.
 Activated rows resolve the stable spell namespace and reject mismatches with
 the retained numeric ID; older rows remain compatible through numeric fallback.

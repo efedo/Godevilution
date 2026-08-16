@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.227.0` schema in
+It declares its identity and `devilution.diablo@1.228.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1507,7 +1507,7 @@ the complete target header even when they upsert only one row.
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
 | `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with base-item references validated against the active item catalog, authoritative presentation names, optional cursor symbols, and fixed effects. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with direct stock spell identities validated against active `spells.tsv`. |
-| `store_services.tsv` | `key`, `spell_id` | Service pricing and spell-staff costs, with non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
+| `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
 | `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item fallback used only when `unique_items.tsv` is absent. |
 
@@ -1530,7 +1530,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.227.0"
+      "version": "1.228.0"
   },
   "dependencyConstraints": [
     {
@@ -1562,7 +1562,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.227.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.228.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
@@ -2119,6 +2119,9 @@ through the existing authoritative object-interaction path.
 Schema 1.220 adds optional quest gates to `warps.tsv`; the Hellfire crypt
 entrance is now a server-owned trigger that remains closed until Grave Matters
 is completed.
+Schema 1.228 adds optional `spell_symbol` to `store_services.tsv`. Spell-staff
+pricing rows resolve the symbol through the stable spell namespace and reject
+numeric and symbolic mismatches; older rows retain numeric-ID fallback.
 Schema 1.227 adds optional `spell_symbol` to `spells.tsv`. Active spell rows
 resolve the symbol through the stable spell namespace and reject numeric and
 symbolic mismatches; older rows retain numeric-ID fallback.
