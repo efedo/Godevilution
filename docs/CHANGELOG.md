@@ -61,6 +61,11 @@ All notable changes to this fork are documented below.
 - Externalize the five native rune consumables with stable item identities,
   native cursors, drop metadata, and validated consumable spell mappings.
 
+- Externalize 22 native spell-backed scroll rows with stable item identities,
+  native indices, cursor projections, level/value/drop metadata, and validated
+  spell mappings; correct legacy `SCROLL`/`SCROLLT` parsing to native IDs 21/22
+  while retaining Identify scrolls for their dedicated item-action migration.
+
 - Refresh migration status to record all six cursor-driven class capabilities as
   server-owned and covered, leaving native spell, quest, map, and client work as
   the remaining external-content priorities.

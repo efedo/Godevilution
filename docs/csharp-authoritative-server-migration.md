@@ -617,6 +617,16 @@ miscellaneous IDs, drop levels, and values while resolving consumable spell
 sources through the validated Fireball, Lightning Wall, Immolation, Nova, and
 Stone Curse spell rows.
 
+Schema 1.266 externalizes the 22 native spell-backed scroll rows, including the
+fixed Town Portal and Resurrect rows and the random Healing, Search, Lightning,
+Resurrect, Fire Wall, Inferno, Town Portal, Flash, Infravision, Phasing, Mana
+Shield, Flame Wave, Fireball, Stone Curse, Chain Lightning, Guardian, Nova,
+Golem, Teleport, and Apocalypse rows. Their native indices, cursor graphics,
+scroll miscellaneous IDs, level gates, values, drop rates, and stable spell
+references are validated in `items.tsv`; the legacy parser now preserves the
+native 21/22 scroll IDs. Identify scrolls remain legacy until their dual-role
+class-ability identity has an explicit item-action contract.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
