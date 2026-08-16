@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.237.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.238.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -67,6 +67,39 @@ public sealed class ShippedContentTests
             Assert.False(string.IsNullOrWhiteSpace(definition.StableSymbol)));
         composedStableIds.ValidateReferences("item", id => composedItems.TryGet(id, out _));
         Assert.Equal("hellfire_staff_charged_bolt", composedItems.GetRequired(112).StableSymbol);
+    }
+
+    [Fact]
+    public void ShippedUniqueItemsUseStableBaseItemSymbols()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            composed.GetRequiredTable("items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+        var uniqueTable = composed.GetRequiredTable("unique_items.tsv");
+        var uniques = AuthoritativeUniqueItemCatalog.LoadTsv(
+            uniqueTable.SourcePath,
+            uniqueTable.ToCanonicalTsv(),
+            stableIds: stableIds);
+
+        Assert.NotEmpty(uniques.Definitions);
+        Assert.All(uniqueTable.Rows, row => {
+            var symbol = row.Required("base_item_symbol");
+            Assert.Equal(row.RequiredUInt32("base_item_id"), stableIds.Resolve("item", symbol));
+        });
+        uniques.ValidateBaseItems(items);
     }
 
     [Fact]
@@ -856,7 +889,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.237.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.238.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
