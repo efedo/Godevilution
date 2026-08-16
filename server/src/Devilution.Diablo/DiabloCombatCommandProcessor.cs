@@ -8230,7 +8230,8 @@ public sealed class DiabloCombatCommandProcessor
         var retreatChance = GetSkeletonRangedMovementChance(
             monster,
             skeletonRangedTuning.Value.RetreatChanceBase,
-            skeletonRangedTuning.Value.RetreatChanceIntelligenceScale);
+            skeletonRangedTuning.Value.RetreatChanceIntelligenceScale,
+            skeletonRangedTuning.Value.MovementFreshChanceBonus);
         if ((actionSeed / 100U) % 100U >= (uint)retreatChance) {
             monster.AdvanceSkeletonRangedMovementIdle();
             return false;
@@ -8256,7 +8257,8 @@ public sealed class DiabloCombatCommandProcessor
     private static int GetSkeletonRangedMovementChance(
         AuthoritativeCombatTarget monster,
         int chanceBase,
-        int intelligenceScale)
+        int intelligenceScale,
+        int freshChanceBonus)
     {
         var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
         var movementChance = monster.SkeletonRangedMovementIdleTicks == -1
@@ -8265,7 +8267,7 @@ public sealed class DiabloCombatCommandProcessor
                 ? longIdleChance
                 : monster.SkeletonRangedMovementIdleTicks == 0
                     && monster.SkeletonRangedMovementMode is >= 1 and <= 3
-                    ? longIdleChance + 50
+                    ? longIdleChance + freshChanceBonus
                     : 0;
         return Math.Min(100, movementChance);
     }
@@ -8322,7 +8324,8 @@ public sealed class DiabloCombatCommandProcessor
         int RetreatChanceBase,
         int RetreatChanceIntelligenceScale,
         int AttackChanceBase,
-        int AttackChanceIntelligenceScale)? GetSkeletonRangedTuning(
+        int AttackChanceIntelligenceScale,
+        int MovementFreshChanceBonus)? GetSkeletonRangedTuning(
             AuthoritativeCombatTarget target)
     {
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
@@ -8336,11 +8339,14 @@ public sealed class DiabloCombatCommandProcessor
                     definition.SkeletonRangedRetreatChanceBase,
                     definition.SkeletonRangedRetreatChanceIntelligenceScale,
                     definition.SkeletonRangedAttackChanceBase,
-                    definition.SkeletonRangedAttackChanceIntelligenceScale);
+                    definition.SkeletonRangedAttackChanceIntelligenceScale,
+                    definition.SkeletonRangedMovementFreshChanceBonus > 0
+                        ? definition.SkeletonRangedMovementFreshChanceBonus
+                        : 50);
             }
         }
         return UsesNativeAi(target, "SkeletonRanged")
-            ? (4, 13, 2, 3, 2)
+            ? (4, 13, 2, 3, 2, 50)
             : null;
     }
 

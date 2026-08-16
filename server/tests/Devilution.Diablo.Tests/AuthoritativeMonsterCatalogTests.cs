@@ -983,6 +983,11 @@ public sealed class AuthoritativeMonsterCatalogTests
                 SkeletonRangedAttackChanceBase = 3,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                SkeletonRangedMovementFreshChanceBonus = 50,
+            },
+        ]));
     }
 
     [Fact]
@@ -1000,6 +1005,17 @@ public sealed class AuthoritativeMonsterCatalogTests
             skeletonRanged.SkeletonRangedRetreatChanceIntelligenceScale,
             skeletonRanged.SkeletonRangedAttackChanceBase,
             skeletonRanged.SkeletonRangedAttackChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsSkeletonRangedMovementFreshBonusFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_ranged_retreat_minimum_distance\tskeleton_ranged_retreat_chance_base\tskeleton_ranged_retreat_chance_intelligence_scale\tskeleton_ranged_attack_chance_base\tskeleton_ranged_attack_chance_intelligence_scale\tskeleton_ranged_movement_fresh_chance_bonus\n"
+                + "2\t0\tSkeleton Bow\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t1\t1\t0\tSkeletonRanged\t4\t13\t2\t3\t2\t50\n");
+
+        Assert.Equal(50, Assert.Single(catalog.Definitions).SkeletonRangedMovementFreshChanceBonus);
     }
 
     [Fact]

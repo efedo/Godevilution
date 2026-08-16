@@ -6358,6 +6358,70 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonRangedUsesValidatedFreshMovementBonus()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Skeleton Bow",
+                0,
+                0,
+                1,
+                4,
+                4,
+                10,
+                2,
+                9,
+                0,
+                0,
+                false,
+                true,
+                false) {
+                NativeAi = "SkeletonRanged",
+                SkeletonRangedRetreatMinimumDistance = 4,
+                SkeletonRangedRetreatChanceBase = 1,
+                SkeletonRangedRetreatChanceIntelligenceScale = 1,
+                SkeletonRangedAttackChanceBase = 100,
+                SkeletonRangedAttackChanceIntelligenceScale = 1,
+                SkeletonRangedMovementFreshChanceBonus = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            20,
+            monsterId: 1,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged",
+            intelligence: 0,
+            skeletonRangedMovementIdleTicks: 0,
+            skeletonRangedMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1,296 ^ 9 ^ 7 = 1,310: movement roll 13 is outside the authored
+        // two-percent fresh-mode band, so the retreat branch must defer.
+        processor.AdvanceTick(1_296, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(1, monster.SkeletonRangedMovementIdleTicks);
+    }
+
+    [Fact]
     public void SkeletonRangedAiDefersInsideItsNativeMiddleMovementBand()
     {
         var monster = new AuthoritativeCombatTarget(

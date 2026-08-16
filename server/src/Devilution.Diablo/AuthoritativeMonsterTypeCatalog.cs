@@ -339,6 +339,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonRanged arrow attack chance increase per intelligence point. */
     public int SkeletonRangedAttackChanceIntelligenceScale { get; init; }
 
+    /** Native SkeletonRanged fresh-mode movement chance bonus. */
+    public int SkeletonRangedMovementFreshChanceBonus { get; init; }
+
     /** Native Rhino minimum distance required for charge admission. */
     public int RhinoChargeMinimumDistance { get; init; }
 
@@ -740,11 +743,18 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SkeletonRangedRetreatChanceIntelligenceScale is < 0 or > 100
                 || definition.SkeletonRangedAttackChanceBase is < 0 or > 100
                 || definition.SkeletonRangedAttackChanceIntelligenceScale is < 0 or > 100
+                || definition.SkeletonRangedMovementFreshChanceBonus is < 0 or > 100
                 || ((definition.SkeletonRangedRetreatMinimumDistance != 0
                         || definition.SkeletonRangedRetreatChanceBase != 0
                         || definition.SkeletonRangedRetreatChanceIntelligenceScale != 0
                         || definition.SkeletonRangedAttackChanceBase != 0
                         || definition.SkeletonRangedAttackChanceIntelligenceScale != 0)
+                    && (definition.SkeletonRangedRetreatMinimumDistance <= 0
+                        || definition.SkeletonRangedRetreatChanceBase <= 0
+                        || definition.SkeletonRangedRetreatChanceIntelligenceScale <= 0
+                        || definition.SkeletonRangedAttackChanceBase <= 0
+                        || definition.SkeletonRangedAttackChanceIntelligenceScale <= 0))
+                || (definition.SkeletonRangedMovementFreshChanceBonus != 0
                     && (definition.SkeletonRangedRetreatMinimumDistance <= 0
                         || definition.SkeletonRangedRetreatChanceBase <= 0
                         || definition.SkeletonRangedRetreatChanceIntelligenceScale <= 0
@@ -925,6 +935,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonRangedRetreatChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_retreat_chance_intelligence_scale"),
                 SkeletonRangedAttackChanceBase = row.OptionalInt32("skeleton_ranged_attack_chance_base"),
                 SkeletonRangedAttackChanceIntelligenceScale = row.OptionalInt32("skeleton_ranged_attack_chance_intelligence_scale"),
+                SkeletonRangedMovementFreshChanceBonus = row.OptionalInt32("skeleton_ranged_movement_fresh_chance_bonus"),
                 RhinoChargeMinimumDistance = row.OptionalInt32("rhino_charge_minimum_distance"),
                 RhinoChargeChanceBase = row.OptionalInt32("rhino_charge_chance_base"),
                 RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
