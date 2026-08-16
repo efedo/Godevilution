@@ -958,6 +958,10 @@ Status date: 2026-08-16
   Bomb, Theodore, Auric Amulet, Brown Suit, and Grey Suit while preserving their
   native item-index and cursor projections.
 
+- Schema 1.252 normalizes stable symbols, display names, and native cursor
+  projections for the first five Hellfire unique base-item rows, including the
+  shared Hellfire ring base used by multiple unique definitions.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

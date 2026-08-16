@@ -933,6 +933,11 @@ Rune Bomb, Theodore, Auric Amulet, Brown Suit, and Grey Suit. Their native item
 indices and cursor projections remain explicit compatibility metadata, while
 older packs may continue to use the legacy `itemdat.tsv` fallback.
 
+Schema 1.252 normalizes the first five Hellfire unique base-item projections:
+The Undead Crown, the shared Hellfire ring base, Optic Amulet, Ring of Truth,
+and Harlequin Crest. Their stable item symbols, display names, and native
+cursor projections now cross the same validated item boundary.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.
 
+- Normalize the first five Hellfire unique base-item projections with stable
+  symbols, native display names, and cursor identities, including the shared
+  Hellfire ring base.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

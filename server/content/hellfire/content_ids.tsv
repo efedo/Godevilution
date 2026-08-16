@@ -109,12 +109,12 @@ unique	demon_plate_armor	1109
 unique	acolyte_s_amulet	1110
 unique	gladiator_s_ring	1111
 item	cathedral_map	43
-item	hellfire_item_111	111
+item	the_undead_crown	111
 item	hellfire_staff_charged_bolt	112
-item	hellfire_item_113	113
-item	hellfire_item_114	114
-item	hellfire_item_115	115
-item	hellfire_item_116	116
+item	hellfire_ring_base	113
+item	optic_amulet	114
+item	ring_of_truth	115
+item	harlequin_crest	116
 item	hellfire_item_117	117
 item	hellfire_item_118	118
 item	hellfire_item_119	119

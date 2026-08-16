@@ -546,6 +546,10 @@ Schema 1.251 adds normalized Hellfire quest-item definitions for Rune Bomb,
 Theodore, Auric Amulet, Brown Suit, and Grey Suit. Native item indices and
 cursor projections remain explicit compatibility metadata.
 
+Schema 1.252 normalizes stable symbols, display names, and native cursor
+projections for the first five Hellfire unique base-item rows, including the
+shared Hellfire ring base used by multiple unique definitions.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
