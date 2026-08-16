@@ -7050,7 +7050,8 @@ public sealed class DiabloCombatCommandProcessorTests
                 new AuthoritativeMonsterMissileDefinition(
                     "GoatRanged",
                     "CustomCharge",
-                    AuthoritativeProjectileBehavior.SnakeCharge),
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    DamageType: AuthoritativeDamageType.Fire),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -7064,6 +7065,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var charge = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
+        Assert.Equal(AuthoritativeDamageType.Fire, charge.DamageType);
     }
 
     [Fact]

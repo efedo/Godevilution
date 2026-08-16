@@ -6761,7 +6761,7 @@ public sealed class DiabloCombatCommandProcessor
                     player.PositionX,
                     player.PositionY,
                     0,
-                    AuthoritativeDamageType.Physical,
+                    missile.DamageType ?? AuthoritativeDamageType.Physical,
                     0,
                     checked((uint)chargeProjectileTuning.Lifetime)) {
                     Behavior = AuthoritativeProjectileBehavior.SnakeCharge,
@@ -7153,7 +7153,7 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             0,
-            AuthoritativeDamageType.Physical,
+            missile.DamageType ?? AuthoritativeDamageType.Physical,
             0,
             checked((uint)chargeProjectileTuning.Lifetime)) {
             Behavior = AuthoritativeProjectileBehavior.BatCharge,
