@@ -1082,16 +1082,16 @@ the item is generated.
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
-cursor while selecting an eligible external template. Random books roll over
+cursor while applying an eligible external template. Random books roll over
 the validated active native spell-table span and walk native spell IDs
 cyclically before mapping the result to a stable content ID; explicit spell
 references retain their direct behavior. `ReadBookRequested` now owns native
 intelligence gating, learned-spell level mutation, mana refund, and book
 consumption through the shared protocol. Single-player generation excludes the
 native Resurrect and Heal Other rows, while multiplayer generation retains
-them. Store rows, quest-completion rewards,
-and both static and procedural monster-drop rows invoke that generator before
-authoritative stock or world-item state is emitted.
+them. Store rows, quest-completion rewards, and static/procedural drops retain
+their supplied native book-template identity while invoking that generator
+before authoritative stock or world-item state is emitted.
 
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
@@ -1762,7 +1762,7 @@ the complete target header even when they upsert only one row.
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources with optional stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, and Golem summon formula terms. |
-| `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, and minimum intelligence; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order and is used by stores, drops, and quest rewards. |
+| `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, and minimum intelligence; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order while stores, drops, and quest rewards retain their supplied native book-template identity. |
 | `items.tsv` | `item_id` | Normalized item identity with optional stable `item_symbol` (required by shipped base and Hellfire definitions and validated against `content_ids.tsv`), explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
 | `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `item_symbol` and `quest_symbol`, including native quest activation, completion, and `_qvar1` updates. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |

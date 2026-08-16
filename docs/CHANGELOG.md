@@ -64,7 +64,9 @@ All notable changes to this fork are documented below.
   stable content IDs; explicit spell references remain direct and deterministic.
   Thread the active game mode through stores, static/procedural drops, and quest
   rewards so single-player excludes native Resurrect and Heal Other while
-  multiplayer retains both.
+  multiplayer retains both. Store, drop, and quest-reward paths now preserve
+  the supplied native book-template identity instead of substituting another
+  eligible template.
 
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when

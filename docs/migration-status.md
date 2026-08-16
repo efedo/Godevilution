@@ -1096,7 +1096,8 @@ Status date: 2026-08-16
   `ReadBookRequested`; single-player generation excludes native Resurrect and
   Heal Other while multiplayer generation retains both. Store rows plus
   static/procedural monster drops and quest-completion rewards now invoke the
-  same game-mode-aware generator.
+  same game-mode-aware generator and retain their supplied native book-template
+  identity.
 
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
