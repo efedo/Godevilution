@@ -30,4 +30,27 @@ public sealed class StableContentIdCatalogTests
             new StableContentId("spell", "haste", 1),
         ]));
     }
+
+    [Fact]
+    public void ValidatesReferencesInAStableNamespace()
+    {
+        var catalog = new StableContentIdCatalog([
+            new StableContentId("level", "town", 1),
+            new StableContentId("level", "dungeon", 2),
+        ]);
+
+        catalog.ValidateReferences("level", id => id is 1 or 2);
+    }
+
+    [Fact]
+    public void RejectsUnknownReferencesInAStableNamespace()
+    {
+        var catalog = new StableContentIdCatalog([
+            new StableContentId("portal", "cathedral_entrance", 1),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            catalog.ValidateReferences("portal", _ => false));
+        Assert.Contains("Stable content portal symbol 'cathedral_entrance' references unknown ID 1", exception.Message, StringComparison.Ordinal);
+    }
 }
