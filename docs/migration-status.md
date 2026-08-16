@@ -114,6 +114,10 @@ Status date: 2026-08-16
   `post_melee_missile` mapping flag, while older mappings retain the
   `MonsterMagic`/`Lightning` compatibility tuple.
 
+- Mapped Bat and Snake charge projectiles now consume validated missile
+  `damage_type` content, while older mappings retain the native Physical
+  fallback.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1404,6 +1408,10 @@ Status date: 2026-08-16
 - Schema 1.320 externalizes Familiar's post-melee missile identity through an
   optional `post_melee_missile` field, retaining the legacy Lightning-label
   fallback for older mappings.
+
+- Schema 1.321 externalizes mapped Bat and Snake charge projectile damage
+  type through the existing optional `damage_type` field, retaining the
+  native Physical fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

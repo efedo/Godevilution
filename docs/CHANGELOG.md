@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.321 validated mapped-charge damage types to
+  `monster_missiles.tsv`, preserving the native Physical fallback when older
+  rows omit the optional value.
+
 - Add schema 1.320 validated Familiar post-melee missile identity to
   `monster_missiles.tsv`, preserving the legacy Lightning-label fallback for
   older mappings.
