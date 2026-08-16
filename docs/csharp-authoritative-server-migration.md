@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.246 adds the stable `set_level` namespace. Set-level definitions and
+quest-type links can resolve `set_level_symbol` values, including native
+`SL_NONE` ID zero, while preserving numeric projections.
+
 Schema 1.245 extends stable level symbols to authored monster, object, quest,
 and combat restart links through `level_symbol` columns; activation checks
 those links against the composed world while preserving numeric projections.

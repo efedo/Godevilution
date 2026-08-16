@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.246 adds the stable `set_level` namespace. Set-level definitions
+retain their native symbols and quest-type rows may carry `set_level_symbol`;
+the valid native `SL_NONE` ID zero is preserved while numeric-only rows remain
+compatible.
+
 Schema 1.245 extends the stable `level` namespace to authored monster,
 object, quest, and combat restart links through `level_symbol` columns.
 Numeric-only level references remain compatible while active symbols are

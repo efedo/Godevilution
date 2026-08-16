@@ -937,6 +937,10 @@ Status date: 2026-08-16
   and combat restart links through `level_symbol` columns. Numeric-only rows
   remain compatible while links are checked against the composed world.
 
+- Schema 1.246 adds the stable `set_level` namespace and optional
+  `set_level_symbol` quest-type links, preserving native `SL_NONE` ID zero and
+  numeric-only compatibility.
+
 - Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
   shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
   compatible for older external packs.
