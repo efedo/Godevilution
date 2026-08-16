@@ -13202,7 +13202,9 @@ public sealed class DiabloCombatCommandProcessor
             || world.CombatTargets.ContainsKey(nextWorldItemEntityId)
             || world.WorldItems.ContainsKey(nextWorldItemEntityId)
             || world.Objects.ContainsKey(nextWorldItemEntityId)
-            || world.Projectiles.ContainsKey(nextWorldItemEntityId)) {
+            || world.Projectiles.ContainsKey(nextWorldItemEntityId)
+            || world.Portals.ContainsKey(nextWorldItemEntityId)
+            || world.Corpses.ContainsKey(nextWorldItemEntityId)) {
             nextWorldItemEntityId = checked(nextWorldItemEntityId + 1);
         }
         return nextWorldItemEntityId++;
@@ -13844,10 +13846,12 @@ public sealed class DiabloCombatCommandProcessor
     private uint AllocateProjectileEntityId()
     {
         while (nextProjectileEntityId == 0
+            || activePlayers.Any(player => player.EntityId == nextProjectileEntityId)
             || world.CombatTargets.ContainsKey(nextProjectileEntityId)
             || world.WorldItems.ContainsKey(nextProjectileEntityId)
             || world.Objects.ContainsKey(nextProjectileEntityId)
             || world.Projectiles.ContainsKey(nextProjectileEntityId)
+            || world.Portals.ContainsKey(nextProjectileEntityId)
             || world.Corpses.ContainsKey(nextProjectileEntityId)) {
             nextProjectileEntityId = checked(nextProjectileEntityId + 1);
         }

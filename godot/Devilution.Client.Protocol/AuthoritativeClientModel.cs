@@ -39,10 +39,7 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException("The authoritative snapshot has no local player.");
             var entityIds = new HashSet<uint>();
             foreach (var player in message.Snapshot.Players) {
-                if (player.EntityId == 0 || !entityIds.Add(player.EntityId)) {
-                    throw new InvalidDataException(
-                        "The authoritative snapshot contains invalid player entity IDs.");
-                }
+                ValidateEntityId(entityIds, player.EntityId);
                 if (player.CharacterName.Length > 31
                     || player.CharacterName.Any(character => character is < (char)0x21 or > (char)0x7e)) {
                     throw new InvalidDataException(
@@ -76,15 +73,23 @@ public sealed class AuthoritativeClientModel
                 ValidateStatusEffects(player);
                 ValidatePlayerAction(player);
             }
-            foreach (var monster in message.Snapshot.Monsters)
+            foreach (var monster in message.Snapshot.Monsters) {
+                ValidateEntityId(entityIds, monster.EntityId);
                 ValidateMonsterVitality(monster);
+            }
             foreach (var item in message.Snapshot.WorldItems) {
-                if (item.EntityId == 0
-                    || !HasValidItemIdentity(item.ItemSeed, item.State)) {
+                ValidateEntityId(entityIds, item.EntityId);
+                if (!HasValidItemIdentity(item.ItemSeed, item.State)) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains an invalid world item.");
                 }
             }
+            foreach (var @object in message.Snapshot.Objects)
+                ValidateEntityId(entityIds, @object.EntityId);
+            foreach (var projectile in message.Snapshot.Projectiles)
+                ValidateEntityId(entityIds, projectile.EntityId);
+            foreach (var corpse in message.Snapshot.Corpses)
+                ValidateEntityId(entityIds, corpse.EntityId);
             var portalIds = new HashSet<uint>();
             foreach (var portal in message.Snapshot.Portals) {
                 if (portal.PortalId == 0
@@ -264,6 +269,14 @@ public sealed class AuthoritativeClientModel
             || player.ManaMaximum > 0 && player.Mana > player.ManaMaximum) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid player resources.");
+        }
+    }
+
+    private static void ValidateEntityId(HashSet<uint> entityIds, uint entityId)
+    {
+        if (entityId == 0 || !entityIds.Add(entityId)) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains duplicate or zero entity IDs.");
         }
     }
 

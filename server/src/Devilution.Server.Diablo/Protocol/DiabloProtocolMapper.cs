@@ -12,7 +12,8 @@ internal static class DiabloProtocolMapper
         bool revealTraps = true,
         AuthoritativeSpellCatalog? spells = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        IReadOnlyList<AuthoritativeLevel>? levelGeometry = null)
+        IReadOnlyList<AuthoritativeLevel>? levelGeometry = null,
+        bool allowZeroPlayerEntityId = false)
     {
         ArgumentNullException.ThrowIfNull(source);
         var visibleParticipants = participants?
@@ -280,6 +281,7 @@ internal static class DiabloProtocolMapper
             snapshot.ActiveStore = store;
         }
 
+        ValidateEntityIds(snapshot, allowZeroPlayerEntityId);
         snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
         return snapshot;
     }
@@ -380,6 +382,7 @@ internal static class DiabloProtocolMapper
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)
     {
         ArgumentNullException.ThrowIfNull(source);
+        ValidateEntityIds(source, allowZeroPlayerEntityId: true);
         var player = source.Players.Count == 1
             ? ToPlayerState(source.Players[0])
             : throw new InvalidDataException(
@@ -656,6 +659,38 @@ internal static class DiabloProtocolMapper
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = FromProtocolDifficulty(source.Difficulty),
         };
+    }
+
+    private static void ValidateEntityIds(
+        Snapshot snapshot,
+        bool allowZeroPlayerEntityId = false)
+    {
+        var entityIds = new HashSet<uint>();
+        foreach (var player in snapshot.Players)
+            ValidateEntityId(entityIds, player.EntityId, "player", allowZeroPlayerEntityId);
+        foreach (var monster in snapshot.Monsters)
+            ValidateEntityId(entityIds, monster.EntityId, "monster");
+        foreach (var item in snapshot.WorldItems)
+            ValidateEntityId(entityIds, item.EntityId, "world item");
+        foreach (var @object in snapshot.Objects)
+            ValidateEntityId(entityIds, @object.EntityId, "object");
+        foreach (var projectile in snapshot.Projectiles)
+            ValidateEntityId(entityIds, projectile.EntityId, "projectile");
+        foreach (var corpse in snapshot.Corpses)
+            ValidateEntityId(entityIds, corpse.EntityId, "corpse");
+    }
+
+    private static void ValidateEntityId(
+        HashSet<uint> entityIds,
+        uint entityId,
+        string entityKind,
+        bool allowZero = false)
+    {
+        if (allowZero && entityKind == "player" && entityId == 0)
+            return;
+        if (entityId == 0 || !entityIds.Add(entityId))
+            throw new InvalidDataException(
+                $"The authoritative snapshot contains a duplicate or zero {entityKind} entity ID ({entityId}).");
     }
 
     private static GameDifficulty ToProtocolDifficulty(DiabloDifficulty difficulty)

@@ -17,7 +17,9 @@ public sealed class AuthoritativeSaveCodec
     public string Serialize(DiabloSimulationSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        var protocolSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(snapshot);
+        var protocolSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            snapshot,
+            allowZeroPlayerEntityId: true);
         return JsonSerializer.Serialize(new AuthoritativeSaveDocument(
             CurrentFormatVersion,
             Convert.ToBase64String(protocolSnapshot.ToByteArray())));

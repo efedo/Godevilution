@@ -77,6 +77,26 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void RejectsCrossCollectionEntityIdCollisionsInSaves()
+    {
+        var source = CreateSnapshot() with {
+            Objects = [new DiabloObjectState(
+                20,
+                4,
+                0,
+                1,
+                1,
+                false,
+                0,
+                AuthoritativeObjectEffectKind.None,
+                0)],
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSaveCodec().Serialize(source));
+    }
+
+    [Fact]
     public void VersionOneRoundTripsSneakStateThroughTheProtocolSave()
     {
         var baseline = CreateSnapshot();
@@ -657,7 +677,7 @@ public sealed class AuthoritativeSaveCodecTests
                     NativeCursorGraphic = 21,
                 })],
             [new DiabloObjectState(
-                20,
+                22,
                 4,
                 0,
                 1,

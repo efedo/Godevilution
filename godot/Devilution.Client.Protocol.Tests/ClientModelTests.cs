@@ -146,6 +146,42 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsCrossCollectionEntityIdCollisions()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = {
+                new MonsterSnapshot { EntityId = 8 },
+            },
+            WorldItems = {
+                new WorldItemSnapshot {
+                    EntityId = 9,
+                    ItemSeed = 42,
+                    State = new ItemStateSnapshot(),
+                },
+            },
+            Objects = { new ObjectSnapshot { EntityId = 10 } },
+            Projectiles = { new ProjectileSnapshot { EntityId = 11 } },
+            Corpses = { new CorpseSnapshot { EntityId = 12 } },
+        };
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Monsters[0].EntityId = 7,
+            snapshot => snapshot.WorldItems[0].EntityId = 7,
+            snapshot => snapshot.Objects[0].EntityId = 7,
+            snapshot => snapshot.Projectiles[0].EntityId = 7,
+            snapshot => snapshot.Corpses[0].EntityId = 7,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void ValidatesAndRetainsTheAuthoritativeHeldItem()
     {
         var model = new AuthoritativeClientModel();
