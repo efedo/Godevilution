@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.258.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.259.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.258.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.259.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1707,6 +1707,28 @@ public sealed class ShippedContentTests
             Assert.Contains("Mace", mace.GenerationTags);
             Assert.DoesNotContain("Sword", mace.GenerationTags);
         }
+        Assert.Equal(("long_staff", "Long Staff", 123), (
+            hellfireItems.GetRequired(147).StableSymbol,
+            hellfireItems.GetRequired(147).Name,
+            hellfireItems.GetRequired(147).NativeCursorGraphic));
+        Assert.Equal(("war_staff", "War Staff", 124), (
+            hellfireItems.GetRequired(148).StableSymbol,
+            hellfireItems.GetRequired(148).Name,
+            hellfireItems.GetRequired(148).NativeCursorGraphic));
+        Assert.Equal(("short_staff", "Short Staff", 109), (
+            hellfireItems.GetRequired(149).StableSymbol,
+            hellfireItems.GetRequired(149).Name,
+            hellfireItems.GetRequired(149).NativeCursorGraphic));
+        Assert.Equal(("composite_staff", "Composite Staff", 166), (
+            hellfireItems.GetRequired(150).StableSymbol,
+            hellfireItems.GetRequired(150).Name,
+            hellfireItems.GetRequired(150).NativeCursorGraphic));
+        Assert.Equal(("quarter_staff", "Quarter Staff", 109), (
+            hellfireItems.GetRequired(151).StableSymbol,
+            hellfireItems.GetRequired(151).Name,
+            hellfireItems.GetRequired(151).NativeCursorGraphic));
+        foreach (var itemId in new uint[] { 147, 148, 149, 150, 151 })
+            Assert.Contains("Staff", hellfireItems.GetRequired(itemId).GenerationTags);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);

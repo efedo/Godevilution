@@ -217,45 +217,45 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1055	dreamflange	Dreamflange	142	mace	26	26450	MAGICRES	50	50	-
 1055	dreamflange	Dreamflange	142	mace	26	26450	LIGHT	2	2	-
 1055	dreamflange	Dreamflange	142	mace	26	26450	SPLLVLADD	1	1	-
-1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	MAG_CURSE	10	10	-
-1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	TOHIT	10	10	-
-1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	DAMP	60	60	-
-1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	LIGHT_CURSE	2	2	-
-1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	FASTATTACK	1	1	-
-1057	immolator	Immolator	147	hellfire_item_147	4	3900	FIRERES	20	20	-
-1057	immolator	Immolator	147	hellfire_item_147	4	3900	FIREDAM	4	4	-
-1057	immolator	Immolator	147	hellfire_item_147	4	3900	MANA	10	10	-
-1057	immolator	Immolator	147	hellfire_item_147	4	3900	VIT_CURSE	5	5	-
-1058	storm_spire	Storm Spire	148	hellfire_item_148	8	22500	LIGHTRES	50	50	-
-1058	storm_spire	Storm Spire	148	hellfire_item_148	8	22500	LIGHTDAM	2	8	-
-1058	storm_spire	Storm Spire	148	hellfire_item_148	8	22500	STR	10	10	-
-1058	storm_spire	Storm Spire	148	hellfire_item_148	8	22500	MAG_CURSE	10	10	-
-1059	gleamsong	Gleamsong	149	hellfire_item_149	8	6520	MANA	25	25	-
-1059	gleamsong	Gleamsong	149	hellfire_item_149	8	6520	STR_CURSE	3	3	-
-1059	gleamsong	Gleamsong	149	hellfire_item_149	8	6520	VIT_CURSE	3	3	-
-1059	gleamsong	Gleamsong	149	hellfire_item_149	8	6520	SPELL	10	76	-
-1060	thundercall	Thundercall	150	hellfire_item_150	14	22250	TOHIT	35	35	-
-1060	thundercall	Thundercall	150	hellfire_item_150	14	22250	LIGHTDAM	1	10	-
-1060	thundercall	Thundercall	150	hellfire_item_150	14	22250	SPELL	3	76	-
-1060	thundercall	Thundercall	150	hellfire_item_150	14	22250	LIGHTRES	30	30	-
-1060	thundercall	Thundercall	150	hellfire_item_150	14	22250	LIGHT	2	2	-
-1061	the_protector	The Protector	149	hellfire_item_149	16	17240	VIT	5	5	THE_PROTECTOR
-1061	the_protector	The Protector	149	hellfire_item_149	16	17240	GETHIT	5	5	THE_PROTECTOR
-1061	the_protector	The Protector	149	hellfire_item_149	16	17240	SETAC	40	40	THE_PROTECTOR
-1061	the_protector	The Protector	149	hellfire_item_149	16	17240	SPELL	2	86	THE_PROTECTOR
-1061	the_protector	The Protector	149	hellfire_item_149	16	17240	THORNS	1	3	THE_PROTECTOR
-1062	naj_s_puzzler	Naj's Puzzler	147	hellfire_item_147	18	34000	MAG	20	20	-
-1062	naj_s_puzzler	Naj's Puzzler	147	hellfire_item_147	18	34000	DEX	10	10	-
-1062	naj_s_puzzler	Naj's Puzzler	147	hellfire_item_147	18	34000	ALLRES	20	20	-
-1062	naj_s_puzzler	Naj's Puzzler	147	hellfire_item_147	18	34000	SPELL	23	57	-
-1062	naj_s_puzzler	Naj's Puzzler	147	hellfire_item_147	18	34000	LIFE_CURSE	25	25	-
-1063	mindcry	Mindcry	151	hellfire_item_151	20	41500	MAG	15	15	-
-1063	mindcry	Mindcry	151	hellfire_item_151	20	41500	SPELL	13	69	-
-1063	mindcry	Mindcry	151	hellfire_item_151	20	41500	ALLRES	15	15	-
-1063	mindcry	Mindcry	151	hellfire_item_151	20	41500	SPLLVLADD	1	1	-
-1064	rod_of_onan	Rod of Onan	148	hellfire_item_148	22	44167	SPELL	21	50	-
-1064	rod_of_onan	Rod of Onan	148	hellfire_item_148	22	44167	DAMP	100	100	-
-1064	rod_of_onan	Rod of Onan	148	hellfire_item_148	22	44167	ATTRIBS	5	5	-
+1056	staff_of_shadows	Staff of Shadows	147	long_staff	2	1250	MAG_CURSE	10	10	-
+1056	staff_of_shadows	Staff of Shadows	147	long_staff	2	1250	TOHIT	10	10	-
+1056	staff_of_shadows	Staff of Shadows	147	long_staff	2	1250	DAMP	60	60	-
+1056	staff_of_shadows	Staff of Shadows	147	long_staff	2	1250	LIGHT_CURSE	2	2	-
+1056	staff_of_shadows	Staff of Shadows	147	long_staff	2	1250	FASTATTACK	1	1	-
+1057	immolator	Immolator	147	long_staff	4	3900	FIRERES	20	20	-
+1057	immolator	Immolator	147	long_staff	4	3900	FIREDAM	4	4	-
+1057	immolator	Immolator	147	long_staff	4	3900	MANA	10	10	-
+1057	immolator	Immolator	147	long_staff	4	3900	VIT_CURSE	5	5	-
+1058	storm_spire	Storm Spire	148	war_staff	8	22500	LIGHTRES	50	50	-
+1058	storm_spire	Storm Spire	148	war_staff	8	22500	LIGHTDAM	2	8	-
+1058	storm_spire	Storm Spire	148	war_staff	8	22500	STR	10	10	-
+1058	storm_spire	Storm Spire	148	war_staff	8	22500	MAG_CURSE	10	10	-
+1059	gleamsong	Gleamsong	149	short_staff	8	6520	MANA	25	25	-
+1059	gleamsong	Gleamsong	149	short_staff	8	6520	STR_CURSE	3	3	-
+1059	gleamsong	Gleamsong	149	short_staff	8	6520	VIT_CURSE	3	3	-
+1059	gleamsong	Gleamsong	149	short_staff	8	6520	SPELL	10	76	-
+1060	thundercall	Thundercall	150	composite_staff	14	22250	TOHIT	35	35	-
+1060	thundercall	Thundercall	150	composite_staff	14	22250	LIGHTDAM	1	10	-
+1060	thundercall	Thundercall	150	composite_staff	14	22250	SPELL	3	76	-
+1060	thundercall	Thundercall	150	composite_staff	14	22250	LIGHTRES	30	30	-
+1060	thundercall	Thundercall	150	composite_staff	14	22250	LIGHT	2	2	-
+1061	the_protector	The Protector	149	short_staff	16	17240	VIT	5	5	THE_PROTECTOR
+1061	the_protector	The Protector	149	short_staff	16	17240	GETHIT	5	5	THE_PROTECTOR
+1061	the_protector	The Protector	149	short_staff	16	17240	SETAC	40	40	THE_PROTECTOR
+1061	the_protector	The Protector	149	short_staff	16	17240	SPELL	2	86	THE_PROTECTOR
+1061	the_protector	The Protector	149	short_staff	16	17240	THORNS	1	3	THE_PROTECTOR
+1062	naj_s_puzzler	Naj's Puzzler	147	long_staff	18	34000	MAG	20	20	-
+1062	naj_s_puzzler	Naj's Puzzler	147	long_staff	18	34000	DEX	10	10	-
+1062	naj_s_puzzler	Naj's Puzzler	147	long_staff	18	34000	ALLRES	20	20	-
+1062	naj_s_puzzler	Naj's Puzzler	147	long_staff	18	34000	SPELL	23	57	-
+1062	naj_s_puzzler	Naj's Puzzler	147	long_staff	18	34000	LIFE_CURSE	25	25	-
+1063	mindcry	Mindcry	151	quarter_staff	20	41500	MAG	15	15	-
+1063	mindcry	Mindcry	151	quarter_staff	20	41500	SPELL	13	69	-
+1063	mindcry	Mindcry	151	quarter_staff	20	41500	ALLRES	15	15	-
+1063	mindcry	Mindcry	151	quarter_staff	20	41500	SPLLVLADD	1	1	-
+1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	SPELL	21	50	-
+1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	DAMP	100	100	-
+1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	ATTRIBS	5	5	-
 1065	helm_of_spirits	Helm of Spirits	152	hellfire_item_152	1	7525	STEALLIFE	5	5	HELM_OF_SPIRITS
 1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	MANA	30	30	THINKING_CAP
 1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	SPLLVLADD	2	2	THINKING_CAP

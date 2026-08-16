@@ -41,11 +41,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 144	flail	1	7810	7810	2	12	0	36	36	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	30	0	0	142	0	0	None	Flail	Flail	FLAIL	10	1	false			0	0
 145	morning_star	1	6850	6850	1	10	0	40	40	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	26	0	0	138	0	0	None	Morning Star	Morning Star	MORNING_STAR	5	1	false			0	0
 146	war_hammer	1	600	600	5	9	0	50	50	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	40	0	0	139	0	0	None	War Hammer	War Hammer	WAR_HAMMER	5	1	false			0	0
-147	hellfire_item_147	10	100	100	4	8	0	35	35	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	-	-	-	6	1	false			0	0
-148	hellfire_item_148	10	1500	1500	8	16	0	75	75	1	3	1	Staff,TwoHanded	2	1	0	0		0	30	0	0	156	0	0	None	-	-	-	5	1	false			0	0
-149	hellfire_item_149	10	30	30	1	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	-	-	-	4	1	false			0	0
-150	hellfire_item_150	10	500	500	5	10	0	45	45	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	154	0	0	None	-	-	-	9	1	false			0	0
-151	hellfire_item_151	10	1000	1000	6	12	0	55	55	1	3	1	Staff,TwoHanded	2	1	0	0		0	20	0	0	155	0	0	None	-	-	-	12	1	false			0	0
+147	long_staff	10	100	100	4	8	0	35	35	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	Long Staff	Long Staff	LONG_STAFF	6	1	false			0	0
+148	war_staff	10	1500	1500	8	16	0	75	75	1	3	1	Staff,TwoHanded	2	1	0	0		0	30	0	0	156	0	0	None	War Staff	War Staff	WAR_STAFF	5	1	false			0	0
+149	short_staff	10	30	30	1	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	Short Staff	Short Staff	SHORT_STAFF	4	1	false			0	0
+150	composite_staff	10	500	500	5	10	0	45	45	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	154	0	0	None	Composite Staff	Composite Staff	COMPOSITE_STAFF	9	1	false			0	0
+151	quarter_staff	10	1000	1000	6	12	0	55	55	1	3	1	Staff,TwoHanded	2	1	0	0		0	20	0	0	155	0	0	None	Quarter Staff	Quarter Staff	SHORT_STAFF	12	1	false			0	0
 152	hellfire_item_152	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	51	0	0	None	-	-	-	12	1	false			4	4
 153	hellfire_item_153	7	25	25	0	0	4	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	50	0	0	None	-	-	-	8	1	false			4	4
 154	hellfire_item_154	7	400	400	0	0	15	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	54	0	0	None	-	-	-	1	1	false			15	15
