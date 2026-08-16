@@ -41,6 +41,9 @@ Status date: 2026-08-16
 - All 22 checked-in base and Hellfire replay fixtures now bind the active
   content-manifest identities; the full 307-test server assembly passes again.
 
+- Host shutdown now disposes the active authoritative adapter as well as
+  drained retired generations, closing the ruleset lifecycle ownership gap.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

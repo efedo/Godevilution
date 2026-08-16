@@ -161,6 +161,7 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
         operationBarrier.EnterWriteLock();
         try {
             DisposeRetiredAdaptersCore();
+            disposeAdapter(rulesets.Active.Target);
         } finally {
             operationBarrier.ExitWriteLock();
             operationBarrier.Dispose();

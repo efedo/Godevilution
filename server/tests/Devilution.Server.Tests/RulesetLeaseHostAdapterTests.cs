@@ -223,6 +223,7 @@ public sealed class RulesetLeaseHostAdapterTests
         adapter.Dispose();
 
         Assert.True(initial.Disposed);
+        Assert.True(replacement.Disposed);
         Assert.Throws<ObjectDisposedException>(
             () => adapter.ExportSessionState("session"));
     }

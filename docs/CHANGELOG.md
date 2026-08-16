@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Refresh all 22 checked-in base and Hellfire replay fixture manifest hashes to
   the active content identities, restoring the full server replay gate.
 
+- Dispose the active authoritative adapter during host shutdown, completing
+  safe lifecycle ownership alongside retired-generation disposal.
+
 - Reject impossible authoritative player-resource and monster-vitality bounds
   at the Godot protocol boundary before presentation consumes snapshots.
 

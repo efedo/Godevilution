@@ -158,8 +158,9 @@ candidate, and updates the handshake identity only after migration succeeds.
 Generation leases keep replaced activations alive until all in-flight
 operations release them; the host drains and disposes those targets through its
 injected disposal policy.
-Server shutdown also disposes the leased wrapper itself, releasing its
-operation barrier after draining any remaining retired generation.
+Server shutdown also disposes the leased wrapper itself, draining any remaining
+retired generation and disposing the active target before releasing its
+operation barrier.
 
 Snapshot hashing treats static catalog portals as content rather than mutable
 simulation state, preserving legacy replay vectors. Owned, expiring portals are
