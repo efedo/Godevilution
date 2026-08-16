@@ -627,6 +627,12 @@ references are validated in `items.tsv`; the legacy parser now preserves the
 native 21/22 scroll IDs. Identify scrolls remain legacy until their dual-role
 class-ability identity has an explicit item-action contract.
 
+Schema 1.267 adds explicit item-action metadata for the two native Identify
+scroll rows. The server keeps the Bard's Identify ability as a separate class
+capability, while consumable Identify requests carry an authoritative source
+item reference and consume the validated scroll after identifying a magical
+target.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
