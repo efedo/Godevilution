@@ -416,8 +416,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var setLevelNamesTable)
             ? AuthoritativeSetLevelNameCatalog.LoadTsv(
                 setLevelNamesTable.SourcePath,
-                setLevelNamesTable.ToCanonicalTsv())
+                setLevelNamesTable.ToCanonicalTsv(),
+                stableIds)
             : null;
+        if (stableIds is not null && setLevelNames is not null)
+            stableIds.ValidateReferences(
+                "set_level",
+                setLevelId => setLevelId <= int.MaxValue
+                    && setLevelNames.TryGet((int)setLevelId, out _));
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,

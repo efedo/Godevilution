@@ -63,7 +63,11 @@ public sealed class AuthoritativeQuestTypeCatalog
                 row.RequiredInt32("single_player_level"),
                 row.RequiredInt32("multiplayer_level"),
                 OptionalText(row, "level_type"),
-                row.OptionalInt32("set_level", 0),
+                AuthoritativeSetLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "set_level",
+                    "set_level_symbol"),
                 ParseFlag(row, "single_player_only")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             }));

@@ -92,3 +92,12 @@ class	barbarian	5
 level	town	0
 level	cathedral	1
 level	catacombs	2
+set_level	SL_NONE	0
+set_level	SL_SKELKING	1
+set_level	SL_BONECHAMB	2
+set_level	SL_MAZE	3
+set_level	SL_POISONWATER	4
+set_level	SL_VILEBETRAYER	5
+set_level	SL_ARENA_CHURCH	6
+set_level	SL_ARENA_HELL	7
+set_level	SL_ARENA_CIRCLE_OF_LIFE	8

@@ -46,12 +46,13 @@ public sealed class AuthoritativeSetLevelNameCatalog
 
     public static AuthoritativeSetLevelNameCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeSetLevelNameCatalog(table.Rows.Select(row =>
             new AuthoritativeSetLevelName(
-                row.RequiredInt32("set_level_id"),
+                AuthoritativeSetLevelIdentity.Resolve(row, stableIds),
                 row.Required("symbol"),
                 OptionalText(row, "display_name"))));
     }

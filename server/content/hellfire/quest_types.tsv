@@ -1,9 +1,9 @@
-quest_id	quest_symbol	native_quest_id	name	single_player_level	multiplayer_level	level_type	set_level	single_player_only
-3017	grave_matters	16	Grave Matters	17	17		0	0
-3018	farmers_orchard	17	Farmer's Orchard	9	9		0	0
-3019	little_girl	18	Little Girl	17	-1		0	1
-3020	wandering_trader	19	Wandering Trader	21	-1		0	1
-3021	defiler	20	The Defiler	17	17		0	0
-3022	na_krul	21	Na-Krul	21	21		0	0
-3023	cornerstone	22	Cornerstone of the World	21	-1		0	1
-3024	jerseys_jersey	23	The Jersey's Jersey	9	9		0	0
+quest_id	quest_symbol	native_quest_id	name	single_player_level	multiplayer_level	level_type	set_level	set_level_symbol	single_player_only
+3017	grave_matters	16	Grave Matters	17	17		0	SL_NONE	0
+3018	farmers_orchard	17	Farmer's Orchard	9	9		0	SL_NONE	0
+3019	little_girl	18	Little Girl	17	-1		0	SL_NONE	1
+3020	wandering_trader	19	Wandering Trader	21	-1		0	SL_NONE	1
+3021	defiler	20	The Defiler	17	17		0	SL_NONE	0
+3022	na_krul	21	Na-Krul	21	21		0	SL_NONE	0
+3023	cornerstone	22	Cornerstone of the World	21	-1		0	SL_NONE	1
+3024	jerseys_jersey	23	The Jersey's Jersey	9	9		0	SL_NONE	0

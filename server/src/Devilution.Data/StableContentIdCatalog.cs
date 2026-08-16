@@ -20,10 +20,11 @@ public sealed class StableContentIdCatalog
                 || string.IsNullOrWhiteSpace(entry.Symbol)
                 || (entry.NumericId == 0
                     && !string.Equals(entry.Kind, "class", StringComparison.Ordinal)
-                    && !string.Equals(entry.Kind, "level", StringComparison.Ordinal)))
+                    && !string.Equals(entry.Kind, "level", StringComparison.Ordinal)
+                    && !string.Equals(entry.Kind, "set_level", StringComparison.Ordinal)))
                 throw new InvalidDataException(
                     "Stable content IDs require non-empty kind/symbol values and a non-zero numeric ID, "
-                    + "except for native class and level namespaces where ID zero is valid.");
+                    + "except for native class, level, and set-level namespaces where ID zero is valid.");
             if (!bySymbol.TryAdd((entry.Kind, entry.Symbol), entry.NumericId))
                 throw new InvalidDataException($"Stable content symbol '{entry.Kind}:{entry.Symbol}' is duplicated.");
             if (!byId.TryAdd((entry.Kind, entry.NumericId), entry.Symbol))
