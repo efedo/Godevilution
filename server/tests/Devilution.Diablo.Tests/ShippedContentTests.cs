@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.263.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.264.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -54,9 +54,13 @@ public sealed class ShippedContentTests
         var composedStableIds = StableContentIdCatalog.LoadTsv(
             "content_ids.tsv",
             composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
+        var composedCursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            composed.GetRequiredTable("item_cursor_graphics.tsv").ToCanonicalTsv());
         var composedItems = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
             composed.GetRequiredTable("items.tsv").ToCanonicalTsv(),
+            cursorCatalog: composedCursorCatalog,
             stableIds: composedStableIds);
         var composedItemIds = composedStableIds.Entries
             .Where(entry => entry.Kind == "item")
@@ -66,7 +70,15 @@ public sealed class ShippedContentTests
         Assert.All(composedItems.Definitions, definition =>
             Assert.False(string.IsNullOrWhiteSpace(definition.StableSymbol)));
         composedStableIds.ValidateReferences("item", id => composedItems.TryGet(id, out _));
-        Assert.Equal("hellfire_staff_charged_bolt", composedItems.GetRequired(112).StableSymbol);
+        var hellfireStaff = composedItems.GetRequired(112);
+        Assert.Equal("hellfire_staff_charged_bolt", hellfireStaff.StableSymbol);
+        Assert.Equal("Short Staff of Charged Bolt", hellfireStaff.Name);
+        Assert.Equal("Short Staff of Charged Bolt", hellfireStaff.IdentifiedName);
+        Assert.Equal(109, hellfireStaff.NativeCursorGraphic);
+        Assert.Equal(1, hellfireStaff.SpellId);
+        Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, hellfireStaff.SpellSourceKind);
+        Assert.Contains("Staff", hellfireStaff.GenerationTags, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains("TwoHanded", hellfireStaff.GenerationTags, StringComparer.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -1062,7 +1074,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.263.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.264.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

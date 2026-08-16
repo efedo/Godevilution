@@ -6,7 +6,7 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2104	brown_suit	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	46	0	0	None	Brown Suit	Brown Suit	BROWN_SUIT	0	0	false			0	0
 2105	grey_suit	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	47	0	0	None	Grey Suit	Grey Suit	GREY_SUIT	0	0	false			0	0
 111	the_undead_crown	7	16650	16650	0	0	15	50	50	1	1	1	Armor,Helmet	4	2	28	0		2	0	0	0	7	0	0	None	The Undead Crown	The Undead Crown	HELM	0	0	false			15	15
-112	hellfire_staff_charged_bolt	10	210	210	2	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	23	1		0	0	17	0	166	40	40	ChargedItem	-	-	-	1	0	false			0	0
+112	hellfire_staff_charged_bolt	10	210	210	2	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	23	1	firebolt	0	0	17	0	166	40	40	ChargedItem	Short Staff of Charged Bolt	Short Staff of Charged Bolt	SHORT_STAFF	1	0	false			0	0
 113	hellfire_ring_base	12	8000	8000	0	0	0	0	0	1	1	1	Misc,Ring	5	3	26	0		0	0	0	0	157	0	0	None	Empyrean Band	Empyrean Band	RING	10	1	false			0	0
 114	optic_amulet	13	9750	9750	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	11	0	0	0	None	Optic Amulet	Optic Amulet	AMULET	1	1	true			0	0
 115	ring_of_truth	12	9100	9100	0	0	0	0	0	1	1	1	Misc,Ring	5	3	26	0		0	0	0	12	0	0	0	None	Ring of Truth	Ring of Truth	RING	1	1	true			0	0
