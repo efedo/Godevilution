@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.252.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.253.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.252.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.253.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1597,6 +1597,26 @@ public sealed class ShippedContentTests
             hellfireItems.GetRequired(116).StableSymbol,
             hellfireItems.GetRequired(116).Name,
             hellfireItems.GetRequired(116).NativeCursorGraphic));
+        Assert.Equal(("veil_of_steel", "Veil of Steel", 85), (
+            hellfireItems.GetRequired(117).StableSymbol,
+            hellfireItems.GetRequired(117).Name,
+            hellfireItems.GetRequired(117).NativeCursorGraphic));
+        Assert.Equal(("arkaine_s_valor", "Arkaine's Valor", 157), (
+            hellfireItems.GetRequired(118).StableSymbol,
+            hellfireItems.GetRequired(118).Name,
+            hellfireItems.GetRequired(118).NativeCursorGraphic));
+        Assert.Equal(("griswold_s_edge", "Griswold's Edge", 61), (
+            hellfireItems.GetRequired(119).StableSymbol,
+            hellfireItems.GetRequired(119).Name,
+            hellfireItems.GetRequired(119).NativeCursorGraphic));
+        Assert.Equal(("bovine_plate", "Bovine Plate", 226), (
+            hellfireItems.GetRequired(120).StableSymbol,
+            hellfireItems.GetRequired(120).Name,
+            hellfireItems.GetRequired(120).NativeCursorGraphic));
+        Assert.Equal(("butcher_s_cleaver", "The Butcher's Cleaver", 106), (
+            hellfireItems.GetRequired(121).StableSymbol,
+            hellfireItems.GetRequired(121).Name,
+            hellfireItems.GetRequired(121).NativeCursorGraphic));
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
