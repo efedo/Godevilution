@@ -185,6 +185,10 @@ Status date: 2026-08-16
   native speed-16, lifetime-256 transport values, removing that fallback from
   the active base pack while preserving compatibility for older packs.
 
+- The shipped Acid and AcidUnique mappings now explicitly carry native
+  projectile speed 16; their validated lifetime and puddle terms remain
+  authoritative, while older rows retain compatibility fallbacks.
+
 - Nova and Immolation controllers now consume their validated
   `nova_projectile_count` and `immolation_projectile_count` fields in native
   radial emission order; the shipped rows retain the native 36-projectile

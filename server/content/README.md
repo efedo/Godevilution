@@ -554,6 +554,9 @@ impact path and applies the target's matching resistance; omitted values retain
 the native physical arrow behavior. Mapped arrow rows also keep ranged-only
 monsters from falling through to adjacent melee when the content label is
 changed.
+The shipped `Acid` and `AcidUnique` mappings also carry the native speed-16
+projectile transport explicitly; older rows retain the compatibility speed
+fallback while their validated lifetime and puddle terms remain authoritative.
 Validated `SnakeCharge` missile mappings select the native two-tile charge
 controller and server-owned collision path independently of the `Snake` label
 or `Rhino` missile name. Outside the charge boundary, the same mapping now
