@@ -125,6 +125,10 @@ Status date: 2026-08-16
 - Mapped Bat and Snake charge projectiles now consume their validated missile
   `spell_id`, while older mappings retain the native spell identity `1`.
 
+- Snake charge collision damage now applies the mapped missile `damage_type`
+  through player resistance, while older mappings retain native Physical
+  damage behavior.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

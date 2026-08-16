@@ -1314,7 +1314,8 @@ compatibility tuple.
 
 Schema 1.321 makes the optional `damage_type` authoritative for mapped Bat
 and Snake charge projectiles. Shipped charge rows carry `Physical`; older
-rows that omit the value retain the native Physical fallback.
+rows that omit the value retain the native Physical fallback. Snake charge
+collisions also apply the mapped type through player resistance.
 
 Schema 1.322 makes the optional `spell_id`/`spell_symbol` authoritative for
 mapped Bat and Snake charge projectiles. Shipped rows carry spell identity 1;

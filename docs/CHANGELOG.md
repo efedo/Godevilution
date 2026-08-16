@@ -8,6 +8,9 @@ All notable changes to this fork are documented below.
   post-melee Lightning mappings, preserving the configured random-damage
   fallback when older mappings omit a fixed value.
 
+- Apply mapped Snake charge `damage_type` through the authoritative player
+  resistance path, preserving native Physical damage for older rows.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.
