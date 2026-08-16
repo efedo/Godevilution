@@ -152,4 +152,27 @@ public sealed class StoreCatalogTests
             invalidStores.ValidateSpellReferences(spells));
         Assert.Contains("Store 1 slot 0 references unknown spell 8", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void DirectStoreSpellReferencesResolveStableSymbolsAndRejectMismatches()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "fireball", 7),
+        ]);
+        var validStores = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\tspell_id\tspell_symbol\n"
+                + "1\t0\t42\t75\t7\tfireball\n",
+            stableIds: stableIds);
+
+        Assert.True(validStores.TryGetItem(1, 0, out var item));
+        Assert.Equal(7, item.State.SpellId);
+
+        var exception = Assert.Throws<InvalidDataException>(() => StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\tspell_id\tspell_symbol\n"
+                + "1\t0\t42\t75\t8\tfireball\n",
+            stableIds: stableIds));
+        Assert.Contains("maps spell 8 to symbol 'fireball'", exception.Message, StringComparison.Ordinal);
+    }
 }
