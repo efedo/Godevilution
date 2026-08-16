@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.236 extends stable item symbols to item combinations, catalog-backed
+monster drops, and the PvP-ear combat rule. Numeric-only references remain
+compatible while active rows reject symbolic/numeric mismatches.
+
 Schema 1.235 extends the stable `item` namespace to store stock, unique-item
 base references, quest completion rewards, and item quest effects. These links
 cross-check optional symbols against retained numeric IDs while numeric-only
