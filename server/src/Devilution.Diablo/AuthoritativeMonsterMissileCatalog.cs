@@ -234,6 +234,22 @@ public sealed class AuthoritativeMonsterMissileCatalog
         }
     }
 
+    /** Validates monster-specific selectors against the active monster catalog. */
+    public void ValidateMonsterSelectorReferences(AuthoritativeMonsterTypeCatalog monsterTypes)
+    {
+        ArgumentNullException.ThrowIfNull(monsterTypes);
+        var activeNativeAis = monsterTypes.Definitions
+            .Select(definition => definition.NativeAi)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var definition in Definitions.Where(definition =>
+                     definition.MonsterId != 0 && activeNativeAis.Contains(definition.NativeAi))) {
+            if (!monsterTypes.TryGet(definition.MonsterId, out _))
+                throw new InvalidDataException(
+                    $"Monster missile '{definition.NativeAi}'/{definition.MissileId} "
+                    + $"references unknown monster type {definition.MonsterId}.");
+        }
+    }
+
     public static AuthoritativeMonsterMissileCatalog LoadTsv(
         string sourcePath,
         string contents)

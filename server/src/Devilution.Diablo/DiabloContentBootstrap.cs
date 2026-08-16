@@ -307,8 +307,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             : null;
         if (monsterMissiles is not null && spells is not null)
             monsterMissiles.ValidateSpellReferences(spells);
-        if (monsterMissiles is not null && monsterTypes is not null)
+        if (monsterMissiles is not null && monsterTypes is not null) {
+            monsterMissiles.ValidateMonsterSelectorReferences(monsterTypes);
             monsterMissiles.ValidateSpawnMonsterReferences(monsterTypes);
+        }
         var monsters = content.TryGetTable("monsters.tsv", out var monstersTable)
             ? AuthoritativeMonsterCatalog.LoadTsv(
                 monstersTable.SourcePath,
