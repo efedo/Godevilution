@@ -106,8 +106,13 @@ Status date: 2026-08-16
   mappings.
 
 - AiRangedAvoidance adjacent attack admission now uses optional missile fields
-  for its validated base and intelligence scale, preserving the native
-  6,000/1,000-per-intelligence band and Acid half-band for older mappings.
+  for its validated base, intelligence scale, and divisor, preserving the
+  native 6,000/1,000-per-intelligence band and Acid half-band for older
+  mappings.
+
+- Familiar post-melee Lightning dispatch now uses an explicit validated
+  `post_melee_missile` mapping flag, while older mappings retain the
+  `MonsterMagic`/`Lightning` compatibility tuple.
 
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
@@ -1388,9 +1393,17 @@ Status date: 2026-08-16
   bound through optional missile data, retaining the native `GenerateRnd(10)`
   fallback for older mappings.
 
-- Schema 1.319 externalizes AiRangedAvoidance's adjacent attack-admission band
-  and divisor through optional missile data, retaining the native
-  6,000/1,000 fallback and Acid half-band for older mappings.
+- Schema 1.318 externalizes AiRangedAvoidance's adjacent attack-admission base
+  and intelligence scale through optional missile data, retaining the native
+  6,000/1,000 fallback for older mappings.
+
+- Schema 1.319 externalizes AiRangedAvoidance's adjacent attack-admission
+  divisor through optional missile data, retaining the native Acid half-band
+  for older mappings.
+
+- Schema 1.320 externalizes Familiar's post-melee missile identity through an
+  optional `post_melee_missile` field, retaining the legacy Lightning-label
+  fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
