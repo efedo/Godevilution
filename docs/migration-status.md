@@ -91,6 +91,10 @@ Status date: 2026-08-16
   separate validated monster-type fields, preserving their distinct native
   intelligence-scaled and fixed-base formulas.
 
+- Counselor failed-ranged-admission movement chance is now a validated
+  `counselor_move_chance_percent` monster-type field, preserving the native
+  30-percent branch with compatibility fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1226,6 +1230,10 @@ Status date: 2026-08-16
 - Schema 1.300 externalizes Snake's distant-delay admission chance through
   optional `SnakeCharge` missile fields, retaining the native
   35-minus-two-times-intelligence fallback for older mappings.
+
+- Schema 1.301 externalizes Counselor's failed-ranged-admission movement
+  chance through optional `counselor_move_chance_percent` monster-type data,
+  retaining the native 30-percent fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
