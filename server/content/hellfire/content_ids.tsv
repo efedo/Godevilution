@@ -1,4 +1,6 @@
 kind	symbol	numeric_id
+item	cathedral_map	43
+item	hellfire_staff_charged_bolt	112
 quest	grave_matters	3017
 quest	farmers_orchard	3018
 quest	little_girl	3019

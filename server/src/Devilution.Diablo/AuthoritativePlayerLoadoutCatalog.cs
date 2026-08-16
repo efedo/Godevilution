@@ -89,6 +89,14 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         "location",
         "slot",
     ];
+    private static readonly IReadOnlyList<string> SymbolicItemColumns = [
+        "class_id",
+        "item_order",
+        "item_id",
+        "item_symbol",
+        "location",
+        "slot",
+    ];
 
     private readonly AuthoritativePlayerClassCatalog playerClasses;
     private readonly AuthoritativeItemCatalog items;
@@ -298,10 +306,13 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         var hasSymbols = loadoutTable.Columns.SequenceEqual(
             SymbolicLoadoutColumns,
             StringComparer.Ordinal);
+        var hasItemSymbols = itemTable.Columns.SequenceEqual(
+            SymbolicItemColumns,
+            StringComparer.Ordinal);
         if (!hasSymbols
             && !hasAbilityKind
             && !loadoutTable.Columns.SequenceEqual(LoadoutColumns, StringComparer.Ordinal)
-            || !itemTable.Columns.SequenceEqual(ItemColumns, StringComparer.Ordinal)) {
+            || !hasItemSymbols && !itemTable.Columns.SequenceEqual(ItemColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
                 "Player-loadout tables do not match their required ordered schemas.");
         }
@@ -311,7 +322,9 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 ClassId = row.RequiredUInt32("class_id"),
                 Item = new AuthoritativePlayerLoadoutItemDefinition(
                     row.RequiredUInt32("item_order"),
-                    row.RequiredUInt32("item_id"),
+                    hasItemSymbols
+                        ? AuthoritativeItemIdentity.Resolve(row, stableIds)
+                        : row.RequiredUInt32("item_id"),
                     ParseLocation(row),
                     row.RequiredUInt32("slot")),
             })

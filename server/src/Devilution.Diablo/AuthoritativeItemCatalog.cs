@@ -18,6 +18,9 @@ public sealed record AuthoritativeItemDefinition(
     int InventoryHeight,
     bool Identified)
 {
+    /** Stable content symbol retained alongside the numeric compatibility ID. */
+    public string StableSymbol { get; init; } = string.Empty;
+
     /** Explicit content-owned classification; null preserves legacy native fallback. */
     public DiabloItemSpellSourceKind? SpellSourceKind { get; init; }
 
@@ -332,7 +335,7 @@ public sealed class AuthoritativeItemCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row => new AuthoritativeItemDefinition(
-            row.RequiredUInt32("item_id"),
+            AuthoritativeItemIdentity.Resolve(row, stableIds),
             row.RequiredInt32("item_type"),
             row.RequiredInt32("value"),
             row.RequiredInt32("identified_value"),
@@ -344,6 +347,7 @@ public sealed class AuthoritativeItemCatalog
             Math.Max(1, row.OptionalInt32("inventory_width", 1)),
             Math.Max(1, row.OptionalInt32("inventory_height", 1)),
             row.OptionalInt32("identified") != 0) {
+                StableSymbol = AuthoritativeItemIdentity.ReadSymbol(row),
                 GenerationTags = row.TryGet("item_tags", out var tags) && !string.IsNullOrWhiteSpace(tags)
                     ? tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                         .ToHashSet(StringComparer.OrdinalIgnoreCase)

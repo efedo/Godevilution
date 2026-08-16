@@ -1,2 +1,2 @@
-class_id	item_order	item_id	location	slot
-2	0	112	Equipment	4
+class_id	item_order	item_id	item_symbol	location	slot
+2	0	112	hellfire_staff_charged_bolt	Equipment	4

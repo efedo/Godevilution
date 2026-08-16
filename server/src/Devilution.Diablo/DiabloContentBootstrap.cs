@@ -223,6 +223,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Active Diablo content must provide items.tsv or itemdat.tsv.");
         }
+        stableIds?.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
         var itemCombinations = content.TryGetTable(
             "item_combinations.tsv",
             out var itemCombinationsTable)

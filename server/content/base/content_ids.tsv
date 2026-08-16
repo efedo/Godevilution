@@ -1,4 +1,17 @@
 kind	symbol	numeric_id
+item	short_sword_starting	100
+item	buckler_starting	101
+item	club_starting	102
+item	short_bow_starting	103
+item	short_staff_charged_bolt_starting	104
+item	potion_healing	105
+item	potion_mana	106
+item	short_staff_starting	107
+item	sword_starting	108
+item	dagger_starting	109
+item	spiked_club_starting	110
+item	short_sword	1
+item	buckler	2
 level	town	1
 level	dungeon	2
 portal	cathedral_entrance	1
