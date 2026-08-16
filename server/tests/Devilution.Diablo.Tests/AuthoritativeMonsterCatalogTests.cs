@@ -1170,6 +1170,30 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void ResolvesStableMonsterUniqueDropSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("unique", "ember_blade", 1001),
+        ]);
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Ember Blade", 7, 1, 3650, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ], uniqueItems: uniques);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_unique_item_id\tdrop_unique_item_symbol\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t3650\t\tember_blade\t1\n",
+            items,
+            uniques,
+            stableIds: stableIds);
+
+        Assert.Equal(1001, Assert.Single(catalog.Targets).Drop!.State.UniqueId);
+        Assert.Equal(1001U, Assert.Single(catalog.DropDefinitions).DropUniqueItemId);
+    }
+
+    [Fact]
     public void ExposesValidatedProceduralDropPolicyByMonsterType()
     {
         var items = new AuthoritativeItemCatalog([

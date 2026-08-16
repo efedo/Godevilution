@@ -925,6 +925,29 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void StoreRowsResolveStableUniqueItemSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("unique", "ember_blade", 1001),
+        ]);
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Ember Blade", 7, 1, 3650, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ], uniqueItems: uniques);
+        var stores = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\tunique_item_id\tunique_item_symbol\titem_level\n"
+                + "1\t0\t42\t3650\t\tember_blade\t1\n",
+            items,
+            uniques,
+            stableIds);
+
+        Assert.Equal(1001, Assert.Single(stores.GetItems(1)).State.UniqueId);
+    }
+
+    [Fact]
     public void UniqueItemBaseReferencesMustResolveInTheActiveCatalog()
     {
         var items = new AuthoritativeItemCatalog([
