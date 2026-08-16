@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.251.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.252.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.251.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.252.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1577,6 +1577,26 @@ public sealed class ShippedContentTests
         Assert.Equal(2, hellfireItems.GetRequired(1).MinimumMonsterLevel);
         Assert.Equal(0, hellfireItems.GetRequired(1).DropRate);
         Assert.False(hellfireItems.GetRequired(1).Usable);
+        Assert.Equal(("the_undead_crown", "The Undead Crown", 82), (
+            hellfireItems.GetRequired(111).StableSymbol,
+            hellfireItems.GetRequired(111).Name,
+            hellfireItems.GetRequired(111).NativeCursorGraphic));
+        Assert.Equal(("hellfire_ring_base", "Empyrean Band", 12), (
+            hellfireItems.GetRequired(113).StableSymbol,
+            hellfireItems.GetRequired(113).Name,
+            hellfireItems.GetRequired(113).NativeCursorGraphic));
+        Assert.Equal(("optic_amulet", "Optic Amulet", 45), (
+            hellfireItems.GetRequired(114).StableSymbol,
+            hellfireItems.GetRequired(114).Name,
+            hellfireItems.GetRequired(114).NativeCursorGraphic));
+        Assert.Equal(("ring_of_truth", "Ring of Truth", 12), (
+            hellfireItems.GetRequired(115).StableSymbol,
+            hellfireItems.GetRequired(115).Name,
+            hellfireItems.GetRequired(115).NativeCursorGraphic));
+        Assert.Equal(("harlequin_crest", "Harlequin Crest", 81), (
+            hellfireItems.GetRequired(116).StableSymbol,
+            hellfireItems.GetRequired(116).Name,
+            hellfireItems.GetRequired(116).NativeCursorGraphic));
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
