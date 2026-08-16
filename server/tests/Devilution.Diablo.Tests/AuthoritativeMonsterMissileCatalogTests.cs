@@ -169,6 +169,40 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void ValidatesConfiguredMonsterSelectorReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\n"
+                + "Bat\tRhino\tBatCharge\t42\n");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                42, 42, "Bat", 1, 16, 1, 1, 1, 1, 1, 1, 1, 1,
+                false, false, false) { NativeAi = "Bat" },
+        ]);
+
+        catalog.ValidateMonsterSelectorReferences(monsterTypes);
+    }
+
+    [Fact]
+    public void RejectsUnknownConfiguredMonsterSelectorReferences()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\n"
+                + "Bat\tRhino\tBatCharge\t42\n");
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1, 1, "Bat", 1, 16, 1, 1, 1, 1, 1, 1, 1, 1,
+                false, false, false) { NativeAi = "Bat" },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            catalog.ValidateMonsterSelectorReferences(monsterTypes));
+        Assert.Contains("references unknown monster type 42", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidatesConfiguredSpawnMonsterReferences()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

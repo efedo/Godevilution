@@ -375,6 +375,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownMonsterMissileSelector()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var missiles = basePack.Tables.Single(table => table.SourcePath == "monster_missiles.tsv");
+        var invalidMissiles = TsvTable.Parse(
+            missiles.SourcePath,
+            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\n"
+                + "Zombie\tArrow\tMonsterArrow\t9999\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == missiles.SourcePath
+                    ? invalidMissiles
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("references unknown monster type 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
