@@ -117,6 +117,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsRangedAvoidanceMovementBandTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tranged_avoidance_movement_chance_base\tranged_avoidance_movement_chance_intelligence_scale\tranged_avoidance_movement_fresh_chance_bonus\n"
+                + "Magma\tMagmaBall\tMonsterMagic\tRangedAvoidance\t50\t10\t30\n");
+
+        Assert.True(catalog.TryGet("Magma", out var magma));
+        Assert.Equal((50, 10, 30), (
+            magma.RangedAvoidanceMovementChanceBase,
+            magma.RangedAvoidanceMovementChanceIntelligenceScale,
+            magma.RangedAvoidanceMovementFreshChanceBonus));
+    }
+
+    [Fact]
     public void LoadsValidatedRangedPostAttackDelayTuning()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -348,6 +363,9 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedAvoidanceChanceIntelligenceScale);
         Assert.Equal(0, succubus.RangedAvoidanceFarIntelligenceOffset);
         Assert.Equal(0, succubus.RangedAvoidanceMovementChanceModulo);
+        Assert.Equal(0, succubus.RangedAvoidanceMovementChanceBase);
+        Assert.Equal(0, succubus.RangedAvoidanceMovementChanceIntelligenceScale);
+        Assert.Equal(0, succubus.RangedAvoidanceMovementFreshChanceBonus);
         Assert.Equal(0, succubus.RangedRetreatMinimumDistance);
         Assert.Equal(0, succubus.RangedRetreatChanceBase);
         Assert.Equal(0, succubus.RangedRetreatChanceIntelligenceScale);
@@ -685,6 +703,21 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 "BloodStar",
                 AuthoritativeProjectileBehavior.BloodStar) {
                 RangedAvoidanceMovementChanceModulo = 4,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void RejectsRangedAvoidanceMovementBandOnOrdinaryRangedMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar) {
+                RangedAvoidanceMovementChanceBase = 50,
+                RangedAvoidanceMovementChanceIntelligenceScale = 10,
+                RangedAvoidanceMovementFreshChanceBonus = 30,
             },
         ]));
     }

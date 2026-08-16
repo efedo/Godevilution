@@ -7339,6 +7339,7 @@ public sealed class DiabloCombatCommandProcessor
                         player,
                         players,
                         attackSeed,
+                        missile,
                         useRoundWalk: false);
                     if (!moved)
                         monster.StartRangedAvoidanceDelay(
@@ -7388,6 +7389,7 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed,
+                    missile,
                     rangedAvoidanceUsesRoundWalk,
                     rangedAvoidanceRoundWalkTurn);
                 if (!moved)
@@ -7426,6 +7428,7 @@ public sealed class DiabloCombatCommandProcessor
                     player,
                     players,
                     attackSeed,
+                    missile,
                     rangedAvoidanceUsesRoundWalk,
                     rangedAvoidanceRoundWalkTurn);
                 if (!moved)
@@ -7749,11 +7752,26 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
         uint seed,
+        AuthoritativeMonsterMissileDefinition missile,
         bool useRoundWalk,
         int roundWalkTurn = -1)
     {
         if (!useRoundWalk) {
-            var movementChance = GetRangedAvoidanceMovementChance(monster);
+            var movementChanceBase = missile.RangedAvoidanceMovementChanceBase == 0
+                ? 50
+                : missile.RangedAvoidanceMovementChanceBase;
+            var movementChanceIntelligenceScale =
+                missile.RangedAvoidanceMovementChanceIntelligenceScale == 0
+                    ? 10
+                    : missile.RangedAvoidanceMovementChanceIntelligenceScale;
+            var movementFreshChanceBonus = missile.RangedAvoidanceMovementFreshChanceBonus == 0
+                ? 30
+                : missile.RangedAvoidanceMovementFreshChanceBonus;
+            var movementChance = GetRangedAvoidanceMovementChance(
+                monster,
+                movementChanceBase,
+                movementChanceIntelligenceScale,
+                movementFreshChanceBonus);
             var movementRoll = (seed / 100U) % 100U;
             if (movementRoll >= (uint)movementChance) {
                 monster.AdvanceRangedAvoidanceMovementIdle();
@@ -7807,16 +7825,19 @@ public sealed class DiabloCombatCommandProcessor
 
     /** Native AiRangedAvoidance ordinary movement admission across var2 bands. */
     private static int GetRangedAvoidanceMovementChance(
-        AuthoritativeCombatTarget monster)
+        AuthoritativeCombatTarget monster,
+        int chanceBase,
+        int intelligenceScale,
+        int freshChanceBonus)
     {
-        var longIdleChance = 10 * (monster.Intelligence + 5);
+        var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
         var movementChance = monster.RangedAvoidanceMovementIdleTicks == -1
             ? longIdleChance
             : monster.RangedAvoidanceMovementIdleTicks > 20
                 ? longIdleChance
                 : monster.RangedAvoidanceMovementIdleTicks == 0
                     && monster.RangedAvoidanceMovementMode is >= 1 and <= 3
-                    ? longIdleChance + 30
+                    ? longIdleChance + freshChanceBonus
                     : 0;
         return Math.Min(100, movementChance);
     }

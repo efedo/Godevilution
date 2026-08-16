@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.308.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.309.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1228,8 +1228,16 @@ public sealed class ShippedContentTests
             acid.RangedAvoidanceChanceIntelligenceScale,
             acid.RangedAvoidanceFarIntelligenceOffset));
         Assert.Equal(8, acid.RangedAvoidanceMovementChanceModulo);
+        Assert.Equal((50, 10, 30), (
+            acid.RangedAvoidanceMovementChanceBase,
+            acid.RangedAvoidanceMovementChanceIntelligenceScale,
+            acid.RangedAvoidanceMovementFreshChanceBonus));
         Assert.True(activation.MonsterMissiles.TryGet("Magma", out var magmaRangedAvoidance));
         Assert.Equal(4, magmaRangedAvoidance.RangedAvoidanceMovementChanceModulo);
+        Assert.Equal((50, 10, 30), (
+            magmaRangedAvoidance.RangedAvoidanceMovementChanceBase,
+            magmaRangedAvoidance.RangedAvoidanceMovementChanceIntelligenceScale,
+            magmaRangedAvoidance.RangedAvoidanceMovementFreshChanceBonus));
         Assert.True(activation.MonsterMissiles.TryGet("AcidUnique", out var acidUnique));
         Assert.Equal("Acid", acidUnique.MissileId);
         Assert.Equal(AuthoritativeProjectileBehavior.Acid, acidUnique.ProjectileBehavior);
@@ -1324,7 +1332,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.308.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.309.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

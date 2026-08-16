@@ -9549,6 +9549,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesValidatedOrdinaryMovementBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0,
+            rangedAvoidanceMovementIdleTicks: 0,
+            rangedAvoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceMinimumDistance: 2,
+                    RangedAvoidanceFarDistance: 3,
+                    RangedAvoidanceChanceBase: 500,
+                    RangedAvoidanceChanceIntelligenceScale: 500) {
+                    RangedAvoidanceMovementChanceBase = 1,
+                    RangedAvoidanceMovementChanceIntelligenceScale = 1,
+                    RangedAvoidanceMovementFreshChanceBonus = 1,
+                },
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 4,944 ^ 9 ^ 7 = 4,958: the authored fresh-mode band is two
+        // percent, so movement roll 49 must defer instead of using native 80%.
+        processor.AdvanceTick(4_944, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(1, monster.RangedAvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
     public void RangedAvoidanceUsesItsNativeLongIdleMovementBand()
     {
         var monster = new AuthoritativeCombatTarget(
