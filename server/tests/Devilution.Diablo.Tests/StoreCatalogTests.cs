@@ -64,4 +64,35 @@ public sealed class StoreCatalogTests
         Assert.Equal(2, item.State.InventoryWidth);
         Assert.Equal(3, item.State.InventoryHeight);
     }
+
+    [Fact]
+    public void SpellStaffPricingMustResolveInTheActiveSpellCatalog()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0),
+        ]);
+        var validPricing = StoreServicePricing.LoadTsv(
+            "store_services.tsv",
+            "key\tspell_id\tvalue\nspell_staff_cost\t7\t100\n");
+
+        validPricing.ValidateSpellReferences(spells);
+        Assert.Equal(100U, validPricing.GetSpellStaffCost(7));
+
+        var invalidPricing = StoreServicePricing.LoadTsv(
+            "store_services.tsv",
+            "key\tspell_id\tvalue\nspell_staff_cost\t8\t100\n");
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            invalidPricing.ValidateSpellReferences(spells));
+        Assert.Contains("Store service pricing references unknown spell 8", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NegativeSpellStaffPricingIdentitiesAreRejected()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StoreServicePricing.LoadTsv(
+                "store_services.tsv",
+                "key\tspell_id\tvalue\nspell_staff_cost\t-1\t100\n"));
+        Assert.Contains("contains a negative spell -1", exception.Message, StringComparison.Ordinal);
+    }
 }

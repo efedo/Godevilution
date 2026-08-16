@@ -286,6 +286,35 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownStoreSpellPricing()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var pricing = basePack.Tables.Single(table => table.SourcePath == "store_services.tsv");
+        var invalidPricing = TsvTable.Parse(
+            pricing.SourcePath,
+            pricing.ToCanonicalTsv() + "spell_staff_cost\t9999\t100\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == pricing.SourcePath
+                    ? invalidPricing
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Store service pricing references unknown spell 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
