@@ -1990,7 +1990,7 @@ public sealed class AuthoritativeSpellCatalog
             ProjectileCount = row.OptionalInt32("projectile_count", 1),
             ProjectileCountLevelDivisor = row.OptionalInt32("projectile_count_level_divisor"),
             ProjectileBehavior = ParseProjectileBehavior(row),
-            JesterSpellIds = ParseJesterSpellIds(row),
+            JesterSpellIds = ParseJesterSpellIds(row, stableIds),
             RandomMagicDamageDivisor = row.OptionalInt32("random_magic_damage_divisor"),
             RandomDamageRange = row.OptionalInt32("random_damage_range"),
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
@@ -2251,6 +2251,46 @@ public sealed class AuthoritativeSpellCatalog
         if (Enum.TryParse<AuthoritativeDamageType>(value, ignoreCase: true, out var damageType))
             return damageType;
         throw new InvalidDataException($"Spell row {row.LineNumber} contains an unknown damage type '{value}'.");
+    }
+
+    private static IReadOnlyList<uint> ParseJesterSpellIds(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericIds = ParseJesterSpellIds(row);
+        if (!row.TryGet("jester_spell_symbols", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || value == "0")
+            return numericIds;
+
+        var entries = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var symbolicIds = new List<uint>(entries.Length);
+        foreach (var entry in entries) {
+            if (stableIds is null) {
+                if (numericIds.Count == 0)
+                    throw new InvalidDataException(
+                        $"Spell row {row.LineNumber} requires stable spell IDs to resolve Jester symbol '{entry}'.");
+                return numericIds;
+            }
+
+            try {
+                symbolicIds.Add(stableIds.Resolve("spell", entry));
+            } catch (KeyNotFoundException exception) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} references unknown Jester spell symbol '{entry}'.",
+                    exception);
+            }
+        }
+
+        if (numericIds.Count != 0 && numericIds.Count != symbolicIds.Count)
+            throw new InvalidDataException(
+                $"Spell row {row.LineNumber} has {numericIds.Count} Jester spell IDs but "
+                + $"{symbolicIds.Count} Jester spell symbols.");
+        if (numericIds.Count != 0
+            && numericIds.Zip(symbolicIds).Any(pair => pair.First != pair.Second))
+            throw new InvalidDataException(
+                $"Spell row {row.LineNumber} contains mismatched Jester spell IDs and symbols.");
+        return symbolicIds;
     }
 
     private static IReadOnlyList<uint> ParseJesterSpellIds(TsvRow row)
