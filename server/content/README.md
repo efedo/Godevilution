@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.241 extends stable unique identities to optional catalog-backed
+store stock and monster-drop references through `unique_item_symbol` and
+`drop_unique_item_symbol`. Numeric-only references remain compatible while
+active symbols are cross-checked against the unique catalog.
+
 Schema 1.240 adds the stable `unique` namespace. Shipped `unique_items.tsv`
 rows carry a `unique_symbol`, and activation cross-checks those symbols against
 retained numeric IDs before publishing the unique catalog. Numeric-only rows
@@ -1540,7 +1545,7 @@ the complete target header even when they upsert only one row.
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id`/`required_quest_symbol` and `required_quest_completed` gates; endpoints must be in bounds and walkable. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints, validated against the composed world geometry and walkability during activation. |
-| `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; optional `drop_item_symbol` cross-checks catalog-backed drops, and authored levels and positions are validated against active world bounds. |
+| `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; optional `drop_item_symbol` and `drop_unique_item_symbol` cross-check catalog-backed drops, and authored levels and positions are validated against active world bounds. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
@@ -1557,7 +1562,7 @@ the complete target header even when they upsert only one row.
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
 | `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects. |
-| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `item_symbol` and `spell_symbol` cross-checks validated against active item and spell catalogs. |
+| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active item, unique-item, and spell catalogs. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
 | `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item fallback used only when `unique_items.tsv` is absent. |

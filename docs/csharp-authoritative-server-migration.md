@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.241 extends the stable unique namespace to optional store
+`unique_item_symbol` and monster `drop_unique_item_symbol` references. These
+links are cross-checked against retained numeric IDs and the active unique
+catalog, while numeric-only rows remain compatible.
+
 Schema 1.240 adds a stable `unique` namespace. Every shipped normalized
 `unique_items.tsv` row carries a `unique_symbol`; activation cross-checks it
 against the retained numeric ID before publishing the unique catalog, while

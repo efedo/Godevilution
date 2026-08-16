@@ -69,6 +69,10 @@ Status date: 2026-08-16
   `unique` namespace. Activation cross-checks each symbol against its numeric
   ID and validates the complete namespace before publication.
 
+- Optional store unique-item stock and monster unique-drop references now
+  resolve `unique_item_symbol`/`drop_unique_item_symbol` through the stable
+  unique namespace, preserving numeric-only compatibility.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -911,6 +915,10 @@ Status date: 2026-08-16
 
 - Schema 1.235 extends optional item symbols to `stores.tsv`,
   `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
+
+- Schema 1.241 extends stable unique symbols to optional store unique-item
+  stock and monster unique-drop references. Numeric-only links remain
+  compatible while active symbols are validated against the unique catalog.
 
 - Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
   shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
