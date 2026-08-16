@@ -385,6 +385,18 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsSkeletonKingRoundWalkChanceModuloFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_king_round_walk_chance_modulo\n"
+                + "2\t50\tSkeleton King\t4\t4\t9\t140\t140\t70\t6\t16\t0\t0\t1\t1\t0\tSkeletonKing\t4\n");
+
+        var skeletonKing = Assert.Single(catalog.Definitions);
+        Assert.Equal(4, skeletonKing.SkeletonKingRoundWalkChanceModulo);
+    }
+
+    [Fact]
     public void RejectsInvalidGoatMeleeTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -469,6 +481,12 @@ public sealed class AuthoritativeMonsterCatalogTests
                 NativeAi = "Zombie",
                 MegaIntermediateMovementChanceBase = 50,
                 MegaIntermediateMovementChanceIntelligenceScale = 10,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                SkeletonKingRoundWalkChanceModulo = 4,
             },
         ]));
     }

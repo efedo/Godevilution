@@ -159,6 +159,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Mega intermediate-distance movement chance increase per intelligence. */
     public int MegaIntermediateMovementChanceIntelligenceScale { get; init; }
 
+    /** Native SkeletonKing RoundWalk admission modulo for the movement branch. */
+    public int SkeletonKingRoundWalkChanceModulo { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -547,6 +550,10 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.NativeAi != "Mega"
                         || definition.MegaIntermediateMovementChanceBase <= 0
                         || definition.MegaIntermediateMovementChanceIntelligenceScale <= 0)
+                || definition.SkeletonKingRoundWalkChanceModulo is < 0 or > 100
+                || definition.SkeletonKingRoundWalkChanceModulo != 0
+                    && (definition.NativeAi != "SkeletonKing"
+                        || definition.SkeletonKingRoundWalkChanceModulo <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -908,6 +915,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 MegaDelayChanceIntelligenceScale = row.OptionalInt32("mega_delay_chance_intelligence_scale"),
                 MegaIntermediateMovementChanceBase = row.OptionalInt32("mega_intermediate_movement_chance_base"),
                 MegaIntermediateMovementChanceIntelligenceScale = row.OptionalInt32("mega_intermediate_movement_chance_intelligence_scale"),
+                SkeletonKingRoundWalkChanceModulo = row.OptionalInt32("skeleton_king_round_walk_chance_modulo"),
             }));
     }
 

@@ -2234,6 +2234,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingUsesValidatedRoundWalkChanceModulo()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                51,
+                50,
+                "Skeleton King",
+                4,
+                4,
+                9,
+                140,
+                140,
+                70,
+                6,
+                16,
+                0,
+                0,
+                true,
+                true,
+                false) {
+                NativeAi = "SkeletonKing",
+                SkeletonKingSummonMinimumDistance = 3,
+                SkeletonKingSummonChanceBase = 35,
+                SkeletonKingSummonChanceIntelligenceScale = 4,
+                SkeletonKingRoundWalkChanceModulo = 1,
+            },
+        ]);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            monsterId: 51,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7);
+
+        // 101 ^ 9 ^ 7 = 111: movement is admitted and the authored modulo
+        // selects RoundWalk even though the native modulo-four branch misses.
+        processor.AdvanceTick(101, [player]);
+
+        Assert.True(king.IsMoving);
+        Assert.NotEqual((5, 6), (king.FuturePositionX, king.FuturePositionY));
+    }
+
+    [Fact]
     public void SkeletonKingDefersWhenItsNativeRandomWalkCandidatesAreBlocked()
     {
         var king = new AuthoritativeCombatTarget(

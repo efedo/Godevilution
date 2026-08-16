@@ -6135,7 +6135,13 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        if (distance >= 3 && (actionSeed / 100U) % 4U == 0U) {
+        var roundWalkChanceModulo = 4;
+        if (monsterTypes?.TryGet(target.MonsterId, out var skeletonKingDefinition) == true
+            && skeletonKingDefinition.SkeletonKingRoundWalkChanceModulo > 0) {
+            roundWalkChanceModulo = skeletonKingDefinition.SkeletonKingRoundWalkChanceModulo;
+        }
+        if (distance >= 3
+            && (actionSeed / 100U) % (uint)roundWalkChanceModulo == 0U) {
             var roundWalk = FindNativeRoundWalkStep(
                 target,
                 victim,
