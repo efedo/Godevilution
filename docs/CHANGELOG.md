@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Add schema 1.267 Identify item-action metadata and server-authoritative
   consumable scroll handling, while keeping the Bard class ability distinct.
 
+- Add schema 1.268 stable Hellfire quest and miscellaneous item identities for
+  Magic Rock, Tavern Sign, Golden Elixir, Anvil of Fury, Black Mushroom, Brain,
+  Fungal Tome, Spectral Elixir, and Blood Stone.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

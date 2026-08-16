@@ -633,6 +633,12 @@ capability, while consumable Identify requests carry an authoritative source
 item reference and consume the validated scroll after identifying a magical
 target.
 
+Schema 1.268 externalizes nine Hellfire quest and miscellaneous item rows:
+Magic Rock, Tavern Sign, Golden Elixir, Anvil of Fury, Black Mushroom, Brain,
+Fungal Tome, Spectral Elixir, and Blood Stone. Their stable IDs preserve native
+indices, cursor identities, item classes, miscellaneous IDs, level gates, and
+usability without reintroducing native-table inference.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
