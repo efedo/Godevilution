@@ -6763,7 +6763,15 @@ public sealed class DiabloCombatCommandProcessor
 
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         if (distance < 2) {
-            var attackChance = Math.Min(100, monster.Intelligence + 20);
+            var attackChanceBase = missile.SnakeAdjacentAttackChanceBase > 0
+                ? missile.SnakeAdjacentAttackChanceBase
+                : 20;
+            var attackChanceIntelligenceScale = missile.SnakeAdjacentAttackChanceIntelligenceScale > 0
+                ? missile.SnakeAdjacentAttackChanceIntelligenceScale
+                : 1;
+            var attackChance = Math.Min(
+                100,
+                attackChanceBase + (attackChanceIntelligenceScale * monster.Intelligence));
             if (actionSeed % 100U >= (uint)attackChance) {
                 monster.StartSnakeDelay(
                     ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: true));

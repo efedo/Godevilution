@@ -85,6 +85,10 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int SnakeDistantDelayChanceBase = 0,
     /** Optional Snake distant-delay admission chance reduction per intelligence. */
     int SnakeDistantDelayChanceIntelligenceScale = 0,
+    /** Optional Snake adjacent attack admission chance base. */
+    int SnakeAdjacentAttackChanceBase = 0,
+    /** Optional Snake adjacent attack admission chance intelligence scale. */
+    int SnakeAdjacentAttackChanceIntelligenceScale = 0,
     /** Optional Mega post-action delay base; zero preserves native behavior. */
     int MegaDelayBase = 0,
     /** Optional exclusive Mega post-action delay random range. */
@@ -142,6 +146,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.PuddleDamageHigh < definition.PuddleDamageLow
                 || definition.PuddleImpactLifetime < 0
                 || definition.ProjectileImpactLifetime < 0
+                || definition.SnakeAdjacentAttackChanceBase is < 0 or > 100
+                || definition.SnakeAdjacentAttackChanceIntelligenceScale is < 0 or > 100
                 || definition.RangedDelayBase < 0
                 || definition.RangedDelayRandomRange < 0
                 || (definition.RangedDelayBase != 0
@@ -228,6 +234,14 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
                     && (definition.ChargeChanceBase != 0
                         || definition.ChargeChanceIntelligenceScale != 0))
+                || (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
+                    && (definition.SnakeAdjacentAttackChanceBase != 0
+                        || definition.SnakeAdjacentAttackChanceIntelligenceScale != 0)
+                    && (definition.SnakeAdjacentAttackChanceBase <= 0
+                        || definition.SnakeAdjacentAttackChanceIntelligenceScale <= 0))
+                || (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge
+                    && (definition.SnakeAdjacentAttackChanceBase != 0
+                        || definition.SnakeAdjacentAttackChanceIntelligenceScale != 0))
                 || (definition.ProjectileBehavior is not (
                         AuthoritativeProjectileBehavior.BatCharge
                         or AuthoritativeProjectileBehavior.SnakeCharge)
@@ -453,6 +467,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("snake_distant_delay_random_range"),
                 row.OptionalInt32("snake_distant_delay_chance_base"),
                 row.OptionalInt32("snake_distant_delay_chance_intelligence_scale"),
+                row.OptionalInt32("snake_adjacent_attack_chance_base"),
+                row.OptionalInt32("snake_adjacent_attack_chance_intelligence_scale"),
                 row.OptionalInt32("mega_delay_base"),
                 row.OptionalInt32("mega_delay_random_range")) {
                 RangedAvoidanceMovementChanceModulo = row.OptionalInt32(

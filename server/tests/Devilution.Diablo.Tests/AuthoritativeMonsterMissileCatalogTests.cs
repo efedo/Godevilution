@@ -215,6 +215,45 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedSnakeAdjacentAttackAdmissionChance()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tsnake_adjacent_attack_chance_base\tsnake_adjacent_attack_chance_intelligence_scale\n"
+                + "Snake\tRhino\tSnakeCharge\t20\t1\n");
+
+        var snake = Assert.Single(catalog.Definitions);
+        Assert.Equal((20, 1), (
+            snake.SnakeAdjacentAttackChanceBase,
+            snake.SnakeAdjacentAttackChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void RejectsPartialSnakeAdjacentAttackAdmissionChance()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Snake",
+                "Rhino",
+                AuthoritativeProjectileBehavior.SnakeCharge,
+                SnakeAdjacentAttackChanceBase: 20),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsSnakeAdjacentAttackAdmissionChanceOnNonSnakeMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "GoatRanged",
+                "Arrow",
+                AuthoritativeProjectileBehavior.MonsterArrow,
+                SnakeAdjacentAttackChanceBase: 20,
+                SnakeAdjacentAttackChanceIntelligenceScale: 1),
+        ]));
+    }
+
+    [Fact]
     public void LoadsValidatedMegaDelayTuning()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

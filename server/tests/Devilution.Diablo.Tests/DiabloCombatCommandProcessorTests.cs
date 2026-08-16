@@ -7090,6 +7090,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiUsesValidatedAdjacentAttackAdmissionChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            toHit: 100,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    SnakeAdjacentAttackChanceBase: 100,
+                    SnakeAdjacentAttackChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 50 ^ 9 ^ 7 = 60: the authored 100-percent band admits the
+        // adjacent attack, whereas the native 20-percent fallback would
+        // start Snake's delay branch.
+        processor.AdvanceTick(50, [player]);
+
+        Assert.Equal(0, monster.SnakeDelayTicks);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void GloomUsesItsMonsterSpecificRhinoMappingForMovementOnlyCharge()
     {
         var monster = new AuthoritativeCombatTarget(
