@@ -118,6 +118,9 @@ Status date: 2026-08-16
   `damage_type` content, while older mappings retain the native Physical
   fallback.
 
+- Mapped Bat and Snake charge projectiles now consume their validated missile
+  `spell_id`, while older mappings retain the native spell identity `1`.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1412,6 +1415,10 @@ Status date: 2026-08-16
 - Schema 1.321 externalizes mapped Bat and Snake charge projectile damage
   type through the existing optional `damage_type` field, retaining the
   native Physical fallback for older mappings.
+
+- Schema 1.322 externalizes mapped Bat and Snake charge projectile spell
+  identity through the existing optional `spell_id`/`spell_symbol` fields,
+  retaining native spell identity `1` for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
+  preserving the native spell identity `1` when older rows omit the optional
+  reference.
+
 - Add schema 1.321 validated mapped-charge damage types to
   `monster_missiles.tsv`, preserving the native Physical fallback when older
   rows omit the optional value.
