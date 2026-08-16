@@ -44,6 +44,11 @@ All notable changes to this fork are documented below.
   and spell-backed scroll rows, retaining their actual native enum indices and
   removing the duplicate healing-scroll alias.
 
+- Add schema 1.277 stable identities for the four native dynamic spell-book
+  templates at indices 114–117, preserving level gates, drop weights, misc
+  identity, and the blue-book cursor projection while leaving dynamic spell
+  assignment for a follow-up behavior migration.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

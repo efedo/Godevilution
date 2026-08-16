@@ -682,6 +682,12 @@ fixed and spell-backed scroll rows. Their stable identities now use the actual
 native enum indices, with native gaps retained for non-scroll rows, and the
 duplicate healing-scroll alias is removed.
 
+Schema 1.277 externalizes the four native dynamic spell-book templates at
+indices 114–117, preserving their level gates, drop weights, misc identity, and
+blue-book cursor projection. Dynamic spell assignment and book-cost mutation
+remain a separate behavior migration because the native spell is selected when
+the item is generated.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
