@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.239 adds an optional `effect_item_symbol` to `objects.tsv` for
+`QuestItemCompletion` interactions. It is resolved and cross-checked against
+the retained numeric `effect_amount`; other object effects remain unchanged.
+
 Schema 1.238 completes stable base-item links in shipped normalized unique
 items. Every base and Hellfire `unique_items.tsv` row carries a
 `base_item_symbol` cross-checked against its retained numeric ID and the active

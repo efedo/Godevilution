@@ -61,6 +61,10 @@ Status date: 2026-08-16
   IDs and the active item catalog, while numeric-only external packs remain
   compatible.
 
+- Quest-item completion objects now accept `effect_item_symbol` links through
+  the stable item namespace. Activation cross-checks the symbol against the
+  retained numeric `effect_amount`; non-item object effects remain numeric.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -903,6 +907,10 @@ Status date: 2026-08-16
 
 - Schema 1.235 extends optional item symbols to `stores.tsv`,
   `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
+
+- Schema 1.239 adds optional `effect_item_symbol` to `objects.tsv` for
+  `QuestItemCompletion` rows while preserving numeric effect amounts for all
+  legacy and non-item effects.
 
 - Schema 1.238 completes stable base-item symbols for shipped
   `unique_items.tsv` rows. Numeric-only external packs remain compatible while
