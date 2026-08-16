@@ -54,6 +54,20 @@ public sealed class StableContentIdCatalog
         return symbol;
     }
 
+    /** Validates one stable-ID namespace against its active runtime catalog. */
+    public void ValidateReferences(string kind, Func<uint, bool> containsId)
+    {
+        if (string.IsNullOrWhiteSpace(kind))
+            throw new ArgumentException("A stable-ID kind is required.", nameof(kind));
+        ArgumentNullException.ThrowIfNull(containsId);
+        foreach (var entry in Entries.Where(entry =>
+                     string.Equals(entry.Kind, kind, StringComparison.Ordinal))) {
+            if (!containsId(entry.NumericId))
+                throw new InvalidDataException(
+                    $"Stable content {kind} symbol '{entry.Symbol}' references unknown ID {entry.NumericId}.");
+        }
+    }
+
     public static StableContentIdCatalog LoadTsv(string sourcePath, string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);
