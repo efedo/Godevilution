@@ -1,9 +1,51 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativePlayerClassCatalogTests
 {
+    [Fact]
+    public void ResolvesStableClassSymbolsIncludingNativeZero()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("class", "warrior", 0),
+            new StableContentId("class", "rogue", 1),
+            new StableContentId("class", "sorcerer", 2),
+            new StableContentId("class", "monk", 3),
+            new StableContentId("class", "bard", 4),
+            new StableContentId("class", "barbarian", 5),
+        ]);
+        var catalog = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            ReadShippedTable(),
+            stableIds);
+
+        Assert.Equal(0U, catalog.Resolve("warrior").ClassId);
+        Assert.Equal(5U, catalog.Resolve("barbarian").ClassId);
+    }
+
+    [Fact]
+    public void RejectsStableClassSymbolNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("class", "warrior", 0),
+            new StableContentId("class", "rogue", 1),
+            new StableContentId("class", "sorcerer", 2),
+            new StableContentId("class", "monk", 3),
+            new StableContentId("class", "bard", 4),
+            new StableContentId("class", "barbarian", 5),
+        ]);
+        var source = ReadShippedTable().Replace(
+            "0\twarrior\tWarrior",
+            "1\twarrior\tWarrior",
+            StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.LoadTsv("classes.tsv", source, stableIds));
+
+        Assert.Contains("maps class 1 to symbol 'warrior', which resolves to 0", exception.Message);
+    }
     [Fact]
     public void ShippedCatalogPreservesBaseAndHellfireClassMetadata()
     {

@@ -19,6 +19,17 @@ public sealed class StableContentIdCatalogTests
     }
 
     [Fact]
+    public void AllowsNativeZeroForTheClassNamespace()
+    {
+        var catalog = new StableContentIdCatalog([
+            new StableContentId("class", "warrior", 0),
+        ]);
+
+        Assert.Equal(0U, catalog.Resolve("class", "warrior"));
+        Assert.Equal("warrior", catalog.Resolve(0, "class"));
+    }
+
+    [Fact]
     public void RejectsDuplicateSymbolAndNumericId()
     {
         Assert.Throws<InvalidDataException>(() => new StableContentIdCatalog([
