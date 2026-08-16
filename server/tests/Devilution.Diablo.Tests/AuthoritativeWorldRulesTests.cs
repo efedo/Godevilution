@@ -55,6 +55,42 @@ public sealed class AuthoritativeWorldRulesTests
     }
 
     [Fact]
+    public void ValidatesExternalTownPortalDestinationSlotsAgainstWorldGeometry()
+    {
+        var rules = new AuthoritativeWorldRules(7, 73, 2, 3, 2, 2) {
+            HasTownPortalDestinationGeometry = true,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(7, 8, 8));
+
+        rules.ValidateWorld(world);
+    }
+
+    [Fact]
+    public void RejectsExternalTownPortalDestinationOutsideWorldGeometry()
+    {
+        var rules = new AuthoritativeWorldRules(7, 73, 7, 3, 2, 1) {
+            HasTownPortalDestinationGeometry = true,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(7, 8, 8));
+
+        Assert.Throws<InvalidDataException>(() => rules.ValidateWorld(world));
+    }
+
+    [Fact]
+    public void RejectsExternalTownPortalDestinationOnBlockedCell()
+    {
+        var rules = new AuthoritativeWorldRules(7, 73, 2, 3, 1, 0) {
+            HasTownPortalDestinationGeometry = true,
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(7, 8, 8, blockedCells: [26]));
+
+        Assert.Throws<InvalidDataException>(() => rules.ValidateWorld(world));
+    }
+
+    [Fact]
     public void RejectsServiceStoreCollision()
     {
         var rules = new AuthoritativeWorldRules(0, 10);
