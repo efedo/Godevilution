@@ -248,10 +248,18 @@ public sealed class StoreCatalog
         AuthoritativeUniqueItemCatalog? uniqueItems,
         StableContentIdCatalog? stableIds)
     {
-        if (itemCatalog is not null && uniqueItems is not null && row.TryGet("unique_item_id", out var uniqueId)
-            && !string.IsNullOrWhiteSpace(uniqueId))
+        var hasUniqueItemId = row.TryGet("unique_item_id", out var uniqueId)
+            && !string.IsNullOrWhiteSpace(uniqueId);
+        var hasUniqueItemSymbol = row.TryGet("unique_item_symbol", out var uniqueSymbol)
+            && !string.IsNullOrWhiteSpace(uniqueSymbol);
+        if (itemCatalog is not null && uniqueItems is not null
+            && (hasUniqueItemId || hasUniqueItemSymbol))
             return itemCatalog.GenerateUnique(
-                row.RequiredUInt32("unique_item_id"),
+                AuthoritativeUniqueItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "unique_item_id",
+                    "unique_item_symbol"),
                 row.RequiredUInt32("item_seed"),
                 row.OptionalInt32("item_level", 1));
         if (itemCatalog is not null && row.TryGet("item_id", out var itemId)

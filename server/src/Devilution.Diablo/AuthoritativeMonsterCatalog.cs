@@ -141,7 +141,11 @@ public sealed class AuthoritativeMonsterCatalog
                 stableIds,
                 "drop_item_id",
                 "drop_item_symbol");
-            var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
+            var dropUniqueItemId = AuthoritativeUniqueItemIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "drop_unique_item_id",
+                "drop_unique_item_symbol");
             var dropItemSeed = row.OptionalUInt32("drop_item_seed");
             AuthoritativeItemState? dropItemState = null;
             if (dropItemId != 0 || dropUniqueItemId != 0) {
@@ -243,7 +247,11 @@ public sealed class AuthoritativeMonsterCatalog
             stableIds,
             "drop_item_id",
             "drop_item_symbol");
-        var dropUniqueItemId = row.OptionalUInt32("drop_unique_item_id");
+        var dropUniqueItemId = AuthoritativeUniqueItemIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "drop_unique_item_id",
+            "drop_unique_item_symbol");
         var monsterUnique = ReadFlag(row, "unique", false);
         var monsterDiablo = ReadFlag(row, "diablo", false);
         if (dropItemId == 0
