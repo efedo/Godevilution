@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
 - Reject impossible authoritative player-resource and monster-vitality bounds
   at the Godot protocol boundary before presentation consumes snapshots.
 
+- Enforce one nonzero entity-ID namespace across authoritative players,
+  monsters, items, objects, projectiles, and corpses, while preserving the
+  zero-player identity compatibility needed by version-1 saves.
+
 - Add typed Godot combat feedback for authoritative damage, healing, and
   experience events, replacing Lua-owned floating-number presentation for the
   server-backed client.

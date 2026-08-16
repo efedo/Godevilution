@@ -33,6 +33,11 @@ Status date: 2026-08-16
   `PlayerSnapshot` resources; the client clamps presentation values but never
   predicts or mutates those resources.
 
+- Player, monster, world-item, object, projectile, and corpse IDs now share a
+  validated server-owned namespace at the mapper and Godot boundaries. Entity
+  allocators skip occupied portal/corpse/player IDs, while identity-neutral
+  version-1 saves preserve their zero player ID until import.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

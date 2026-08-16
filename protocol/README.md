@@ -92,6 +92,11 @@ Windows toolchain command.
   must be nonzero and unique. Canonical hashing independently sorts the complete
   player set by entity ID, so receiver-specific wire order does not change the
   state hash.
+- Entity IDs for monsters, world items, objects, projectiles, and corpses share
+  the same server-owned namespace as players and must also be nonzero and
+  globally unique within a snapshot. Version-1 save snapshots may retain a
+  zero player ID because the identity is rebound when the save is imported;
+  live protocol snapshots must use the assigned nonzero ID.
 - `PlayerSnapshot.character_class_id` is the stable ID from the active game
   module's validated class catalog. An absent field has Protobuf's zero value;
   shipped content reserves ID `0` for Warrior so older snapshots and peers keep
