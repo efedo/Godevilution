@@ -30,7 +30,8 @@ public sealed record DiabloContentActivation
         AuthoritativeQuestPoolCatalog? questPools = null,
         AuthoritativeSetLevelNameCatalog? setLevelNames = null,
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
-        AuthoritativeMonsterMissileCatalog? monsterMissiles = null)
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
+        uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -47,6 +48,7 @@ public sealed record DiabloContentActivation
         SetLevelNames = setLevelNames;
         MonsterSpawnPlanner = monsterSpawnPlanner;
         MonsterMissiles = monsterMissiles;
+        AdriaStoreId = adriaStoreId;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -75,6 +77,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native AI-to-missile mappings from the active content pack. */
     public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; }
+
+    /** Service-only store identity supplied by the active world rules. */
+    public uint AdriaStoreId { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -266,6 +271,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             storeTable.ToCanonicalTsv(),
             itemCatalog,
             uniqueItems);
+        worldRules.ValidateStores(stores);
         if (spells is not null)
             stores.ValidateSpellReferences(spells);
         var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
@@ -513,6 +519,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             RepairAbilitySpellId = repairAbilitySpellId,
             RechargeAbilitySpellId = rechargeAbilitySpellId,
             TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
+            AdriaStoreId = worldRules.AdriaStoreId,
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
             MonsterMissiles = monsterMissiles,
@@ -536,7 +543,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questPools,
             setLevelNames,
             monsterSpawnPlanner,
-            monsterMissiles);
+            monsterMissiles,
+            worldRules.AdriaStoreId);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -86,6 +86,9 @@ public sealed class DiabloSimulationOptions
     /** Stable spell identity authorizing the Rogue's native Trap Disarm action. */
     public uint TrapDisarmAbilitySpellId { get; init; }
 
+    /** External service-only store identity used by Adria's mana action. */
+    public uint AdriaStoreId { get; init; } = DiabloStoreCommandProcessor.AdriaStoreId;
+
     public AuthoritativePlayerClassCatalog? PlayerClasses { get; init; }
 
     public AuthoritativePlayerAnimationCatalog? PlayerAnimations { get; init; }
@@ -186,7 +189,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.RepairAbilitySpellId,
                 options.RechargeAbilitySpellId,
                 spells,
-                options.Items),
+                options.Items,
+                options.AdriaStoreId),
             worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,

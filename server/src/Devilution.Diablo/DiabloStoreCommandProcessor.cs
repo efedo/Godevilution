@@ -18,6 +18,7 @@ public sealed class DiabloStoreCommandProcessor
     private readonly uint identifyAbilitySpellId;
     private readonly uint repairAbilitySpellId;
     private readonly uint rechargeAbilitySpellId;
+    private readonly uint adriaStoreId;
     private readonly AuthoritativeSpellCatalog? spells;
     private readonly AuthoritativeItemCatalog? items;
 
@@ -30,7 +31,8 @@ public sealed class DiabloStoreCommandProcessor
         uint repairAbilitySpellId = 0,
         uint rechargeAbilitySpellId = 0,
         AuthoritativeSpellCatalog? spells = null,
-        AuthoritativeItemCatalog? items = null)
+        AuthoritativeItemCatalog? items = null,
+        uint adriaStoreId = AdriaStoreId)
     {
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.rules = rules ?? new DiabloStoreRules();
@@ -39,6 +41,9 @@ public sealed class DiabloStoreCommandProcessor
         this.identifyAbilitySpellId = identifyAbilitySpellId;
         this.repairAbilitySpellId = repairAbilitySpellId;
         this.rechargeAbilitySpellId = rechargeAbilitySpellId;
+        if (adriaStoreId == 0)
+            throw new ArgumentOutOfRangeException(nameof(adriaStoreId));
+        this.adriaStoreId = adriaStoreId;
         this.spells = spells;
         this.items = items;
     }
@@ -70,7 +75,7 @@ public sealed class DiabloStoreCommandProcessor
 
     private DiabloIntentResult OpenStore(AuthoritativePlayerState player, uint storeId)
     {
-        if (storeId != AdriaStoreId && !catalog.ContainsStore(storeId))
+        if (storeId != adriaStoreId && !catalog.ContainsStore(storeId))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         player.ActiveStoreId = storeId;
@@ -400,7 +405,7 @@ public sealed class DiabloStoreCommandProcessor
 
     private DiabloIntentResult RefillMana(AuthoritativePlayerState player)
     {
-        if (player.ActiveStoreId != AdriaStoreId)
+        if (player.ActiveStoreId != adriaStoreId)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var rejection = rules.ValidateManaRefill(player.Mana, player.ManaMaximum, player.Gold);
         if (rejection.HasValue)
