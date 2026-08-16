@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.293 validated Mega post-action delay tuning to the
+  `InfernoController` mapping in `monster_missiles.tsv`, preserving the
+  native base-plus-exclusive-random delay for older mappings.
+
 - Add schema 1.292 validated Snake adjacent and distant delay-band tuning to
   `monster_missiles.tsv`, preserving native intelligence reduction and
   exclusive random ranges for older mappings.
