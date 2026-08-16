@@ -94,6 +94,14 @@ public sealed class AuthoritativeWorldTests
         Assert.Equal(7U, world.FindNearestWarpTarget(1, 0, 0)!.WarpId);
         Assert.True(world.IsWarpTrigger(1, 1, 1));
         Assert.Equal(0U, world.WarpTargets.Single().RequiredQuestId);
+        var gatedTargets = AuthoritativeWarpCatalog.LoadTsv(
+            "gated-warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_completed\n"
+                + "8\t1\t1\t1\t2\t2\t2\t3017\t1\n",
+            world);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.ValidateQuestRequirements(
+            gatedTargets,
+            [new AuthoritativeQuestState(3018, 17, 1)]));
         Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.LoadTsv(
             "invalid-warps.tsv",
             "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"

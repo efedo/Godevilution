@@ -23,6 +23,35 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsQuestGatedWarpsWithoutAQuestCatalog()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var warps = basePack.Tables.Single(table => table.SourcePath == "warps.tsv");
+        var gatedWarps = TsvTable.Parse(
+            warps.SourcePath,
+            warps.ToCanonicalTsv()
+                + "2\t0\t0\t0\t0\t0\t0\t3017\t1\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath is not "quests.tsv" and not "quest_states.tsv")
+                .Select(table => table.SourcePath == warps.SourcePath ? gatedWarps : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("Quest-gated warps require an active quest catalog", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BaseProceduralActivationCarriesTheShippedMonsterDrop()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
