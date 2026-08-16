@@ -1093,8 +1093,10 @@ Status date: 2026-08-16
   Random selection now rolls over the validated active native spell-table span
   and walks native spell IDs cyclically before mapping to stable IDs; explicit
   spell references remain direct. Reading/learning is server-owned through
-  `ReadBookRequested`, and store rows plus static/procedural monster drops and
-  quest-completion rewards now invoke the same generator.
+  `ReadBookRequested`; single-player generation excludes native Resurrect and
+  Heal Other while multiplayer generation retains both. Store rows plus
+  static/procedural monster drops and quest-completion rewards now invoke the
+  same game-mode-aware generator.
 
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.

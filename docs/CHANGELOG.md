@@ -62,6 +62,9 @@ All notable changes to this fork are documented below.
 - Refine schema 1.278 dynamic-book selection to roll over the validated active
   native spell-table span and walk native spell IDs cyclically before mapping to
   stable content IDs; explicit spell references remain direct and deterministic.
+  Thread the active game mode through stores, static/procedural drops, and quest
+  rewards so single-player excludes native Resurrect and Heal Other while
+  multiplayer retains both.
 
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
