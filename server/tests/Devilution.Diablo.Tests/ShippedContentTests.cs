@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.230.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.231.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -504,8 +504,8 @@ public sealed class ShippedContentTests
         var invalidStableIds = TsvTable.Parse(
             stableIds.SourcePath,
             stableIds.ToCanonicalTsv().Replace(
-                "spell\tidentify\t5",
-                "spell\tidentify\t9999",
+                "ability\tidentify\t5",
+                "ability\tidentify\t9999",
                 StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
@@ -525,7 +525,7 @@ public sealed class ShippedContentTests
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
 
         Assert.Contains(
-            "maps spell 5 to symbol 'identify', which resolves to 9999",
+            "maps ability 5 to symbol 'identify', which resolves to 9999",
             exception.Message,
             StringComparison.Ordinal);
     }
@@ -805,7 +805,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.230.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.231.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2637,10 +2637,11 @@ public sealed class ShippedContentTests
         var stableIds = StableContentIdCatalog.LoadTsv(
             "content_ids.tsv",
             File.ReadAllText(Path.Combine(contentRoot, "content_ids.tsv")));
-        Assert.Equal(5U, stableIds.Resolve("spell", "identify"));
-        Assert.Equal(26U, stableIds.Resolve("spell", "repair"));
-        Assert.Equal(27U, stableIds.Resolve("spell", "recharge"));
-        Assert.Equal(28U, stableIds.Resolve("spell", "trap_disarm"));
+        Assert.Equal(5U, stableIds.Resolve("ability", "identify"));
+        Assert.Equal(26U, stableIds.Resolve("ability", "repair"));
+        Assert.Equal(27U, stableIds.Resolve("ability", "recharge"));
+        Assert.Equal(28U, stableIds.Resolve("ability", "trap_disarm"));
+        Assert.Equal(5U, stableIds.Resolve("spell", "holy_bolt"));
         Assert.Equal(30U, stableIds.Resolve("spell", "charged_bolt"));
         Assert.Equal(46U, stableIds.Resolve("spell", "search"));
         Assert.Equal(36U, stableIds.Resolve("spell", "blood_star"));

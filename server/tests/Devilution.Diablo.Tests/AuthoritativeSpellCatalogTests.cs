@@ -75,6 +75,19 @@ public sealed class AuthoritativeSpellCatalogTests
             new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
         ]);
         var stableIds = new StableContentIdCatalog([
+            new StableContentId("ability", "repair", 26),
+        ]);
+
+        spells.ValidateStableReferences(stableIds, [26]);
+    }
+
+    [Fact]
+    public void LegacySpellNamespaceStillValidatesAnActiveClassAbility()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0),
+        ]);
+        var stableIds = new StableContentIdCatalog([
             new StableContentId("spell", "repair", 26),
         ]);
 
@@ -484,7 +497,19 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var stableIdsPath = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "content_ids.tsv");
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            stableIdsPath,
+            File.ReadAllText(stableIdsPath));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path),
+            stableIds);
 
         Assert.True(catalog.TryGet(5, out var holyBolt));
         Assert.Equal(AuthoritativeProjectileBehavior.HolyBolt, holyBolt.ProjectileBehavior);
