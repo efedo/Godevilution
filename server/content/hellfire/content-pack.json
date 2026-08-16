@@ -5,7 +5,7 @@
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.264.0"
+    "version": "1.265.0"
   },
   "dependencyConstraints": [
     {

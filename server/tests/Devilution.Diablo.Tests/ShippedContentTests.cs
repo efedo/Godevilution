@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.264.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.265.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1074,7 +1074,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.264.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.265.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1589,6 +1589,29 @@ public sealed class ShippedContentTests
         Assert.Equal(2, hellfireItems.GetRequired(1).MinimumMonsterLevel);
         Assert.Equal(0, hellfireItems.GetRequired(1).DropRate);
         Assert.False(hellfireItems.GetRequired(1).Usable);
+        var runeExpectations = new[] {
+            ("rune_of_fire", 2106U, 161, 193, 47, 12, "fireball", "Rune of Fire"),
+            ("rune_of_lightning", 2107U, 162, 195, 48, 50, "lightning_wall", "Rune of Lightning"),
+            ("greater_rune_of_fire", 2108U, 163, 194, 50, 45, "immolation", "Greater Rune of Fire"),
+            ("greater_rune_of_lightning", 2109U, 164, 196, 49, 18, "nova", "Greater Rune of Lightning"),
+            ("rune_of_stone", 2110U, 165, 197, 51, 8, "stone_curse", "Rune of Stone"),
+        };
+        foreach (var (symbol, itemId, nativeIndex, cursor, miscId, spellId, spellSymbol, name) in runeExpectations) {
+            Assert.Equal(itemId, stableIds.Resolve("item", symbol));
+            var rune = hellfireItems.GetRequired(itemId);
+            Assert.Equal(symbol, rune.StableSymbol);
+            Assert.Equal(spellId, stableIds.Resolve("spell", spellSymbol));
+            Assert.Equal(nativeIndex, rune.NativeItemIndex);
+            Assert.Equal(cursor, rune.NativeCursorGraphic);
+            Assert.Equal(miscId, rune.MiscId);
+            Assert.Equal(spellId, rune.SpellId);
+            Assert.Equal(DiabloItemSpellSourceKind.ConsumableItem, rune.SpellSourceKind);
+            Assert.Equal(name, rune.Name);
+            Assert.Equal("Rune", rune.IdentifiedName);
+            Assert.True(rune.Usable);
+            Assert.Contains("Rune", rune.GenerationTags, StringComparer.OrdinalIgnoreCase);
+            Assert.True(hellfireItems.CanDropAtMonsterLevel(itemId, rune.MinimumMonsterLevel));
+        }
         Assert.Equal(("the_undead_crown", "The Undead Crown", 82), (
             hellfireItems.GetRequired(111).StableSymbol,
             hellfireItems.GetRequired(111).Name,

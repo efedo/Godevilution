@@ -20,6 +20,11 @@ item	torn_note_1	2001
 item	torn_note_2	2002
 item	torn_note_3	2003
 item	reconstructed_note	2004
+item	rune_of_fire	2106
+item	rune_of_lightning	2107
+item	greater_rune_of_fire	2108
+item	greater_rune_of_lightning	2109
+item	rune_of_stone	2110
 portal	cathedral_entrance	1
 object	l1_left_door	1
 store	smith	1
