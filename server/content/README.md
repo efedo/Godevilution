@@ -924,6 +924,10 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.233 extends the same optional `quest` symbols to warp gates, linked
+objects, item quest effects, and follow-on quest activation. Each authored link
+rejects numeric/symbol mismatches while retaining numeric-only compatibility.
+
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
 
@@ -1493,21 +1497,21 @@ the complete target header even when they upsert only one row.
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
-| `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id` and `required_quest_completed` gates; endpoints must be in bounds and walkable. |
+| `warps.tsv` | `warp_id` | Normalized level-trigger source and destination projections for the server-owned Warp spell, with optional `required_quest_id`/`required_quest_symbol` and `required_quest_completed` gates; endpoints must be in bounds and walkable. |
 | `portals.tsv` | `portal_id` | Source and destination level endpoints, validated against the composed world geometry and walkability during activation. |
 | `monsters.tsv` | `entity_id` | Encounter state, resistances, drops, and immutable capabilities such as `undead`, `animal`, and `knockback`; authored levels and positions are validated against active world bounds. |
 | `unique_monsters.tsv` | `entity_id` | Native unique-monster identity bound to a matching unique encounter and preserved by server snapshots. |
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
-| `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. `QuestItemCompletion` stores the required normalized item ID in `effect_amount`. |
-| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation (validated against the composed quest catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
-| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol` resolves through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
+| `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional `quest_symbol` link, effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. `QuestItemCompletion` stores the required normalized item ID in `effect_amount`. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
+| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol` and `completion_activate_quest_symbol` resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources with optional stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, and Golem summon formula terms. |
 | `items.tsv` | `item_id` | Normalized item identity, explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
-| `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, including native quest activation, completion, and `_qvar1` updates. |
+| `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `quest_symbol`, including native quest activation, completion, and `_qvar1` updates. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
@@ -2131,6 +2135,8 @@ legacy class-loadout symbols still fall back to the `spell` namespace.
 Schema 1.232 adds optional `quest_symbol` columns to quest type, state, and
 pool tables. Activated rows resolve the `quest` namespace and reject numeric
 and symbolic mismatches while older numeric-only rows remain compatible.
+Schema 1.233 extends optional quest symbols to warp gates, linked objects, item
+quest effects, and follow-on quest activation.
 Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`.
 Activated rows resolve the stable spell namespace and reject numeric and
 symbolic mismatches; older rows retain numeric-ID fallback.

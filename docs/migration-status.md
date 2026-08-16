@@ -37,6 +37,10 @@ Status date: 2026-08-16
   rows reject numeric/symbol mismatches while numeric-only legacy rows remain
   compatible.
 
+- Warp gates, linked objects, item quest effects, and follow-on quest activation
+  now resolve optional stable quest symbols through the same namespace, with
+  activation-time mismatch checks and numeric-only fallback.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -870,6 +874,9 @@ Status date: 2026-08-16
 - Schema 1.232 adds optional `quest_symbol` columns to quest type, state, and
   pool tables; activated rows resolve the `quest` namespace and reject
   numeric/symbol mismatches while older numeric-only rows retain fallback.
+
+- Schema 1.233 extends optional quest symbols to warp gates, linked objects,
+  item quest effects, and follow-on quest activation.
 
 - Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
   rows resolve stable spell IDs and reject numeric/symbol mismatches while

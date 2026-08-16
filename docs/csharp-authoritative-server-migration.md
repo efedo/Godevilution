@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.233 extends stable `quest` symbols to warp gates, linked objects, item
+quest effects, and follow-on quest activation. Numeric-only links remain
+compatible while activated rows reject mismatches.
+
 Schema 1.232 adds optional stable `quest_symbol` values to quest type, state,
 and pool rows. Activated rows resolve the `quest` namespace and reject numeric
 and symbolic mismatches while older numeric-only rows remain compatible.

@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend stable quest symbols to warp gates, linked objects, item quest effects,
+  and follow-on quest activation while retaining numeric compatibility.
+
 - Add optional stable `quest_symbol` identities to quest types, quest state
   rows, and single-player quest pools, with activation-time mismatch checks and
   numeric-only compatibility for older content packs.
