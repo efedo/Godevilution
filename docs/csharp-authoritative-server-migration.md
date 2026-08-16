@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.225 adds an optional `spell_symbol` to `monster_missiles.tsv`.
+Activated rows resolve the stable spell namespace and reject mismatches with
+the retained numeric ID; older rows remain compatible through numeric fallback.
+
 Schema 1.224 adds optional stable spell symbols to `class_loadouts.tsv` for
 class abilities and starting memorized spells. Activated packs resolve symbols
 through `content_ids.tsv` and reject mismatches with retained numeric

@@ -36,6 +36,10 @@ Status date: 2026-08-15
   reject symbol/numeric mismatches, while legacy loadout schemas retain their
   numeric-ID fallback.
 
+- Monster missile mappings now optionally resolve `spell_symbol` through the
+  stable spell namespace. Activated rows reject symbol/numeric mismatches,
+  while older rows retain numeric-ID fallback.
+
 - Stable level and portal symbols are now cross-validated against active world
   and portal catalogs during content activation, without removing legacy
   no-catalog fallbacks.
@@ -832,6 +836,10 @@ Status date: 2026-08-15
 
 - Schema 1.222 adds the Adria service-only store identity to `world_rules.tsv`;
   activation rejects zero and stock-vendor collisions.
+
+- Schema 1.225 adds optional `spell_symbol` to `monster_missiles.tsv`; active
+  rows resolve stable spell IDs and reject numeric/symbol mismatches while older
+  rows retain numeric fallback.
 
 - Schema 1.224 adds optional class-loadout spell symbols for class abilities and
   starting memorized spells; activated packs cross-check those symbols against

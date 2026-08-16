@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize mapped monster-missile spell references through optional
+  `spell_symbol`; active rows resolve stable spell IDs and reject mismatches
+  while numeric fallback remains available.
+
 - Externalize class-skill and starting-spell references through optional stable
   spell symbols in `class_loadouts.tsv`; activated packs cross-check symbols
   against numeric compatibility IDs while older loadout schemas remain valid.
