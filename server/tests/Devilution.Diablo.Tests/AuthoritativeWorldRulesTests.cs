@@ -34,6 +34,22 @@ public sealed class AuthoritativeWorldRulesTests
     }
 
     [Fact]
+    public void ResolvesStableAdriaStoreSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "town", 0),
+            new StableContentId("store", "adria", 10),
+        ]);
+        var rules = AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            "town_level_id\ttown_level_symbol\tadria_store_id\tadria_store_symbol\n"
+                + "0\ttown\t10\tadria\n",
+            stableIds);
+
+        Assert.Equal(10U, rules.AdriaStoreId);
+    }
+
+    [Fact]
     public void LoadsExternalTownPortalDestinationGeometry()
     {
         var rules = AuthoritativeWorldRules.LoadTsv(

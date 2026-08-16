@@ -7,6 +7,27 @@ namespace Devilution.Diablo.Tests;
 public sealed class StoreCatalogTests
 {
     [Fact]
+    public void ResolvesStableStoreSymbolsAndRejectsMismatches()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("store", "smith", 1),
+        ]);
+        var catalog = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_symbol\tstore_slot\titem_seed\tprice\n"
+                + "1\tsmith\t0\t42\t75\n",
+            stableIds: stableIds);
+
+        Assert.True(catalog.ContainsStore(1));
+        var exception = Assert.Throws<InvalidDataException>(() => StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_symbol\tstore_slot\titem_seed\tprice\n"
+                + "2\tsmith\t0\t42\t75\n",
+            stableIds: stableIds));
+        Assert.Contains("maps store 2 to symbol 'smith'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DuplicateSlotsDoNotPartiallyRegisterAStore()
     {
         var catalog = new StoreCatalog();

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.247.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.248.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -100,6 +100,37 @@ public sealed class ShippedContentTests
         });
         stableIds.ValidateReferences("object", id => objects.Any(@object => @object.ObjectId == id));
         Assert.Equal("grave_matters_cathedral_map", stableIds.Resolve(6004, "object"));
+    }
+
+    [Fact]
+    public void ShippedStoresUseStableStoreSymbols()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var storesTable = basePack.Tables.Single(table => table.SourcePath == "stores.tsv");
+        var stores = StoreCatalog.LoadTsv(
+            storesTable.SourcePath,
+            storesTable.ToCanonicalTsv(),
+            stableIds: stableIds);
+        var worldRules = AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv").ToCanonicalTsv(),
+            stableIds);
+
+        var storeIds = stableIds.Entries
+            .Where(entry => entry.Kind == "store")
+            .ToArray();
+        Assert.Equal(5, storeIds.Length);
+        Assert.All(storesTable.Rows, row =>
+            Assert.Equal(row.RequiredUInt32("store_id"), stableIds.Resolve("store", row.Required("store_symbol"))));
+        stableIds.ValidateReferences(
+            "store",
+            id => stores.ContainsStore(id) || id == worldRules.AdriaStoreId);
+        Assert.Equal(10U, stableIds.Resolve("store", "adria"));
     }
 
     [Fact]
@@ -931,7 +962,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.247.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.248.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
