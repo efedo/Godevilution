@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.276.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.277.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -215,6 +215,27 @@ public sealed class ShippedContentTests
         Assert.Contains("Misc", arenaPotion.GenerationTags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal(DiabloItemSpellSourceKind.None, arenaPotion.SpellSourceKind);
         Assert.Equal(DiabloItemActionKind.None, arenaPotion.ItemActionKind);
+
+        var bookTemplateExpectations = new[] {
+            ("book_template_level_2", 2201U, 114, 2),
+            ("book_template_level_8", 2202U, 115, 8),
+            ("book_template_level_14", 2203U, 116, 14),
+            ("book_template_level_20", 2204U, 117, 20),
+        };
+        foreach (var (symbol, itemId, nativeIndex, minimumLevel) in bookTemplateExpectations) {
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            var book = baseItems.GetRequired(itemId);
+            Assert.Equal(symbol, book.StableSymbol);
+            Assert.Equal(nativeIndex, book.NativeItemIndex);
+            Assert.Equal(25, book.MiscId);
+            Assert.Equal(minimumLevel, book.MinimumMonsterLevel);
+            Assert.Equal(1, book.DropRate);
+            Assert.Equal("BOOK_BLUE", book.CursorGraphic);
+            Assert.True(book.Usable);
+            Assert.Equal(DiabloItemSpellSourceKind.None, book.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, book.ItemActionKind);
+            Assert.Contains("Book", book.GenerationTags, StringComparer.OrdinalIgnoreCase);
+        }
 
         var composed = ComposedContent.Compose(new ContentManifest(
             "hellfire",
@@ -1243,7 +1264,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.276.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.277.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
