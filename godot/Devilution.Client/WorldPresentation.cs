@@ -236,6 +236,15 @@ public partial class WorldPresentation : Node2D
         var center = PositionFor(monster.EntityId, monster.PositionX, monster.PositionY);
         var color = monster.Petrified ? new Color("aeb7c4") : new Color("d95151");
         DrawTextureOrRect("monster", center, new Vector2(24, 24), color);
+        var health = MonsterHealthBarProjection.Resolve(monster);
+        if (health.Visible) {
+            var bar = new Rect2(center.X - 13, center.Y - 19, 26, 4);
+            DrawRect(bar, new Color("24151b"), true);
+            DrawRect(
+                new Rect2(bar.Position + new Vector2(1, 1), new Vector2(24 * health.Ratio, 2)),
+                new Color("e85d75"),
+                true);
+        }
         if (monster.Petrified)
             DrawArc(center, 15, 0, Mathf.Tau, 20, new Color("dce3eb"), 2);
     }
