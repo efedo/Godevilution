@@ -34,9 +34,13 @@ public sealed class AuthoritativeSpellBookCatalog
     private const int BookMiscId = 25;
     private const uint FirstNativeSpellId = 1;
     private const uint MaximumNativeSpellId = 51;
+    private const uint NativeResurrectSpellId = 32;
+    private const uint NativeHealOtherSpellId = 34;
     private readonly Dictionary<uint, AuthoritativeSpellBookDefinition> definitions;
     private IReadOnlyDictionary<uint, AuthoritativeSpellBookDefinition> nativeDefinitions
         = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+    private IReadOnlyDictionary<uint, uint> nativeSpellIdsByStableId
+        = new Dictionary<uint, uint>();
     private uint nativeSpellTableSize;
 
     public AuthoritativeSpellBookCatalog(
@@ -88,6 +92,7 @@ public sealed class AuthoritativeSpellBookCatalog
             throw new InvalidDataException(
                 "Spell-book metadata requires at least one item tagged Book.");
         var validatedNativeDefinitions = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+        var validatedNativeSpellIds = new Dictionary<uint, uint>();
         var maximumNativeSpellId = FirstNativeSpellId;
         var nativeSelectionSupported = true;
         foreach (var spell in spells.Definitions) {
@@ -106,14 +111,18 @@ public sealed class AuthoritativeSpellBookCatalog
                 // Packs authored before native spell IDs were externalized
                 // retain the stable-order fallback below.
                 nativeSelectionSupported = false;
+            } else {
+                validatedNativeSpellIds[definition.SpellId] = nativeSpellId;
             }
             maximumNativeSpellId = Math.Max(maximumNativeSpellId, nativeSpellId);
         }
         if (nativeSelectionSupported) {
             nativeDefinitions = validatedNativeDefinitions;
+            nativeSpellIdsByStableId = validatedNativeSpellIds;
             nativeSpellTableSize = checked(maximumNativeSpellId + 1);
         } else {
             nativeDefinitions = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+            nativeSpellIdsByStableId = new Dictionary<uint, uint>();
             nativeSpellTableSize = 0;
         }
     }
@@ -166,17 +175,21 @@ public sealed class AuthoritativeSpellBookCatalog
     public AuthoritativeItemState GenerateRandom(
         AuthoritativeItemCatalog items,
         uint itemSeed,
-        int itemLevel = 1)
+        int itemLevel = 1,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         ArgumentNullException.ThrowIfNull(items);
         if (itemSeed == 0)
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
         if (itemLevel < 0)
             throw new ArgumentOutOfRangeException(nameof(itemLevel));
+        if (!Enum.IsDefined(gameMode))
+            throw new ArgumentOutOfRangeException(nameof(gameMode));
 
         var maximumNativeLevel = Math.Max(1, itemLevel);
         var eligible = Definitions
-            .Where(definition => definition.BookLevel <= maximumNativeLevel)
+            .Where(definition => definition.BookLevel <= maximumNativeLevel
+                && IsAvailableInGameMode(definition, gameMode))
             .ToArray();
         if (eligible.Length == 0)
             throw new InvalidDataException(
@@ -184,6 +197,16 @@ public sealed class AuthoritativeSpellBookCatalog
 
         var spell = SelectRandomSpell(eligible, itemSeed);
         return Generate(items, spell.SpellId, itemSeed, itemLevel);
+    }
+
+    private bool IsAvailableInGameMode(
+        AuthoritativeSpellBookDefinition definition,
+        DiabloGameMode gameMode)
+    {
+        if (gameMode == DiabloGameMode.Multiplayer
+            || !nativeSpellIdsByStableId.TryGetValue(definition.SpellId, out var nativeSpellId))
+            return true;
+        return nativeSpellId is not NativeResurrectSpellId and not NativeHealOtherSpellId;
     }
 
     private AuthoritativeSpellBookDefinition SelectRandomSpell(

@@ -128,7 +128,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 spawn,
                 index,
                 seed,
-                firstEntityId))
+                firstEntityId,
+                multiplayer))
             .ToArray();
     }
 
@@ -139,7 +140,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint seed,
         int positionX,
         int positionY,
-        uint entityId)
+        uint entityId,
+        bool multiplayer = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -168,7 +170,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 attackDamage),
             0,
             seed,
-            entityId);
+            entityId,
+            multiplayer);
     }
 
     /** Creates one content-defined SkeletonMelee summon at an explicit cell. */
@@ -177,7 +180,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         uint seed,
         int positionX,
         int positionY,
-        uint entityId)
+        uint entityId,
+        bool multiplayer = false)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -214,14 +218,16 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 attackDamage),
             0,
             seed,
-            entityId);
+            entityId,
+            multiplayer);
     }
 
     private AuthoritativeCombatTarget CreateCombatTarget(
         AuthoritativeMonsterSpawn spawn,
         int index,
         uint seed,
-        uint firstEntityId)
+        uint firstEntityId,
+        bool multiplayer)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -247,7 +253,10 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                     dropSeed,
                     dropDefinition.ItemLevel,
                     dropDefinition.OnlyGood,
-                    spellBooks: spellBooks);
+                    spellBooks: spellBooks,
+                    gameMode: multiplayer
+                        ? DiabloGameMode.Multiplayer
+                        : DiabloGameMode.SinglePlayer);
             var monsterEntityId = checked(firstEntityId + (uint)index);
             dropEntityId = monsterEntityId >= FirstGeneratedMonsterEntityId
                 ? checked(FirstGeneratedDropEntityId

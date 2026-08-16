@@ -289,14 +289,15 @@ public sealed class AuthoritativeItemCatalog
         int monsterLevel,
         bool onlyGood = false,
         int? uniqueChancePercent = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         if (!TryGet(itemId, out var definition))
             throw new InvalidDataException($"Item {itemId} is not present in the authoritative catalog.");
         if (itemSeed == 0)
             throw new ArgumentOutOfRangeException(nameof(itemSeed));
         if (spellBooks is not null && spellBooks.IsBookTemplate(this, itemId))
-            return spellBooks.GenerateRandom(this, itemSeed, monsterLevel);
+            return spellBooks.GenerateRandom(this, itemSeed, monsterLevel, gameMode);
         if (affixes is null || !affixes.UsesLegacyRandom || monsterLevel <= 0)
             return definition.Generate(itemSeed);
 

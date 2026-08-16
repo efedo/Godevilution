@@ -87,7 +87,8 @@ public sealed class AuthoritativeMonsterCatalog
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         StableContentIdCatalog? stableIds = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var targets = table.Rows.Select(row => {
@@ -165,7 +166,8 @@ public sealed class AuthoritativeMonsterCatalog
                         dropItemSeed,
                         row.OptionalInt32("drop_item_level"),
                         row.OptionalInt32("drop_only_good") != 0,
-                        spellBooks: spellBooks);
+                        spellBooks: spellBooks,
+                        gameMode: gameMode);
             }
             var fireResistance = row.TryGet("fire_resistance", out _)
                 ? row.OptionalInt32("fire_resistance")

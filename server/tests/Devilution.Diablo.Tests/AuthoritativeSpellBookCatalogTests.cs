@@ -8,12 +8,7 @@ public sealed class AuthoritativeSpellBookCatalogTests
     [Fact]
     public void RandomBookSelectionWalksNativeSpellIdsInsteadOfStableIds()
     {
-        var items = new AuthoritativeItemCatalog([
-            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
-                MiscId = 25,
-                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
-            },
-        ]);
+        var items = CreateBookTemplateCatalog();
         var spells = new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(100, 1, 0, 0, 0, 0) { NativeSpellId = 3 },
             new AuthoritativeSpellDefinition(200, 1, 0, 0, 0, 0) { NativeSpellId = 1 },
@@ -47,5 +42,71 @@ public sealed class AuthoritativeSpellBookCatalogTests
             Assert.Equal(expectedSpellId, state.SpellId);
             Assert.Equal(DiabloItemActionKind.ReadBook, state.ItemActionKind);
         }
+    }
+
+    [Fact]
+    public void SinglePlayerBookSelectionSkipsResurrectAndHealOther()
+    {
+        var items = CreateBookTemplateCatalog();
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(1, 1, 0, 0, 0, 0) { NativeSpellId = 32 },
+            new AuthoritativeSpellDefinition(2, 1, 0, 0, 0, 0) { NativeSpellId = 34 },
+            new AuthoritativeSpellDefinition(3, 1, 0, 0, 0, 0) { NativeSpellId = 35 },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                1,
+                "Resurrect",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+            new AuthoritativeSpellBookDefinition(
+                2,
+                "Heal Other",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+            new AuthoritativeSpellBookDefinition(
+                3,
+                "Blood Star",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+        ]);
+
+        books.Validate(spells, items);
+
+        for (uint seed = 1; seed <= 128; seed++) {
+            var singlePlayer = books.GenerateRandom(
+                items,
+                seed,
+                itemLevel: 1,
+                gameMode: DiabloGameMode.SinglePlayer);
+            Assert.Equal(3, singlePlayer.SpellId);
+        }
+
+        var multiplayerSpellIds = Enumerable.Range(1, 128)
+            .Select(seed => books.GenerateRandom(
+                items,
+                (uint)seed,
+                itemLevel: 1,
+                gameMode: DiabloGameMode.Multiplayer).SpellId)
+            .ToHashSet();
+        Assert.Contains(1, multiplayerSpellIds);
+        Assert.Contains(2, multiplayerSpellIds);
+        Assert.Contains(3, multiplayerSpellIds);
+    }
+
+    private static AuthoritativeItemCatalog CreateBookTemplateCatalog()
+    {
+        return new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
     }
 }

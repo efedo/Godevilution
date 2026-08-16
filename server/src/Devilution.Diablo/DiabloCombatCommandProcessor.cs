@@ -6024,7 +6024,8 @@ public sealed class DiabloCombatCommandProcessor
                     unchecked((uint)tick ^ target.EntityId ^ victim.EntityId),
                     positionX,
                     positionY,
-                    entityId);
+                    entityId,
+                    gameMode == DiabloGameMode.Multiplayer);
                 if (summon is not null) {
                     DiabloDifficultyMonsterScaling.ApplyInitialHealth(
                         summon,
@@ -9320,7 +9321,8 @@ public sealed class DiabloCombatCommandProcessor
                 ^ projectile.TargetEntityId),
             spawnPosition.Value.X,
             spawnPosition.Value.Y,
-            AllocateMonsterEntityId(players));
+            AllocateMonsterEntityId(players),
+            gameMode == DiabloGameMode.Multiplayer);
         if (summon is not null) {
             DiabloDifficultyMonsterScaling.ApplyInitialHealth(
                 summon,
@@ -13736,7 +13738,8 @@ public sealed class DiabloCombatCommandProcessor
             ? spellBooks.GenerateRandom(
                 items,
                 itemSeed,
-                quest.CompletionRewardItemLevel)
+                quest.CompletionRewardItemLevel,
+                gameMode)
             : items.Generate(
                 quest.CompletionRewardItemId,
                 itemSeed,

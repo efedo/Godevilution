@@ -229,4 +229,46 @@ public sealed class StoreCatalogTests
         Assert.Equal("Book of Firebolt", item.State.BaseName);
         Assert.Equal(100, item.State.Value);
     }
+
+    [Fact]
+    public void MultiplayerStoreRetainsHealOtherBookWhileSinglePlayerExcludesIt()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(34, 1, 0, 0, 0, 0) { NativeSpellId = 34 },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                34,
+                "Heal Other",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Magic,
+                17),
+        ]);
+        books.Validate(spells, items);
+        const string contents = "store_id\tstore_slot\titem_seed\tprice\titem_id\titem_level\n"
+            + "1\t0\t42\t100\t114\t1\n";
+
+        Assert.Throws<InvalidDataException>(() => StoreCatalog.LoadTsv(
+            "stores.tsv",
+            contents,
+            items,
+            spellBooks: books,
+            gameMode: DiabloGameMode.SinglePlayer));
+
+        var multiplayer = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            contents,
+            items,
+            spellBooks: books,
+            gameMode: DiabloGameMode.Multiplayer);
+        var item = Assert.Single(multiplayer.GetItems(1));
+        Assert.Equal(34, item.State.SpellId);
+    }
 }

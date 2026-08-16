@@ -315,7 +315,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             itemCatalog,
             uniqueItems,
             stableIds,
-            spellBooks);
+            spellBooks,
+            gameMode);
         if (stableIds is not null)
             stableIds.ValidateReferences(
                 "store",
@@ -397,7 +398,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 uniqueItems,
                 monsterTypes,
                 stableIds,
-                spellBooks)
+                spellBooks,
+                gameMode)
             : null;
         if (world is not null && monsters is not null)
             AuthoritativeMonsterCatalog.ValidateWorld(monsters.Targets, world);
