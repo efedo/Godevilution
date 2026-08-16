@@ -164,6 +164,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             : null;
         if (spells is not null)
             pricing.ValidateSpellReferences(spells);
+        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
+            ? StableContentIdCatalog.LoadTsv(
+                stableIdsTable.SourcePath,
+                stableIdsTable.ToCanonicalTsv())
+            : null;
 
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
@@ -198,7 +203,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 itemTable.ToCanonicalTsv(),
                 affixes,
                 null,
-                cursorCatalog)
+                cursorCatalog,
+                stableIds)
             : null;
         // Normalized IDs take precedence. The legacy table remains a fallback
         // and intentionally derives compatibility IDs from its own row order.
@@ -240,11 +246,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 100,
                 townLevelId: worldRules.TownLevelId);
         combatRules.ValidateItems(itemCatalog);
-        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
-            ? StableContentIdCatalog.LoadTsv(
-                stableIdsTable.SourcePath,
-                stableIdsTable.ToCanonicalTsv())
-            : null;
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
             "class_loadout_items.tsv");

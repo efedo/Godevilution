@@ -327,7 +327,8 @@ public sealed class AuthoritativeItemCatalog
         string contents,
         AuthoritativeItemAffixCatalog? affixes = null,
         AuthoritativeUniqueItemCatalog? uniqueItems = null,
-        AuthoritativeItemCursorCatalog? cursorCatalog = null)
+        AuthoritativeItemCursorCatalog? cursorCatalog = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows.Select(row => new AuthoritativeItemDefinition(
@@ -350,7 +351,7 @@ public sealed class AuthoritativeItemCatalog
                 EquipLocation = row.OptionalInt32("equip_location"),
                 ItemClass = row.OptionalInt32("item_class"),
                 MiscId = row.OptionalInt32("misc_id"),
-                SpellId = row.OptionalInt32("spell_id"),
+                SpellId = ResolveSpellId(row, stableIds),
                 SpellSourceKind = ParseSpellSourceKind(row),
                 Flags = ParseNormalizedFlags(row),
                 HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(row),
@@ -373,6 +374,37 @@ public sealed class AuthoritativeItemCatalog
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
+    }
+
+    private static int ResolveSpellId(TsvRow row, StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.OptionalInt32("spell_id");
+        if (!row.TryGet("spell_symbol", out var symbol)
+            || string.IsNullOrWhiteSpace(symbol))
+            return numericId;
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Item row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Item row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (resolvedId > int.MaxValue)
+            throw new InvalidDataException(
+                $"Item row {row.LineNumber} resolves spell symbol '{symbol}' beyond the item spell-ID range.");
+        if (numericId != 0 && numericId != (int)resolvedId)
+            throw new InvalidDataException(
+                $"Item row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        return checked((int)resolvedId);
     }
 
     internal static DiabloItemSpellSourceKind? ParseSpellSourceKind(TsvRow row)
