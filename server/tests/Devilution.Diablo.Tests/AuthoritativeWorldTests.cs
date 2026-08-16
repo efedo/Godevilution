@@ -107,6 +107,15 @@ public sealed class AuthoritativeWorldTests
             "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"
                 + "8\t1\t1\t1\t9\t0\t0\n",
             world));
+        var blockedWorld = AuthoritativeWorld.LoadTsv(
+            "blocked-levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\t4\n2\t3\t3\tnone\n");
+        var blockedTarget = Assert.Single(AuthoritativeWarpCatalog.LoadTsv(
+            "blocked-warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"
+                + "9\t1\t1\t1\t2\t2\t2\n",
+            blockedWorld));
+        Assert.Throws<InvalidDataException>(() => blockedWorld.AddWarpTarget(blockedTarget));
     }
 
     [Fact]
@@ -127,6 +136,12 @@ public sealed class AuthoritativeWorldTests
         Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
             [new AuthoritativePortal(3, 1, 0, 0, 9, 0, 0)],
             world));
+        var blockedWorld = AuthoritativeWorld.LoadTsv(
+            "blocked-levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\t4\n2\t3\t3\tnone\n");
+        Assert.Throws<InvalidDataException>(() => AuthoritativePortalCatalog.ValidateWorld(
+            portals,
+            blockedWorld));
     }
 
     [Fact]
