@@ -49,6 +49,11 @@ Status date: 2026-08-16
   fallback behavior for older packs; the shipped base and Hellfire mappings
   carry the active values and replay identities have been refreshed.
 
+- RangedAvoidance recovery delays are now validated missile-content fields
+  (`ranged_avoidance_delay_base` and `ranged_avoidance_delay_random_range`),
+  retaining the native fallback for older packs and carrying the active values
+  in the shipped base mappings.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

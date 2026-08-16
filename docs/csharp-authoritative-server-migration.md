@@ -738,6 +738,13 @@ content. The random range remains exclusive and uses the native base-plus-roll
 formula; older packs and avoidance mappings retain their native compatibility
 behavior when the columns are absent or zero.
 
+Schema 1.290 externalizes the native RangedAvoidance recovery delay through
+optional `ranged_avoidance_delay_base` and
+`ranged_avoidance_delay_random_range` columns in the same validated missile
+catalog. The exclusive random range and base preserve the native five-plus-ten
+timing for shipped mappings, while older packs retain the compatibility
+fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
