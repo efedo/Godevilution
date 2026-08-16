@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.288.0` schema in
+It declares its identity and `devilution.diablo@1.289.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1136,6 +1136,11 @@ Schema 1.288 adds the optional `guardian_arc_offsets` column to `spells.tsv`.
 The checked-in Guardian row carries the native 48-cell firing arc; older
 mappings retain the native order when the column is omitted.
 
+Schema 1.289 adds optional `ranged_delay_base` and
+`ranged_delay_random_range` columns to `monster_missiles.tsv`. Checked-in
+ranged mappings carry the native base-plus-exclusive-random delay, while
+older mappings retain the compatibility fallback when the columns are omitted.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
@@ -1850,7 +1855,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.288.0"
+    "version": "1.289.0"
   },
   "dependencyConstraints": [
     {
@@ -1882,7 +1887,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.288.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.289.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

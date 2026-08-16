@@ -731,6 +731,13 @@ Schema 1.288 externalizes Guardian's ordered 48-cell firing arc in validated
 spell content while retaining the native firing order for older packs that omit
 the optional column.
 
+Schema 1.289 externalizes the post-attack delay for ranged monster missile
+mappings through optional `ranged_delay_base` and
+`ranged_delay_random_range` columns in validated `monster_missiles.tsv`
+content. The random range remains exclusive and uses the native base-plus-roll
+formula; older packs and avoidance mappings retain their native compatibility
+behavior when the columns are absent or zero.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

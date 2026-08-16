@@ -44,6 +44,11 @@ Status date: 2026-08-16
 - Host shutdown now disposes the active authoritative adapter as well as
   drained retired generations, closing the ruleset lifecycle ownership gap.
 
+- Ranged monster missile post-attack delays are now validated content fields
+  (`ranged_delay_base` and `ranged_delay_random_range`) with native-compatible
+  fallback behavior for older packs; the shipped base and Hellfire mappings
+  carry the active values and replay identities have been refreshed.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.
