@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.242 adds the stable `monster` namespace. Monster type rows carry
+`monster_symbol`, and encounter, missile selector/spawn, unique-monster, and
+quest-completion links can resolve symbolic identities while preserving their
+numeric compatibility projections.
+
 Schema 1.241 extends the stable unique namespace to optional store
 `unique_item_symbol` and monster `drop_unique_item_symbol` references. These
 links are cross-checked against retained numeric IDs and the active unique

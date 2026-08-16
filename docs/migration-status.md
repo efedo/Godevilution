@@ -920,6 +920,11 @@ Status date: 2026-08-16
   stock and monster unique-drop references. Numeric-only links remain
   compatible while active symbols are validated against the unique catalog.
 
+- Schema 1.242 adds the stable `monster` namespace. Monster type rows and
+  authored encounter, missile selector/spawn, unique-monster, and quest
+  completion links may carry symbols cross-checked against retained numeric
+  IDs; numeric-only rows remain compatible.
+
 - Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
   shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
   compatible for older external packs.

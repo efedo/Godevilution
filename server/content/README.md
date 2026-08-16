@@ -924,6 +924,12 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.242 adds the stable `monster` namespace. Monster type rows carry
+`monster_symbol`, and authored encounter, missile selector/spawn, unique
+monster, and quest-completion links may use corresponding symbolic columns.
+Activation cross-checks symbols against retained numeric IDs and the active
+monster catalog; numeric-only rows remain compatible.
+
 Schema 1.241 extends stable unique identities to optional catalog-backed
 store stock and monster-drop references through `unique_item_symbol` and
 `drop_unique_item_symbol`. Numeric-only references remain compatible while
