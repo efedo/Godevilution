@@ -82,6 +82,10 @@ Status date: 2026-08-16
   `counselor_attack_chance_intelligence_scale` monster-type fields, preserving
   the native capped 50/5 band with fallback behavior for older packs.
 
+- Shared AiAvoidance fresh-mode movement admission is now validated through
+  the `ai_avoidance_movement_fresh_chance_bonus` monster-type field, preserving
+  the native 50-point bonus with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -631,9 +635,10 @@ Status date: 2026-08-16
   is carried through snapshots, protocol saves, and the authoritative state
   hash, while the Godot client remains behavior-blind.
 
-- Counselor mapped ranged rows now consume the native
-  `5 * (intelligence + 10)` admission and 30-percent `RoundWalk` fallback;
-  failed admissions defer on the server instead of generic-pursuing.
+- Counselor mapped ranged rows now consume validated base and intelligence-scale
+  admission terms, preserving the native 50/5 fallback and 30-percent
+  `RoundWalk` branch; failed admissions defer on the server instead of
+  generic-pursuing.
 
 - Rhino charge admission is now selected by its complete validated tuning tuple
   independent of the row's native-AI label; rows without migrated tuning retain
@@ -1344,6 +1349,10 @@ Status date: 2026-08-16
 - Schema 1.313 externalizes Counselor's ranged-admission chance through
   optional monster-type data, retaining the native capped 50/5 fallback for
   older mappings.
+
+- Schema 1.314 externalizes the shared AiAvoidance fresh-mode movement bonus
+  through optional monster-type data, retaining the native 50-point fallback
+  for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.314 validated AiAvoidance fresh-mode movement bonus to
+  `monster_types.tsv`, preserving the native 50-point fallback for older
+  mappings.
+
 - Add schema 1.313 validated Counselor ranged-admission chance fields to
   `monster_types.tsv`, preserving the native capped 50/5 fallback for older
   mappings.
@@ -763,8 +767,9 @@ All notable changes to this fork are documented below.
   hashing.
 
 - Restore Counselor’s native ranged admission: mapped Firebolt, Charged Bolt,
-  Fireball, Lightning, and magic rows now use the `5 * (intelligence + 10)`
-  attack band and 30-percent `RoundWalk` fallback before generic pursuit.
+  Fireball, Lightning, and magic rows now use validated base and intelligence-
+  scale terms, preserving the native 50/5 fallback and 30-percent `RoundWalk`
+  branch before generic pursuit.
 
 - Honor standalone validated Gargoyle healing tuning by composing omitted
   safety-boundary and healing-formula terms from the native 2/1 and 16/5/4

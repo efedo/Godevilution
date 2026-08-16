@@ -296,9 +296,10 @@ clients never execute them.
 
 Optional `MonsterSnapshot` fields 64-65 carry the shared `AiAvoidance`
 `var2`-compatible idle counter and `var1`-compatible movement value. The
-server applies the native long-idle, fresh-mode, and middle-band ordinary
-movement admissions for `GoatMelee` and `Gargoyle`; older peers may omit these
-fields and clients never execute the AI.
+server applies the native long-idle, validated fresh-mode bonus, and
+middle-band ordinary movement admissions for `GoatMelee` and `Gargoyle`; older
+mappings retain the native 50-point bonus, older peers may omit these fields,
+and clients never execute the AI.
 
 Optional `MonsterSnapshot` fields 66-67 carry the native
 `AiRangedAvoidance` `var2`-compatible idle counter and `var1`-compatible
@@ -357,9 +358,10 @@ For the `Mega` identity, Inferno admission and its intermediate-distance
 `2 * (5 * intelligence + 25)` RandomWalk fallback are server-owned. A failed or
 blocked mapped Inferno roll never delegates movement policy to the client.
 
-Counselor mapped ranged rows use the native `5 * (intelligence + 10)` admission
-and 30-percent `RoundWalk` fallback; clients receive only the resulting
-projectile or authoritative movement snapshot.
+Counselor mapped ranged rows use validated base and intelligence-scale
+admission terms, capped at 100, with the native 50/5 fallback for older
+mappings, followed by the 30-percent `RoundWalk` fallback; clients receive
+only the resulting projectile or authoritative movement snapshot.
 
 The `SkeletonKing` identity drives a server-owned summon boundary. When its
 validated single-player admission succeeds, the server selects a level-valid
