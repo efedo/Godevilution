@@ -6385,6 +6385,13 @@ public sealed class DiabloCombatCommandProcessor
     private (int ChanceBase, int IntelligenceScale)? GetGargoyleAttackTuning(
         AuthoritativeCombatTarget target)
     {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.GargoyleAttackChanceBase > 0
+            && definition.GargoyleAttackChanceIntelligenceScale > 0) {
+            return (
+                definition.GargoyleAttackChanceBase,
+                definition.GargoyleAttackChanceIntelligenceScale);
+        }
         return UsesNativeAi(target, "Gargoyle")
             ? (23, 2)
             : null;

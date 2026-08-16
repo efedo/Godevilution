@@ -5101,6 +5101,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleAiUsesContentSelectedAdjacentAttackAdmission()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                81,
+                "Gargoyle",
+                0,
+                0,
+                9,
+                60,
+                90,
+                45,
+                10,
+                16,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Gargoyle",
+                GargoyleAttackChanceBase = 10,
+                GargoyleAttackChanceIntelligenceScale = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            40,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            monsterId: 1,
+            nativeAi: "Gargoyle",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15: outside the content-selected 10% attack band.
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.Equal(100, player.Life);
+
+        // 6 ^ 9 ^ 7 = 8: inside the same content-selected attack band.
+        Assert.Single(processor.AdvanceTick(6, [player]));
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void GargoyleUsesValidatedSafetyBoundaryTuning()
     {
         var monsterTypes = new AuthoritativeMonsterTypeCatalog([

@@ -606,6 +606,12 @@ public sealed class AuthoritativeMonsterCatalogTests
         ]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
             CreateType(1, 1, 1) with {
+                NativeAi = "Gargoyle",
+                GargoyleAttackChanceBase = 23,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
                 GargoyleSafeDistanceBase = 2,
             },
         ]));
@@ -635,6 +641,20 @@ public sealed class AuthoritativeMonsterCatalogTests
             gargoyle.GargoyleHealDivisorMultiplier,
             gargoyle.GargoyleHealDivisorRandomRange,
             gargoyle.GargoyleHealDivisorRandomOffset));
+    }
+
+    [Fact]
+    public void LoadsGargoyleAttackTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tgargoyle_attack_chance_base\tgargoyle_attack_chance_intelligence_scale\n"
+                + "2\t0\tGargoyle\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tGargoyle\t23\t2\n");
+
+        var gargoyle = Assert.Single(catalog.Definitions);
+        Assert.Equal((23, 2), (
+            gargoyle.GargoyleAttackChanceBase,
+            gargoyle.GargoyleAttackChanceIntelligenceScale));
     }
 
     [Fact]
