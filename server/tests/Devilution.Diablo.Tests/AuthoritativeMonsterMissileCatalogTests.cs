@@ -160,6 +160,32 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedSnakeDistantDelayAdmissionChance()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tsnake_distant_delay_chance_base\tsnake_distant_delay_chance_intelligence_scale\n"
+                + "Snake\tRhino\tSnakeCharge\t41\t3\n");
+
+        var snake = Assert.Single(catalog.Definitions);
+        Assert.Equal((41, 3), (
+            snake.SnakeDistantDelayChanceBase,
+            snake.SnakeDistantDelayChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void RejectsPartialSnakeDistantDelayAdmissionChance()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Snake",
+                "Rhino",
+                AuthoritativeProjectileBehavior.SnakeCharge,
+                SnakeDistantDelayChanceBase: 41),
+        ]));
+    }
+
+    [Fact]
     public void LoadsValidatedMegaDelayTuning()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

@@ -81,6 +81,10 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     int SnakeDistantDelayIntelligenceScale = 0,
     /** Optional exclusive Snake distant-delay random range. */
     int SnakeDistantDelayRandomRange = 0,
+    /** Optional Snake distant-delay admission chance base. */
+    int SnakeDistantDelayChanceBase = 0,
+    /** Optional Snake distant-delay admission chance reduction per intelligence. */
+    int SnakeDistantDelayChanceIntelligenceScale = 0,
     /** Optional Mega post-action delay base; zero preserves native behavior. */
     int MegaDelayBase = 0,
     /** Optional exclusive Mega post-action delay random range. */
@@ -151,6 +155,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.SnakeDistantDelayBase < 0
                 || definition.SnakeDistantDelayIntelligenceScale < 0
                 || definition.SnakeDistantDelayRandomRange < 0
+                || definition.SnakeDistantDelayChanceBase is < 0 or > 100
+                || definition.SnakeDistantDelayChanceIntelligenceScale is < 0 or > 100
                 || (definition.SnakeAdjacentDelayBase != 0
                     || definition.SnakeAdjacentDelayIntelligenceScale != 0
                     || definition.SnakeAdjacentDelayRandomRange != 0
@@ -161,6 +167,12 @@ public sealed class AuthoritativeMonsterMissileCatalog
                         != AuthoritativeProjectileBehavior.SnakeCharge
                         || definition.SnakeAdjacentDelayRandomRange <= 0
                         || definition.SnakeDistantDelayRandomRange <= 0)
+                || (definition.SnakeDistantDelayChanceBase != 0
+                    || definition.SnakeDistantDelayChanceIntelligenceScale != 0)
+                    && (definition.ProjectileBehavior
+                        != AuthoritativeProjectileBehavior.SnakeCharge
+                        || definition.SnakeDistantDelayChanceBase <= 0
+                        || definition.SnakeDistantDelayChanceIntelligenceScale <= 0)
                 || definition.MegaDelayBase < 0
                 || definition.MegaDelayRandomRange < 0
                 || (definition.MegaDelayBase != 0
@@ -411,6 +423,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("snake_distant_delay_base"),
                 row.OptionalInt32("snake_distant_delay_intelligence_scale"),
                 row.OptionalInt32("snake_distant_delay_random_range"),
+                row.OptionalInt32("snake_distant_delay_chance_base"),
+                row.OptionalInt32("snake_distant_delay_chance_intelligence_scale"),
                 row.OptionalInt32("mega_delay_base"),
                 row.OptionalInt32("mega_delay_random_range"));
         }));

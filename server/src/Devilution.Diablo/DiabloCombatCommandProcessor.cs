@@ -6735,7 +6735,15 @@ public sealed class DiabloCombatCommandProcessor
             return false;
         }
 
-        var delayBand = Math.Max(0, 35 - (2 * monster.Intelligence));
+        var delayChanceBase = missile.SnakeDistantDelayChanceBase > 0
+            ? missile.SnakeDistantDelayChanceBase
+            : 35;
+        var delayChanceIntelligenceScale = missile.SnakeDistantDelayChanceIntelligenceScale > 0
+            ? missile.SnakeDistantDelayChanceIntelligenceScale
+            : 2;
+        var delayBand = Math.Max(
+            0,
+            delayChanceBase - (delayChanceIntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand) {
             monster.StartSnakeDelay(
                 ResolveSnakeDelay(missile, actionSeed, monster.Intelligence, adjacent: false));

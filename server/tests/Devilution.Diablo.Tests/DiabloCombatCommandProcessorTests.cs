@@ -6418,6 +6418,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiUsesValidatedDistantDelayAdmissionChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    SnakeDistantDelayChanceBase: 100,
+                    SnakeDistantDelayChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38, outside the native 35-point band. The authored
+        // 100-point band must still enter the server-owned delay branch.
+        processor.AdvanceTick(40, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.False(monster.IsMoving);
+        Assert.Equal(15, monster.SnakeDelayTicks);
+    }
+
+    [Fact]
     public void SnakeAiUsesValidatedDriftPattern()
     {
         var monster = new AuthoritativeCombatTarget(
