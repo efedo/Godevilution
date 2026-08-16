@@ -148,6 +148,9 @@ Status date: 2026-08-16
   per-tick tile-step count, while omitted values retain the native speed-one
   fallback and lifetime behavior.
 
+- Mega Inferno segments now consume the mapped `projectile_damage` override,
+  while older mappings retain the native per-segment monster-damage roll.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

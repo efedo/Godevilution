@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
 - MonsterArrow mappings now advance up to their validated `projectile_speed`
   tiles per simulation tick, while speed-one rows retain the native fallback.
 
+- Mega `InfernoController` mappings now carry validated `projectile_damage`
+  into every emitted segment, while omitted values retain the native random
+  monster-damage roll.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.

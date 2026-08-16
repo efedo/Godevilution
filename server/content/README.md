@@ -580,7 +580,9 @@ Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserve
 Mega's distance- and intelligence-based special-attack admission, speed-32
 Inferno controller, three-segment limit, and monster damage roll through the
 same server-owned persistent collision path used by player Inferno. The current
-Inferno admission values are supplied by the validated missile row.
+Inferno admission values are supplied by the validated missile row, and its
+optional `projectile_damage` overrides the damage captured by every emitted
+segment; omitted values retain the native per-segment monster-damage roll.
 The `SkeletonRanged` identity now consumes the native `3 + 2 * intelligence`
 attack band for a clear-lane arrow hit; the server owns the resulting accuracy,
 damage event, and blocked-lane movement fallback. Complete positive tuples
