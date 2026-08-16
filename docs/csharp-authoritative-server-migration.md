@@ -550,6 +550,10 @@ Schema 1.252 normalizes stable symbols, display names, and native cursor
 projections for the first five Hellfire unique base-item rows, including the
 shared Hellfire ring base used by multiple unique definitions.
 
+Schema 1.253 normalizes stable symbols, display names, and native cursor
+projections for the next five Hellfire unique base-item rows: Veil of Steel,
+Arkaine's Valor, Griswold's Edge, Bovine Plate, and The Butcher's Cleaver.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

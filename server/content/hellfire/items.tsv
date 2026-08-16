@@ -11,11 +11,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 114	optic_amulet	13	9750	9750	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	11	0	0	0	None	Optic Amulet	Optic Amulet	AMULET	1	1	true			0	0
 115	ring_of_truth	12	9100	9100	0	0	0	0	0	1	1	1	Misc,Ring	5	3	26	0		0	0	0	12	0	0	0	None	Ring of Truth	Ring of Truth	RING	1	1	true			0	0
 116	harlequin_crest	7	4000	4000	0	0	0	15	15	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	15	0	0	0	None	Harlequin Crest	Harlequin Crest	HARLEQUIN_CREST	1	1	true			0	0
-117	hellfire_item_117	7	63800	63800	0	0	18	60	60	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	16	0	0	0	None	-	-	-	1	1	true			18	18
-118	hellfire_item_118	8	42000	42000	0	0	0	40	40	2	2	1	Armor,MediumArmor,BodyArmor	3	2	28	0		0	0	0	30	0	0	0	None	-	-	-	1	1	true			0	0
-119	hellfire_item_119	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	28	0		2	40	0	0	32	0	0	None	-	-	-	0	0	false			0	0
-120	hellfire_item_120	9	0	0	0	0	0	40	40	2	2	1	Armor,HeavyArmor,BodyArmor	3	2	28	0		2	50	0	0	33	0	0	None	-	-	-	0	0	false			0	0
-121	hellfire_item_121	2	2000	2000	4	24	0	10	10	2	3	1	Weapon,Axe,TwoHanded	2	1	28	0		2	0	0	0	6	0	0	None	-	-	-	10	0	false			0	0
+117	veil_of_steel	7	63800	63800	0	0	18	60	60	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	16	0	0	0	None	Veil of Steel	Veil of Steel	VEIL_OF_STEEL	1	1	true			18	18
+118	arkaine_s_valor	8	42000	42000	0	0	0	40	40	2	2	1	Armor,MediumArmor,BodyArmor	3	2	28	0		0	0	0	30	0	0	0	None	Arkaine's Valor	Arkaine's Valor	ARKAINES_VALOR	1	1	true			0	0
+119	griswold_s_edge	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	28	0		2	40	0	0	32	0	0	None	Griswold's Edge	Griswold's Edge	BROAD_SWORD	0	0	false			0	0
+120	bovine_plate	9	0	0	0	0	0	40	40	2	2	1	Armor,HeavyArmor,BodyArmor	3	2	28	0		2	50	0	0	33	0	0	None	Bovine Plate	Bovine Plate	BOVINE	0	0	false			0	0
+121	butcher_s_cleaver	2	2000	2000	4	24	0	10	10	2	3	1	Weapon,Axe,TwoHanded	2	1	28	0		2	0	0	0	6	0	0	None	The Butcher's Cleaver	The Butcher's Cleaver	CLEAVER	10	0	false			0	0
 122	hellfire_item_122	3	250	250	1	6	0	35	35	2	3	0	Bow,TwoHanded	2	1	0	0		0	25	0	30	146	0	0	None	-	-	-	7	2	false			0	0
 123	hellfire_item_123	3	600	600	3	6	0	45	45	2	3	0	Bow,TwoHanded	2	1	0	0		0	25	0	40	147	0	0	None	-	-	-	9	2	false			0	0
 124	hellfire_item_124	3	350	350	2	5	0	40	40	2	3	0	Bow,TwoHanded	2	1	0	0		0	20	0	35	145	0	0	None	-	-	-	5	2	false			0	0

@@ -938,6 +938,11 @@ The Undead Crown, the shared Hellfire ring base, Optic Amulet, Ring of Truth,
 and Harlequin Crest. Their stable item symbols, display names, and native
 cursor projections now cross the same validated item boundary.
 
+Schema 1.253 normalizes the next five Hellfire unique base-item projections:
+Veil of Steel, Arkaine's Valor, Griswold's Edge, Bovine Plate, and The
+Butcher's Cleaver. Their stable item symbols, native display names, and cursor
+projections are validated alongside their unique base-item links.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.

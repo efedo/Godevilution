@@ -16,34 +16,34 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1007	harlequin_crest	Harlequin Crest	116	harlequin_crest	1	4000	ATTRIBS	2	2	-
 1007	harlequin_crest	Harlequin Crest	116	harlequin_crest	1	4000	LIFE	7	7	-
 1007	harlequin_crest	Harlequin Crest	116	harlequin_crest	1	4000	MANA	7	7	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	ALLRES	50	50	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	LIGHT_CURSE	2	2	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	ACP	60	60	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	MANA_CURSE	30	30	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	STR	15	15	-
-1008	veil_of_steel	Veil of Steel	117	hellfire_item_117	1	63800	VIT	15	15	-
-1009	arkaine_s_valor	Arkaine's Valor	118	hellfire_item_118	1	42000	SETAC	25	25	-
-1009	arkaine_s_valor	Arkaine's Valor	118	hellfire_item_118	1	42000	VIT	10	10	-
-1009	arkaine_s_valor	Arkaine's Valor	118	hellfire_item_118	1	42000	GETHIT	3	3	-
-1009	arkaine_s_valor	Arkaine's Valor	118	hellfire_item_118	1	42000	FASTRECOVER	3	3	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	FIREDAM	1	10	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	TOHIT	25	25	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	FASTATTACK	2	2	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	KNOCKBACK	0	0	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	MANA	20	20	-
-1010	griswold_s_edge	Griswold's Edge	119	hellfire_item_119	1	42000	LIFE_CURSE	20	20	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	SETAC	150	150	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	INDESTRUCTIBLE	0	0	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	LIGHT	5	5	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	ALLRES	30	30	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	MANA_CURSE	50	50	-
-1011	bovine_plate	Bovine Plate	120	hellfire_item_120	1	400	SPLLVLADD	-2	-2	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	ALLRES	50	50	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	LIGHT_CURSE	2	2	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	ACP	60	60	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	MANA_CURSE	30	30	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	STR	15	15	-
+1008	veil_of_steel	Veil of Steel	117	veil_of_steel	1	63800	VIT	15	15	-
+1009	arkaine_s_valor	Arkaine's Valor	118	arkaine_s_valor	1	42000	SETAC	25	25	-
+1009	arkaine_s_valor	Arkaine's Valor	118	arkaine_s_valor	1	42000	VIT	10	10	-
+1009	arkaine_s_valor	Arkaine's Valor	118	arkaine_s_valor	1	42000	GETHIT	3	3	-
+1009	arkaine_s_valor	Arkaine's Valor	118	arkaine_s_valor	1	42000	FASTRECOVER	3	3	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	FIREDAM	1	10	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	TOHIT	25	25	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	FASTATTACK	2	2	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	KNOCKBACK	0	0	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	MANA	20	20	-
+1010	griswold_s_edge	Griswold's Edge	119	griswold_s_edge	1	42000	LIFE_CURSE	20	20	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	SETAC	150	150	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	INDESTRUCTIBLE	0	0	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	LIGHT	5	5	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	ALLRES	30	30	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	MANA_CURSE	50	50	-
+1011	bovine_plate	Bovine Plate	120	bovine_plate	1	400	SPLLVLADD	-2	-2	-
 1012	the_rift_bow	The Rift Bow	103	short_bow_starting	1	1800	RNDARROWVEL	0	0	-
 1012	the_rift_bow	The Rift Bow	103	short_bow_starting	1	1800	DAMMOD	2	2	-
 1012	the_rift_bow	The Rift Bow	103	short_bow_starting	1	1800	DEX_CURSE	3	3	-
-1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	hellfire_item_121	1	3650	STR	10	10	-
-1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	hellfire_item_121	1	3650	SETDAM	4	24	-
-1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	hellfire_item_121	1	3650	SETDUR	10	10	-
+1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	butcher_s_cleaver	1	3650	STR	10	10	-
+1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	butcher_s_cleaver	1	3650	SETDAM	4	24	-
+1013	the_butcher_s_cleaver	The Butcher's Cleaver	121	butcher_s_cleaver	1	3650	SETDUR	10	10	-
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	TOHIT	50	50	THE_NEEDLER
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	SETDAM	1	3	THE_NEEDLER
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	FASTATTACK	2	2	THE_NEEDLER

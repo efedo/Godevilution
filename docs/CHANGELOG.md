@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   symbols, native display names, and cursor identities, including the shared
   Hellfire ring base.
 
+- Normalize the next five Hellfire unique base-item projections: Veil of Steel,
+  Arkaine's Valor, Griswold's Edge, Bovine Plate, and The Butcher's Cleaver.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.
