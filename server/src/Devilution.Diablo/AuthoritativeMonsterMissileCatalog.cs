@@ -252,9 +252,11 @@ public sealed class AuthoritativeMonsterMissileCatalog
 
     public static AuthoritativeMonsterMissileCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var hasSpellSymbol = table.Columns.Contains("spell_symbol");
         return new AuthoritativeMonsterMissileCatalog(table.Rows.Select(row => {
             var behaviorText = row.Required("projectile_behavior");
             if (!Enum.TryParse<AuthoritativeProjectileBehavior>(
@@ -273,7 +275,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 ParseAttackMode(row),
                 row.OptionalInt32("avoidance_probability_percent", 100),
                 row.OptionalUInt32("monster_id"),
-                row.OptionalUInt32("spell_id"),
+                ResolveSpellId(row, hasSpellSymbol, stableIds),
                 row.OptionalUInt32("spawn_monster_id"),
                 row.OptionalInt32("projectile_speed"),
                 row.OptionalInt32("projectile_lifetime"),
@@ -309,6 +311,41 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("puddle_impact_lifetime"),
                 row.OptionalInt32("projectile_impact_lifetime"));
         }));
+    }
+
+    private static uint ResolveSpellId(
+        TsvRow row,
+        bool hasSpellSymbol,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.OptionalUInt32("spell_id");
+        if (!hasSpellSymbol
+            || !row.TryGet("spell_symbol", out var symbol)
+            || string.IsNullOrWhiteSpace(symbol)) {
+            return numericId;
+        }
+        if (stableIds is null) {
+            if (numericId == 0) {
+                throw new InvalidDataException(
+                    $"Monster missile row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            }
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Monster missile row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (numericId != 0 && numericId != resolvedId) {
+            throw new InvalidDataException(
+                $"Monster missile row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        }
+        return resolvedId;
     }
 
     private static string CreateKey(string nativeAi, uint monsterId)

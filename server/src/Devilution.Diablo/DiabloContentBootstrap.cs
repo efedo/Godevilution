@@ -332,7 +332,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var monsterMissilesTable)
             ? AuthoritativeMonsterMissileCatalog.LoadTsv(
                 monsterMissilesTable.SourcePath,
-                monsterMissilesTable.ToCanonicalTsv())
+                monsterMissilesTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (monsterMissiles is not null && spells is not null)
             monsterMissiles.ValidateSpellReferences(spells);

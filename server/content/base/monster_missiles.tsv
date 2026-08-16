@@ -1,28 +1,28 @@
-native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spawn_monster_id	damage_type	projectile_speed	projectile_lifetime	projectile_lifetime_base	projectile_lifetime_intelligence_scale	puddle_duration_random_range	puddle_duration_base	puddle_duration_intelligence_scale	puddle_damage_minimum_monster_level	puddle_damage_low	puddle_damage_high	charge_minimum_distance	charge_chance_base	charge_chance_intelligence_scale	ranged_avoidance_minimum_distance	ranged_avoidance_far_distance	ranged_avoidance_chance_base	ranged_avoidance_chance_intelligence_scale	ranged_avoidance_far_intelligence_offset	ranged_retreat_minimum_distance	ranged_retreat_chance_base	ranged_retreat_chance_intelligence_scale	inferno_maximum_distance	inferno_adjacent_chance_base	inferno_adjacent_chance_intelligence_scale	inferno_ranged_far_distance	inferno_ranged_chance_base	inferno_ranged_chance_intelligence_scale	inferno_ranged_far_intelligence_offset	inferno_adjacent_choice_modulo	projectile_damage	puddle_impact_lifetime	projectile_impact_lifetime
-GoatRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0	0	0	Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Snake	Rhino	SnakeCharge	Ranged	100	0	0	0		18	256	0	0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Succubus	BloodStar	BloodStar	Ranged	100	0	36	0	Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0	36	0	Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Acid	Acid	Acid	RangedAvoidance	50	0	1	0	Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	2	1
-AcidUnique	Acid	Acid	Ranged	100	0	1	0	Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	2	1
-FireBat	Firebolt	Firebolt	Ranged	100	0	1	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Torchant	Fireball	Fireball	Ranged	100	0	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Lich	OrangeFlare	MonsterMagic	Ranged	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-ArchLich	YellowFlare	MonsterMagic	Ranged	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Psychorb	BlueFlare	MonsterMagic	Ranged	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Necromorb	RedFlare	MonsterMagic	Ranged	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0	1	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
-Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0	3	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
-Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0	25	0	Magic	0	15	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	40	0	1
-BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0	1	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
-Mega	InfernoControl	InfernoController	Ranged	100	0	21	0	Fire	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	5	40	10	3	5	5	1	2	0	0	1
-Bat	Rhino	BatCharge	RangedAvoidance	100	42	0	0		18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
-Bat	Lightning	MonsterMagic	Ranged	100	43	3	0	Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8
-Counselor	Firebolt	Firebolt	Ranged	100	107	1	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	0	Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	LightningControl	Lightning	Ranged	100	109	3	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	Fireball	Fireball	Ranged	100	110	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Counselor	Fireball	Fireball	Ranged	100	113	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Zhar	Fireball	Fireball	Ranged	100	107	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
-Lazarus	Fireball	Fireball	Ranged	100	113	12	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_percent	monster_id	spell_id	spell_symbol	spawn_monster_id	damage_type	projectile_speed	projectile_lifetime	projectile_lifetime_base	projectile_lifetime_intelligence_scale	puddle_duration_random_range	puddle_duration_base	puddle_duration_intelligence_scale	puddle_damage_minimum_monster_level	puddle_damage_low	puddle_damage_high	charge_minimum_distance	charge_chance_base	charge_chance_intelligence_scale	ranged_avoidance_minimum_distance	ranged_avoidance_far_distance	ranged_avoidance_chance_base	ranged_avoidance_chance_intelligence_scale	ranged_avoidance_far_intelligence_offset	ranged_retreat_minimum_distance	ranged_retreat_chance_base	ranged_retreat_chance_intelligence_scale	inferno_maximum_distance	inferno_adjacent_chance_base	inferno_adjacent_chance_intelligence_scale	inferno_ranged_far_distance	inferno_ranged_chance_base	inferno_ranged_chance_intelligence_scale	inferno_ranged_far_intelligence_offset	inferno_adjacent_choice_modulo	projectile_damage	puddle_impact_lifetime	projectile_impact_lifetime
+GoatRanged	Arrow	MonsterArrow	Ranged	100	0	0		0	Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0	0		0	Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Snake	Rhino	SnakeCharge	Ranged	100	0	0		0		18	256	0	0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Succubus	BloodStar	BloodStar	Ranged	100	0	36	blood_star	0	Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0	36	blood_star	0	Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Acid	Acid	Acid	RangedAvoidance	50	0	1	firebolt	0	Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	2	1
+AcidUnique	Acid	Acid	Ranged	100	0	1	firebolt	0	Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	2	1
+FireBat	Firebolt	Firebolt	Ranged	100	0	1	firebolt	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Torchant	Fireball	Fireball	Ranged	100	0	12	fireball	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Lich	OrangeFlare	MonsterMagic	Ranged	100	0	1	firebolt	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+ArchLich	YellowFlare	MonsterMagic	Ranged	100	0	1	firebolt	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Psychorb	BlueFlare	MonsterMagic	Ranged	100	0	1	firebolt	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Necromorb	RedFlare	MonsterMagic	Ranged	100	0	1	firebolt	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Magma	MagmaBall	MonsterMagic	RangedAvoidance	100	0	1	firebolt	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Storm	ThinLightningControl	Lightning	RangedAvoidance	100	0	3	lightning	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Diablo	DiabloApocalypse	ApocalypseController	RangedAvoidance	100	0	25	apocalypse	0	Magic	0	15	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	40	0	1
+BoneDemon	BlueFlare2	MonsterMagic	RangedAvoidance	100	0	1	firebolt	0	Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Mega	InfernoControl	InfernoController	Ranged	100	0	21	inferno	0	Fire	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	5	40	10	3	5	5	1	2	0	0	1
+Bat	Rhino	BatCharge	RangedAvoidance	100	42	0		0		18	256	0	0	0	0	0	0	0	0	5	33	4	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1
+Bat	Lightning	MonsterMagic	Ranged	100	43	3	lightning	0	Lightning	16	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8
+Counselor	Firebolt	Firebolt	Ranged	100	107	1	firebolt	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	ChargedBolt	MonsterChargedBolt	Ranged	100	108	30	charged_bolt	0	Lightning	8	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	LightningControl	Lightning	Ranged	100	109	3	lightning	0	Lightning	32	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	Fireball	Fireball	Ranged	100	110	12	fireball	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Counselor	Fireball	Fireball	Ranged	100	113	12	fireball	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Zhar	Fireball	Fireball	Ranged	100	107	12	fireball	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
+Lazarus	Fireball	Fireball	Ranged	100	113	12	fireball	0	Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1
