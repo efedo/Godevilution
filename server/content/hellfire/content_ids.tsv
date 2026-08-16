@@ -125,11 +125,11 @@ item	long_bow	123
 item	short_bow	124
 item	long_war_bow	125
 item	short_battle_bow	126
-item	hellfire_item_127	127
-item	hellfire_item_128	128
-item	hellfire_item_129	129
-item	hellfire_item_130	130
-item	hellfire_item_131	131
+item	dagger	127
+item	sabre	128
+item	falchion	129
+item	broad_sword	130
+item	long_sword	131
 item	hellfire_item_132	132
 item	hellfire_item_133	133
 item	hellfire_item_134	134
