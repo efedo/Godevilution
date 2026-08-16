@@ -321,6 +321,11 @@ monster	flesh_thing_native_135	137
 monster	reaper_native_136	138
 monster	na_krul_native_137	139
 warp	grave_matters_dungeon	2
+item	rune_bomb	2101
+item	theodore	2102
+item	auric_amulet	2103
+item	brown_suit	2104
+item	grey_suit	2105
 level	caves	3
 level	hell	4
 level	hellfire_level_9	9
