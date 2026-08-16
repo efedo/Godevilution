@@ -62,6 +62,11 @@ Status date: 2026-08-16
   missile fields, preserving native intelligence reduction and deterministic
   zero-clamped timing while retaining fallback behavior for older packs.
 
+- Snake distant-delay admission chance is now validated `SnakeCharge` missile
+  content (`snake_distant_delay_chance_base` and
+  `snake_distant_delay_chance_intelligence_scale`), preserving the native
+  35-minus-two-times-intelligence band with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1217,6 +1222,10 @@ Status date: 2026-08-16
 - Schema 1.288 externalizes Guardian's ordered 48-cell firing arc in validated
   spell content, retaining the native firing order when older mappings omit
   the optional column.
+
+- Schema 1.300 externalizes Snake's distant-delay admission chance through
+  optional `SnakeCharge` missile fields, retaining the native
+  35-minus-two-times-intelligence fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

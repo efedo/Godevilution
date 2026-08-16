@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.300 validated Snake distant-delay admission chance fields to
+  `monster_missiles.tsv`, preserving the native intelligence-scaled band for
+  older mappings.
+
 - Add an authoritative-path dependency gate that rejects Lua/sol2 references
   from server and Godot C# source/project files while retaining the native
   compatibility layer.
