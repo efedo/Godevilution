@@ -337,8 +337,8 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
             "gold",
             StringComparison.Ordinal);
         var overlapping = loadoutItems.Replace(
-            "0\t4\t105\tBelt\t1",
-            "0\t4\t105\tBelt\t0",
+            "0\twarrior\t4\t105\tpotion_healing\tBelt\t1",
+            "0\twarrior\t4\t105\tpotion_healing\tBelt\t0",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
@@ -404,9 +404,9 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
                     if (!line.StartsWith("105\t", StringComparison.Ordinal))
                         return line;
                     var fields = line.Split('\t');
-                    fields[12] = "Misc,Belt";
-                    fields[13] = "0";
+                    fields[13] = "Misc,Belt";
                     fields[14] = "0";
+                    fields[15] = "0";
                     return string.Join('\t', fields);
                 })) + "\r\n";
         var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", conflictingItems);
@@ -444,13 +444,13 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
                     if (!line.StartsWith("103\t", StringComparison.Ordinal))
                         return line;
                     var fields = line.Split('\t');
-                    fields[12] = "Bow,TwoHanded";
-                    fields[13] = "1";
+                    fields[13] = "Bow,TwoHanded";
+                    fields[14] = "1";
                     return string.Join('\t', fields);
                 })) + "\r\n";
         var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", conflictingItems);
         var loadoutItems = ReadBase(root, "class_loadout_items.tsv") +
-            "1\t1\t101\tEquipment\t5\r\n";
+            "1\trogue\t3\t103\tshort_bow_starting\tEquipment\t5\r\n";
 
         Assert.Throws<InvalidDataException>(() => AuthoritativePlayerLoadoutCatalog.LoadTsv(
             classes,
@@ -477,16 +477,16 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
                     var fields = line.Split('\t');
                     fields[0] = "999";
                     fields[1] = "7";
-                    fields[12] = "Armor,BodyArmor";
-                    fields[13] = "1";
-                    fields[14] = "2";
-                    fields[22] = "199";
+                    fields[13] = "Armor,BodyArmor";
+                    fields[14] = "1";
+                    fields[15] = "2";
+                    fields[23] = "199";
                     return string.Join('\t', fields);
                 })) + "\r\n";
         var items = AuthoritativeItemCatalog.LoadTsv("items.tsv", customItems);
         var loadoutItems = ReadBase(root, "class_loadout_items.tsv").Replace(
-            "3\t0\t107\tEquipment\t4",
-            "3\t0\t999\tEquipment\t6",
+            "3\tmonk\t0\t107\tshort_staff_starting\tEquipment\t4",
+            "3\tmonk\t0\t999\tshort_staff_starting\tEquipment\t6",
             StringComparison.Ordinal);
         var catalog = AuthoritativePlayerLoadoutCatalog.LoadTsv(
             classes,
@@ -524,8 +524,9 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
                     fields[0],
                     fields[1],
                     fields[2],
-                    fields[5],
-                    fields[7],
+                    fields[3],
+                    fields[6],
+                    fields[8],
                 ]);
             })
             .ToArray();

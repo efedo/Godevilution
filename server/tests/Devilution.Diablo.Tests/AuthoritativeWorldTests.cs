@@ -33,6 +33,8 @@ public sealed class AuthoritativeWorldTests
         var stableIds = new StableContentIdCatalog([
             new StableContentId("level", "town", 0),
             new StableContentId("level", "cathedral", 1),
+            new StableContentId("warp", "grave_matters_dungeon", 7),
+            new StableContentId("portal", "cathedral_entrance", 1),
         ]);
         var world = AuthoritativeWorld.LoadTsv(
             "levels.tsv",

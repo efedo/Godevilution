@@ -97,8 +97,8 @@ public sealed class AuthoritativePlayerAnimationCatalogTests
             source.Split(["\r\n", "\n"], StringSplitOptions.None)
                 .Where(line => !line.StartsWith("5\t", StringComparison.Ordinal)));
         var duplicateClass = source.Replace(
-            "1\t18\t10\t",
-            "0\t18\t10\t",
+            "1\trogue\t18\t10\t",
+            "0\trogue\t18\t10\t",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => Load(missingClass));
@@ -110,12 +110,12 @@ public sealed class AuthoritativePlayerAnimationCatalogTests
     {
         var source = ReadShippedAnimations();
         var changedSchema = source.Replace(
-            "class_id\tunarmed_frames\t",
-            "id\tunarmed_frames\t",
+            "class_id\tclass_symbol\t",
+            "id\tclass_symbol\t",
             StringComparison.Ordinal);
         var invalidAttackAction = source.Replace(
-            "0\t16\t9\t",
-            "0\t16\t17\t",
+            "0\twarrior\t16\t9\t",
+            "0\twarrior\t16\t17\t",
             StringComparison.Ordinal);
         var invalidWalkFrames = source.Replace(
             "\t10\t8\t2\t20\t20\t6\t",

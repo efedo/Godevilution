@@ -63,6 +63,13 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
         var stableIds = new StableContentIdCatalog([
             new StableContentId("set_level", "SL_NONE", 0),
             new StableContentId("set_level", "SL_SKELKING", 1),
+            new StableContentId("set_level", "SL_BONECHAMB", 2),
+            new StableContentId("set_level", "SL_MAZE", 3),
+            new StableContentId("set_level", "SL_POISONWATER", 4),
+            new StableContentId("set_level", "SL_VILEBETRAYER", 5),
+            new StableContentId("set_level", "SL_ARENA_CHURCH", 6),
+            new StableContentId("set_level", "SL_ARENA_HELL", 7),
+            new StableContentId("set_level", "SL_ARENA_CIRCLE_OF_LIFE", 8),
         ]);
         var setLevels = AuthoritativeSetLevelNameCatalog.LoadTsv(
             "set_level_names.tsv",

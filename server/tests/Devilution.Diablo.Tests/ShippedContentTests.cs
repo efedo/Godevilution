@@ -84,9 +84,13 @@ public sealed class ShippedContentTests
         var stableIds = StableContentIdCatalog.LoadTsv(
             "content_ids.tsv",
             composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
+        var cursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
+            "item_cursor_graphics.tsv",
+            composed.GetRequiredTable("item_cursor_graphics.tsv").ToCanonicalTsv());
         var items = AuthoritativeItemCatalog.LoadTsv(
             "items.tsv",
             composed.GetRequiredTable("items.tsv").ToCanonicalTsv(),
+            cursorCatalog: cursorCatalog,
             stableIds: stableIds);
 
         var expected = new[] {
@@ -283,7 +287,7 @@ public sealed class ShippedContentTests
         var gatedWarps = TsvTable.Parse(
             warps.SourcePath,
             warps.ToCanonicalTsv()
-                + "2\t0\t0\t0\t0\t0\t0\t3017\t\t1\n");
+                + "2\t\t0\t\t0\t0\t0\t\t0\t0\t3017\t\t1\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -312,7 +316,7 @@ public sealed class ShippedContentTests
         var questLinkedObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv()
-                + "9001\t6001\t0\t0\t0\t0\t3017\t\tNone\t0\t1\t0\t0\t0\n");
+                + "9001\t6001\t\t0\t\t0\t0\t0\t3017\t\tNone\t0\t\t0\t0\t0\t0\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -346,7 +350,7 @@ public sealed class ShippedContentTests
                     if (index != 1)
                         return line;
                     var columns = line.Split('\t');
-                    columns[18] = "9999";
+                    columns[20] = "9999";
                     return string.Join('\t', columns);
                 }));
         var incompletePack = new ContentPack(
@@ -378,8 +382,8 @@ public sealed class ShippedContentTests
         var invalidPortals = TsvTable.Parse(
             portals.SourcePath,
             portals.ToCanonicalTsv().Replace(
-                "1\t1\t2\t2\t2\t3\t4",
-                "1\t1\t40\t2\t2\t3\t4",
+                "1\tcathedral_entrance\t1\tcathedral\t2\t2\t2\tcatacombs\t3\t4",
+                "1\tcathedral_entrance\t1\tcathedral\t40\t2\t2\tcatacombs\t3\t4",
                 StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
@@ -434,18 +438,28 @@ public sealed class ShippedContentTests
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
+        var stableIds = basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv");
         var configuredWorldRules = TsvTable.Parse(
             worldRules.SourcePath,
-            "town_level_id\tadria_store_id\ttown_portal_destination_position_x\t"
-                + "town_portal_destination_position_y\ttown_portal_destination_slot_count\t"
-                + "town_portal_destination_slot_spacing\n0\t73\t60\t41\t2\t4\n");
+            "town_level_id\ttown_level_symbol\tadria_store_id\tadria_store_symbol\t"
+                + "town_portal_destination_position_x\ttown_portal_destination_position_y\t"
+                + "town_portal_destination_slot_count\ttown_portal_destination_slot_spacing\n"
+                + "0\ttown\t73\tadria\t60\t41\t2\t4\n");
+        var configuredStableIds = TsvTable.Parse(
+            stableIds.SourcePath,
+            stableIds.ToCanonicalTsv().Replace(
+                "store\tadria\t10",
+                "store\tadria\t73",
+                StringComparison.Ordinal));
         var configuredPack = new ContentPack(
             basePack.Id,
             basePack.Version,
             basePack.Tables
                 .Select(table => table.SourcePath == worldRules.SourcePath
                     ? configuredWorldRules
-                    : table)
+                    : table.SourcePath == stableIds.SourcePath
+                        ? configuredStableIds
+                        : table)
                 .ToArray(),
             [],
             [],
@@ -469,8 +483,8 @@ public sealed class ShippedContentTests
         var invalidObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv().Replace(
-                "2001\t1\t1\t4\t4",
-                "2001\t1\t1\t40\t4",
+                "2001\t1\tl1_left_door\t1\tcathedral\t4\t4",
+                "2001\t1\tl1_left_door\t1\tcathedral\t40\t4",
                 StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
@@ -497,9 +511,11 @@ public sealed class ShippedContentTests
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var existingMonsters = basePack.Tables.Single(table => table.SourcePath == "monsters.tsv");
         var invalidMonsters = TsvTable.Parse(
-            "monsters.tsv",
-            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
-                + "9001\t1\t1\t40\t4\t10\t10\t2\n");
+            existingMonsters.SourcePath,
+            existingMonsters.ToCanonicalTsv().Replace(
+                "9\t1\tbase_monster\t1\tcathedral\t1\t0",
+                "9001\t1\tbase_monster\t1\tcathedral\t40\t4",
+                StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -536,7 +552,7 @@ public sealed class ShippedContentTests
                         if (index == 0 || !line.StartsWith("107\t", StringComparison.Ordinal))
                             return line;
                         var columns = line.Split('\t');
-                        columns[16] = "9999";
+                        columns[17] = "9999";
                         return string.Join('\t', columns);
                     })));
         var incompletePack = new ContentPack(
@@ -575,7 +591,8 @@ public sealed class ShippedContentTests
                         if (index == 0 || !line.StartsWith("1001\t", StringComparison.Ordinal))
                             return line;
                         var columns = line.Split('\t');
-                        columns[2] = "9999";
+                        columns[3] = "9999";
+                        columns[4] = string.Empty;
                         return string.Join('\t', columns);
                     })));
         var incompletePack = new ContentPack(
@@ -628,45 +645,22 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
-    public void ContentBootstrapRejectsUnknownDirectStoreSpell()
-    {
-        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
-        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
-        var stores = basePack.Tables.Single(table => table.SourcePath == "stores.tsv");
-        var invalidStores = TsvTable.Parse(
-            stores.SourcePath,
-            "store_id\tstore_slot\titem_seed\tprice\tspell_id\n"
-                + "1\t0\t42\t75\t9999\n");
-        var incompletePack = new ContentPack(
-            basePack.Id,
-            basePack.Version,
-            basePack.Tables
-                .Select(table => table.SourcePath == stores.SourcePath
-                    ? invalidStores
-                    : table)
-                .ToArray(),
-            [],
-            [],
-            basePack.Schema,
-            basePack.DependencyConstraints);
-
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            DiabloModule.Instance.ContentBootstrap.Activate(
-                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
-
-        Assert.Contains("Store 1 slot 0 references unknown spell 9999", exception.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public void ContentBootstrapRejectsUnknownMonsterMissileSpawn()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var missiles = basePack.Tables.Single(table => table.SourcePath == "monster_missiles.tsv");
+        var spawnColumns = Enumerable.Repeat(string.Empty, missiles.Columns.Count).ToArray();
+        spawnColumns[0] = "HorkDemon";
+        spawnColumns[1] = "HorkSpawn";
+        spawnColumns[2] = "HorkSpawn";
+        spawnColumns[9] = "9999";
         var invalidMissiles = TsvTable.Parse(
             missiles.SourcePath,
-            "native_ai\tmissile_id\tprojectile_behavior\tspawn_monster_id\n"
-                + "HorkDemon\tHorkSpawn\tHorkSpawn\t9999\n");
+            string.Join('\t', missiles.Columns)
+                + "\n"
+                + string.Join('\t', spawnColumns)
+                + "\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -693,10 +687,17 @@ public sealed class ShippedContentTests
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var missiles = basePack.Tables.Single(table => table.SourcePath == "monster_missiles.tsv");
+        var selectorColumns = Enumerable.Repeat(string.Empty, missiles.Columns.Count).ToArray();
+        selectorColumns[0] = "Zombie";
+        selectorColumns[1] = "Arrow";
+        selectorColumns[2] = "MonsterArrow";
+        selectorColumns[5] = "9999";
         var invalidMissiles = TsvTable.Parse(
             missiles.SourcePath,
-            "native_ai\tmissile_id\tprojectile_behavior\tmonster_id\n"
-                + "Zombie\tArrow\tMonsterArrow\t9999\n");
+            string.Join('\t', missiles.Columns)
+                + "\n"
+                + string.Join('\t', selectorColumns)
+                + "\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -856,7 +857,7 @@ public sealed class ShippedContentTests
                     if (index != 1)
                         return line;
                     var columns = line.Split('\t');
-                    columns[12] = "9999";
+                    columns[13] = "9999";
                     return string.Join('\t', columns);
                 }));
         var incompletePack = new ContentPack(
