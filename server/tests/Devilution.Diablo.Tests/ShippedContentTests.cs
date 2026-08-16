@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.253.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.254.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.253.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.254.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1617,6 +1617,26 @@ public sealed class ShippedContentTests
             hellfireItems.GetRequired(121).StableSymbol,
             hellfireItems.GetRequired(121).Name,
             hellfireItems.GetRequired(121).NativeCursorGraphic));
+        Assert.Equal(("hunters_bow", "Hunter's Bow", 102), (
+            hellfireItems.GetRequired(122).StableSymbol,
+            hellfireItems.GetRequired(122).Name,
+            hellfireItems.GetRequired(122).NativeCursorGraphic));
+        Assert.Equal(("long_bow", "Long Bow", 102), (
+            hellfireItems.GetRequired(123).StableSymbol,
+            hellfireItems.GetRequired(123).Name,
+            hellfireItems.GetRequired(123).NativeCursorGraphic));
+        Assert.Equal(("short_bow", "Short Bow", 118), (
+            hellfireItems.GetRequired(124).StableSymbol,
+            hellfireItems.GetRequired(124).Name,
+            hellfireItems.GetRequired(124).NativeCursorGraphic));
+        Assert.Equal(("long_war_bow", "Long War Bow", 120), (
+            hellfireItems.GetRequired(125).StableSymbol,
+            hellfireItems.GetRequired(125).Name,
+            hellfireItems.GetRequired(125).NativeCursorGraphic));
+        Assert.Equal(("short_battle_bow", "Short Battle Bow", 167), (
+            hellfireItems.GetRequired(126).StableSymbol,
+            hellfireItems.GetRequired(126).Name,
+            hellfireItems.GetRequired(126).NativeCursorGraphic));
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);

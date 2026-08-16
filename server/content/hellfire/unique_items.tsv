@@ -47,35 +47,35 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	TOHIT	50	50	THE_NEEDLER
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	SETDAM	1	3	THE_NEEDLER
 1014	the_needler	The Needler	103	short_bow_starting	2	8900	FASTATTACK	2	2	THE_NEEDLER
-1015	the_celestial_bow	The Celestial Bow	122	hellfire_item_122	2	1200	NOMINSTR	0	0	COMPOSITE_BOW
-1015	the_celestial_bow	The Celestial Bow	122	hellfire_item_122	2	1200	DAMMOD	2	2	COMPOSITE_BOW
-1015	the_celestial_bow	The Celestial Bow	122	hellfire_item_122	2	1200	SETAC	5	5	COMPOSITE_BOW
-1016	deadly_hunter	Deadly Hunter	123	hellfire_item_123	3	8750	3XDAMVDEM	0	0	DEADLY_HUNTER
-1016	deadly_hunter	Deadly Hunter	123	hellfire_item_123	3	8750	TOHIT	20	20	DEADLY_HUNTER
-1016	deadly_hunter	Deadly Hunter	123	hellfire_item_123	3	8750	MAG_CURSE	5	5	DEADLY_HUNTER
-1017	bow_of_the_dead	Bow of the Dead	123	hellfire_item_123	5	2500	TOHIT	10	10	DEADLY_HUNTER
-1017	bow_of_the_dead	Bow of the Dead	123	hellfire_item_123	5	2500	DEX	4	4	DEADLY_HUNTER
-1017	bow_of_the_dead	Bow of the Dead	123	hellfire_item_123	5	2500	VIT_CURSE	3	3	DEADLY_HUNTER
-1017	bow_of_the_dead	Bow of the Dead	123	hellfire_item_123	5	2500	LIGHT_CURSE	2	2	DEADLY_HUNTER
-1017	bow_of_the_dead	Bow of the Dead	123	hellfire_item_123	5	2500	SETDUR	30	30	DEADLY_HUNTER
-1018	the_blackoak_bow	The Blackoak Bow	122	hellfire_item_122	5	2500	DEX	10	10	-
-1018	the_blackoak_bow	The Blackoak Bow	122	hellfire_item_122	5	2500	VIT_CURSE	10	10	-
-1018	the_blackoak_bow	The Blackoak Bow	122	hellfire_item_122	5	2500	DAMP	50	50	-
-1018	the_blackoak_bow	The Blackoak Bow	122	hellfire_item_122	5	2500	LIGHT_CURSE	1	1	-
-1019	flamedart	Flamedart	124	hellfire_item_124	10	14250	FIRE_ARROWS	1	6	-
-1019	flamedart	Flamedart	124	hellfire_item_124	10	14250	TOHIT	20	20	-
-1019	flamedart	Flamedart	124	hellfire_item_124	10	14250	FIRERES	40	40	-
-1020	fleshstinger	Fleshstinger	122	hellfire_item_122	13	16500	DEX	15	15	-
-1020	fleshstinger	Fleshstinger	122	hellfire_item_122	13	16500	TOHIT	40	40	-
-1020	fleshstinger	Fleshstinger	122	hellfire_item_122	13	16500	DAMP	80	80	-
-1020	fleshstinger	Fleshstinger	122	hellfire_item_122	13	16500	DUR	6	6	-
-1021	windforce	Windforce	125	hellfire_item_125	17	37750	STR	5	5	WINDFORCE
-1021	windforce	Windforce	125	hellfire_item_125	17	37750	DAMP	200	200	WINDFORCE
-1021	windforce	Windforce	125	hellfire_item_125	17	37750	KNOCKBACK	0	0	WINDFORCE
-1022	eaglehorn	Eaglehorn	126	hellfire_item_126	26	42500	DEX	20	20	DEADLY_HUNTER
-1022	eaglehorn	Eaglehorn	126	hellfire_item_126	26	42500	TOHIT	50	50	DEADLY_HUNTER
-1022	eaglehorn	Eaglehorn	126	hellfire_item_126	26	42500	DAMP	100	100	DEADLY_HUNTER
-1022	eaglehorn	Eaglehorn	126	hellfire_item_126	26	42500	INDESTRUCTIBLE	0	0	DEADLY_HUNTER
+1015	the_celestial_bow	The Celestial Bow	122	hunters_bow	2	1200	NOMINSTR	0	0	COMPOSITE_BOW
+1015	the_celestial_bow	The Celestial Bow	122	hunters_bow	2	1200	DAMMOD	2	2	COMPOSITE_BOW
+1015	the_celestial_bow	The Celestial Bow	122	hunters_bow	2	1200	SETAC	5	5	COMPOSITE_BOW
+1016	deadly_hunter	Deadly Hunter	123	long_bow	3	8750	3XDAMVDEM	0	0	DEADLY_HUNTER
+1016	deadly_hunter	Deadly Hunter	123	long_bow	3	8750	TOHIT	20	20	DEADLY_HUNTER
+1016	deadly_hunter	Deadly Hunter	123	long_bow	3	8750	MAG_CURSE	5	5	DEADLY_HUNTER
+1017	bow_of_the_dead	Bow of the Dead	123	long_bow	5	2500	TOHIT	10	10	DEADLY_HUNTER
+1017	bow_of_the_dead	Bow of the Dead	123	long_bow	5	2500	DEX	4	4	DEADLY_HUNTER
+1017	bow_of_the_dead	Bow of the Dead	123	long_bow	5	2500	VIT_CURSE	3	3	DEADLY_HUNTER
+1017	bow_of_the_dead	Bow of the Dead	123	long_bow	5	2500	LIGHT_CURSE	2	2	DEADLY_HUNTER
+1017	bow_of_the_dead	Bow of the Dead	123	long_bow	5	2500	SETDUR	30	30	DEADLY_HUNTER
+1018	the_blackoak_bow	The Blackoak Bow	122	hunters_bow	5	2500	DEX	10	10	-
+1018	the_blackoak_bow	The Blackoak Bow	122	hunters_bow	5	2500	VIT_CURSE	10	10	-
+1018	the_blackoak_bow	The Blackoak Bow	122	hunters_bow	5	2500	DAMP	50	50	-
+1018	the_blackoak_bow	The Blackoak Bow	122	hunters_bow	5	2500	LIGHT_CURSE	1	1	-
+1019	flamedart	Flamedart	124	short_bow	10	14250	FIRE_ARROWS	1	6	-
+1019	flamedart	Flamedart	124	short_bow	10	14250	TOHIT	20	20	-
+1019	flamedart	Flamedart	124	short_bow	10	14250	FIRERES	40	40	-
+1020	fleshstinger	Fleshstinger	122	hunters_bow	13	16500	DEX	15	15	-
+1020	fleshstinger	Fleshstinger	122	hunters_bow	13	16500	TOHIT	40	40	-
+1020	fleshstinger	Fleshstinger	122	hunters_bow	13	16500	DAMP	80	80	-
+1020	fleshstinger	Fleshstinger	122	hunters_bow	13	16500	DUR	6	6	-
+1021	windforce	Windforce	125	long_war_bow	17	37750	STR	5	5	WINDFORCE
+1021	windforce	Windforce	125	long_war_bow	17	37750	DAMP	200	200	WINDFORCE
+1021	windforce	Windforce	125	long_war_bow	17	37750	KNOCKBACK	0	0	WINDFORCE
+1022	eaglehorn	Eaglehorn	126	short_battle_bow	26	42500	DEX	20	20	DEADLY_HUNTER
+1022	eaglehorn	Eaglehorn	126	short_battle_bow	26	42500	TOHIT	50	50	DEADLY_HUNTER
+1022	eaglehorn	Eaglehorn	126	short_battle_bow	26	42500	DAMP	100	100	DEADLY_HUNTER
+1022	eaglehorn	Eaglehorn	126	short_battle_bow	26	42500	INDESTRUCTIBLE	0	0	DEADLY_HUNTER
 1023	gonnagal_s_dirk	Gonnagal's Dirk	127	hellfire_item_127	1	7040	DEX_CURSE	5	5	GONNAGALS_DIRK
 1023	gonnagal_s_dirk	Gonnagal's Dirk	127	hellfire_item_127	1	7040	DAMMOD	4	4	GONNAGALS_DIRK
 1023	gonnagal_s_dirk	Gonnagal's Dirk	127	hellfire_item_127	1	7040	FASTATTACK	2	2	GONNAGALS_DIRK
@@ -389,20 +389,20 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1098	ring_of_thunder	Ring of Thunder	113	hellfire_ring_base	8	8000	MAGICRES_CURSE	30	30	-
 1099	amulet_of_warding	Amulet of Warding	171	hellfire_item_171	12	30000	ALLRES	40	40	-
 1099	amulet_of_warding	Amulet of Warding	171	hellfire_item_171	12	30000	LIFE_CURSE	100	100	-
-1100	gnat_sting	Gnat Sting	124	hellfire_item_124	15	30000	MULT_ARROWS	3	3	-
-1100	gnat_sting	Gnat Sting	124	hellfire_item_124	15	30000	SETDAM	1	2	-
-1100	gnat_sting	Gnat Sting	124	hellfire_item_124	15	30000	FASTATTACK	1	1	-
-1100	gnat_sting	Gnat Sting	124	hellfire_item_124	15	30000	INDESTRUCTIBLE	0	0	-
-1101	flambeau	Flambeau	123	hellfire_item_123	11	30000	FIREBALL	15	20	-
-1101	flambeau	Flambeau	123	hellfire_item_123	11	30000	SETDAM	0	0	-
-1101	flambeau	Flambeau	123	hellfire_item_123	11	30000	INDESTRUCTIBLE	0	0	-
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	MULT_ARROWS	3	3	-
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	SETDAM	1	2	-
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	FASTATTACK	1	1	-
+1100	gnat_sting	Gnat Sting	124	short_bow	15	30000	INDESTRUCTIBLE	0	0	-
+1101	flambeau	Flambeau	123	long_bow	11	30000	FIREBALL	15	20	-
+1101	flambeau	Flambeau	123	long_bow	11	30000	SETDAM	0	0	-
+1101	flambeau	Flambeau	123	long_bow	11	30000	INDESTRUCTIBLE	0	0	-
 1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	NOMINSTR	0	0	-
 1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	SETAC	225	225	-
 1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	ALLRESZERO	0	0	-
 1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	LIGHT_CURSE	2	2	-
-1103	blitzen	Blitzen	123	hellfire_item_123	13	30000	ADDACLIFE	10	15	-
-1103	blitzen	Blitzen	123	hellfire_item_123	13	30000	SETDAM	0	0	-
-1103	blitzen	Blitzen	123	hellfire_item_123	13	30000	INDESTRUCTIBLE	0	0	-
+1103	blitzen	Blitzen	123	long_bow	13	30000	ADDACLIFE	10	15	-
+1103	blitzen	Blitzen	123	long_bow	13	30000	SETDAM	0	0	-
+1103	blitzen	Blitzen	123	long_bow	13	30000	INDESTRUCTIBLE	0	0	-
 1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	ADDMANAAC	3	6	-
 1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	STR	20	20	-
 1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	LIGHTRES	30	30	-
