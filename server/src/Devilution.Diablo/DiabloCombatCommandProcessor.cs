@@ -5317,7 +5317,17 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         if (monster.AdvanceSkeletonMeleeDelay())
             return true;
-        var delayBand = Math.Max(0, 35 - (4 * monster.Intelligence));
+        var delayChanceBase = 35;
+        var delayChanceIntelligenceScale = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var megaDefinition) == true
+            && megaDefinition.MegaDelayChanceBase > 0
+            && megaDefinition.MegaDelayChanceIntelligenceScale > 0) {
+            delayChanceBase = megaDefinition.MegaDelayChanceBase;
+            delayChanceIntelligenceScale = megaDefinition.MegaDelayChanceIntelligenceScale;
+        }
+        var delayBand = Math.Max(
+            0,
+            delayChanceBase - (delayChanceIntelligenceScale * monster.Intelligence));
         if (actionSeed % 100U < (uint)delayBand) {
             monster.StartSkeletonMeleeDelay(
                 ResolveSkeletonMeleeMovementDelay(monster, actionSeed));

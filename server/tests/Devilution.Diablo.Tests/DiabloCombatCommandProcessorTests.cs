@@ -8495,6 +8495,69 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MegaAiUsesValidatedDelayAdmissionChance()
+    {
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(0, 12, 12));
+        var monster = new AuthoritativeCombatTarget(
+            14,
+            6,
+            6,
+            20,
+            levelId: 0,
+            monsterId: 1,
+            aggroRange: 8,
+            nativeAi: "Mega",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Slayer",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Mega",
+                MegaDelayChanceBase = 100,
+                MegaDelayChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(nativeWorld, combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Mega",
+                    "InfernoControl",
+                    AuthoritativeProjectileBehavior.InfernoController),
+            ]));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            levelId: 0,
+            entityId: 7);
+
+        // 44 ^ 14 ^ 7 = 37, outside the native 35-point band. The authored
+        // 100-point band must still enter the delegated Skeleton delay.
+        processor.AdvanceTick(44, [player]);
+
+        Assert.Equal(15, monster.SkeletonMeleeDelayTicks);
+        Assert.False(monster.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MegaAiPersistsTheDelegatedSkeletonDelayBeyondItsInfernoRange()
     {
         var monster = new AuthoritativeCombatTarget(
