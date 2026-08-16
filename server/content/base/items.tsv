@@ -23,30 +23,30 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2108	greater_rune_of_fire	0	400	400	0	0	0	0	0	1	1	0	Misc,Rune	7	3	50	45	immolation	0	0	0	0	163	0	0	ConsumableItem	Greater Rune of Fire	Rune	GREATER_RUNE_OF_FIRE	7	1	true			0	0	None
 2109	greater_rune_of_lightning	0	500	500	0	0	0	0	0	1	1	0	Misc,Rune	7	3	49	18	nova	0	0	0	0	164	0	0	ConsumableItem	Greater Rune of Lightning	Rune	GREATER_RUNE_OF_LIGHTNING	7	1	true			0	0	None
 2110	rune_of_stone	0	300	300	0	0	0	0	0	1	1	0	Misc,Rune	7	3	51	8	stone_curse	0	0	0	0	165	0	0	ConsumableItem	Rune of Stone	Rune	RUNE_OF_STONE	7	1	true			0	0	None
-2111	scroll_of_town_portal_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	28	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	0	true			0	0	None
-2112	scroll_of_resurrect_fixed	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	35	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	0	true			0	0	None
-2113	scroll_of_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	92	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None
-2114	scroll_of_search	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	46	search	0	0	0	0	93	0	0	ConsumableItem	Scroll of Search	Scroll of Search	SCROLL_OF	1	1	true			0	0	None
-2115	scroll_of_lightning	0	150	150	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	3	lightning	0	0	0	0	94	0	0	ConsumableItem	Scroll of Lightning	Scroll of Lightning	SCROLL_OF	4	1	true			0	0	None
-2116	scroll_of_resurrect	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	96	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	1	true			0	0	None
-2117	scroll_of_fire_wall	0	400	400	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	6	fire_wall	0	0	0	0	97	0	0	ConsumableItem	Scroll of Fire Wall	Scroll of Fire Wall	SCROLL_OF	4	1	true			0	0	None
-2118	scroll_of_inferno	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	21	inferno	0	0	0	0	98	0	0	ConsumableItem	Scroll of Inferno	Scroll of Inferno	SCROLL_OF	1	1	true			0	0	None
-2119	scroll_of_town_portal	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	99	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	1	true			0	0	None
-2120	scroll_of_flash	0	500	500	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	4	flash	0	0	0	0	100	0	0	ConsumableItem	Scroll of Flash	Scroll of Flash	SCROLL_OF	6	1	true			0	0	None
-2121	scroll_of_infravision	0	600	600	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	9	infravision	0	0	0	0	101	0	0	ConsumableItem	Scroll of Infravision	Scroll of Infravision	SCROLL_OF	8	1	true			0	0	None
-2122	scroll_of_phasing	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	10	phasing	0	0	0	0	102	0	0	ConsumableItem	Scroll of Phasing	Scroll of Phasing	SCROLL_OF	6	1	true			0	0	None
-2123	scroll_of_mana_shield	0	1200	1200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	11	mana_shield	0	0	0	0	103	0	0	ConsumableItem	Scroll of Mana Shield	Scroll of Mana Shield	SCROLL_OF	8	1	true			0	0	None
-2124	scroll_of_flame_wave	0	650	650	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	15	flame_wave	0	0	0	0	104	0	0	ConsumableItem	Scroll of Flame Wave	Scroll of Flame Wave	SCROLL_OF	10	1	true			0	0	None
-2125	scroll_of_fireball	0	300	300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	12	fireball	0	0	0	0	105	0	0	ConsumableItem	Scroll of Fireball	Scroll of Fireball	SCROLL_OF	8	1	true			0	0	None
-2126	scroll_of_stone_curse	0	800	800	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	8	stone_curse	0	0	0	0	106	0	0	ConsumableItem	Scroll of Stone Curse	Scroll of Stone Curse	SCROLL_OF	6	1	true			0	0	None
-2127	scroll_of_chain_lightning	0	750	750	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	16	chain_lightning	0	0	0	0	107	0	0	ConsumableItem	Scroll of Chain Lightning	Scroll of Chain Lightning	SCROLL_OF	10	1	true			0	0	None
-2128	scroll_of_guardian	0	950	950	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	7	guardian	0	0	0	0	108	0	0	ConsumableItem	Scroll of Guardian	Scroll of Guardian	SCROLL_OF	12	1	true			0	0	None
-2129	scroll_of_nova	0	1300	1300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	18	nova	0	0	0	0	110	0	0	ConsumableItem	Scroll of Nova	Scroll of Nova	SCROLL_OF	14	1	true			0	0	None
-2130	scroll_of_golem	0	1100	1100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	52	golem	0	0	0	0	111	0	0	ConsumableItem	Scroll of Golem	Scroll of Golem	SCROLL_OF	10	1	true			0	0	None
-2131	scroll_of_teleport	0	3000	3000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	23	teleport	0	0	0	0	113	0	0	ConsumableItem	Scroll of Teleport	Scroll of Teleport	SCROLL_OF	14	1	true			0	0	None
-2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	114	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None
-2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	27	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify
-2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	95	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify
+2111	scroll_of_town_portal_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	27	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	0	true			0	0	None
+2112	scroll_of_resurrect_fixed	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	34	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	0	true			0	0	None
+2113	scroll_of_healing	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	91	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None
+2114	scroll_of_search	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	46	search	0	0	0	0	92	0	0	ConsumableItem	Scroll of Search	Scroll of Search	SCROLL_OF	1	1	true			0	0	None
+2115	scroll_of_lightning	0	150	150	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	3	lightning	0	0	0	0	93	0	0	ConsumableItem	Scroll of Lightning	Scroll of Lightning	SCROLL_OF	4	1	true			0	0	None
+2116	scroll_of_resurrect	0	250	250	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	32	resurrection	0	0	0	0	95	0	0	ConsumableItem	Scroll of Resurrect	Scroll of Resurrect	SCROLL_OF	1	1	true			0	0	None
+2117	scroll_of_fire_wall	0	400	400	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	6	fire_wall	0	0	0	0	96	0	0	ConsumableItem	Scroll of Fire Wall	Scroll of Fire Wall	SCROLL_OF	4	1	true			0	0	None
+2118	scroll_of_inferno	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	21	inferno	0	0	0	0	97	0	0	ConsumableItem	Scroll of Inferno	Scroll of Inferno	SCROLL_OF	1	1	true			0	0	None
+2119	scroll_of_town_portal	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	39	town_portal	0	0	0	0	98	0	0	ConsumableItem	Scroll of Town Portal	Scroll of Town Portal	SCROLL_OF	4	1	true			0	0	None
+2120	scroll_of_flash	0	500	500	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	4	flash	0	0	0	0	99	0	0	ConsumableItem	Scroll of Flash	Scroll of Flash	SCROLL_OF	6	1	true			0	0	None
+2121	scroll_of_infravision	0	600	600	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	9	infravision	0	0	0	0	100	0	0	ConsumableItem	Scroll of Infravision	Scroll of Infravision	SCROLL_OF	8	1	true			0	0	None
+2122	scroll_of_phasing	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	10	phasing	0	0	0	0	101	0	0	ConsumableItem	Scroll of Phasing	Scroll of Phasing	SCROLL_OF	6	1	true			0	0	None
+2123	scroll_of_mana_shield	0	1200	1200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	11	mana_shield	0	0	0	0	102	0	0	ConsumableItem	Scroll of Mana Shield	Scroll of Mana Shield	SCROLL_OF	8	1	true			0	0	None
+2124	scroll_of_flame_wave	0	650	650	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	15	flame_wave	0	0	0	0	103	0	0	ConsumableItem	Scroll of Flame Wave	Scroll of Flame Wave	SCROLL_OF	10	1	true			0	0	None
+2125	scroll_of_fireball	0	300	300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	12	fireball	0	0	0	0	104	0	0	ConsumableItem	Scroll of Fireball	Scroll of Fireball	SCROLL_OF	8	1	true			0	0	None
+2126	scroll_of_stone_curse	0	800	800	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	8	stone_curse	0	0	0	0	105	0	0	ConsumableItem	Scroll of Stone Curse	Scroll of Stone Curse	SCROLL_OF	6	1	true			0	0	None
+2127	scroll_of_chain_lightning	0	750	750	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	16	chain_lightning	0	0	0	0	106	0	0	ConsumableItem	Scroll of Chain Lightning	Scroll of Chain Lightning	SCROLL_OF	10	1	true			0	0	None
+2128	scroll_of_guardian	0	950	950	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	7	guardian	0	0	0	0	107	0	0	ConsumableItem	Scroll of Guardian	Scroll of Guardian	SCROLL_OF	12	1	true			0	0	None
+2129	scroll_of_nova	0	1300	1300	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	18	nova	0	0	0	0	109	0	0	ConsumableItem	Scroll of Nova	Scroll of Nova	SCROLL_OF	14	1	true			0	0	None
+2130	scroll_of_golem	0	1100	1100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	22	52	golem	0	0	0	0	110	0	0	ConsumableItem	Scroll of Golem	Scroll of Golem	SCROLL_OF	10	1	true			0	0	None
+2131	scroll_of_teleport	0	3000	3000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	23	teleport	0	0	0	0	112	0	0	ConsumableItem	Scroll of Teleport	Scroll of Teleport	SCROLL_OF	14	1	true			0	0	None
+2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	113	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None
+2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	26	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify
+2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	94	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify
 127	dagger	1	60	60	1	4	0	16	16	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	118	0	0	None	Dagger	Dagger	DAGGER	1	1	false			0	0	None
 2160	short_sword_standard	1	120	120	2	6	0	24	24	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	119	0	0	None	Short Sword	Sword	SHORT_SWORD	1	1	false			0	0	None
 129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	120	0	0	None	Falchion	Sword	FALCHION	2	1	false			0	0	None
@@ -128,7 +128,6 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2191	elixir_of_magic_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	12	0		0	0	0	0	88	0	0	None	Elixir of Magic	Elixir of Magic	ELIXIR_OF_MAGIC	15	1	true			0	0	None
 2192	elixir_of_dexterity_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	13	0		0	0	0	0	89	0	0	None	Elixir of Dexterity	Elixir of Dexterity	ELIXIR_OF_DEXTERITY	15	1	true			0	0	None
 2193	elixir_of_vitality_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	14	0		0	0	0	0	90	0	0	None	Elixir of Vitality	Elixir of Vitality	ELIXIR_OF_VITALITY	20	1	true			0	0	None
-2194	scroll_of_healing_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	91	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None
 2195	ring_level_5	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	156	0	0	None	Ring	Ring	RING	5	1	false			0	0	None
 2196	ring_level_10	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	157	0	0	None	Ring	Ring	RING	10	1	false			0	0	None
 2197	ring_level_15	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	158	0	0	None	Ring	Ring	RING	15	1	false			0	0	None
