@@ -96,6 +96,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Native `SpellID` identity retained separately from the stable content ID. */
     public uint NativeSpellId { get; init; }
 
+    /** Optional server-owned presentation name supplied by the active content pack. */
+    public string DisplayName { get; init; } = string.Empty;
+
     /** Native rune miscellaneous ID that resolves to this stable spell row. */
     public int ConsumableMiscId { get; init; }
 
@@ -514,6 +517,9 @@ public sealed class AuthoritativeSpellCatalog
         foreach (var definition in definitions) {
             if (definition.SpellId == 0 || definition.ManaCost <= 0 || definition.HealingAmount < 0 || definition.DamageAmount < 0)
                 throw new InvalidDataException("Spell definitions require a non-zero ID, positive mana cost, and non-negative effects.");
+            if (definition.DisplayName is null || definition.DisplayName.Contains('\0'))
+                throw new InvalidDataException(
+                    $"Spell {definition.SpellId} has invalid presentation metadata.");
             if (definition.NativeSpellId > MaximumNativeSpellId)
                 throw new InvalidDataException(
                     $"Spell {definition.SpellId} has an invalid native spell ID {definition.NativeSpellId}.");
@@ -1980,6 +1986,9 @@ public sealed class AuthoritativeSpellCatalog
             row.OptionalUInt32("status_duration"),
             row.OptionalInt32("status_magnitude")) {
             NativeSpellId = row.OptionalUInt32("native_spell_id"),
+            DisplayName = row.TryGet("display_name", out var displayName)
+                ? displayName
+                : string.Empty,
             ConsumableMiscId = row.OptionalInt32("consumable_misc_id"),
             ConsumableBehavior = ParseConsumableBehavior(row),
             DamageAmount = row.OptionalInt32("damage_amount"),

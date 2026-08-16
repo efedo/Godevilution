@@ -22,6 +22,35 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalSpellDisplayNameMetadata()
+    {
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            "spell_id\tmana_cost\tdisplay_name\n"
+                + "1\t6\tFirebolt\n");
+
+        Assert.Equal("Firebolt", Assert.Single(catalog.Definitions).DisplayName);
+    }
+
+    [Fact]
+    public void ShippedDirectSpellsCarryValidatedDisplayNames()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path));
+
+        Assert.NotEmpty(catalog.Definitions);
+        Assert.All(catalog.Definitions, spell =>
+            Assert.False(string.IsNullOrWhiteSpace(spell.DisplayName)));
+    }
+
+    [Fact]
     public void RejectsSymbolicSpellIdNumericMismatch()
     {
         var stableIds = new StableContentIdCatalog([
@@ -433,6 +462,7 @@ public sealed class AuthoritativeSpellCatalogTests
             File.ReadAllText(path));
 
         Assert.True(catalog.TryGet(1, out var firebolt));
+        Assert.Equal("Firebolt", firebolt.DisplayName);
         Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, firebolt.ProjectileBehavior);
         Assert.Equal((6, 1, 2, 3, 64), (
             firebolt.ManaCost,

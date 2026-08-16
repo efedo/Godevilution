@@ -323,10 +323,7 @@ internal static class DiabloProtocolMapper
             player.MemorizedSpells.Add(new PlayerSpellLevelSnapshot {
                 SpellId = spell.SpellId,
                 Level = spell.Level,
-                DisplayName = spellBooks is not null
-                    && spellBooks.TryGet(spell.SpellId, out var book)
-                    ? book.DisplayName
-                    : string.Empty,
+                DisplayName = ResolveSpellDisplayName(spell.SpellId, spells, spellBooks),
             });
         }
         if (state.CurrentAction is not null)
@@ -1053,13 +1050,26 @@ internal static class DiabloProtocolMapper
                 ?? DiabloCastSourceRules.ClassifyItem(state, spells)),
             ItemActionKind = (ItemActionKind)state.ItemActionKind,
             SpellDisplayName = state.SpellId > 0
-                && spellBooks is not null
-                && spellBooks.TryGet(checked((uint)state.SpellId), out var book)
-                ? book.DisplayName
+                ? ResolveSpellDisplayName(checked((uint)state.SpellId), spells, spellBooks)
                 : string.Empty,
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;
         return snapshot;
+    }
+
+    private static string ResolveSpellDisplayName(
+        uint spellId,
+        AuthoritativeSpellCatalog? spells,
+        AuthoritativeSpellBookCatalog? spellBooks)
+    {
+        if (spells is not null
+            && spells.TryGet(spellId, out var spell)
+            && !string.IsNullOrWhiteSpace(spell.DisplayName))
+            return spell.DisplayName;
+        if (spellBooks is not null
+            && spellBooks.TryGet(spellId, out var book))
+            return book.DisplayName;
+        return string.Empty;
     }
 }
