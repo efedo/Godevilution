@@ -1500,7 +1500,7 @@ the complete target header even when they upsert only one row.
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
 | `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with base-item references validated against the active item catalog, authoritative presentation names, optional cursor symbols, and fixed effects. |
-| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references. |
+| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with direct stock spell identities validated against active `spells.tsv`. |
 | `store_services.tsv` | `key`, `spell_id` | Service pricing and spell-staff costs, with non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
 | `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item fallback used only when `unique_items.tsv` is absent. |
