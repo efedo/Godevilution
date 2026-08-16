@@ -966,6 +966,10 @@ Status date: 2026-08-16
   projections for the next five Hellfire unique base-item rows: Veil of Steel,
   Arkaine's Valor, Griswold's Edge, Bovine Plate, and The Butcher's Cleaver.
 
+- Schema 1.254 normalizes stable symbols, display names, and native cursor
+  projections for the next five Hellfire bow base-item rows: Hunter's Bow, Long
+  Bow, Short Bow, Long War Bow, and Short Battle Bow.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

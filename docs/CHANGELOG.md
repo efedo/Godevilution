@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
 - Normalize the next five Hellfire unique base-item projections: Veil of Steel,
   Arkaine's Valor, Griswold's Edge, Bovine Plate, and The Butcher's Cleaver.
 
+- Normalize the next five Hellfire bow base-item projections: Hunter's Bow,
+  Long Bow, Short Bow, Long War Bow, and Short Battle Bow.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

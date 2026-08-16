@@ -943,6 +943,11 @@ Veil of Steel, Arkaine's Valor, Griswold's Edge, Bovine Plate, and The
 Butcher's Cleaver. Their stable item symbols, native display names, and cursor
 projections are validated alongside their unique base-item links.
 
+Schema 1.254 normalizes the next five Hellfire bow base-item projections:
+Hunter's Bow, Long Bow, Short Bow, Long War Bow, and Short Battle Bow. Their
+stable item symbols, native display names, and cursor projections are validated
+for all unique definitions that reuse those bases.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
