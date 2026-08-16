@@ -129,6 +129,21 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native AiAvoidance failed RoundWalk exclusive random range. */
     public int AvoidanceDelayRandomRange { get; init; }
 
+    /** Native Counselor failed-ranged-admission delay base before intelligence reduction. */
+    public int CounselorDelayBase { get; init; }
+
+    /** Native Counselor failed-ranged-admission delay reduction per intelligence point. */
+    public int CounselorDelayIntelligenceScale { get; init; }
+
+    /** Native Counselor failed-ranged-admission delay exclusive random range. */
+    public int CounselorDelayRandomRange { get; init; }
+
+    /** Native Counselor successful-attack recovery delay base. */
+    public int CounselorAttackDelayBase { get; init; }
+
+    /** Native Counselor successful-attack recovery exclusive random range. */
+    public int CounselorAttackDelayRandomRange { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -478,6 +493,22 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.NativeAi is not ("GoatMelee" or "Gargoyle")
                         || definition.AvoidanceDelayBase <= 0
                         || definition.AvoidanceDelayRandomRange <= 0)
+                || definition.CounselorDelayBase is < 0 or > 1024
+                || definition.CounselorDelayIntelligenceScale is < 0 or > 1024
+                || definition.CounselorDelayRandomRange is < 0 or > 1024
+                || (definition.CounselorDelayBase != 0
+                    || definition.CounselorDelayIntelligenceScale != 0
+                    || definition.CounselorDelayRandomRange != 0)
+                    && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
+                        || definition.CounselorDelayBase <= 0
+                        || definition.CounselorDelayRandomRange <= 0)
+                || definition.CounselorAttackDelayBase is < 0 or > 1024
+                || definition.CounselorAttackDelayRandomRange is < 0 or > 1024
+                || (definition.CounselorAttackDelayBase != 0
+                    || definition.CounselorAttackDelayRandomRange != 0)
+                    && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
+                        || definition.CounselorAttackDelayBase <= 0
+                        || definition.CounselorAttackDelayRandomRange <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -820,6 +851,11 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonMeleeAttackDelayRandomRange = row.OptionalInt32("skeleton_melee_attack_delay_random_range"),
                 AvoidanceDelayBase = row.OptionalInt32("avoidance_delay_base"),
                 AvoidanceDelayRandomRange = row.OptionalInt32("avoidance_delay_random_range"),
+                CounselorDelayBase = row.OptionalInt32("counselor_delay_base"),
+                CounselorDelayIntelligenceScale = row.OptionalInt32("counselor_delay_intelligence_scale"),
+                CounselorDelayRandomRange = row.OptionalInt32("counselor_delay_random_range"),
+                CounselorAttackDelayBase = row.OptionalInt32("counselor_attack_delay_base"),
+                CounselorAttackDelayRandomRange = row.OptionalInt32("counselor_attack_delay_random_range"),
             }));
     }
 

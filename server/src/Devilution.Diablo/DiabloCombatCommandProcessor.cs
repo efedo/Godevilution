@@ -5424,10 +5424,7 @@ public sealed class DiabloCombatCommandProcessor
                         monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
                 } else {
                     monster.StartCounselorDelay(
-                        Math.Max(
-                            0,
-                            2 * (5 - monster.Intelligence)
-                                + (int)((attackSeed / 200U) % 10U)));
+                        ResolveCounselorDelay(monster, attackSeed));
                 }
                 return true;
             }
@@ -7478,7 +7475,8 @@ public sealed class DiabloCombatCommandProcessor
         }
         world.Projectiles.Add(projectile.EntityId, projectile);
         if (isCounselor)
-            monster.StartCounselorDelay(5 + (int)((attackSeed / 200U) % 10U));
+            monster.StartCounselorDelay(
+                ResolveCounselorAttackDelay(monster, attackSeed));
         else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
             monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
@@ -7589,6 +7587,45 @@ public sealed class DiabloCombatCommandProcessor
             randomRange = definition.AvoidanceDelayRandomRange;
         }
         return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
+    }
+
+    private int ResolveCounselorDelay(
+        AuthoritativeCombatTarget target,
+        uint actionSeed)
+    {
+        var delayBase = 10;
+        var intelligenceScale = 2;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.CounselorDelayRandomRange > 0) {
+            delayBase = definition.CounselorDelayBase > 0
+                ? definition.CounselorDelayBase
+                : delayBase;
+            intelligenceScale = definition.CounselorDelayIntelligenceScale > 0
+                ? definition.CounselorDelayIntelligenceScale
+                : intelligenceScale;
+            randomRange = definition.CounselorDelayRandomRange;
+        }
+        return Math.Max(
+            0,
+            checked(delayBase - (intelligenceScale * target.Intelligence)
+                + (int)((actionSeed / 200U) % (uint)randomRange)));
+    }
+
+    private int ResolveCounselorAttackDelay(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        var delayBase = 5;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.CounselorAttackDelayRandomRange > 0) {
+            delayBase = definition.CounselorAttackDelayBase > 0
+                ? definition.CounselorAttackDelayBase
+                : delayBase;
+            randomRange = definition.CounselorAttackDelayRandomRange;
+        }
+        return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
     }
 
     private static int ResolveMegaDelay(

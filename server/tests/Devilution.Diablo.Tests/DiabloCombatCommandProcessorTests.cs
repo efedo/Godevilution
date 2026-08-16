@@ -7339,11 +7339,37 @@ public sealed class DiabloCombatCommandProcessorTests
             aggroRange: 8,
             minDamage: 4,
             maxDamage: 4,
+            monsterId: 1,
             nativeAi: "Counselor",
             intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Counselor",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Counselor",
+                CounselorDelayBase = 8,
+                CounselorDelayIntelligenceScale = 1,
+                CounselorDelayRandomRange = 4,
+            },
+        ]);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
             world,
+            monsterTypes: monsterTypes,
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
                     "Counselor",
@@ -7363,11 +7389,11 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.False(monster.IsMoving);
         Assert.Equal((1, 0), (monster.PositionX, monster.PositionY));
-        Assert.Equal(15, monster.CounselorDelayTicks);
+        Assert.Equal(9, monster.CounselorDelayTicks);
 
         processor.AdvanceTick(5_101, [player]);
 
-        Assert.Equal(14, monster.CounselorDelayTicks);
+        Assert.Equal(8, monster.CounselorDelayTicks);
         Assert.False(monster.IsMoving);
         Assert.Empty(world.Projectiles);
     }
@@ -7387,11 +7413,35 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterLevel: 50,
             nativeAi: "Counselor",
             intelligence: 1);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                108,
+                108,
+                "Counselor",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Counselor",
+                CounselorAttackDelayBase = 7,
+                CounselorAttackDelayRandomRange = 3,
+            },
+        ]);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
             world,
             spells: new AuthoritativeSpellCatalog([CreateChargedBoltSpell()]),
             random: new DiabloRandom(0),
+            monsterTypes: monsterTypes,
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
                     "Counselor",
@@ -7415,7 +7465,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
         Assert.Equal(30U, projectile.SpellId);
         Assert.Equal(8, projectile.Speed);
-        Assert.Equal(5, monster.CounselorDelayTicks);
+        Assert.Equal(7, monster.CounselorDelayTicks);
         Assert.Equal(100, player.Life);
 
         // Use a stationary controller at the target tile to characterize the

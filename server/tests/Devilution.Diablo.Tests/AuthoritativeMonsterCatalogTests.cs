@@ -339,6 +339,23 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsCounselorDelayTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tcounselor_delay_base\tcounselor_delay_intelligence_scale\tcounselor_delay_random_range\tcounselor_attack_delay_base\tcounselor_attack_delay_random_range\n"
+                + "2\t0\tCounselor\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tCounselor\t10\t2\t10\t5\t10\n");
+
+        var counselor = Assert.Single(catalog.Definitions);
+        Assert.Equal((10, 2, 10, 5, 10), (
+            counselor.CounselorDelayBase,
+            counselor.CounselorDelayIntelligenceScale,
+            counselor.CounselorDelayRandomRange,
+            counselor.CounselorAttackDelayBase,
+            counselor.CounselorAttackDelayRandomRange));
+    }
+
+    [Fact]
     public void RejectsInvalidGoatMeleeTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -389,6 +406,20 @@ public sealed class AuthoritativeMonsterCatalogTests
                 NativeAi = "Zombie",
                 AvoidanceDelayBase = 10,
                 AvoidanceDelayRandomRange = 10,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Counselor",
+                CounselorDelayBase = 10,
+                CounselorDelayRandomRange = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                CounselorAttackDelayBase = 5,
+                CounselorAttackDelayRandomRange = 10,
             },
         ]));
     }
