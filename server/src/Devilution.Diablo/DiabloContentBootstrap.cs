@@ -32,7 +32,8 @@ public sealed record DiabloContentActivation
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId,
-        AuthoritativeWorldRules? worldRules = null)
+        AuthoritativeWorldRules? worldRules = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -51,6 +52,7 @@ public sealed record DiabloContentActivation
         MonsterMissiles = monsterMissiles;
         AdriaStoreId = adriaStoreId;
         WorldRules = worldRules ?? AuthoritativeWorldRules.NativeDefaults;
+        SpellBooks = spellBooks;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -85,6 +87,9 @@ public sealed record DiabloContentActivation
 
     /** Validated world identities and optional Town Portal destination geometry. */
     public AuthoritativeWorldRules WorldRules { get; }
+
+    /** Validated native dynamic spell-book metadata from the active content pack. */
+    public AuthoritativeSpellBookCatalog? SpellBooks { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -228,6 +233,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 "Active Diablo content must provide items.tsv or itemdat.tsv.");
         }
         stableIds?.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
+        var spellBooks = content.TryGetTable("spell_books.tsv", out var spellBooksTable)
+            ? AuthoritativeSpellBookCatalog.LoadTsv(
+                spellBooksTable.SourcePath,
+                spellBooksTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (spellBooks is not null) {
+            if (spells is null)
+                throw new InvalidDataException(
+                    "Spell-book metadata requires an active spell catalog.");
+            spellBooks.Validate(spells, itemCatalog);
+        }
         var itemCombinations = content.TryGetTable(
             "item_combinations.tsv",
             out var itemCombinationsTable)
@@ -604,7 +621,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             monsterSpawnPlanner,
             monsterMissiles,
             worldRules.AdriaStoreId,
-            worldRules);
+            worldRules,
+            spellBooks);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

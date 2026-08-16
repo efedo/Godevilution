@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.277.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.278.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -269,6 +269,57 @@ public sealed class ShippedContentTests
         Assert.Equal(DiabloItemSpellSourceKind.ChargedItem, hellfireStaff.SpellSourceKind);
         Assert.Contains("Staff", hellfireStaff.GenerationTags, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("TwoHanded", hellfireStaff.GenerationTags, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SpellBookMetadataGeneratesNativeDynamicBooks()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "spells.tsv").ToCanonicalTsv(),
+            stableIds);
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+        var books = AuthoritativeSpellBookCatalog.LoadTsv(
+            "spell_books.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "spell_books.tsv").ToCanonicalTsv(),
+            stableIds);
+
+        books.Validate(spells, items);
+        Assert.Equal(23, books.Definitions.Count);
+
+        var firebolt = books.Generate(items, 1, 0x12345678, itemLevel: 1);
+        Assert.Equal(1, firebolt.SpellId);
+        Assert.Equal(114, firebolt.ItemIndex);
+        Assert.Equal(1000, firebolt.Value);
+        Assert.Equal(15, firebolt.MinimumMagic);
+        Assert.Equal("Book of Firebolt", firebolt.BaseName);
+        Assert.Equal("Book of Firebolt", firebolt.IdentifiedName);
+        Assert.Equal(87, firebolt.NativeCursorGraphic);
+
+        var lightning = books.Generate(items, 3, 0x12345678, itemLevel: 10);
+        Assert.Equal(3, lightning.SpellId);
+        Assert.Equal(3000, lightning.Value);
+        Assert.Equal(20, lightning.MinimumMagic);
+        Assert.Equal("Book of Lightning", lightning.BaseName);
+        Assert.Equal(88, lightning.NativeCursorGraphic);
+        Assert.Contains(lightning.ItemIndex, new[] { 114, 115, 116, 117 });
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "base",
+                "1",
+                [basePack])));
+        Assert.NotNull(activation.SpellBooks);
+        Assert.Equal(23, activation.SpellBooks!.Definitions.Count);
     }
 
     [Fact]
@@ -1264,7 +1315,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.277.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.278.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -3658,11 +3709,19 @@ public sealed class ShippedContentTests
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadDirectory("base", "1", contentRoot);
         var spells = basePack.Tables.Single(table => table.SourcePath == "spells.tsv");
+        var spellBooks = basePack.Tables.Single(table => table.SourcePath == "spell_books.tsv");
         var withoutChargedBolt = TsvTable.Parse(
             spells.SourcePath,
             string.Join(
                 '\n',
                 spells.ToCanonicalTsv()
+                    .Split('\n')
+                    .Where(line => !line.StartsWith("30\t", StringComparison.Ordinal))));
+        var withoutChargedBoltBook = TsvTable.Parse(
+            spellBooks.SourcePath,
+            string.Join(
+                '\n',
+                spellBooks.ToCanonicalTsv()
                     .Split('\n')
                     .Where(line => !line.StartsWith("30\t", StringComparison.Ordinal))));
         var incompletePack = new ContentPack(
@@ -3671,6 +3730,8 @@ public sealed class ShippedContentTests
             basePack.Tables
                 .Select(table => table.SourcePath == spells.SourcePath
                     ? withoutChargedBolt
+                    : table.SourcePath == spellBooks.SourcePath
+                        ? withoutChargedBoltBook
                     : table)
                 .ToArray());
         var incompleteManifest = new ContentManifest("base", "1", [incompletePack]);
