@@ -178,6 +178,41 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var quests = basePack.Tables.Single(table => table.SourcePath == "quests.tsv");
+        var invalidQuests = string.Join(
+            '\n',
+            quests.ToCanonicalTsv()
+                .Split('\n')
+                .Select((line, index) => {
+                    if (index != 1)
+                        return line;
+                    var columns = line.Split('\t');
+                    columns[11] = "9999";
+                    return string.Join('\t', columns);
+                }));
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == quests.SourcePath
+                    ? TsvTable.Parse(quests.SourcePath, invalidQuests)
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+        Assert.Contains("Quest 3001 references unknown completion monster 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BaseProceduralActivationCarriesTheShippedMonsterDrop()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

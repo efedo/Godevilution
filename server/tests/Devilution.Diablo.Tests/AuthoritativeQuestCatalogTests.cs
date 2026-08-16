@@ -151,6 +151,40 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestCompletionTargetsResolveAgainstMonsterTypes()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                12,
+                12,
+                "Test Monster",
+                1,
+                16,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                false,
+                false,
+                false),
+        ]);
+        var quest = new AuthoritativeQuestState(3001, 1, 1, completionMonsterId: 12);
+
+        AuthoritativeQuestCatalog.ValidateMonsterCompletionTargets([quest], monsterTypes);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.ValidateMonsterCompletionTargets(
+                [new AuthoritativeQuestState(3001, 1, 1, completionMonsterId: 13)],
+                monsterTypes));
+        AuthoritativeQuestCatalog.ValidateMonsterCompletionTargets(
+            [new AuthoritativeQuestState(3006, 15, 1, completionDiablo: true)],
+            monsterTypes);
+    }
+
+    [Fact]
     public void QuestStateTablesMergeAdditivelyAndRejectDuplicateIds()
     {
         var baseQuests = AuthoritativeQuestCatalog.LoadTsv(
