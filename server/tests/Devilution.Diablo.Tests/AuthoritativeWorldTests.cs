@@ -80,6 +80,29 @@ public sealed class AuthoritativeWorldTests
         Assert.Equal(1U, @object.LevelId);
         Assert.Equal(1U, quest.LevelId);
     }
+
+    [Fact]
+    public void ResolvesStableWorldObjectSymbolsAndRejectsMismatches()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("object", "l1_left_door", 1),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tobject_symbol\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\n"
+                + "20\t1\tl1_left_door\t1\t2\t2\tNone\t0\n",
+            stableIds));
+
+        Assert.Equal(1U, @object.ObjectId);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.LoadTsv(
+                "objects.tsv",
+                "entity_id\tobject_id\tobject_symbol\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\n"
+                    + "20\t2\tl1_left_door\t1\t2\t2\tNone\t0\n",
+                stableIds));
+        Assert.Contains("maps object 2 to symbol 'l1_left_door'", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ResolvesStableQuestSymbolsForWarpAndObjectLinks()
     {
