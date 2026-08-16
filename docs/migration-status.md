@@ -28,6 +28,9 @@ Status date: 2026-08-15
   the active item catalog before constructing sessions, rejecting unknown or
   mismatched native ear projections at the data boundary.
 
+- Stable spell symbols in `content_ids.tsv` are now cross-validated against
+  the active spell catalog before ability IDs are published to a session.
+
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
   spell, arrow, beam, impact, and movement-transition families without moving

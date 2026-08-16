@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   `combat.tsv` `pvp_ear_item_id` references before a session can construct a
   player-kill ear.
 
+- Validate `content_ids.tsv` spell-kind entries against the active spell
+  catalog during activation, preventing stable ability symbols from resolving
+  to unreachable spell definitions.
+
 - Externalize native Nightmare/Hell level, accuracy, armor, damage, experience,
   and initial-health modifiers through validated `combat.tsv` difficulty
   columns, preserving the native distinct Nightmare and Hell damage formulas
