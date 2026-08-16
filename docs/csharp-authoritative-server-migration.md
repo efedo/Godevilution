@@ -575,6 +575,11 @@ Schema 1.258 normalizes stable symbols, corrected native indices, display names,
 native cursor projections, and `Mace` generation tags for the next five
 Hellfire mace-family rows: Mace, Maul, Flail, Morning Star, and War Hammer.
 
+Schema 1.259 normalizes stable symbols, native indices, display names, native
+cursor projections, and `Staff` generation tags for the next five Hellfire staff
+rows: Long Staff, War Staff, Short Staff, Composite Staff, and Quarter Staff.
+Quarter Staff retains its native `SHORT_STAFF` cursor projection.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

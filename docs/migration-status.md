@@ -989,6 +989,11 @@ Status date: 2026-08-16
   five Hellfire mace-family rows: Mace, Maul, Flail, Morning Star, and War
   Hammer.
 
+- Schema 1.259 normalizes stable symbols, native indices, display names, native
+  cursor projections, and `Staff` generation tags for the next five Hellfire
+  staff rows: Long Staff, War Staff, Short Staff, Composite Staff, and Quarter
+  Staff. Quarter Staff retains its native `SHORT_STAFF` cursor projection.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

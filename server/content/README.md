@@ -968,6 +968,12 @@ Maul, Flail, Morning Star, and War Hammer. Their stable symbols, corrected
 native indices, display names, cursor projections, and `Mace` generation tags
 are validated against native item and unique-item definitions.
 
+Schema 1.259 normalizes the next five Hellfire staff projections: Long Staff,
+War Staff, Short Staff, Composite Staff, and Quarter Staff. Their stable symbols,
+native indices, display names, cursor projections, and `Staff` generation tags
+are validated against the native table; Quarter Staff retains its native
+SHORT_STAFF cursor projection.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
