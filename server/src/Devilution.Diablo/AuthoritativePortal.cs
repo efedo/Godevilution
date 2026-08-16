@@ -10,7 +10,11 @@ public sealed partial record AuthoritativePortal(
     int SourcePositionY,
     uint DestinationLevelId,
     int DestinationPositionX,
-    int DestinationPositionY);
+    int DestinationPositionY)
+{
+    /** Stable content symbol retained alongside the numeric portal identity. */
+    public string StableSymbol { get; init; } = string.Empty;
+}
 
 public static class AuthoritativePortalRules
 {
@@ -119,7 +123,7 @@ public static class AuthoritativePortalCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var portals = table.Rows.Select(row => new AuthoritativePortal(
-            row.RequiredUInt32("portal_id"),
+            AuthoritativePortalIdentity.Resolve(row, stableIds),
             AuthoritativeLevelIdentity.ResolveOptional(
                 row,
                 stableIds,
@@ -133,7 +137,9 @@ public static class AuthoritativePortalCatalog
                 "destination_level_id",
                 "destination_level_symbol"),
             row.RequiredInt32("destination_position_x"),
-            row.RequiredInt32("destination_position_y"))).ToArray();
+            row.RequiredInt32("destination_position_y")) {
+                StableSymbol = AuthoritativePortalIdentity.ReadSymbol(row),
+            }).ToArray();
         if (portals.Any(portal => portal.PortalId == 0)
             || portals.Select(portal => portal.PortalId).Distinct().Count() != portals.Length)
             throw new InvalidDataException($"Portal table '{sourcePath}' contains duplicate or zero IDs.");
