@@ -1059,6 +1059,35 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void ValidatesAuthoredMonsterPositionsAgainstWorldBounds()
+    {
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\n1\t4\t4\n");
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            10,
+            levelId: 1,
+            monsterId: 1);
+        var catalog = new AuthoritativeMonsterCatalog([target]);
+
+        AuthoritativeMonsterCatalog.ValidateWorld(catalog.Targets, world);
+
+        target.PositionX = 4;
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.ValidateWorld(catalog.Targets, world));
+        Assert.Contains("Monster 9 contains a position outside its level", exception.Message, StringComparison.Ordinal);
+
+        target.PositionX = 1;
+        target.LevelId = 2;
+        exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.ValidateWorld(catalog.Targets, world));
+        Assert.Contains("Monster 9 references unknown level 2", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsOptionalDropDefinitions()
     {
         var catalog = AuthoritativeMonsterCatalog.LoadTsv(
