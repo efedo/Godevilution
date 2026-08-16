@@ -63,6 +63,7 @@ public sealed class DiabloStoreCommandProcessor
             DiabloRepairItemIntent repair => Repair(player, repair),
             DiabloRechargeItemIntent recharge => Recharge(player, recharge),
             DiabloIdentifyItemIntent identify => Identify(player, identify),
+            DiabloReadBookIntent readBook => ReadBook(player, readBook),
             DiabloRefillManaIntent => RefillMana(player),
             DiabloMoveInventoryItemIntent moveInventory => MoveInventoryItem(
                 player,
@@ -353,6 +354,75 @@ public sealed class DiabloStoreCommandProcessor
 
     private bool IsStaff(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsStaff(state, items);
+
+    private DiabloIntentResult ReadBook(
+        AuthoritativePlayerState player,
+        DiabloReadBookIntent intent)
+    {
+        var reference = intent.Item ?? new DiabloPlayerItemReference(
+            DiabloPlayerItemLocation.Inventory,
+            intent.LegacyInventoryIndex);
+        if (!TryGetItem(
+                player,
+                reference,
+                intent.LegacyInventoryIndex,
+                out var item)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+        if (reference.Location is not (DiabloPlayerItemLocation.Inventory
+            or DiabloPlayerItemLocation.Belt)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        var state = item.State;
+        if (state.Deleted
+            || state.ItemActionKind != DiabloItemActionKind.ReadBook
+            || state.MiscId != 25
+            || state.SpellId <= 0
+            || spells is null
+            || !spells.TryGet(checked((uint)state.SpellId), out var spell)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        var previousLevel = player.MemorizedSpells
+            .FirstOrDefault(candidate => candidate.SpellId == spell.SpellId)
+            ?.Level
+            ?? 0;
+        var requiredMagic = ResolveBookMinimumMagic(state.MinimumMagic, previousLevel);
+        if (player.Attributes.Magic.Current < requiredMagic)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        var nextLevel = checked(previousLevel + 1);
+        var memorizedIndex = player.MemorizedSpells.FindIndex(
+            candidate => candidate.SpellId == spell.SpellId);
+        if (nextLevel <= AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel) {
+            var learned = new MemorizedSpellState(spell.SpellId, nextLevel);
+            if (memorizedIndex >= 0)
+                player.MemorizedSpells[memorizedIndex] = learned;
+            else
+                player.MemorizedSpells.Add(learned);
+        }
+
+        if (!AuthoritativeEquipmentManaRules.HasNoManaItem(player.Equipment)) {
+            var manaGain = checked(spell.ManaCost * spell.ManaCostScale);
+            player.Mana = Math.Min(player.ManaMaximum, checked(player.Mana + manaGain));
+        }
+        DiabloPlayerItemAccess.Remove(player, reference);
+        return DiabloIntentResult.Accepted;
+    }
+
+    /** Mirrors Item::updateRequiredStatsCacheForPlayer for the current spell level. */
+    private static int ResolveBookMinimumMagic(int baseMinimumMagic, uint spellLevel)
+    {
+        var minimumMagic = Math.Max(baseMinimumMagic, 0);
+        while (spellLevel > 0) {
+            minimumMagic = checked(minimumMagic + 20 * minimumMagic / 100);
+            spellLevel--;
+            if (minimumMagic + 20 * minimumMagic / 100 > byte.MaxValue)
+                return byte.MaxValue;
+        }
+        return minimumMagic;
+    }
 
     private DiabloIntentResult Identify(
         AuthoritativePlayerState player,

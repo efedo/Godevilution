@@ -54,6 +54,11 @@ public partial class Main : Node2D
             }
             QueueIfConnected(new Command { IdentifyItemRequested = request });
         };
+        hud.ReadBookRequested += inventoryIndex => QueueIfConnected(new Command {
+            ReadBookRequested = new ReadBookRequested {
+                InventoryIndex = inventoryIndex,
+            },
+        });
         hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
             DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = entityId },
         });

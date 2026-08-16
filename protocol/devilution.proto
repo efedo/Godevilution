@@ -78,6 +78,7 @@ enum ItemSpellSourceKind {
 enum ItemActionKind {
 	ITEM_ACTION_KIND_UNSPECIFIED = 0;
 	ITEM_ACTION_KIND_IDENTIFY = 1;
+	ITEM_ACTION_KIND_READ_BOOK = 2;
 }
 
 message CommandBatch {
@@ -111,6 +112,7 @@ message Command {
 		DropHeldItemRequested drop_held_item_requested = 28;
 		DisarmTrapRequested disarm_trap_requested = 29;
 		TalkToQuestRequested talk_to_quest_requested = 30;
+		ReadBookRequested read_book_requested = 31;
 	}
 }
 
@@ -183,6 +185,11 @@ message IdentifyItemRequested {
 	ItemServiceSourceKind source = 3;
 	// Consumable item service requests identify the source scroll explicitly.
 	PlayerItemReference source_item = 4;
+}
+
+message ReadBookRequested {
+	uint32 inventory_index = 1;
+	PlayerItemReference item = 2;
 }
 
 enum ItemServiceSourceKind {

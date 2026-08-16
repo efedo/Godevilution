@@ -562,6 +562,96 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ReadBookLearnsAndLevelsSpellConsumesBookAndRefundsNativeManaCost()
+    {
+        var book = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ReadBook,
+                MiscId = 25,
+                SpellId = 1,
+                MinimumMagic = 15,
+            });
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 640,
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 20),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0)),
+            inventory: [book]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                    ManaCostScale = 64,
+                },
+            ]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloReadBookIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                0),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(player.MemorizedSpells));
+        Assert.Equal(484, player.Mana);
+    }
+
+    [Fact]
+    public void ReadBookUsesTheCurrentLearnedLevelForNativeMagicRequirement()
+    {
+        var book = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ReadBook,
+                MiscId = 25,
+                SpellId = 1,
+                MinimumMagic = 15,
+            });
+        var player = CreatePlayer(
+            mana: 0,
+            manaMaximum: 640,
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 17),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0)),
+            inventory: [book]);
+        player.MemorizedSpells.Add(new MemorizedSpellState(1, 1));
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            spells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                    ManaCostScale = 64,
+                },
+            ]));
+
+        var result = processor.Execute(
+            player,
+            new DiabloReadBookIntent(null, 0),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(player.MemorizedSpells));
+        Assert.Single(player.Inventory);
+        Assert.Equal(0, player.Mana);
+    }
+
+    [Fact]
     public void AppliesCompleteVendorLifecycleWithoutProtocolTypes()
     {
         var itemState = AuthoritativeItemState.Empty with {

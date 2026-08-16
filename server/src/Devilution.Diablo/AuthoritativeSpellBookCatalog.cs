@@ -117,6 +117,7 @@ public sealed class AuthoritativeSpellBookCatalog
             Value = value,
             IdentifiedValue = checked(state.IdentifiedValue + book.BookCost),
             SpellId = checked((int)spellId),
+            ItemActionKind = DiabloItemActionKind.ReadBook,
             MinimumMagic = book.MinimumMagic,
             BaseName = name,
             IdentifiedName = name,

@@ -379,6 +379,51 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolReadBookUsesAuthoritativeSpellLearningAndItemConsumption()
+    {
+        var book = new OwnedStoreItem(0, 0, 42, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ReadBook,
+                MiscId = 25,
+                SpellId = 1,
+                MinimumMagic = 15,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingMana: 100,
+            startingManaMaximum: 640,
+            startingAttributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 20),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0)),
+            startingInventory: [book],
+            startingSpells: new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(1, 6, 0, 0, 0, 0) {
+                    ManaCostScale = 64,
+                },
+            ]));
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            ReadBookRequested = new ReadBookRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Empty(player.Inventory);
+        Assert.Equal(new MemorizedSpellState(1, 1), Assert.Single(player.MemorizedSpells));
+        Assert.Equal(484, player.Mana);
+    }
+
+    [Fact]
     public void ProtocolRepairAbilityUsesAuthoritativeClassSkillAndNativeRandomRule()
     {
         const uint repairSpellId = 26;

@@ -27,6 +27,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button repairSelected = new() { Text = "Repair selected" };
     private readonly Button rechargeSelected = new() { Text = "Recharge selected" };
     private readonly Button identifySelected = new() { Text = "Identify selected" };
+    private readonly Button readBookSelected = new() { Text = "Read book selected" };
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
@@ -51,6 +52,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? RepairItemRequested;
     public event Action<uint>? RechargeItemRequested;
     public event Action<uint>? IdentifyItemRequested;
+    public event Action<uint>? ReadBookRequested;
     public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
@@ -88,7 +90,7 @@ public partial class HudPresentation : CanvasLayer
         var controls = new GridContainer { Columns = 2 };
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
-            rechargeSelected, identifySelected, disarmTrap, interactObject, advanceQuest,
+            rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
             refillMana, dropHeld, clearEvents,
         })
             controls.AddChild(button);
@@ -119,6 +121,7 @@ public partial class HudPresentation : CanvasLayer
         repairSelected.Pressed += () => InvokeInventoryAction(RepairItemRequested);
         rechargeSelected.Pressed += () => InvokeInventoryAction(RechargeItemRequested);
         identifySelected.Pressed += () => InvokeInventoryAction(IdentifyItemRequested);
+        readBookSelected.Pressed += () => InvokeInventoryAction(ReadBookRequested);
         disarmTrap.Pressed += () => {
             if (availableTrapEntityId is { } entityId)
                 DisarmTrapRequested?.Invoke(entityId);

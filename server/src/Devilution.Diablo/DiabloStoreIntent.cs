@@ -47,6 +47,11 @@ public sealed record DiabloIdentifyItemIntent(
     DiabloItemServiceSourceKind Source = DiabloItemServiceSourceKind.Vendor,
     DiabloPlayerItemReference? SourceItem = null) : DiabloStoreIntent;
 
+/** Consumes an owned spell book and applies its learned-spell transition. */
+public sealed record DiabloReadBookIntent(
+    DiabloPlayerItemReference? Item,
+    uint LegacyInventoryIndex) : DiabloStoreIntent;
+
 public sealed record DiabloRefillManaIntent : DiabloStoreIntent;
 
 public sealed record DiabloMoveInventoryItemIntent(

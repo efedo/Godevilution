@@ -301,6 +301,7 @@ public sealed class ShippedContentTests
         Assert.Equal(114, firebolt.ItemIndex);
         Assert.Equal(1000, firebolt.Value);
         Assert.Equal(15, firebolt.MinimumMagic);
+        Assert.Equal(DiabloItemActionKind.ReadBook, firebolt.ItemActionKind);
         Assert.Equal("Book of Firebolt", firebolt.BaseName);
         Assert.Equal("Book of Firebolt", firebolt.IdentifiedName);
         Assert.Equal(87, firebolt.NativeCursorGraphic);
@@ -309,6 +310,7 @@ public sealed class ShippedContentTests
         Assert.Equal(3, lightning.SpellId);
         Assert.Equal(3000, lightning.Value);
         Assert.Equal(20, lightning.MinimumMagic);
+        Assert.Equal(DiabloItemActionKind.ReadBook, lightning.ItemActionKind);
         Assert.Equal("Book of Lightning", lightning.BaseName);
         Assert.Equal(88, lightning.NativeCursorGraphic);
         Assert.Contains(lightning.ItemIndex, new[] { 114, 115, 116, 117 });

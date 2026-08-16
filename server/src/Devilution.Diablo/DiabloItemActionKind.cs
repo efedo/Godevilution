@@ -5,4 +5,5 @@ public enum DiabloItemActionKind
 {
     None,
     Identify,
+    ReadBook,
 }
