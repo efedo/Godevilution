@@ -8247,11 +8247,14 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
-        var damage = rules.ResolveMonsterRangedAttackDamage(
-            SelectEffectiveMonsterDamage(
+        var baseDamage = missile?.ProjectileDamage > 0
+            ? missile.ProjectileDamage
+            : SelectEffectiveMonsterDamage(
                 monster,
                 special: false,
-                seed: attackSeed),
+                seed: attackSeed);
+        var damage = rules.ResolveMonsterRangedAttackDamage(
+            baseDamage,
             GetEffectiveMonsterToHit(monster, special: false),
             GetEffectiveMonsterLevel(monster),
             player.CharacterLevel,
