@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -1029,6 +1030,35 @@ public sealed class AuthoritativeCombatRulesTests
         rules.ValidateItems(new AuthoritativeItemCatalog([
             CreateEarDefinition(nativeItemIndex: 99, miscId: 77),
         ]));
+    }
+
+    [Fact]
+    public void ResolvesStablePvpEarItemSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "ear", 24),
+        ]);
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_ear_item_id\tpvp_ear_item_symbol\n"
+                + "10\t1\t100\t24\tear\n",
+            stableIds: stableIds);
+
+        Assert.Equal(24U, rules.PvpEarItemId);
+    }
+
+    [Fact]
+    public void RejectsStablePvpEarItemNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "ear", 24),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_ear_item_id\tpvp_ear_item_symbol\n"
+                + "10\t1\t100\t25\tear\n",
+            stableIds: stableIds));
     }
 
     [Fact]

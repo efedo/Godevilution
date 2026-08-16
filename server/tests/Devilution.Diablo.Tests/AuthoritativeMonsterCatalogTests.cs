@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -1114,6 +1115,39 @@ public sealed class AuthoritativeMonsterCatalogTests
 
         Assert.Equal(7, Assert.Single(catalog.Targets).Drop!.State.ItemIndex);
         Assert.Equal(4, catalog.Targets[0].Drop!.State.MinDamage);
+    }
+
+    [Fact]
+    public void ResolvesStableMonsterDropItemSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 4, 8, 0, 20, 20, 1, 1, true),
+        ]);
+        var catalog = AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_symbol\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t7\tshort_sword\t1\n",
+            items,
+            stableIds: stableIds);
+
+        Assert.Equal(7, Assert.Single(catalog.Targets).Drop!.State.ItemIndex);
+    }
+
+    [Fact]
+    public void RejectsStableMonsterDropItemNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "short_sword", 7),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\tdrop_item_entity_id\tdrop_item_seed\tdrop_item_price\tdrop_item_id\tdrop_item_symbol\tdrop_item_level\n"
+                + "9\t1\t1\t1\t0\t10\t10\t2\t1009\t6001\t25\t8\tshort_sword\t1\n",
+            stableIds: stableIds));
     }
 
     [Fact]

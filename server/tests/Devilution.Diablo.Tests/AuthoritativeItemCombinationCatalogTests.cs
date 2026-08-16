@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Devilution.Domain.Inventory;
 using Xunit;
@@ -6,6 +7,43 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeItemCombinationCatalogTests
 {
+    [Fact]
+    public void ResolvesStableSymbolsForCombinationResultAndInputs()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "reconstructed_note", 2004),
+            new StableContentId("item", "torn_note_1", 2001),
+            new StableContentId("item", "torn_note_2", 2002),
+            new StableContentId("item", "torn_note_3", 2003),
+        ]);
+        var catalog = AuthoritativeItemCombinationCatalog.LoadTsv(
+            "item_combinations.tsv",
+            "result_item_id\tresult_item_symbol\trequired_item_ids\trequired_item_symbols\n"
+                + "2004\treconstructed_note\t2001,2002,2003\ttorn_note_1,torn_note_2,torn_note_3\n",
+            stableIds);
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal(2004U, definition.ResultItemId);
+        Assert.Equal([2001U, 2002U, 2003U], definition.RequiredItemIds);
+    }
+
+    [Fact]
+    public void RejectsStableSymbolNumericMismatchForCombination()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "reconstructed_note", 2004),
+            new StableContentId("item", "torn_note_1", 2001),
+            new StableContentId("item", "torn_note_2", 2002),
+            new StableContentId("item", "torn_note_3", 2003),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCombinationCatalog.LoadTsv(
+            "item_combinations.tsv",
+            "result_item_id\tresult_item_symbol\trequired_item_ids\trequired_item_symbols\n"
+                + "2004\treconstructed_note\t2001,9999,2003\ttorn_note_1,torn_note_2,torn_note_3\n",
+            stableIds));
+    }
+
     [Fact]
     public void LoadsAndValidatesContentOwnedCombination()
     {
