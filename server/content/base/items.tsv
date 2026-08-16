@@ -47,3 +47,21 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	114	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None
 2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	27	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify
 2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	95	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify
+152	helm	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	50	0	0	None	Helm	Helm	HELM	8	1	false			4	6	None
+153	skull_cap	7	25	25	0	0	2	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	49	0	0	None	Skull Cap	Cap	SKULL_CAP	4	1	false			2	4	None
+154	great_helm	7	400	400	0	0	10	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	53	0	0	None	Great Helm	Helm	GREAT_HELM	20	1	false			10	15	None
+155	crown	7	200	200	0	0	8	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	52	0	0	None	Crown	Crown	CROWN	16	1	false			8	12	None
+156	rags	7	5	5	0	0	2	6	6	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	55	0	0	None	Rags	Rags	RAGS	1	1	false			2	6	None
+157	studded_leather_armor	7	700	700	0	0	15	45	45	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	20	0	0	61	0	0	None	Studded Leather Armor	Armor	STUDDED_LEATHER_ARMOR	9	1	false			15	17	None
+158	cloak	7	40	40	0	0	3	18	18	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	56	0	0	None	Cloak	Cloak	CLOAK	2	1	false			3	7	None
+159	leather_armor	7	300	300	0	0	10	35	35	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	59	0	0	None	Leather Armor	Armor	LEATHER_ARMOR	6	1	false			10	13	None
+160	robe	7	75	75	0	0	4	24	24	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	57	0	0	None	Robe	Robe	ROBE	3	1	false			4	7	None
+161	chain_mail	7	1250	1250	0	0	18	55	55	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	30	0	0	63	0	0	None	Chain Mail	Mail	CHAIN_MAIL	13	1	false			18	22	None
+162	breast_plate	7	2800	2800	0	0	20	80	80	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	40	0	0	65	0	0	None	Breast Plate	Plate	BREAST_PLATE	16	1	false			20	24	None
+163	cape	7	10	10	0	0	1	12	12	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	54	0	0	None	Cape	Cape	CAPE	1	1	false			1	5	None
+164	plate_mail	7	4600	4600	0	0	42	75	75	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	60	0	0	67	0	0	None	Plate Mail	Plate	FIELD_PLATE	19	1	false			42	50	None
+165	full_plate_mail	7	6500	6500	0	0	60	90	90	1	1	1	Armor,HeavyArmor,BodyArmor	3	2	0	0		0	90	0	0	70	0	0	None	Full Plate Mail	Plate	FULL_PLATE_MAIL	25	1	false			60	75	None
+167	kite_shield	7	400	400	0	0	8	40	40	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	50	0	0	74	0	0	None	Kite Shield	Shield	KITE_SHIELD	14	1	false			8	15	None
+168	small_shield	7	90	90	0	0	3	24	24	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	25	0	0	72	0	0	None	Small Shield	Shield	SMALL_SHIELD	5	1	false			3	8	None
+169	large_shield	7	200	200	0	0	5	32	32	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	40	0	0	73	0	0	None	Large Shield	Shield	LARGE_SHIELD	9	1	false			5	10	None
+170	gothic_shield	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	80	0	0	76	0	0	None	Gothic Shield	Shield	GOTHIC_SHIELD	23	1	false			14	18	None
