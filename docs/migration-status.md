@@ -144,6 +144,10 @@ Status date: 2026-08-16
   simulation logic into the client. Teleport and Phasing controllers remain
   server-owned while their authoritative positions are now visible to players.
 
+- Projectile snapshots now carry additive server-owned `presentation_kind`
+  metadata. Godot prefers that projection and retains behavior/phase mapping only
+  as the compatibility fallback for older peers.
+
 - The Godot client also maps authoritative status-effect identities to typed
   overlays: Infravision, Search, and Etherealize now have distinct player
   presentation while the server retains all timing, stacking, and admission

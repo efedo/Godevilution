@@ -142,6 +142,10 @@ presentation-only. Godot renders the
 authoritative radial controller and continuing Lightning balls; the server owns
 the native mirrored fan-out order, movement, target collision, damage, lifetime,
 and RNG.
+The server also projects `ProjectileSnapshot.presentation_kind` as an additive
+visual family for every projectile. Godot prefers that server-owned metadata and
+falls back to behavior/phase classification only when communicating with an
+older peer that omits field 53.
 
 For a manual production launch, use protocol `0.2.0`: set
 `DEVILUTION_PROTOCOL_VERSION` to `0.2.0`, set `DEVILUTION_CONTENT_HASH` to the

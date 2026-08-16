@@ -511,6 +511,11 @@ impact phase, resistance divisor, exact damage, and stationary-collision state.
 A resumed Lightning cast retains its invisible controller, stationary damaging
 segments, source spell level, remaining lifetimes, exact Q6 damage, and native
 per-tick collision/RNG boundary.
+`ProjectileSnapshot.presentation_kind` field 53 is an additive server-owned
+presentation family. Current servers populate it for every projectile so
+presentation clients do not need to maintain the behavior-to-visual mapping;
+older peers may omit it and clients retain their behavior/phase compatibility
+fallback.
 A Teleport cast uses the existing projectile behavior value `9` as an invisible
 two-tick controller. Its position and remaining lifetime are authoritative;
 the resulting player position continues to use the existing player snapshot

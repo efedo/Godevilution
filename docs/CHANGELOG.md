@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add additive server-owned projectile presentation metadata so Godot no longer
+  needs the canonical behavior-to-visual mapping for current peers.
+
 - Add schema 1.279 validated display names to every directly castable spell row,
   projecting them through memorized, charged-item, and consumable-item sources.
 

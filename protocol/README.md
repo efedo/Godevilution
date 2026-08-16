@@ -238,6 +238,10 @@ Windows toolchain command.
   damage, resistance, lifetime, and spell-level fields preserve deterministic
   resume without adding a protocol field. Clients render the two phases but do
   not select splash targets or resolve damage.
+  `ProjectileSnapshot.presentation_kind` field 53 is an additive server-owned
+  presentation family. Current servers populate it for every projectile so
+  Godot does not need to maintain the behavior-to-visual mapping; older peers
+  may omit it and clients retain their behavior/phase compatibility fallback.
   Blood Star uses behavior value `20` for its fixed native magic projectile;
   Bone Spirit uses behavior value `21` for its native homing projectile and
   seven-tick impact phase. Both remain server-owned, including resistance,
