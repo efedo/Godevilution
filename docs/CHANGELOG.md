@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
   Magic Rock, Tavern Sign, Golden Elixir, Anvil of Fury, Black Mushroom, Brain,
   Fungal Tome, Spectral Elixir, and Blood Stone.
 
+- Add schema 1.269 stable Hellfire fixed/random Full Healing, Full Mana, Mana,
+  Healing, Rejuvenation, and Full Rejuvenation potion identities.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

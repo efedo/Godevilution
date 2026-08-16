@@ -1028,6 +1028,12 @@ Fungal Tome, Spectral Elixir, and Blood Stone. Their native indices, cursor
 symbols, item classes, miscellaneous IDs, level gates, usability, and stable
 content IDs are validated by the Hellfire pack.
 
+Schema 1.269 externalizes the Hellfire full-potion and rejuvenation family,
+including fixed Full Healing and Full Mana rows plus random Healing, Full
+Healing, Mana, Full Mana, Rejuvenation, and Full Rejuvenation rows. Their
+native indices, potion miscellaneous IDs, cursor symbols, level gates, drop
+rates, and usability are validated through the active item catalog.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
