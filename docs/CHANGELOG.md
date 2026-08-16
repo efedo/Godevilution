@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional stable `quest_symbol` identities to quest types, quest state
+  rows, and single-player quest pools, with activation-time mismatch checks and
+  numeric-only compatibility for older content packs.
+
 - Separate class capability IDs into the stable `ability` namespace and assign
   Holy Bolt its explicit `spell:holy_bolt` identity, while retaining legacy
   spell-namespace fallback for older loadouts.

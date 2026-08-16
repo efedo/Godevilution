@@ -895,7 +895,7 @@ eligibility boundary. Successful physical attacks apply random life steal and
 the native 3/5-percent life/mana rates in Q6 units; `NoMana` suppresses mana
 steal, and the server emits the existing healing event for applied life gain.
 Schema 0.64 adds the validated `quest_types.tsv` catalog for all base and
-Hellfire native quest IDs. Quest-state rows must resolve a declared stable
+Hellfire native quest IDs. Quest-state rows may resolve a declared stable
 quest identity; native IDs, routing levels, set-level sources, and
 single-player availability remain external metadata.
 
@@ -918,6 +918,11 @@ Initial quest rows activate from their validated native route level when an
 authoritative player enters that level; explicit session mode selects the
 single-player or multiplayer route, and multiplayer skips quest types marked
 `single_player_only`.
+
+Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
+`quests.tsv`, `quest_states.tsv`, and `quest_pools.tsv`. Active rows resolve
+through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
+mismatches; older numeric-only rows remain compatible.
 
 The Hellfire Sorcerer loadout replaces the base Charged Bolt staff with the
 native Firebolt staff through a keyed `class_loadout_items.tsv` overlay.
@@ -1484,7 +1489,7 @@ the complete target header even when they upsert only one row.
 | `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection. |
-| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; class capabilities such as `ability:trap_disarm` are declared separately from spell identities, spell-kind entries are validated against active spells, and level/portal entries are validated against their active catalogs during activation. |
+| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; quest identities and class capabilities such as `ability:trap_disarm` are declared separately from spell identities, and quest, spell, level, and portal entries are validated against their active catalogs during activation. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
@@ -1495,10 +1500,10 @@ the complete target header even when they upsert only one row.
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission tuning, optional ranged-avoidance distance/chance tuning, optional ranged-retreat distance/chance tuning, and optional monster-Inferno admission tuning; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, and optional `trap_armed` state. `QuestItemCompletion` stores the required normalized item ID in `effect_amount`. |
-| `quests.tsv` | `quest_id` | Level-scoped progress requirements, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation (validated against the composed quest catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
-| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
-| `quest_types.tsv` | `quest_id` | Native-compatible quest identity, routing levels, set-level source, and single-player availability. |
-| `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools using stable quest identities. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation (validated against the composed quest catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
+| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol` resolves through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
+| `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
+| `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources with optional stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, and Golem summon formula terms. |
 | `items.tsv` | `item_id` | Normalized item identity, explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
@@ -2123,6 +2128,9 @@ is completed.
 Schema 1.231 separates class capabilities into the stable `ability` namespace
 and assigns the shipped Holy Bolt row the stable `spell:holy_bolt` symbol;
 legacy class-loadout symbols still fall back to the `spell` namespace.
+Schema 1.232 adds optional `quest_symbol` columns to quest type, state, and
+pool tables. Activated rows resolve the `quest` namespace and reject numeric
+and symbolic mismatches while older numeric-only rows remain compatible.
 Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`.
 Activated rows resolve the stable spell namespace and reject numeric and
 symbolic mismatches; older rows retain numeric-ID fallback.

@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-15
+Status date: 2026-08-16
 
 ## Current state
 
@@ -31,6 +31,11 @@ Status date: 2026-08-15
 - Stable spell and ability symbols in `content_ids.tsv` are now
   cross-validated against their active catalogs before IDs are published to a
   session.
+
+- Quest types, quest state rows, and single-player quest pools now optionally
+  resolve stable `quest_symbol` values through `content_ids.tsv`; activated
+  rows reject numeric/symbol mismatches while numeric-only legacy rows remain
+  compatible.
 
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
@@ -861,6 +866,10 @@ Status date: 2026-08-15
 - Schema 1.231 separates class capability symbols into the stable `ability`
   namespace and assigns Holy Bolt the stable `spell:holy_bolt` identity while
   legacy loadouts retain spell-namespace fallback.
+
+- Schema 1.232 adds optional `quest_symbol` columns to quest type, state, and
+  pool tables; activated rows resolve the `quest` namespace and reject
+  numeric/symbol mismatches while older numeric-only rows retain fallback.
 
 - Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
   rows resolve stable spell IDs and reject numeric/symbol mismatches while

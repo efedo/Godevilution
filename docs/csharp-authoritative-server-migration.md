@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.232 adds optional stable `quest_symbol` values to quest type, state,
+and pool rows. Activated rows resolve the `quest` namespace and reject numeric
+and symbolic mismatches while older numeric-only rows remain compatible.
+
 Schema 1.231 separates class capability symbols into the stable `ability`
 namespace and assigns Holy Bolt the stable `spell:holy_bolt` identity. Existing
 loadouts retain a fallback to the legacy `spell` namespace.
