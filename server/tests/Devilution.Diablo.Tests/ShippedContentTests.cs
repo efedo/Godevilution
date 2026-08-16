@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.249.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.250.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -156,6 +156,42 @@ public sealed class ShippedContentTests
             Assert.Equal(row.RequiredUInt32("portal_id"), stableIds.Resolve("portal", row.Required("portal_symbol"))));
         Assert.Equal("cathedral_entrance", Assert.Single(portals).StableSymbol);
         stableIds.ValidateReferences("portal", id => portals.Any(portal => portal.PortalId == id));
+    }
+
+    [Fact]
+    public void ShippedHellfireWarpsUseStableWarpSymbols()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            composed.GetRequiredTable("levels.tsv").ToCanonicalTsv(),
+            stableIds);
+        var warpsTable = composed.GetRequiredTable("warps.tsv");
+        var warps = AuthoritativeWarpCatalog.LoadTsv(
+            warpsTable.SourcePath,
+            warpsTable.ToCanonicalTsv(),
+            world,
+            stableIds);
+
+        var warpIds = stableIds.Entries
+            .Where(entry => entry.Kind == "warp")
+            .ToArray();
+        Assert.Equal(warpIds.Length, warps.Count);
+        Assert.All(warpsTable.Rows, row =>
+            Assert.Equal(row.RequiredUInt32("warp_id"), stableIds.Resolve("warp", row.Required("warp_symbol"))));
+        Assert.Equal("grave_matters_dungeon", Assert.Single(warps).StableSymbol);
+        stableIds.ValidateReferences("warp", id => warps.Any(warp => warp.WarpId == id));
     }
 
     [Fact]
@@ -987,7 +1023,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.249.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.250.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

@@ -14,6 +14,7 @@ public sealed class AuthoritativeWorldTests
             new StableContentId("level", "town", 0),
             new StableContentId("level", "cathedral", 1),
             new StableContentId("portal", "cathedral_entrance", 1),
+            new StableContentId("warp", "grave_matters_dungeon", 7),
         ]);
         var world = AuthoritativeWorld.LoadTsv(
             "levels.tsv",
@@ -41,8 +42,8 @@ public sealed class AuthoritativeWorldTests
             stableIds);
         var warp = Assert.Single(AuthoritativeWarpCatalog.LoadTsv(
             "warps.tsv",
-            "warp_id\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\n"
-                + "7\t0\ttown\t1\t1\t0\ttown\t2\t2\n",
+            "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\n"
+                + "7\tgrave_matters_dungeon\t0\ttown\t1\t1\t0\ttown\t2\t2\n",
             world,
             stableIds));
         var portal = Assert.Single(AuthoritativePortalCatalog.LoadTsv(
@@ -52,6 +53,7 @@ public sealed class AuthoritativeWorldTests
             stableIds));
 
         Assert.Equal(0U, warp.SourceLevelId);
+        Assert.Equal("grave_matters_dungeon", warp.StableSymbol);
         Assert.Equal(1U, portal.DestinationLevelId);
         Assert.Equal("cathedral_entrance", portal.StableSymbol);
 
@@ -62,6 +64,15 @@ public sealed class AuthoritativeWorldTests
                     + "2\tcathedral_entrance\t0\t1\t1\t1\t2\t2\n",
                 stableIds));
         Assert.Contains("maps portal 2 to symbol 'cathedral_entrance'", exception.Message, StringComparison.Ordinal);
+
+        var warpException = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWarpCatalog.LoadTsv(
+                "warps.tsv",
+                "warp_id\twarp_symbol\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\n"
+                    + "8\tgrave_matters_dungeon\t0\t1\t1\t0\t2\t2\n",
+                world,
+                stableIds));
+        Assert.Contains("maps warp 8 to symbol 'grave_matters_dungeon'", warpException.Message, StringComparison.Ordinal);
     }
 
     [Fact]
