@@ -8376,7 +8376,16 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var hasMoveGoal = monster.RhinoMovementTicks >= 0;
-        var startsMoveGoal = distance >= 5 && (attackSeed / 100U) % 4U != 0U;
+        var movementGoalMinimumDistance = 5;
+        var movementGoalChanceModulo = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var rhinoDefinition) == true
+            && rhinoDefinition.RhinoMovementGoalMinimumDistance > 0
+            && rhinoDefinition.RhinoMovementGoalChanceModulo > 0) {
+            movementGoalMinimumDistance = rhinoDefinition.RhinoMovementGoalMinimumDistance;
+            movementGoalChanceModulo = rhinoDefinition.RhinoMovementGoalChanceModulo;
+        }
+        var startsMoveGoal = distance >= movementGoalMinimumDistance
+            && (attackSeed / 100U) % (uint)movementGoalChanceModulo != 0U;
         if (hasMoveGoal || startsMoveGoal) {
             if (!hasMoveGoal)
                 monster.StartRhinoMovement((int)((attackSeed / 100U) % 2U));

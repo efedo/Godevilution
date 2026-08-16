@@ -5899,6 +5899,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RhinoAiUsesValidatedMovementGoalGate()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                66,
+                64,
+                "Horned Demon",
+                7,
+                9,
+                13,
+                40,
+                80,
+                35,
+                2,
+                16,
+                5,
+                32,
+                false,
+                false,
+                false) {
+                NativeAi = "Rhino",
+                RhinoChargeMinimumDistance = 5,
+                RhinoChargeChanceBase = 1,
+                RhinoChargeChanceIntelligenceScale = 1,
+                RhinoMovementGoalMinimumDistance = 5,
+                RhinoMovementGoalChanceModulo = 5,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            4,
+            4,
+            20,
+            attackDamage: 1,
+            aggroRange: 8,
+            monsterId: 66,
+            minDamageSpecial: 5,
+            maxDamageSpecial: 32,
+            toHitSpecial: 100,
+            nativeAi: "Rhino",
+            rhinoMovementIdleTicks: 10,
+            rhinoMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 10,
+            positionY: 4,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 400 ^ 9 ^ 7 = 414: native modulo-four skips the movement goal and
+        // the middle idle band rejects ordinary movement; authored modulo-five
+        // admits the persisted Rhino movement goal.
+        processor.AdvanceTick(400, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.RhinoMovementTicks);
+    }
+
+    [Fact]
     public void RhinoAiCarriesItsNativeMoveGoalAcrossTicks()
     {
         var monster = new AuthoritativeCombatTarget(

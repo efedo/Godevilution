@@ -1018,6 +1018,13 @@ public sealed class AuthoritativeMonsterCatalogTests
                 RhinoChargeChanceBase = 43,
             },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                RhinoMovementGoalMinimumDistance = 5,
+                RhinoMovementGoalChanceModulo = 4,
+            },
+        ]));
     }
 
     [Fact]
@@ -1033,6 +1040,20 @@ public sealed class AuthoritativeMonsterCatalogTests
             rhino.RhinoChargeMinimumDistance,
             rhino.RhinoChargeChanceBase,
             rhino.RhinoChargeChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsRhinoMovementGoalTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\trhino_movement_goal_minimum_distance\trhino_movement_goal_chance_modulo\n"
+                + "66\t64\tHorned Demon\t7\t9\t13\t40\t80\t35\t2\t16\t5\t32\t0\t0\t0\tRhino\t5\t4\n");
+
+        var rhino = Assert.Single(catalog.Definitions);
+        Assert.Equal((5, 4), (
+            rhino.RhinoMovementGoalMinimumDistance,
+            rhino.RhinoMovementGoalChanceModulo));
     }
 
     [Fact]

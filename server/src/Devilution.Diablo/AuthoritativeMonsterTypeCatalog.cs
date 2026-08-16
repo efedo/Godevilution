@@ -348,6 +348,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Rhino charge chance increase per intelligence point. */
     public int RhinoChargeChanceIntelligenceScale { get; init; }
 
+    /** Native Rhino movement-goal minimum distance. */
+    public int RhinoMovementGoalMinimumDistance { get; init; }
+
+    /** Native Rhino far-distance movement-goal admission modulo. */
+    public int RhinoMovementGoalChanceModulo { get; init; }
+
     /** Native Rhino recovery-delay base before its exclusive random range. */
     public int RhinoDelayBase { get; init; }
 
@@ -753,6 +759,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.RhinoChargeMinimumDistance <= 0
                         || definition.RhinoChargeChanceBase <= 0
                         || definition.RhinoChargeChanceIntelligenceScale <= 0))
+                || definition.RhinoMovementGoalMinimumDistance is < 0 or > 100
+                || definition.RhinoMovementGoalChanceModulo is < 0 or > 100
+                || (definition.RhinoMovementGoalMinimumDistance != 0
+                    || definition.RhinoMovementGoalChanceModulo != 0)
+                    && (definition.NativeAi != "Rhino"
+                        || definition.RhinoMovementGoalMinimumDistance < 2
+                        || definition.RhinoMovementGoalChanceModulo <= 0)
                 || !this.definitions.TryAdd(definition.MonsterId, definition)) {
                 throw new InvalidDataException("Monster type definitions contain invalid or duplicate identities.");
             }
@@ -915,6 +928,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 RhinoChargeMinimumDistance = row.OptionalInt32("rhino_charge_minimum_distance"),
                 RhinoChargeChanceBase = row.OptionalInt32("rhino_charge_chance_base"),
                 RhinoChargeChanceIntelligenceScale = row.OptionalInt32("rhino_charge_chance_intelligence_scale"),
+                RhinoMovementGoalMinimumDistance = row.OptionalInt32("rhino_movement_goal_minimum_distance"),
+                RhinoMovementGoalChanceModulo = row.OptionalInt32("rhino_movement_goal_chance_modulo"),
                 RhinoDelayBase = row.OptionalInt32("rhino_delay_base"),
                 RhinoDelayRandomRange = row.OptionalInt32("rhino_delay_random_range"),
                 SkeletonMeleeMovementDelayBase = row.OptionalInt32("skeleton_melee_movement_delay_base"),
