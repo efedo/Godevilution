@@ -583,6 +583,10 @@ When present, the mapping's `projectile_speed`, `projectile_lifetime`, and
 `damage_type` fields override the corresponding spell transport values, and
 `projectile_damage` supplies a fixed impact value; omitted fields retain the
 native spell-backed transport and monster-damage defaults.
+The shipped Succubus and Lazarus rows now carry the native Blood Star transport
+values (`projectile_speed=16`, `projectile_lifetime=256`) explicitly, so the
+active pack no longer depends on the spell-row transport fallback for those
+encounters.
 Usable identified equipment with native `Knockback` now applies the same
 authoritative physical-hit boundary: surviving non-petrified targets move one
 valid unoccupied cell away from the attacker, while blocked destinations and

@@ -181,6 +181,10 @@ Status date: 2026-08-16
   `projectile_damage` metadata before falling back to mapped-spell transport
   values and native monster damage, keeping older rows compatible.
 
+- The shipped Succubus and Lazarus BloodStar rows now explicitly carry the
+  native speed-16, lifetime-256 transport values, removing that fallback from
+  the active base pack while preserving compatibility for older packs.
+
 - Nova and Immolation controllers now consume their validated
   `nova_projectile_count` and `immolation_projectile_count` fields in native
   radial emission order; the shipped rows retain the native 36-projectile
