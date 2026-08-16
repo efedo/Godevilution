@@ -65,6 +65,10 @@ Status date: 2026-08-16
   the stable item namespace. Activation cross-checks the symbol against the
   retained numeric `effect_amount`; non-item object effects remain numeric.
 
+- Unique-item definitions now carry stable `unique_symbol` identities in the
+  `unique` namespace. Activation cross-checks each symbol against its numeric
+  ID and validates the complete namespace before publication.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -907,6 +911,10 @@ Status date: 2026-08-16
 
 - Schema 1.235 extends optional item symbols to `stores.tsv`,
   `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
+
+- Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
+  shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
+  compatible for older external packs.
 
 - Schema 1.239 adds optional `effect_item_symbol` to `objects.tsv` for
   `QuestItemCompletion` rows while preserving numeric effect amounts for all

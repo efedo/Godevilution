@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.240 adds the stable `unique` namespace. Shipped `unique_items.tsv`
+rows carry a `unique_symbol`, and activation cross-checks those symbols against
+retained numeric IDs before publishing the unique catalog. Numeric-only rows
+remain compatible for older external packs.
+
 Schema 1.239 adds `effect_item_symbol` to `objects.tsv` for
 `QuestItemCompletion` rows. The symbol resolves through the stable `item`
 namespace and is cross-checked against `effect_amount`; sequence, healing,
@@ -1528,7 +1533,7 @@ the complete target header even when they upsert only one row.
 | `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with optional stable `item_symbol` cross-checks. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection with optional `pvp_ear_item_symbol`. |
-| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, quest, and class capabilities such as `ability:trap_disarm` are declared separately from spell identities, and item, quest, spell, level, and portal entries are validated against their active catalogs during activation. |
+| `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, unique-item, quest, and class capabilities such as `ability:trap_disarm` are declared separately from spell identities, and item, unique, quest, spell, level, and portal entries are validated against their active catalogs during activation. |
 | `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Validated server-owned item-combination recipes with optional result and input item symbols. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
 | `world_rules.tsv` | singleton | External town-level identity, Adria service-only store identity, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero or stock-vendor service IDs. |
@@ -1551,7 +1556,7 @@ the complete target header even when they upsert only one row.
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
-| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with base-item references and optional `base_item_symbol` validated against the active item catalog (required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `item_symbol` and `spell_symbol` cross-checks validated against active item and spell catalogs. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |

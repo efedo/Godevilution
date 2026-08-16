@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.240 adds a stable `unique` namespace. Every shipped normalized
+`unique_items.tsv` row carries a `unique_symbol`; activation cross-checks it
+against the retained numeric ID before publishing the unique catalog, while
+older numeric-only external packs remain compatible.
+
 Schema 1.239 adds an optional `effect_item_symbol` to `objects.tsv` for
 `QuestItemCompletion` interactions. It is resolved and cross-checked against
 the retained numeric `effect_amount`; other object effects remain unchanged.
