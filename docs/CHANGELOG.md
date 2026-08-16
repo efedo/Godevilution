@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.308 validated AiRangedAvoidance movement-goal modulo to
+  `monster_missiles.tsv`, preserving the native four-way/Acid eight-way
+  fallback for older mappings.
+
 - Add schema 1.307 validated Rhino movement-goal gate fields to
   `monster_types.tsv`, preserving the native minimum-five/modulo-four fallback
   for older mappings.

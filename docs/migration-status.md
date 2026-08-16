@@ -126,6 +126,11 @@ Status date: 2026-08-16
   native minimum-five/modulo-four gate with compatibility fallback for older
   packs.
 
+- AiRangedAvoidance far-distance Move-goal admission is now validated through
+  the `ranged_avoidance_movement_chance_modulo` missile field, preserving the
+  native modulo-four gate (Acid modulo-eight variant) with compatibility
+  fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1290,6 +1295,10 @@ Status date: 2026-08-16
 - Schema 1.307 externalizes Rhino's far-distance movement-goal distance and
   modulo gate through optional monster-type data, retaining the native
   minimum-five/modulo-four fallback for older mappings.
+
+- Schema 1.308 externalizes AiRangedAvoidance's far-distance Move-goal modulo
+  through optional missile data, retaining the native four-way/Acid eight-way
+  fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
