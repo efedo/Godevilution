@@ -6491,6 +6491,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterMagicUsesConfiguredImpactLifetimeAfterPlayerHit()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            nativeAi: "FireBat");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "FireBat",
+                    "ImpactMagic",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    SpellId: 1,
+                    ProjectileSpeed: 16,
+                    ProjectileLifetime: 256,
+                    ProjectileImpactLifetime: 3,
+                    ProjectileDamage: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 6_400,
+            lifeMaximum: 6_400);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Single(world.Projectiles);
+        AuthoritativeProjectile? impact = null;
+        var impactTick = 0UL;
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++) {
+            processor.AdvanceTick(tick, [player]);
+            impact = world.Projectiles.Values.SingleOrDefault();
+            if (impact?.Phase == AuthoritativeProjectilePhase.Impact) {
+                impactTick = tick;
+                break;
+            }
+        }
+
+        Assert.NotNull(impact);
+        Assert.NotEqual(0UL, impactTick);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, impact!.Phase);
+        Assert.Equal(3U, impact.RemainingTicks);
+        Assert.Equal(6_400 - 2 * DiabloFixedPointQ6.Scale, player.Life);
+
+        processor.AdvanceTick(impactTick + 1, [player]);
+        processor.AdvanceTick(impactTick + 2, [player]);
+        processor.AdvanceTick(impactTick + 3, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(6_400 - 2 * DiabloFixedPointQ6.Scale, player.Life);
+    }
+
+    [Fact]
     public void SkeletonRangedAiDefersWhenTheArrowLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -9703,7 +9703,8 @@ public sealed class DiabloCombatCommandProcessor
                     events)) {
                 if (projectile.Behavior is AuthoritativeProjectileBehavior.BloodStar
                     or AuthoritativeProjectileBehavior.MonsterMagic) {
-                    world.Projectiles.Remove(projectile.EntityId);
+                    if (!TryEnterMonsterProjectileImpact(projectile))
+                        world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
                 EnterProjectileImpact(projectile);
@@ -9737,7 +9738,8 @@ public sealed class DiabloCombatCommandProcessor
                     events)) {
                 if (projectile.Behavior is AuthoritativeProjectileBehavior.BloodStar
                     or AuthoritativeProjectileBehavior.MonsterMagic) {
-                    world.Projectiles.Remove(projectile.EntityId);
+                    if (!TryEnterMonsterProjectileImpact(projectile))
+                        world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
                 projectile.PositionX = previousX;
@@ -12239,6 +12241,15 @@ public sealed class DiabloCombatCommandProcessor
         projectile.RemainingTicks = (uint)projectile.ImpactLifetime;
         projectile.VelocityX = 0;
         projectile.VelocityY = 0;
+    }
+
+    private bool TryEnterMonsterProjectileImpact(AuthoritativeProjectile projectile)
+    {
+        if (projectile.ImpactLifetime <= 0
+            || !world.CombatTargets.ContainsKey(projectile.SourceEntityId))
+            return false;
+        EnterProjectileImpact(projectile);
+        return true;
     }
 
     private void AdvanceChargedBolt(
