@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalize Town Portal destination slot geometry through validated
+  `world_rules.tsv`; active packs own placement while packs without the new
+  columns retain legacy spell-row tuning.
+
 - Externalize Adria's service-only store identity through validated
   `world_rules.tsv`. The authoritative store processor now uses the active
   content value, rejects collisions with stock vendor IDs, and retains native

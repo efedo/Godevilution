@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.223 adds Town Portal destination coordinates and slot layout to
+`world_rules.tsv`. The active world contract now controls portal placement;
+packs without those columns retain the prior spell-row tuning.
+
 Schema 1.222 adds the `adria_store_id` column to `world_rules.tsv`. The active
 pack now owns Adria's service-only store identity; activation rejects zero or
 stock-vendor collisions, and callers without world rules retain native store

@@ -44,6 +44,10 @@ Status date: 2026-08-15
   validated `world_rules.tsv` contract. Activation rejects collisions with
   stock vendor IDs, while compatibility callers retain native store `10`.
 
+- Town Portal destination coordinates and slot layout are now optionally owned
+  by validated `world_rules.tsv` content. Packs without the geometry columns
+  retain their existing spell-row destination behavior.
+
 - The Godot client now classifies server-owned projectile behavior IDs through a
   shared protocol-side presentation mapper and renders distinct elemental,
   spell, arrow, beam, impact, and movement-transition families without moving
@@ -815,6 +819,16 @@ Status date: 2026-08-15
   now a server-owned town warp that opens only after Grave Matters completes.
   Procedural crypt return triggers remain part of the native map-synthesis
   backlog until their generated tile identities are externalized.
+
+- Schema 1.221 adds `world_rules.tsv` with the externalized town-level identity
+  used by Town Portal and Warp.
+
+- Schema 1.222 adds the Adria service-only store identity to `world_rules.tsv`;
+  activation rejects zero and stock-vendor collisions.
+
+- Schema 1.223 adds optional Town Portal destination coordinates and slot
+  layout to `world_rules.tsv`; packs without those columns retain spell-row
+  destination tuning.
 
 - The native single-player Diablo defeat rank is now server-owned and crosses
   snapshots, protocol field 34, version-1 saves, and canonical state hashes;
