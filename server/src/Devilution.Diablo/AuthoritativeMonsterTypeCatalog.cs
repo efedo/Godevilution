@@ -177,6 +177,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonKing summon chance increase per intelligence point. */
     public int SkeletonKingSummonChanceIntelligenceScale { get; init; }
 
+    /** Native SkeletonKing movement-delay base before its exclusive random range. */
+    public int SkeletonKingDelayBase { get; init; }
+
+    /** Native SkeletonKing movement-delay exclusive random range. */
+    public int SkeletonKingDelayRandomRange { get; init; }
+
     /** Native HorkDemon adjacent attack chance base before intelligence scaling. */
     public int HorkDemonAttackChanceBase { get; init; }
 
@@ -491,6 +497,12 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.SkeletonKingSummonMinimumDistance <= 0
                         || definition.SkeletonKingSummonChanceBase <= 0
                         || definition.SkeletonKingSummonChanceIntelligenceScale <= 0))
+                || definition.SkeletonKingDelayBase < 0
+                || definition.SkeletonKingDelayRandomRange < 0
+                || (definition.SkeletonKingDelayBase != 0
+                    || definition.SkeletonKingDelayRandomRange != 0)
+                    && (definition.NativeAi != "SkeletonKing"
+                        || definition.SkeletonKingDelayRandomRange <= 0)
                 || definition.HorkDemonAttackChanceBase is < 0 or > 100
                 || definition.HorkDemonAttackChanceIntelligenceScale is < 0 or > 100
                 || definition.HorkDemonSpawnMinimumDistance is < 0 or > 64
@@ -706,6 +718,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonKingSummonMinimumDistance = row.OptionalInt32("skeleton_king_summon_minimum_distance"),
                 SkeletonKingSummonChanceBase = row.OptionalInt32("skeleton_king_summon_chance_base"),
                 SkeletonKingSummonChanceIntelligenceScale = row.OptionalInt32("skeleton_king_summon_chance_intelligence_scale"),
+                SkeletonKingDelayBase = row.OptionalInt32("skeleton_king_delay_base"),
+                SkeletonKingDelayRandomRange = row.OptionalInt32("skeleton_king_delay_random_range"),
                 HorkDemonAttackChanceBase = row.OptionalInt32("hork_demon_attack_chance_base"),
                 HorkDemonAttackChanceIntelligenceScale = row.OptionalInt32("hork_demon_attack_chance_intelligence_scale"),
                 HorkDemonSpawnMinimumDistance = row.OptionalInt32("hork_demon_spawn_minimum_distance"),

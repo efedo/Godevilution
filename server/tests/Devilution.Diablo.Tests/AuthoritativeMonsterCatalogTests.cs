@@ -548,6 +548,37 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsContentSelectedSkeletonKingDelayTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tskeleton_king_delay_base\tskeleton_king_delay_random_range\n"
+                + "51\t50\tSkeleton King\t4\t4\t9\t140\t140\t70\t6\t16\t0\t0\t1\t1\t0\tSkeletonKing\t7\t3\n");
+
+        var king = Assert.Single(catalog.Definitions);
+        Assert.Equal((7, 3), (
+            king.SkeletonKingDelayBase,
+            king.SkeletonKingDelayRandomRange));
+    }
+
+    [Fact]
+    public void RejectsInvalidSkeletonKingDelayTuning()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                SkeletonKingDelayBase = 7,
+                SkeletonKingDelayRandomRange = 3,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "SkeletonKing",
+                SkeletonKingDelayBase = 7,
+            },
+        ]));
+    }
+
+    [Fact]
     public void RejectsInvalidHorkDemonTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([

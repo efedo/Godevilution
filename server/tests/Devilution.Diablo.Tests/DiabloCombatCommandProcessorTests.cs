@@ -2294,6 +2294,58 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingUsesValidatedDelayTuning()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                51,
+                50,
+                "Skeleton King",
+                4,
+                4,
+                9,
+                140,
+                140,
+                70,
+                6,
+                16,
+                0,
+                0,
+                true,
+                true,
+                false) {
+                NativeAi = "SkeletonKing",
+                AggroRange = 8,
+                SkeletonKingSummonMinimumDistance = 3,
+                SkeletonKingSummonChanceBase = 35,
+                SkeletonKingSummonChanceIntelligenceScale = 4,
+                SkeletonKingDelayBase = 7,
+                SkeletonKingDelayRandomRange = 3,
+            },
+        ]);
+        var king = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            20,
+            monsterId: 51,
+            aggroRange: 8,
+            nativeAi: "SkeletonKing",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [king]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 6,
+            entityId: 7);
+
+        processor.AdvanceTick(50, [player]);
+
+        Assert.False(king.IsMoving);
+        Assert.Equal(7, king.SkeletonKingDelayTicks);
+    }
+
+    [Fact]
     public void SkeletonKingUsesValidatedSummonChanceTuning()
     {
         var nativeWorld = new AuthoritativeWorld();

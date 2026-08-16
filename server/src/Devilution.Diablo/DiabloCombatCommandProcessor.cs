@@ -6066,8 +6066,7 @@ public sealed class DiabloCombatCommandProcessor
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
         var movementChance = Math.Min(100, target.Intelligence + 25);
         if (actionSeed % 100U >= (uint)movementChance) {
-            target.StartSkeletonKingDelay(
-                10 + (int)((actionSeed / 200U) % 10U));
+            target.StartSkeletonKingDelay(ResolveSkeletonKingDelay(target, actionSeed));
             return true;
         }
 
@@ -6085,8 +6084,7 @@ public sealed class DiabloCombatCommandProcessor
             // Native LeoricAi enters AiDelay when its admitted RoundWalk
             // cannot find a candidate; do not replace that tick with a
             // different movement policy.
-            target.StartSkeletonKingDelay(
-                10 + (int)((actionSeed / 200U) % 10U));
+            target.StartSkeletonKingDelay(ResolveSkeletonKingDelay(target, actionSeed));
             return true;
         }
 
@@ -6122,6 +6120,21 @@ public sealed class DiabloCombatCommandProcessor
         return UsesNativeAi(target, "SkeletonKing")
             ? (3, 35, 4)
             : null;
+    }
+
+    private int ResolveSkeletonKingDelay(
+        AuthoritativeCombatTarget target,
+        uint actionSeed)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.SkeletonKingDelayBase > 0
+            && definition.SkeletonKingDelayRandomRange > 0) {
+            delayBase = definition.SkeletonKingDelayBase;
+            randomRange = definition.SkeletonKingDelayRandomRange;
+        }
+        return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
     }
 
     /** Native ProcessMonsters health regeneration, applied before each AI tick. */
