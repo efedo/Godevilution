@@ -103,6 +103,33 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedRangedPostAttackDelayTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tranged_delay_base\tranged_delay_random_range\n"
+                + "Succubus\tBloodStar\tBloodStar\t3\t7\n");
+
+        var succubus = Assert.Single(catalog.Definitions);
+        Assert.Equal(3, succubus.RangedDelayBase);
+        Assert.Equal(7, succubus.RangedDelayRandomRange);
+    }
+
+    [Fact]
+    public void RejectsRangedPostAttackDelayOnAvoidanceMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Acid",
+                "Acid",
+                AuthoritativeProjectileBehavior.Acid,
+                AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                RangedDelayBase: 1,
+                RangedDelayRandomRange: 2),
+        ]));
+    }
+
+    [Fact]
     public void LoadsValidatedInfernoAdmissionTuning()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
@@ -146,6 +173,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.PuddleDamageHigh);
         Assert.Equal(0, succubus.PuddleImpactLifetime);
         Assert.Equal(0, succubus.ProjectileImpactLifetime);
+        Assert.Equal(0, succubus.RangedDelayBase);
+        Assert.Equal(0, succubus.RangedDelayRandomRange);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);

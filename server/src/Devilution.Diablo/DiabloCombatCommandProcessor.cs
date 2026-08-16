@@ -6581,7 +6581,7 @@ public sealed class DiabloCombatCommandProcessor
             attackSeed,
             missile);
         if (created)
-            monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
+            monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
         return created;
     }
 
@@ -7436,7 +7436,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.StartCounselorDelay(5 + (int)((attackSeed / 200U) % 10U));
         else if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
             && missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController)
-            monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
+            monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
         else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega"))
             monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
@@ -7458,6 +7458,17 @@ public sealed class DiabloCombatCommandProcessor
             missile?.RangedRetreatChanceIntelligenceScale > 0
                 ? missile.RangedRetreatChanceIntelligenceScale
                 : 10);
+    }
+
+    private static int ResolveRangedDelay(
+        AuthoritativeMonsterMissileDefinition? missile,
+        uint attackSeed)
+    {
+        var randomRange = missile?.RangedDelayRandomRange > 0
+            ? missile.RangedDelayRandomRange
+            : 20;
+        var delayBase = missile?.RangedDelayBase ?? 0;
+        return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
     }
 
     private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(
@@ -7853,7 +7864,7 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = 1,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
-        monster.StartRangedDelay((int)((attackSeed / 200U) % 20U));
+        monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
         return true;
     }
 
