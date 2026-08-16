@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   collisions, preserving the native special-damage roll when older mappings
   omit a fixed value.
 
+- MonsterArrow mappings now retain their configured
+  `projectile_impact_lifetime` after a player impact, while omitted values
+  retain the native one-tick compatibility phase.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.

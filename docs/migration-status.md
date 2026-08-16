@@ -133,6 +133,9 @@ Status date: 2026-08-16
   missile field before applying resistance, while older mappings retain the
   native special-damage range.
 
+- MonsterArrow impacts now enter the validated `projectile_impact_lifetime`
+  phase before removal, retaining the native one-tick fallback for older rows.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
