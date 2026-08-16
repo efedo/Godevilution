@@ -10974,6 +10974,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatMeleeAiUsesValidatedFreshAvoidanceMovementBonus()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                34,
+                "Flesh Clan",
+                0,
+                0,
+                8,
+                30,
+                45,
+                15,
+                4,
+                10,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "GoatMelee",
+                GoatMeleeMovementChanceBase = 10,
+                GoatMeleeMovementChanceIntelligenceScale = 1,
+                AiAvoidanceMovementFreshChanceBonus = 100,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            3,
+            0,
+            40,
+            attackDamage: 2,
+            aggroRange: 5,
+            monsterId: 1,
+            nativeAi: "GoatMelee",
+            intelligence: 0,
+            avoidanceMovementIdleTicks: 0,
+            avoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 50 ^ 9 ^ 7 = 60: the configured ten-percent long-idle band plus
+        // the validated 100-point fresh bonus admits this movement.
+        processor.AdvanceTick(50, [player]);
+
+        Assert.True(monster.IsMoving);
+    }
+
+    [Fact]
     public void GoatMeleeAiDefersInsideItsNativeAvoidanceMovementBands()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -291,6 +291,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native AiAvoidance Move-goal admission modulo. */
     public int AiAvoidanceMovementChanceModulo { get; init; }
 
+    /** Native AiAvoidance fresh-mode movement chance bonus. */
+    public int AiAvoidanceMovementFreshChanceBonus { get; init; }
+
     /** Native Gargoyle safety-boundary base before intelligence scaling. */
     public int GargoyleSafeDistanceBase { get; init; }
 
@@ -618,11 +621,14 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.HorkDemonRoundWalkChanceModulo <= 0)
                 || definition.AiAvoidanceMovementMinimumDistance is < 0 or > 100
                 || definition.AiAvoidanceMovementChanceModulo is < 0 or > 100
+                || definition.AiAvoidanceMovementFreshChanceBonus is < 0 or > 100
                 || (definition.AiAvoidanceMovementMinimumDistance != 0
                     || definition.AiAvoidanceMovementChanceModulo != 0)
                     && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
                         || definition.AiAvoidanceMovementMinimumDistance < 2
                         || definition.AiAvoidanceMovementChanceModulo <= 0)
+                || definition.AiAvoidanceMovementFreshChanceBonus != 0
+                    && definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -1010,6 +1016,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 HorkDemonRoundWalkChanceModulo = row.OptionalInt32("hork_demon_round_walk_chance_modulo"),
                 AiAvoidanceMovementMinimumDistance = row.OptionalInt32("ai_avoidance_movement_minimum_distance"),
                 AiAvoidanceMovementChanceModulo = row.OptionalInt32("ai_avoidance_movement_chance_modulo"),
+                AiAvoidanceMovementFreshChanceBonus = row.OptionalInt32("ai_avoidance_movement_fresh_chance_bonus"),
             }));
     }
 

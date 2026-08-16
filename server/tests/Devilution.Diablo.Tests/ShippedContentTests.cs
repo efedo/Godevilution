@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.313.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.314.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1332,7 +1332,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.313.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.314.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1570,7 +1570,7 @@ public sealed class ShippedContentTests
                 .Distinct()
                 .Single());
         Assert.Equal(
-            (28, 2, 23, 2, 50, 2),
+            (28, 2, 23, 2, 50, 2, 50),
             monsterTypes.Definitions
                 .Where(definition => definition.NativeAi == "GoatMelee")
                 .Select(definition => (
@@ -1579,7 +1579,8 @@ public sealed class ShippedContentTests
                     definition.GoatMeleeAttackChanceBase,
                     definition.GoatMeleeAttackChanceIntelligenceScale,
                     definition.GoatMeleeSpecialHealthThresholdPercent,
-                    definition.GoatMeleeSpecialChanceGroupPeriod))
+                    definition.GoatMeleeSpecialChanceGroupPeriod,
+                    definition.AiAvoidanceMovementFreshChanceBonus))
                 .Distinct()
                 .Single());
         Assert.Equal(

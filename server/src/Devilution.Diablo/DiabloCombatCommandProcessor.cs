@@ -5047,7 +5047,8 @@ public sealed class DiabloCombatCommandProcessor
         var movementChance = GetAiAvoidanceMovementChance(
             monster,
             goatTuning.Value.ChanceBase,
-            goatTuning.Value.IntelligenceScale);
+            goatTuning.Value.IntelligenceScale,
+            GetAiAvoidanceMovementFreshChanceBonus(monster));
         if (actionSeed % 100U >= (uint)movementChance)
         {
             monster.AdvanceAvoidanceMovementIdle();
@@ -6556,7 +6557,8 @@ public sealed class DiabloCombatCommandProcessor
         var movementChance = GetAiAvoidanceMovementChance(
             monster,
             movementTuning?.ChanceBase ?? 28,
-            movementTuning?.IntelligenceScale ?? 2);
+            movementTuning?.IntelligenceScale ?? 2,
+            GetAiAvoidanceMovementFreshChanceBonus(monster));
         if (actionSeed % 100U >= (uint)movementChance)
         {
             monster.AdvanceAvoidanceMovementIdle();
@@ -6885,7 +6887,8 @@ public sealed class DiabloCombatCommandProcessor
     private static int GetAiAvoidanceMovementChance(
         AuthoritativeCombatTarget monster,
         int chanceBase,
-        int intelligenceScale)
+        int intelligenceScale,
+        int freshChanceBonus)
     {
         var longIdleChance = chanceBase + (intelligenceScale * monster.Intelligence);
         var movementChance = monster.AvoidanceMovementIdleTicks == -1
@@ -6894,9 +6897,19 @@ public sealed class DiabloCombatCommandProcessor
                 ? longIdleChance
                 : monster.AvoidanceMovementIdleTicks == 0
                     && monster.AvoidanceMovementMode is >= 1 and <= 3
-                    ? longIdleChance + 50
+                    ? longIdleChance + freshChanceBonus
                     : 0;
         return Math.Min(100, movementChance);
+    }
+
+    /** Native AiAvoidance fresh-mode bonus with a compatibility fallback for older packs. */
+    private int GetAiAvoidanceMovementFreshChanceBonus(
+        AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.AiAvoidanceMovementFreshChanceBonus > 0)
+            return definition.AiAvoidanceMovementFreshChanceBonus;
+        return 50;
     }
 
     private bool IsNativeAvoidanceDirectionAvailable(
