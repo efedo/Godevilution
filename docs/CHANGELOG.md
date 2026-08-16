@@ -44,6 +44,10 @@ All notable changes to this fork are documented below.
 - Validate quest identities referenced by authored world objects during content
   activation, including rejection when a quest catalog is missing.
 
+- Validate follow-on quest identities from primary `quests.tsv` rows during
+  activation, closing the path where malformed non-overlay quest data could
+  activate an unknown quest at runtime.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
