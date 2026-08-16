@@ -2,8 +2,8 @@ native_ai	missile_id	projectile_behavior	attack_mode	avoidance_probability_perce
 GoatRanged	Arrow	MonsterArrow	Ranged	100	0		0		0		Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
 SkeletonRanged	Arrow	MonsterArrow	Ranged	100	0		0		0		Physical	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
 Snake	Rhino	SnakeCharge	Ranged	100	0		0		0			18	256	0	0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	1,1,0,-1,-1,0
-Succubus	BloodStar	BloodStar	Ranged	100	0		36	blood_star	0		Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
-LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0		36	blood_star	0		Magic	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
+Succubus	BloodStar	BloodStar	Ranged	100	0		36	blood_star	0		Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
+LazarusSuccubus	BloodStar	BloodStar	Ranged	100	0		36	blood_star	0		Magic	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
 Acid	Acid	Acid	RangedAvoidance	50	0		1	firebolt	0		Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	2	3	500	500	1	0	0	0	0	0	0	0	0	0	0	0	0	2	1	
 AcidUnique	Acid	Acid	Ranged	100	0		1	firebolt	0		Acid	0	0	20	5	15	40	40	2	1	2	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	2	1	
 FireBat	Firebolt	Firebolt	Ranged	100	0		1	firebolt	0		Fire	16	256	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	70	10	0	0	0	0	0	0	0	0	0	0	1	
