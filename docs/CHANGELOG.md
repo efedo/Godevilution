@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.299 validated SkeletonKing movement-admission chance tuning to
+  `monster_types.tsv`, preserving the native intelligence band for older
+  mappings.
+
 - Add schema 1.298 separate Counselor failed-admission and successful-attack
   delay tuning to `monster_types.tsv`, preserving both native formulas for
   older mappings.

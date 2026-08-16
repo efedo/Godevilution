@@ -86,6 +86,9 @@ Status date: 2026-08-16
   separate validated monster-type fields, preserving their distinct native
   intelligence-scaled and fixed-base formulas.
 
+- SkeletonKing movement-admission chance is now a validated monster-type
+  field, preserving the native intelligence-scaled movement band.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

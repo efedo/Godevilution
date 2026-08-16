@@ -785,6 +785,10 @@ successful-attack delays through separate optional fields on the validated
 monster-type mapping. Older packs retain the native intelligence-scaled and
 fixed-base formulas through the compatibility fallback.
 
+Schema 1.299 externalizes SkeletonKing movement-admission chance through
+optional `skeleton_king_movement_chance_*` fields on the validated monster-type
+mapping. Older packs retain the native 25-plus-intelligence band.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
