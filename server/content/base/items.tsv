@@ -129,3 +129,9 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2192	elixir_of_dexterity_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	13	0		0	0	0	0	89	0	0	None	Elixir of Dexterity	Elixir of Dexterity	ELIXIR_OF_DEXTERITY	15	1	true			0	0	None
 2193	elixir_of_vitality_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	14	0		0	0	0	0	90	0	0	None	Elixir of Vitality	Elixir of Vitality	ELIXIR_OF_VITALITY	20	1	true			0	0	None
 2194	scroll_of_healing_standard	0	50	50	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	2	healing	0	0	0	0	91	0	0	ConsumableItem	Scroll of Healing	Scroll of Healing	SCROLL_OF	1	1	true			0	0	None
+2195	ring_level_5	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	156	0	0	None	Ring	Ring	RING	5	1	false			0	0	None
+2196	ring_level_10	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	157	0	0	None	Ring	Ring	RING	10	1	false			0	0	None
+2197	ring_level_15	12	1000	1000	0	0	0	0	0	1	1	0	Misc,Ring	5	3	26	0		0	0	0	0	158	0	0	None	Ring	Ring	RING	15	1	false			0	0	None
+2198	amulet_level_8	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	159	0	0	None	Amulet	Amulet	AMULET	8	1	false			0	0	None
+2199	amulet_level_16	13	1200	1200	0	0	0	0	0	1	1	0	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	Amulet	Amulet	AMULET	16	1	false			0	0	None
+2200	arena_potion	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	55	0		0	0	0	0	167	0	0	None	Arena Potion	Arena Potion	ARENA_POTION	7	0	true			0	0	None

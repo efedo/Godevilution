@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.274.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.275.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -197,6 +197,37 @@ public sealed class ShippedContentTests
         Assert.Contains("Scroll", baseHealingScroll.GenerationTags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal(DiabloItemSpellSourceKind.ConsumableItem, baseHealingScroll.SpellSourceKind);
         Assert.Equal(DiabloItemActionKind.None, baseHealingScroll.ItemActionKind);
+        var baseJewelryExpectations = new[] {
+            ("ring_level_5", 2195U, 156, 5, 26, 1000),
+            ("ring_level_10", 2196U, 157, 10, 26, 1000),
+            ("ring_level_15", 2197U, 158, 15, 26, 1000),
+            ("amulet_level_8", 2198U, 159, 8, 27, 1200),
+            ("amulet_level_16", 2199U, 160, 16, 27, 1200),
+        };
+        foreach (var (symbol, itemId, nativeIndex, minimumLevel, miscId, value) in baseJewelryExpectations) {
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            var item = baseItems.GetRequired(itemId);
+            Assert.Equal(symbol, item.StableSymbol);
+            Assert.Equal(nativeIndex, item.NativeItemIndex);
+            Assert.Equal(minimumLevel, item.MinimumMonsterLevel);
+            Assert.Equal(miscId, item.MiscId);
+            Assert.Equal(value, item.Value);
+            Assert.Contains("Misc", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
+            Assert.False(item.Usable);
+            Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+        }
+        var arenaPotion = baseItems.GetRequired(2200);
+        Assert.Equal(2200U, baseStableIds.Resolve("item", "arena_potion"));
+        Assert.Equal("arena_potion", arenaPotion.StableSymbol);
+        Assert.Equal(167, arenaPotion.NativeItemIndex);
+        Assert.Equal(55, arenaPotion.MiscId);
+        Assert.Equal(7, arenaPotion.MinimumMonsterLevel);
+        Assert.Equal(0, arenaPotion.DropRate);
+        Assert.True(arenaPotion.Usable);
+        Assert.Contains("Misc", arenaPotion.GenerationTags, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(DiabloItemSpellSourceKind.None, arenaPotion.SpellSourceKind);
+        Assert.Equal(DiabloItemActionKind.None, arenaPotion.ItemActionKind);
 
         var composed = ComposedContent.Compose(new ContentManifest(
             "hellfire",
@@ -1225,7 +1256,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.274.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.275.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
