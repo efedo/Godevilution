@@ -610,6 +610,13 @@ Schema 1.264 normalizes the Hellfire Sorcerer starting staff overlay. The
 Hellfire Firebolt charged-item behavior while restoring the native display and
 cursor projections and the stable `firebolt` spell reference.
 
+Schema 1.265 externalizes the five native rune consumables: Rune of Fire, Rune
+of Lightning, Greater Rune of Fire, Greater Rune of Lightning, and Rune of
+Stone. Their stable item identities retain native indices and cursor graphics,
+miscellaneous IDs, drop levels, and values while resolving consumable spell
+sources through the validated Fireball, Lightning Wall, Immolation, Nova, and
+Stone Curse spell rows.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

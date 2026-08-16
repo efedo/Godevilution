@@ -1022,6 +1022,12 @@ Status date: 2026-08-16
   Hellfire Firebolt charged-item behavior while restoring native display and
   cursor projections plus the stable `firebolt` spell reference.
 
+- Schema 1.265 externalizes the five native rune consumables: Rune of Fire,
+  Rune of Lightning, Greater Rune of Fire, Greater Rune of Lightning, and Rune
+  of Stone. Their stable item identities retain native indices and cursor
+  graphics, miscellaneous IDs, drop levels, and values while resolving
+  consumable spell sources through validated spell rows.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

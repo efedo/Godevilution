@@ -58,6 +58,9 @@ All notable changes to this fork are documented below.
   presentation and a stable `firebolt` spell reference while preserving its
   Hellfire charged-item behavior.
 
+- Externalize the five native rune consumables with stable item identities,
+  native cursors, drop metadata, and validated consumable spell mappings.
+
 - Refresh migration status to record all six cursor-driven class capabilities as
   server-owned and covered, leaving native spell, quest, map, and client work as
   the remaining external-content priorities.
