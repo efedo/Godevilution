@@ -2631,8 +2631,10 @@ Schema 1.208 adds the optional mapped monster projectile impact lifetime to
 `monster_missiles.tsv`. MonsterArrow mappings now retain the configured phase
 after a player impact; omitted values retain the native one-tick phase.
 Server-owned `MonsterMagic`, `BloodStar`, and `SnakeCharge` mappings use the
-same impact phase; player-owned spell projectiles and other monster-missile
-controller lifecycles remain native-specific until migrated.
+same impact phase; player-owned spell projectiles retain their spell-specific
+impact transitions. Authoritative `BatCharge`, `HorkSpawn`, `Acid`, and
+`InfernoController` mappings retain their controller-specific native lifecycle
+transitions rather than entering this shared impact phase.
 
 Schema 1.212 adds optional Hell-specific resistance columns to
 `monster_types.tsv`; omitted values retain the ordinary resistance channels,

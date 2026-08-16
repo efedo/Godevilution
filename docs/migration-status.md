@@ -1087,8 +1087,10 @@ Status date: 2026-08-16
   phase.
 
 - Schema 1.208 adds an optional mapped monster projectile impact lifetime to
-  `monster_missiles.tsv`; omitted values retain the native one-tick impact
-  phase.
+  `monster_missiles.tsv`. MonsterArrow, SnakeCharge, MonsterMagic, and
+  BloodStar mappings consume the shared phase; omitted values retain the native
+  one-tick impact phase, while other authoritative controllers retain their
+  controller-specific lifecycle transitions.
 
 - Schema 1.209 adds optional quest dialogue and completion transition variables
   to `quests.tsv` and `quest_states.tsv`; omitted values retain the existing
