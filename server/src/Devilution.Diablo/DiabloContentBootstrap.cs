@@ -157,19 +157,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerAnimationTable.SourcePath,
             playerAnimationTable.ToCanonicalTsv(),
             playerClasses);
-        var spells = content.TryGetTable("spells.tsv", out var spellsTable)
-            ? AuthoritativeSpellCatalog.LoadTsv(
-                spellsTable.SourcePath,
-                spellsTable.ToCanonicalTsv())
-            : null;
-        if (spells is not null)
-            pricing.ValidateSpellReferences(spells);
         var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
             ? StableContentIdCatalog.LoadTsv(
                 stableIdsTable.SourcePath,
                 stableIdsTable.ToCanonicalTsv())
             : null;
-
+        var spells = content.TryGetTable("spells.tsv", out var spellsTable)
+            ? AuthoritativeSpellCatalog.LoadTsv(
+                spellsTable.SourcePath,
+                spellsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (spells is not null)
+            pricing.ValidateSpellReferences(spells);
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);

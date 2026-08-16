@@ -1955,11 +1955,14 @@ public sealed class AuthoritativeSpellCatalog
     public bool TryGetByConsumableMiscId(int miscId, out AuthoritativeSpellDefinition definition)
         => consumableSpells.TryGetValue(miscId, out definition!);
 
-    public static AuthoritativeSpellCatalog LoadTsv(string sourcePath, string contents)
+    public static AuthoritativeSpellCatalog LoadTsv(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeSpellCatalog(table.Rows.Select(row => new AuthoritativeSpellDefinition(
-            row.RequiredUInt32("spell_id"),
+            ResolveSpellId(row, stableIds),
             row.RequiredInt32("mana_cost"),
             row.OptionalInt32("healing_amount"),
             row.OptionalUInt32("status_effect_id"),
@@ -2211,6 +2214,34 @@ public sealed class AuthoritativeSpellCatalog
                 "phasing_maximum_axis_offset"),
             StaffLevel = row.OptionalInt32("staff_level"),
         }));
+    }
+
+    private static uint ResolveSpellId(TsvRow row, StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.RequiredUInt32("spell_id");
+        if (!row.TryGet("spell_symbol", out var symbol)
+            || string.IsNullOrWhiteSpace(symbol))
+            return numericId;
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Spell row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (numericId != 0 && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"Spell row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedId}.");
+        return resolvedId;
     }
 
     private static AuthoritativeDamageType ParseDamageType(TsvRow row)
