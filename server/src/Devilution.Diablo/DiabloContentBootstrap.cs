@@ -369,7 +369,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     additionalQuests,
                     questStatesTable.SourcePath);
         }
+        if (world is not null
+            && quests is null
+            && world.WarpTargets.Any(target => target.RequiredQuestId != 0)) {
+            throw new InvalidDataException(
+                "Quest-gated warps require an active quest catalog.");
+        }
         if (quests is not null) {
+            if (world is not null)
+                AuthoritativeWarpCatalog.ValidateQuestRequirements(
+                    world.WarpTargets,
+                    quests);
             var rewardQuests = quests
                 .Where(quest => quest.CompletionRewardItemId != 0)
                 .ToArray();

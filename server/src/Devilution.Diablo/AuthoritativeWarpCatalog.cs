@@ -57,6 +57,21 @@ public sealed class AuthoritativeWarpTarget
 /** Loads normalized native trigger destinations from an external content table. */
 public static class AuthoritativeWarpCatalog
 {
+    /** Validates quest identities referenced by content-owned level triggers. */
+    public static void ValidateQuestRequirements(
+        IEnumerable<AuthoritativeWarpTarget> targets,
+        IEnumerable<AuthoritativeQuestState> quests)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(quests);
+        var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var target in targets.Where(target => target.RequiredQuestId != 0)) {
+            if (!questIds.Contains(target.RequiredQuestId))
+                throw new InvalidDataException(
+                    $"Warp {target.WarpId} references unknown quest {target.RequiredQuestId}.");
+        }
+    }
+
     public static IReadOnlyList<AuthoritativeWarpTarget> LoadTsv(
         string sourcePath,
         string contents,
