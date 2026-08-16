@@ -6785,8 +6785,7 @@ public sealed class DiabloCombatCommandProcessor
                 roundWalk.Value.X - monster.PositionX,
                 roundWalk.Value.Y - monster.PositionY);
         } else {
-            monster.StartAvoidanceDelay(
-                10 + (int)((seed / 200U) % 10U));
+            monster.StartAvoidanceDelay(ResolveAvoidanceDelay(monster, seed));
         }
         return true;
     }
@@ -7574,6 +7573,22 @@ public sealed class DiabloCombatCommandProcessor
             0,
             checked(baseDelay - intelligenceScale * intelligence
                 + (int)((actionSeed / 100U) % (uint)randomRange)));
+    }
+
+    private int ResolveAvoidanceDelay(
+        AuthoritativeCombatTarget target,
+        uint actionSeed)
+    {
+        var delayBase = 10;
+        var randomRange = 10;
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.AvoidanceDelayRandomRange > 0) {
+            delayBase = definition.AvoidanceDelayBase > 0
+                ? definition.AvoidanceDelayBase
+                : delayBase;
+            randomRange = definition.AvoidanceDelayRandomRange;
+        }
+        return checked(delayBase + (int)((actionSeed / 200U) % (uint)randomRange));
     }
 
     private static int ResolveMegaDelay(

@@ -123,6 +123,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native SkeletonMelee failed-adjacent-attack delay exclusive random range. */
     public int SkeletonMeleeAttackDelayRandomRange { get; init; }
 
+    /** Native AiAvoidance failed RoundWalk delay base. */
+    public int AvoidanceDelayBase { get; init; }
+
+    /** Native AiAvoidance failed RoundWalk exclusive random range. */
+    public int AvoidanceDelayRandomRange { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -465,6 +471,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     || definition.SkeletonMeleeAttackDelayRandomRange != 0)
                     && (definition.NativeAi is not ("SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord")
                         || definition.SkeletonMeleeAttackDelayRandomRange <= 0)
+                || definition.AvoidanceDelayBase is < 0 or > 1024
+                || definition.AvoidanceDelayRandomRange is < 0 or > 1024
+                || (definition.AvoidanceDelayBase != 0
+                    || definition.AvoidanceDelayRandomRange != 0)
+                    && (definition.NativeAi is not ("GoatMelee" or "Gargoyle")
+                        || definition.AvoidanceDelayBase <= 0
+                        || definition.AvoidanceDelayRandomRange <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -805,6 +818,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SkeletonMeleeAttackDelayBase = row.OptionalInt32("skeleton_melee_attack_delay_base"),
                 SkeletonMeleeAttackDelayIntelligenceScale = row.OptionalInt32("skeleton_melee_attack_delay_intelligence_scale"),
                 SkeletonMeleeAttackDelayRandomRange = row.OptionalInt32("skeleton_melee_attack_delay_random_range"),
+                AvoidanceDelayBase = row.OptionalInt32("avoidance_delay_base"),
+                AvoidanceDelayRandomRange = row.OptionalInt32("avoidance_delay_random_range"),
             }));
     }
 

@@ -325,6 +325,20 @@ public sealed class AuthoritativeMonsterCatalogTests
     }
 
     [Fact]
+    public void LoadsAvoidanceDelayTuningFromMonsterTypes()
+    {
+        var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tavoidance_delay_base\tavoidance_delay_random_range\n"
+                + "2\t0\tGoat\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tGoatMelee\t10\t10\n");
+
+        var goat = Assert.Single(catalog.Definitions);
+        Assert.Equal((10, 10), (
+            goat.AvoidanceDelayBase,
+            goat.AvoidanceDelayRandomRange));
+    }
+
+    [Fact]
     public void RejectsInvalidGoatMeleeTuning()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
@@ -361,6 +375,20 @@ public sealed class AuthoritativeMonsterCatalogTests
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
             CreateType(1, 1, 1) with {
                 GoatMeleeSpecialHealthThresholdPercent = 50,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "GoatMelee",
+                AvoidanceDelayBase = 10,
+                AvoidanceDelayRandomRange = 0,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Zombie",
+                AvoidanceDelayBase = 10,
+                AvoidanceDelayRandomRange = 10,
             },
         ]));
     }

@@ -10266,6 +10266,73 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AiAvoidanceUsesValidatedFailureDelayTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            6,
+            6,
+            40,
+            attackDamage: 2,
+            aggroRange: 8,
+            monsterId: 1,
+            nativeAi: "GoatMelee",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Goat",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                8,
+                20,
+                false,
+                false,
+                false) {
+                NativeAi = "GoatMelee",
+                AvoidanceDelayBase = 6,
+                AvoidanceDelayRandomRange = 3,
+            },
+        ]);
+        var world = new DiabloWorldState(
+            objects: [
+                new AuthoritativeWorldObject(1001, 1, 0, 5, 5),
+                new AuthoritativeWorldObject(1002, 2, 0, 6, 5),
+                new AuthoritativeWorldObject(1003, 3, 0, 7, 5),
+                new AuthoritativeWorldObject(1004, 4, 0, 5, 6),
+                new AuthoritativeWorldObject(1005, 5, 0, 7, 6),
+                new AuthoritativeWorldObject(1006, 6, 0, 5, 7),
+                new AuthoritativeWorldObject(1007, 7, 0, 6, 7),
+                new AuthoritativeWorldObject(1008, 8, 0, 7, 7)],
+            combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 6,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, so the configured six-tick base is used with no
+        // random increment; the next tick advances the same native delay.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(6, monster.AvoidanceDelayTicks);
+
+        processor.AdvanceTick(2, [player]);
+
+        Assert.Equal(5, monster.AvoidanceDelayTicks);
+    }
+
+    [Fact]
     public void GoatMeleeAiDefersWhenItsNativeRandomWalkCandidatesAreBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
