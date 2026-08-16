@@ -25,6 +25,10 @@ All notable changes to this fork are documented below.
   Sword, Scimitar, Bastard Sword, and Two-Handed Sword, including a distinct
   symbol for the duplicate Hellfire Broad Sword projection.
 
+- Normalize the next five Hellfire axe base-item projections: Large Axe, Broad
+  Axe, Battle Axe, Small Axe, and Great Axe, including their native `Axe`
+  generation tags.
+
 - Normalize the Hellfire Rune Bomb, Theodore, Auric Amulet, Brown Suit, and
   Grey Suit quest items with stable symbols, native item indices, and cursor
   projections while retaining the legacy item-table fallback.

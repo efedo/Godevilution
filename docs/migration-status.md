@@ -980,6 +980,10 @@ Status date: 2026-08-16
   Broad Sword uses a distinct stable symbol while retaining its native
   projection.
 
+- Schema 1.257 normalizes stable symbols, display names, native cursor
+  projections, and `Axe` generation tags for the next five Hellfire axe
+  base-item rows: Large Axe, Broad Axe, Battle Axe, Small Axe, and Great Axe.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 

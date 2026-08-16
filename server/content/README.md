@@ -958,6 +958,11 @@ Claymore, Broad Sword, Scimitar, Bastard Sword, and Two-Handed Sword. The
 duplicate Hellfire Broad Sword receives its own stable symbol while retaining
 the native display and cursor projection.
 
+Schema 1.257 normalizes the next five Hellfire axe base-item projections:
+Large Axe, Broad Axe, Battle Axe, Small Axe, and Great Axe. Their stable item
+symbols, native display names, cursor projections, and `Axe` generation tags
+are validated against the native table.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
