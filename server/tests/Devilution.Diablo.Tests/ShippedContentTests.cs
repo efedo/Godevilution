@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.259.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.260.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.259.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.260.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1729,6 +1729,35 @@ public sealed class ShippedContentTests
             hellfireItems.GetRequired(151).NativeCursorGraphic));
         foreach (var itemId in new uint[] { 147, 148, 149, 150, 151 })
             Assert.Contains("Staff", hellfireItems.GetRequired(itemId).GenerationTags);
+        Assert.Equal(("helm", "Helm", 82), (
+            hellfireItems.GetRequired(152).StableSymbol,
+            hellfireItems.GetRequired(152).Name,
+            hellfireItems.GetRequired(152).NativeCursorGraphic));
+        Assert.Equal(("skull_cap", "Skull Cap", 90), (
+            hellfireItems.GetRequired(153).StableSymbol,
+            hellfireItems.GetRequired(153).Name,
+            hellfireItems.GetRequired(153).NativeCursorGraphic));
+        Assert.Equal(("great_helm", "Great Helm", 98), (
+            hellfireItems.GetRequired(154).StableSymbol,
+            hellfireItems.GetRequired(154).Name,
+            hellfireItems.GetRequired(154).NativeCursorGraphic));
+        Assert.Equal(("crown", "Crown", 95), (
+            hellfireItems.GetRequired(155).StableSymbol,
+            hellfireItems.GetRequired(155).Name,
+            hellfireItems.GetRequired(155).NativeCursorGraphic));
+        Assert.Equal(("rags", "Rags", 128), (
+            hellfireItems.GetRequired(156).StableSymbol,
+            hellfireItems.GetRequired(156).Name,
+            hellfireItems.GetRequired(156).NativeCursorGraphic));
+        foreach (var itemId in new uint[] { 152, 153, 154, 155 }) {
+            var helm = hellfireItems.GetRequired(itemId);
+            Assert.Equal(4, helm.EquipLocation);
+            Assert.Contains("Helmet", helm.GenerationTags);
+        }
+        var rags = hellfireItems.GetRequired(156);
+        Assert.Equal(3, rags.EquipLocation);
+        Assert.Contains("LightArmor", rags.GenerationTags);
+        Assert.Contains("BodyArmor", rags.GenerationTags);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
@@ -2561,7 +2590,7 @@ public sealed class ShippedContentTests
         Assert.Equal(255, tornFlesh.Durability);
         Assert.Equal(255, tornFlesh.MaxDurability);
         Assert.Equal(0, tornFlesh.MinimumStrength);
-        Assert.Equal(4, tornFlesh.EquipLocation);
+        Assert.Equal(3, tornFlesh.EquipLocation);
         Assert.Equal(10, tornFlesh.PlusVitality);
         Assert.Equal(-1, tornFlesh.PlusGetHit);
         var gladiatorsBane = hellfireItems.GenerateUnique(1072, 0x12345678, 6);

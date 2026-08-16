@@ -46,11 +46,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 149	short_staff	10	30	30	1	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	Short Staff	Short Staff	SHORT_STAFF	4	1	false			0	0
 150	composite_staff	10	500	500	5	10	0	45	45	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	154	0	0	None	Composite Staff	Composite Staff	COMPOSITE_STAFF	9	1	false			0	0
 151	quarter_staff	10	1000	1000	6	12	0	55	55	1	3	1	Staff,TwoHanded	2	1	0	0		0	20	0	0	155	0	0	None	Quarter Staff	Quarter Staff	SHORT_STAFF	12	1	false			0	0
-152	hellfire_item_152	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	51	0	0	None	-	-	-	12	1	false			4	4
-153	hellfire_item_153	7	25	25	0	0	4	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	50	0	0	None	-	-	-	8	1	false			4	4
-154	hellfire_item_154	7	400	400	0	0	15	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	54	0	0	None	-	-	-	1	1	false			15	15
-155	hellfire_item_155	7	200	200	0	0	12	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	53	0	0	None	-	-	-	20	1	false			12	12
-156	hellfire_item_156	7	5	5	0	0	2	6	6	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	56	0	0	None	-	-	-	2	1	false			2	2
+152	helm	7	40	40	0	0	4	30	30	1	1	1	Armor,Helmet	4	2	0	0		0	25	0	0	51	0	0	None	Helm	Helm	HELM	12	1	false			4	4
+153	skull_cap	7	25	25	0	0	4	20	20	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	50	0	0	None	Skull Cap	Skull Cap	SKULL_CAP	8	1	false			4	4
+154	great_helm	7	400	400	0	0	15	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	54	0	0	None	Great Helm	Great Helm	GREAT_HELM	1	1	false			15	15
+155	crown	7	200	200	0	0	12	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	53	0	0	None	Crown	Crown	CROWN	20	1	false			12	12
+156	rags	7	5	5	0	0	2	6	6	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	56	0	0	None	Rags	Rags	RAGS	2	1	false			2	2
 157	hellfire_item_157	7	700	700	0	0	15	45	45	1	1	1	Armor,Helmet	4	2	0	0		0	20	0	0	62	0	0	None	-	-	-	11	1	false			15	15
 158	hellfire_item_158	7	40	40	0	0	3	18	18	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	57	0	0	None	-	-	-	3	1	false			3	3
 159	hellfire_item_159	7	300	300	0	0	10	35	35	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	60	0	0	None	-	-	-	7	1	false			10	10

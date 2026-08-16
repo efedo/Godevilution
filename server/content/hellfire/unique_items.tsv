@@ -256,33 +256,33 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	SPELL	21	50	-
 1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	DAMP	100	100	-
 1064	rod_of_onan	Rod of Onan	148	war_staff	22	44167	ATTRIBS	5	5	-
-1065	helm_of_spirits	Helm of Spirits	152	hellfire_item_152	1	7525	STEALLIFE	5	5	HELM_OF_SPIRITS
-1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	MANA	30	30	THINKING_CAP
-1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	SPLLVLADD	2	2	THINKING_CAP
-1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	ALLRES	20	20	THINKING_CAP
-1066	thinking_cap	Thinking Cap	153	hellfire_item_153	6	2020	SETDUR	1	1	THINKING_CAP
-1067	overlord_s_helm	OverLord's Helm	152	hellfire_item_152	7	12500	STR	20	20	OVERLORDS_HELM
-1067	overlord_s_helm	OverLord's Helm	152	hellfire_item_152	7	12500	DEX	15	15	OVERLORDS_HELM
-1067	overlord_s_helm	OverLord's Helm	152	hellfire_item_152	7	12500	VIT	5	5	OVERLORDS_HELM
-1067	overlord_s_helm	OverLord's Helm	152	hellfire_item_152	7	12500	MAG_CURSE	20	20	OVERLORDS_HELM
-1067	overlord_s_helm	OverLord's Helm	152	hellfire_item_152	7	12500	SETDUR	15	15	OVERLORDS_HELM
-1068	fool_s_crest	Fool's Crest	152	hellfire_item_152	12	10150	ATTRIBS_CURSE	4	4	FOOLS_CREST
-1068	fool_s_crest	Fool's Crest	152	hellfire_item_152	12	10150	LIFE	100	100	FOOLS_CREST
-1068	fool_s_crest	Fool's Crest	152	hellfire_item_152	12	10150	GETHIT_CURSE	1	6	FOOLS_CREST
-1068	fool_s_crest	Fool's Crest	152	hellfire_item_152	12	10150	THORNS	1	3	FOOLS_CREST
-1069	gotterdamerung	Gotterdamerung	154	hellfire_item_154	21	54900	ATTRIBS	20	20	VEIL_OF_STEEL
-1069	gotterdamerung	Gotterdamerung	154	hellfire_item_154	21	54900	SETAC	60	60	VEIL_OF_STEEL
-1069	gotterdamerung	Gotterdamerung	154	hellfire_item_154	21	54900	GETHIT	4	4	VEIL_OF_STEEL
-1069	gotterdamerung	Gotterdamerung	154	hellfire_item_154	21	54900	ALLRESZERO	0	0	VEIL_OF_STEEL
-1069	gotterdamerung	Gotterdamerung	154	hellfire_item_154	21	54900	LIGHT_CURSE	4	4	VEIL_OF_STEEL
-1070	royal_circlet	Royal Circlet	155	hellfire_item_155	27	24875	ATTRIBS	10	10	ROYAL_CIRCLET
-1070	royal_circlet	Royal Circlet	155	hellfire_item_155	27	24875	MANA	40	40	ROYAL_CIRCLET
-1070	royal_circlet	Royal Circlet	155	hellfire_item_155	27	24875	SETAC	40	40	ROYAL_CIRCLET
-1070	royal_circlet	Royal Circlet	155	hellfire_item_155	27	24875	LIGHT	1	1	ROYAL_CIRCLET
-1071	torn_flesh_of_souls	Torn Flesh of Souls	156	hellfire_item_156	2	4825	SETAC	8	8	TORN_FLESH_OF_SOULS
-1071	torn_flesh_of_souls	Torn Flesh of Souls	156	hellfire_item_156	2	4825	VIT	10	10	TORN_FLESH_OF_SOULS
-1071	torn_flesh_of_souls	Torn Flesh of Souls	156	hellfire_item_156	2	4825	GETHIT	1	1	TORN_FLESH_OF_SOULS
-1071	torn_flesh_of_souls	Torn Flesh of Souls	156	hellfire_item_156	2	4825	INDESTRUCTIBLE	0	0	TORN_FLESH_OF_SOULS
+1065	helm_of_spirits	Helm of Spirits	152	helm	1	7525	STEALLIFE	5	5	HELM_OF_SPIRITS
+1066	thinking_cap	Thinking Cap	153	skull_cap	6	2020	MANA	30	30	THINKING_CAP
+1066	thinking_cap	Thinking Cap	153	skull_cap	6	2020	SPLLVLADD	2	2	THINKING_CAP
+1066	thinking_cap	Thinking Cap	153	skull_cap	6	2020	ALLRES	20	20	THINKING_CAP
+1066	thinking_cap	Thinking Cap	153	skull_cap	6	2020	SETDUR	1	1	THINKING_CAP
+1067	overlord_s_helm	OverLord's Helm	152	helm	7	12500	STR	20	20	OVERLORDS_HELM
+1067	overlord_s_helm	OverLord's Helm	152	helm	7	12500	DEX	15	15	OVERLORDS_HELM
+1067	overlord_s_helm	OverLord's Helm	152	helm	7	12500	VIT	5	5	OVERLORDS_HELM
+1067	overlord_s_helm	OverLord's Helm	152	helm	7	12500	MAG_CURSE	20	20	OVERLORDS_HELM
+1067	overlord_s_helm	OverLord's Helm	152	helm	7	12500	SETDUR	15	15	OVERLORDS_HELM
+1068	fool_s_crest	Fool's Crest	152	helm	12	10150	ATTRIBS_CURSE	4	4	FOOLS_CREST
+1068	fool_s_crest	Fool's Crest	152	helm	12	10150	LIFE	100	100	FOOLS_CREST
+1068	fool_s_crest	Fool's Crest	152	helm	12	10150	GETHIT_CURSE	1	6	FOOLS_CREST
+1068	fool_s_crest	Fool's Crest	152	helm	12	10150	THORNS	1	3	FOOLS_CREST
+1069	gotterdamerung	Gotterdamerung	154	great_helm	21	54900	ATTRIBS	20	20	VEIL_OF_STEEL
+1069	gotterdamerung	Gotterdamerung	154	great_helm	21	54900	SETAC	60	60	VEIL_OF_STEEL
+1069	gotterdamerung	Gotterdamerung	154	great_helm	21	54900	GETHIT	4	4	VEIL_OF_STEEL
+1069	gotterdamerung	Gotterdamerung	154	great_helm	21	54900	ALLRESZERO	0	0	VEIL_OF_STEEL
+1069	gotterdamerung	Gotterdamerung	154	great_helm	21	54900	LIGHT_CURSE	4	4	VEIL_OF_STEEL
+1070	royal_circlet	Royal Circlet	155	crown	27	24875	ATTRIBS	10	10	ROYAL_CIRCLET
+1070	royal_circlet	Royal Circlet	155	crown	27	24875	MANA	40	40	ROYAL_CIRCLET
+1070	royal_circlet	Royal Circlet	155	crown	27	24875	SETAC	40	40	ROYAL_CIRCLET
+1070	royal_circlet	Royal Circlet	155	crown	27	24875	LIGHT	1	1	ROYAL_CIRCLET
+1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	SETAC	8	8	TORN_FLESH_OF_SOULS
+1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	VIT	10	10	TORN_FLESH_OF_SOULS
+1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	GETHIT	1	1	TORN_FLESH_OF_SOULS
+1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	INDESTRUCTIBLE	0	0	TORN_FLESH_OF_SOULS
 1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	SETAC	25	25	-
 1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	GETHIT	2	2	-
 1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	DUR	200	200	-
