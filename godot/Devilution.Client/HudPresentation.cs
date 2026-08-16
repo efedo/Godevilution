@@ -16,10 +16,12 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label dialog = new();
     private readonly Label commandFeedback = new();
     private readonly Label diagnostics = new();
+    private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
     private readonly GridContainer inventoryGrid = new() { Columns = InventoryColumns };
     private readonly List<Button> inventoryCells = [];
     private readonly List<uint> storeSlots = [];
+    private readonly List<string> spellSourceKeys = [];
     private readonly Button openSmith = new() { Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
     private readonly Button buySelected = new() { Text = "Buy selected" };
@@ -60,6 +62,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action? RefillManaRequested;
     public event Action? DropHeldItemRequested;
     public event Action? ClearEventsRequested;
+    public event Action<string>? SpellSourceSelected;
 
     public override void _Ready()
     {
@@ -78,6 +81,9 @@ public partial class HudPresentation : CanvasLayer
         sideBox.AddChild(new Label { Text = "AUTHORITATIVE CLIENT" });
         sideBox.AddChild(commandFeedback);
         sideBox.AddChild(diagnostics);
+        sideBox.AddChild(new Label { Text = "Spell sources (click to select; Q/E cycles)" });
+        spellSources.CustomMinimumSize = new Vector2(340, 100);
+        sideBox.AddChild(spellSources);
         sideBox.AddChild(inventory);
         sideBox.AddChild(inventoryGrid);
         sideBox.AddChild(new Label { Text = "Store stock" });
@@ -113,6 +119,11 @@ public partial class HudPresentation : CanvasLayer
         storeItems.ItemSelected += index => {
             var itemIndex = checked((int)index);
             selectedStoreSlot = itemIndex >= 0 && itemIndex < storeSlots.Count ? storeSlots[itemIndex] : null;
+        };
+        spellSources.ItemSelected += index => {
+            var sourceIndex = checked((int)index);
+            if (sourceIndex >= 0 && sourceIndex < spellSourceKeys.Count)
+                SpellSourceSelected?.Invoke(spellSourceKeys[sourceIndex]);
         };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
@@ -154,9 +165,37 @@ public partial class HudPresentation : CanvasLayer
         status.Text = value;
     }
 
-    public void SetSelectedSpellSource(AuthoritativeSpellSource? source)
+    public void SetSpellSources(
+        IReadOnlyList<AuthoritativeSpellSource> sources,
+        string? selectedSourceKey)
     {
-        selectedSpellText = source?.DisplayName ?? "none";
+        var rebuild = spellSourceKeys.Count != sources.Count;
+        if (!rebuild) {
+            for (var index = 0; index < sources.Count; index++) {
+                if (!string.Equals(spellSourceKeys[index], sources[index].Key, StringComparison.Ordinal)
+                    || !string.Equals(
+                        spellSources.GetItemText(index),
+                        sources[index].DisplayName,
+                        StringComparison.Ordinal)) {
+                    rebuild = true;
+                    break;
+                }
+            }
+        }
+        if (rebuild) {
+            spellSources.Clear();
+            spellSourceKeys.Clear();
+            foreach (var source in sources) {
+                spellSources.AddItem(source.DisplayName);
+                spellSourceKeys.Add(source.Key);
+            }
+        }
+        var selectedIndex = spellSourceKeys.FindIndex(
+            key => string.Equals(key, selectedSourceKey, StringComparison.Ordinal));
+        if (selectedIndex >= 0)
+            spellSources.Select(selectedIndex, false);
+        var selectedSource = selectedIndex >= 0 ? sources[selectedIndex] : null;
+        selectedSpellText = selectedSource?.DisplayName ?? "none";
     }
 
     public void ToggleDiagnostics() => diagnosticsToggle.ButtonPressed = !diagnosticsToggle.ButtonPressed;
@@ -231,6 +270,9 @@ public partial class HudPresentation : CanvasLayer
         refillMana.Disabled = !connected;
         dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;
+        spellSources.MouseFilter = !connected || spellSourceKeys.Count == 0
+            ? Control.MouseFilterEnum.Ignore
+            : Control.MouseFilterEnum.Stop;
         ApplyAccessibility();
     }
 

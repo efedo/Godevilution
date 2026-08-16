@@ -68,6 +68,7 @@ public partial class Main : Node2D
         hud.RefillManaRequested += () => QueueIfConnected(new Command { RefillManaRequested = new RefillManaRequested() });
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
         hud.ClearEventsRequested += model.ClearRecentEvents;
+        hud.SpellSourceSelected += SelectSpellSource;
         client = new AuthoritativeClient(ClientConnectionOptions.FromEnvironment());
         connectionTask = ConnectAsync(lifetime.Token);
         hud.SetStatus("Connecting to authoritative server...");
@@ -115,7 +116,7 @@ public partial class Main : Node2D
             spellSources,
             selectedSpellSourceKey);
         selectedSpellSourceKey = selectedSpell?.Key;
-        hud?.SetSelectedSpellSource(selectedSpell);
+        hud?.SetSpellSources(spellSources, selectedSpellSourceKey);
         hud?.Apply(model, client, connectionTask);
         feedback?.Apply(model, world);
     }
@@ -300,9 +301,18 @@ public partial class Main : Node2D
             selectedSpellSourceKey,
             direction);
         selectedSpellSourceKey = source?.Key;
-        hud?.SetSelectedSpellSource(source);
         if (source is not null)
             hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast; Q/E cycles)");
+    }
+
+    private void SelectSpellSource(string sourceKey)
+    {
+        var source = AuthoritativeSpellSourceSelector.Select(
+            AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
+            sourceKey);
+        selectedSpellSourceKey = source?.Key;
+        if (source is not null)
+            hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast)");
     }
 
     private uint ResolveVisiblePlayerTargetEntityId(
