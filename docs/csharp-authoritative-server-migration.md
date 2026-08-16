@@ -710,6 +710,10 @@ Schema 1.283 externalizes Resurrection's ordered eight-cell initial placement
 probes in validated spell content while retaining the native probe order for
 older packs that omit the optional column.
 
+Schema 1.284 externalizes Charged Bolt's ordered 16-entry steering pattern in
+validated spell content while retaining the native sequence for older packs
+that omit the optional column.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
