@@ -92,25 +92,28 @@ public static class AuthoritativeWorldObjectCatalog
         StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        var objects = table.Rows.Select(row => new AuthoritativeWorldObject(
-            row.RequiredUInt32("entity_id"),
-            row.RequiredUInt32("object_id"),
-            row.RequiredUInt32("level_id"),
-            row.RequiredInt32("position_x"),
-            row.RequiredInt32("position_y"),
-            row.OptionalInt32("activated") != 0,
-            AuthoritativeQuestIdentity.ResolveOptional(
-                row,
-                stableIds,
-                "quest_id",
-                "quest_symbol"),
-            ParseEffectKind(row),
-            row.OptionalInt32("effect_amount"),
-            row.OptionalUInt32("quest_progress", 1),
-            row.OptionalInt32("missile_passable") != 0,
-            row.OptionalInt32("breakable") != 0,
-            row.OptionalInt32("destroyed") != 0,
-            row.OptionalInt32("trap_armed") != 0)).ToArray();
+        var objects = table.Rows.Select(row => {
+            var effectKind = ParseEffectKind(row);
+            return new AuthoritativeWorldObject(
+                row.RequiredUInt32("entity_id"),
+                row.RequiredUInt32("object_id"),
+                row.RequiredUInt32("level_id"),
+                row.RequiredInt32("position_x"),
+                row.RequiredInt32("position_y"),
+                row.OptionalInt32("activated") != 0,
+                AuthoritativeQuestIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "quest_id",
+                    "quest_symbol"),
+                effectKind,
+                ParseEffectAmount(row, effectKind, stableIds),
+                row.OptionalUInt32("quest_progress", 1),
+                row.OptionalInt32("missile_passable") != 0,
+                row.OptionalInt32("breakable") != 0,
+                row.OptionalInt32("destroyed") != 0,
+                row.OptionalInt32("trap_armed") != 0);
+        }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence
@@ -164,5 +167,23 @@ public static class AuthoritativeWorldObjectCatalog
         if (Enum.TryParse<AuthoritativeObjectEffectKind>(value, true, out var effectKind))
             return effectKind;
         throw new InvalidDataException($"Object row {row.LineNumber} contains an unknown effect kind '{value}'.");
+    }
+
+    private static int ParseEffectAmount(
+        TsvRow row,
+        AuthoritativeObjectEffectKind effectKind,
+        StableContentIdCatalog? stableIds)
+    {
+        var itemSymbol = AuthoritativeItemIdentity.ReadSymbol(row, "effect_item_symbol");
+        if (itemSymbol.Length > 0 && effectKind != AuthoritativeObjectEffectKind.QuestItemCompletion)
+            throw new InvalidDataException(
+                $"Object row {row.LineNumber} supplies effect_item_symbol for effect kind '{effectKind}'.");
+        if (effectKind != AuthoritativeObjectEffectKind.QuestItemCompletion)
+            return row.OptionalInt32("effect_amount");
+        return checked((int)AuthoritativeItemIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "effect_amount",
+            "effect_item_symbol"));
     }
 }
