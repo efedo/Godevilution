@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Validate optional `monster_missiles.tsv` `monster_id` selectors against the
+  active monster-type catalog during content activation, preventing
+  monster-specific projectile rows from becoming silently unreachable.
+
 - Externalize native Nightmare/Hell level, accuracy, armor, damage, experience,
   and initial-health modifiers through validated `combat.tsv` difficulty
   columns, preserving the native distinct Nightmare and Hell damage formulas
