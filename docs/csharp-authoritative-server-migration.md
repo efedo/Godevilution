@@ -766,6 +766,10 @@ Schema 1.294 externalizes SkeletonKing's movement delay through optional
 the validated monster-type mapping. Older packs retain the native
 ten-plus-ten fallback.
 
+Schema 1.295 externalizes Rhino's recovery delay through optional
+`rhino_delay_base` and `rhino_delay_random_range` columns on the validated
+monster-type mapping. Older packs retain the native ten-plus-ten fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

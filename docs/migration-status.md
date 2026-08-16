@@ -70,6 +70,10 @@ Status date: 2026-08-16
   (`skeleton_king_delay_base` and `skeleton_king_delay_random_range`),
   retaining native-compatible fallback behavior for older packs.
 
+- Rhino recovery delays are now validated monster-type fields
+  (`rhino_delay_base` and `rhino_delay_random_range`), retaining
+  native-compatible fallback behavior for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

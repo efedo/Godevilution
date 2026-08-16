@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.295 validated Rhino recovery-delay tuning to
+  `monster_types.tsv`, preserving the native base-plus-exclusive-random delay
+  for older mappings.
+
 - Add schema 1.294 validated SkeletonKing movement-delay tuning to
   `monster_types.tsv`, preserving the native base-plus-exclusive-random delay
   for older mappings.
