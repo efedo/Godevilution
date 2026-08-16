@@ -1,7 +1,7 @@
-namespace Devilution.Diablo;
+namespace Devilution.Engine;
 
-/** Deterministic bounded fallback navigation for server-owned monsters. */
-internal static class AuthoritativeMonsterNavigation
+/** Deterministic bounded breadth-first navigation over a caller-owned grid. */
+public static class DeterministicGridNavigation
 {
     private static readonly (int X, int Y)[] NeighborOffsets = [
         (1, 0),
@@ -14,22 +14,27 @@ internal static class AuthoritativeMonsterNavigation
         (1, -1),
     ];
 
+    /**
+     * Finds the first step to a walkable cell adjacent to the target.
+     *
+     * The caller owns grid semantics through the two predicates. Neighbor
+     * order, breadth-first traversal, depth limits, and first-step selection
+     * are deterministic and independent of any game module.
+     */
     public static (int X, int Y)? FindStep(
-        DiabloWorldState world,
-        AuthoritativeCombatTarget monster,
-        AuthoritativePlayerState victim,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        int startX,
+        int startY,
+        int targetX,
+        int targetY,
+        int maximumDepth,
+        Func<int, int, bool> isWalkable,
+        Func<int, int, bool> isOccupied)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(monster);
-        ArgumentNullException.ThrowIfNull(victim);
-        ArgumentNullException.ThrowIfNull(players);
+        ArgumentOutOfRangeException.ThrowIfNegative(maximumDepth);
+        ArgumentNullException.ThrowIfNull(isWalkable);
+        ArgumentNullException.ThrowIfNull(isOccupied);
 
-        var maximumDepth = Math.Clamp(
-            checked(monster.AggroRange * 2 + 2),
-            8,
-            256);
-        var start = (monster.PositionX, monster.PositionY);
+        var start = (X: startX, Y: startY);
         var queue = new Queue<(int X, int Y)>();
         var distances = new Dictionary<(int X, int Y), int> {
             [start] = 0,
@@ -46,20 +51,15 @@ internal static class AuthoritativeMonsterNavigation
             foreach (var offset in NeighborOffsets) {
                 var next = (X: current.X + offset.X, Y: current.Y + offset.Y);
                 if (distances.ContainsKey(next)
-                    || !world.IsWalkable(monster.LevelId, next.X, next.Y)
-                    || world.IsOccupied(
-                        monster.LevelId,
-                        next.X,
-                        next.Y,
-                        players,
-                        monster.EntityId)) {
+                    || !isWalkable(next.X, next.Y)
+                    || isOccupied(next.X, next.Y)) {
                     continue;
                 }
 
                 var nextDepth = depth + 1;
                 distances.Add(next, nextDepth);
                 parents.Add(next, current);
-                if (IsAdjacentTo(next, victim.PositionX, victim.PositionY))
+                if (IsAdjacentTo(next, targetX, targetY))
                     return ReconstructFirstStep(start, next, parents);
                 queue.Enqueue(next);
             }

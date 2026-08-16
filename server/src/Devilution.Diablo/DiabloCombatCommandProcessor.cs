@@ -1,3 +1,5 @@
+using Devilution.Engine;
+
 namespace Devilution.Diablo;
 
 /** Applies combat intents and autonomous combat ticks without host dependencies. */
@@ -4845,11 +4847,23 @@ public sealed class DiabloCombatCommandProcessor
                 break;
             }
             if (!moved) {
-                var fallback = AuthoritativeMonsterNavigation.FindStep(
-                    world,
-                    target,
-                    victim,
-                    players);
+                var maximumDepth = Math.Clamp(
+                    checked(target.AggroRange * 2 + 2),
+                    8,
+                    256);
+                var fallback = DeterministicGridNavigation.FindStep(
+                    target.PositionX,
+                    target.PositionY,
+                    victim.PositionX,
+                    victim.PositionY,
+                    maximumDepth,
+                    (x, y) => world.IsWalkable(target.LevelId, x, y),
+                    (x, y) => world.IsOccupied(
+                        target.LevelId,
+                        x,
+                        y,
+                        players,
+                        target.EntityId));
                 if (fallback.HasValue)
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
