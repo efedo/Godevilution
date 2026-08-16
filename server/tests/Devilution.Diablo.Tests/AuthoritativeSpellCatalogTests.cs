@@ -203,7 +203,19 @@ public sealed class AuthoritativeSpellCatalogTests
             "content",
             "base",
             "spells.tsv");
-        var catalog = AuthoritativeSpellCatalog.LoadTsv(path, File.ReadAllText(path));
+        var stableIdsPath = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "content_ids.tsv");
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            stableIdsPath,
+            File.ReadAllText(stableIdsPath));
+        var catalog = AuthoritativeSpellCatalog.LoadTsv(
+            path,
+            File.ReadAllText(path),
+            stableIds);
 
         Assert.True(catalog.TryGet(47, out var jester));
         Assert.Equal(39U, jester.NativeSpellId);
@@ -218,6 +230,25 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Equal(
             [1U, 1U, 12U, 6U, 7U, 16U, 39U, 23U, 25U, 8U],
             jester.JesterSpellIds);
+    }
+
+    [Fact]
+    public void JesterDispatchRejectsNumericAndSymbolicMismatches()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var spellPath = Path.Combine(repositoryRoot, "server", "content", "base", "spells.tsv");
+        var stableIdsPath = Path.Combine(repositoryRoot, "server", "content", "base", "content_ids.tsv");
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            stableIdsPath,
+            File.ReadAllText(stableIdsPath));
+        var contents = File.ReadAllText(spellPath).Replace(
+            "firebolt,firebolt,fireball,fire_wall,guardian,chain_lightning,town_portal,teleport,apocalypse,stone_curse",
+            "firebolt,firebolt,fireball,fire_wall,guardian,chain_lightning,town_portal,teleport,apocalypse,fireball",
+            StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(spellPath, contents, stableIds));
+        Assert.Contains("mismatched Jester spell IDs and symbols", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
