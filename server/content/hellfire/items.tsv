@@ -51,11 +51,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 154	great_helm	7	400	400	0	0	15	60	60	1	1	1	Armor,Helmet	4	2	0	0		0	50	0	0	54	0	0	None	Great Helm	Great Helm	GREAT_HELM	1	1	false			15	15
 155	crown	7	200	200	0	0	12	40	40	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	53	0	0	None	Crown	Crown	CROWN	20	1	false			12	12
 156	rags	7	5	5	0	0	2	6	6	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	56	0	0	None	Rags	Rags	RAGS	2	1	false			2	2
-157	hellfire_item_157	7	700	700	0	0	15	45	45	1	1	1	Armor,Helmet	4	2	0	0		0	20	0	0	62	0	0	None	-	-	-	11	1	false			15	15
-158	hellfire_item_158	7	40	40	0	0	3	18	18	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	57	0	0	None	-	-	-	3	1	false			3	3
-159	hellfire_item_159	7	300	300	0	0	10	35	35	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	60	0	0	None	-	-	-	7	1	false			10	10
-160	hellfire_item_160	7	75	75	0	0	4	24	24	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	58	0	0	None	-	-	-	4	1	false			4	4
-161	hellfire_item_161	7	1250	1250	0	0	18	55	55	1	1	1	Armor,Helmet	4	2	0	0		0	30	0	0	63	0	0	None	-	-	-	13	1	false			18	18
+157	studded_leather_armor	7	700	700	0	0	15	45	45	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	20	0	0	62	0	0	None	Studded Leather Armor	Studded Leather Armor	STUDDED_LEATHER_ARMOR	11	1	false			15	17
+158	cloak	7	40	40	0	0	3	18	18	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	57	0	0	None	Cloak	Cloak	CLOAK	3	1	false			3	7
+159	leather_armor	7	300	300	0	0	10	35	35	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	60	0	0	None	Leather Armor	Armor	LEATHER_ARMOR	7	1	false			10	13
+160	robe	7	75	75	0	0	4	24	24	1	1	1	Armor,LightArmor,BodyArmor	3	2	0	0		0	0	0	0	58	0	0	None	Robe	Robe	ROBE	4	1	false			4	7
+161	chain_mail	7	1250	1250	0	0	18	55	55	1	1	1	Armor,MediumArmor,BodyArmor	3	2	0	0		0	30	0	0	64	0	0	None	Chain Mail	Mail	CHAIN_MAIL	13	1	false			18	22
 162	hellfire_item_162	7	2800	2800	0	0	20	80	80	1	1	1	Armor,Helmet	4	2	0	0		0	40	0	0	66	0	0	None	-	-	-	17	1	false			20	20
 163	hellfire_item_163	7	10	10	0	0	1	12	12	1	1	1	Armor,Helmet	4	2	0	0		0	0	0	0	55	0	0	None	-	-	-	1	1	false			1	1
 164	hellfire_item_164	7	4600	4600	0	0	42	75	75	1	1	1	Armor,Helmet	4	2	0	0		0	60	0	0	68	0	0	None	-	-	-	21	1	false			42	42

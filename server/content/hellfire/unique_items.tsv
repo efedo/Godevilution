@@ -283,27 +283,27 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	VIT	10	10	TORN_FLESH_OF_SOULS
 1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	GETHIT	1	1	TORN_FLESH_OF_SOULS
 1071	torn_flesh_of_souls	Torn Flesh of Souls	156	rags	2	4825	INDESTRUCTIBLE	0	0	TORN_FLESH_OF_SOULS
-1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	SETAC	25	25	-
-1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	GETHIT	2	2	-
-1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	DUR	200	200	-
-1072	the_gladiator_s_bane	The Gladiator's Bane	157	hellfire_item_157	6	3450	ATTRIBS_CURSE	3	3	-
-1073	the_rainbow_cloak	The Rainbow Cloak	158	hellfire_item_158	2	4900	SETAC	10	10	THE_RAINBOW_CLOAK
-1073	the_rainbow_cloak	The Rainbow Cloak	158	hellfire_item_158	2	4900	ATTRIBS	1	1	THE_RAINBOW_CLOAK
-1073	the_rainbow_cloak	The Rainbow Cloak	158	hellfire_item_158	2	4900	ALLRES	10	10	THE_RAINBOW_CLOAK
-1073	the_rainbow_cloak	The Rainbow Cloak	158	hellfire_item_158	2	4900	LIFE	5	5	THE_RAINBOW_CLOAK
-1073	the_rainbow_cloak	The Rainbow Cloak	158	hellfire_item_158	2	4900	DUR	50	50	THE_RAINBOW_CLOAK
-1074	leather_of_aut	Leather of Aut	159	hellfire_item_159	4	10550	SETAC	15	15	-
-1074	leather_of_aut	Leather of Aut	159	hellfire_item_159	4	10550	STR	5	5	-
-1074	leather_of_aut	Leather of Aut	159	hellfire_item_159	4	10550	MAG_CURSE	5	5	-
-1074	leather_of_aut	Leather of Aut	159	hellfire_item_159	4	10550	DEX	5	5	-
-1074	leather_of_aut	Leather of Aut	159	hellfire_item_159	4	10550	INDESTRUCTIBLE	0	0	-
-1075	wisdom_s_wrap	Wisdom's Wrap	160	hellfire_item_160	5	6200	MAG	5	5	THE_RAINBOW_CLOAK
-1075	wisdom_s_wrap	Wisdom's Wrap	160	hellfire_item_160	5	6200	MANA	10	10	THE_RAINBOW_CLOAK
-1075	wisdom_s_wrap	Wisdom's Wrap	160	hellfire_item_160	5	6200	LIGHTRES	25	25	THE_RAINBOW_CLOAK
-1075	wisdom_s_wrap	Wisdom's Wrap	160	hellfire_item_160	5	6200	SETAC	15	15	THE_RAINBOW_CLOAK
-1075	wisdom_s_wrap	Wisdom's Wrap	160	hellfire_item_160	5	6200	GETHIT	1	1	THE_RAINBOW_CLOAK
-1076	sparking_mail	Sparking Mail	161	hellfire_item_161	9	15750	SETAC	30	30	-
-1076	sparking_mail	Sparking Mail	161	hellfire_item_161	9	15750	LIGHTDAM	1	10	-
+1072	the_gladiator_s_bane	The Gladiator's Bane	157	studded_leather_armor	6	3450	SETAC	25	25	-
+1072	the_gladiator_s_bane	The Gladiator's Bane	157	studded_leather_armor	6	3450	GETHIT	2	2	-
+1072	the_gladiator_s_bane	The Gladiator's Bane	157	studded_leather_armor	6	3450	DUR	200	200	-
+1072	the_gladiator_s_bane	The Gladiator's Bane	157	studded_leather_armor	6	3450	ATTRIBS_CURSE	3	3	-
+1073	the_rainbow_cloak	The Rainbow Cloak	158	cloak	2	4900	SETAC	10	10	THE_RAINBOW_CLOAK
+1073	the_rainbow_cloak	The Rainbow Cloak	158	cloak	2	4900	ATTRIBS	1	1	THE_RAINBOW_CLOAK
+1073	the_rainbow_cloak	The Rainbow Cloak	158	cloak	2	4900	ALLRES	10	10	THE_RAINBOW_CLOAK
+1073	the_rainbow_cloak	The Rainbow Cloak	158	cloak	2	4900	LIFE	5	5	THE_RAINBOW_CLOAK
+1073	the_rainbow_cloak	The Rainbow Cloak	158	cloak	2	4900	DUR	50	50	THE_RAINBOW_CLOAK
+1074	leather_of_aut	Leather of Aut	159	leather_armor	4	10550	SETAC	15	15	-
+1074	leather_of_aut	Leather of Aut	159	leather_armor	4	10550	STR	5	5	-
+1074	leather_of_aut	Leather of Aut	159	leather_armor	4	10550	MAG_CURSE	5	5	-
+1074	leather_of_aut	Leather of Aut	159	leather_armor	4	10550	DEX	5	5	-
+1074	leather_of_aut	Leather of Aut	159	leather_armor	4	10550	INDESTRUCTIBLE	0	0	-
+1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	MAG	5	5	THE_RAINBOW_CLOAK
+1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	MANA	10	10	THE_RAINBOW_CLOAK
+1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	LIGHTRES	25	25	THE_RAINBOW_CLOAK
+1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	SETAC	15	15	THE_RAINBOW_CLOAK
+1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	GETHIT	1	1	THE_RAINBOW_CLOAK
+1076	sparking_mail	Sparking Mail	161	chain_mail	9	15750	SETAC	30	30	-
+1076	sparking_mail	Sparking Mail	161	chain_mail	9	15750	LIGHTDAM	1	10	-
 1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	GETHIT	15	15	-
 1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	AC_CURSE	30	30	-
 1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	DEX	5	5	-
@@ -422,8 +422,8 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1107	diamondedge	Diamondedge	131	long_sword	17	42000	DAMP	100	100	-
 1107	diamondedge	Diamondedge	131	long_sword	17	42000	LIGHTRES	50	50	-
 1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETAC	10	10	-
-1108	bone_chain_armor	Bone Chain Armor	157	hellfire_item_157	13	36000	SETAC	40	40	-
-1108	bone_chain_armor	Bone Chain Armor	157	hellfire_item_157	13	36000	ACUNDEAD	0	0	-
+1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	SETAC	40	40	-
+1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	ACUNDEAD	0	0	-
 1109	demon_plate_armor	Demon Plate Armor	165	hellfire_item_165	25	80000	SETAC	80	80	-
 1109	demon_plate_armor	Demon Plate Armor	165	hellfire_item_165	25	80000	ACDEMON	0	0	-
 1110	acolyte_s_amulet	Acolyte's Amulet	171	hellfire_item_171	10	10000	MANATOLIFE	50	50	-

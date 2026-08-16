@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.260.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.261.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.260.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.261.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1758,6 +1758,38 @@ public sealed class ShippedContentTests
         Assert.Equal(3, rags.EquipLocation);
         Assert.Contains("LightArmor", rags.GenerationTags);
         Assert.Contains("BodyArmor", rags.GenerationTags);
+        Assert.Equal(("studded_leather_armor", "Studded Leather Armor", 107), (
+            hellfireItems.GetRequired(157).StableSymbol,
+            hellfireItems.GetRequired(157).Name,
+            hellfireItems.GetRequired(157).NativeCursorGraphic));
+        Assert.Equal(("cloak", "Cloak", 149), (
+            hellfireItems.GetRequired(158).StableSymbol,
+            hellfireItems.GetRequired(158).Name,
+            hellfireItems.GetRequired(158).NativeCursorGraphic));
+        Assert.Equal(("leather_armor", "Leather Armor", 135), (
+            hellfireItems.GetRequired(159).StableSymbol,
+            hellfireItems.GetRequired(159).Name,
+            hellfireItems.GetRequired(159).NativeCursorGraphic));
+        Assert.Equal(("robe", "Robe", 137), (
+            hellfireItems.GetRequired(160).StableSymbol,
+            hellfireItems.GetRequired(160).Name,
+            hellfireItems.GetRequired(160).NativeCursorGraphic));
+        Assert.Equal(("chain_mail", "Chain Mail", 111), (
+            hellfireItems.GetRequired(161).StableSymbol,
+            hellfireItems.GetRequired(161).Name,
+            hellfireItems.GetRequired(161).NativeCursorGraphic));
+        foreach (var itemId in new uint[] { 157, 158, 159, 160 }) {
+            var lightArmor = hellfireItems.GetRequired(itemId);
+            Assert.Equal(3, lightArmor.EquipLocation);
+            Assert.Contains("LightArmor", lightArmor.GenerationTags);
+            Assert.Contains("BodyArmor", lightArmor.GenerationTags);
+            Assert.DoesNotContain("Helmet", lightArmor.GenerationTags);
+        }
+        var chainMail = hellfireItems.GetRequired(161);
+        Assert.Equal(3, chainMail.EquipLocation);
+        Assert.Contains("MediumArmor", chainMail.GenerationTags);
+        Assert.Contains("BodyArmor", chainMail.GenerationTags);
+        Assert.DoesNotContain("Helmet", chainMail.GenerationTags);
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
@@ -2601,7 +2633,7 @@ public sealed class ShippedContentTests
         Assert.Equal(135, gladiatorsBane.Durability);
         Assert.Equal(135, gladiatorsBane.MaxDurability);
         Assert.Equal(20, gladiatorsBane.MinimumStrength);
-        Assert.Equal(4, gladiatorsBane.EquipLocation);
+        Assert.Equal(3, gladiatorsBane.EquipLocation);
         Assert.Equal(-3, gladiatorsBane.PlusStrength);
         Assert.Equal(-3, gladiatorsBane.PlusMagic);
         Assert.Equal(-3, gladiatorsBane.PlusDexterity);
@@ -2615,7 +2647,7 @@ public sealed class ShippedContentTests
         Assert.Equal(27, rainbowCloak.Durability);
         Assert.Equal(27, rainbowCloak.MaxDurability);
         Assert.Equal(0, rainbowCloak.MinimumStrength);
-        Assert.Equal(4, rainbowCloak.EquipLocation);
+        Assert.Equal(3, rainbowCloak.EquipLocation);
         Assert.Equal(1, rainbowCloak.PlusStrength);
         Assert.Equal(1, rainbowCloak.PlusMagic);
         Assert.Equal(1, rainbowCloak.PlusDexterity);
@@ -2632,7 +2664,7 @@ public sealed class ShippedContentTests
         Assert.Equal(255, leatherOfAut.Durability);
         Assert.Equal(255, leatherOfAut.MaxDurability);
         Assert.Equal(0, leatherOfAut.MinimumStrength);
-        Assert.Equal(4, leatherOfAut.EquipLocation);
+        Assert.Equal(3, leatherOfAut.EquipLocation);
         Assert.Equal(5, leatherOfAut.PlusStrength);
         Assert.Equal(-5, leatherOfAut.PlusMagic);
         Assert.Equal(5, leatherOfAut.PlusDexterity);
@@ -2644,7 +2676,7 @@ public sealed class ShippedContentTests
         Assert.Equal(24, wisdomsWrap.Durability);
         Assert.Equal(24, wisdomsWrap.MaxDurability);
         Assert.Equal(0, wisdomsWrap.MinimumStrength);
-        Assert.Equal(4, wisdomsWrap.EquipLocation);
+        Assert.Equal(3, wisdomsWrap.EquipLocation);
         Assert.Equal(5, wisdomsWrap.PlusMagic);
         Assert.Equal(10 << 6, wisdomsWrap.PlusMana);
         Assert.Equal(25, wisdomsWrap.PlusLightningResistance);
@@ -2652,12 +2684,12 @@ public sealed class ShippedContentTests
         var sparkingMail = hellfireItems.GenerateUnique(1076, 0x12345678, 9);
         Assert.Equal(1076, sparkingMail.UniqueId);
         Assert.Equal(15750, sparkingMail.Value);
-        Assert.Equal(63, sparkingMail.ItemIndex);
+        Assert.Equal(64, sparkingMail.ItemIndex);
         Assert.Equal(30, sparkingMail.ArmorClass);
         Assert.Equal(55, sparkingMail.Durability);
         Assert.Equal(55, sparkingMail.MaxDurability);
         Assert.Equal(30, sparkingMail.MinimumStrength);
-        Assert.Equal(4, sparkingMail.EquipLocation);
+        Assert.Equal(3, sparkingMail.EquipLocation);
         Assert.Equal(1, sparkingMail.LightningMinDamage);
         Assert.Equal(10, sparkingMail.LightningMaxDamage);
         Assert.NotEqual(0U, sparkingMail.Flags & 0x00000020U);
@@ -3010,11 +3042,11 @@ public sealed class ShippedContentTests
         var boneChainArmor = hellfireItems.GenerateUnique(1108, 0x12345678, 13);
         Assert.Equal(1108, boneChainArmor.UniqueId);
         Assert.Equal(36000, boneChainArmor.Value);
-        Assert.Equal(62, boneChainArmor.ItemIndex);
-        Assert.Equal(4, boneChainArmor.EquipLocation);
+        Assert.Equal(64, boneChainArmor.ItemIndex);
+        Assert.Equal(3, boneChainArmor.EquipLocation);
         Assert.Equal(40, boneChainArmor.ArmorClass);
-        Assert.Equal(45, boneChainArmor.Durability);
-        Assert.Equal(45, boneChainArmor.MaxDurability);
+        Assert.Equal(55, boneChainArmor.Durability);
+        Assert.Equal(55, boneChainArmor.MaxDurability);
         Assert.Equal(64, boneChainArmor.HellfireDamageArmorFlags);
         var demonPlateArmor = hellfireItems.GenerateUnique(1109, 0x12345678, 25);
         Assert.Equal(1109, demonPlateArmor.UniqueId);
