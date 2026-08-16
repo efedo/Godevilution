@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.309 validated AiRangedAvoidance ordinary movement-band fields to
+  `monster_missiles.tsv`, preserving the native 50/10/30 fallback for older
+  mappings.
+
 - Add schema 1.308 validated AiRangedAvoidance movement-goal modulo to
   `monster_missiles.tsv`, preserving the native four-way/Acid eight-way
   fallback for older mappings.
