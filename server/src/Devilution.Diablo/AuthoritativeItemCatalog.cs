@@ -24,6 +24,9 @@ public sealed record AuthoritativeItemDefinition(
     /** Explicit content-owned classification; null preserves legacy native fallback. */
     public DiabloItemSpellSourceKind? SpellSourceKind { get; init; }
 
+    /** Explicit content-owned item action; None preserves legacy fallback. */
+    public DiabloItemActionKind ItemActionKind { get; init; }
+
     public IReadOnlySet<string> GenerationTags { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     public int MinArmorClass { get; init; } = -1;
@@ -95,6 +98,7 @@ public sealed record AuthoritativeItemDefinition(
             MiscId = MiscId,
             SpellId = SpellId,
             SpellSourceKind = SpellSourceKind,
+            ItemActionKind = ItemActionKind,
             Flags = Flags,
             HellfireDamageArmorFlags = HellfireDamageArmorFlags,
             MinimumStrength = MinimumStrength,
@@ -146,6 +150,7 @@ public sealed class AuthoritativeItemCatalog
                 || definition.Charges < 0 || definition.MaxCharges < definition.Charges
                 || (definition.SpellSourceKind is not null
                     && !Enum.IsDefined(definition.SpellSourceKind.Value))
+                || !Enum.IsDefined(definition.ItemActionKind)
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ChargedItem
                     && (definition.SpellId <= 0 || definition.MaxCharges <= 0))
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem
@@ -357,6 +362,7 @@ public sealed class AuthoritativeItemCatalog
                 MiscId = row.OptionalInt32("misc_id"),
                 SpellId = ResolveSpellId(row, stableIds),
                 SpellSourceKind = ParseSpellSourceKind(row),
+                ItemActionKind = ParseItemActionKind(row),
                 Flags = ParseNormalizedFlags(row),
                 HellfireDamageArmorFlags = ParseNormalizedHellfireEffects(row),
                 MinArmorClass = row.OptionalInt32("min_armor_class", -1),
@@ -423,6 +429,18 @@ public sealed class AuthoritativeItemCatalog
             return kind;
         throw new InvalidDataException(
             $"TSV row {row.LineNumber} contains unknown item spell source kind '{value}'.");
+    }
+
+    internal static DiabloItemActionKind ParseItemActionKind(TsvRow row)
+    {
+        if (!row.TryGet("item_action_kind", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return DiabloItemActionKind.None;
+        if (Enum.TryParse<DiabloItemActionKind>(value, ignoreCase: true, out var kind)
+            && Enum.IsDefined(kind))
+            return kind;
+        throw new InvalidDataException(
+            $"TSV row {row.LineNumber} contains unknown item action kind '{value}'.");
     }
 
     /** Loads the shipped itemdat.tsv shape and assigns stable IDs by explicit row order. */

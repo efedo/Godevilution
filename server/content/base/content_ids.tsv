@@ -47,6 +47,8 @@ item	scroll_of_nova	2129
 item	scroll_of_golem	2130
 item	scroll_of_teleport	2131
 item	scroll_of_apocalypse	2132
+item	scroll_of_identify_fixed	2133
+item	scroll_of_identify	2134
 portal	cathedral_entrance	1
 object	l1_left_door	1
 store	smith	1

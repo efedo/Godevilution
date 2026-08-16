@@ -74,6 +74,12 @@ enum ItemSpellSourceKind {
 	ITEM_SPELL_SOURCE_KIND_CONSUMABLE_ITEM = 2;
 }
 
+// Server-projected semantic action supplied by an item, independent of spells.
+enum ItemActionKind {
+	ITEM_ACTION_KIND_UNSPECIFIED = 0;
+	ITEM_ACTION_KIND_IDENTIFY = 1;
+}
+
 message CommandBatch {
 	repeated Command commands = 1;
 }
@@ -175,11 +181,14 @@ message IdentifyItemRequested {
 	// Zero preserves the existing paid vendor-service behavior. Class ability
 	// requests are validated against the player's authoritative loadout.
 	ItemServiceSourceKind source = 3;
+	// Consumable item service requests identify the source scroll explicitly.
+	PlayerItemReference source_item = 4;
 }
 
 enum ItemServiceSourceKind {
 	ITEM_SERVICE_SOURCE_KIND_UNSPECIFIED = 0;
 	ITEM_SERVICE_SOURCE_KIND_CLASS_ABILITY = 1;
+	ITEM_SERVICE_SOURCE_KIND_CONSUMABLE_ITEM = 2;
 }
 
 message MoveInventoryItemRequested {
@@ -807,6 +816,7 @@ message ItemStateSnapshot {
 	// Native Hellfire percentage of base life converted into mana on equip.
 	int32 life_to_mana_percent = 63;
 	ItemSpellSourceKind spell_source_kind = 64;
+	ItemActionKind item_action_kind = 65;
 }
 
 message PlayerAttributesSnapshot {

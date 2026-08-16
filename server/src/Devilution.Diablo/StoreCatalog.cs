@@ -30,6 +30,9 @@ public sealed record AuthoritativeItemState(
     /** Explicit content-owned classification; null preserves legacy native fallback. */
     public DiabloItemSpellSourceKind? SpellSourceKind { get; init; }
 
+    /** Explicit content-owned item action; None preserves legacy fallback. */
+    public DiabloItemActionKind ItemActionKind { get; init; }
+
     public int PlusDamage { get; init; }
 
     public int PlusToHit { get; init; }
@@ -288,6 +291,7 @@ public sealed class StoreCatalog
             MiscId = row.OptionalInt32("misc_id"),
             SpellId = ResolveSpellId(row, stableIds),
             SpellSourceKind = AuthoritativeItemCatalog.ParseSpellSourceKind(row),
+            ItemActionKind = AuthoritativeItemCatalog.ParseItemActionKind(row),
             ItemIndex = row.OptionalInt32("item_index", -1),
             Charges = row.OptionalInt32("charges"),
             MaxCharges = row.OptionalInt32("max_charges"),
