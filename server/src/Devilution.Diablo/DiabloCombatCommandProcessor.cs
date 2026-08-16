@@ -10061,6 +10061,13 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            projectile.RemainingTicks--;
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
         if (!world.CombatTargets.TryGetValue(
                 projectile.SourceEntityId,
                 out var monster)
@@ -10103,7 +10110,8 @@ public sealed class DiabloCombatCommandProcessor
                     tile.X,
                     tile.Y,
                     events)) {
-                world.Projectiles.Remove(projectile.EntityId);
+                if (!TryEnterMonsterProjectileImpact(projectile))
+                    world.Projectiles.Remove(projectile.EntityId);
                 return;
             }
 

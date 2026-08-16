@@ -6928,6 +6928,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeChargeUsesConfiguredImpactLifetimeAfterPlayerHit()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 3,
+            minDamageSpecial: 4,
+            maxDamageSpecial: 4,
+            monsterLevel: 5,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "ImpactCharge",
+                    AuthoritativeProjectileBehavior.SnakeCharge,
+                    ProjectileImpactLifetime: 3,
+                    ProjectileDamage: 8),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 6_400,
+            lifeMaximum: 6_400,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Single(world.Projectiles);
+        AuthoritativeProjectile? impact = null;
+        var impactTick = 0UL;
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++) {
+            processor.AdvanceTick(tick, [player]);
+            impact = world.Projectiles.Values.SingleOrDefault();
+            if (impact?.Phase == AuthoritativeProjectilePhase.Impact) {
+                impactTick = tick;
+                break;
+            }
+        }
+
+        Assert.NotNull(impact);
+        Assert.NotEqual(0UL, impactTick);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, impact!.Phase);
+        Assert.Equal(3U, impact.RemainingTicks);
+        Assert.Equal(6_400 - 8 * DiabloFixedPointQ6.Scale, player.Life);
+
+        processor.AdvanceTick(impactTick + 1, [player]);
+        processor.AdvanceTick(impactTick + 2, [player]);
+        processor.AdvanceTick(impactTick + 3, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(6_400 - 8 * DiabloFixedPointQ6.Scale, player.Life);
+    }
+
+    [Fact]
     public void SnakeChargeUsesConfiguredDamageTypeAndPlayerResistance()
     {
         var monster = new AuthoritativeCombatTarget(
