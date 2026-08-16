@@ -346,7 +346,8 @@ The optional `rhino_movement_goal_minimum_distance` and
 `rhino_movement_goal_chance_modulo` columns externalize the Rhino far-distance
 movement-goal gate. Legacy Rhino rows retain the native minimum-five/modulo-
 four compatibility values; a positive pair selects the gate directly from
-validated content.
+validated content across both the primary charge path and its movement
+fallback branches.
 The optional `rhino_movement_chance_base`,
 `rhino_movement_chance_intelligence_scale`, and
 `rhino_movement_fresh_chance_bonus` columns externalize Rhino's ordinary

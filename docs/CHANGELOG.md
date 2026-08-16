@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Apply the validated Rhino far-distance movement-goal gate consistently to
+  charge-miss and blocked-lane fallback branches, retaining the native 5/4
+  fallback for older mappings.
+
 - Add schema 1.316 validated Rhino ordinary movement bands to
   `monster_types.tsv`, preserving the native 33/2/50 fallback for older
   mappings.

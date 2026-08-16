@@ -95,6 +95,11 @@ Status date: 2026-08-16
   `rhino_movement_fresh_chance_bonus` monster-type fields, preserving the native
   33/2/50 bands with fallback behavior for older packs.
 
+- Rhino far-distance Move-goal admission now uses the same validated
+  `rhino_movement_goal_minimum_distance` and
+  `rhino_movement_goal_chance_modulo` gate in charge-miss and blocked-lane
+  fallback branches, preserving the native 5/4 fallback for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
