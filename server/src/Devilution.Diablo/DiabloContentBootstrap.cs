@@ -219,6 +219,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 combatTable.SourcePath,
                 combatTable.ToCanonicalTsv())
             : new AuthoritativeCombatRules(10, 1, 100);
+        combatRules.ValidateItems(itemCatalog);
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
             "class_loadout_items.tsv");

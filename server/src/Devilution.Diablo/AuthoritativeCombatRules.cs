@@ -632,7 +632,9 @@ public sealed class AuthoritativeCombatRules
     public void ValidateItems(AuthoritativeItemCatalog items)
     {
         ArgumentNullException.ThrowIfNull(items);
-        var ear = items.GetRequired(PvpEarItemId);
+        if (!items.TryGet(PvpEarItemId, out var ear))
+            throw new InvalidDataException(
+                $"Combat PvP-ear content references unknown item {PvpEarItemId}.");
         if (ear.NativeItemIndex != PvpEarNativeItemIndex
             || ear.MiscId != PvpEarMiscId) {
             throw new InvalidDataException(
