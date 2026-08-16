@@ -4,12 +4,19 @@ using Godot;
 
 namespace Devilution.Client;
 
-/** Optional audio feedback. Missing audio assets intentionally degrade to silence. */
+/** Audio and transient combat feedback driven by authoritative events. */
 public partial class PresentationFeedback : Node
 {
+    private sealed class FloatingNumber(Label label, float remainingSeconds)
+    {
+        public Label Label { get; } = label;
+        public float RemainingSeconds { get; set; } = remainingSeconds;
+    }
+
     private readonly AudioStreamPlayer damage = new();
     private readonly AudioStreamPlayer healing = new();
     private readonly AudioStreamPlayer commandRejected = new();
+    private readonly List<FloatingNumber> floatingNumbers = [];
     private int appliedEventCount;
     private string? appliedCommandResult;
 
@@ -23,12 +30,26 @@ public partial class PresentationFeedback : Node
         commandRejected.Stream = LoadOptional("res://assets/audio/command_rejected.ogg");
     }
 
-    public void Apply(AuthoritativeClientModel model)
+    public override void _Process(double delta)
+    {
+        for (var index = floatingNumbers.Count - 1; index >= 0; index--) {
+            var floating = floatingNumbers[index];
+            floating.RemainingSeconds -= (float)delta;
+            floating.Label.Position += Vector2.Up * (float)(delta * 24);
+            if (floating.RemainingSeconds > 0)
+                continue;
+            floating.Label.QueueFree();
+            floatingNumbers.RemoveAt(index);
+        }
+    }
+
+    public void Apply(AuthoritativeClientModel model, WorldPresentation? world = null)
     {
         if (model.RecentEvents.Count < appliedEventCount)
             appliedEventCount = 0;
         for (var index = appliedEventCount; index < model.RecentEvents.Count; index++) {
-            switch (model.RecentEvents[index].EventCase) {
+            var gameEvent = model.RecentEvents[index];
+            switch (gameEvent.EventCase) {
                 case GameEvent.EventOneofCase.Damage:
                     damage.Play();
                     break;
@@ -36,6 +57,10 @@ public partial class PresentationFeedback : Node
                     healing.Play();
                     break;
             }
+            if (world is not null
+                && AuthoritativeCombatFeedbackMapper.Resolve(gameEvent) is { } feedback
+                && world.ScreenPositionForEntity(feedback.TargetEntityId) is { } position)
+                AddFloatingNumber(feedback, position);
         }
         appliedEventCount = model.RecentEvents.Count;
 
@@ -48,6 +73,26 @@ public partial class PresentationFeedback : Node
         appliedCommandResult = resultKey;
         if (result.Status != CommandStatus.Accepted)
             commandRejected.Play();
+    }
+
+    private void AddFloatingNumber(
+        AuthoritativeCombatFeedback feedback,
+        Vector2 position)
+    {
+        var label = new Label {
+            Text = feedback.Text,
+            Position = position + new Vector2(-18, -22),
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            ZIndex = 20,
+        };
+        label.Modulate = feedback.Kind switch {
+            AuthoritativeCombatFeedbackKind.Damage => new Color("ff8a8a"),
+            AuthoritativeCombatFeedbackKind.Healing => new Color("8aff9a"),
+            _ => new Color("ffe38a"),
+        };
+        label.AddThemeFontSizeOverride("font_size", 16);
+        AddChild(label);
+        floatingNumbers.Add(new FloatingNumber(label, 0.9f));
     }
 
     private static AudioStream? LoadOptional(string path)

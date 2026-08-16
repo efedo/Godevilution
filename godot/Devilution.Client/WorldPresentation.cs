@@ -61,6 +61,13 @@ public partial class WorldPresentation : Node2D
             Mathf.FloorToInt((screenPosition.Y - OriginY) / TileSize));
     }
 
+    public Vector2? ScreenPositionForEntity(uint entityId)
+    {
+        return displayedPositions.TryGetValue(entityId, out var position)
+            ? position
+            : null;
+    }
+
     public void SetTargetPreview(Vector2I? target)
     {
         targetPreview = target;

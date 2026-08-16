@@ -117,7 +117,7 @@ public partial class Main : Node2D
         selectedSpellSourceKey = selectedSpell?.Key;
         hud?.SetSelectedSpellSource(selectedSpell);
         hud?.Apply(model, client, connectionTask);
-        feedback?.Apply(model);
+        feedback?.Apply(model, world);
     }
 
     public override void _UnhandledInput(InputEvent @event)
