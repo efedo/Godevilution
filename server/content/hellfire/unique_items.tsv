@@ -304,34 +304,34 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1075	wisdom_s_wrap	Wisdom's Wrap	160	robe	5	6200	GETHIT	1	1	THE_RAINBOW_CLOAK
 1076	sparking_mail	Sparking Mail	161	chain_mail	9	15750	SETAC	30	30	-
 1076	sparking_mail	Sparking Mail	161	chain_mail	9	15750	LIGHTDAM	1	10	-
-1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	GETHIT	15	15	-
-1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	AC_CURSE	30	30	-
-1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	DEX	5	5	-
-1077	scavenger_carapace	Scavenger Carapace	162	hellfire_item_162	13	14000	LIGHTRES	40	40	-
-1078	nightscape	Nightscape	163	hellfire_item_163	16	11600	FASTRECOVER	2	2	THE_RAINBOW_CLOAK
-1078	nightscape	Nightscape	163	hellfire_item_163	16	11600	LIGHT_CURSE	4	4	THE_RAINBOW_CLOAK
-1078	nightscape	Nightscape	163	hellfire_item_163	16	11600	SETAC	15	15	THE_RAINBOW_CLOAK
-1078	nightscape	Nightscape	163	hellfire_item_163	16	11600	DEX	3	3	THE_RAINBOW_CLOAK
-1078	nightscape	Nightscape	163	hellfire_item_163	16	11600	ALLRES	20	20	THE_RAINBOW_CLOAK
-1079	naj_s_light_plate	Naj's Light Plate	164	hellfire_item_164	19	78700	NOMINSTR	0	0	NAJS_LIGHT_PLATE
-1079	naj_s_light_plate	Naj's Light Plate	164	hellfire_item_164	19	78700	MAG	5	5	NAJS_LIGHT_PLATE
-1079	naj_s_light_plate	Naj's Light Plate	164	hellfire_item_164	19	78700	MANA	20	20	NAJS_LIGHT_PLATE
-1079	naj_s_light_plate	Naj's Light Plate	164	hellfire_item_164	19	78700	ALLRES	20	20	NAJS_LIGHT_PLATE
-1079	naj_s_light_plate	Naj's Light Plate	164	hellfire_item_164	19	78700	SPLLVLADD	1	1	NAJS_LIGHT_PLATE
-1080	demonspike_coat	Demonspike Coat	165	hellfire_item_165	25	251175	SETAC	100	100	-
-1080	demonspike_coat	Demonspike Coat	165	hellfire_item_165	25	251175	GETHIT	6	6	-
-1080	demonspike_coat	Demonspike Coat	165	hellfire_item_165	25	251175	STR	10	10	-
-1080	demonspike_coat	Demonspike Coat	165	hellfire_item_165	25	251175	INDESTRUCTIBLE	0	0	-
-1080	demonspike_coat	Demonspike Coat	165	hellfire_item_165	25	251175	FIRERES	50	50	-
-1081	the_deflector	The Deflector	166	hellfire_item_166	1	1500	SETAC	7	7	-
-1081	the_deflector	The Deflector	166	hellfire_item_166	1	1500	ALLRES	10	10	-
-1081	the_deflector	The Deflector	166	hellfire_item_166	1	1500	DAMP_CURSE	20	20	-
-1081	the_deflector	The Deflector	166	hellfire_item_166	1	1500	TOHIT_CURSE	5	5	-
-1082	split_skull_shield	Split Skull Shield	166	hellfire_item_166	1	2025	SETAC	10	10	SPLIT_SKULL_SHIELD
-1082	split_skull_shield	Split Skull Shield	166	hellfire_item_166	1	2025	LIFE	10	10	SPLIT_SKULL_SHIELD
-1082	split_skull_shield	Split Skull Shield	166	hellfire_item_166	1	2025	STR	2	2	SPLIT_SKULL_SHIELD
-1082	split_skull_shield	Split Skull Shield	166	hellfire_item_166	1	2025	LIGHT_CURSE	1	1	SPLIT_SKULL_SHIELD
-1082	split_skull_shield	Split Skull Shield	166	hellfire_item_166	1	2025	SETDUR	15	15	SPLIT_SKULL_SHIELD
+1077	scavenger_carapace	Scavenger Carapace	162	breast_plate	13	14000	GETHIT	15	15	-
+1077	scavenger_carapace	Scavenger Carapace	162	breast_plate	13	14000	AC_CURSE	30	30	-
+1077	scavenger_carapace	Scavenger Carapace	162	breast_plate	13	14000	DEX	5	5	-
+1077	scavenger_carapace	Scavenger Carapace	162	breast_plate	13	14000	LIGHTRES	40	40	-
+1078	nightscape	Nightscape	163	cape	16	11600	FASTRECOVER	2	2	THE_RAINBOW_CLOAK
+1078	nightscape	Nightscape	163	cape	16	11600	LIGHT_CURSE	4	4	THE_RAINBOW_CLOAK
+1078	nightscape	Nightscape	163	cape	16	11600	SETAC	15	15	THE_RAINBOW_CLOAK
+1078	nightscape	Nightscape	163	cape	16	11600	DEX	3	3	THE_RAINBOW_CLOAK
+1078	nightscape	Nightscape	163	cape	16	11600	ALLRES	20	20	THE_RAINBOW_CLOAK
+1079	naj_s_light_plate	Naj's Light Plate	164	plate_mail	19	78700	NOMINSTR	0	0	NAJS_LIGHT_PLATE
+1079	naj_s_light_plate	Naj's Light Plate	164	plate_mail	19	78700	MAG	5	5	NAJS_LIGHT_PLATE
+1079	naj_s_light_plate	Naj's Light Plate	164	plate_mail	19	78700	MANA	20	20	NAJS_LIGHT_PLATE
+1079	naj_s_light_plate	Naj's Light Plate	164	plate_mail	19	78700	ALLRES	20	20	NAJS_LIGHT_PLATE
+1079	naj_s_light_plate	Naj's Light Plate	164	plate_mail	19	78700	SPLLVLADD	1	1	NAJS_LIGHT_PLATE
+1080	demonspike_coat	Demonspike Coat	165	full_plate_mail	25	251175	SETAC	100	100	-
+1080	demonspike_coat	Demonspike Coat	165	full_plate_mail	25	251175	GETHIT	6	6	-
+1080	demonspike_coat	Demonspike Coat	165	full_plate_mail	25	251175	STR	10	10	-
+1080	demonspike_coat	Demonspike Coat	165	full_plate_mail	25	251175	INDESTRUCTIBLE	0	0	-
+1080	demonspike_coat	Demonspike Coat	165	full_plate_mail	25	251175	FIRERES	50	50	-
+1081	the_deflector	The Deflector	166	hellfire_buckler	1	1500	SETAC	7	7	-
+1081	the_deflector	The Deflector	166	hellfire_buckler	1	1500	ALLRES	10	10	-
+1081	the_deflector	The Deflector	166	hellfire_buckler	1	1500	DAMP_CURSE	20	20	-
+1081	the_deflector	The Deflector	166	hellfire_buckler	1	1500	TOHIT_CURSE	5	5	-
+1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	SETAC	10	10	SPLIT_SKULL_SHIELD
+1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	LIFE	10	10	SPLIT_SKULL_SHIELD
+1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	STR	2	2	SPLIT_SKULL_SHIELD
+1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	LIGHT_CURSE	1	1	SPLIT_SKULL_SHIELD
+1082	split_skull_shield	Split Skull Shield	166	hellfire_buckler	1	2025	SETDUR	15	15	SPLIT_SKULL_SHIELD
 1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	FIRERES	25	25	DRAGONS_BREACH
 1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	STR	5	5	DRAGONS_BREACH
 1083	dragon_s_breach	Dragon's Breach	167	hellfire_item_167	2	19200	SETAC	20	20	DRAGONS_BREACH
@@ -396,10 +396,10 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1101	flambeau	Flambeau	123	long_bow	11	30000	FIREBALL	15	20	-
 1101	flambeau	Flambeau	123	long_bow	11	30000	SETDAM	0	0	-
 1101	flambeau	Flambeau	123	long_bow	11	30000	INDESTRUCTIBLE	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	NOMINSTR	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	SETAC	225	225	-
-1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	ALLRESZERO	0	0	-
-1102	armor_of_gloom	Armor of Gloom	165	hellfire_item_165	25	200000	LIGHT_CURSE	2	2	-
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	NOMINSTR	0	0	-
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	SETAC	225	225	-
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	ALLRESZERO	0	0	-
+1102	armor_of_gloom	Armor of Gloom	165	full_plate_mail	25	200000	LIGHT_CURSE	2	2	-
 1103	blitzen	Blitzen	123	long_bow	13	30000	ADDACLIFE	10	15	-
 1103	blitzen	Blitzen	123	long_bow	13	30000	SETDAM	0	0	-
 1103	blitzen	Blitzen	123	long_bow	13	30000	INDESTRUCTIBLE	0	0	-
@@ -424,7 +424,7 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1107	diamondedge	Diamondedge	131	long_sword	17	42000	SETAC	10	10	-
 1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	SETAC	40	40	-
 1108	bone_chain_armor	Bone Chain Armor	161	chain_mail	13	36000	ACUNDEAD	0	0	-
-1109	demon_plate_armor	Demon Plate Armor	165	hellfire_item_165	25	80000	SETAC	80	80	-
-1109	demon_plate_armor	Demon Plate Armor	165	hellfire_item_165	25	80000	ACDEMON	0	0	-
+1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	SETAC	80	80	-
+1109	demon_plate_armor	Demon Plate Armor	165	full_plate_mail	25	80000	ACDEMON	0	0	-
 1110	acolyte_s_amulet	Acolyte's Amulet	171	hellfire_item_171	10	10000	MANATOLIFE	50	50	-
 1111	gladiator_s_ring	Gladiator's Ring	113	hellfire_ring_base	10	10000	LIFETOMANA	40	40	-
