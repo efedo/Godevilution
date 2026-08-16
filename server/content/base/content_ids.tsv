@@ -1,4 +1,6 @@
 kind	symbol	numeric_id
+unique	the_ember_blade	1001
+unique	the_ward_shield	1002
 item	short_sword	1
 item	buckler	2
 item	ear	24

@@ -281,6 +281,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             itemCatalog.AttachUniqueCatalog(uniqueItems);
         if (uniqueItems is not null)
             uniqueItems.ValidateBaseItems(itemCatalog!);
+        if (stableIds is not null && uniqueItems is not null)
+            stableIds.ValidateReferences(
+                "unique",
+                uniqueId => uniqueItems.TryGet(uniqueId, out _));
 
         var storeTable = content.GetRequiredTable("stores.tsv");
         var stores = StoreCatalog.LoadTsv(

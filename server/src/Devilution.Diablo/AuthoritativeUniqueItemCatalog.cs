@@ -33,6 +33,9 @@ public sealed record AuthoritativeUniqueItemDefinition(
     int Value,
     IReadOnlyList<AuthoritativeUniqueItemPower> Powers)
 {
+    /** Stable content symbol retained alongside the numeric compatibility ID. */
+    public string StableSymbol { get; init; } = string.Empty;
+
     /** Optional legacy cursor symbol; an empty value preserves the base item cursor. */
     public string CursorGraphic { get; init; } = string.Empty;
 
@@ -182,38 +185,42 @@ public sealed class AuthoritativeUniqueItemCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows
-            .GroupBy(row => row.RequiredUInt32("unique_id"))
+            .Select(row => (Row: row, UniqueId: AuthoritativeUniqueItemIdentity.Resolve(row, stableIds)))
+            .GroupBy(entry => entry.UniqueId)
             .Select(group => {
                 var first = group.First();
                 var powers = group.Select(row => new AuthoritativeUniqueItemPower(
-                    row.Required("power"),
-                    row.OptionalInt32("value1"),
-                    row.OptionalInt32("value2"))).ToArray();
-                if (group.Any(row => row.Required("name") != first.Required("name")
-                    || AuthoritativeItemIdentity.Resolve(row, stableIds, "base_item_id", "base_item_symbol")
+                    row.Row.Required("power"),
+                    row.Row.OptionalInt32("value1"),
+                    row.Row.OptionalInt32("value2"))).ToArray();
+                if (group.Any(row => row.Row.Required("name") != first.Row.Required("name")
+                    || AuthoritativeUniqueItemIdentity.ReadSymbol(row.Row)
+                        != AuthoritativeUniqueItemIdentity.ReadSymbol(first.Row)
+                    || AuthoritativeItemIdentity.Resolve(row.Row, stableIds, "base_item_id", "base_item_symbol")
                         != AuthoritativeItemIdentity.Resolve(
-                            first,
+                            first.Row,
                             stableIds,
                             "base_item_id",
                             "base_item_symbol")
-                    || row.RequiredInt32("min_level") != first.RequiredInt32("min_level")
-                    || row.RequiredInt32("value") != first.RequiredInt32("value")
-                    || OptionalCursorSymbol(row, "cursor_graphic")
-                        != OptionalCursorSymbol(first, "cursor_graphic")))
+                    || row.Row.RequiredInt32("min_level") != first.Row.RequiredInt32("min_level")
+                    || row.Row.RequiredInt32("value") != first.Row.RequiredInt32("value")
+                    || OptionalCursorSymbol(row.Row, "cursor_graphic")
+                        != OptionalCursorSymbol(first.Row, "cursor_graphic")))
                     throw new InvalidDataException($"Unique item {group.Key} has inconsistent definition columns.");
                 return new AuthoritativeUniqueItemDefinition(
                     group.Key,
-                    first.Required("name"),
+                    first.Row.Required("name"),
                     AuthoritativeItemIdentity.Resolve(
-                        first,
+                        first.Row,
                         stableIds,
                         "base_item_id",
                         "base_item_symbol"),
-                    first.RequiredInt32("min_level"),
-                    first.RequiredInt32("value"),
+                    first.Row.RequiredInt32("min_level"),
+                    first.Row.RequiredInt32("value"),
                     powers) {
-                        CursorGraphic = OptionalCursorSymbol(first, "cursor_graphic"),
-                        NativeCursorGraphic = ParseOptionalCursorGraphic(first, cursorCatalog),
+                        StableSymbol = AuthoritativeUniqueItemIdentity.ReadSymbol(first.Row),
+                        CursorGraphic = OptionalCursorSymbol(first.Row, "cursor_graphic"),
+                        NativeCursorGraphic = ParseOptionalCursorGraphic(first.Row, cursorCatalog),
                     };
             });
         return new AuthoritativeUniqueItemCatalog(definitions);
