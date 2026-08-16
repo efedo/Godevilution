@@ -7051,6 +7051,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     "GoatRanged",
                     "CustomCharge",
                     AuthoritativeProjectileBehavior.SnakeCharge,
+                    SpellId: 37,
                     DamageType: AuthoritativeDamageType.Fire),
             ]));
         var player = CreatePlayer(
@@ -7065,6 +7066,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         var charge = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.SnakeCharge, charge.Behavior);
+        Assert.Equal(37U, charge.SpellId);
         Assert.Equal(AuthoritativeDamageType.Fire, charge.DamageType);
     }
 
