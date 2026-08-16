@@ -283,7 +283,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             storeTable.SourcePath,
             storeTable.ToCanonicalTsv(),
             itemCatalog,
-            uniqueItems);
+            uniqueItems,
+            stableIds);
         worldRules.ValidateStores(stores);
         if (spells is not null)
             stores.ValidateSpellReferences(spells);

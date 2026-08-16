@@ -147,7 +147,8 @@ public sealed class StoreCatalog
         string sourcePath,
         string contents,
         AuthoritativeItemCatalog? itemCatalog = null,
-        AuthoritativeUniqueItemCatalog? uniqueItems = null)
+        AuthoritativeUniqueItemCatalog? uniqueItems = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var catalog = new StoreCatalog();
@@ -157,7 +158,7 @@ public sealed class StoreCatalog
                 row.RequiredUInt32("store_slot"),
                 row.RequiredUInt32("item_seed"),
                 row.RequiredUInt32("price"),
-                ParseItemState(row, itemCatalog, uniqueItems))));
+                ParseItemState(row, itemCatalog, uniqueItems, stableIds))));
         }
         if (!catalog.stores.Any())
             throw new InvalidDataException($"Store table '{sourcePath}' does not contain any stores.");
@@ -244,7 +245,8 @@ public sealed class StoreCatalog
     private static AuthoritativeItemState ParseItemState(
         TsvRow row,
         AuthoritativeItemCatalog? itemCatalog,
-        AuthoritativeUniqueItemCatalog? uniqueItems)
+        AuthoritativeUniqueItemCatalog? uniqueItems,
+        StableContentIdCatalog? stableIds)
     {
         if (itemCatalog is not null && uniqueItems is not null && row.TryGet("unique_item_id", out var uniqueId)
             && !string.IsNullOrWhiteSpace(uniqueId))
@@ -275,7 +277,7 @@ public sealed class StoreCatalog
             ArmorClass = row.OptionalInt32("armor_class"),
             Flags = row.OptionalUInt32("flags"),
             MiscId = row.OptionalInt32("misc_id"),
-            SpellId = row.OptionalInt32("spell_id"),
+            SpellId = ResolveSpellId(row, stableIds),
             SpellSourceKind = AuthoritativeItemCatalog.ParseSpellSourceKind(row),
             ItemIndex = row.OptionalInt32("item_index", -1),
             Charges = row.OptionalInt32("charges"),
@@ -321,5 +323,38 @@ public sealed class StoreCatalog
             InventoryWidth = Math.Max(1, row.OptionalInt32("inventory_width", 1)),
             InventoryHeight = Math.Max(1, row.OptionalInt32("inventory_height", 1)),
         };
+    }
+
+    private static int ResolveSpellId(TsvRow row, StableContentIdCatalog? stableIds)
+    {
+        var numericId = row.OptionalInt32("spell_id");
+        if (!row.TryGet("spell_symbol", out var symbol)
+            || string.IsNullOrWhiteSpace(symbol))
+            return numericId;
+        if (stableIds is null) {
+            if (numericId == 0)
+                throw new InvalidDataException(
+                    $"Store row {row.LineNumber} requires stable spell IDs to resolve '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("spell", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"Store row {row.LineNumber} references unknown stable spell symbol '{symbol}'.",
+                exception);
+        }
+        if (resolvedId > int.MaxValue)
+            throw new InvalidDataException(
+                $"Store row {row.LineNumber} resolves spell symbol '{symbol}' "
+                + $"to unsupported ID {resolvedId}.");
+        var resolvedInt = checked((int)resolvedId);
+        if (numericId != 0 && numericId != resolvedInt)
+            throw new InvalidDataException(
+                $"Store row {row.LineNumber} maps spell {numericId} to symbol '{symbol}', "
+                + $"which resolves to {resolvedInt}.");
+        return resolvedInt;
     }
 }
