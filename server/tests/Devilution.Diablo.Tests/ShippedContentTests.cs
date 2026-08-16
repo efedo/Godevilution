@@ -405,6 +405,36 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsUnknownCombatPvpEarItem()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var combat = basePack.Tables.Single(table => table.SourcePath == "combat.tsv");
+        var invalidCombat = TsvTable.Parse(
+            combat.SourcePath,
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_ear_item_id\n"
+                + "10\t1\t100\t9999\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == combat.SourcePath
+                    ? invalidCombat
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("references unknown item 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownQuestCompletionMonster()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");

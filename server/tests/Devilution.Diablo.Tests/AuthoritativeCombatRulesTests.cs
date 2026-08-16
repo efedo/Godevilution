@@ -1005,6 +1005,18 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void RejectsUnknownPvpEarItemReference()
+    {
+        var rules = new AuthoritativeCombatRules(10, 1, 100, pvpEarItemId: 9999);
+        var items = new AuthoritativeItemCatalog([
+            CreateEarDefinition(nativeItemIndex: 23, miscId: 44),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() => rules.ValidateItems(items));
+        Assert.Contains("references unknown item 9999", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsPvpEarNativeProjectionFromCombatContent()
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
