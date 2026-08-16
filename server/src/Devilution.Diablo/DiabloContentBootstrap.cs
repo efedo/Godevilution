@@ -307,6 +307,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 uniqueItems,
                 monsterTypes)
             : null;
+        if (world is not null && monsters is not null)
+            AuthoritativeMonsterCatalog.ValidateWorld(monsters.Targets, world);
         var uniqueMonsters = content.TryGetTable(
             "unique_monsters.tsv",
             out var uniqueMonstersTable)

@@ -54,6 +54,23 @@ public sealed class AuthoritativeMonsterCatalog
 
     public IReadOnlyList<AuthoritativeMonsterDropDefinition> DropDefinitions { get; }
 
+    /** Validates authored monster levels and positions against world bounds. */
+    public static void ValidateWorld(
+        IEnumerable<AuthoritativeCombatTarget> targets,
+        AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var target in targets) {
+            if (!world.ContainsLevel(target.LevelId))
+                throw new InvalidDataException(
+                    $"Monster {target.EntityId} references unknown level {target.LevelId}.");
+            if (!world.ContainsPosition(target.LevelId, target.PositionX, target.PositionY))
+                throw new InvalidDataException(
+                    $"Monster {target.EntityId} contains a position outside its level.");
+        }
+    }
+
     public bool TryGetDropDefinition(
         uint monsterId,
         out AuthoritativeMonsterDropDefinition definition)
