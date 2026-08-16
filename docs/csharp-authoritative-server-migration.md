@@ -726,6 +726,10 @@ Schema 1.287 externalizes Flash's ordered bottom and top layer offsets in
 validated spell content while retaining the native layer orders for older packs
 that omit the optional columns.
 
+Schema 1.288 externalizes Guardian's ordered 48-cell firing arc in validated
+spell content while retaining the native firing order for older packs that omit
+the optional column.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

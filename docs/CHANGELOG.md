@@ -39,6 +39,9 @@ All notable changes to this fork are documented below.
 - Add schema 1.287 Flash bottom/top layer offset metadata to validated spell
   content, preserving the native layer orders for older mappings.
 
+- Add schema 1.288 Guardian arc-offset metadata to validated spell content,
+  preserving the native firing order for older mappings.
+
 - Add additive server-owned spell display names to memorized and item-backed
   spell snapshots, sourced from validated spell-book content so Godot can
   present cast sources without maintaining a client-side spell-ID table.

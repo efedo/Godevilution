@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.287.0` schema in
+It declares its identity and `devilution.diablo@1.288.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1125,6 +1125,10 @@ columns to `spells.tsv`. The checked-in Flash row carries the native bottom and
 top layer orders; older mappings retain the native orders when the columns are
 omitted.
 
+Schema 1.288 adds the optional `guardian_arc_offsets` column to `spells.tsv`.
+The checked-in Guardian row carries the native 48-cell firing arc; older
+mappings retain the native order when the column is omitted.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
@@ -1807,7 +1811,7 @@ the complete target header even when they upsert only one row.
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
-| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, and Golem summon formula terms. |
+| `spells.tsv` | `spell_id` | Directly castable spell resources with optional validated `display_name`, stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, Resurrection initial-placement probes, Charged Bolt steering patterns, Fireball explosion offsets, Elemental burst offsets, Flash layer offsets, Guardian firing arcs, and Golem summon formula terms. |
 | `spell_books.tsv` | `spell_id` | Validated metadata for native bookable spells: display name, book level/cost, magic school, and minimum intelligence; activation resolves spell symbols and applies the metadata through the server-owned, game-mode-aware dynamic-book generator, whose random selection follows the validated native spell-table order while stores, drops, and quest rewards retain their supplied native book-template identity. |
 | `items.tsv` | `item_id` | Normalized item identity with optional stable `item_symbol` (required by shipped base and Hellfire definitions and validated against `content_ids.tsv`), explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
 | `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `item_symbol` and `quest_symbol`, including native quest activation, completion, and `_qvar1` updates. |
@@ -1839,7 +1843,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.287.0"
+    "version": "1.288.0"
   },
   "dependencyConstraints": [
     {
@@ -1871,7 +1875,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.287.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.288.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

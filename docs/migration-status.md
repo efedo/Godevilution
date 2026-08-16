@@ -1132,6 +1132,10 @@ Status date: 2026-08-16
   validated spell content, retaining the native layer orders when older
   mappings omit the optional columns.
 
+- Schema 1.288 externalizes Guardian's ordered 48-cell firing arc in validated
+  spell content, retaining the native firing order when older mappings omit
+  the optional column.
+
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.
