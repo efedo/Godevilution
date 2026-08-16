@@ -59,6 +59,10 @@ All notable changes to this fork are documented below.
   same deterministic dynamic-book generator before emitting authoritative item
   state, including quest-completion rewards.
 
+- Refine schema 1.278 dynamic-book selection to roll over the validated active
+  native spell-table span and walk native spell IDs cyclically before mapping to
+  stable content IDs; explicit spell references remain direct and deterministic.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

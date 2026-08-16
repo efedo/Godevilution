@@ -1090,9 +1090,11 @@ Status date: 2026-08-16
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
   requirements, school-specific cursors, and eligible external templates.
-  Reading/learning is server-owned through `ReadBookRequested`, and store rows
-  plus static/procedural monster drops and quest-completion rewards now invoke
-  the same generator.
+  Random selection now rolls over the validated active native spell-table span
+  and walks native spell IDs cyclically before mapping to stable IDs; explicit
+  spell references remain direct. Reading/learning is server-owned through
+  `ReadBookRequested`, and store rows plus static/procedural monster drops and
+  quest-completion rewards now invoke the same generator.
 
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.

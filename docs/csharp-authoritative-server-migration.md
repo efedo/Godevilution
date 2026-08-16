@@ -691,9 +691,12 @@ the item is generated.
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
-cursor while selecting an eligible external template. `ReadBookRequested` now
-owns native intelligence gating, learned-spell level mutation, mana refund, and
-book consumption through the shared protocol. Store rows and both static and
+cursor while selecting an eligible external template. Random books roll over
+the validated active native spell-table span and walk native spell IDs
+cyclically before mapping the selected spell to its stable content ID; explicit
+spell references retain their direct behavior. `ReadBookRequested` now owns
+native intelligence gating, learned-spell level mutation, mana refund, and book
+consumption through the shared protocol. Store rows and both static and
 procedural monster-drop rows now pass native book templates through that same
 generator, so the server owns dynamic spell selection, names, costs, and cursor
 projections before stock, quest-reward, or world-item snapshots are emitted.
