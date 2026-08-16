@@ -41,6 +41,10 @@ Status date: 2026-08-16
   namespace against stock and the reserved service identity while numeric-only
   rows remain compatible.
 
+- Static portal rows now optionally resolve stable `portal_symbol` values;
+  activation cross-checks them against the retained portal IDs while numeric
+  routes remain compatible.
+
 - Quest types, quest state rows, and single-player quest pools now optionally
   resolve stable `quest_symbol` values through `content_ids.tsv`; activated
   rows reject numeric/symbol mismatches while numeric-only legacy rows remain
@@ -945,6 +949,9 @@ Status date: 2026-08-16
 - Schema 1.245 extends stable level symbols to authored monster, object, quest,
   and combat restart links through `level_symbol` columns. Numeric-only rows
   remain compatible while links are checked against the composed world.
+
+- Schema 1.249 completes the stable `portal` namespace with optional
+  `portal_symbol` static-route links, preserving numeric compatibility.
 
 - Schema 1.248 adds the stable `store` namespace and optional store symbols for
   vendor stock and Adria's service identity, preserving numeric compatibility.

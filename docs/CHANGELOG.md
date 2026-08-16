@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Complete the stable `portal` namespace with optional `portal_symbol` links on
+  static portal rows, activation-time mismatch checks, and numeric fallback.
+
 - Add the stable `store` namespace and optional store symbols for vendor stock
   and Adria's service identity, with activation-time validation and numeric
   compatibility for older packs.

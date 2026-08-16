@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.249 completes the stable `portal` namespace. Static portal rows may
+carry `portal_symbol` links, which are cross-checked against retained numeric
+IDs while numeric-only routes remain compatible.
+
 Schema 1.248 adds the stable `store` namespace. Store stock and Adria's
 service-only world rule may carry stable symbols, which are cross-checked
 against retained numeric IDs while numeric-only rows remain compatible.
