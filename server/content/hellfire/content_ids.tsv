@@ -343,6 +343,14 @@ item	potion_mana_hellfire	2148
 item	potion_of_full_mana	2149
 item	potion_of_rejuvenation	2150
 item	potion_of_full_rejuvenation	2151
+item	oil_of_blacksmith	2152
+item	oil_of_accuracy	2153
+item	oil_of_sharpness	2154
+item	oil_of_fortitude	2155
+item	elixir_of_strength	2156
+item	elixir_of_magic	2157
+item	elixir_of_dexterity	2158
+item	elixir_of_vitality	2159
 level	caves	3
 level	hell	4
 level	hellfire_level_9	9
