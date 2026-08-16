@@ -66,3 +66,12 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 169	large_shield	7	200	200	0	0	5	32	32	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	40	0	0	74	0	0	None	Large Shield	Shield	LARGE_SHIELD	9	1	false			5	10	None
 170	gothic_shield	7	2300	2300	0	0	14	60	60	1	1	1	Armor,Shield,OneHanded	1	2	0	0		0	80	0	0	77	0	0	None	Gothic Shield	Shield	GOTHIC_SHIELD	23	1	true			14	18	None
 171	amulet	13	1200	1200	0	0	0	0	0	1	1	1	Misc,Amulet	6	3	27	0		0	0	0	0	160	0	0	None	Amulet	Amulet	AMULET	8	1	false			0	0	None
+2135	magic_rock	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	9	0	0	None	Magic Rock	Magic Rock	MAGIC_ROCK	0	0	false			0	0	None
+2136	tavern_sign	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	12	0	0	None	Tavern Sign	Tavern Sign	TAVERN_SIGN	0	0	false			0	0	None
+2137	golden_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	0	0		0	0	0	0	15	0	0	None	Golden Elixir	Golden Elixir	GOLDEN_ELIXIR	15	0	false			0	0	None
+2138	anvil_of_fury	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	16	0	0	None	Anvil of Fury	Anvil of Fury	ANVIL_OF_FURY	0	0	false			0	0	None
+2139	black_mushroom	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	17	0	0	None	Black Mushroom	Black Mushroom	BLACK_MUSHROOM	0	0	false			0	0	None
+2140	brain	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	18	0	0	None	Brain	Brain	BRAIN	0	0	false			0	0	None
+2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None
+2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	None
+2143	blood_stone	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	21	0	0	None	Blood Stone	Blood Stone	BLOOD_STONE	0	0	false			0	0	None

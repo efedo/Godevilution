@@ -326,6 +326,15 @@ item	theodore	2102
 item	auric_amulet	2103
 item	brown_suit	2104
 item	grey_suit	2105
+item	magic_rock	2135
+item	tavern_sign	2136
+item	golden_elixir	2137
+item	anvil_of_fury	2138
+item	black_mushroom	2139
+item	brain	2140
+item	fungal_tome	2141
+item	spectral_elixir	2142
+item	blood_stone	2143
 level	caves	3
 level	hell	4
 level	hellfire_level_9	9

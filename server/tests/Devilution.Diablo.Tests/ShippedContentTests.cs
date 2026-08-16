@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.267.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.268.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1074,7 +1074,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.267.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.268.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1669,6 +1669,29 @@ public sealed class ShippedContentTests
             Assert.Equal(dropRate, scroll.DropRate);
             Assert.Equal(value, scroll.Value);
             Assert.True(scroll.Usable);
+        }
+        var hellfireQuestItemExpectations = new[] {
+            ("magic_rock", 2135U, 9, 76, 0, false, "Misc,Quest"),
+            ("tavern_sign", 2136U, 12, 126, 0, false, "Misc,Quest"),
+            ("golden_elixir", 2137U, 15, 17, 15, false, "Misc"),
+            ("anvil_of_fury", 2138U, 16, 140, 0, false, "Misc,Quest"),
+            ("black_mushroom", 2139U, 17, 89, 0, false, "Misc,Quest"),
+            ("brain", 2140U, 18, 40, 0, false, "Misc,Quest"),
+            ("fungal_tome", 2141U, 19, 97, 0, false, "Misc,Quest"),
+            ("spectral_elixir", 2142U, 20, 15, 15, true, "Misc"),
+            ("blood_stone", 2143U, 21, 25, 0, false, "Misc,Quest"),
+        };
+        foreach (var (symbol, itemId, nativeIndex, cursor, minimumLevel, usable, tags) in hellfireQuestItemExpectations) {
+            Assert.Equal(itemId, stableIds.Resolve("item", symbol));
+            var item = hellfireItems.GetRequired(itemId);
+            Assert.Equal(symbol, item.StableSymbol);
+            Assert.Equal(nativeIndex, item.NativeItemIndex);
+            Assert.Equal(cursor, item.NativeCursorGraphic);
+            Assert.Equal(minimumLevel, item.MinimumMonsterLevel);
+            Assert.Equal(usable, item.Usable);
+            Assert.Equal(tags.Split(','), item.GenerationTags.OrderBy(tag => tag));
+            Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
         }
         Assert.Equal(("the_undead_crown", "The Undead Crown", 82), (
             hellfireItems.GetRequired(111).StableSymbol,
