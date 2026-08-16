@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
   native armor ranges, durability, requirements, cursor projections, and
   Hellfire-compatible overlays.
 
+- Add schema 1.272 stable base standard weapon identities for swords, axes,
+  maces, bows, and staves, preserving native damage ranges, durability,
+  requirements, cursor projections, and Hellfire-compatible overlays.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

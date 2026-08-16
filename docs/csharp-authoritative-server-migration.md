@@ -655,6 +655,12 @@ indices, armor ranges, durability, requirements, cursor identities, level
 gates, values, and equipment subtypes while Hellfire overlays retain their
 variant-specific native projections.
 
+Schema 1.272 externalizes the base standard weapon rows for swords, axes,
+maces, bows, and staves. Shared stable IDs retain Hellfire overlay identity;
+base-only rows use new stable symbols. Native damage ranges, durability,
+requirements, cursor identities, level gates, values, and weapon subtypes remain
+validated content rather than legacy-table inference.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

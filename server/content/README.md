@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.271.0` schema in
+It declares its identity and `devilution.diablo@1.272.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1046,6 +1046,12 @@ indices, armor ranges, durability, requirements, cursor identities, level
 gates, values, and equipment subtypes while Hellfire overlays retain their
 variant-specific native projections.
 
+Schema 1.272 externalizes the base standard weapon rows for swords, axes,
+maces, bows, and staves. Shared stable IDs retain Hellfire overlay identity;
+base-only rows use new stable symbols. Native damage ranges, durability,
+requirements, cursor identities, level gates, values, and weapon subtypes remain
+validated content rather than legacy-table inference.
+
 Schema 1.249 adds the stable `portal` namespace. Static portal rows may carry
 `portal_symbol` values resolved through `content_ids.tsv`; numeric-only routes
 remain compatible while active symbols are cross-checked.
@@ -1745,7 +1751,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.271.0"
+    "version": "1.272.0"
   },
   "dependencyConstraints": [
     {
@@ -1777,7 +1783,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.271.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.272.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
