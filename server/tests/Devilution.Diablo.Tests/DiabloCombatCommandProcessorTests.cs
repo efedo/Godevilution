@@ -7768,6 +7768,68 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorUsesValidatedRangedAdmissionChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterId: 1,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Counselor",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Counselor",
+                CounselorAttackChanceBase = 100,
+                CounselorAttackChanceIntelligenceScale = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 60 ^ 9 ^ 7 = 50: the authored 100-percent band admits the ranged
+        // attack where the native 50-percent fallback would miss.
+        processor.AdvanceTick(60, [player]);
+
+        Assert.Single(world.Projectiles.Values);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void CounselorUsesValidatedMoveAdmissionChance()
     {
         var monster = new AuthoritativeCombatTarget(

@@ -5426,9 +5426,22 @@ public sealed class DiabloCombatCommandProcessor
                 or AuthoritativeProjectileBehavior.MonsterMagic
                 or AuthoritativeProjectileBehavior.Lightning)) {
             var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
+            var attackChanceBase = monsterTypes?.TryGet(
+                    monster.MonsterId,
+                    out var counselorAttackDefinition) == true
+                && counselorAttackDefinition.CounselorAttackChanceBase > 0
+                ? counselorAttackDefinition.CounselorAttackChanceBase
+                : 50;
+            var attackChanceIntelligenceScale = monsterTypes?.TryGet(
+                    monster.MonsterId,
+                    out counselorAttackDefinition) == true
+                && counselorAttackDefinition.CounselorAttackChanceIntelligenceScale > 0
+                ? counselorAttackDefinition.CounselorAttackChanceIntelligenceScale
+                : 5;
             var attackChance = Math.Min(
                 100,
-                5 * (monster.Intelligence + 10));
+                attackChanceBase
+                    + (attackChanceIntelligenceScale * monster.Intelligence));
             if (attackSeed % 100U >= (uint)attackChance
                 || !world.HasMissileLineOfSight(
                     monster.LevelId,

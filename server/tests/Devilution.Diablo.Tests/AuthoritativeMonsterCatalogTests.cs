@@ -354,17 +354,19 @@ public sealed class AuthoritativeMonsterCatalogTests
     {
         var catalog = AuthoritativeMonsterTypeCatalog.LoadTsv(
             "monster_types.tsv",
-            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tcounselor_delay_base\tcounselor_delay_intelligence_scale\tcounselor_delay_random_range\tcounselor_attack_delay_base\tcounselor_attack_delay_random_range\tcounselor_move_chance_percent\n"
-                + "2\t0\tCounselor\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tCounselor\t10\t2\t10\t5\t10\t30\n");
+            "monster_id\tnative_monster_id\tname\tminimum_dungeon_level\tmaximum_dungeon_level\tmonster_level\tminimum_hit_points\tmaximum_hit_points\tarmor_class\tminimum_damage\tmaximum_damage\tminimum_special_damage\tmaximum_special_damage\tstone_curse_immune\tundead\tberserk_immune\tnative_ai\tcounselor_delay_base\tcounselor_delay_intelligence_scale\tcounselor_delay_random_range\tcounselor_attack_delay_base\tcounselor_attack_delay_random_range\tcounselor_move_chance_percent\tcounselor_attack_chance_base\tcounselor_attack_chance_intelligence_scale\n"
+                + "2\t0\tCounselor\t1\t2\t1\t4\t7\t10\t2\t5\t0\t0\t0\t0\t0\tCounselor\t10\t2\t10\t5\t10\t30\t50\t5\n");
 
         var counselor = Assert.Single(catalog.Definitions);
-        Assert.Equal((10, 2, 10, 5, 10, 30), (
+        Assert.Equal((10, 2, 10, 5, 10, 30, 50, 5), (
             counselor.CounselorDelayBase,
             counselor.CounselorDelayIntelligenceScale,
             counselor.CounselorDelayRandomRange,
             counselor.CounselorAttackDelayBase,
             counselor.CounselorAttackDelayRandomRange,
-            counselor.CounselorMoveChancePercent));
+            counselor.CounselorMoveChancePercent,
+            counselor.CounselorAttackChanceBase,
+            counselor.CounselorAttackChanceIntelligenceScale));
     }
 
     [Fact]
@@ -478,6 +480,12 @@ public sealed class AuthoritativeMonsterCatalogTests
             CreateType(1, 1, 1) with {
                 NativeAi = "Zombie",
                 CounselorMoveChancePercent = 30,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                NativeAi = "Counselor",
+                CounselorAttackChanceBase = 50,
             },
         ]));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([

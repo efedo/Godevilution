@@ -156,6 +156,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Counselor failed-ranged-admission movement chance percentage. */
     public int CounselorMoveChancePercent { get; init; }
 
+    /** Native Counselor ranged-admission chance base before intelligence scaling. */
+    public int CounselorAttackChanceBase { get; init; }
+
+    /** Native Counselor ranged-admission chance increase per intelligence point. */
+    public int CounselorAttackChanceIntelligenceScale { get; init; }
+
     /** Native Mega delegated Skeleton movement-delay chance base. */
     public int MegaDelayChanceBase { get; init; }
 
@@ -435,6 +441,8 @@ public sealed record AuthoritativeMonsterTypeDefinition(
             && SkeletonRangedRetreatChanceIntelligenceScale > 0
             && SkeletonRangedAttackChanceBase > 0
             && SkeletonRangedAttackChanceIntelligenceScale > 0
+            || CounselorAttackChanceBase > 0
+            && CounselorAttackChanceIntelligenceScale > 0
             || RhinoChargeMinimumDistance > 0
             && RhinoChargeChanceBase > 0
             && RhinoChargeChanceIntelligenceScale > 0;
@@ -579,6 +587,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.CounselorMoveChancePercent is < 0 or > 100
                 || definition.CounselorMoveChancePercent != 0
                     && definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
+                || definition.CounselorAttackChanceBase is < 0 or > 100
+                || definition.CounselorAttackChanceIntelligenceScale is < 0 or > 100
+                || (definition.CounselorAttackChanceBase != 0
+                    || definition.CounselorAttackChanceIntelligenceScale != 0)
+                    && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
+                        || definition.CounselorAttackChanceBase <= 0
+                        || definition.CounselorAttackChanceIntelligenceScale <= 0)
                 || definition.MegaDelayChanceBase is < 0 or > 100
                 || definition.MegaDelayChanceIntelligenceScale is < 0 or > 100
                 || (definition.MegaDelayChanceBase != 0
@@ -985,6 +1000,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 CounselorAttackDelayBase = row.OptionalInt32("counselor_attack_delay_base"),
                 CounselorAttackDelayRandomRange = row.OptionalInt32("counselor_attack_delay_random_range"),
                 CounselorMoveChancePercent = row.OptionalInt32("counselor_move_chance_percent"),
+                CounselorAttackChanceBase = row.OptionalInt32("counselor_attack_chance_base"),
+                CounselorAttackChanceIntelligenceScale = row.OptionalInt32("counselor_attack_chance_intelligence_scale"),
                 MegaDelayChanceBase = row.OptionalInt32("mega_delay_chance_base"),
                 MegaDelayChanceIntelligenceScale = row.OptionalInt32("mega_delay_chance_intelligence_scale"),
                 MegaIntermediateMovementChanceBase = row.OptionalInt32("mega_intermediate_movement_chance_base"),
