@@ -147,6 +147,7 @@ public sealed class AuthoritativeItemCatalog
                     && (definition.SpellId <= 0 || definition.MaxCharges <= 0))
                 || (definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem
                     && definition.SpellId <= 0)
+                || definition.SpellId < 0
                 || !IsValidPresentationText(definition.Name)
                 || !IsValidPresentationText(definition.IdentifiedName)
                 || !IsValidCursorSymbol(definition.CursorGraphic)
@@ -172,6 +173,17 @@ public sealed class AuthoritativeItemCatalog
     public IReadOnlyList<AuthoritativeItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.ItemId).ToArray();
 
     public bool TryGet(uint itemId, out AuthoritativeItemDefinition definition) => definitions.TryGetValue(itemId, out definition!);
+
+    /** Validates item spell identities against the active spell catalog. */
+    public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(spells);
+        foreach (var definition in Definitions.Where(definition => definition.SpellId != 0)) {
+            if (!spells.TryGet(checked((uint)definition.SpellId), out _))
+                throw new InvalidDataException(
+                    $"Item {definition.ItemId} references unknown spell {definition.SpellId}.");
+        }
+    }
 
     private static bool IsValidPresentationText(string value)
     {

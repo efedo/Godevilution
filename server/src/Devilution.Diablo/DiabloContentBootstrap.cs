@@ -283,6 +283,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null && levelGeneration is not null)
             levelGeneration.ValidateWorld(world);
         playerLoadouts.ValidateCastSources(spells);
+        if (spells is not null)
+            itemCatalog!.ValidateSpellReferences(spells);
         if (world is not null)
             combatRules.ValidateWorld(world);
         var monsterTypes = content.TryGetTable("monster_types.tsv", out var monsterTypesTable)
