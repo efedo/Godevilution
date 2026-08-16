@@ -688,6 +688,11 @@ blue-book cursor projection. Dynamic spell assignment and book-cost mutation
 remain a separate behavior migration because the native spell is selected when
 the item is generated.
 
+Schema 1.279 adds validated presentation names to every directly castable spell
+row. Memorized, charged-item, and consumable-item protocol projections consume
+those server-owned names, with spell-book metadata retained as the compatibility
+fallback for bookable rows.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
