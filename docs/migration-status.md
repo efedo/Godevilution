@@ -140,6 +140,10 @@ Status date: 2026-08-16
   `projectile_impact_lifetime` phase, while player-owned spell projectiles and
   native expiry behavior remain unchanged.
 
+- `SnakeCharge` impacts now enter the validated `projectile_impact_lifetime`
+  phase after a successful player collision, while blocked, missed, and
+  expired charges retain native removal behavior.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

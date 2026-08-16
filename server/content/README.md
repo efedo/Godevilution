@@ -2623,9 +2623,9 @@ Schema 1.207 adds the optional Acid puddle impact lifetime to
 Schema 1.208 adds the optional mapped monster projectile impact lifetime to
 `monster_missiles.tsv`. MonsterArrow mappings now retain the configured phase
 after a player impact; omitted values retain the native one-tick phase.
-Server-owned `MonsterMagic` and `BloodStar` mappings use the same impact phase;
-player-owned spell projectiles and other monster-missile controller lifecycles
-remain native-specific until migrated.
+Server-owned `MonsterMagic`, `BloodStar`, and `SnakeCharge` mappings use the
+same impact phase; player-owned spell projectiles and other monster-missile
+controller lifecycles remain native-specific until migrated.
 
 Schema 1.212 adds optional Hell-specific resistance columns to
 `monster_types.tsv`; omitted values retain the ordinary resistance channels,

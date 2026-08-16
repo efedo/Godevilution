@@ -23,6 +23,10 @@ All notable changes to this fork are documented below.
   configured `projectile_impact_lifetime` after a player impact; player-owned
   spell projectiles and native expiry behavior remain unchanged.
 
+- `SnakeCharge` mappings now retain their configured
+  `projectile_impact_lifetime` after a successful player impact; blocked,
+  missed, and expired charges retain native removal behavior.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.
