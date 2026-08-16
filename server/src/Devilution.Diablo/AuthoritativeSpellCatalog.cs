@@ -309,6 +309,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Maximum native crawl radius used when a revived player must be relocated. */
     public int ResurrectionSearchRadius { get; init; }
 
+    /** Optional ordered initial placement probes; empty preserves the native probes. */
+    public IReadOnlyList<(int X, int Y)> ResurrectionInitialOffsets { get; init; } = [];
+
     /** Maximum native crawl radius used to find Teleport's destination. */
     public int TeleportSearchRadius { get; init; } = 5;
 
@@ -1302,6 +1305,17 @@ public sealed class AuthoritativeSpellCatalog
                 throw new InvalidDataException(
                     "Resurrection behavior requires one stationary player-target effect with positive life and crawl tuning.");
             }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.Resurrection
+                && definition.ResurrectionInitialOffsets.Count is not (0 or 8)) {
+                throw new InvalidDataException(
+                    "Resurrection initial placement requires exactly eight ordered probes when configured.");
+            }
+            if (definition.ResurrectionInitialOffsets.Any(offset =>
+                    offset.X is < -DiabloCrawl.MaximumSupportedRadius or > DiabloCrawl.MaximumSupportedRadius
+                    || offset.Y is < -DiabloCrawl.MaximumSupportedRadius or > DiabloCrawl.MaximumSupportedRadius)) {
+                throw new InvalidDataException(
+                    "Resurrection initial placement offsets exceed the supported crawl radius.");
+            }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ResurrectionBeam) {
                 throw new InvalidDataException(
                     "ResurrectionBeam is runtime-owned and cannot be selected by spell content.");
@@ -1831,7 +1845,8 @@ public sealed class AuthoritativeSpellCatalog
             if (definition.ProjectileBehavior != AuthoritativeProjectileBehavior.Resurrection
                 && (definition.ResurrectionLife != 0
                     || definition.ResurrectionLifeScale != 1
-                    || definition.ResurrectionSearchRadius != 0)) {
+                    || definition.ResurrectionSearchRadius != 0
+                    || definition.ResurrectionInitialOffsets.Count != 0)) {
                 throw new InvalidDataException(
                     "Resurrection tuning requires Resurrection projectile behavior.");
             }
@@ -2196,6 +2211,7 @@ public sealed class AuthoritativeSpellCatalog
             ResurrectionLife = row.OptionalInt32("resurrection_life"),
             ResurrectionLifeScale = row.OptionalInt32("resurrection_life_scale", 1),
             ResurrectionSearchRadius = row.OptionalInt32("resurrection_search_radius"),
+            ResurrectionInitialOffsets = ParseResurrectionInitialOffsets(row),
             TeleportSearchRadius = row.OptionalInt32("teleport_search_radius", 5),
             WarpSearchRadius = row.OptionalInt32("warp_search_radius", 5),
             TownPortalSearchRadius = row.OptionalInt32("town_portal_search_radius", 5),
@@ -2328,6 +2344,31 @@ public sealed class AuthoritativeSpellCatalog
             spellIds.Add(spellId);
         }
         return spellIds;
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseResurrectionInitialOffsets(TsvRow row)
+    {
+        if (!row.TryGet("resurrection_initial_offsets", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ';',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var offsets = new (int X, int Y)[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            var components = entries[index].Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (components.Length != 2
+                || !int.TryParse(components[0], out var x)
+                || !int.TryParse(components[1], out var y)) {
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Resurrection initial placement offset.");
+            }
+            offsets[index] = (x, y);
+        }
+        return offsets;
     }
 
     private static AuthoritativeProjectileBehavior ParseProjectileBehavior(TsvRow row)

@@ -4108,7 +4108,10 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeSpellDefinition spell,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        foreach (var offset in ResurrectionInitialOffsets) {
+        var initialOffsets = spell.ResurrectionInitialOffsets.Count > 0
+            ? spell.ResurrectionInitialOffsets
+            : ResurrectionInitialOffsets;
+        foreach (var offset in initialOffsets) {
             var candidateX = checked(target.PositionX + offset.X);
             var candidateY = checked(target.PositionY + offset.Y);
             if (IsResurrectionPositionAvailable(target, candidateX, candidateY, players))

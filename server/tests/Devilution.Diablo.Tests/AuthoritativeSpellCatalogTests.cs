@@ -1006,10 +1006,23 @@ public sealed class AuthoritativeSpellCatalogTests
             resurrection.ResurrectionLife,
             resurrection.ResurrectionLifeScale,
             resurrection.ResurrectionSearchRadius));
+        Assert.Equal(
+            [(0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (0, 2), (1, 2), (2, 1)],
+            resurrection.ResurrectionInitialOffsets);
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([
                 resurrection with { ResurrectionSearchRadius = 0 },
             ]));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeSpellCatalog([
+                resurrection with { ResurrectionInitialOffsets = [(0, 0)] },
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(
+                path,
+                File.ReadAllText(path).Replace(
+                    "0,0;1,0;0,1;1,1;2,0;0,2;1,2;2,1",
+                    "0,0;invalid")));
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeSpellCatalog([
                 resurrection with {

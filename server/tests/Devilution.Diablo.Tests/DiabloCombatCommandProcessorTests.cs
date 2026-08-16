@@ -15195,6 +15195,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ResurrectionUsesValidatedInitialPlacementOrder()
+    {
+        var world = new DiabloWorldState(
+            combatTargets: [new AuthoritativeCombatTarget(30, 10, 10, 10, 0)]);
+        var spell = CreateResurrectionSpell() with {
+            ResurrectionInitialOffsets = [
+                (2, 2),
+                (0, 0),
+                (1, 0),
+                (0, 1),
+                (1, 1),
+                (2, 0),
+                (0, 2),
+                (2, 1),
+            ],
+        };
+        var processor = CreateProcessor(world, new AuthoritativeSpellCatalog([spell]));
+        var caster = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            mana: 3000,
+            manaMaximum: 3000,
+            entityId: 7,
+            memorizedSpells: [new MemorizedSpellState(32, 5)]);
+        var target = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            life: 0,
+            lifeMaximum: 1000,
+            mana: 600,
+            manaMaximum: 600,
+            entityId: 8);
+        target.CombatMode = DiabloPlayerCombatMode.Death;
+
+        var result = processor.Execute(
+            caster,
+            new DiabloCastIntent(
+                32,
+                8,
+                0,
+                0,
+                DiabloCastSourceKind.MemorizedSpell),
+            1,
+            [caster, target]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((12, 12), (target.PositionX, target.PositionY));
+    }
+
+    [Fact]
     public void ResurrectionBeamsLivingTargetsButRejectsInvalidPlayerTargets()
     {
         var world = new DiabloWorldState();
