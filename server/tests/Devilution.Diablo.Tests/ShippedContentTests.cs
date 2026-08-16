@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.239.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.240.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -95,7 +95,16 @@ public sealed class ShippedContentTests
             stableIds: stableIds);
 
         Assert.NotEmpty(uniques.Definitions);
+        var uniqueIds = stableIds.Entries
+            .Where(entry => entry.Kind == "unique")
+            .ToArray();
+        Assert.Equal(uniqueIds.Length, uniques.Definitions.Count);
+        Assert.All(uniques.Definitions, definition =>
+            Assert.False(string.IsNullOrWhiteSpace(definition.StableSymbol)));
+        stableIds.ValidateReferences("unique", id => uniques.TryGet(id, out _));
         Assert.All(uniqueTable.Rows, row => {
+            var uniqueSymbol = row.Required("unique_symbol");
+            Assert.Equal(row.RequiredUInt32("unique_id"), stableIds.Resolve("unique", uniqueSymbol));
             var symbol = row.Required("base_item_symbol");
             Assert.Equal(row.RequiredUInt32("base_item_id"), stableIds.Resolve("item", symbol));
         });
@@ -889,7 +898,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.239.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.240.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

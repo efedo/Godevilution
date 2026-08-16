@@ -495,6 +495,38 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void UniqueItemsResolveStableUniqueSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("unique", "ember_blade", 1001),
+            new StableContentId("item", "short_sword", 7),
+        ]);
+        var uniques = AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            "unique_id\tunique_symbol\tname\tbase_item_id\tbase_item_symbol\tmin_level\tvalue\tpower\tvalue1\tvalue2\n"
+                + "1001\tember_blade\tEmber Blade\t7\tshort_sword\t1\t3650\tTOHIT\t10\t10\n",
+            stableIds: stableIds);
+
+        var definition = Assert.Single(uniques.Definitions);
+        Assert.Equal(1001U, definition.UniqueId);
+        Assert.Equal("ember_blade", definition.StableSymbol);
+    }
+
+    [Fact]
+    public void UniqueItemsRejectStableUniqueNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("unique", "ember_blade", 1001),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            "unique_id\tunique_symbol\tname\tbase_item_id\tmin_level\tvalue\tpower\tvalue1\tvalue2\n"
+                + "1002\tember_blade\tEmber Blade\t7\t1\t3650\tTOHIT\t10\t10\n",
+            stableIds: stableIds));
+    }
+
+    [Fact]
     public void UniqueItemsResolveStableBaseItemSymbols()
     {
         var stableIds = new StableContentIdCatalog([
