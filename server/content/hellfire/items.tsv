@@ -26,11 +26,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	121	0	0	None	Falchion	Falchion	FALCHION	4	1	false			0	0
 130	broad_sword	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	127	0	0	None	Broad Sword	Broad Sword	BROAD_SWORD	10	1	false			0	0
 131	long_sword	1	350	350	2	10	0	40	40	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	30	126	0	0	None	Long Sword	Long Sword	LONG_SWORD	8	1	false			0	0
-132	hellfire_item_132	1	450	450	1	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	35	0	0	123	0	0	None	-	-	-	4	1	false			0	0
-133	hellfire_item_133	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	127	0	0	None	-	-	-	10	1	false			0	0
-134	hellfire_item_134	1	200	200	3	7	0	28	28	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	23	0	23	122	0	0	None	-	-	-	5	1	false			0	0
-135	hellfire_item_135	1	1800	1800	8	16	0	75	75	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	65	0	0	129	0	0	None	-	-	-	17	1	false			0	0
-136	hellfire_item_136	1	3000	3000	10	20	0	100	100	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	75	0	0	130	0	0	None	-	-	-	2	1	false			0	0
+132	claymore	1	450	450	1	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	35	0	0	123	0	0	None	Claymore	Claymore	CLAYMORE	4	1	false			0	0
+133	hellfire_broad_sword	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	127	0	0	None	Broad Sword	Broad Sword	BROAD_SWORD	10	1	false			0	0
+134	scimitar	1	200	200	3	7	0	28	28	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	23	0	23	122	0	0	None	Scimitar	Scimitar	SCIMITAR	5	1	false			0	0
+135	bastard_sword	1	1800	1800	8	16	0	75	75	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	65	0	0	129	0	0	None	Bastard Sword	Bastard Sword	BASTARD_SWORD	17	1	false			0	0
+136	two_handed_sword	1	3000	3000	10	20	0	100	100	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	75	0	0	130	0	0	None	Two-Handed Sword	Two-Handed Sword	TWO_HANDED_SWORD	2	1	false			0	0
 137	hellfire_item_137	1	750	750	6	16	0	40	40	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	30	0	0	133	0	0	None	-	-	-	8	1	false			0	0
 138	hellfire_item_138	1	1000	1000	8	20	0	50	50	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	50	0	0	134	0	0	None	-	-	-	10	1	false			0	0
 139	hellfire_item_139	1	1500	1500	10	25	0	60	60	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	65	0	0	135	0	0	None	-	-	-	12	1	false			0	0
