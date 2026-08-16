@@ -160,6 +160,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedMegaDelayTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tmega_delay_base\tmega_delay_random_range\n"
+                + "Mega\tInfernoControl\tInfernoController\t6\t12\n");
+
+        var mega = Assert.Single(catalog.Definitions);
+        Assert.Equal(6, mega.MegaDelayBase);
+        Assert.Equal(12, mega.MegaDelayRandomRange);
+    }
+
+    [Fact]
     public void RejectsRangedPostAttackDelayOnAvoidanceMappings()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
@@ -212,6 +225,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 SnakeAdjacentDelayRandomRange: 2,
                 SnakeDistantDelayBase: 1,
                 SnakeDistantDelayRandomRange: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsMegaDelayTuningOnNonInfernoMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar,
+                MegaDelayBase: 1,
+                MegaDelayRandomRange: 2),
         ]));
     }
 
@@ -271,6 +297,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.SnakeDistantDelayBase);
         Assert.Equal(0, succubus.SnakeDistantDelayIntelligenceScale);
         Assert.Equal(0, succubus.SnakeDistantDelayRandomRange);
+        Assert.Equal(0, succubus.MegaDelayBase);
+        Assert.Equal(0, succubus.MegaDelayRandomRange);
         Assert.Equal(0, succubus.ChargeMinimumDistance);
         Assert.Equal(0, succubus.ChargeChanceBase);
         Assert.Equal(0, succubus.ChargeChanceIntelligenceScale);

@@ -7167,7 +7167,7 @@ public sealed class DiabloCombatCommandProcessor
                             players,
                             attackSeed,
                             distance);
-                        monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
+                        monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
                         return true;
                     }
                     return false;
@@ -7317,7 +7317,7 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     attackSeed,
                     distance);
-                monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
+                monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
                 return true;
             }
             return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
@@ -7433,7 +7433,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.StartRangedDelay(ResolveRangedDelay(missile, attackSeed));
         else if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega"))
-            monster.StartMegaDelay(5 + (int)((attackSeed / 200U) % 10U));
+            monster.StartMegaDelay(ResolveMegaDelay(missile, attackSeed));
         return true;
     }
 
@@ -7522,6 +7522,19 @@ public sealed class DiabloCombatCommandProcessor
             0,
             checked(baseDelay - intelligenceScale * intelligence
                 + (int)((actionSeed / 100U) % (uint)randomRange)));
+    }
+
+    private static int ResolveMegaDelay(
+        AuthoritativeMonsterMissileDefinition? missile,
+        uint attackSeed)
+    {
+        var randomRange = missile?.MegaDelayRandomRange > 0
+            ? missile.MegaDelayRandomRange
+            : 10;
+        var delayBase = missile?.MegaDelayBase > 0
+            ? missile.MegaDelayBase
+            : 5;
+        return checked(delayBase + (int)((attackSeed / 200U) % (uint)randomRange));
     }
 
     private static (int Speed, int Lifetime) ResolveMappedChargeProjectileTuning(

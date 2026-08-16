@@ -80,7 +80,11 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional Snake distant-delay intelligence reduction. */
     int SnakeDistantDelayIntelligenceScale = 0,
     /** Optional exclusive Snake distant-delay random range. */
-    int SnakeDistantDelayRandomRange = 0);
+    int SnakeDistantDelayRandomRange = 0,
+    /** Optional Mega post-action delay base; zero preserves native behavior. */
+    int MegaDelayBase = 0,
+    /** Optional exclusive Mega post-action delay random range. */
+    int MegaDelayRandomRange = 0);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -157,6 +161,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                         != AuthoritativeProjectileBehavior.SnakeCharge
                         || definition.SnakeAdjacentDelayRandomRange <= 0
                         || definition.SnakeDistantDelayRandomRange <= 0)
+                || definition.MegaDelayBase < 0
+                || definition.MegaDelayRandomRange < 0
+                || (definition.MegaDelayBase != 0
+                    || definition.MegaDelayRandomRange != 0)
+                    && (definition.ProjectileBehavior
+                        != AuthoritativeProjectileBehavior.InfernoController
+                        || definition.MegaDelayRandomRange <= 0)
                 || definition.ChargeMinimumDistance is < 0 or > 64
                 || definition.ChargeChanceBase is < 0 or > 100
                 || definition.ChargeChanceIntelligenceScale is < 0 or > 100
@@ -399,7 +410,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("snake_adjacent_delay_random_range"),
                 row.OptionalInt32("snake_distant_delay_base"),
                 row.OptionalInt32("snake_distant_delay_intelligence_scale"),
-                row.OptionalInt32("snake_distant_delay_random_range"));
+                row.OptionalInt32("snake_distant_delay_random_range"),
+                row.OptionalInt32("mega_delay_base"),
+                row.OptionalInt32("mega_delay_random_range"));
         }));
     }
 
