@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.231.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.232.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -94,7 +94,7 @@ public sealed class ShippedContentTests
                     if (index != 1)
                         return line;
                     var columns = line.Split('\t');
-                    columns[17] = "9999";
+                    columns[18] = "9999";
                     return string.Join('\t', columns);
                 }));
         var incompletePack = new ContentPack(
@@ -604,7 +604,7 @@ public sealed class ShippedContentTests
                     if (index != 1)
                         return line;
                     var columns = line.Split('\t');
-                    columns[11] = "9999";
+                    columns[12] = "9999";
                     return string.Join('\t', columns);
                 }));
         var incompletePack = new ContentPack(
@@ -799,13 +799,17 @@ public sealed class ShippedContentTests
             [basePack, hellfirePack]);
 
         var composed = ComposedContent.Compose(manifest);
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            composed.GetRequiredTable("content_ids.tsv").ToCanonicalTsv());
+        Assert.Equal(3024U, stableIds.Resolve("quest", "jerseys_jersey"));
         var combat = AuthoritativeCombatRules.LoadTsv(
             "combat.tsv",
             composed.GetRequiredTable("combat.tsv").ToCanonicalTsv());
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.231.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.232.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2641,6 +2645,8 @@ public sealed class ShippedContentTests
         Assert.Equal(26U, stableIds.Resolve("ability", "repair"));
         Assert.Equal(27U, stableIds.Resolve("ability", "recharge"));
         Assert.Equal(28U, stableIds.Resolve("ability", "trap_disarm"));
+        Assert.Equal(3001U, stableIds.Resolve("quest", "magic_rock"));
+        Assert.Equal(3016U, stableIds.Resolve("quest", "lazarus"));
         Assert.Equal(5U, stableIds.Resolve("spell", "holy_bolt"));
         Assert.Equal(30U, stableIds.Resolve("spell", "charged_bolt"));
         Assert.Equal(46U, stableIds.Resolve("spell", "search"));

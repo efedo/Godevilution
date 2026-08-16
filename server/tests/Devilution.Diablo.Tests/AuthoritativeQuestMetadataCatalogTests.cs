@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,24 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeQuestMetadataCatalogTests
 {
+    [Fact]
+    public void ResolvesStableQuestSymbolsInPoolEntries()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "magic_rock", 3001),
+        ]);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(3001, 0, "The Magic Rock", 5, -1, string.Empty, 0, true),
+        ]);
+        var pools = AuthoritativeQuestPoolCatalog.LoadTsv(
+            "quest_pools.tsv",
+            "pool_id\tquest_id\tquest_symbol\n1\t3001\tmagic_rock\n",
+            questTypes,
+            stableIds);
+
+        Assert.Equal(3001U, Assert.Single(pools.Definitions).QuestId);
+    }
+
     [Fact]
     public void LoadsNativeSetLevelNamesAndQuestPools()
     {

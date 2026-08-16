@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,44 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeQuestCatalogTests
 {
+    [Fact]
+    public void ResolvesStableQuestSymbolsForTypesAndStateRows()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "magic_rock", 3001),
+        ]);
+        var types = AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            "quest_id\tquest_symbol\tnative_quest_id\tname\tsingle_player_level\tmultiplayer_level\tlevel_type\tset_level\tsingle_player_only\n"
+                + "3001\tmagic_rock\t0\tThe Magic Rock\t5\t-1\t\t0\t1\n",
+            stableIds: stableIds);
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tquest_symbol\tlevel_id\trequired_progress\n"
+                + "3001\tmagic_rock\t1\t3\n",
+            types,
+            stableIds);
+
+        Assert.Equal("magic_rock", Assert.Single(types.Definitions).StableSymbol);
+        Assert.Equal("magic_rock", Assert.Single(quests).StableSymbol);
+    }
+
+    [Fact]
+    public void RejectsStableQuestSymbolNumericMismatch()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "magic_rock", 3001),
+        ]);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.LoadTsv(
+                "quests.tsv",
+                "quest_id\tquest_symbol\tlevel_id\trequired_progress\n"
+                    + "3002\tmagic_rock\t1\t3\n",
+                stableIds: stableIds));
+
+        Assert.Contains("maps quest 3002 to symbol 'magic_rock', which resolves to 3001", exception.Message);
+    }
+
     [Fact]
     public void LoadsNativeQuestTypesInStableIdentityOrder()
     {
