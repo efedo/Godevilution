@@ -13,6 +13,7 @@ public sealed class AuthoritativeWorldTests
         var stableIds = new StableContentIdCatalog([
             new StableContentId("level", "town", 0),
             new StableContentId("level", "cathedral", 1),
+            new StableContentId("portal", "cathedral_entrance", 1),
         ]);
         var world = AuthoritativeWorld.LoadTsv(
             "levels.tsv",
@@ -46,12 +47,21 @@ public sealed class AuthoritativeWorldTests
             stableIds));
         var portal = Assert.Single(AuthoritativePortalCatalog.LoadTsv(
             "portals.tsv",
-            "portal_id\tsource_level_id\tsource_level_symbol\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_level_symbol\tdestination_position_x\tdestination_position_y\n"
-                + "1\t0\ttown\t1\t1\t1\tcathedral\t2\t2\n",
+            "portal_id\tportal_symbol\tsource_level_id\tsource_level_symbol\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_level_symbol\tdestination_position_x\tdestination_position_y\n"
+                + "1\tcathedral_entrance\t0\ttown\t1\t1\t1\tcathedral\t2\t2\n",
             stableIds));
 
         Assert.Equal(0U, warp.SourceLevelId);
         Assert.Equal(1U, portal.DestinationLevelId);
+        Assert.Equal("cathedral_entrance", portal.StableSymbol);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePortalCatalog.LoadTsv(
+                "portals.tsv",
+                "portal_id\tportal_symbol\tsource_level_id\tsource_position_x\tsource_position_y\tdestination_level_id\tdestination_position_x\tdestination_position_y\n"
+                    + "2\tcathedral_entrance\t0\t1\t1\t1\t2\t2\n",
+                stableIds));
+        Assert.Contains("maps portal 2 to symbol 'cathedral_entrance'", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

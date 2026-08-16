@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.248.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.249.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -131,6 +131,31 @@ public sealed class ShippedContentTests
             "store",
             id => stores.ContainsStore(id) || id == worldRules.AdriaStoreId);
         Assert.Equal(10U, stableIds.Resolve("store", "adria"));
+    }
+
+    [Fact]
+    public void ShippedPortalsUseStablePortalSymbols()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var portalsTable = basePack.Tables.Single(table => table.SourcePath == "portals.tsv");
+        var portals = AuthoritativePortalCatalog.LoadTsv(
+            portalsTable.SourcePath,
+            portalsTable.ToCanonicalTsv(),
+            stableIds);
+
+        var portalIds = stableIds.Entries
+            .Where(entry => entry.Kind == "portal")
+            .ToArray();
+        Assert.Equal(portalIds.Length, portals.Count);
+        Assert.All(portalsTable.Rows, row =>
+            Assert.Equal(row.RequiredUInt32("portal_id"), stableIds.Resolve("portal", row.Required("portal_symbol"))));
+        Assert.Equal("cathedral_entrance", Assert.Single(portals).StableSymbol);
+        stableIds.ValidateReferences("portal", id => portals.Any(portal => portal.PortalId == id));
     }
 
     [Fact]
@@ -962,7 +987,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.248.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.249.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
