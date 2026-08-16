@@ -21,6 +21,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DiabloGameMode gameMode;
     private readonly DiabloDifficulty difficulty;
     private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
@@ -139,7 +140,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
-        AuthoritativeWorldRules? worldRules = null)
+        AuthoritativeWorldRules? worldRules = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -157,6 +159,7 @@ public sealed class DiabloCombatCommandProcessor
             ? difficulty
             : throw new ArgumentOutOfRangeException(nameof(difficulty));
         this.items = items;
+        this.spellBooks = spellBooks;
         this.monsterMissiles = monsterMissiles;
         this.monsterSpawnPlanner = monsterSpawnPlanner;
         this.monsterTypes = monsterTypes;
@@ -13728,10 +13731,16 @@ public sealed class DiabloCombatCommandProcessor
         if (quest.CompletionRewardItemId == 0 || items is null)
             return;
         var itemSeed = AllocateWorldItemSeed();
-        var state = items.Generate(
-            quest.CompletionRewardItemId,
-            itemSeed,
-            quest.CompletionRewardItemLevel);
+        var state = spellBooks is not null
+            && spellBooks.IsBookTemplate(items, quest.CompletionRewardItemId)
+            ? spellBooks.GenerateRandom(
+                items,
+                itemSeed,
+                quest.CompletionRewardItemLevel)
+            : items.Generate(
+                quest.CompletionRewardItemId,
+                itemSeed,
+                quest.CompletionRewardItemLevel);
         var entityId = AllocateWorldItemEntityId(activePlayers);
         world.WorldItems[entityId] = new AuthoritativeWorldItem(
             entityId,

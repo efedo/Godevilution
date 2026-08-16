@@ -61,6 +61,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeSpellCatalog? Spells { get; init; }
 
+    /** Validated native dynamic spell-book metadata used by item rewards. */
+    public AuthoritativeSpellBookCatalog? SpellBooks { get; init; }
+
     /** Validated native AI-to-missile mappings supplied by active content. */
     public AuthoritativeMonsterMissileCatalog? MonsterMissiles { get; init; }
 
@@ -212,7 +215,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.MonsterSpawnPlanner,
                 options.MonsterTypes,
                 options.Difficulty,
-                options.WorldRules),
+                options.WorldRules,
+                options.SpellBooks),
             spells,
             random,
             combatRules,

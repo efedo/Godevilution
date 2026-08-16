@@ -1203,6 +1203,57 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void QuestCompletionRewardUsesDynamicSpellBookGeneration()
+    {
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: true,
+            completionUniqueIdentity: "Defiler",
+            completionRewardItemId: 114);
+        var target = new AuthoritativeCombatTarget(
+            16,
+            1,
+            0,
+            8,
+            levelId: 17,
+            monsterId: 126,
+            unique: true,
+            uniqueIdentity: "Defiler");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            items: items,
+            spellBooks: books);
+        var player = CreatePlayer(entityId: 7, levelId: 17);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(16), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(7, reward.State.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, reward.State.ItemActionKind);
+        Assert.Equal("Book of Firebolt", reward.State.BaseName);
+    }
+
+    [Fact]
     public void UniqueQuestDefeatAppliesItsNativeCompletionVariables()
     {
         var quest = new AuthoritativeQuestState(
@@ -16804,7 +16855,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         bool useNativePlayerActionTiming = false,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
-        AuthoritativeWorldRules? worldRules = null)
+        AuthoritativeWorldRules? worldRules = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -16825,7 +16877,8 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterSpawnPlanner: monsterSpawnPlanner,
             monsterTypes: monsterTypes,
             difficulty: difficulty,
-            worldRules: worldRules);
+            worldRules: worldRules,
+            spellBooks: spellBooks);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(
