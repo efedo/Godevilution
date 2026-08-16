@@ -104,7 +104,8 @@ public sealed class AuthoritativeCombatRules
         DiabloDifficultyRules? difficultyRules = null,
         int? rangedAttackFrameSkipWithFirstFrame = null,
         int? rangedAttackFrameSkipWithoutFirstFrame = null,
-        int? rangedFastAttackFrameSkipBonus = null)
+        int? rangedFastAttackFrameSkipBonus = null,
+        uint townLevelId = AuthoritativePortalRules.TownLevelId)
     {
         var resolvedRangedAttackFrameSkipWithFirstFrame = rangedAttackFrameSkipWithFirstFrame
             ?? (gameVariant == DiabloGameVariant.Hellfire ? 0 : 1);
@@ -288,6 +289,7 @@ public sealed class AuthoritativeCombatRules
         CriticalMultiplier = criticalMultiplier;
         FriendlyFire = friendlyFire;
         GameVariant = gameVariant;
+        TownLevelId = townLevelId;
         RestartLevelId = restartLevelId;
         RestartPositionX = restartPositionX;
         RestartPositionY = restartPositionY;
@@ -390,6 +392,9 @@ public sealed class AuthoritativeCombatRules
 
     /** Selects native base-game or Hellfire-only deterministic behavior. */
     public DiabloGameVariant GameVariant { get; }
+
+    /** External world identity used by town portal and warp admission. */
+    public uint TownLevelId { get; }
 
     public uint RestartLevelId { get; }
 
@@ -645,6 +650,10 @@ public sealed class AuthoritativeCombatRules
     public void ValidateWorld(AuthoritativeWorld world)
     {
         ArgumentNullException.ThrowIfNull(world);
+        if (!world.ContainsLevel(TownLevelId)) {
+            throw new InvalidDataException(
+                $"Combat rules reference unknown town level {TownLevelId}.");
+        }
         if (!world.IsWalkable(RestartLevelId, RestartPositionX, RestartPositionY)) {
             throw new InvalidDataException(
                 "Combat restart-in-town destination must be a walkable world position.");
@@ -885,7 +894,10 @@ public sealed class AuthoritativeCombatRules
         return Math.Max(0, postArmor * (100 - Math.Clamp(resistance, -100, 100)) / 100);
     }
 
-    public static AuthoritativeCombatRules LoadTsv(string sourcePath, string contents)
+    public static AuthoritativeCombatRules LoadTsv(
+        string sourcePath,
+        string contents,
+        uint townLevelId = AuthoritativePortalRules.TownLevelId)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var row = table.Rows.Single();
@@ -981,7 +993,8 @@ public sealed class AuthoritativeCombatRules
             DiabloDifficultyRules.LoadTsv(row),
             row.OptionalInt32("ranged_attack_frame_skip_with_first_frame", 1),
             row.OptionalInt32("ranged_attack_frame_skip_without_first_frame"),
-            row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1));
+            row.OptionalInt32("ranged_fast_attack_frame_skip_bonus", 1),
+            townLevelId);
     }
 
     private static DiabloGameVariant ParseGameVariant(TsvRow row)

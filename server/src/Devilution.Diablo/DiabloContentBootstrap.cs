@@ -214,11 +214,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 itemCombinationsTable.ToCanonicalTsv())
             : null;
         itemCombinations?.ValidateItems(itemCatalog);
+        var worldRules = content.TryGetTable("world_rules.tsv", out var worldRulesTable)
+            ? AuthoritativeWorldRules.LoadTsv(
+                worldRulesTable.SourcePath,
+                worldRulesTable.ToCanonicalTsv())
+            : AuthoritativeWorldRules.NativeDefaults;
         var combatRules = content.TryGetTable("combat.tsv", out var combatTable)
             ? AuthoritativeCombatRules.LoadTsv(
                 combatTable.SourcePath,
-                combatTable.ToCanonicalTsv())
-            : new AuthoritativeCombatRules(10, 1, 100);
+                combatTable.ToCanonicalTsv(),
+                worldRules.TownLevelId)
+            : new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                townLevelId: worldRules.TownLevelId);
         combatRules.ValidateItems(itemCatalog);
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
@@ -296,6 +306,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var trapDisarmAbilitySpellId = stableIds?.Resolve("spell", "trap_disarm") ?? 0;
         if (spells is not null)
             itemCatalog!.ValidateSpellReferences(spells);
+        if (world is not null)
+            worldRules.ValidateWorld(world);
         if (world is not null)
             combatRules.ValidateWorld(world);
         var monsterTypes = content.TryGetTable("monster_types.tsv", out var monsterTypesTable)

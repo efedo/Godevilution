@@ -206,7 +206,7 @@ public sealed class DiabloWorldCommandProcessor
             || destinationSlotSpacing < 0)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
         var participants = players.ToArray();
-        if (player.LevelId == AuthoritativePortalRules.TownLevelId
+        if (player.LevelId == combatRules.TownLevelId
             || !world.HasMissileLineOfSight(
                 player.LevelId,
                 player.PositionX,
@@ -251,7 +251,7 @@ public sealed class DiabloWorldCommandProcessor
                 player.LevelId,
                 portalPosition.Value.X,
                 portalPosition.Value.Y,
-                AuthoritativePortalRules.TownLevelId,
+                combatRules.TownLevelId,
                 AuthoritativePortalRules.GetTownPositionX(
                     player.EntityId,
                     destinationPositionX,
@@ -276,7 +276,7 @@ public sealed class DiabloWorldCommandProcessor
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(players);
         if (world.World is null
-            || player.LevelId == AuthoritativePortalRules.TownLevelId) {
+            || player.LevelId == combatRules.TownLevelId) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 

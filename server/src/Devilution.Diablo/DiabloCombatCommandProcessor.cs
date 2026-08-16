@@ -1796,7 +1796,7 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (isTownPortal) {
             if (worldCommands is null
-                || player.LevelId == AuthoritativePortalRules.TownLevelId
+                || player.LevelId == rules.TownLevelId
                 || intent.TargetEntityId != 0
                 || Math.Max(
                     Math.Abs(intent.TargetX - player.PositionX),
