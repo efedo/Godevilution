@@ -924,6 +924,11 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.238 completes stable item links in shipped unique-item definitions.
+Every `unique_items.tsv` row now carries a `base_item_symbol` that resolves to
+the retained numeric `base_item_id`; older external packs may omit the
+optional column and remain numeric-only.
+
 Schema 1.237 completes the shipped normalized item namespace. Every base and
 Hellfire `items.tsv` definition now carries an `item_symbol`, and every symbol
 is declared exactly once in the corresponding `content_ids.tsv` overlay. The
@@ -1541,7 +1546,7 @@ the complete target header even when they upsert only one row.
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
-| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with base-item references and optional `base_item_symbol` validated against the active item catalog, authoritative presentation names, optional cursor symbols, and fixed effects. |
+| `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with base-item references and optional `base_item_symbol` validated against the active item catalog (required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `item_symbol` and `spell_symbol` cross-checks validated against active item and spell catalogs. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |

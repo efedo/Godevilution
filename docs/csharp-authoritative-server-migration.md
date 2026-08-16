@@ -538,6 +538,11 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.238 completes stable base-item links in shipped normalized unique
+items. Every base and Hellfire `unique_items.tsv` row carries a
+`base_item_symbol` cross-checked against its retained numeric ID and the active
+item catalog; older external packs may remain numeric-only.
+
 Schema 1.237 completes the stable item namespace for shipped content. Every
 base and Hellfire normalized `items.tsv` row carries a unique `item_symbol`,
 and the corresponding `content_ids.tsv` tables contain one matching entry.

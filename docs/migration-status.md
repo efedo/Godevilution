@@ -56,6 +56,11 @@ Status date: 2026-08-16
   unique stable `item_symbol`; the active item namespace is checked for full
   definition coverage while numeric IDs remain the compatibility projection.
 
+- Shipped normalized unique-item rows now carry stable `base_item_symbol`
+  links. Activation cross-checks those symbols against retained numeric base
+  IDs and the active item catalog, while numeric-only external packs remain
+  compatible.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -898,6 +903,10 @@ Status date: 2026-08-16
 
 - Schema 1.235 extends optional item symbols to `stores.tsv`,
   `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
+
+- Schema 1.238 completes stable base-item symbols for shipped
+  `unique_items.tsv` rows. Numeric-only external packs remain compatible while
+  checked-in base and Hellfire rows are symbolically linked.
 
 - Schema 1.237 completes stable symbols for every shipped normalized item
   definition. `items.tsv` retains optional-symbol compatibility for older
