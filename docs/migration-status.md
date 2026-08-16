@@ -129,6 +129,10 @@ Status date: 2026-08-16
   through player resistance, while older mappings retain native Physical
   damage behavior.
 
+- Snake charge collisions now honor the existing optional `projectile_damage`
+  missile field before applying resistance, while older mappings retain the
+  native special-damage range.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
 - Apply mapped Snake charge `damage_type` through the authoritative player
   resistance path, preserving native Physical damage for older rows.
 
+- Honor existing validated `projectile_damage` metadata for Snake charge
+  collisions, preserving the native special-damage roll when older mappings
+  omit a fixed value.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.
