@@ -173,50 +173,50 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	ATTRIBS	5	5	MESSERSCHMIDTS_REAVER
 1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	LIFE_CURSE	50	50	MESSERSCHMIDTS_REAVER
 1046	messerschmidt_s_reaver	Messerschmidt's Reaver	141	great_axe	25	58000	FIREDAM	2	12	MESSERSCHMIDTS_REAVER
-1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	ATTRIBS	2	2	-
-1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	INDESTRUCTIBLE	0	0	-
-1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	ALLRES	15	15	-
-1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	DAMP	50	50	-
-1047	crackrust	Crackrust	142	hellfire_item_142	1	11375	SPLLVLADD	-1	-1	-
-1048	hammer_of_jholm	Hammer of Jholm	143	hellfire_item_143	1	8700	SETDAM	4	10	-
-1048	hammer_of_jholm	Hammer of Jholm	143	hellfire_item_143	1	8700	INDESTRUCTIBLE	0	0	-
-1048	hammer_of_jholm	Hammer of Jholm	143	hellfire_item_143	1	8700	STR	3	3	-
-1048	hammer_of_jholm	Hammer of Jholm	143	hellfire_item_143	1	8700	TOHIT	15	15	-
-1049	civerb_s_cudgel	Civerb's Cudgel	142	hellfire_item_142	1	2000	3XDAMVDEM	0	0	-
-1049	civerb_s_cudgel	Civerb's Cudgel	142	hellfire_item_142	1	2000	DEX_CURSE	5	5	-
-1049	civerb_s_cudgel	Civerb's Cudgel	142	hellfire_item_142	1	2000	MAG_CURSE	2	2	-
-1050	the_celestial_star	The Celestial Star	144	hellfire_item_144	2	7810	NOMINSTR	0	0	-
-1050	the_celestial_star	The Celestial Star	144	hellfire_item_144	2	7810	LIGHT	2	2	-
-1050	the_celestial_star	The Celestial Star	144	hellfire_item_144	2	7810	DAMMOD	10	10	-
-1050	the_celestial_star	The Celestial Star	144	hellfire_item_144	2	7810	AC_CURSE	8	8	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	TOHIT	12	12	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	DAMP	80	80	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	FASTATTACK	1	1	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	VIT	4	4	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	DEX_CURSE	4	4	-
-1051	baranar_s_star	Baranar's Star	145	hellfire_item_145	5	6850	SETDUR	60	60	-
+1047	crackrust	Crackrust	142	mace	1	11375	ATTRIBS	2	2	-
+1047	crackrust	Crackrust	142	mace	1	11375	INDESTRUCTIBLE	0	0	-
+1047	crackrust	Crackrust	142	mace	1	11375	ALLRES	15	15	-
+1047	crackrust	Crackrust	142	mace	1	11375	DAMP	50	50	-
+1047	crackrust	Crackrust	142	mace	1	11375	SPLLVLADD	-1	-1	-
+1048	hammer_of_jholm	Hammer of Jholm	143	maul	1	8700	SETDAM	4	10	-
+1048	hammer_of_jholm	Hammer of Jholm	143	maul	1	8700	INDESTRUCTIBLE	0	0	-
+1048	hammer_of_jholm	Hammer of Jholm	143	maul	1	8700	STR	3	3	-
+1048	hammer_of_jholm	Hammer of Jholm	143	maul	1	8700	TOHIT	15	15	-
+1049	civerb_s_cudgel	Civerb's Cudgel	142	mace	1	2000	3XDAMVDEM	0	0	-
+1049	civerb_s_cudgel	Civerb's Cudgel	142	mace	1	2000	DEX_CURSE	5	5	-
+1049	civerb_s_cudgel	Civerb's Cudgel	142	mace	1	2000	MAG_CURSE	2	2	-
+1050	the_celestial_star	The Celestial Star	144	flail	2	7810	NOMINSTR	0	0	-
+1050	the_celestial_star	The Celestial Star	144	flail	2	7810	LIGHT	2	2	-
+1050	the_celestial_star	The Celestial Star	144	flail	2	7810	DAMMOD	10	10	-
+1050	the_celestial_star	The Celestial Star	144	flail	2	7810	AC_CURSE	8	8	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	TOHIT	12	12	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	DAMP	80	80	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	FASTATTACK	1	1	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	VIT	4	4	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	DEX_CURSE	4	4	-
+1051	baranar_s_star	Baranar's Star	145	morning_star	5	6850	SETDUR	60	60	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	TOHIT	20	20	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	DAMP	300	300	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	DEX	10	10	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	MAG	5	5	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	ALLRES	10	10	-
 1052	gnarled_root	Gnarled Root	110	spiked_club_starting	9	9820	AC_CURSE	10	10	-
-1053	the_cranium_basher	The Cranium Basher	143	hellfire_item_143	12	36500	DAMMOD	20	20	-
-1053	the_cranium_basher	The Cranium Basher	143	hellfire_item_143	12	36500	STR	15	15	-
-1053	the_cranium_basher	The Cranium Basher	143	hellfire_item_143	12	36500	INDESTRUCTIBLE	0	0	-
-1053	the_cranium_basher	The Cranium Basher	143	hellfire_item_143	12	36500	MANA_CURSE	150	150	-
-1053	the_cranium_basher	The Cranium Basher	143	hellfire_item_143	12	36500	ALLRES	5	5	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	DAMP_CURSE	100	100	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	LIGHTDAM	1	50	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	LIFE	50	50	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	TOHIT	30	30	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	LIGHTRES	80	80	-
-1054	schaefer_s_hammer	Schaefer's Hammer	146	hellfire_item_146	16	56125	LIGHT	1	1	-
-1055	dreamflange	Dreamflange	142	hellfire_item_142	26	26450	MAG	30	30	-
-1055	dreamflange	Dreamflange	142	hellfire_item_142	26	26450	MANA	50	50	-
-1055	dreamflange	Dreamflange	142	hellfire_item_142	26	26450	MAGICRES	50	50	-
-1055	dreamflange	Dreamflange	142	hellfire_item_142	26	26450	LIGHT	2	2	-
-1055	dreamflange	Dreamflange	142	hellfire_item_142	26	26450	SPLLVLADD	1	1	-
+1053	the_cranium_basher	The Cranium Basher	143	maul	12	36500	DAMMOD	20	20	-
+1053	the_cranium_basher	The Cranium Basher	143	maul	12	36500	STR	15	15	-
+1053	the_cranium_basher	The Cranium Basher	143	maul	12	36500	INDESTRUCTIBLE	0	0	-
+1053	the_cranium_basher	The Cranium Basher	143	maul	12	36500	MANA_CURSE	150	150	-
+1053	the_cranium_basher	The Cranium Basher	143	maul	12	36500	ALLRES	5	5	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	DAMP_CURSE	100	100	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	LIGHTDAM	1	50	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	LIFE	50	50	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	TOHIT	30	30	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	LIGHTRES	80	80	-
+1054	schaefer_s_hammer	Schaefer's Hammer	146	war_hammer	16	56125	LIGHT	1	1	-
+1055	dreamflange	Dreamflange	142	mace	26	26450	MAG	30	30	-
+1055	dreamflange	Dreamflange	142	mace	26	26450	MANA	50	50	-
+1055	dreamflange	Dreamflange	142	mace	26	26450	MAGICRES	50	50	-
+1055	dreamflange	Dreamflange	142	mace	26	26450	LIGHT	2	2	-
+1055	dreamflange	Dreamflange	142	mace	26	26450	SPLLVLADD	1	1	-
 1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	MAG_CURSE	10	10	-
 1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	TOHIT	10	10	-
 1056	staff_of_shadows	Staff of Shadows	147	hellfire_item_147	2	1250	DAMP	60	60	-
@@ -403,11 +403,11 @@ unique_id	unique_symbol	name	base_item_id	base_item_symbol	min_level	value	power
 1103	blitzen	Blitzen	123	long_bow	13	30000	ADDACLIFE	10	15	-
 1103	blitzen	Blitzen	123	long_bow	13	30000	SETDAM	0	0	-
 1103	blitzen	Blitzen	123	long_bow	13	30000	INDESTRUCTIBLE	0	0	-
-1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	ADDMANAAC	3	6	-
-1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	STR	20	20	-
-1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	LIGHTRES	30	30	-
-1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	LIGHT	2	2	-
-1104	thunderclap	Thunderclap	146	hellfire_item_146	13	30000	INDESTRUCTIBLE	0	0	-
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	ADDMANAAC	3	6	-
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	STR	20	20	-
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHTRES	30	30	-
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	LIGHT	2	2	-
+1104	thunderclap	Thunderclap	146	war_hammer	13	30000	INDESTRUCTIBLE	0	0	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	ONEHAND	0	0	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	FASTATTACK	4	4	-
 1105	shirotachi	Shirotachi	136	two_handed_sword	21	36000	TARGAC	2	2	-

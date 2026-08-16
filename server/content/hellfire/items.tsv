@@ -36,11 +36,11 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 139	battle_axe	1	1500	1500	10	25	0	60	60	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	65	0	0	135	0	0	None	Battle Axe	Battle Axe	BATTLE_AXE	12	1	false			0	0
 140	small_axe	1	24800	24800	2	10	0	24	24	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	0	0	0	131	0	0	None	Small Axe	Small Axe	SMALL_AXE	4	1	false			0	0
 141	great_axe	1	58000	58000	12	30	0	75	75	1	1	1	Weapon,Axe,TwoHanded	2	1	0	0		0	80	0	0	136	0	0	None	Great Axe	Great Axe	GREAT_AXE	2	1	false			0	0
-142	hellfire_item_142	1	11375	11375	1	8	0	32	32	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	16	0	0	137	0	0	None	-	-	-	3	1	false			0	0
-143	hellfire_item_143	1	8700	8700	6	20	0	50	50	1	1	1	Weapon,Sword,TwoHanded	2	1	0	0		0	55	0	0	142	0	0	None	-	-	-	10	1	false			0	0
-144	hellfire_item_144	1	7810	7810	2	12	0	36	36	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	142	0	0	None	-	-	-	10	1	false			0	0
-145	hellfire_item_145	1	6850	6850	1	10	0	40	40	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	26	0	0	138	0	0	None	-	-	-	5	1	false			0	0
-146	hellfire_item_146	1	600	600	5	9	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	40	0	0	138	0	0	None	-	-	-	5	1	false			0	0
+142	mace	1	11375	11375	1	8	0	32	32	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	16	0	0	137	0	0	None	Mace	Mace	MACE	3	1	false			0	0
+143	maul	1	8700	8700	6	20	0	50	50	1	1	1	Weapon,Mace,TwoHanded	2	1	0	0		0	55	0	0	143	0	0	None	Maul	Maul	MAUL	10	1	false			0	0
+144	flail	1	7810	7810	2	12	0	36	36	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	30	0	0	142	0	0	None	Flail	Flail	FLAIL	10	1	false			0	0
+145	morning_star	1	6850	6850	1	10	0	40	40	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	26	0	0	138	0	0	None	Morning Star	Morning Star	MORNING_STAR	5	1	false			0	0
+146	war_hammer	1	600	600	5	9	0	50	50	1	1	1	Weapon,Mace,OneHanded	1	1	0	0		0	40	0	0	139	0	0	None	War Hammer	War Hammer	WAR_HAMMER	5	1	false			0	0
 147	hellfire_item_147	10	100	100	4	8	0	35	35	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	153	0	0	None	-	-	-	6	1	false			0	0
 148	hellfire_item_148	10	1500	1500	8	16	0	75	75	1	3	1	Staff,TwoHanded	2	1	0	0		0	30	0	0	156	0	0	None	-	-	-	5	1	false			0	0
 149	hellfire_item_149	10	30	30	1	4	0	25	25	1	3	1	Staff,TwoHanded	2	1	0	0		0	0	0	0	152	0	0	None	-	-	-	4	1	false			0	0

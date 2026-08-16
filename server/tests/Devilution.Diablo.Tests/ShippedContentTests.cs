@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.257.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.258.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1062,7 +1062,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.257.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.258.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1682,6 +1682,31 @@ public sealed class ShippedContentTests
             Assert.Contains("Axe", axe.GenerationTags);
             Assert.DoesNotContain("Sword", axe.GenerationTags);
         }
+        Assert.Equal(("mace", "Mace", 59), (
+            hellfireItems.GetRequired(142).StableSymbol,
+            hellfireItems.GetRequired(142).Name,
+            hellfireItems.GetRequired(142).NativeCursorGraphic));
+        Assert.Equal(("maul", "Maul", 122), (
+            hellfireItems.GetRequired(143).StableSymbol,
+            hellfireItems.GetRequired(143).Name,
+            hellfireItems.GetRequired(143).NativeCursorGraphic));
+        Assert.Equal(("flail", "Flail", 131), (
+            hellfireItems.GetRequired(144).StableSymbol,
+            hellfireItems.GetRequired(144).Name,
+            hellfireItems.GetRequired(144).NativeCursorGraphic));
+        Assert.Equal(("morning_star", "Morning Star", 63), (
+            hellfireItems.GetRequired(145).StableSymbol,
+            hellfireItems.GetRequired(145).Name,
+            hellfireItems.GetRequired(145).NativeCursorGraphic));
+        Assert.Equal(("war_hammer", "War Hammer", 121), (
+            hellfireItems.GetRequired(146).StableSymbol,
+            hellfireItems.GetRequired(146).Name,
+            hellfireItems.GetRequired(146).NativeCursorGraphic));
+        foreach (var itemId in new uint[] { 142, 143, 144, 145, 146 }) {
+            var mace = hellfireItems.GetRequired(itemId);
+            Assert.Contains("Mace", mace.GenerationTags);
+            Assert.DoesNotContain("Sword", mace.GenerationTags);
+        }
         var crown = hellfireItems.GenerateUnique(1003, 0x12345678, 1);
         Assert.Equal(7, crown.ItemIndex);
         Assert.Equal("The Undead Crown", crown.BaseName);
@@ -2183,7 +2208,7 @@ public sealed class ShippedContentTests
         var hammerOfJholm = hellfireItems.GenerateUnique(1048, 0x12345678, 1);
         Assert.Equal(1048, hammerOfJholm.UniqueId);
         Assert.Equal(8700, hammerOfJholm.Value);
-        Assert.Equal(142, hammerOfJholm.ItemIndex);
+        Assert.Equal(143, hammerOfJholm.ItemIndex);
         Assert.Equal(4, hammerOfJholm.MinDamage);
         Assert.Equal(10, hammerOfJholm.MaxDamage);
         Assert.Equal(55, hammerOfJholm.MinimumStrength);
@@ -2248,7 +2273,7 @@ public sealed class ShippedContentTests
         var craniumBasher = hellfireItems.GenerateUnique(1053, 0x12345678, 12);
         Assert.Equal(1053, craniumBasher.UniqueId);
         Assert.Equal(36500, craniumBasher.Value);
-        Assert.Equal(142, craniumBasher.ItemIndex);
+        Assert.Equal(143, craniumBasher.ItemIndex);
         Assert.Equal(6, craniumBasher.MinDamage);
         Assert.Equal(20, craniumBasher.MaxDamage);
         Assert.Equal(55, craniumBasher.MinimumStrength);
@@ -2264,7 +2289,7 @@ public sealed class ShippedContentTests
         var schaefersHammer = hellfireItems.GenerateUnique(1054, 0x12345678, 16);
         Assert.Equal(1054, schaefersHammer.UniqueId);
         Assert.Equal(56125, schaefersHammer.Value);
-        Assert.Equal(138, schaefersHammer.ItemIndex);
+        Assert.Equal(139, schaefersHammer.ItemIndex);
         Assert.Equal(5, schaefersHammer.MinDamage);
         Assert.Equal(9, schaefersHammer.MaxDamage);
         Assert.Equal(40, schaefersHammer.MinimumStrength);
@@ -2878,7 +2903,7 @@ public sealed class ShippedContentTests
         var thunderclap = hellfireItems.GenerateUnique(1104, 0x12345678, 13);
         Assert.Equal(1104, thunderclap.UniqueId);
         Assert.Equal(30000, thunderclap.Value);
-        Assert.Equal(138, thunderclap.ItemIndex);
+        Assert.Equal(139, thunderclap.ItemIndex);
         Assert.Equal(1, thunderclap.EquipLocation);
         Assert.Equal(20, thunderclap.PlusStrength);
         Assert.Equal(30, thunderclap.PlusLightningResistance);
