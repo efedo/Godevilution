@@ -22,6 +22,11 @@ item	torn_note_3	2003
 item	reconstructed_note	2004
 portal	cathedral_entrance	1
 object	l1_left_door	1
+store	smith	1
+store	witch	2
+store	wirt	3
+store	healer	4
+store	adria	10
 quest	magic_rock	3001
 quest	black_mushroom	3002
 quest	gharbads_weak	3003

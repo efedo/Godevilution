@@ -43,8 +43,11 @@ public sealed record AuthoritativeWorldRules(
                 stableIds,
                 "town_level_id",
                 "town_level_symbol"),
-            row.OptionalUInt32(
+            AuthoritativeStoreIdentity.ResolveOptional(
+                row,
+                stableIds,
                 "adria_store_id",
+                "adria_store_symbol",
                 DiabloStoreCommandProcessor.AdriaStoreId),
             row.OptionalInt32(
                 "town_portal_destination_position_x",

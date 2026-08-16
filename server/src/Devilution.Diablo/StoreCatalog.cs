@@ -152,7 +152,8 @@ public sealed class StoreCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var catalog = new StoreCatalog();
-        var grouped = table.Rows.GroupBy(row => row.RequiredUInt32("store_id"));
+        var grouped = table.Rows.GroupBy(row =>
+            AuthoritativeStoreIdentity.Resolve(row, stableIds));
         foreach (var store in grouped) {
             catalog.AddStore(store.Key, store.Select(row => new StoreItem(
                 row.RequiredUInt32("store_slot"),

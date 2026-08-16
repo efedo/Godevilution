@@ -298,6 +298,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             itemCatalog,
             uniqueItems,
             stableIds);
+        if (stableIds is not null)
+            stableIds.ValidateReferences(
+                "store",
+                storeId => stores.ContainsStore(storeId)
+                    || storeId == worldRules.AdriaStoreId);
         worldRules.ValidateStores(stores);
         if (spells is not null)
             stores.ValidateSpellReferences(spells);
