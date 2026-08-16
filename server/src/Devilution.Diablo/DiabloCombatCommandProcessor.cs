@@ -7152,13 +7152,19 @@ public sealed class DiabloCombatCommandProcessor
         // animation it admits intelligence + 13, while a fresh movement mode
         // with var2 == 0 admits intelligence + 63. Legacy hand-built targets
         // without that state retain the earlier standing-tick boundary once.
+        var movementTuning = GetBatMovementTuning(monster);
         var movementChance = monster.BatMovementIdleTicks == -1
-            ? monster.Intelligence + 63
+            ? movementTuning.ChanceBase
+                + movementTuning.IntelligenceScale * monster.Intelligence
+                + movementTuning.FreshChanceBonus
             : monster.BatMovementIdleTicks > 20
-                ? monster.Intelligence + 13
+                ? movementTuning.ChanceBase
+                    + movementTuning.IntelligenceScale * monster.Intelligence
                 : monster.BatMovementIdleTicks == 0
                     && monster.BatMovementMode is >= 1 and <= 3
-                    ? monster.Intelligence + 63
+                    ? movementTuning.ChanceBase
+                        + movementTuning.IntelligenceScale * monster.Intelligence
+                        + movementTuning.FreshChanceBonus
                     : 0;
         movementChance = Math.Min(100, movementChance);
         if (seed % 100U >= (uint)movementChance) {
@@ -7180,6 +7186,21 @@ public sealed class DiabloCombatCommandProcessor
             monster.AdvanceBatMovementIdle();
         }
         return true;
+    }
+
+    private (int ChanceBase, int IntelligenceScale, int FreshChanceBonus)
+        GetBatMovementTuning(AuthoritativeCombatTarget target)
+    {
+        if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
+            && definition.BatMovementChanceBase > 0
+            && definition.BatMovementChanceIntelligenceScale > 0
+            && definition.BatMovementFreshChanceBonus > 0) {
+            return (
+                definition.BatMovementChanceBase,
+                definition.BatMovementChanceIntelligenceScale,
+                definition.BatMovementFreshChanceBonus);
+        }
+        return (13, 1, 50);
     }
 
     private (int X, int Y)? FindGoatRangedRetreatDestination(

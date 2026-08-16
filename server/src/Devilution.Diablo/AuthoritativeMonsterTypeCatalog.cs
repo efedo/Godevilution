@@ -96,6 +96,15 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Bat adjacent attack chance increase per intelligence point. */
     public int BatAttackChanceIntelligenceScale { get; init; }
 
+    /** Native Bat movement chance base before intelligence scaling. */
+    public int BatMovementChanceBase { get; init; }
+
+    /** Native Bat movement chance increase per intelligence point. */
+    public int BatMovementChanceIntelligenceScale { get; init; }
+
+    /** Native Bat fresh-mode movement chance bonus. */
+    public int BatMovementFreshChanceBonus { get; init; }
+
     /** Native Bat post-hit retreat duration in authoritative ticks. */
     public int BatRetreatDurationTicks { get; init; }
 
@@ -374,6 +383,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
             && SneakRetreatTicks > 0
             || BatAttackChanceBase > 0
             && BatAttackChanceIntelligenceScale > 0
+            || BatMovementChanceBase > 0
+            && BatMovementChanceIntelligenceScale > 0
+            && BatMovementFreshChanceBonus > 0
             || SkeletonMeleeDelayChanceBase > 0
             && SkeletonMeleeDelayChanceIntelligenceScale > 0
             || SkeletonMeleeAttackChanceBase > 0
@@ -505,6 +517,19 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.BatAttackChanceIntelligenceScale != 0)
                     && (definition.BatAttackChanceBase <= 0
                         || definition.BatAttackChanceIntelligenceScale <= 0))
+                || definition.BatMovementChanceBase is < 0 or > 100
+                || definition.BatMovementChanceIntelligenceScale is < 0 or > 100
+                || definition.BatMovementFreshChanceBonus is < 0 or > 100
+                || ((definition.BatMovementChanceBase != 0
+                        || definition.BatMovementChanceIntelligenceScale != 0
+                        || definition.BatMovementFreshChanceBonus != 0)
+                    && (definition.BatMovementChanceBase <= 0
+                        || definition.BatMovementChanceIntelligenceScale <= 0
+                        || definition.BatMovementFreshChanceBonus <= 0))
+                || (definition.NativeAi != "Bat"
+                    && (definition.BatMovementChanceBase != 0
+                        || definition.BatMovementChanceIntelligenceScale != 0
+                        || definition.BatMovementFreshChanceBonus != 0))
                 || definition.BatRetreatDurationTicks is < 0 or > 64
                 || definition.SkeletonMeleeDelayChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeDelayChanceIntelligenceScale is < 0 or > 100
@@ -876,6 +901,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 SneakRetreatTicks = row.OptionalInt32("sneak_retreat_ticks"),
                 BatAttackChanceBase = row.OptionalInt32("bat_attack_chance_base"),
                 BatAttackChanceIntelligenceScale = row.OptionalInt32("bat_attack_chance_intelligence_scale"),
+                BatMovementChanceBase = row.OptionalInt32("bat_movement_chance_base"),
+                BatMovementChanceIntelligenceScale = row.OptionalInt32("bat_movement_chance_intelligence_scale"),
+                BatMovementFreshChanceBonus = row.OptionalInt32("bat_movement_fresh_chance_bonus"),
                 BatRetreatDurationTicks = row.OptionalInt32("bat_retreat_duration_ticks"),
                 SkeletonMeleeDelayChanceBase = row.OptionalInt32("skeleton_melee_delay_chance_base"),
                 SkeletonMeleeDelayChanceIntelligenceScale = row.OptionalInt32("skeleton_melee_delay_chance_intelligence_scale"),

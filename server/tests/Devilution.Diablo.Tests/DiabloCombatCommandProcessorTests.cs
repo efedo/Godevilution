@@ -7441,6 +7441,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BatUsesValidatedMovementChanceTuning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            monsterId: 42,
+            nativeAi: "Bat",
+            intelligence: 0,
+            batMovementIdleTicks: 0,
+            batMovementMode: 1);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                42,
+                42,
+                "Bat",
+                1,
+                2,
+                1,
+                4,
+                7,
+                10,
+                2,
+                5,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Bat",
+                BatMovementChanceBase = 1,
+                BatMovementChanceIntelligenceScale = 1,
+                BatMovementFreshChanceBonus = 1,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.BatCharge,
+                    ChargeMinimumDistance: 5,
+                    ChargeChanceBase: 1,
+                    ChargeChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(entityId: 7, positionX: 7, positionY: 0);
+
+        // 11 ^ 9 ^ 7 = 5: the charge roll misses, and the authored two-point
+        // fresh-mode movement band defers instead of using native 63 percent.
+        processor.AdvanceTick(11, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(1, monster.BatMovementIdleTicks);
+    }
+
+    [Fact]
     public void BatDefersBeforeItsNativeMovementModeIsReady()
     {
         var monster = new AuthoritativeCombatTarget(
