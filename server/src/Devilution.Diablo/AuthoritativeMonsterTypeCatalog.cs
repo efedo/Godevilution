@@ -270,6 +270,12 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native HorkDemon far-distance RoundWalk admission modulo. */
     public int HorkDemonRoundWalkChanceModulo { get; init; }
 
+    /** Native AiAvoidance minimum distance required to start its Move goal. */
+    public int AiAvoidanceMovementMinimumDistance { get; init; }
+
+    /** Native AiAvoidance Move-goal admission modulo. */
+    public int AiAvoidanceMovementChanceModulo { get; init; }
+
     /** Native Gargoyle safety-boundary base before intelligence scaling. */
     public int GargoyleSafeDistanceBase { get; init; }
 
@@ -561,6 +567,13 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.HorkDemonRoundWalkChanceModulo != 0
                     && (definition.NativeAi != "HorkDemon"
                         || definition.HorkDemonRoundWalkChanceModulo <= 0)
+                || definition.AiAvoidanceMovementMinimumDistance is < 0 or > 100
+                || definition.AiAvoidanceMovementChanceModulo is < 0 or > 100
+                || (definition.AiAvoidanceMovementMinimumDistance != 0
+                    || definition.AiAvoidanceMovementChanceModulo != 0)
+                    && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
+                        || definition.AiAvoidanceMovementMinimumDistance < 2
+                        || definition.AiAvoidanceMovementChanceModulo <= 0)
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -924,6 +937,8 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 MegaIntermediateMovementChanceIntelligenceScale = row.OptionalInt32("mega_intermediate_movement_chance_intelligence_scale"),
                 SkeletonKingRoundWalkChanceModulo = row.OptionalInt32("skeleton_king_round_walk_chance_modulo"),
                 HorkDemonRoundWalkChanceModulo = row.OptionalInt32("hork_demon_round_walk_chance_modulo"),
+                AiAvoidanceMovementMinimumDistance = row.OptionalInt32("ai_avoidance_movement_minimum_distance"),
+                AiAvoidanceMovementChanceModulo = row.OptionalInt32("ai_avoidance_movement_chance_modulo"),
             }));
     }
 

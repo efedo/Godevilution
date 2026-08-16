@@ -6806,13 +6806,22 @@ public sealed class DiabloCombatCommandProcessor
         int distance,
         uint seed)
     {
+        var movementMinimumDistance = 4;
+        var movementChanceModulo = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var avoidanceDefinition) == true
+            && avoidanceDefinition.AiAvoidanceMovementMinimumDistance > 0
+            && avoidanceDefinition.AiAvoidanceMovementChanceModulo > 0) {
+            movementMinimumDistance = avoidanceDefinition.AiAvoidanceMovementMinimumDistance;
+            movementChanceModulo = avoidanceDefinition.AiAvoidanceMovementChanceModulo;
+        }
         if (distance < 2) {
             monster.ClearAvoidanceMovement();
             return false;
         }
 
         var hasMoveGoal = monster.AvoidanceMovementTicks >= 0;
-        var startsMoveGoal = distance >= 4 && (seed / 100U) % 4U == 0U;
+        var startsMoveGoal = distance >= movementMinimumDistance
+            && (seed / 100U) % (uint)movementChanceModulo == 0U;
         if (!hasMoveGoal && !startsMoveGoal)
             return false;
 

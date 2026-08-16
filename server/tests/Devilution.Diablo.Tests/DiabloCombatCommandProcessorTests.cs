@@ -10684,6 +10684,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AiAvoidanceUsesValidatedMovementGoalGate()
+    {
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                34,
+                "Flesh Clan",
+                4,
+                6,
+                8,
+                30,
+                45,
+                15,
+                4,
+                10,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "GoatMelee",
+                GoatMeleeMovementChanceBase = 1,
+                GoatMeleeMovementChanceIntelligenceScale = 1,
+                AiAvoidanceMovementMinimumDistance = 4,
+                AiAvoidanceMovementChanceModulo = 1,
+            },
+        ]);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            40,
+            attackDamage: 2,
+            aggroRange: 7,
+            monsterId: 1,
+            nativeAi: "GoatMelee",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, monsterTypes: monsterTypes);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 101 ^ 9 ^ 7 = 107: native modulo-four skips the Move goal and the
+        // one-percent ordinary movement roll fails; authored modulo-one must
+        // still start the persisted AiAvoidance goal.
+        Assert.Empty(processor.AdvanceTick(101, [player]));
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal(1, monster.AvoidanceMovementTicks);
+    }
+
+    [Fact]
     public void GoatMeleeAiDefersWhenItsNativeRoundWalkCandidatesAreBlocked()
     {
         var monster = new AuthoritativeCombatTarget(
