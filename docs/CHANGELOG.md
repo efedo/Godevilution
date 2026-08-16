@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Clarify current architecture and content documentation that schema 1.278
+  completed dynamic spell-book assignment and book-cost behavior.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

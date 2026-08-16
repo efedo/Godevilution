@@ -685,9 +685,8 @@ duplicate healing-scroll alias is removed.
 
 Schema 1.277 externalizes the four native dynamic spell-book templates at
 indices 114–117, preserving their level gates, drop weights, misc identity, and
-blue-book cursor projection. Dynamic spell assignment and book-cost mutation
-remain a separate behavior migration because the native spell is selected when
-the item is generated.
+blue-book cursor projection. Schema 1.278 completes dynamic spell assignment and
+book-cost mutation through the validated server-owned generator described below.
 
 Schema 1.279 adds validated presentation names to every directly castable spell
 row. Memorized, charged-item, and consumable-item protocol projections consume

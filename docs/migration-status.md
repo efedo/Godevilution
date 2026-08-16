@@ -1323,8 +1323,9 @@ Status date: 2026-08-16
 
 - Schema 1.277 externalizes the four native dynamic spell-book templates at
   indices 114–117, preserving level gates, drop weights, misc identity, and the
-  blue-book cursor projection; dynamic spell assignment and book-cost mutation
-  remain a separate behavior migration.
+  blue-book cursor projection. Schema 1.278 completes dynamic spell assignment
+  and book-cost mutation through the validated server-owned generator described
+  below.
 
 - Schema 1.279 adds validated display names to every directly castable spell
   row. Memorized, charged-item, and consumable-item projections now use the
