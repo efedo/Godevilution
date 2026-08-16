@@ -118,6 +118,21 @@ public static class AuthoritativeWorldObjectCatalog
         }
     }
 
+    /** Validates quest identities referenced by content-owned world objects. */
+    public static void ValidateQuestRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        IEnumerable<AuthoritativeQuestState> quests)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(quests);
+        var questIds = quests.Select(quest => quest.QuestId).ToHashSet();
+        foreach (var @object in objects.Where(@object => @object.QuestId != 0)) {
+            if (!questIds.Contains(@object.QuestId))
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown quest {@object.QuestId}.");
+        }
+    }
+
     private static AuthoritativeObjectEffectKind ParseEffectKind(TsvRow row)
     {
         if (!row.TryGet("effect_kind", out var value) || string.IsNullOrWhiteSpace(value))

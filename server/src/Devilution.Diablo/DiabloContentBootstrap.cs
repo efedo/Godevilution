@@ -371,14 +371,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (world is not null
             && quests is null
-            && world.WarpTargets.Any(target => target.RequiredQuestId != 0)) {
+            && (world.WarpTargets.Any(target => target.RequiredQuestId != 0)
+                || objects?.Any(@object => @object.QuestId != 0) == true)) {
             throw new InvalidDataException(
-                "Quest-gated warps require an active quest catalog.");
+                "Quest-gated warps and objects require an active quest catalog.");
         }
         if (quests is not null) {
             if (world is not null)
                 AuthoritativeWarpCatalog.ValidateQuestRequirements(
                     world.WarpTargets,
+                    quests);
+            if (objects is not null)
+                AuthoritativeWorldObjectCatalog.ValidateQuestRequirements(
+                    objects,
                     quests);
             var rewardQuests = quests
                 .Where(quest => quest.CompletionRewardItemId != 0)
