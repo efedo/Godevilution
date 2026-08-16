@@ -6205,6 +6205,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SnakeAiUsesValidatedDriftPattern()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            nativeAi: "Snake",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge) {
+                    SnakeDriftPattern = [0, 0, 0, 0, 0, 0],
+                },
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 5,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 40 ^ 9 ^ 7 = 38, outside Snake's native delay band. The configured
+        // first rotation is zero, so the drift target is straight ahead (2,0)
+        // instead of the legacy lateral (2,1) candidate.
+        processor.AdvanceTick(40, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((2, 0), (monster.FuturePositionX, monster.FuturePositionY));
+    }
+
+    [Fact]
     public void SnakeChargeUsesConfiguredMonsterPlayerBlockLevelScale()
     {
         var monster = new AuthoritativeCombatTarget(

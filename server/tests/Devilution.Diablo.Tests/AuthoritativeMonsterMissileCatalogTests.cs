@@ -344,6 +344,32 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedSnakeDriftPattern()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tsnake_drift_pattern\n"
+                + "Snake\tRhino\tSnakeCharge\t1, 1, 0, -1, -1, 0\n");
+
+        Assert.True(catalog.TryGet("Snake", out var snakeCharge));
+        Assert.Equal([1, 1, 0, -1, -1, 0], snakeCharge.SnakeDriftPattern);
+    }
+
+    [Fact]
+    public void RejectsSnakeDriftPatternsWithTheWrongLength()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Snake",
+                    "Rhino",
+                    AuthoritativeProjectileBehavior.SnakeCharge) {
+                    SnakeDriftPattern = [1, 0],
+                },
+            ]));
+    }
+
+    [Fact]
     public void RejectsAnOutOfRangeAvoidanceProbability()
     {
         Assert.Throws<InvalidDataException>(() =>

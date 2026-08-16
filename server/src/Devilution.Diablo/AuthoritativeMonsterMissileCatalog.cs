@@ -54,7 +54,9 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional Acid puddle impact lifetime; zero preserves the native two-tick phase. */
     int PuddleImpactLifetime = 0,
     /** Optional mapped projectile impact lifetime; zero preserves the native one-tick phase. */
-    int ProjectileImpactLifetime = 0);
+    int ProjectileImpactLifetime = 0,
+    /** Optional SnakeAi lateral drift rotation sequence; empty preserves the native sequence. */
+    IReadOnlyList<int>? SnakeDriftPattern = null);
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -80,6 +82,13 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.ProjectileLifetimeBase < 0
                 || definition.ProjectileLifetimeIntelligenceScale < 0
                 || definition.ProjectileDamage < 0
+                || definition.SnakeDriftPattern is not null
+                    && definition.SnakeDriftPattern.Any(rotation => rotation is < -4 or > 4)
+                || definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
+                    && definition.SnakeDriftPattern is not null
+                    && definition.SnakeDriftPattern.Count != 6
+                || definition.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge
+                    && definition.SnakeDriftPattern is not null
                 || definition.PuddleDurationRandomRange < 0
                 || definition.PuddleDurationBase < 0
                 || definition.PuddleDurationIntelligenceScale < 0
@@ -317,8 +326,27 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("inferno_adjacent_choice_modulo"),
                 row.OptionalInt32("projectile_damage"),
                 row.OptionalInt32("puddle_impact_lifetime"),
-                row.OptionalInt32("projectile_impact_lifetime"));
+                row.OptionalInt32("projectile_impact_lifetime"),
+                ParseSnakeDriftPattern(row));
         }));
+    }
+
+    private static IReadOnlyList<int>? ParseSnakeDriftPattern(TsvRow row)
+    {
+        if (!row.TryGet("snake_drift_pattern", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var entries = value.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var pattern = new int[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            if (!int.TryParse(entries[index], out pattern[index]))
+                throw new InvalidDataException(
+                    $"Monster missile row {row.LineNumber} contains an invalid Snake drift rotation.");
+        }
+        return pattern;
     }
 
     private static uint ResolveSpellId(

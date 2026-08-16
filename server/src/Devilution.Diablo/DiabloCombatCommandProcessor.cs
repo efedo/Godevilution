@@ -6663,7 +6663,12 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        var drift = FindSnakeDriftStep(monster, player, players, actionSeed);
+        var drift = FindSnakeDriftStep(
+            monster,
+            player,
+            players,
+            actionSeed,
+            missile.SnakeDriftPattern);
         if (drift.HasValue)
             monster.BeginMovement(drift.Value.X, drift.Value.Y);
         return true;
@@ -6768,17 +6773,21 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
         IReadOnlyList<AuthoritativePlayerState> players,
-        uint seed)
+        uint seed,
+        IReadOnlyList<int>? configuredPattern)
     {
         var targetDirection = GetDirection(
             monster.PositionX,
             monster.PositionY,
             player.PositionX,
             player.PositionY);
-        var patternIndex = (int)((seed / 100U) % (uint)SnakeDriftPattern.Length);
+        var pattern = configuredPattern is { Count: > 0 }
+            ? configuredPattern
+            : SnakeDriftPattern;
+        var patternIndex = (int)((seed / 100U) % (uint)pattern.Count);
         var direction = RotateDirection(
             targetDirection,
-            SnakeDriftPattern[patternIndex]);
+            pattern[patternIndex]);
         var driftDisplacement = DirectionDisplacements[direction];
         var driftX = checked(monster.PositionX + driftDisplacement.X);
         var driftY = checked(monster.PositionY + driftDisplacement.Y);
