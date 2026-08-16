@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the stable `warp` namespace and optional `warp_symbol` links to static
+  level-trigger routes, with activation-time checks and numeric fallback.
+
 - Complete the stable `portal` namespace with optional `portal_symbol` links on
   static portal rows, activation-time mismatch checks, and numeric fallback.
 
