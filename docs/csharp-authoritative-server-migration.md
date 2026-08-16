@@ -770,6 +770,11 @@ Schema 1.295 externalizes Rhino's recovery delay through optional
 `rhino_delay_base` and `rhino_delay_random_range` columns on the validated
 monster-type mapping. Older packs retain the native ten-plus-ten fallback.
 
+Schema 1.296 externalizes SkeletonMelee movement and failed-adjacent-attack
+delays through optional `skeleton_melee_*_delay_*` columns on the validated
+monster-type mapping. Older packs retain the native 15/10 base, 2-point
+intelligence reduction, and ten-wide random formulas.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school

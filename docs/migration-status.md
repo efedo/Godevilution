@@ -74,6 +74,10 @@ Status date: 2026-08-16
   (`rhino_delay_base` and `rhino_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
 
+- SkeletonMelee movement and failed-adjacent-attack delay bands are now
+  validated monster-type fields, preserving native intelligence reduction
+  and deterministic exclusive random ranges for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.
