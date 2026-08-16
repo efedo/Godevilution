@@ -37,6 +37,10 @@ All notable changes to this fork are documented below.
   native town trigger remains closed until Grave Matters is completed, then
   uses the authored crypt destination and validated destination crawl.
 
+- Validate quest catalogs and identities referenced by level-trigger gates
+  during content activation, so malformed external packs fail before
+  publication.
+
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
