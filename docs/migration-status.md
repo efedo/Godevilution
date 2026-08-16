@@ -100,6 +100,11 @@ Status date: 2026-08-16
   `rhino_movement_goal_chance_modulo` gate in charge-miss and blocked-lane
   fallback branches, preserving the native 5/4 fallback for older packs.
 
+- Familiar Lightning damage now uses the optional
+  `projectile_damage_random_range` missile field for its native
+  `GenerateRnd` upper bound, preserving the native range of ten for older
+  mappings.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1374,6 +1379,10 @@ Status date: 2026-08-16
 
 - Schema 1.316 externalizes Rhino's ordinary movement bands through optional
   monster-type data, retaining the native 33/2/50 fallback for older mappings.
+
+- Schema 1.317 externalizes Familiar Lightning's native random-damage upper
+  bound through optional missile data, retaining the native `GenerateRnd(10)`
+  fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

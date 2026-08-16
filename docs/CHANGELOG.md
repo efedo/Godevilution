@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.317 validated Familiar Lightning random-damage bounds to
+  `monster_missiles.tsv`, preserving the native `GenerateRnd(10)` fallback for
+  older mappings.
+
 - Apply the validated Rhino far-distance movement-goal gate consistently to
   charge-miss and blocked-lane fallback branches, retaining the native 5/4
   fallback for older mappings.
