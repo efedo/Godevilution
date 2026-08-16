@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.311 validated Snake adjacent attack-admission chance fields to
+  `monster_missiles.tsv`, preserving the native 20-plus-intelligence fallback
+  for older mappings.
+
 - Add schema 1.310 validated SkeletonRanged fresh-mode movement bonus to
   `monster_types.tsv`, preserving the native 50-percent fallback for older
   mappings.

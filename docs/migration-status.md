@@ -67,6 +67,11 @@ Status date: 2026-08-16
   `snake_distant_delay_chance_intelligence_scale`), preserving the native
   35-minus-two-times-intelligence band with fallback behavior for older packs.
 
+- Snake adjacent attack admission chance is now validated `SnakeCharge` missile
+  content (`snake_adjacent_attack_chance_base` and
+  `snake_adjacent_attack_chance_intelligence_scale`), preserving the native
+  20-plus-intelligence band with fallback behavior for older packs.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
@@ -1317,6 +1322,10 @@ Status date: 2026-08-16
 - Schema 1.310 externalizes SkeletonRanged's fresh-mode movement bonus through
   optional monster-type data, retaining the native 50-percent fallback for
   older mappings.
+
+- Schema 1.311 externalizes Snake's adjacent attack-admission chance through
+  optional `SnakeCharge` missile data, retaining the native
+  20-plus-intelligence fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
