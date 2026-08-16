@@ -2399,10 +2399,11 @@ victim level supplies value, the activated class supplies cursor graphic, and
 schema-0.18 combat/item content supplies stable item identity. Runtime names
 and cursor cross protocol, saves, both clients, and conditional hashes; a shared
 C++/C# replay proves death, exact ear state, placement, and unchanged ear-drop
-RNG. Remaining spell scaling and other class modifiers, targeting edge cases,
-and a complete Godot spell-selection UI remain migration work; the six
-cursor-driven class capabilities are now server-owned and covered by protocol
-tests.
+RNG. Remaining spell scaling and other class modifiers and targeting edge cases
+remain migration work. Godot now presents the complete authoritative spell
+source list, preserves source-key selection across snapshots, and allows direct
+selection alongside Q/E cycling; the six cursor-driven class capabilities are
+now server-owned and covered by protocol tests.
 
 Content schema 0.8 moves block/recovery timing out of `classes.tsv` and imports
 the complete native six-class animation matrix into validated

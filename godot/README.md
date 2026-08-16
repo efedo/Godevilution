@@ -10,6 +10,11 @@ into transient floating feedback positioned from the latest snapshot. This is
 the server-backed presentation path; the native Lua floating-number mods remain
 available only to the legacy compatibility client.
 
+The HUD presents every server-provided memorized spell, charged item,
+consumable, and class ability as a selectable spell source. Selection is keyed
+by the authoritative source identity, so reconnects and snapshot updates do
+not turn presentation labels into gameplay state.
+
 ## Projects
 
 - `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,
