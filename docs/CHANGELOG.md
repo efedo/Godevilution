@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Separate class capability IDs into the stable `ability` namespace and assign
+  Holy Bolt its explicit `spell:holy_bolt` identity, while retaining legacy
+  spell-namespace fallback for older loadouts.
+
 - Externalize direct store spell references through optional `spell_symbol`
   values in `stores.tsv`; activated rows reject numeric/symbol mismatches while
   numeric fallback remains available.

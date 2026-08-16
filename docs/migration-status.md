@@ -28,13 +28,14 @@ Status date: 2026-08-15
   the active item catalog before constructing sessions, rejecting unknown or
   mismatched native ear projections at the data boundary.
 
-- Stable spell symbols in `content_ids.tsv` are now cross-validated against
-  the active spell catalog before ability IDs are published to a session.
+- Stable spell and ability symbols in `content_ids.tsv` are now
+  cross-validated against their active catalogs before IDs are published to a
+  session.
 
-- Class loadouts now optionally resolve `ability_spell_symbol` and
-  `starting_spell_symbol` through the stable spell namespace. Activated packs
-  reject symbol/numeric mismatches, while legacy loadout schemas retain their
-  numeric-ID fallback.
+- Class loadouts now resolve `ability_spell_symbol` through the stable ability
+  namespace and `starting_spell_symbol` through the spell namespace. Activated
+  packs reject symbol/numeric mismatches, while legacy symbols fall back to the
+  old spell namespace.
 
 - Monster missile mappings now optionally resolve `spell_symbol` through the
   stable spell namespace. Activated rows reject symbol/numeric mismatches,
@@ -856,6 +857,10 @@ Status date: 2026-08-15
 
 - Schema 1.222 adds the Adria service-only store identity to `world_rules.tsv`;
   activation rejects zero and stock-vendor collisions.
+
+- Schema 1.231 separates class capability symbols into the stable `ability`
+  namespace and assigns Holy Bolt the stable `spell:holy_bolt` identity while
+  legacy loadouts retain spell-namespace fallback.
 
 - Schema 1.230 adds optional `spell_symbol` to direct spell rows in `stores.tsv`;
   rows resolve stable spell IDs and reject numeric/symbol mismatches while

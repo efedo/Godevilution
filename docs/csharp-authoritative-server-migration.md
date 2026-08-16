@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.231 separates class capability symbols into the stable `ability`
+namespace and assigns Holy Bolt the stable `spell:holy_bolt` identity. Existing
+loadouts retain a fallback to the legacy `spell` namespace.
+
 Schema 1.230 adds an optional `spell_symbol` to direct spell rows in
 `stores.tsv`. Activated rows resolve the stable spell namespace and reject
 mismatches with retained numeric IDs; older rows remain compatible through
