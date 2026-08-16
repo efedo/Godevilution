@@ -53,6 +53,33 @@ public sealed class AuthoritativeWorldTests
         Assert.Equal(0U, warp.SourceLevelId);
         Assert.Equal(1U, portal.DestinationLevelId);
     }
+
+    [Fact]
+    public void AuthoredMonsterObjectAndQuestLevelLinksResolveStableSymbols()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "cathedral", 1),
+        ]);
+        var monster = Assert.Single(AuthoritativeMonsterCatalog.LoadTsv(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tlevel_id\tlevel_symbol\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t1\t1\tcathedral\t1\t1\t10\t10\t2\n",
+            stableIds: stableIds).Targets);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tlevel_symbol\tposition_x\tposition_y\teffect_kind\teffect_amount\n"
+                + "9\t1\t1\tcathedral\t1\t1\tNone\t0\n",
+            stableIds));
+        var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\tlevel_symbol\trequired_progress\n"
+                + "3001\t1\tcathedral\t1\n",
+            stableIds: stableIds));
+
+        Assert.Equal(1U, monster.LevelId);
+        Assert.Equal(1U, @object.LevelId);
+        Assert.Equal(1U, quest.LevelId);
+    }
     [Fact]
     public void ResolvesStableQuestSymbolsForWarpAndObjectLinks()
     {

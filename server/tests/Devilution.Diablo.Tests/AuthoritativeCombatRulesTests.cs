@@ -1048,6 +1048,21 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void ResolvesStableRestartLevelSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("level", "town", 0),
+        ]);
+        var rules = AuthoritativeCombatRules.LoadTsv(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\trestart_level_id\trestart_level_symbol\n"
+                + "10\t1\t100\t0\ttown\n",
+            stableIds: stableIds);
+
+        Assert.Equal(0U, rules.RestartLevelId);
+    }
+
+    [Fact]
     public void RejectsStablePvpEarItemNumericMismatch()
     {
         var stableIds = new StableContentIdCatalog([
