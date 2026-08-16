@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -6,6 +7,31 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeWorldTests
 {
+    [Fact]
+    public void ResolvesStableQuestSymbolsForWarpAndObjectLinks()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "grave_matters", 3017),
+        ]);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t3\t3\tnone\n2\t3\t3\tnone\n");
+        var warp = Assert.Single(AuthoritativeWarpCatalog.LoadTsv(
+            "warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\n"
+                + "7\t1\t1\t1\t2\t2\t2\t3017\tgrave_matters\t1\n",
+            world,
+            stableIds));
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tactivated\tquest_id\tquest_symbol\teffect_kind\teffect_amount\tmissile_passable\tbreakable\tdestroyed\ttrap_armed\n"
+                + "9\t1\t1\t1\t1\t0\t3017\tgrave_matters\tQuestSequence\t1\t0\t0\t0\t0\n",
+            stableIds));
+
+        Assert.Equal(3017U, warp.RequiredQuestId);
+        Assert.Equal(3017U, @object.QuestId);
+    }
+
     [Fact]
     public void LevelsValidateBoundsAndBlockedCellsIndependently()
     {

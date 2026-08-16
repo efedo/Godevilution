@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.232.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.233.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -31,7 +31,7 @@ public sealed class ShippedContentTests
         var gatedWarps = TsvTable.Parse(
             warps.SourcePath,
             warps.ToCanonicalTsv()
-                + "2\t0\t0\t0\t0\t0\t0\t3017\t1\n");
+                + "2\t0\t0\t0\t0\t0\t0\t3017\t\t1\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -60,7 +60,7 @@ public sealed class ShippedContentTests
         var questLinkedObjects = TsvTable.Parse(
             objects.SourcePath,
             objects.ToCanonicalTsv()
-                + "9001\t6001\t0\t0\t0\t0\t3017\tNone\t0\t1\t0\t0\t0\n");
+                + "9001\t6001\t0\t0\t0\t0\t3017\t\tNone\t0\t1\t0\t0\t0\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -809,7 +809,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.232.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.233.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

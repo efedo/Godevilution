@@ -45,6 +45,22 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void ResolvesStableSymbolForFollowOnQuestActivation()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "lazarus", 3016),
+            new StableContentId("quest", "diablo", 3006),
+        ]);
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tquest_symbol\tlevel_id\trequired_progress\tcompletion_activate_quest_id\tcompletion_activate_quest_symbol\n"
+                + "3016\tlazarus\t15\t1\t3006\tdiablo\n",
+            stableIds: stableIds);
+
+        Assert.Equal(3006U, Assert.Single(quests).CompletionActivateQuestId);
+    }
+
+    [Fact]
     public void LoadsNativeQuestTypesInStableIdentityOrder()
     {
         var catalog = AuthoritativeQuestTypeCatalog.LoadTsv(

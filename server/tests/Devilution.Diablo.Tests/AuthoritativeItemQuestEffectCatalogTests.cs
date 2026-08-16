@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,21 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeItemQuestEffectCatalogTests
 {
+    [Fact]
+    public void ResolvesStableQuestSymbolForItemEffect()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "grave_matters", 3017),
+        ]);
+        var catalog = AuthoritativeItemQuestEffectCatalog.LoadTsv(
+            "item_quest_effects.tsv",
+            "item_id\tquest_id\tquest_symbol\teffect_kind\teffect_amount\n"
+                + "43\t3017\tgrave_matters\tActivateQuest\t1\n",
+            stableIds);
+
+        Assert.Equal(3017U, Assert.Single(catalog.Definitions).QuestId);
+    }
+
     [Fact]
     public void LoadsAndValidatesItemQuestEffect()
     {
