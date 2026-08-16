@@ -32,7 +32,12 @@ public sealed record AuthoritativeSpellBookDefinition(
 public sealed class AuthoritativeSpellBookCatalog
 {
     private const int BookMiscId = 25;
+    private const uint FirstNativeSpellId = 1;
+    private const uint MaximumNativeSpellId = 51;
     private readonly Dictionary<uint, AuthoritativeSpellBookDefinition> definitions;
+    private IReadOnlyDictionary<uint, AuthoritativeSpellBookDefinition> nativeDefinitions
+        = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+    private uint nativeSpellTableSize;
 
     public AuthoritativeSpellBookCatalog(
         IEnumerable<AuthoritativeSpellBookDefinition> definitions)
@@ -82,10 +87,34 @@ public sealed class AuthoritativeSpellBookCatalog
         if (templates.Count == 0)
             throw new InvalidDataException(
                 "Spell-book metadata requires at least one item tagged Book.");
+        var validatedNativeDefinitions = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+        var maximumNativeSpellId = FirstNativeSpellId;
+        var nativeSelectionSupported = true;
+        foreach (var spell in spells.Definitions) {
+            if (spell.NativeSpellId != 0)
+                maximumNativeSpellId = Math.Max(maximumNativeSpellId, spell.NativeSpellId);
+        }
         foreach (var definition in Definitions) {
-            if (!spells.TryGet(definition.SpellId, out _))
+            if (!spells.TryGet(definition.SpellId, out var spell))
                 throw new InvalidDataException(
                     $"Spell-book definition references unknown spell {definition.SpellId}.");
+            var nativeSpellId = spell.NativeSpellId == 0
+                ? definition.SpellId
+                : spell.NativeSpellId;
+            if (nativeSpellId is < FirstNativeSpellId or > MaximumNativeSpellId
+                || !validatedNativeDefinitions.TryAdd(nativeSpellId, definition)) {
+                // Packs authored before native spell IDs were externalized
+                // retain the stable-order fallback below.
+                nativeSelectionSupported = false;
+            }
+            maximumNativeSpellId = Math.Max(maximumNativeSpellId, nativeSpellId);
+        }
+        if (nativeSelectionSupported) {
+            nativeDefinitions = validatedNativeDefinitions;
+            nativeSpellTableSize = checked(maximumNativeSpellId + 1);
+        } else {
+            nativeDefinitions = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
+            nativeSpellTableSize = 0;
         }
     }
 
@@ -153,8 +182,30 @@ public sealed class AuthoritativeSpellBookCatalog
             throw new InvalidDataException(
                 $"No spell is eligible for a book at item level {itemLevel}.");
 
-        var spell = eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Length)];
+        var spell = SelectRandomSpell(eligible, itemSeed);
         return Generate(items, spell.SpellId, itemSeed, itemLevel);
+    }
+
+    private AuthoritativeSpellBookDefinition SelectRandomSpell(
+        IReadOnlyList<AuthoritativeSpellBookDefinition> eligible,
+        uint itemSeed)
+    {
+        if (nativeDefinitions.Count == 0)
+            return eligible[new AuthoritativeLegacyRandom(itemSeed).Next(eligible.Count)];
+
+        var remaining = new AuthoritativeLegacyRandom(itemSeed).Next(checked((int)nativeSpellTableSize)) + 1;
+        var nativeSpellId = FirstNativeSpellId;
+        while (true) {
+            if (nativeDefinitions.TryGetValue(nativeSpellId, out var definition)
+                && eligible.Contains(definition)) {
+                remaining--;
+                if (remaining == 0)
+                    return definition;
+            }
+            nativeSpellId++;
+            if (nativeSpellId >= nativeSpellTableSize)
+                nativeSpellId = FirstNativeSpellId;
+        }
     }
 
     public static AuthoritativeSpellBookCatalog LoadTsv(
