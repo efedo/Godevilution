@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an authoritative-path dependency gate that rejects Lua/sol2 references
+  from server and Godot C# source/project files while retaining the native
+  compatibility layer.
+
 - Add schema 1.299 validated SkeletonKing movement-admission chance tuning to
   `monster_types.tsv`, preserving the native intelligence band for older
   mappings.
