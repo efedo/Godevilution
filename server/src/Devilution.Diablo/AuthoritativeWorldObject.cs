@@ -69,6 +69,23 @@ public sealed class AuthoritativeWorldObject
 /** External object placement and identity definitions. */
 public static class AuthoritativeWorldObjectCatalog
 {
+    /** Validates authored object levels and positions against world bounds. */
+    public static void ValidateWorld(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var @object in objects) {
+            if (!world.ContainsLevel(@object.LevelId))
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown level {@object.LevelId}.");
+            if (!world.ContainsPosition(@object.LevelId, @object.PositionX, @object.PositionY))
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} contains a position outside its level.");
+        }
+    }
+
     public static IReadOnlyList<AuthoritativeWorldObject> LoadTsv(string sourcePath, string contents)
     {
         var table = TsvTable.Parse(sourcePath, contents);

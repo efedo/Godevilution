@@ -332,6 +332,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.SourcePath,
                 objectsTable.ToCanonicalTsv())
             : null;
+        if (world is not null && objects is not null)
+            AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         if (objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objects, itemCatalog!);
         var setLevelNames = content.TryGetTable(
