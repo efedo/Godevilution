@@ -7553,7 +7553,7 @@ public sealed class DiabloCombatCommandProcessorTests
             spells: new AuthoritativeSpellCatalog([
                 new AuthoritativeSpellDefinition(3, 1, 0, 0, 0, 0),
             ]),
-            random: new DiabloRandom(0),
+            random: new DiabloRandom(1),
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
                     "Bat",
@@ -7564,7 +7564,8 @@ public sealed class DiabloCombatCommandProcessorTests
                     DamageType: AuthoritativeDamageType.Lightning,
                     ProjectileSpeed: 16,
                     ProjectileLifetime: 2,
-                    ProjectileImpactLifetime: 8),
+                    ProjectileImpactLifetime: 8,
+                    ProjectileDamageRandomRange: 4),
             ]));
         var player = CreatePlayer(
             entityId: 7,
@@ -7579,7 +7580,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
         Assert.Equal(AuthoritativeDamageType.Lightning, projectile.DamageType);
         Assert.Equal(3U, projectile.SpellId);
-        Assert.InRange(projectile.Damage, 1, 10);
+        Assert.Equal(3, projectile.Damage);
         Assert.Equal(1U, projectile.RemainingTicks);
         Assert.True(monster.BatRetreatTicks > 0);
     }

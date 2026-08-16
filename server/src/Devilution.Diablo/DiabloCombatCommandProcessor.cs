@@ -7018,7 +7018,7 @@ public sealed class DiabloCombatCommandProcessor
             && missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic
             && missile.MissileId == "Lightning";
 
-    /** Captures the native Familiar GenerateRnd(10) damage before missile travel. */
+    /** Captures Familiar's validated GenerateRnd damage bound before travel. */
     private void CreateFamiliarLightningProjectile(
         AuthoritativeCombatTarget monster,
         AuthoritativePlayerState player,
@@ -7037,6 +7037,9 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             speed);
+        var damageRandomRange = missile.ProjectileDamageRandomRange > 0
+            ? missile.ProjectileDamageRandomRange
+            : 10;
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(),
             monster.EntityId,
@@ -7047,7 +7050,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.PositionY,
             player.PositionX,
             player.PositionY,
-            random.RandomIntBetween(1, 10),
+            random.RandomIntBetween(1, damageRandomRange),
             missile.DamageType ?? AuthoritativeDamageType.Lightning,
             0,
             checked((uint)lifetime)) {

@@ -24,6 +24,17 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalProjectileDamageRandomRange()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tprojectile_damage_random_range\n"
+                + "Bat\tLightning\tMonsterMagic\t4\n");
+
+        Assert.Equal(4, Assert.Single(catalog.Definitions).ProjectileDamageRandomRange);
+    }
+
+    [Fact]
     public void ResolvesSymbolicMissileSpellIdsThroughStableContentIds()
     {
         var stableIds = new StableContentIdCatalog([
@@ -644,6 +655,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "DiabloApocalypse",
                     AuthoritativeProjectileBehavior.ApocalypseController,
                 ProjectileDamage: -1),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsNegativeProjectileDamageRandomRange()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Bat",
+                    "Lightning",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    ProjectileDamageRandomRange: -1),
             ]));
     }
 
