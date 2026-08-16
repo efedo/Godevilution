@@ -95,6 +95,11 @@ Status date: 2026-08-16
   `counselor_move_chance_percent` monster-type field, preserving the native
   30-percent branch with compatibility fallback for older packs.
 
+- Mega delegated Skeleton movement-delay admission is now validated
+  `mega_delay_chance_base` and `mega_delay_chance_intelligence_scale`
+  monster-type data, preserving the native 35-minus-four-times-intelligence
+  band with compatibility fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1234,6 +1239,10 @@ Status date: 2026-08-16
 - Schema 1.301 externalizes Counselor's failed-ranged-admission movement
   chance through optional `counselor_move_chance_percent` monster-type data,
   retaining the native 30-percent fallback for older mappings.
+
+- Schema 1.302 externalizes Mega's delegated Skeleton delay-admission chance
+  through optional monster-type fields, retaining the native
+  35-minus-four-times-intelligence fallback for older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

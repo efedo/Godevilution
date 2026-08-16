@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.302 validated Mega delegated delay-admission chance fields to
+  `monster_types.tsv`, preserving the native intelligence-scaled band for older
+  mappings.
+
 - Add schema 1.301 validated Counselor failed-ranged-admission movement chance
   metadata to `monster_types.tsv`, preserving the native 30-percent fallback
   for older mappings.
