@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   `projectile_impact_lifetime` after a player impact, while omitted values
   retain the native one-tick compatibility phase.
 
+- Server-owned `MonsterMagic` and `BloodStar` mappings now retain their
+  configured `projectile_impact_lifetime` after a player impact; player-owned
+  spell projectiles and native expiry behavior remain unchanged.
+
 - Add schema 1.322 mapped-charge spell identities to `monster_missiles.tsv`,
   preserving the native spell identity `1` when older rows omit the optional
   reference.

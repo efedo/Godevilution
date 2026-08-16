@@ -136,6 +136,10 @@ Status date: 2026-08-16
 - MonsterArrow impacts now enter the validated `projectile_impact_lifetime`
   phase before removal, retaining the native one-tick fallback for older rows.
 
+- Server-owned `MonsterMagic` and `BloodStar` impacts now enter the validated
+  `projectile_impact_lifetime` phase, while player-owned spell projectiles and
+  native expiry behavior remain unchanged.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
