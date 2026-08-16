@@ -30,6 +30,11 @@ All notable changes to this fork are documented below.
   Cap, Full Helm, Quilted Armor, Hard Leather Armor, Ring Mail, Scale Mail,
   Splint Mail, Field Plate, Gothic Plate, Buckler, and Tower Shield.
 
+- Add schema 1.274 stable identities for the remaining base potion, oil, and
+  elixir rows (native indices 77–90) and the native healing scroll at index 91,
+  preserving miscellaneous IDs, values, level gates, drop rates, cursor
+  projections, usability, and the scroll's consumable spell source.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

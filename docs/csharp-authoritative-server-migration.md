@@ -667,6 +667,11 @@ Plate, Gothic Plate, Buckler, and Tower Shield. Their stable IDs preserve native
 armor ranges, durability, requirements, cursor identities, level gates, values,
 and equipment subtypes.
 
+Schema 1.274 externalizes the remaining base potion, oil, and elixir rows at
+native indices 77–90 plus the native healing scroll at index 91. Their stable
+IDs preserve native miscellaneous IDs, values, level gates, drop rates, cursor
+identities, usability, and the healing scroll's consumable spell source.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

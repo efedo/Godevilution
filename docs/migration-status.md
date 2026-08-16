@@ -1068,6 +1068,11 @@ Status date: 2026-08-16
   ranges, durability, requirements, cursor identities, level gates, values,
   and equipment subtypes.
 
+- Schema 1.274 externalizes the remaining base potion, oil, and elixir rows at
+  native indices 77–90 plus the native healing scroll at index 91, preserving
+  native miscellaneous IDs, values, level gates, drop rates, cursor identities,
+  usability, and the scroll's consumable spell source.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 
