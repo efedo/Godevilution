@@ -57,7 +57,7 @@ All notable changes to this fork are documented below.
   intelligence gating, learned-spell level mutation, mana refund, and book
   consumption. Store rows and static/procedural monster drops now invoke the
   same deterministic dynamic-book generator before emitting authoritative item
-  state.
+  state, including quest-completion rewards.
 
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
