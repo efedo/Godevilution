@@ -165,6 +165,9 @@ public sealed record AuthoritativeSpellDefinition(
     /** Exclusive upper bound for Charged Bolt's native initial path roll. */
     public int ChargedBoltPathRandomRange { get; init; }
 
+    /** Optional 16-entry steering pattern; empty preserves the native pattern. */
+    public IReadOnlyList<int> ChargedBoltPathPattern { get; init; } = [];
+
     /** Monster-level penalty applied by Charged Bolt's native magic-hit roll. */
     public int ChargedBoltHitMonsterLevelScale { get; init; } = 2;
 
@@ -721,6 +724,15 @@ public sealed class AuthoritativeSpellCatalog
                         < definition.ChargedBoltMinimumHitChance)) {
                 throw new InvalidDataException(
                     "Charged Bolt behavior requires movement, random magic damage, and no area radius.");
+            }
+            if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.ChargedBolt
+                && definition.ChargedBoltPathPattern.Count is not (0 or 16)) {
+                throw new InvalidDataException(
+                    "Charged Bolt path tuning requires exactly sixteen steering entries when configured.");
+            }
+            if (definition.ChargedBoltPathPattern.Any(turn => turn is < -1 or > 1)) {
+                throw new InvalidDataException(
+                    "Charged Bolt path steering entries must be -1, 0, or 1.");
             }
             if (definition.ProjectileBehavior == AuthoritativeProjectileBehavior.HolyBolt
                 && definition.HolyBoltMaximumHitChance < definition.HolyBoltMinimumHitChance) {
@@ -1458,6 +1470,7 @@ public sealed class AuthoritativeSpellCatalog
                 && (definition.ProjectileCountLevelDivisor != 0
                     || definition.RandomMagicDamageDivisor != 0
                     || definition.ChargedBoltPathRandomRange != 0
+                    || definition.ChargedBoltPathPattern.Count != 0
                     || definition.ChargedBoltHitMonsterLevelScale != 2
                     || definition.ChargedBoltMinimumHitChance != 5
                     || definition.ChargedBoltMaximumHitChance != 95)) {
@@ -2031,6 +2044,7 @@ public sealed class AuthoritativeSpellCatalog
             MagicDamageDivisor = row.OptionalInt32("magic_damage_divisor"),
             ChargedBoltPathRandomRange = row.OptionalInt32(
                 "charged_bolt_path_random_range"),
+            ChargedBoltPathPattern = ParseChargedBoltPathPattern(row),
             ChargedBoltHitMonsterLevelScale = row.OptionalInt32(
                 "charged_bolt_hit_monster_level_scale",
                 2),
@@ -2369,6 +2383,24 @@ public sealed class AuthoritativeSpellCatalog
             offsets[index] = (x, y);
         }
         return offsets;
+    }
+
+    private static IReadOnlyList<int> ParseChargedBoltPathPattern(TsvRow row)
+    {
+        if (!row.TryGet("charged_bolt_path_pattern", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var entries = value.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var pattern = new int[entries.Length];
+        for (var index = 0; index < entries.Length; index++) {
+            if (!int.TryParse(entries[index], out pattern[index]))
+                throw new InvalidDataException(
+                    $"Spell row {row.LineNumber} contains an invalid Charged Bolt path steering entry.");
+        }
+        return pattern;
     }
 
     private static AuthoritativeProjectileBehavior ParseProjectileBehavior(TsvRow row)

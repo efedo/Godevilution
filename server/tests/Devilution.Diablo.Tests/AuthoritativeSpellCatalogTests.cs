@@ -1180,6 +1180,9 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.True(catalog.TryGet(30, out var chargedBolt));
         Assert.Equal(AuthoritativeProjectileBehavior.ChargedBolt, chargedBolt.ProjectileBehavior);
         Assert.Equal(15, chargedBolt.ChargedBoltPathRandomRange);
+        Assert.Equal(
+            [-1, 0, 1, -1, 0, 1, -1, -1, 0, 0, 1, 1, 0, 1, -1, 0],
+            chargedBolt.ChargedBoltPathPattern);
         Assert.Equal((2, 5, 95), (
             chargedBolt.ChargedBoltHitMonsterLevelScale,
             chargedBolt.ChargedBoltMinimumHitChance,
@@ -1192,6 +1195,15 @@ public sealed class AuthoritativeSpellCatalogTests
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             chargedBolt with { ChargedBoltMinimumHitChance = 96 },
         ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
+            chargedBolt with { ChargedBoltPathPattern = [0] },
+        ]));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.LoadTsv(
+                path,
+                File.ReadAllText(path).Replace(
+                    "-1,0,1,-1,0,1,-1,-1,0,0,1,1,0,1,-1,0",
+                    "0,bad")));
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSpellCatalog([
             chargedBolt with {
                 ChargedBoltMinimumHitChance = 80,

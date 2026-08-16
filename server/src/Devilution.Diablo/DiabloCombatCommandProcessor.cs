@@ -11769,9 +11769,14 @@ public sealed class DiabloCombatCommandProcessor
         if (projectile.Phase == AuthoritativeProjectilePhase.Impact)
             return;
 
+        var pathPattern = spells.TryGet(projectile.SpellId, out var spell)
+            && spell.ChargedBoltPathPattern.Count > 0
+            ? spell.ChargedBoltPathPattern
+            : ChargedBoltPath;
+
         if (projectile.PathTicks == 0) {
             var direction = projectile.OriginalDirection;
-            direction = ChargedBoltPath[projectile.PathIndex] switch {
+            direction = pathPattern[projectile.PathIndex & 0xF] switch {
                 -1 => (direction + 7) % 8,
                 1 => (direction + 1) % 8,
                 _ => direction,

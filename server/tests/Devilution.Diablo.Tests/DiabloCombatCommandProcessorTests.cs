@@ -12080,6 +12080,30 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.All(world.Projectiles.Values, projectile => Assert.Equal(1, projectile.PathIndex));
     }
 
+    [Fact]
+    public void ChargedBoltUsesValidatedSteeringPattern()
+    {
+        var projectile = CreateStationaryChargedBolt(1, 1);
+        projectile.PathTicks = 0;
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateChargedBoltSpell() with {
+                    ChargedBoltPathPattern = [
+                        1, 1, 1, 1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1, 1, 1, 1,
+                    ],
+                },
+            ]));
+
+        processor.AdvanceTick(1, []);
+
+        Assert.Equal(1, projectile.PathIndex);
+        Assert.Equal(-370720, projectile.VelocityX);
+        Assert.Equal(185360, projectile.VelocityY);
+    }
+
     [Theory]
     [InlineData(DiabloGameVariant.Diablo, 680)]
     [InlineData(DiabloGameVariant.Hellfire, 808)]
