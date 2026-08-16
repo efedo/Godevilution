@@ -643,6 +643,12 @@ Schema 1.269 externalizes the Hellfire full-potion and rejuvenation family,
 preserving fixed and random native rows with stable IDs, potion miscellaneous
 IDs, cursor identities, level gates, drop rates, and usable-item metadata.
 
+Schema 1.270 externalizes the Hellfire oil and elixir consumables: Blacksmith
+Oil, Oil of Accuracy, Oil of Sharpness, Oil of Fortitude, and the Strength,
+Magic, Dexterity, and Vitality Elixirs. Their stable IDs preserve native
+indices, miscellaneous IDs, cursor identities, level gates, values, drop rates,
+and usability.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
