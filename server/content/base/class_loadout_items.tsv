@@ -1,23 +1,23 @@
-class_id	item_order	item_id	item_symbol	location	slot
-0	0	100	short_sword_starting	Equipment	4
-0	1	101	buckler_starting	Equipment	5
-0	2	102	club_starting	Inventory	0
-0	3	105	potion_healing	Belt	0
-0	4	105	potion_healing	Belt	1
-1	0	103	short_bow_starting	Equipment	4
-1	1	105	potion_healing	Belt	0
-1	2	105	potion_healing	Belt	1
-2	0	104	short_staff_charged_bolt_starting	Equipment	4
-2	1	106	potion_mana	Belt	0
-2	2	106	potion_mana	Belt	1
-3	0	107	short_staff_starting	Equipment	4
-3	1	105	potion_healing	Belt	0
-3	2	105	potion_healing	Belt	1
-4	0	108	sword_starting	Equipment	4
-4	1	109	dagger_starting	Equipment	5
-4	2	105	potion_healing	Belt	0
-4	3	105	potion_healing	Belt	1
-5	0	110	spiked_club_starting	Equipment	4
-5	1	101	buckler_starting	Equipment	5
-5	2	105	potion_healing	Belt	0
-5	3	105	potion_healing	Belt	1
+class_id	class_symbol	item_order	item_id	item_symbol	location	slot
+0	warrior	0	100	short_sword_starting	Equipment	4
+0	warrior	1	101	buckler_starting	Equipment	5
+0	warrior	2	102	club_starting	Inventory	0
+0	warrior	3	105	potion_healing	Belt	0
+0	warrior	4	105	potion_healing	Belt	1
+1	rogue	0	103	short_bow_starting	Equipment	4
+1	rogue	1	105	potion_healing	Belt	0
+1	rogue	2	105	potion_healing	Belt	1
+2	sorcerer	0	104	short_staff_charged_bolt_starting	Equipment	4
+2	sorcerer	1	106	potion_mana	Belt	0
+2	sorcerer	2	106	potion_mana	Belt	1
+3	monk	0	107	short_staff_starting	Equipment	4
+3	monk	1	105	potion_healing	Belt	0
+3	monk	2	105	potion_healing	Belt	1
+4	bard	0	108	sword_starting	Equipment	4
+4	bard	1	109	dagger_starting	Equipment	5
+4	bard	2	105	potion_healing	Belt	0
+4	bard	3	105	potion_healing	Belt	1
+5	barbarian	0	110	spiked_club_starting	Equipment	4
+5	barbarian	1	101	buckler_starting	Equipment	5
+5	barbarian	2	105	potion_healing	Belt	0
+5	barbarian	3	105	potion_healing	Belt	1

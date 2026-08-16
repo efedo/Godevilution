@@ -83,3 +83,9 @@ spell	nova	18
 spell	golem	52
 spell	etherealize	53
 monster	base_monster	1
+class	warrior	0
+class	rogue	1
+class	sorcerer	2
+class	monk	3
+class	bard	4
+class	barbarian	5

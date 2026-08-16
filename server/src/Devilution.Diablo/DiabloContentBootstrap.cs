@@ -157,12 +157,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var playerClassTable = content.GetRequiredTable("classes.tsv");
         var playerClasses = AuthoritativePlayerClassCatalog.LoadTsv(
             playerClassTable.SourcePath,
-            playerClassTable.ToCanonicalTsv());
+            playerClassTable.ToCanonicalTsv(),
+            stableIds);
+        if (stableIds is not null)
+            stableIds.ValidateReferences("class", classId => playerClasses.TryGet(classId, out _));
         var playerAnimationTable = content.GetRequiredTable("class_animations.tsv");
         var playerAnimations = AuthoritativePlayerAnimationCatalog.LoadTsv(
             playerAnimationTable.SourcePath,
             playerAnimationTable.ToCanonicalTsv(),
-            playerClasses);
+            playerClasses,
+            stableIds);
         var spells = content.TryGetTable("spells.tsv", out var spellsTable)
             ? AuthoritativeSpellCatalog.LoadTsv(
                 spellsTable.SourcePath,

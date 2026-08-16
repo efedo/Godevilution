@@ -82,6 +82,21 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         "starting_spell_symbol",
         "starting_spell_level",
     ];
+    private static readonly IReadOnlyList<string> ClassSymbolicLoadoutColumns = [
+        "class_id",
+        "class_symbol",
+        .. SymbolicLoadoutColumns.Skip(1),
+    ];
+    private static readonly IReadOnlyList<string> ClassCurrentLoadoutColumns = [
+        "class_id",
+        "class_symbol",
+        .. CurrentLoadoutColumns.Skip(1),
+    ];
+    private static readonly IReadOnlyList<string> ClassLoadoutColumns = [
+        "class_id",
+        "class_symbol",
+        .. LoadoutColumns.Skip(1),
+    ];
     private static readonly IReadOnlyList<string> ItemColumns = [
         "class_id",
         "item_order",
@@ -96,6 +111,16 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         "item_symbol",
         "location",
         "slot",
+    ];
+    private static readonly IReadOnlyList<string> ClassSymbolicItemColumns = [
+        "class_id",
+        "class_symbol",
+        .. SymbolicItemColumns.Skip(1),
+    ];
+    private static readonly IReadOnlyList<string> ClassItemColumns = [
+        "class_id",
+        "class_symbol",
+        .. ItemColumns.Skip(1),
     ];
 
     private readonly AuthoritativePlayerClassCatalog playerClasses;
@@ -300,26 +325,68 @@ public sealed class AuthoritativePlayerLoadoutCatalog
     {
         var loadoutTable = TsvTable.Parse(loadoutSourcePath, loadoutContents);
         var itemTable = TsvTable.Parse(itemSourcePath, itemContents);
+        var hasClassSymbols = loadoutTable.Columns.SequenceEqual(
+                ClassSymbolicLoadoutColumns,
+                StringComparer.Ordinal)
+            || loadoutTable.Columns.SequenceEqual(
+                ClassCurrentLoadoutColumns,
+                StringComparer.Ordinal)
+            || loadoutTable.Columns.SequenceEqual(
+                ClassLoadoutColumns,
+                StringComparer.Ordinal);
         var hasAbilityKind = loadoutTable.Columns.SequenceEqual(
-            CurrentLoadoutColumns,
-            StringComparer.Ordinal);
+                CurrentLoadoutColumns,
+                StringComparer.Ordinal)
+            || loadoutTable.Columns.SequenceEqual(
+                ClassCurrentLoadoutColumns,
+                StringComparer.Ordinal);
         var hasSymbols = loadoutTable.Columns.SequenceEqual(
-            SymbolicLoadoutColumns,
-            StringComparer.Ordinal);
+                SymbolicLoadoutColumns,
+                StringComparer.Ordinal)
+            || loadoutTable.Columns.SequenceEqual(
+                ClassSymbolicLoadoutColumns,
+                StringComparer.Ordinal);
+        var hasItemClassSymbols = itemTable.Columns.SequenceEqual(
+                ClassSymbolicItemColumns,
+                StringComparer.Ordinal)
+            || itemTable.Columns.SequenceEqual(
+                ClassItemColumns,
+                StringComparer.Ordinal);
         var hasItemSymbols = itemTable.Columns.SequenceEqual(
-            SymbolicItemColumns,
-            StringComparer.Ordinal);
+                SymbolicItemColumns,
+                StringComparer.Ordinal)
+            || itemTable.Columns.SequenceEqual(
+                ClassSymbolicItemColumns,
+                StringComparer.Ordinal);
+        var hasLegacyLoadout = loadoutTable.Columns.SequenceEqual(
+                LoadoutColumns,
+                StringComparer.Ordinal)
+            || loadoutTable.Columns.SequenceEqual(
+                ClassLoadoutColumns,
+                StringComparer.Ordinal);
+        var hasLegacyItems = itemTable.Columns.SequenceEqual(
+                ItemColumns,
+                StringComparer.Ordinal)
+            || itemTable.Columns.SequenceEqual(
+                ClassItemColumns,
+                StringComparer.Ordinal);
         if (!hasSymbols
             && !hasAbilityKind
-            && !loadoutTable.Columns.SequenceEqual(LoadoutColumns, StringComparer.Ordinal)
-            || !hasItemSymbols && !itemTable.Columns.SequenceEqual(ItemColumns, StringComparer.Ordinal)) {
+            && !hasLegacyLoadout
+            || !hasItemSymbols && !hasLegacyItems) {
             throw new InvalidDataException(
                 "Player-loadout tables do not match their required ordered schemas.");
         }
 
         var itemsByClass = itemTable.Rows
             .Select(row => new {
-                ClassId = row.RequiredUInt32("class_id"),
+                ClassId = hasItemClassSymbols
+                    ? AuthoritativeClassIdentity.ResolveOptional(
+                        row,
+                        stableIds,
+                        "class_id",
+                        "class_symbol")
+                    : row.RequiredUInt32("class_id"),
                 Item = new AuthoritativePlayerLoadoutItemDefinition(
                     row.RequiredUInt32("item_order"),
                     hasItemSymbols
@@ -334,7 +401,13 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 group => (IReadOnlyList<AuthoritativePlayerLoadoutItemDefinition>)
                     group.Select(entry => entry.Item).ToArray());
         var definitions = loadoutTable.Rows.Select(row => {
-            var classId = row.RequiredUInt32("class_id");
+            var classId = hasClassSymbols
+                ? AuthoritativeClassIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "class_id",
+                    "class_symbol")
+                : row.RequiredUInt32("class_id");
             return new AuthoritativePlayerLoadoutDefinition(
                 classId,
                 row.RequiredUInt32("starting_gold"),

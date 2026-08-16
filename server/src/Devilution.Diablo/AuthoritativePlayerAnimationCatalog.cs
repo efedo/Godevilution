@@ -95,6 +95,12 @@ public sealed class AuthoritativePlayerAnimationCatalog
         "casting_action_frame",
     ];
 
+    private static readonly IReadOnlyList<string> SymbolicColumns = [
+        "class_id",
+        "class_symbol",
+        .. RequiredColumns.Skip(1),
+    ];
+
     private readonly Dictionary<uint, AuthoritativePlayerAnimationDefinition> byClassId;
 
     public AuthoritativePlayerAnimationCatalog(
@@ -143,17 +149,26 @@ public sealed class AuthoritativePlayerAnimationCatalog
     public static AuthoritativePlayerAnimationCatalog LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativePlayerClassCatalog playerClasses)
+        AuthoritativePlayerClassCatalog playerClasses,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        if (!table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
+        var hasSymbols = table.Columns.SequenceEqual(SymbolicColumns, StringComparer.Ordinal);
+        if (!hasSymbols
+            && !table.Columns.SequenceEqual(RequiredColumns, StringComparer.Ordinal)) {
             throw new InvalidDataException(
                 $"Player animation table '{sourcePath}' does not match the required ordered schema.");
         }
 
         return new AuthoritativePlayerAnimationCatalog(
             table.Rows.Select(row => new AuthoritativePlayerAnimationDefinition(
-                row.RequiredUInt32("class_id"),
+                hasSymbols
+                    ? AuthoritativeClassIdentity.ResolveOptional(
+                        row,
+                        stableIds,
+                        "class_id",
+                        "class_symbol")
+                    : row.RequiredUInt32("class_id"),
                 ReadAttack(row, "unarmed"),
                 ReadAttack(row, "unarmed_shield"),
                 ReadAttack(row, "sword"),

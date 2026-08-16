@@ -378,7 +378,8 @@ public sealed class AuthoritativePlayerClassCatalog
 
     public static AuthoritativePlayerClassCatalog LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var hasClassDefenseTuning = table.Columns.SequenceEqual(
@@ -421,7 +422,11 @@ public sealed class AuthoritativePlayerClassCatalog
         }
         return new AuthoritativePlayerClassCatalog(table.Rows.Select(row =>
             new AuthoritativePlayerClassDefinition(
-                row.RequiredUInt32("class_id"),
+                AuthoritativeClassIdentity.Resolve(
+                    row,
+                    stableIds,
+                    "class_id",
+                    "symbol"),
                 row.Required("symbol"),
                 row.Required("display_name"),
                 ParseAvailability(row),

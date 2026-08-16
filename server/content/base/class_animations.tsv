@@ -1,7 +1,7 @@
-class_id	unarmed_frames	unarmed_action_frame	unarmed_shield_frames	unarmed_shield_action_frame	sword_frames	sword_action_frame	sword_shield_frames	sword_shield_action_frame	bow_frames	bow_action_frame	axe_frames	axe_action_frame	mace_frames	mace_action_frame	mace_shield_frames	mace_shield_action_frame	staff_frames	staff_action_frame	idle_frames	walking_frames	blocking_frames	death_frames	casting_frames	recovery_frames	town_idle_frames	town_walking_frames	casting_action_frame
-0	16	9	16	9	16	9	16	9	16	11	20	10	16	9	16	9	16	11	10	8	2	20	20	6	20	8	14
-1	18	10	18	10	18	10	18	10	12	7	22	13	18	10	18	10	16	11	8	8	4	20	16	7	20	8	12
-2	20	12	16	9	16	12	16	12	20	16	24	16	16	12	16	12	16	12	8	8	6	20	12	8	20	8	8
-3	12	7	12	7	16	12	16	12	20	14	23	14	16	12	16	12	13	8	8	8	3	20	18	6	20	8	13
-4	18	10	18	10	18	10	18	10	12	11	22	13	18	10	18	10	16	11	8	8	4	20	16	7	20	8	12
-5	16	9	16	9	16	9	16	9	16	11	20	8	16	8	16	8	16	11	10	8	2	20	20	6	20	8	14
+class_id	class_symbol	unarmed_frames	unarmed_action_frame	unarmed_shield_frames	unarmed_shield_action_frame	sword_frames	sword_action_frame	sword_shield_frames	sword_shield_action_frame	bow_frames	bow_action_frame	axe_frames	axe_action_frame	mace_frames	mace_action_frame	mace_shield_frames	mace_shield_action_frame	staff_frames	staff_action_frame	idle_frames	walking_frames	blocking_frames	death_frames	casting_frames	recovery_frames	town_idle_frames	town_walking_frames	casting_action_frame
+0	warrior	16	9	16	9	16	9	16	9	16	11	20	10	16	9	16	9	16	11	10	8	2	20	20	6	20	8	14
+1	rogue	18	10	18	10	18	10	18	10	12	7	22	13	18	10	18	10	16	11	8	8	4	20	16	7	20	8	12
+2	sorcerer	20	12	16	9	16	12	16	12	20	16	24	16	16	12	16	12	16	12	8	8	6	20	12	8	20	8	8
+3	monk	12	7	12	7	16	12	16	12	20	14	23	14	16	12	16	12	13	8	8	8	3	20	18	6	20	8	13
+4	bard	18	10	18	10	18	10	18	10	12	11	22	13	18	10	18	10	16	11	8	8	4	20	16	7	20	8	12
+5	barbarian	16	9	16	9	16	9	16	9	16	11	20	8	16	8	16	8	16	11	10	8	2	20	20	6	20	8	14
