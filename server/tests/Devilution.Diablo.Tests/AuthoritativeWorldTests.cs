@@ -311,6 +311,25 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void ResolvesStableItemSymbolForQuestItemCompletionObjects()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("item", "cathedral_map", 43),
+        ]);
+        const string header = "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tquest_id\teffect_kind\teffect_amount\teffect_item_symbol\n";
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            header + "2404\t6004\t0\t36\t22\t3017\tQuestItemCompletion\t\tcathedral_map\n",
+            stableIds));
+
+        Assert.Equal(43, @object.EffectAmount);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            header + "2404\t6004\t0\t36\t22\t3017\tQuestItemCompletion\t2\tcathedral_map\n",
+            stableIds));
+    }
+
+    [Fact]
     public void MissileLineOfSightUsesGeometryWhileMovingCollisionIncludesObjects()
     {
         var @object = new AuthoritativeWorldObject(20, 4, 0, 1, 0);
