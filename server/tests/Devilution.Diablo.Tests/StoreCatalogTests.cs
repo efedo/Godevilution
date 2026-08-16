@@ -95,4 +95,24 @@ public sealed class StoreCatalogTests
                 "key\tspell_id\tvalue\nspell_staff_cost\t-1\t100\n"));
         Assert.Contains("contains a negative spell -1", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void DirectStoreStockSpellReferencesMustResolveInTheActiveCatalog()
+    {
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 50, 0, 0, 0, 0),
+        ]);
+        var validStores = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\tspell_id\n1\t0\t42\t75\t7\n");
+
+        validStores.ValidateSpellReferences(spells);
+
+        var invalidStores = StoreCatalog.LoadTsv(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\tspell_id\n1\t0\t42\t75\t8\n");
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            invalidStores.ValidateSpellReferences(spells));
+        Assert.Contains("Store 1 slot 0 references unknown spell 8", exception.Message, StringComparison.Ordinal);
+    }
 }
