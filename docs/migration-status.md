@@ -925,6 +925,10 @@ Status date: 2026-08-16
   completion links may carry symbols cross-checked against retained numeric
   IDs; numeric-only rows remain compatible.
 
+- Schema 1.243 adds the stable `class` namespace. Class-keyed loadout and
+  animation rows may carry `class_symbol`, including the valid native class
+  ID zero; numeric-only rows remain compatible.
+
 - Schema 1.240 adds the stable `unique` namespace and `unique_symbol` to
   shipped `unique_items.tsv` rows. Numeric-only unique definitions remain
   compatible for older external packs.

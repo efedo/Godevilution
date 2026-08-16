@@ -538,6 +538,10 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.243 adds the stable `class` namespace. Class definitions and
+class-keyed loadout and animation rows may carry `class_symbol`; native class
+ID zero is retained and symbolic references are validated at activation.
+
 Schema 1.242 adds the stable `monster` namespace. Monster type rows carry
 `monster_symbol`, and encounter, missile selector/spawn, unique-monster, and
 quest-completion links can resolve symbolic identities while preserving their
