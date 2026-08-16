@@ -220,6 +220,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ActiveWorldRulesOverrideSpellRowTownPortalGeometry()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var worldRules = AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            "town_level_id\tadria_store_id\ttown_portal_destination_position_x\t"
+                + "town_portal_destination_position_y\ttown_portal_destination_slot_count\t"
+                + "town_portal_destination_slot_spacing\n0\t10\t60\t41\t2\t4\n");
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([
+                CreateTownPortalSpell() with {
+                    TownPortalDestinationPositionX = 70,
+                    TownPortalDestinationPositionY = 42,
+                    TownPortalDestinationSlotCount = 3,
+                    TownPortalDestinationSlotSpacing = 3,
+                },
+            ]),
+            worldCommands: worldCommands,
+            worldRules: worldRules);
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            levelId: 1,
+            entityId: 7,
+            mana: 3000,
+            manaMaximum: 3000,
+            memorizedSpells: [new MemorizedSpellState(39, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(39, 0, 12, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded);
+        var portal = Assert.Single(world.Portals.Values);
+        Assert.Equal((60, 41), (portal.DestinationPositionX, portal.DestinationPositionY));
+    }
+
+    [Fact]
     public void TownPortalRejectsTownCastingBeforeSpendingMana()
     {
         var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
@@ -16762,7 +16803,8 @@ public sealed class DiabloCombatCommandProcessorTests
         AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner = null,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         bool useNativePlayerActionTiming = false,
-        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        AuthoritativeWorldRules? worldRules = null)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -16782,7 +16824,8 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterMissiles: monsterMissiles,
             monsterSpawnPlanner: monsterSpawnPlanner,
             monsterTypes: monsterTypes,
-            difficulty: difficulty);
+            difficulty: difficulty,
+            worldRules: worldRules);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(

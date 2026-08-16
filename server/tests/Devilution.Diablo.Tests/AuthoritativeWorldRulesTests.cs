@@ -14,6 +14,31 @@ public sealed class AuthoritativeWorldRulesTests
 
         Assert.Equal(7U, rules.TownLevelId);
         Assert.Equal(73U, rules.AdriaStoreId);
+        Assert.False(rules.HasTownPortalDestinationGeometry);
+    }
+
+    [Fact]
+    public void LoadsExternalTownPortalDestinationGeometry()
+    {
+        var rules = AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            "town_level_id\tadria_store_id\ttown_portal_destination_position_x\t"
+                + "town_portal_destination_position_y\ttown_portal_destination_slot_count\t"
+                + "town_portal_destination_slot_spacing\n7\t73\t60\t41\t2\t4\n");
+
+        Assert.True(rules.HasTownPortalDestinationGeometry);
+        Assert.Equal(60, rules.TownPortalDestinationPositionX);
+        Assert.Equal(41, rules.TownPortalDestinationPositionY);
+        Assert.Equal(2, rules.TownPortalDestinationSlotCount);
+        Assert.Equal(4, rules.TownPortalDestinationSlotSpacing);
+    }
+
+    [Fact]
+    public void RejectsPartialTownPortalDestinationGeometry()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWorldRules.LoadTsv(
+            "world_rules.tsv",
+            "town_level_id\ttown_portal_destination_position_x\n7\t60\n"));
     }
 
     [Fact]

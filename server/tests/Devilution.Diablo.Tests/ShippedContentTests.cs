@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.222.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.223.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -184,7 +184,9 @@ public sealed class ShippedContentTests
         var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
         var configuredWorldRules = TsvTable.Parse(
             worldRules.SourcePath,
-            "town_level_id\tadria_store_id\n0\t73\n");
+            "town_level_id\tadria_store_id\ttown_portal_destination_position_x\t"
+                + "town_portal_destination_position_y\ttown_portal_destination_slot_count\t"
+                + "town_portal_destination_slot_spacing\n0\t73\t60\t41\t2\t4\n");
         var configuredPack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -202,6 +204,8 @@ public sealed class ShippedContentTests
             ComposedContent.Compose(new ContentManifest("base", "1", [configuredPack])));
 
         Assert.Equal(73U, activation.AdriaStoreId);
+        Assert.True(activation.WorldRules.HasTownPortalDestinationGeometry);
+        Assert.Equal(60, activation.WorldRules.TownPortalDestinationPositionX);
     }
 
     [Fact]
@@ -796,7 +800,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.222.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.223.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
