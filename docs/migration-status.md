@@ -66,6 +66,10 @@ Status date: 2026-08-16
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.
 
+- SkeletonKing movement delays are now validated monster-type fields
+  (`skeleton_king_delay_base` and `skeleton_king_delay_random_range`),
+  retaining native-compatible fallback behavior for older packs.
+
 - The client protocol model rejects impossible player life/mana and monster
   vitality bounds before publishing a snapshot to presentation; visual
   clamping remains defensive and never replaces authoritative validation.

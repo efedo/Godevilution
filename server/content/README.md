@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.293.0` schema in
+It declares its identity and `devilution.diablo@1.294.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1161,6 +1161,11 @@ Schema 1.293 adds optional `mega_delay_base` and
 mapping. The shipped Mega row carries the native five-plus-exclusive-random
 post-action delay, while older mappings retain the compatibility fallback.
 
+Schema 1.294 adds optional `skeleton_king_delay_base` and
+`skeleton_king_delay_random_range` columns to `monster_types.tsv`. The shipped
+Hellfire Skeleton King row carries the native ten-plus-exclusive-random
+movement delay, while older mappings retain the compatibility fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
@@ -1875,7 +1880,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.293.0"
+    "version": "1.294.0"
   },
   "dependencyConstraints": [
     {
@@ -1907,7 +1912,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.293.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.294.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

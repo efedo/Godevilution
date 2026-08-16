@@ -761,6 +761,11 @@ Schema 1.293 externalizes Mega's post-action delay through optional
 `InfernoController` mapping. Older packs retain the native five-plus-ten
 fallback.
 
+Schema 1.294 externalizes SkeletonKing's movement delay through optional
+`skeleton_king_delay_base` and `skeleton_king_delay_random_range` columns on
+the validated monster-type mapping. Older packs retain the native
+ten-plus-ten fallback.
+
 Schema 1.278 adds validated spell-book metadata for all 23 native bookable
 spells and a server-owned deterministic generator. Generated books now apply
 the native spell name, book cost, intelligence requirement, and magic-school
