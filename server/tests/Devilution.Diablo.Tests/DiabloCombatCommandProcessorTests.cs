@@ -7417,6 +7417,69 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorUsesValidatedMoveAdmissionChance()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 4,
+            maxDamage: 4,
+            monsterId: 1,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var monsterTypes = new AuthoritativeMonsterTypeCatalog([
+            new AuthoritativeMonsterTypeDefinition(
+                1,
+                1,
+                "Counselor",
+                1,
+                16,
+                1,
+                1,
+                100,
+                0,
+                1,
+                3,
+                0,
+                0,
+                false,
+                false,
+                false) {
+                NativeAi = "Counselor",
+                CounselorMoveChancePercent = 100,
+            },
+        ]);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterTypes: monsterTypes,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Counselor",
+                    "Firebolt",
+                    AuthoritativeProjectileBehavior.Firebolt),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 2992 ^ 9 ^ 7 = 3006: the native 50-percent ranged roll misses,
+        // while the second roll is 30 and must be admitted by the authored
+        // 100-percent movement chance.
+        processor.AdvanceTick(2992, [player]);
+
+        Assert.True(monster.IsMoving);
+        Assert.Equal((0, 0), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void CounselorDefersAfterFailedRangedAndMovementAdmissions()
     {
         var monster = new AuthoritativeCombatTarget(

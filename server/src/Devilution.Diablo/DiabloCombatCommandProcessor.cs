@@ -5414,7 +5414,13 @@ public sealed class DiabloCombatCommandProcessor
                 // Native CounselorAi delays after a missed ranged admission,
                 // then uses a 30-percent Move/ RoundWalk branch instead of
                 // falling through to generic pursuit.
-                if ((attackSeed / 100U) % 100U < 30U) {
+                var movementChance = monsterTypes?.TryGet(
+                        monster.MonsterId,
+                        out var counselorDefinition) == true
+                    && counselorDefinition.CounselorMoveChancePercent > 0
+                    ? counselorDefinition.CounselorMoveChancePercent
+                    : 30;
+                if ((attackSeed / 100U) % 100U < (uint)movementChance) {
                     var roundWalk = FindNativeRoundWalkStep(
                         monster,
                         victim,

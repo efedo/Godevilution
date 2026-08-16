@@ -144,6 +144,9 @@ public sealed record AuthoritativeMonsterTypeDefinition(
     /** Native Counselor successful-attack recovery exclusive random range. */
     public int CounselorAttackDelayRandomRange { get; init; }
 
+    /** Native Counselor failed-ranged-admission movement chance percentage. */
+    public int CounselorMoveChancePercent { get; init; }
+
     /** Native SkeletonMelee adjacent attack chance base before intelligence scaling. */
     public int SkeletonMeleeAttackChanceBase { get; init; }
 
@@ -515,6 +518,9 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
                         || definition.CounselorAttackDelayBase <= 0
                         || definition.CounselorAttackDelayRandomRange <= 0)
+                || definition.CounselorMoveChancePercent is < 0 or > 100
+                || definition.CounselorMoveChancePercent != 0
+                    && definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
                 || definition.SkeletonMeleeAttackChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeAttackChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeAttackChanceBase != 0
@@ -871,6 +877,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 CounselorDelayRandomRange = row.OptionalInt32("counselor_delay_random_range"),
                 CounselorAttackDelayBase = row.OptionalInt32("counselor_attack_delay_base"),
                 CounselorAttackDelayRandomRange = row.OptionalInt32("counselor_attack_delay_random_range"),
+                CounselorMoveChancePercent = row.OptionalInt32("counselor_move_chance_percent"),
             }));
     }
 
