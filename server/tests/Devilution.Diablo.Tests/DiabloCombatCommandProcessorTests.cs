@@ -6434,6 +6434,63 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterArrowUsesConfiguredImpactLifetimeAfterPlayerHit()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "GoatRanged",
+                    "ImpactArrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow,
+                    ProjectileSpeed: 1,
+                    ProjectileLifetime: 8,
+                    ProjectileImpactLifetime: 3),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+        Assert.Single(world.Projectiles);
+        AuthoritativeProjectile? impact = null;
+        for (ulong tick = 2; tick < 16 && world.Projectiles.Count != 0; tick++) {
+            processor.AdvanceTick(tick, [player]);
+            impact = world.Projectiles.Values.SingleOrDefault();
+            if (impact?.Phase == AuthoritativeProjectilePhase.Impact)
+                break;
+        }
+
+        Assert.NotNull(impact);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, impact!.Phase);
+        Assert.Equal(3U, impact.RemainingTicks);
+        Assert.Equal(98, player.Life);
+
+        processor.AdvanceTick(16, [player]);
+        Assert.Single(world.Projectiles);
+        Assert.Equal(2U, Assert.Single(world.Projectiles.Values).RemainingTicks);
+        processor.AdvanceTick(17, [player]);
+        processor.AdvanceTick(18, [player]);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(98, player.Life);
+    }
+
+    [Fact]
     public void SkeletonRangedAiDefersWhenTheArrowLaneIsBlocked()
     {
         var monster = new AuthoritativeCombatTarget(

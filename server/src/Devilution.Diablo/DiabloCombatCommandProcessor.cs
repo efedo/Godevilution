@@ -9357,6 +9357,12 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            projectile.RemainingTicks--;
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
         if (!world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
             world.Projectiles.Remove(projectile.EntityId);
             return;
@@ -9382,7 +9388,10 @@ public sealed class DiabloCombatCommandProcessor
             nextY);
         if (target is not null) {
             ResolveMonsterArrowImpact(tick, projectile, target, players, events);
-            world.Projectiles.Remove(projectile.EntityId);
+            if (projectile.ImpactLifetime > 0)
+                EnterProjectileImpact(projectile);
+            else
+                world.Projectiles.Remove(projectile.EntityId);
             return;
         }
 
