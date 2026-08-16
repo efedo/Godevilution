@@ -26,6 +26,10 @@ All notable changes to this fork are documented below.
   maces, bows, and staves, preserving native damage ranges, durability,
   requirements, cursor projections, and Hellfire-compatible overlays.
 
+- Add schema 1.273 stable identities for the remaining base armor variants:
+  Cap, Full Helm, Quilted Armor, Hard Leather Armor, Ring Mail, Scale Mail,
+  Splint Mail, Field Plate, Gothic Plate, Buckler, and Tower Shield.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

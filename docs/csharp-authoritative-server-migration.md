@@ -661,6 +661,12 @@ base-only rows use new stable symbols. Native damage ranges, durability,
 requirements, cursor identities, level gates, values, and weapon subtypes remain
 validated content rather than legacy-table inference.
 
+Schema 1.273 completes the remaining base armor variants: Cap, Full Helm,
+Quilted Armor, Hard Leather Armor, Ring Mail, Scale Mail, Splint Mail, Field
+Plate, Gothic Plate, Buckler, and Tower Shield. Their stable IDs preserve native
+armor ranges, durability, requirements, cursor identities, level gates, values,
+and equipment subtypes.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
