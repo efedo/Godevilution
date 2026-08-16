@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.273.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.274.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -154,6 +154,49 @@ public sealed class ShippedContentTests
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
             Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
         }
+        var baseConsumableExpectations = new[] {
+            ("potion_healing_standard", 2180U, 77, 3, 1, 50),
+            ("potion_full_healing", 2181U, 78, 2, 1, 150),
+            ("potion_mana_standard", 2182U, 79, 6, 1, 50),
+            ("potion_full_mana", 2183U, 80, 7, 1, 150),
+            ("potion_rejuvenation_standard", 2184U, 81, 19, 3, 120),
+            ("potion_full_rejuvenation_standard", 2185U, 82, 20, 7, 600),
+            ("oil_of_blacksmith_standard", 2186U, 83, 37, 1, 100),
+            ("oil_of_accuracy_standard", 2187U, 84, 32, 1, 500),
+            ("oil_of_sharpness_standard", 2188U, 85, 34, 1, 500),
+            ("oil_standard", 2189U, 86, 31, 10, 0),
+            ("elixir_of_strength_standard", 2190U, 87, 11, 15, 5000),
+            ("elixir_of_magic_standard", 2191U, 88, 12, 15, 5000),
+            ("elixir_of_dexterity_standard", 2192U, 89, 13, 15, 5000),
+            ("elixir_of_vitality_standard", 2193U, 90, 14, 20, 5000),
+        };
+        foreach (var (symbol, itemId, nativeIndex, miscId, minimumLevel, value) in baseConsumableExpectations) {
+            Assert.Equal(itemId, baseStableIds.Resolve("item", symbol));
+            var item = baseItems.GetRequired(itemId);
+            Assert.Equal(symbol, item.StableSymbol);
+            Assert.Equal(nativeIndex, item.NativeItemIndex);
+            Assert.Equal(miscId, item.MiscId);
+            Assert.Equal(minimumLevel, item.MinimumMonsterLevel);
+            Assert.Equal(value, item.Value);
+            Assert.Contains("Misc", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("Belt", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
+            Assert.True(item.Usable);
+            Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
+            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+        }
+        var baseHealingScroll = baseItems.GetRequired(2194);
+        Assert.Equal(2194U, baseStableIds.Resolve("item", "scroll_of_healing_standard"));
+        Assert.Equal("scroll_of_healing_standard", baseHealingScroll.StableSymbol);
+        Assert.Equal(91, baseHealingScroll.NativeItemIndex);
+        Assert.Equal(21, baseHealingScroll.MiscId);
+        Assert.Equal(2, baseHealingScroll.SpellId);
+        Assert.Equal(1, baseHealingScroll.MinimumMonsterLevel);
+        Assert.Equal(50, baseHealingScroll.Value);
+        Assert.Equal(1, baseHealingScroll.DropRate);
+        Assert.True(baseHealingScroll.Usable);
+        Assert.Contains("Scroll", baseHealingScroll.GenerationTags, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(DiabloItemSpellSourceKind.ConsumableItem, baseHealingScroll.SpellSourceKind);
+        Assert.Equal(DiabloItemActionKind.None, baseHealingScroll.ItemActionKind);
 
         var composed = ComposedContent.Compose(new ContentManifest(
             "hellfire",
@@ -1182,7 +1225,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.273.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.274.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
