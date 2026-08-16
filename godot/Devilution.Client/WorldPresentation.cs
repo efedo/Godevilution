@@ -176,6 +176,25 @@ public partial class WorldPresentation : Node2D
                 ? "dce3eb"
                 : isLocal ? "4da6ff" : "6dd47e");
         DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
+        var resources = PlayerResourceBarProjection.Resolve(player);
+        if (resources.LifeVisible || resources.ManaVisible) {
+            var bar = new Rect2(center.X - 13, center.Y - 21, 26, 3);
+            DrawRect(bar, new Color("24151b"), true);
+            if (resources.LifeVisible) {
+                DrawRect(
+                    new Rect2(bar.Position + new Vector2(1, 1), new Vector2(24 * resources.LifeRatio, 1)),
+                    new Color("e85d75"),
+                    true);
+            }
+            if (resources.ManaVisible) {
+                var manaBar = new Rect2(center.X - 13, center.Y - 17, 26, 3);
+                DrawRect(manaBar, new Color("24151b"), true);
+                DrawRect(
+                    new Rect2(manaBar.Position + new Vector2(1, 1), new Vector2(24 * resources.ManaRatio, 1)),
+                    new Color("5aa9e6"),
+                    true);
+            }
+        }
         if (player.ManaShieldActive)
             DrawArc(center, 17, 0, Mathf.Tau, 32, new Color("6fffe9"), 3);
         if (player.ReflectCharges > 0)
