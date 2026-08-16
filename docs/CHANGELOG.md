@@ -65,6 +65,9 @@ All notable changes to this fork are documented below.
 
 - Validate normalized item spell identities against the active spell catalog,
   preventing charged or consumable items from referencing inert spells.
+
+- Validate normalized unique-item base references against the active item
+  catalog, preventing late generation failures from malformed content.
 - Preserve native Familiar Bat follow-up lightning: validated monster-specific
   content now emits a server-owned `MonsterMagic` projectile with captured
   `GenerateRnd(10) + 1` damage after an adjacent attack, while ranged ticks
