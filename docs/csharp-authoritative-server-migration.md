@@ -558,6 +558,10 @@ Schema 1.254 normalizes stable symbols, display names, and native cursor
 projections for the next five Hellfire bow base-item rows: Hunter's Bow, Long
 Bow, Short Bow, Long War Bow, and Short Battle Bow.
 
+Schema 1.255 normalizes stable symbols, display names, and native cursor
+projections for the next five Hellfire sword base-item rows: Dagger, Sabre,
+Falchion, Broad Sword, and Long Sword.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.

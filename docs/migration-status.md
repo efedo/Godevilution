@@ -970,6 +970,10 @@ Status date: 2026-08-16
   projections for the next five Hellfire bow base-item rows: Hunter's Bow, Long
   Bow, Short Bow, Long War Bow, and Short Battle Bow.
 
+- Schema 1.255 normalizes stable symbols, display names, and native cursor
+  projections for the next five Hellfire sword base-item rows: Dagger, Sabre,
+  Falchion, Broad Sword, and Long Sword.
+
 - Schema 1.250 adds the stable `warp` namespace with optional `warp_symbol`
   static-route links, preserving numeric compatibility.
 
