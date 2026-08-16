@@ -124,6 +124,8 @@ public sealed class AuthoritativeQuestCatalogTests
         var quest = Assert.Single(quests);
         Assert.Equal(3002U, quest.CompletionActivateQuestId);
         Assert.False(quest.ActivateOnRoute);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.ValidateActivationTargets(quests));
     }
 
     [Fact]
