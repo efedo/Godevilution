@@ -21,7 +21,8 @@ public sealed record AuthoritativeWorldRules(
 
     public static AuthoritativeWorldRules LoadTsv(
         string sourcePath,
-        string contents)
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var row = table.Rows.Single();
@@ -37,7 +38,11 @@ public sealed record AuthoritativeWorldRules(
                 "World rules Town Portal geometry must declare all four destination columns.");
         }
         return new AuthoritativeWorldRules(
-            row.OptionalUInt32("town_level_id", AuthoritativePortalRules.TownLevelId),
+            AuthoritativeLevelIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "town_level_id",
+                "town_level_symbol"),
             row.OptionalUInt32(
                 "adria_store_id",
                 DiabloStoreCommandProcessor.AdriaStoreId),

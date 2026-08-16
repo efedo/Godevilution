@@ -1,4 +1,4 @@
-level_id	width	height	blocked_cells	missile_blocked_cells	default_start	suppress_multiplayer_death_drops
-0	112	112	none	none	0	0
-1	40	40	none	none	1	0
-2	40	40	none	none	0	0
+level_id	level_symbol	width	height	blocked_cells	missile_blocked_cells	default_start	suppress_multiplayer_death_drops
+0	town	112	112	none	none	0	0
+1	cathedral	40	40	none	none	1	0
+2	catacombs	40	40	none	none	0	0

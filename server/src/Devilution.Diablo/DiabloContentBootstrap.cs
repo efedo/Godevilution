@@ -240,7 +240,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var worldRules = content.TryGetTable("world_rules.tsv", out var worldRulesTable)
             ? AuthoritativeWorldRules.LoadTsv(
                 worldRulesTable.SourcePath,
-                worldRulesTable.ToCanonicalTsv())
+                worldRulesTable.ToCanonicalTsv(),
+                stableIds)
             : AuthoritativeWorldRules.NativeDefaults;
         var combatRules = content.TryGetTable("combat.tsv", out var combatTable)
             ? AuthoritativeCombatRules.LoadTsv(
@@ -303,7 +304,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
-                levelsTable.ToCanonicalTsv())
+                levelsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         var levelGeneration = content.TryGetTable(
             "level_generation.tsv",
@@ -388,7 +390,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
             ? AuthoritativePortalCatalog.LoadTsv(
                 portalsTable.SourcePath,
-                portalsTable.ToCanonicalTsv())
+                portalsTable.ToCanonicalTsv(),
+                stableIds)
             : null;
         if (stableIds is not null && world is not null)
             stableIds.ValidateReferences("level", world.ContainsLevel);

@@ -112,15 +112,26 @@ public static class AuthoritativePortalCatalog
         }
     }
 
-    public static IReadOnlyList<AuthoritativePortal> LoadTsv(string sourcePath, string contents)
+    public static IReadOnlyList<AuthoritativePortal> LoadTsv(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var portals = table.Rows.Select(row => new AuthoritativePortal(
             row.RequiredUInt32("portal_id"),
-            row.RequiredUInt32("source_level_id"),
+            AuthoritativeLevelIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "source_level_id",
+                "source_level_symbol"),
             row.RequiredInt32("source_position_x"),
             row.RequiredInt32("source_position_y"),
-            row.RequiredUInt32("destination_level_id"),
+            AuthoritativeLevelIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "destination_level_id",
+                "destination_level_symbol"),
             row.RequiredInt32("destination_position_x"),
             row.RequiredInt32("destination_position_y"))).ToArray();
         if (portals.Any(portal => portal.PortalId == 0)

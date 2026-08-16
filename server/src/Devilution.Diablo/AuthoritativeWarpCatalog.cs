@@ -84,10 +84,18 @@ public static class AuthoritativeWarpCatalog
         foreach (var row in table.Rows) {
             var target = new AuthoritativeWarpTarget(
                 row.RequiredUInt32("warp_id"),
-                row.RequiredUInt32("source_level_id"),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "source_level_id",
+                    "source_level_symbol"),
                 row.RequiredInt32("trigger_x"),
                 row.RequiredInt32("trigger_y"),
-                row.RequiredUInt32("target_level_id"),
+                AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "target_level_id",
+                    "target_level_symbol"),
                 row.RequiredInt32("target_x"),
                 row.RequiredInt32("target_y"),
                 AuthoritativeQuestIdentity.ResolveOptional(

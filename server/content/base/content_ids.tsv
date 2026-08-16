@@ -89,3 +89,6 @@ class	sorcerer	2
 class	monk	3
 class	bard	4
 class	barbarian	5
+level	town	0
+level	cathedral	1
+level	catacombs	2

@@ -103,6 +103,12 @@ public sealed class AuthoritativeWorld
         .SingleOrDefault();
 
     public static AuthoritativeWorld LoadTsv(string sourcePath, string contents)
+        => LoadTsv(sourcePath, contents, stableIds: null);
+
+    public static AuthoritativeWorld LoadTsv(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var world = new AuthoritativeWorld();
@@ -111,14 +117,17 @@ public sealed class AuthoritativeWorld
             var missileBlocked = row.TryGet("missile_blocked_cells", out _)
                 ? ParseCells(row, "missile_blocked_cells")
                 : null;
-            world.AddLevel(new AuthoritativeLevel(
-                row.RequiredUInt32("level_id"),
+            var level = new AuthoritativeLevel(
+                AuthoritativeLevelIdentity.Resolve(row, stableIds),
                 row.RequiredInt32("width"),
                 row.RequiredInt32("height"),
                 blocked,
                 missileBlocked,
                 ParseBooleanFlag(row, "default_start"),
-                ParseBooleanFlag(row, "suppress_multiplayer_death_drops")));
+                ParseBooleanFlag(row, "suppress_multiplayer_death_drops")) {
+                StableSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
+            };
+            world.AddLevel(level);
         }
         return world;
     }
@@ -192,6 +201,9 @@ public sealed class AuthoritativeLevel
     }
 
     public uint LevelId { get; }
+
+    /** Stable content symbol retained alongside the numeric compatibility ID. */
+    public string StableSymbol { get; init; } = string.Empty;
 
     public int Width { get; }
 
