@@ -51,6 +51,17 @@ public sealed class StoreServicePricing
         return spellStaffCosts.TryGetValue(spellId, out var cost) ? cost : 0;
     }
 
+    /** Validates non-zero spell-staff pricing identities against active spells. */
+    public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(spells);
+        foreach (var spellId in spellStaffCosts.Keys.Where(spellId => spellId != 0)) {
+            if (spellId < 0 || !spells.TryGet(checked((uint)spellId), out _))
+                throw new InvalidDataException(
+                    $"Store service pricing references unknown spell {spellId}.");
+        }
+    }
+
     /** Loads one service row per key and optional spell staff-cost rows. */
     public static StoreServicePricing LoadTsv(string sourcePath, string contents)
     {
@@ -61,6 +72,9 @@ public sealed class StoreServicePricing
             var key = row.Required("key");
             if (key.Equals("spell_staff_cost", StringComparison.Ordinal)) {
                 var spellId = row.RequiredInt32("spell_id");
+                if (spellId < 0)
+                    throw new InvalidDataException(
+                        $"Store pricing table '{sourcePath}' contains a negative spell {spellId}.");
                 var cost = row.RequiredUInt32("value");
                 if (!spellCosts.TryAdd(spellId, cost))
                     throw new InvalidDataException($"Store pricing table '{sourcePath}' contains duplicate spell {spellId}.");

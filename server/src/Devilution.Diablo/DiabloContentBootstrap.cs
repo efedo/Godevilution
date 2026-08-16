@@ -152,6 +152,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 spellsTable.SourcePath,
                 spellsTable.ToCanonicalTsv())
             : null;
+        if (spells is not null)
+            pricing.ValidateSpellReferences(spells);
 
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
