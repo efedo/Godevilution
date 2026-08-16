@@ -328,6 +328,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 world.AddWarpTarget(warp);
             }
         }
+        if (stableIds is not null && world is not null)
+            stableIds.ValidateReferences(
+                "warp",
+                warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
         if (world is not null && levelGeneration is not null)
             levelGeneration.ValidateWorld(world);
         playerLoadouts.ValidateCastSources(spells);

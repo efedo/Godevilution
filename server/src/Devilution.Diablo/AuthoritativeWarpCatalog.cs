@@ -52,6 +52,9 @@ public sealed class AuthoritativeWarpTarget
 
     /** Whether the required quest must be completed rather than active. */
     public bool RequiredQuestCompleted { get; }
+
+    /** Stable content symbol retained alongside the numeric warp identity. */
+    public string StableSymbol { get; init; } = string.Empty;
 }
 
 /** Loads normalized native trigger destinations from an external content table. */
@@ -83,7 +86,7 @@ public static class AuthoritativeWarpCatalog
         var targets = new List<AuthoritativeWarpTarget>();
         foreach (var row in table.Rows) {
             var target = new AuthoritativeWarpTarget(
-                row.RequiredUInt32("warp_id"),
+                AuthoritativeWarpIdentity.Resolve(row, stableIds),
                 AuthoritativeLevelIdentity.ResolveOptional(
                     row,
                     stableIds,
@@ -103,7 +106,9 @@ public static class AuthoritativeWarpCatalog
                     stableIds,
                     "required_quest_id",
                     "required_quest_symbol"),
-                row.OptionalInt32("required_quest_completed") != 0);
+                row.OptionalInt32("required_quest_completed") != 0) {
+                StableSymbol = AuthoritativeWarpIdentity.ReadSymbol(row),
+            };
             if (!world.ContainsLevel(target.SourceLevelId)
                 || !world.ContainsLevel(target.TargetLevelId)) {
                 throw new InvalidDataException(
