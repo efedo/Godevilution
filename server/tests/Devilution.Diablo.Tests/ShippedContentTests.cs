@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.220.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.221.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -145,6 +145,35 @@ public sealed class ShippedContentTests
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
 
         Assert.Contains("Portal 1 contains an endpoint outside its level", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsUnknownExternalTownLevel()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
+        var invalidWorldRules = TsvTable.Parse(
+            worldRules.SourcePath,
+            "town_level_id\n999\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == worldRules.SourcePath
+                    ? invalidWorldRules
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
+
+        Assert.Contains("World rules reference unknown town level 999", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -739,7 +768,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.220.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.221.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2587,6 +2616,7 @@ public sealed class ShippedContentTests
                 new DelegateAuthoritativeClock(() => 0)));
         var activated = registry.GetRequiredCapability<IDiabloContentBootstrap>()
             .Activate(ComposedContent.Compose(firstManifest));
+        Assert.Equal(0U, activated.Simulation.CombatRules.TownLevelId);
         var runtime = activated.Simulation.CreateRuntime(
             activated.PlayerLoadouts.CreateTemplate(
                 "player",

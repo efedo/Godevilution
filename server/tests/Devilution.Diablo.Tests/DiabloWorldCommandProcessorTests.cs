@@ -163,6 +163,44 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void TownPortalUsesTheExternalTownLevelIdentity()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var combatRules = new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            townLevelId: 5);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            combatRules: combatRules);
+        var player = CreatePlayer(positionX: 10, positionY: 10, levelId: 1, entityId: 1);
+
+        var created = processor.ExecuteTownPortal(
+            player,
+            12,
+            10,
+            1,
+            [player],
+            searchRadius: 2,
+            lifetime: 7);
+
+        Assert.True(created.Succeeded);
+        var portal = Assert.Single(world.Portals.Values);
+        Assert.Equal(5U, portal.DestinationLevelId);
+
+        player.LevelId = 5;
+        var rejected = processor.ExecuteTownPortal(
+            player,
+            12,
+            10,
+            2,
+            [player]);
+
+        AssertRejected(rejected, DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void EnteringQuestRouteLevelActivatesInitialQuestFromExternalMetadata()
     {
         var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 3, 4);
