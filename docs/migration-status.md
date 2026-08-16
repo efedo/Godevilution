@@ -52,6 +52,10 @@ Status date: 2026-08-16
 - Item combinations, catalog-backed monster drops, and the PvP-ear combat rule
   now resolve optional stable item symbols with the same validation guarantees.
 
+- Every shipped base and Hellfire normalized item definition now carries a
+  unique stable `item_symbol`; the active item namespace is checked for full
+  definition coverage while numeric IDs remain the compatibility projection.
+
 - Class loadouts now resolve `ability_spell_symbol` through the stable ability
   namespace and `starting_spell_symbol` through the spell namespace. Activated
   packs reject symbol/numeric mismatches, while legacy symbols fall back to the
@@ -894,6 +898,11 @@ Status date: 2026-08-16
 
 - Schema 1.235 extends optional item symbols to `stores.tsv`,
   `unique_items.tsv`, quest reward columns, and `item_quest_effects.tsv`.
+
+- Schema 1.237 completes stable symbols for every shipped normalized item
+  definition. `items.tsv` retains optional-symbol compatibility for older
+  third-party packs, while the checked-in base and Hellfire definitions and
+  their `content_ids.tsv` entries are complete and one-to-one.
 
 - Schema 1.236 extends optional item symbols to `item_combinations.tsv`,
   monster drop rows, and `combat.tsv`'s PvP-ear item reference.

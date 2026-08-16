@@ -924,6 +924,12 @@ Schema 1.232 adds optional `quest_symbol` columns to `quest_types.tsv`,
 through the `quest` namespace in `content_ids.tsv` and reject numeric/symbol
 mismatches; older numeric-only rows remain compatible.
 
+Schema 1.237 completes the shipped normalized item namespace. Every base and
+Hellfire `items.tsv` definition now carries an `item_symbol`, and every symbol
+is declared exactly once in the corresponding `content_ids.tsv` overlay. The
+numeric `item_id` remains the compatibility projection; older third-party
+packs may omit the optional column and continue using numeric-only rows.
+
 Schema 1.236 extends the stable `item` namespace to item combinations,
 catalog-backed monster drops, and the PvP-ear combat rule. Numeric-only links
 remain compatible while active rows reject symbol/numeric mismatches.
@@ -1530,7 +1536,7 @@ the complete target header even when they upsert only one row.
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
 | `spells.tsv` | `spell_id` | Directly castable spell resources with optional stable `spell_symbol` cross-check, stable/native identity mapping, typed projectile behavior, scaling, status, damage rules, optional Jester dispatch tables with `jester_spell_symbols`, and Golem summon formula terms. |
-| `items.tsv` | `item_id` | Normalized item identity validated against the stable `item` namespace when referenced by active pack IDs, explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
+| `items.tsv` | `item_id` | Normalized item identity with optional stable `item_symbol` (required by shipped base and Hellfire definitions and validated against `content_ids.tsv`), explicit spell-source kind and spell identity with optional stable `spell_symbol` cross-check (validated against active `spells.tsv`), validated presentation names and optional cursor symbol, compatibility projection, placement, charges, armor-range metadata, symbolic ordinary and Hellfire special-effect metadata, drop-level metadata, weighted drop rate, usable-item metadata, and generation inputs. |
 | `item_quest_effects.tsv` | `item_id`, `quest_id`, `effect_kind` | Validated server-owned quest transitions applied when an item is picked up, with optional `item_symbol` and `quest_symbol`, including native quest activation, completion, and `_qvar1` updates. |
 | `item_cursor_graphics.tsv` | `symbol` | Validated legacy item cursor symbols and their native byte-sized graphic IDs, shared by normalized and legacy item loaders. |
 | `item_affixes.tsv` | `name`, `is_suffix` | Normalized prefix/suffix definitions and deterministic affix effects. |

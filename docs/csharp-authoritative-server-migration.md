@@ -538,6 +538,12 @@ handshake; v0.1 remains available for native compatibility clients.
 
 Recent content slices
 
+Schema 1.237 completes the stable item namespace for shipped content. Every
+base and Hellfire normalized `items.tsv` row carries a unique `item_symbol`,
+and the corresponding `content_ids.tsv` tables contain one matching entry.
+The numeric `item_id` remains the compatibility projection and older external
+packs may continue to omit the optional symbol.
+
 Schema 1.236 extends stable item symbols to item combinations, catalog-backed
 monster drops, and the PvP-ear combat rule. Numeric-only references remain
 compatible while active rows reject symbolic/numeric mismatches.
