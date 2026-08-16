@@ -18,6 +18,10 @@ All notable changes to this fork are documented below.
   Sharpness, Oil of Fortitude, and Strength, Magic, Dexterity, and Vitality
   Elixir identities.
 
+- Add schema 1.271 stable base helmet, body-armor, and shield identities with
+  native armor ranges, durability, requirements, cursor projections, and
+  Hellfire-compatible overlays.
+
 - Align the base-pack quest-state and warp overlays with the current stable
   identity schemas, and keep base-only monster missile rows numeric-only when
   their symbols belong to the Hellfire catalog.

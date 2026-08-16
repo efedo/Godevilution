@@ -649,6 +649,12 @@ Magic, Dexterity, and Vitality Elixirs. Their stable IDs preserve native
 indices, miscellaneous IDs, cursor identities, level gates, values, drop rates,
 and usability.
 
+Schema 1.271 externalizes the base helmet, body-armor, and shield rows that
+share stable projections with Hellfire. Their stable IDs preserve base native
+indices, armor ranges, durability, requirements, cursor identities, level
+gates, values, and equipment subtypes while Hellfire overlays retain their
+variant-specific native projections.
+
 Schema 1.249 completes the stable `portal` namespace. Static portal rows may
 carry `portal_symbol` links, which are cross-checked against retained numeric
 IDs while numeric-only routes remain compatible.
