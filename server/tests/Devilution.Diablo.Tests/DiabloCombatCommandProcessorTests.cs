@@ -9812,6 +9812,53 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesValidatedMovementGoalModulo()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            5,
+            5,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 3,
+            monsterLevel: 5,
+            nativeAi: "Magma",
+            intelligence: 0,
+            rangedAvoidanceMovementIdleTicks: 10,
+            rangedAvoidanceMovementMode: 1);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceMinimumDistance: 2,
+                    RangedAvoidanceFarDistance: 3,
+                    RangedAvoidanceChanceBase: 500,
+                    RangedAvoidanceChanceIntelligenceScale: 500) {
+                    RangedAvoidanceMovementChanceModulo = 5,
+                },
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 8,
+            positionY: 5,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5,002 ^ 9 ^ 7 = 4,996: the native modulo-four fallback would
+        // admit the far-distance Move goal, but validated modulo five does not.
+        processor.AdvanceTick(5_002, [player]);
+
+        Assert.False(monster.IsMoving);
+        Assert.Equal(11, monster.RangedAvoidanceMovementIdleTicks);
+    }
+
+    [Fact]
     public void AcidAiCreatesAValidatedSplatAndPersistentPuddle()
     {
         var monster = new AuthoritativeCombatTarget(

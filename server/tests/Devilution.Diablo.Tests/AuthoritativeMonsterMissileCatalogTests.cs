@@ -57,8 +57,8 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
             "monster_missiles.tsv",
-                "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\tranged_avoidance_minimum_distance\tranged_avoidance_far_distance\tranged_avoidance_chance_base\tranged_avoidance_chance_intelligence_scale\tranged_avoidance_far_intelligence_offset\tprojectile_damage\tpuddle_impact_lifetime\tprojectile_impact_lifetime\n"
-                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\tAcid\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\t2\t3\t500\t500\t1\t40\t4\t6\n");
+                "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tavoidance_probability_percent\tspell_id\tspawn_monster_id\tdamage_type\tprojectile_speed\tprojectile_lifetime\tprojectile_lifetime_base\tprojectile_lifetime_intelligence_scale\tpuddle_duration_random_range\tpuddle_duration_base\tpuddle_duration_intelligence_scale\tpuddle_damage_minimum_monster_level\tpuddle_damage_low\tpuddle_damage_high\tranged_avoidance_minimum_distance\tranged_avoidance_far_distance\tranged_avoidance_chance_base\tranged_avoidance_chance_intelligence_scale\tranged_avoidance_far_intelligence_offset\tprojectile_damage\tpuddle_impact_lifetime\tprojectile_impact_lifetime\tranged_avoidance_movement_chance_modulo\n"
+                + "Acid\tAcid\tAcid\tRangedAvoidance\t50\t1\t117\tAcid\t8\t9\t20\t5\t15\t40\t40\t2\t1\t2\t2\t3\t500\t500\t1\t40\t4\t6\t8\n");
 
         Assert.True(catalog.TryGet("Acid", out var acid));
         Assert.Equal(AuthoritativeMonsterRangedAttackMode.RangedAvoidance, acid.AttackMode);
@@ -85,6 +85,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
             acid.RangedAvoidanceChanceBase,
             acid.RangedAvoidanceChanceIntelligenceScale,
             acid.RangedAvoidanceFarIntelligenceOffset));
+        Assert.Equal(8, acid.RangedAvoidanceMovementChanceModulo);
     }
 
     [Fact]
@@ -100,6 +101,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
             acidUnique.RangedRetreatMinimumDistance,
             acidUnique.RangedRetreatChanceBase,
             acidUnique.RangedRetreatChanceIntelligenceScale));
+    }
+
+    [Fact]
+    public void LoadsRangedAvoidanceMovementModuloWithoutOtherAvoidanceTuning()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\tranged_avoidance_movement_chance_modulo\n"
+                + "Magma\tMagmaBall\tMonsterMagic\tRangedAvoidance\t5\n");
+
+        Assert.True(catalog.TryGet("Magma", out var magma));
+        Assert.Equal(5, magma.RangedAvoidanceMovementChanceModulo);
+        Assert.Equal(0, magma.RangedAvoidanceMinimumDistance);
     }
 
     [Fact]
@@ -333,6 +347,7 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
         Assert.Equal(0, succubus.RangedAvoidanceChanceBase);
         Assert.Equal(0, succubus.RangedAvoidanceChanceIntelligenceScale);
         Assert.Equal(0, succubus.RangedAvoidanceFarIntelligenceOffset);
+        Assert.Equal(0, succubus.RangedAvoidanceMovementChanceModulo);
         Assert.Equal(0, succubus.RangedRetreatMinimumDistance);
         Assert.Equal(0, succubus.RangedRetreatChanceBase);
         Assert.Equal(0, succubus.RangedRetreatChanceIntelligenceScale);
@@ -658,6 +673,19 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                 "BloodStar",
                 AuthoritativeProjectileBehavior.BloodStar,
                 RangedAvoidanceMinimumDistance: 2),
+        ]));
+    }
+
+    [Fact]
+    public void RejectsRangedAvoidanceMovementModuloOnOrdinaryRangedMappings()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "Succubus",
+                "BloodStar",
+                AuthoritativeProjectileBehavior.BloodStar) {
+                RangedAvoidanceMovementChanceModulo = 4,
+            },
         ]));
     }
 

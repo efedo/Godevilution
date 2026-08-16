@@ -88,7 +88,11 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional Mega post-action delay base; zero preserves native behavior. */
     int MegaDelayBase = 0,
     /** Optional exclusive Mega post-action delay random range. */
-    int MegaDelayRandomRange = 0);
+    int MegaDelayRandomRange = 0)
+{
+    /** Optional AiRangedAvoidance far-distance movement-goal admission modulo. */
+    public int RangedAvoidanceMovementChanceModulo { get; init; }
+}
 
 /** Externalized native monster missile identities used by server-owned AI. */
 public sealed class AuthoritativeMonsterMissileCatalog
@@ -188,6 +192,7 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.RangedAvoidanceChanceBase is < 0 or > 10_000
                 || definition.RangedAvoidanceChanceIntelligenceScale is < 0 or > 10_000
                 || definition.RangedAvoidanceFarIntelligenceOffset is < 0 or > 64
+                || definition.RangedAvoidanceMovementChanceModulo is < 0 or > 64
                 || definition.RangedRetreatMinimumDistance is < 0 or > 64
                 || definition.RangedRetreatChanceBase is < 0 or > 100
                 || definition.RangedRetreatChanceIntelligenceScale is < 0 or > 100
@@ -233,7 +238,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                         || definition.RangedAvoidanceFarDistance != 0
                         || definition.RangedAvoidanceChanceBase != 0
                         || definition.RangedAvoidanceChanceIntelligenceScale != 0
-                        || definition.RangedAvoidanceFarIntelligenceOffset != 0))
+                        || definition.RangedAvoidanceFarIntelligenceOffset != 0
+                        || definition.RangedAvoidanceMovementChanceModulo != 0))
                 || (definition.AttackMode == AuthoritativeMonsterRangedAttackMode.Ranged
                     && (definition.RangedRetreatMinimumDistance != 0
                         || definition.RangedRetreatChanceBase != 0
@@ -426,7 +432,10 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 row.OptionalInt32("snake_distant_delay_chance_base"),
                 row.OptionalInt32("snake_distant_delay_chance_intelligence_scale"),
                 row.OptionalInt32("mega_delay_base"),
-                row.OptionalInt32("mega_delay_random_range"));
+                row.OptionalInt32("mega_delay_random_range")) {
+                RangedAvoidanceMovementChanceModulo = row.OptionalInt32(
+                    "ranged_avoidance_movement_chance_modulo"),
+            };
         }));
     }
 

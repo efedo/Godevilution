@@ -7353,9 +7353,12 @@ public sealed class DiabloCombatCommandProcessor
             // ticks and saves until the native movement window completes.
             var lessMissiles = missile.ProjectileBehavior
                 == AuthoritativeProjectileBehavior.Acid ? 1 : 0;
+            var movementChanceModulo = missile.RangedAvoidanceMovementChanceModulo == 0
+                ? 4 << lessMissiles
+                : missile.RangedAvoidanceMovementChanceModulo;
             var hasMoveGoal = monster.RangedAvoidanceMoveTicks >= 0;
             var startsMoveGoal = distance >= farDistance
-                && attackSeed % (uint)(4 << lessMissiles) == 0;
+                && attackSeed % (uint)movementChanceModulo == 0;
             if (hasMoveGoal || startsMoveGoal) {
                 if (!hasMoveGoal)
                     monster.StartRangedAvoidanceMovement(
