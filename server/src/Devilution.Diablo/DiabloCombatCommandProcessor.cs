@@ -7387,8 +7387,18 @@ public sealed class DiabloCombatCommandProcessor
                         == AuthoritativeProjectileBehavior.Acid
                         ? 1
                         : 0;
-                    var adjacentAttackBand =
-                        (1000 * (monster.Intelligence + 6)) >> adjacentLessMissiles;
+                    var adjacentAttackChanceBase = missile
+                        .RangedAvoidanceAdjacentAttackChanceBase > 0
+                        ? missile.RangedAvoidanceAdjacentAttackChanceBase
+                        : 6_000;
+                    var adjacentAttackChanceIntelligenceScale = missile
+                        .RangedAvoidanceAdjacentAttackChanceIntelligenceScale > 0
+                        ? missile.RangedAvoidanceAdjacentAttackChanceIntelligenceScale
+                        : 1_000;
+                    var adjacentAttackBand = checked(
+                        adjacentAttackChanceBase
+                        + adjacentAttackChanceIntelligenceScale * monster.Intelligence);
+                    adjacentAttackBand >>= adjacentLessMissiles;
                     if (attackSeed % 10_000U
                         >= (uint)Math.Min(10_000, adjacentAttackBand))
                         return true;

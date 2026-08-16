@@ -35,6 +35,23 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedAdjacentAttackBand()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tattack_mode\t"
+                + "ranged_avoidance_adjacent_attack_chance_base\t"
+                + "ranged_avoidance_adjacent_attack_chance_intelligence_scale\n"
+                + "Magma\tMagmaBall\tMonsterMagic\tRangedAvoidance\t"
+                + "3000\t700\n");
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal((3000, 700), (
+            definition.RangedAvoidanceAdjacentAttackChanceBase,
+            definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale));
+    }
+
+    [Fact]
     public void ResolvesSymbolicMissileSpellIdsThroughStableContentIds()
     {
         var stableIds = new StableContentIdCatalog([
@@ -681,6 +698,20 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
                     "Acid",
                     AuthoritativeProjectileBehavior.Acid,
                     PuddleImpactLifetime: -1),
+            ]));
+    }
+
+    [Fact]
+    public void RejectsIncompleteAdjacentAttackTuning()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceAdjacentAttackChanceBase: 6000),
             ]));
     }
 

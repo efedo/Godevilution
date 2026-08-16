@@ -94,7 +94,11 @@ public sealed record AuthoritativeMonsterMissileDefinition(
     /** Optional exclusive Mega post-action delay random range. */
     int MegaDelayRandomRange = 0,
     /** Optional exclusive upper bound for native GenerateRnd damage rolls. */
-    int ProjectileDamageRandomRange = 0)
+    int ProjectileDamageRandomRange = 0,
+    /** Optional AiRangedAvoidance adjacent attack chance base per 10,000. */
+    int RangedAvoidanceAdjacentAttackChanceBase = 0,
+    /** Optional AiRangedAvoidance adjacent attack chance per intelligence per 10,000. */
+    int RangedAvoidanceAdjacentAttackChanceIntelligenceScale = 0)
 {
     /** Optional AiRangedAvoidance far-distance movement-goal admission modulo. */
     public int RangedAvoidanceMovementChanceModulo { get; init; }
@@ -134,6 +138,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 || definition.ProjectileLifetimeIntelligenceScale < 0
                 || definition.ProjectileDamage < 0
                 || definition.ProjectileDamageRandomRange < 0
+                || definition.RangedAvoidanceAdjacentAttackChanceBase is < 0 or > 10_000
+                || definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale is < 0 or > 10_000
                 || definition.SnakeDriftPattern is not null
                     && definition.SnakeDriftPattern.Any(rotation => rotation is < -4 or > 4)
                 || definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
@@ -272,6 +278,12 @@ public sealed class AuthoritativeMonsterMissileCatalog
                         || definition.RangedAvoidanceMovementChanceBase != 0
                         || definition.RangedAvoidanceMovementChanceIntelligenceScale != 0
                         || definition.RangedAvoidanceMovementFreshChanceBonus != 0))
+                || (definition.RangedAvoidanceAdjacentAttackChanceBase != 0
+                    || definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale != 0)
+                    && (definition.AttackMode
+                        != AuthoritativeMonsterRangedAttackMode.RangedAvoidance
+                        || definition.RangedAvoidanceAdjacentAttackChanceBase <= 0
+                        || definition.RangedAvoidanceAdjacentAttackChanceIntelligenceScale <= 0)
                 || (definition.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
                     && (definition.RangedAvoidanceMovementChanceBase != 0
                         || definition.RangedAvoidanceMovementChanceIntelligenceScale != 0
@@ -484,6 +496,10 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     "ranged_avoidance_movement_fresh_chance_bonus"),
                 ProjectileDamageRandomRange = row.OptionalInt32(
                     "projectile_damage_random_range"),
+                RangedAvoidanceAdjacentAttackChanceBase = row.OptionalInt32(
+                    "ranged_avoidance_adjacent_attack_chance_base"),
+                RangedAvoidanceAdjacentAttackChanceIntelligenceScale = row.OptionalInt32(
+                    "ranged_avoidance_adjacent_attack_chance_intelligence_scale"),
             };
         }));
     }

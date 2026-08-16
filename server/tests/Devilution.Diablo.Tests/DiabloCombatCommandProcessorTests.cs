@@ -9837,6 +9837,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RangedAvoidanceUsesValidatedAdjacentAttackBand()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            aggroRange: 8,
+            attackDamage: 5,
+            nativeAi: "Magma",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Magma",
+                    "MagmaBall",
+                    AuthoritativeProjectileBehavior.MonsterMagic,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance,
+                    RangedAvoidanceAdjacentAttackChanceBase: 1_000,
+                    RangedAvoidanceAdjacentAttackChanceIntelligenceScale: 1),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 5,000 ^ 9 ^ 7 = 5,006: authored 1,000-per-10,000 tuning rejects
+        // the adjacent attack that the native 6,000-per-10,000 fallback admits.
+        processor.AdvanceTick(5_000, [player]);
+
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void RangedAvoidanceUsesNativeRoundWalkOrderWhenItsRangedRollFails()
     {
         var monster = new AuthoritativeCombatTarget(
