@@ -1,6 +1,7 @@
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
+using ProjectilePresentationKind = Devilution.Client.Protocol.ProjectilePresentationKind;
 
 namespace Devilution.Client;
 
@@ -268,9 +269,7 @@ public partial class WorldPresentation : Node2D
 
     private void DrawProjectile(ProjectileSnapshot projectile)
     {
-        var kind = ProjectilePresentationStyle.Resolve(
-            projectile.Behavior,
-            projectile.Phase);
+        var kind = ProjectilePresentationStyle.Resolve(projectile);
         var beam = kind == ProjectilePresentationKind.Beam;
         var stoneCurse = kind == ProjectilePresentationKind.StoneCurse;
         var fireImpact = kind == ProjectilePresentationKind.FireImpact;

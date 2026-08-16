@@ -1,6 +1,8 @@
+using Devilution.Protocol.V1;
+
 namespace Devilution.Client.Protocol;
 
-/** Presentation family selected from a server-owned projectile behavior ID. */
+/** Presentation family projected by the server, with a legacy behavior fallback. */
 public enum ProjectilePresentationKind
 {
     Generic,
@@ -50,6 +52,39 @@ public static class ProjectilePresentationStyle
     private const int WeaponArrow = 58;
     private const int MonsterArrow = 59;
     private const int ImpactPhase = 1;
+
+    public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
+    {
+        return projectile.PresentationKind switch {
+            Devilution.Protocol.V1.ProjectilePresentationKind.Generic
+                => ProjectilePresentationKind.Generic,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Fire
+                => ProjectilePresentationKind.Fire,
+            Devilution.Protocol.V1.ProjectilePresentationKind.FireImpact
+                => ProjectilePresentationKind.FireImpact,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Lightning
+                => ProjectilePresentationKind.Lightning,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Holy
+                => ProjectilePresentationKind.Holy,
+            Devilution.Protocol.V1.ProjectilePresentationKind.BloodStar
+                => ProjectilePresentationKind.BloodStar,
+            Devilution.Protocol.V1.ProjectilePresentationKind.BoneSpirit
+                => ProjectilePresentationKind.BoneSpirit,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Acid
+                => ProjectilePresentationKind.Acid,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Arrow
+                => ProjectilePresentationKind.Arrow,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Beam
+                => ProjectilePresentationKind.Beam,
+            Devilution.Protocol.V1.ProjectilePresentationKind.StoneCurse
+                => ProjectilePresentationKind.StoneCurse,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Teleport
+                => ProjectilePresentationKind.Teleport,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Phasing
+                => ProjectilePresentationKind.Phasing,
+            _ => Resolve(projectile.Behavior, projectile.Phase),
+        };
+    }
 
     public static ProjectilePresentationKind Resolve(int behavior, int phase)
     {

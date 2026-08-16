@@ -1,5 +1,7 @@
+using Devilution.Protocol.V1;
 using Devilution.Client.Protocol;
 using Xunit;
+using ProtocolProjectilePresentationKind = Devilution.Protocol.V1.ProjectilePresentationKind;
 
 namespace Devilution.Client.Protocol.Tests;
 
@@ -32,5 +34,31 @@ public sealed class ProjectilePresentationStyleTests
         ProjectilePresentationKind expected)
     {
         Assert.Equal(expected, ProjectilePresentationStyle.Resolve(behavior, 0));
+    }
+
+    [Fact]
+    public void PrefersServerOwnedPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.Fire,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.Fire,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void FallsBackToBehaviorMetadataForOlderSnapshots()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 16,
+            Phase = 1,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.FireImpact,
+            ProjectilePresentationStyle.Resolve(projectile));
     }
 }

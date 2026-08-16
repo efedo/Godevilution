@@ -1601,6 +1601,7 @@ public sealed class LiveAuthoritativeServerTests
                 && projectile.SpellId == 22
                 && projectile.Behavior == 34);
         Assert.True(rage.RemainingTicks > 0);
+        Assert.Equal(Devilution.Protocol.V1.ProjectilePresentationKind.Generic, rage.PresentationKind);
     }
 
     [Fact]

@@ -230,6 +230,9 @@ internal static class DiabloProtocolMapper
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
+                PresentationKind = ResolveProjectilePresentationKind(
+                    projectile.Behavior,
+                    projectile.Phase),
             });
         }
         foreach (var portal in source.Portals.OrderBy(portal => portal.PortalId)) {
@@ -1071,5 +1074,54 @@ internal static class DiabloProtocolMapper
             && spellBooks.TryGet(spellId, out var book))
             return book.DisplayName;
         return string.Empty;
+    }
+
+    private static ProjectilePresentationKind ResolveProjectilePresentationKind(
+        AuthoritativeProjectileBehavior behavior,
+        AuthoritativeProjectilePhase phase)
+    {
+        if (behavior == AuthoritativeProjectileBehavior.ResurrectionBeam)
+            return ProjectilePresentationKind.Beam;
+        if (behavior == AuthoritativeProjectileBehavior.Teleport)
+            return ProjectilePresentationKind.Teleport;
+        if (behavior == AuthoritativeProjectileBehavior.Phasing)
+            return ProjectilePresentationKind.Phasing;
+        if (behavior == AuthoritativeProjectileBehavior.StoneCurse)
+            return ProjectilePresentationKind.StoneCurse;
+        if (behavior == AuthoritativeProjectileBehavior.Fireball)
+            return phase == AuthoritativeProjectilePhase.Impact
+                ? ProjectilePresentationKind.FireImpact
+                : ProjectilePresentationKind.Fire;
+        if (behavior is AuthoritativeProjectileBehavior.FireWallController
+                or AuthoritativeProjectileBehavior.FireWallSegment
+                or AuthoritativeProjectileBehavior.FlameWaveController
+                or AuthoritativeProjectileBehavior.FlameWaveSegment
+                or AuthoritativeProjectileBehavior.InfernoController
+                or AuthoritativeProjectileBehavior.InfernoSegment
+                or AuthoritativeProjectileBehavior.RingOfFireController
+                or AuthoritativeProjectileBehavior.ImmolationController)
+            return ProjectilePresentationKind.Fire;
+        if (behavior is AuthoritativeProjectileBehavior.Lightning
+                or AuthoritativeProjectileBehavior.LightningSegment
+                or AuthoritativeProjectileBehavior.ChainLightningController
+                or AuthoritativeProjectileBehavior.ChainLightningBolt
+                or AuthoritativeProjectileBehavior.NovaController
+                or AuthoritativeProjectileBehavior.NovaBall
+                or AuthoritativeProjectileBehavior.LightningWallController)
+            return ProjectilePresentationKind.Lightning;
+        if (behavior == AuthoritativeProjectileBehavior.HolyBolt)
+            return ProjectilePresentationKind.Holy;
+        if (behavior == AuthoritativeProjectileBehavior.BloodStar)
+            return ProjectilePresentationKind.BloodStar;
+        if (behavior == AuthoritativeProjectileBehavior.BoneSpirit)
+            return ProjectilePresentationKind.BoneSpirit;
+        if (behavior is AuthoritativeProjectileBehavior.Acid
+                or AuthoritativeProjectileBehavior.AcidSplat
+                or AuthoritativeProjectileBehavior.AcidPuddle)
+            return ProjectilePresentationKind.Acid;
+        if (behavior is AuthoritativeProjectileBehavior.WeaponArrow
+                or AuthoritativeProjectileBehavior.MonsterArrow)
+            return ProjectilePresentationKind.Arrow;
+        return ProjectilePresentationKind.Generic;
     }
 }
