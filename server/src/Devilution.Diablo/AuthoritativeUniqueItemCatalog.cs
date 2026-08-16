@@ -68,6 +68,17 @@ public sealed class AuthoritativeUniqueItemCatalog
 
     public bool TryGet(uint uniqueId, out AuthoritativeUniqueItemDefinition definition) => definitions.TryGetValue(uniqueId, out definition!);
 
+    /** Validates unique-item base identities against the active item catalog. */
+    public void ValidateBaseItems(AuthoritativeItemCatalog items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        foreach (var definition in Definitions) {
+            if (!items.TryGet(definition.BaseItemId, out _))
+                throw new InvalidDataException(
+                    $"Unique item {definition.UniqueId} references unknown base item {definition.BaseItemId}.");
+        }
+    }
+
     public bool TrySelectForBase(
         uint baseItemId,
         int itemLevel,
