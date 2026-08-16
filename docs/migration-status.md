@@ -137,6 +137,10 @@ Status date: 2026-08-16
   `ranged_avoidance_movement_fresh_chance_bonus` missile fields, preserving the
   native 50/10/30 movement band with compatibility fallback for older packs.
 
+- SkeletonRanged fresh-mode movement admission is now validated through the
+  `skeleton_ranged_movement_fresh_chance_bonus` monster-type field, preserving
+  the native 50-percent bonus with compatibility fallback for older packs.
+
 - SkeletonKing movement-admission chance is now a validated monster-type
   field, preserving the native intelligence-scaled movement band.
 
@@ -1309,6 +1313,10 @@ Status date: 2026-08-16
 - Schema 1.309 externalizes AiRangedAvoidance's ordinary RandomWalk movement
   band through optional missile data, retaining the native 50/10/30 fallback
   for older mappings.
+
+- Schema 1.310 externalizes SkeletonRanged's fresh-mode movement bonus through
+  optional monster-type data, retaining the native 50-percent fallback for
+  older mappings.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence
