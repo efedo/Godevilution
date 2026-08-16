@@ -265,7 +265,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? AuthoritativeUniqueItemCatalog.LoadTsv(
                 uniqueTable.SourcePath,
                 uniqueTable.ToCanonicalTsv(),
-                cursorCatalog)
+                cursorCatalog,
+                stableIds)
             : itemCatalog is not null
                 && content.TryGetTable("unique_itemdat.tsv", out var legacyUniqueTable)
                 ? AuthoritativeUniqueItemCatalog.LoadLegacyTsv(

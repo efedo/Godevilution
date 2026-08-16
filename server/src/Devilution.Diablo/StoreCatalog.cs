@@ -257,7 +257,7 @@ public sealed class StoreCatalog
         if (itemCatalog is not null && row.TryGet("item_id", out var itemId)
             && !string.IsNullOrWhiteSpace(itemId))
             return itemCatalog.Generate(
-                row.RequiredUInt32("item_id"),
+                AuthoritativeItemIdentity.Resolve(row, stableIds),
                 row.RequiredUInt32("item_seed"),
                 row.OptionalInt32("item_level"));
         return AuthoritativeItemState.Empty with {

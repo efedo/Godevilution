@@ -81,7 +81,7 @@ public sealed class AuthoritativeItemQuestEffectCatalog
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemQuestEffectCatalog(table.Rows.Select(row =>
             new AuthoritativeItemQuestEffectDefinition(
-                row.RequiredUInt32("item_id"),
+                AuthoritativeItemIdentity.Resolve(row, stableIds),
                 AuthoritativeQuestIdentity.Resolve(
                     row,
                     stableIds,

@@ -177,7 +177,8 @@ public sealed class AuthoritativeUniqueItemCatalog
     public static AuthoritativeUniqueItemCatalog LoadTsv(
         string sourcePath,
         string contents,
-        AuthoritativeItemCursorCatalog? cursorCatalog = null)
+        AuthoritativeItemCursorCatalog? cursorCatalog = null,
+        StableContentIdCatalog? stableIds = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var definitions = table.Rows
@@ -189,7 +190,12 @@ public sealed class AuthoritativeUniqueItemCatalog
                     row.OptionalInt32("value1"),
                     row.OptionalInt32("value2"))).ToArray();
                 if (group.Any(row => row.Required("name") != first.Required("name")
-                    || row.RequiredUInt32("base_item_id") != first.RequiredUInt32("base_item_id")
+                    || AuthoritativeItemIdentity.Resolve(row, stableIds, "base_item_id", "base_item_symbol")
+                        != AuthoritativeItemIdentity.Resolve(
+                            first,
+                            stableIds,
+                            "base_item_id",
+                            "base_item_symbol")
                     || row.RequiredInt32("min_level") != first.RequiredInt32("min_level")
                     || row.RequiredInt32("value") != first.RequiredInt32("value")
                     || OptionalCursorSymbol(row, "cursor_graphic")
@@ -198,7 +204,11 @@ public sealed class AuthoritativeUniqueItemCatalog
                 return new AuthoritativeUniqueItemDefinition(
                     group.Key,
                     first.Required("name"),
-                    first.RequiredUInt32("base_item_id"),
+                    AuthoritativeItemIdentity.Resolve(
+                        first,
+                        stableIds,
+                        "base_item_id",
+                        "base_item_symbol"),
                     first.RequiredInt32("min_level"),
                     first.RequiredInt32("value"),
                     powers) {

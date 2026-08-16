@@ -237,7 +237,11 @@ public static class AuthoritativeQuestCatalog
                     "completion_activate_quest_symbol"),
                 activateOnRoute: row.OptionalInt32("route_activation") != 0,
                 completionDiablo: row.OptionalInt32("completion_diablo") != 0,
-                completionRewardItemId: row.OptionalUInt32("completion_reward_item_id"),
+                completionRewardItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "completion_reward_item_id",
+                    "completion_reward_item_symbol"),
                 completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };

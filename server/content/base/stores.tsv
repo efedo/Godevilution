@@ -1,8 +1,8 @@
-store_id	store_slot	item_seed	price	item_id
-1	0	42	75	1
-1	1	43	25	2
-2	0	100	120	1
-2	1	101	30	2
-3	0	200	200	1
-4	0	300	25	2
-4	1	301	50	1
+store_id	store_slot	item_seed	price	item_id	item_symbol
+1	0	42	75	1	short_sword
+1	1	43	25	2	buckler
+2	0	100	120	1	short_sword
+2	1	101	30	2	buckler
+3	0	200	200	1	short_sword
+4	0	300	25	2	buckler
+4	1	301	50	1	short_sword
