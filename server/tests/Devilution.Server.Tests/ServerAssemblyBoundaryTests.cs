@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Devilution.Protocol.V1;
 using Devilution.Server.Host;
 using Devilution.Server.Stores;
@@ -93,6 +94,37 @@ public sealed class ServerAssemblyBoundaryTests
             .ToArray();
 
         Assert.Equal(["Program.cs"], sources);
+    }
+
+    [Fact]
+    public void AuthoritativeCSharpPathHasNoLegacyLuaReferences()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var authoritativeRoots = new[] {
+            Path.Combine(repositoryRoot, "server", "src"),
+            Path.Combine(repositoryRoot, "godot"),
+        };
+        var forbiddenReferences = authoritativeRoots
+            .SelectMany(root => Directory.EnumerateFiles(
+                root,
+                "*.*",
+                SearchOption.AllDirectories))
+            .Where(path => !IsBuildArtifact(path))
+            .Where(path => Path.GetExtension(path) is
+                ".cs" or ".csproj" or ".props" or ".targets" or ".proto")
+            .SelectMany(path => {
+                var text = File.ReadAllText(path);
+                return Regex.IsMatch(
+                        text,
+                        @"\b(lua|sol2)\b",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+                    ? new[] { Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/') }
+                    : Array.Empty<string>();
+            })
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Empty(forbiddenReferences);
     }
 
     private static string[] GodevilutionDependencies(Assembly assembly)
