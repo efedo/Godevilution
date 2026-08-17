@@ -11485,6 +11485,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GenericProjectileBreaksABlockingObjectBeforeRemoval()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var projectile = new AuthoritativeProjectile(
+            100,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            1,
+            AuthoritativeDamageType.Physical,
+            0,
+            3,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.Targeted,
+            Speed = 1,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, []);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void AcidAiDefersItsProjectileOutsideTheNativeHalfRateAvoidanceBand()
     {
         var monster = new AuthoritativeCombatTarget(

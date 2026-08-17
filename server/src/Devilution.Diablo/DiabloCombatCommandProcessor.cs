@@ -9374,6 +9374,7 @@ public sealed class DiabloCombatCommandProcessor
                             projectile.PositionY,
                             nextX,
                             nextY)) {
+                        BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
                         world.Projectiles.Remove(projectile.EntityId);
                         continue;
                     }
