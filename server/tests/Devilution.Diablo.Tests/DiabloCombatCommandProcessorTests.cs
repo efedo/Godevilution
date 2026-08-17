@@ -10300,6 +10300,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void StormLightningRollsItsMonsterDamageWithNativeRngEachTick()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 9,
+            monsterLevel: 5,
+            nativeAi: "Storm",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateLightningSpell()]),
+            random: new DiabloRandom(0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Storm",
+                    "ThinLightningControl",
+                    AuthoritativeProjectileBehavior.Lightning,
+                    AuthoritativeMonsterRangedAttackMode.RangedAvoidance),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+
+        var segment = Assert.Single(
+            world.Projectiles.Values,
+            projectile => projectile.Behavior == AuthoritativeProjectileBehavior.LightningSegment);
+        // DiabloRandom(0)'s first range draw is zero, so native
+        // 2 * RandomIntBetween(3, 9) yields six.
+        Assert.Equal(6, segment.Damage);
+    }
+
+    [Fact]
     public void MagmaAiFiresTheValidatedFireProjectile()
     {
         var monster = new AuthoritativeCombatTarget(

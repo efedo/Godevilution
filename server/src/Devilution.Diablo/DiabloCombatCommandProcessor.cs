@@ -11458,11 +11458,9 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster)
     {
         projectile.RemainingTicks--;
+        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
         var damage = checked(
-            2 * SelectEffectiveMonsterDamage(
-                monster,
-                special: false,
-                seed: projectile.EntityId ^ monster.EntityId));
+            2 * random.RandomIntBetween(damageRange.Minimum, damageRange.Maximum));
         projectile.RemainingTicks--;
 
         var previousX = projectile.PositionX;
