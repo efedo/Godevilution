@@ -12,6 +12,9 @@ namespace Devilution.Server;
 
 internal static class Program
 {
+    private delegate IReadOnlyList<IGameplayModule> ModuleCandidateLoader(
+        out LoadedGameplayModulePackage[] loadedPackages);
+
     public static async Task<int> Main(string[] args)
     {
         if (!ServerHostOptions.TryParse(args, out var options, out var error)) {
@@ -32,35 +35,48 @@ internal static class Program
     private static async Task<int> RunAsync(ServerHostOptions options)
     {
         var contentRoot = Path.GetFullPath(options.ContentRoot);
-        var contentPacks = new List<ContentPack> {
-            LoadBaseContentPack(options, contentRoot),
-        };
-        foreach (var overlayRoot in options.ContentOverlayRoots)
-            contentPacks.Add(ContentPackLoader.LoadManifestDirectory(overlayRoot));
-        var contentManifest = new ContentManifest(
-            options.ContentId,
-            options.ContentVersion,
-            contentPacks);
+        ContentManifest LoadContentManifest()
+        {
+            var contentPacks = new List<ContentPack> {
+                LoadBaseContentPack(options, contentRoot),
+            };
+            foreach (var overlayRoot in options.ContentOverlayRoots)
+                contentPacks.Add(ContentPackLoader.LoadManifestDirectory(overlayRoot));
+            return new ContentManifest(
+                options.ContentId,
+                options.ContentVersion,
+                contentPacks);
+        }
+
+        var contentManifest = LoadContentManifest();
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
         var gameAdapters = BuiltInAuthoritativeGameHostAdapters.Create();
         var builtInModules = gameAdapters.CreateBuiltInModules();
         var modulePackageLoader = new GameplayModulePackageLoader(
             builtInModules.Select(module => module.GetType().Assembly));
-        var modulePackages = options.GameplayModulePackageRoots
-            .Select(modulePackageLoader.LoadDirectory)
-            .ToArray();
-        var duplicatePackageIds = modulePackages
-            .GroupBy(package => package.PackageId, StringComparer.Ordinal)
-            .Where(group => group.Count() > 1)
-            .Select(group => group.Key)
-            .ToArray();
-        if (duplicatePackageIds.Length != 0) {
-            throw new InvalidDataException(
-                $"Gameplay module package IDs must be unique: {string.Join(", ", duplicatePackageIds)}.");
+        IReadOnlyList<IGameplayModule> LoadModuleCandidates(
+            out LoadedGameplayModulePackage[] loadedPackages)
+        {
+            loadedPackages = options.GameplayModulePackageRoots
+                .Select(modulePackageLoader.LoadDirectory)
+                .ToArray();
+            var duplicatePackageIds = loadedPackages
+                .GroupBy(package => package.PackageId, StringComparer.Ordinal)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToArray();
+            if (duplicatePackageIds.Length != 0) {
+                throw new InvalidDataException(
+                    $"Gameplay module package IDs must be unique: {string.Join(", ", duplicatePackageIds)}.");
+            }
+
+            var candidates = gameAdapters.CreateBuiltInModules().ToList();
+            foreach (var package in loadedPackages)
+                candidates.AddRange(package.Modules);
+            return candidates;
         }
-        var moduleCandidates = builtInModules.ToList();
-        foreach (var package in modulePackages)
-            moduleCandidates.AddRange(package.Modules);
+
+        var moduleCandidates = LoadModuleCandidates(out var modulePackages);
         var randomSeed = options.RandomSeed
             ?? BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(sizeof(uint)));
         var playerStart = new AuthoritativePlayerStartConfiguration(
@@ -121,18 +137,98 @@ internal static class Program
                 + (options.ProceduralMonsterLevelId is uint levelId
                     ? $" on level {levelId}"
                     : " on the default starting level"));
-        Console.WriteLine("Press Ctrl+C to stop.");
+        Console.WriteLine("Operator commands: status, reload, help, quit.");
 
         using var cancellation = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) => {
             eventArgs.Cancel = true;
             cancellation.Cancel();
         };
+        var operatorLoop = RunOperatorLoopAsync(
+            server,
+            LoadContentManifest,
+            LoadModuleCandidates,
+            cancellation.Cancel,
+            cancellation.Token);
         try {
             await Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token);
         } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
         }
+        cancellation.Cancel();
+        try {
+            await operatorLoop;
+        } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
+        }
         return 0;
+    }
+
+    private static async Task RunOperatorLoopAsync(
+        AuthoritativeTcpServer server,
+        Func<ContentManifest> loadContentManifest,
+        ModuleCandidateLoader loadModuleCandidates,
+        Action requestShutdown,
+        CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested) {
+            string? line;
+            try {
+                line = await Console.In.ReadLineAsync(cancellationToken);
+            } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                return;
+            }
+            if (line is null)
+                return;
+
+            switch (ServerOperatorCommand.Parse(line)) {
+            case ServerOperatorCommandKind.Empty:
+                continue;
+            case ServerOperatorCommandKind.Help:
+                Console.WriteLine("Commands: status, reload, help, quit.");
+                break;
+            case ServerOperatorCommandKind.Status:
+                Console.WriteLine($"Active sessions: {server.ActiveSessionIds.Count}");
+                Console.WriteLine($"Listening: {server.Port}");
+                break;
+            case ServerOperatorCommandKind.Reload:
+                await ReloadRulesetAsync(
+                    server,
+                    loadContentManifest,
+                    loadModuleCandidates);
+                break;
+            case ServerOperatorCommandKind.Quit:
+                requestShutdown();
+                return;
+            default:
+                Console.WriteLine("Unknown command. Use 'help'.");
+                break;
+            }
+        }
+    }
+
+    private static Task ReloadRulesetAsync(
+        AuthoritativeTcpServer server,
+        Func<ContentManifest> loadContentManifest,
+        ModuleCandidateLoader loadModuleCandidates)
+    {
+        try {
+            var candidateManifest = loadContentManifest();
+            var candidateModules = loadModuleCandidates(out var modulePackages);
+            var result = server.TryReloadRuleset(candidateManifest, candidateModules);
+            if (!result.Succeeded) {
+                Console.WriteLine("Reload rejected:");
+                foreach (var diagnostic in result.Diagnostics)
+                    Console.WriteLine($"  {diagnostic}");
+                return Task.CompletedTask;
+            }
+
+            Console.WriteLine($"Reloaded ruleset: {result.Active.Identity.CombinedSha256}");
+            Console.WriteLine($"Content manifest: {candidateManifest.Sha256}");
+            if (modulePackages.Length != 0)
+                Console.WriteLine($"Module packages: {string.Join(", ", modulePackages.Select(package => $"{package.PackageId}@{package.PackageVersion}"))}");
+        } catch (Exception exception) {
+            Console.WriteLine($"Reload failed: {exception.Message}");
+        }
+        return Task.CompletedTask;
     }
 
     private static ContentPack LoadBaseContentPack(
