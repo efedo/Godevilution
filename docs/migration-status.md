@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,211 tests and the server suite passes all 309 tests.
+  all 1,212 tests and the server suite passes all 309 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
@@ -41,6 +41,10 @@ Status date: 2026-08-16
 - Player-owned arrows now resolve the first living combatant encountered on
   each traversed tile, matching native `ProcessArrow` path collision instead
   of requiring the declared endpoint target to remain the first occupant.
+
+- Player-owned arrows now require the declared endpoint target to still occupy
+  the endpoint tile at impact; targets that leave the native travel path are
+  missed rather than resolved by stale entity identity.
 
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.

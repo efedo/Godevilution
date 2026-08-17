@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Preserve native player-arrow path collision by resolving the first living
   combatant encountered on each traversed tile before the declared endpoint.
 
+- Preserve native player-arrow misses when the declared endpoint target leaves
+  the arrow's spatial path before impact.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
