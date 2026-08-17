@@ -2074,7 +2074,8 @@ breakable pass-through object and any destroyed object that is not breakable. A
 non-passable object can also carry optional `is_shrine=1` metadata. Nova Ball
 preserves its native target-tile shrine exception: a shrine at the ball's
 target tile does not terminate that ball, while other missile-blocking objects
-do. Older packs omit the optional column and retain the ordinary blocker rule.
+destroy the ball's breakable blocker before the ball is removed. Older packs
+omit the optional column and retain the ordinary blocker rule.
 
 ## Table schema reference
 

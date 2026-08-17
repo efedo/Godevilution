@@ -625,9 +625,10 @@ authoritative projectiles and never emit balls or apply damage.
 Nova Ball movement also honors the authoritative world-object boundary. A
 non-passable object removes the ball on collision, except when the object is a
 validated shrine on the ball's target tile; that native shrine interaction
-keeps the ball alive for its remaining lifetime. The optional shrine capability
-is carried through snapshots, saves, protocol projections, and canonical hash
-state, while clients only render the resulting projectile.
+keeps the ball alive for its remaining lifetime. A regular breakable blocker is
+destroyed before the ball is removed. The optional shrine capability is carried
+through snapshots, saves, protocol projections, and canonical hash state, while
+clients only render the resulting projectile.
 
 An Apocalypse cast uses behavior value `32` for its row-major scan controller
 and value `33` for each persistent Physical boom. The server owns cursor

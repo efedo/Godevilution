@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Preserve native breakable-object destruction for persistent Apocalypse booms
   without shortening their remaining lifetime.
 
+- Preserve native breakable-object destruction for regular Nova Ball blockers
+  while retaining the validated shrine exception.
+
 - Preserve Nova Ball's native shrine collision exception through validated
   world-object metadata and the authoritative snapshot, protocol, save, and
   hash boundaries.
