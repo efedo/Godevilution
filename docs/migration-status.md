@@ -144,6 +144,9 @@ Status date: 2026-08-17
 - Elemental behavior `35` now projects the server-owned `Fire` family across
   travel and burst phases, including the legacy behavior fallback.
 
+- Guardian behavior `36` now projects an additive server-owned `Guardian`
+  turret family, while older peers retain behavior-based fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

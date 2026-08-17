@@ -663,6 +663,11 @@ sight, collision, damage, and burst order; the additive presentation projection
 uses `Fire` for both travel and burst phases, matching the native `firerun`
 visual family.
 
+A Guardian cast uses behavior value `36` for its stationary turret controller.
+The server owns its duration, scan order, line-of-sight, firing RNG, and emitted
+Firebolt projectiles; the additive presentation projection uses `Guardian` so
+Godot can render the native turret state without simulating its behavior.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

@@ -87,6 +87,8 @@ All notable changes to this fork are documented below.
   including behavior-based fallback for older peers.
 - Classify Elemental behavior `35` as the server-owned `Fire` family across
   travel and burst phases, matching its native `firerun` visual.
+- Add protocol presentation value `GUARDIAN` and project Guardian behavior `36`
+  through the server and Godot client as a dedicated turret family.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
