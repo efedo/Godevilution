@@ -1577,6 +1577,22 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectShrineCapabilityChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, ObjectId = 4 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Objects[0].IsShrine = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void StaticCatalogPortalsDoNotChangeLegacyHashButDynamicPortalsDo()
     {
         var baseline = new Snapshot();

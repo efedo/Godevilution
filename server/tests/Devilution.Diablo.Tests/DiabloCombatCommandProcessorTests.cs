@@ -15961,6 +15961,82 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NovaBallSurvivesItsTargetShrineCollision()
+    {
+        var shrine = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            2,
+            2,
+            missilePassable: false,
+            isShrine: true);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            7,
+            0,
+            18,
+            0,
+            2,
+            2,
+            2,
+            2,
+            1,
+            AuthoritativeDamageType.Lightning,
+            0,
+            2) {
+            Behavior = AuthoritativeProjectileBehavior.NovaBall,
+        };
+        var world = new DiabloWorldState(
+            objects: [shrine],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Same(projectile, Assert.Single(world.Projectiles.Values));
+        Assert.Equal(1U, projectile.RemainingTicks);
+    }
+
+    [Fact]
+    public void NovaBallStopsAtARegularMissileBlockingObject()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            2,
+            2,
+            missilePassable: false);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            7,
+            0,
+            18,
+            0,
+            2,
+            2,
+            2,
+            2,
+            1,
+            AuthoritativeDamageType.Lightning,
+            0,
+            2) {
+            Behavior = AuthoritativeProjectileBehavior.NovaBall,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void NovaControllerUsesConfiguredProjectileCount()
     {
         var world = new DiabloWorldState();

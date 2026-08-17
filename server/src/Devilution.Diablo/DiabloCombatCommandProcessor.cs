@@ -11807,6 +11807,24 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             }
 
+            if (world.IsMissileBlocked(
+                    projectile.LevelId,
+                    tile.X,
+                    tile.Y)) {
+                var isTargetShrine = tile.X == projectile.TargetX
+                    && tile.Y == projectile.TargetY
+                    && world.TryGetMissileBlockingObject(
+                        projectile.LevelId,
+                        tile.X,
+                        tile.Y,
+                        out var blockingObject)
+                    && blockingObject!.IsShrine;
+                if (!isTargetShrine) {
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
+            }
+
             var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
             if (target is not null
                 && target.EntityId != projectile.LastCollisionTargetEntityId) {

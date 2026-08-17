@@ -1784,7 +1784,8 @@ public sealed class DiabloSimulationTests
                 questId: 40,
                 questProgressAmount: 2,
                 breakable: true,
-                destroyed: true)],
+                destroyed: true,
+                isShrine: true)],
             Quests = [new AuthoritativeQuestState(40, 0, 2, progress: 1)],
             Projectiles = [new AuthoritativeProjectile(
                 50,
@@ -1995,6 +1996,7 @@ public sealed class DiabloSimulationTests
         Assert.Equal(2U, restoredObject.QuestProgressAmount);
         Assert.True(restoredObject.Breakable);
         Assert.True(restoredObject.Destroyed);
+        Assert.True(restoredObject.IsShrine);
         Assert.Equal(1U, Assert.Single(replacement.WorldState.Quests).Value.Progress);
         var restoredProjectiles = replacement.WorldState.Projectiles.Values
             .OrderBy(projectile => projectile.EntityId)

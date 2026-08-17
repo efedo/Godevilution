@@ -494,6 +494,10 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-object-quest-progress-v1");
                     hasher.AppendUInt32(@object.QuestProgressAmount);
                 }
+                if (@object.IsShrine) {
+                    hasher.AppendString("godevilution-object-shrine-v1");
+                    hasher.AppendBool(true);
+                }
             }
         }
 

@@ -19,7 +19,8 @@ public sealed class AuthoritativeWorldObject
         bool missilePassable = false,
         bool breakable = false,
         bool destroyed = false,
-        bool trapArmed = false)
+        bool trapArmed = false,
+        bool isShrine = false)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -45,6 +46,7 @@ public sealed class AuthoritativeWorldObject
         Breakable = breakable;
         Destroyed = destroyed;
         TrapArmed = trapArmed;
+        IsShrine = isShrine;
     }
 
     public uint EntityId { get; }
@@ -64,6 +66,9 @@ public sealed class AuthoritativeWorldObject
 
     /** Native-compatible armed trap state for cursor-driven Trap Disarm. */
     public bool TrapArmed { get; set; }
+
+    /** Native shrine capability used by Nova Ball's target-tile collision rule. */
+    public bool IsShrine { get; set; }
 }
 
 /** External object placement and identity definitions. */
@@ -116,7 +121,8 @@ public static class AuthoritativeWorldObjectCatalog
                 row.OptionalInt32("missile_passable") != 0,
                 row.OptionalInt32("breakable") != 0,
                 row.OptionalInt32("destroyed") != 0,
-                row.OptionalInt32("trap_armed") != 0);
+                row.OptionalInt32("trap_armed") != 0,
+                row.OptionalInt32("is_shrine") != 0);
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");

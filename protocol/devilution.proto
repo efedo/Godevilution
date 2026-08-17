@@ -647,6 +647,8 @@ message ObjectSnapshot {
 	bool trap_armed = 13;
 	// Progress applied when this linked quest object is activated.
 	uint32 quest_progress_amount = 14;
+	// Native shrine capability used by Nova Ball target-tile collision.
+	bool is_shrine = 15;
 }
 
 message QuestSnapshot {

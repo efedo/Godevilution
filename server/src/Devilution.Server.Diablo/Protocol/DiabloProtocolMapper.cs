@@ -159,6 +159,7 @@ internal static class DiabloProtocolMapper
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
                 TrapArmed = revealTraps && @object.TrapArmed,
+                IsShrine = @object.IsShrine,
             });
         }
         foreach (var quest in source.Quests) {
@@ -568,6 +569,7 @@ internal static class DiabloProtocolMapper
                 Breakable = @object.Breakable,
                 Destroyed = @object.Destroyed,
                 TrapArmed = @object.TrapArmed,
+                IsShrine = @object.IsShrine,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,
