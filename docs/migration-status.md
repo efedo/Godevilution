@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,208 tests and the server suite passes all 309 tests.
+  all 1,209 tests and the server suite passes all 309 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
