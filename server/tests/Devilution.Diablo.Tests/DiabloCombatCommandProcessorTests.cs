@@ -16330,6 +16330,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ApocalypseBoomBreaksABlockingObjectWithoutEndingItsLifetime()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            1,
+            breakable: true);
+        var boom = new AuthoritativeProjectile(
+            100,
+            7,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            5,
+            AuthoritativeDamageType.Physical,
+            0,
+            2U,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [boom]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, []);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Equal(1U, boom.RemainingTicks);
+        Assert.Contains(boom, world.Projectiles.Values);
+    }
+
+    [Fact]
     public void RageRunsNativeActiveCooldownAndQ6ExpiryDamage()
     {
         var world = new DiabloWorldState();

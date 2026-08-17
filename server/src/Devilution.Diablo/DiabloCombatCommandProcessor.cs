@@ -11912,6 +11912,12 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloDirectedGameplayEvent> events)
     {
         projectile.RemainingTicks--;
+        // Native CheckMissileCol runs once for the boom and breaks a hit
+        // breakable blocker without ending the boom's remaining lifetime.
+        BreakMissileBlockingObject(
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.PositionY);
         if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
             if (!projectile.ApocalypseHit) {
                 var playerTarget = players.FirstOrDefault(player =>
