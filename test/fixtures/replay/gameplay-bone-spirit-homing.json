@@ -1,0 +1,55 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/bone-spirit-homing",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "bone-spirit-homing-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1280,
+    "life_maximum": 1280,
+    "mana": 2000,
+    "mana_maximum": 2000,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 3,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 40,
+    "combat_target_max_hit_points": 40,
+    "combat_target_magic_resistance": 25,
+    "combat_target_monster_level": 1,
+    "combat_target_petrified": true,
+    "memorized_spells": [
+      { "spell_id": 38, "level": 1 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 38,
+        "target_x": 1,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "bf7bdada07fa3a3db9545c6ffe083a76a90c62a75d437f60c79982ef4015aeed" },
+    { "tick": 10, "state_sha256": "eaede63893b5f5483f2f62d69612beb184a694858eba23c59c154ff794242ffb" }
+  ]
+}
