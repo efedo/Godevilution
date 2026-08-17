@@ -151,6 +151,10 @@ Status date: 2026-08-17
   `Flash` family for the native two-layer visual, while older peers retain
   behavior-based fallback.
 
+- Rage behavior `34` now projects an additive server-owned `HIDDEN` family so
+  current Godot clients suppress the invisible controller instead of drawing a
+  generic projectile; older peers retain behavior-based fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add protocol presentation value `FLASH` and project native Flash behaviors
   `5`, `6`, and `7` through the server and Godot client as a dedicated family.
 
+- Add protocol presentation value `HIDDEN` so Rage controller behavior `34` is
+  suppressed by current Godot clients instead of rendered as a generic sprite.
+
 - Preserve native Fireball collision with missile-blocking tiles and objects,
   including breakable-object destruction before the authoritative splash.
 

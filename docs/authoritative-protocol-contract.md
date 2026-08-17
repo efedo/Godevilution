@@ -673,6 +673,11 @@ layers. The server owns the repeated collision and damage timing; the additive
 `Flash` presentation projection lets Godot render the native blue flash without
 inferring spell behavior from a generic projectile.
 
+Rage behavior `34` is a server-owned controller with no world sprite. The
+additive `HIDDEN` presentation value tells current clients to suppress it;
+older peers may ignore the value and retain their behavior-based compatibility
+path.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

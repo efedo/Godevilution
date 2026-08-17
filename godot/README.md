@@ -167,8 +167,8 @@ families while the server owns scan order, line-of-sight, collision, damage,
 lifetime, and first-hit persistence. Elemental behavior `35` uses the fire
 family during travel and its burst phase. Guardian behavior `36` projects a
 dedicated turret family. Flash behaviors `5`, `6`, and `7` project the native
-two-layer blue flash family. Rage behavior `34` remains an invisible
-server-owned controller.
+two-layer blue flash family. Rage behavior `34` projects `HIDDEN`, so the
+server-owned controller is never rendered as a generic projectile.
 The server also projects `ProjectileSnapshot.presentation_kind` as an additive
 visual family for every projectile. Godot prefers that server-owned metadata and
 falls back to behavior/phase classification only when communicating with an

@@ -88,8 +88,9 @@ Windows toolchain command.
   are transient presentation aids and never replace the following snapshot.
 - `ProjectileSnapshot.presentation_kind` is an additive server-owned visual
   family. `MONSTER_MAGIC`, `HORK_SPAWN`, `GUARDIAN`, and `FLASH` identify native
-  monster/turret/spell visuals for Godot presentation; older peers may ignore
-  the values and fall back to the behavior identity.
+  monster/turret/spell visuals, while `HIDDEN` marks server-only controllers
+  such as Rage. Godot uses these values for presentation; older peers may
+  ignore them and fall back to the behavior identity.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs
