@@ -155,8 +155,11 @@ Legacy local towner behavior stays available outside the authoritative runtime.
 Content-declared unique-monster conversations use the same boundary. When the
 projected live unique identity matches an active quest, the native client sends
 `TalkToQuestRequested`; the server validates the quest, target identity, level,
-and adjacency before returning the dialogue event. The Hellfire Defiler
-conversation is the first shipped definition. Unauthored legacy monster
+and adjacency before returning the dialogue event. Dialogue definitions may
+also declare an inventory hand-in and relative unique or normal-item reward;
+the server consumes the item, completes the quest, and emits the authored
+completion dialogue. Hellfire Defiler is the first conversation-only definition
+and Lachdanan is the first hand-in definition. Unauthored legacy monster
 conversations retain their local fallback until their content actions are
 externalized.
 

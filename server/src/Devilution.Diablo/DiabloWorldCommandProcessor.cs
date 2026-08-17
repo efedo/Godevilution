@@ -1189,7 +1189,7 @@ public sealed class DiabloWorldCommandProcessor
      * Starts the native quest-dialogue boundary without exposing presentation
      * text or encounter state to the client. Content supplies the quest's
      * message identity and unique completion identity; the server validates
-     * both before activating the conversation.
+     * both before activating or completing the conversation.
      */
     private DiabloWorldIntentResult TalkToQuest(
         AuthoritativePlayerState player,
@@ -1213,6 +1213,92 @@ public sealed class DiabloWorldCommandProcessor
                 Math.Abs(target.PositionX - player.PositionX),
                 Math.Abs(target.PositionY - player.PositionY)) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        var dialogueInventoryIndex = -1;
+        if (quest.DialogueItemId != 0) {
+            if (items is null || !items.TryGet(quest.DialogueItemId, out var dialogueItem))
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            for (var index = 0; index < player.Inventory.Count; index++) {
+                if (items.IsStateForDefinition(player.Inventory[index].State, dialogueItem)) {
+                    dialogueInventoryIndex = index;
+                    break;
+                }
+            }
+            if (dialogueInventoryIndex >= 0
+                && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
+                var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
+                var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
+                if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+        }
+
+        if (dialogueInventoryIndex >= 0) {
+            InventoryGridLayout.RemoveAndCompact(
+                player.InventoryGrid,
+                dialogueInventoryIndex);
+            player.Inventory.RemoveAt(dialogueInventoryIndex);
+            quest.Progress = quest.RequiredProgress;
+            quest.Completed = true;
+            quest.Active = false;
+            quest.Logged = true;
+            quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+            quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
+
+            if (quest.CompletionActivateQuestId != 0
+                && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
+                && !nextQuest.Unavailable
+                && !nextQuest.Completed) {
+                nextQuest.Active = true;
+            }
+
+            var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
+            var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
+            if (quest.DialogueRewardUniqueId != 0) {
+                var itemSeed = AllocateGoldStackSeed();
+                var rewardState = items!.GenerateUnique(
+                    quest.DialogueRewardUniqueId,
+                    itemSeed,
+                    quest.DialogueRewardItemLevel);
+                var entityId = AllocateWorldItemEntityId([player]);
+                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                    entityId,
+                    target.LevelId,
+                    rewardX,
+                    rewardY,
+                    itemSeed,
+                    0,
+                    rewardState);
+            }
+            if (quest.DialogueRewardItemId != 0) {
+                var itemSeed = AllocateGoldStackSeed();
+                var rewardState = items!.Generate(
+                    quest.DialogueRewardItemId,
+                    itemSeed,
+                    quest.DialogueRewardItemLevel);
+                var entityId = AllocateWorldItemEntityId([player]);
+                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                    entityId,
+                    target.LevelId,
+                    rewardX,
+                    rewardY,
+                    itemSeed,
+                    checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                    rewardState);
+            }
+
+            return quest.DialogueCompletionMessageId == 0
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.AcceptedWith(
+                    new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Dialogue,
+                        player.EntityId,
+                        target.EntityId,
+                        0) {
+                        MessageId = quest.DialogueCompletionMessageId,
+                        QuestId = quest.QuestId,
+                    });
         }
 
         quest.Active = true;

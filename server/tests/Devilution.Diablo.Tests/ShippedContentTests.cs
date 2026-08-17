@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.327.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.328.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1428,7 +1428,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.327.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.328.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1577,7 +1577,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(17, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(18, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)
@@ -1642,6 +1642,14 @@ public sealed class ShippedContentTests
         Assert.Equal("Zhar", activation.Simulation.WorldState.Quests[3004].CompletionUniqueIdentity);
         Assert.Equal("Warlord", activation.Simulation.WorldState.Quests[3012].CompletionUniqueIdentity);
         Assert.Equal("Lazarus", activation.Simulation.WorldState.Quests[3016].CompletionUniqueIdentity);
+        Assert.Equal((81, 2137U, 1008U, 1, 0, 1, 83), (
+            activation.Simulation.WorldState.Quests[3005].MessageId,
+            activation.Simulation.WorldState.Quests[3005].DialogueItemId,
+            activation.Simulation.WorldState.Quests[3005].DialogueRewardUniqueId,
+            activation.Simulation.WorldState.Quests[3005].DialogueRewardItemLevel,
+            activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetX,
+            activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetY,
+            activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId));
         Assert.Equal(144, activation.Simulation.WorldState.Quests[3003].MessageId);
         Assert.Equal(148, activation.Simulation.WorldState.Quests[3004].MessageId);
         Assert.Equal(110, activation.Simulation.WorldState.Quests[3012].MessageId);

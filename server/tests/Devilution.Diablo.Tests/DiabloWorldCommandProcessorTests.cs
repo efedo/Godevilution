@@ -1021,6 +1021,76 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeUniqueDialogueHandInConsumesElixirAndSpawnsVeilOfSteel()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1008, "Veil of Steel", 117, 1, 63800, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(117, 1, 63800, 63800, 0, 0, 18, 60, 60, 1, 1, true),
+            new AuthoritativeItemDefinition(2137, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 14,
+            unique: true,
+            uniqueIdentity: "Lachdanan");
+        var quest = new AuthoritativeQuestState(
+            3005,
+            14,
+            1,
+            active: false,
+            messageId: 81,
+            completionUniqueIdentity: "Lachdanan",
+            dialogueItemId: 2137,
+            dialogueRewardUniqueId: 1008,
+            dialogueRewardItemLevel: 1,
+            dialogueRewardOffsetY: 1,
+            dialogueCompletionMessageId: 83);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 14,
+            entityId: 7,
+            inventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+
+        var initial = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            1,
+            [player]);
+
+        Assert.True(initial.Succeeded);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(81, Assert.Single(initial.Events).MessageId);
+
+        var elixir = items.Generate(2137, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, elixir.CreateInfo, 0, 0, elixir));
+        player.InventoryGrid[0] = 0;
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(83, Assert.Single(completed.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1008, reward.State.UniqueId);
+        Assert.Equal((20, 21), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void NativeTownerTurnInStartsQuestConversationThenConsumesItemAndSpawnsUniqueReward()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

@@ -551,6 +551,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 if (world is not null)
                     AuthoritativeQuestCatalog.ValidateTurnInPositions(quests, world);
             }
+            if (quests.Any(quest => quest.DialogueItemId != 0
+                                   || quest.DialogueRewardUniqueId != 0
+                                   || quest.DialogueRewardItemId != 0)) {
+                if (itemCatalog is null || uniqueItems is null)
+                    throw new InvalidDataException(
+                        "Quest dialogue hand-ins require active item and unique-item catalogs.");
+                AuthoritativeQuestCatalog.ValidateDialogueRewards(
+                    quests,
+                    itemCatalog,
+                    uniqueItems);
+            }
         }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null

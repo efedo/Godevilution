@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.328 unique-monster dialogue hand-ins. Hellfire Lachdanan now
+  consumes Golden Elixir and spawns the authored Veil of Steel reward through
+  the shared `TalkToQuestRequested` boundary; the server owns completion,
+  relative reward placement, and completion dialogue.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

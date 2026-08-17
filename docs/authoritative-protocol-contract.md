@@ -143,8 +143,11 @@ quest ID and target entity ID; the server requires a living adjacent unique
 encounter whose validated identity matches the quest's completion identity.
 Accepted dialogue activates and logs the quest and emits a `DialogueEvent`;
 the quest's content-owned native dialogue variables advance monotonically as
-part of the same authoritative transition. Clients do not choose message text
-or mutate quest state.
+part of the same authoritative transition. A dialogue definition may instead
+declare a required inventory item and authored relative reward; the server
+consumes the item, completes the quest, spawns the reward, and emits the
+completion message atomically. Clients do not choose message text or mutate
+quest state.
 
 `TurnInQuestRequested` is the additive command at field 34. It names a
 content-owned quest and native towner; the server validates the active quest,

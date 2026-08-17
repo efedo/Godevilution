@@ -114,7 +114,14 @@ public sealed class AuthoritativeQuestState
         int turnInRewardPositionX = 0,
         int turnInRewardPositionY = 0,
         int turnInMessageId = 0,
-        uint turnInRewardItemId = 0)
+        uint turnInRewardItemId = 0,
+        uint dialogueItemId = 0,
+        uint dialogueRewardUniqueId = 0,
+        int dialogueRewardItemLevel = 0,
+        int dialogueRewardOffsetX = 0,
+        int dialogueRewardOffsetY = 0,
+        int dialogueCompletionMessageId = 0,
+        uint dialogueRewardItemId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -144,6 +151,10 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInRewardItemLevel));
         if (turnInMessageId < 0 || turnInMessageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInMessageId));
+        if (dialogueRewardItemLevel is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
+        if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueCompletionMessageId));
         if (completionUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
@@ -180,6 +191,13 @@ public sealed class AuthoritativeQuestState
         TurnInRewardPositionY = turnInRewardPositionY;
         TurnInMessageId = turnInMessageId;
         TurnInRewardItemId = turnInRewardItemId;
+        DialogueItemId = dialogueItemId;
+        DialogueRewardUniqueId = dialogueRewardUniqueId;
+        DialogueRewardItemLevel = dialogueRewardItemLevel;
+        DialogueRewardOffsetX = dialogueRewardOffsetX;
+        DialogueRewardOffsetY = dialogueRewardOffsetY;
+        DialogueCompletionMessageId = dialogueCompletionMessageId;
+        DialogueRewardItemId = dialogueRewardItemId;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -243,6 +261,17 @@ public sealed class AuthoritativeQuestState
     public uint TurnInRewardItemId { get; }
     /** Optional native dialogue identity emitted after a successful turn-in. */
     public int TurnInMessageId { get; }
+    /** Optional item consumed by a unique-monster quest conversation. */
+    public uint DialogueItemId { get; }
+    /** Optional unique item generated relative to the unique-monster target. */
+    public uint DialogueRewardUniqueId { get; }
+    public int DialogueRewardItemLevel { get; }
+    public int DialogueRewardOffsetX { get; }
+    public int DialogueRewardOffsetY { get; }
+    /** Optional native dialogue identity emitted after a dialogue hand-in. */
+    public int DialogueCompletionMessageId { get; }
+    /** Optional normal item generated relative to the unique-monster target. */
+    public uint DialogueRewardItemId { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -329,7 +358,26 @@ public static class AuthoritativeQuestCatalog
                     row,
                     stableIds,
                     "turn_in_reward_item_id",
-                    "turn_in_reward_item_symbol")) {
+                    "turn_in_reward_item_symbol"),
+                dialogueItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "dialogue_item_id",
+                    "dialogue_item_symbol"),
+                dialogueRewardUniqueId: AuthoritativeUniqueItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "dialogue_reward_unique_id",
+                    "dialogue_reward_unique_symbol"),
+                dialogueRewardItemLevel: row.OptionalInt32("dialogue_reward_item_level"),
+                dialogueRewardOffsetX: row.OptionalInt32("dialogue_reward_offset_x"),
+                dialogueRewardOffsetY: row.OptionalInt32("dialogue_reward_offset_y"),
+                dialogueCompletionMessageId: row.OptionalInt32("dialogue_completion_message_id"),
+                dialogueRewardItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "dialogue_reward_item_id",
+                    "dialogue_reward_item_symbol")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -377,6 +425,39 @@ public static class AuthoritativeQuestCatalog
             if (quest.TurnInRewardUniqueId != 0 && quest.TurnInRewardItemId != 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares both a turn-in unique reward and item reward.");
+        }
+    }
+
+    /** Validates content-owned unique-monster dialogue hand-ins and rewards. */
+    public static void ValidateDialogueRewards(
+        IReadOnlyList<AuthoritativeQuestState> quests,
+        AuthoritativeItemCatalog items,
+        AuthoritativeUniqueItemCatalog uniqueItems)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(uniqueItems);
+        foreach (var quest in quests.Where(quest => quest.DialogueItemId != 0
+                                                    || quest.DialogueRewardUniqueId != 0
+                                                    || quest.DialogueRewardItemId != 0)) {
+            if (quest.DialogueItemId == 0
+                || !items.TryGet(quest.DialogueItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown dialogue item {quest.DialogueItemId}.");
+            if (string.IsNullOrWhiteSpace(quest.CompletionUniqueIdentity))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} dialogue hand-in requires a unique-monster identity.");
+            if (quest.DialogueRewardUniqueId != 0
+                && !uniqueItems.TryGet(quest.DialogueRewardUniqueId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown dialogue unique reward {quest.DialogueRewardUniqueId}.");
+            if (quest.DialogueRewardItemId != 0
+                && !items.TryGet(quest.DialogueRewardItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown dialogue item reward {quest.DialogueRewardItemId}.");
+            if (quest.DialogueRewardUniqueId != 0 && quest.DialogueRewardItemId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares both a dialogue unique reward and item reward.");
         }
     }
 
