@@ -65,6 +65,7 @@ internal static class DiabloProtocolMapper
                 Moving = monster.Moving,
                 FuturePositionX = monster.FuturePositionX,
                 FuturePositionY = monster.FuturePositionY,
+                Direction = monster.Direction,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
                 IsUndead = monster.IsUndead,
@@ -422,6 +423,7 @@ internal static class DiabloProtocolMapper
                 FuturePositionY = monster.Moving
                     ? monster.FuturePositionY
                     : monster.PositionY,
+                Direction = monster.Direction,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
                 IsUndead = monster.IsUndead,

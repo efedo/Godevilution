@@ -245,6 +245,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(monster.FuturePositionY);
                     hasher.AppendBool(monster.Petrified);
                 }
+                if (monster.Direction != 0) {
+                    hasher.AppendString("godevilution-monster-direction-v1");
+                    hasher.AppendInt32(monster.Direction);
+                }
                 if (monster.StoneCurseImmune) {
                     hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
                     hasher.AppendBool(true);

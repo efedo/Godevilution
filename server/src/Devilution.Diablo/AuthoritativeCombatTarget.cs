@@ -89,7 +89,8 @@ public sealed class AuthoritativeCombatTarget
         int counselorDelayTicks = 0,
         int avoidanceDelayTicks = 0,
         int rangedDelayTicks = 0,
-        int megaDelayTicks = 0)
+        int megaDelayTicks = 0,
+        int direction = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -177,6 +178,8 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedDelayTicks));
         if (megaDelayTicks is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(megaDelayTicks));
+        if (direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(direction));
         if (counselorRetreatTicks is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (uniqueIdentity.Length > 128)
@@ -213,6 +216,7 @@ public sealed class AuthoritativeCombatTarget
         PositionY = positionY;
         FuturePositionX = resolvedFuturePositionX;
         FuturePositionY = resolvedFuturePositionY;
+        Direction = direction;
         IsMoving = moving;
         IsPetrified = petrified;
         StoneCurseImmune = stoneCurseImmune;
@@ -306,6 +310,9 @@ public sealed class AuthoritativeCombatTarget
     public int PositionY { get; set; }
     public int FuturePositionX { get; private set; }
     public int FuturePositionY { get; private set; }
+
+    /** Native monster direction used by movement, attacks, and Hork Spawn. */
+    public int Direction { get; private set; }
     public bool IsMoving { get; private set; }
     public bool IsPetrified { get; set; }
     public bool StoneCurseImmune { get; set; }
@@ -1241,7 +1248,17 @@ public sealed class AuthoritativeCombatTarget
         }
         FuturePositionX = futurePositionX;
         FuturePositionY = futurePositionY;
+        Direction = DirectionFromStep(
+            futurePositionX - PositionX,
+            futurePositionY - PositionY);
         IsMoving = true;
+    }
+
+    internal void RestoreDirection(int direction)
+    {
+        if (direction is < 0 or >= 8)
+            throw new ArgumentOutOfRangeException(nameof(direction));
+        Direction = direction;
     }
 
     internal void CompleteMovement()
@@ -1267,6 +1284,21 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = positionX;
         FuturePositionY = positionY;
         IsMoving = false;
+    }
+
+    private static int DirectionFromStep(int directionX, int directionY)
+    {
+        return (directionX, directionY) switch {
+            (1, 1) => 0,
+            (0, 1) => 1,
+            (-1, 1) => 2,
+            (-1, 0) => 3,
+            (-1, -1) => 4,
+            (0, -1) => 5,
+            (1, -1) => 6,
+            (1, 0) => 7,
+            _ => throw new ArgumentOutOfRangeException(nameof(directionX)),
+        };
     }
 
     internal void RestoreOccupancy(

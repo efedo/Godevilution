@@ -615,6 +615,8 @@ message MonsterSnapshot {
 	optional int32 ranged_delay_ticks = 82;
 	// Remaining native MegaAi post-action delay ticks.
 	optional int32 mega_delay_ticks = 83;
+	// Native monster direction used by movement, attacks, and Hork Spawn (0-7).
+	optional int32 direction = 84;
 }
 
 message WorldItemSnapshot {

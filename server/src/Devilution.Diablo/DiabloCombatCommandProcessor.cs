@@ -5243,11 +5243,10 @@ public sealed class DiabloCombatCommandProcessor
                             * monster.Intelligence))
             && monsterSpawnPlanner is not null
             && world.CombatTargets.Count < 256) {
-            var direction = GetDirection(
-                monster.PositionX,
-                monster.PositionY,
-                victim.PositionX,
-                victim.PositionY);
+            // Native HorkDemonAi checks the monster's current direction for
+            // the adjacent admission cell; it does not turn toward the
+            // victim before starting Hork Spawn.
+            var direction = monster.Direction;
             var displacement = DirectionDisplacements[direction];
             var positionX = checked(monster.PositionX + displacement.X);
             var positionY = checked(monster.PositionY + displacement.Y);
@@ -9935,7 +9934,8 @@ public sealed class DiabloCombatCommandProcessor
             spawnPosition.Value.X,
             spawnPosition.Value.Y,
             AllocateMonsterEntityId(players),
-            gameMode == DiabloGameMode.Multiplayer);
+            gameMode == DiabloGameMode.Multiplayer,
+            projectile.OriginalDirection);
         if (summon is not null) {
             DiabloDifficultyMonsterScaling.ApplyInitialHealth(
                 summon,

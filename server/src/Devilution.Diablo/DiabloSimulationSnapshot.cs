@@ -27,6 +27,9 @@ public sealed record DiabloMonsterState(
 
     public int FuturePositionY { get; init; } = PositionY;
 
+    /** Native monster direction used by movement, attacks, and Hork Spawn. */
+    public int Direction { get; init; }
+
     public bool Petrified { get; init; }
 
     public bool StoneCurseImmune { get; init; }
@@ -465,6 +468,7 @@ public sealed partial class DiabloSimulation
                     Moving = target.IsMoving,
                     FuturePositionX = target.FuturePositionX,
                     FuturePositionY = target.FuturePositionY,
+                    Direction = target.Direction,
                     Petrified = target.IsPetrified,
                     StoneCurseImmune = target.StoneCurseImmune,
                     IsUndead = target.IsUndead,
@@ -807,6 +811,7 @@ public sealed partial class DiabloSimulation
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
                 || monster.FallenFearTicks is < 0 or > 1024
                 || monster.FallenFearDirection is < 0 or >= 8
+                || monster.Direction is < 0 or >= 8
                 || monster.SneakRetreatTicks is < 0 or > 64
                 || monster.ScavengerHealingTicks is < 0 or > 64
                 || monster.BatRetreatTicks is < 0 or > 64
@@ -1653,6 +1658,7 @@ public sealed partial class DiabloSimulation
                 }
                 target.PositionX = monster.PositionX;
                 target.PositionY = monster.PositionY;
+                target.RestoreDirection(monster.Direction);
                 target.ArmorClass = monster.ArmorClass;
                 target.RestoreHitPointsQ6(
                     monster.HitPointsQ6,
@@ -1765,6 +1771,7 @@ public sealed partial class DiabloSimulation
                     moving: monster.Moving,
                     futurePositionX: monster.FuturePositionX,
                     futurePositionY: monster.FuturePositionY,
+                    direction: monster.Direction,
                     petrified: monster.Petrified,
                     stoneCurseImmune: monster.StoneCurseImmune,
                     undead: monster.IsUndead,

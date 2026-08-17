@@ -141,7 +141,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int positionX,
         int positionY,
         uint entityId,
-        bool multiplayer = false)
+        bool multiplayer = false,
+        int direction = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -171,7 +172,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             0,
             seed,
             entityId,
-            multiplayer);
+            multiplayer,
+            direction);
     }
 
     /** Creates one content-defined SkeletonMelee summon at an explicit cell. */
@@ -227,7 +229,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         int index,
         uint seed,
         uint firstEntityId,
-        bool multiplayer)
+        bool multiplayer,
+        int direction = 0)
     {
         var dropDefinition = monsterCatalog?.TryGetDropDefinition(
             spawn.Definition.MonsterId,
@@ -302,7 +305,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             toHitSpecial: spawn.Definition.ToHitSpecial,
             nativeAi: spawn.Definition.NativeAi,
             intelligence: spawn.Definition.Intelligence,
-            knockback: spawn.Definition.Knockback);
+            knockback: spawn.Definition.Knockback,
+            direction: direction);
     }
 
     private static uint CreateDropSeed(uint seed, uint monsterId, int index)

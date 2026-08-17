@@ -2577,7 +2577,8 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterId: 119,
             aggroRange: 8,
             nativeAi: "Zombie",
-            intelligence: 0);
+            intelligence: 0,
+            direction: 0);
         var world = new DiabloWorldState(nativeWorld, combatTargets: [hork]);
         var processor = CreateProcessor(
             world,
@@ -2606,6 +2607,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(117U, projectile.SpellId);
         Assert.Equal((8, 8U), (projectile.Speed, projectile.RemainingTicks));
         Assert.Equal(6, projectile.ImpactLifetime);
+        Assert.Equal(0, projectile.OriginalDirection);
         Assert.DoesNotContain(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
 
         for (ulong tick = 2; tick <= 9; tick++)
@@ -2615,6 +2617,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var summoned = Assert.Single(world.CombatTargets.Values, target => target.EntityId != hork.EntityId);
         Assert.Equal((119U, 117U), (summoned.MonsterId, monsterTypes.Definitions[0].NativeMonsterId));
         Assert.Equal("Zombie", summoned.NativeAi);
+        Assert.Equal(0, summoned.Direction);
         Assert.Equal((2, 1), (summoned.PositionX, summoned.PositionY));
     }
 

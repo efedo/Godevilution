@@ -62,9 +62,9 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "579fbd99fb7c372baf433e211d0f1aaee0b13197d338135e7718a47c4151d8a8" },
-    { "tick": 2, "state_sha256": "68cc9999d9ffe2c73dd93c6e7ed79887021b272f1b38c6418e20f37dd647853b" },
-    { "tick": 5, "state_sha256": "dccc674d0f45baa18d0f09d660e1b7d6c7e51f566e8b06a793d0026779b013c1" },
-    { "tick": 10, "state_sha256": "5cda8500a61ce505c6e571f180a9c96491f0ea2820571d167eca82b022700467" }
+    { "tick": 1, "state_sha256": "7cef5311fa35f5908f549086f64dab06d89673f13a7b20e1fa986dd1b2780124" },
+    { "tick": 2, "state_sha256": "d928201a11f52ee4ecbf0777e1f7563dcae8fe003e76851d82ec1f4b1b378718" },
+    { "tick": 5, "state_sha256": "d3ff1dd9f213adc6bf24a47d3ce6f1f75a3937e4fab3f5d3564c85bd6ca9ec2e" },
+    { "tick": 10, "state_sha256": "ba6bdb3db08c332d4d8e6b49d1e377ebf9283fd6e08bd256cfdc6d5caf2b7413" }
   ]
 }
