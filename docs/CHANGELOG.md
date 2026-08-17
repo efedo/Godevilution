@@ -35,6 +35,9 @@ All notable changes to this fork are documented below.
   direct collision, impact splash, Q6 damage, participant projection, and removal
   timing across the native and C# runners.
 
+- Preserve Hellfire Fireball shield-block retention and variant rotation RNG,
+  while allowing the retained impact splash to resolve against the participant.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

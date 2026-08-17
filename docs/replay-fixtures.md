@@ -245,6 +245,12 @@ player hit and Q6 damage boundary, direct-to-impact transition, and complete
 participant projection; tick 17 proves the 14-tick impact lifetime and
 projectile removal. Both runners validate the same two checkpoints.
 
+`gameplay-fireball-hellfire-block.json` gives that participant a guaranteed
+shield block against a level-3 Fireball. Tick 1 proves the Hellfire rotation
+draw and retained impact phase; the same impact applies the non-blocked splash
+to leave Q6 life at `1987`, and tick 17 proves removal. Both runners validate
+the same two checkpoints.
+
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified
 lightning-resistant target, and seed `0x12345678`. Ticks 1 and 2 prove native
@@ -376,6 +382,8 @@ Notable shared fixtures include:
   swept direct collision, shifted splash, persistent impact, and RNG parity;
 - `gameplay-fireball-pvp.json` for direct player collision, impact splash,
   complete participant state, Q6 damage, and projectile-lifetime parity;
+- `gameplay-fireball-hellfire-block.json` for Hellfire shield-block retention,
+  variant RNG, impact splash, and projectile-lifetime parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;
