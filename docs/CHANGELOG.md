@@ -4,10 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Route native authoritative inventory-cursor placement through the existing
-  stable-reference `MoveItemRequested` transfer, keeping cursor selection as
-  presentation state and reconciling rejected transfers from the server
-  snapshot.
+- Route normal native authoritative inventory-cursor placement through the
+  existing stable-reference `MoveItemRequested` transfer, keeping cursor
+  selection as presentation state and reconciling rejected transfers from the
+  server snapshot. Automatic shift-click placement remains a follow-up seam.
 
 - Add a live single-player protocol-client check that relocates an inventory
   item by stable identity and confirms a stale reference is rejected without

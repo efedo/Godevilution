@@ -97,11 +97,13 @@ of being sent as a positional reference that could target a different item.
 Inventory relocation now follows the same boundary: the native indexed move
 entry point resolves the latest projected item and sends its stable identity,
 while the legacy positional protocol field remains available for older peers.
-When the native inventory cursor places an item into another inventory cell,
-equipment slot, or belt slot, the final placement now uses the authoritative
-`MoveItemRequested` transfer. The cursor selection is presentation-only while
-the server snapshot remains the source of truth; rejected transfers reconcile
-the native projection instead of applying a local swap.
+When the native inventory cursor completes a normal drag into another inventory
+cell, equipment slot, or belt slot, the final placement now uses the
+authoritative `MoveItemRequested` transfer. The cursor selection is
+presentation-only while the server snapshot remains the source of truth;
+rejected transfers reconcile the native projection instead of applying a local
+swap. Automatic shift-click placement remains on the legacy path until its
+destination selection is server-backed.
 
 Spell-book use follows the same boundary: a connected authoritative client sends
 `ReadBookRequested` with the projected stable item reference and applies the
