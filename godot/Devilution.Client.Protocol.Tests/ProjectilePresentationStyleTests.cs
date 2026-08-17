@@ -12,6 +12,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(16, 1, ProjectilePresentationKind.FireImpact)]
     [InlineData(20, 0, ProjectilePresentationKind.BloodStar)]
     [InlineData(50, 0, ProjectilePresentationKind.MonsterMagic)]
+    [InlineData(57, 0, ProjectilePresentationKind.HorkSpawn)]
     [InlineData(21, 0, ProjectilePresentationKind.BoneSpirit)]
     [InlineData(31, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(51, 0, ProjectilePresentationKind.Acid)]
@@ -60,6 +61,19 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.MonsterMagic,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void ResolvesServerOwnedHorkSpawnPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.HorkSpawn,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.HorkSpawn,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 

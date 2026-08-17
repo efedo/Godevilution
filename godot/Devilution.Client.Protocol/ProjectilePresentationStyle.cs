@@ -19,6 +19,7 @@ public enum ProjectilePresentationKind
     Teleport,
     Phasing,
     MonsterMagic,
+    HorkSpawn,
 }
 
 /** Maps authoritative behavior identities to client-only visual families. */
@@ -34,6 +35,7 @@ public static class ProjectilePresentationStyle
     private const int HolyBolt = 19;
     private const int BloodStar = 20;
     private const int MonsterMagic = 50;
+    private const int HorkSpawn = 57;
     private const int BoneSpirit = 21;
     private const int FireWallController = 22;
     private const int FireWallSegment = 23;
@@ -72,6 +74,8 @@ public static class ProjectilePresentationStyle
                 => ProjectilePresentationKind.BloodStar,
             Devilution.Protocol.V1.ProjectilePresentationKind.MonsterMagic
                 => ProjectilePresentationKind.MonsterMagic,
+            Devilution.Protocol.V1.ProjectilePresentationKind.HorkSpawn
+                => ProjectilePresentationKind.HorkSpawn,
             Devilution.Protocol.V1.ProjectilePresentationKind.BoneSpirit
                 => ProjectilePresentationKind.BoneSpirit,
             Devilution.Protocol.V1.ProjectilePresentationKind.Acid
@@ -127,6 +131,8 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.BloodStar;
         if (behavior == MonsterMagic)
             return ProjectilePresentationKind.MonsterMagic;
+        if (behavior == HorkSpawn)
+            return ProjectilePresentationKind.HorkSpawn;
         if (behavior == BoneSpirit)
             return ProjectilePresentationKind.BoneSpirit;
         if (behavior is Acid or AcidSplat or AcidPuddle)
