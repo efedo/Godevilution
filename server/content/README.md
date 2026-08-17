@@ -643,7 +643,9 @@ values retain the native physical arrow behavior. Mapped arrow rows also keep
 ranged-only monsters from falling through to adjacent melee when the content label
 is changed. They also retain native `AiRanged` arrow admission at adjacent
 distance when the missile lane is clear; the server does not replace that
-close-range shot with melee or silently discard the tick.
+close-range shot with melee or silently discard the tick. Player- and
+monster-owned arrows also destroy a hit breakable missile-blocking object before
+the arrow is removed, matching native `ProcessArrow` behavior.
 The shipped `Acid` and `AcidUnique` mappings also carry the native speed-16
 projectile transport explicitly; older rows retain the compatibility speed
 fallback while their validated lifetime and puddle terms remain authoritative.

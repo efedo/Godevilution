@@ -541,10 +541,12 @@ resumed save revalidates occupancy before the controller's first movement.
 Native `Arrow` rows for GoatRanged and SkeletonRanged select behavior value
 `59`, `MonsterArrow`; older `Targeted` rows are accepted as a compatibility
 mapping. The server retains the launch admission result and target coordinates,
-advances one authoritative tile per tick, removes blocked or expired missiles,
-and rolls the monster's dynamic physical damage range only on collision. A
-zero spell ID is valid for this monster-owned behavior; snapshots, saves,
-hashes, and the additive range fields carry the complete resumable state.
+advances one authoritative tile per tick, destroys a breakable blocking object,
+removes blocked or expired missiles, and rolls the monster's dynamic physical
+damage range only on collision. A zero spell ID is valid for this monster-owned
+behavior; snapshots, saves, hashes, and the additive range fields carry the
+complete resumable state. Player-owned arrows follow the same native
+breakable-object transition through the shared protocol-neutral simulation.
 
 Hork Spawn uses the same current-tile collision boundary as native
 `ProcessHorkSpawn`: before movement or expiry, the server checks a living

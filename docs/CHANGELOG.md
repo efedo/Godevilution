@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Preserve native Fireball collision with missile-blocking tiles and objects,
   including breakable-object destruction before the authoritative splash.
 
+- Preserve native breakable-object destruction for both player and monster
+  arrows when an arrow collides with a missile-blocking object.
+
 - Preserve Nova Ball's native shrine collision exception through validated
   world-object metadata and the authoritative snapshot, protocol, save, and
   hash boundaries.
