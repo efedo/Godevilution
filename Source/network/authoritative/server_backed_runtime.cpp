@@ -549,6 +549,17 @@ tl::expected<void, std::string> ServerBackedRuntime::AdvanceQuest(uint32_t quest
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::TalkToQuest(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->TalkToQuest(questId, targetEntityId, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)
@@ -570,6 +581,18 @@ std::optional<uint32_t> ServerBackedRuntime::ActiveQuestForTowner(uint32_t towne
 	return session_ == nullptr
 	    ? std::nullopt
 	    : session_->ActiveQuestForTowner(townerId);
+}
+
+std::optional<uint32_t> ServerBackedRuntime::ActiveQuestForMonster(uint32_t monsterEntityId) const noexcept
+{
+	if (session_ == nullptr || monsterEntityId == 0)
+		return std::nullopt;
+	const auto monster = std::find_if(worldProjection_.Monsters().begin(), worldProjection_.Monsters().end(), [monsterEntityId](const auto &candidate) {
+		return candidate.entityId == monsterEntityId;
+	});
+	if (monster == worldProjection_.Monsters().end() || !monster->alive || !monster->isUnique || monster->uniqueIdentity.empty())
+		return std::nullopt;
+	return session_->ActiveQuestForUniqueIdentity(monster->uniqueIdentity);
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)

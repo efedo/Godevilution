@@ -196,6 +196,8 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 			return tl::make_unexpected("Server-backed snapshot contains a monster with an invalid entity ID.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate monster entity IDs.");
+		if (source.unique_identity().size() > 128 || (!source.is_unique() && !source.unique_identity().empty()))
+			return tl::make_unexpected("Server-backed snapshot contains an invalid unique monster identity.");
 		const int64_t hitPointsQ6 = source.hit_points_q6() == 0 && source.hit_points() != 0
 		    ? static_cast<int64_t>(source.hit_points()) * 64
 		    : source.hit_points_q6();
@@ -224,6 +226,8 @@ tl::expected<std::vector<ProjectedMonsterSnapshot>, std::string> ProjectMonsterS
 		projected.push_back({
 		    .entityId = source.entity_id(),
 		    .monsterId = source.monster_id(),
+		    .isUnique = source.is_unique(),
+		    .uniqueIdentity = source.unique_identity(),
 		    .levelId = source.level_id(),
 		    .positionX = source.position_x(),
 		    .positionY = source.position_y(),

@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <expected.hpp>
@@ -85,11 +86,14 @@ public:
 	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> TalkToQuest(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
 	/** Returns whether the latest authoritative snapshot has an active quest. */
 	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	/** Returns the lowest-ID active quest whose content declares this towner for turn-in. */
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForTowner(uint32_t townerId) const noexcept;
+	/** Returns the lowest-ID active quest whose content declares this unique target identity. */
+	[[nodiscard]] std::optional<uint32_t> ActiveQuestForUniqueIdentity(std::string_view uniqueIdentity) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 

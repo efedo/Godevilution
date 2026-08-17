@@ -152,6 +152,14 @@ dialogue into the native quest-text UI. The Hellfire Anvil of Fury/Blacksmith
 path is the first shipped definition. Legacy local towner behavior stays
 available outside the authoritative runtime.
 
+Content-declared unique-monster conversations use the same boundary. When the
+projected live unique identity matches an active quest, the native client sends
+`TalkToQuestRequested`; the server validates the quest, target identity, level,
+and adjacency before returning the dialogue event. The Hellfire Defiler
+conversation is the first shipped definition. Unauthored legacy monster
+conversations retain their local fallback until their content actions are
+externalized.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

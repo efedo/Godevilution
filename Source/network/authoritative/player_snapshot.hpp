@@ -71,6 +71,8 @@ struct ProjectedMemorizedSpell {
 struct ProjectedMonsterSnapshot {
 	uint32_t entityId = 0;
 	uint32_t monsterId = 0;
+	bool isUnique = false;
+	std::string uniqueIdentity;
 	uint32_t levelId = 0;
 	int32_t positionX = 0;
 	int32_t positionY = 0;

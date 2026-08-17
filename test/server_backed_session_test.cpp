@@ -49,6 +49,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		activeQuest->set_quest_id(3011);
 		activeQuest->set_required_progress(1);
 		activeQuest->set_turn_in_towner_id(0);
+		activeQuest->set_completion_unique_identity("Defiler");
 		auto *completedQuest = initial.mutable_snapshot()->add_quests();
 		completedQuest->set_quest_id(3002);
 		completedQuest->set_required_progress(1);
@@ -95,6 +96,8 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	ASSERT_TRUE(session.has_value()) << session.error();
 	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
 	EXPECT_FALSE((*session)->ActiveQuestForTowner(1).has_value());
+	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Defiler"), std::optional<uint32_t> { 3011 });
+	EXPECT_FALSE((*session)->ActiveQuestForUniqueIdentity("Na-Krul").has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);
 	ASSERT_TRUE(open.has_value()) << open.error();
 	EXPECT_EQ((*session)->EntityId(), 7U);
@@ -172,6 +175,71 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 	auto sell = (*session)->SellItem(0, 10, 0);
 	ASSERT_TRUE(sell.has_value()) << sell.error();
 	EXPECT_EQ((*session)->LastCommandResolution(), ServerBackedSession::CommandResolution::Rejected);
+	(*session)->Close();
+	server.join();
+	EXPECT_TRUE(observed);
+}
+
+TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool observed = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_session_token("session");
+		WriteEnvelope(socket, serverHello);
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		initial.mutable_snapshot()->add_quests()->set_quest_id(3021);
+		initial.mutable_snapshot()->mutable_quests(0)->set_completion_unique_identity("Defiler");
+		WriteEnvelope(socket, initial);
+
+		auto commandPayload = EnvelopeCodec::Read(socket);
+		if (!commandPayload.has_value() || !commandPayload->has_value())
+			return;
+		protocol::Envelope command;
+		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
+		    || command.command_batch().commands_size() != 1
+		    || !command.command_batch().commands(0).has_talk_to_quest_requested()
+		    || command.command_batch().commands(0).talk_to_quest_requested().quest_id() != 3021
+		    || command.command_batch().commands(0).talk_to_quest_requested().target_entity_id() != 44)
+			return;
+		protocol::Envelope ack;
+		auto *result = ack.mutable_command_ack()->add_results();
+		result->set_client_sequence(1);
+		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		WriteEnvelope(socket, ack);
+		protocol::Envelope snapshot;
+		snapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		WriteEnvelope(socket, snapshot);
+		observed = true;
+	});
+
+	ServerBackedSession::Configuration configuration {
+		.client = {
+			.host = "127.0.0.1",
+			.port = acceptor.local_endpoint().port(),
+			.clientBuildId = "client",
+			.protocolSchemaVersion = "1",
+			.contentManifestHash = "content",
+		},
+	};
+	auto session = ServerBackedSession::Connect(configuration);
+	ASSERT_TRUE(session.has_value()) << session.error();
+	auto talk = (*session)->TalkToQuest(3021, 44, 10, 0);
+	ASSERT_TRUE(talk.has_value()) << talk.error();
+	EXPECT_EQ((*session)->LastCommandResolution(), ServerBackedSession::CommandResolution::Accepted);
 	(*session)->Close();
 	server.join();
 	EXPECT_TRUE(observed);

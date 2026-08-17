@@ -391,6 +391,20 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestC
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeTalkToQuestCommand(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick)
+{
+	if (questId == 0)
+		return tl::make_unexpected("Cannot talk for an invalid quest.");
+	if (targetEntityId == 0)
+		return tl::make_unexpected("Cannot talk to an invalid quest target.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_talk_to_quest_requested();
+	request->set_quest_id(questId);
+	request->set_target_entity_id(targetEntityId);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeTurnInQuestCommand(uint32_t questId, uint32_t townerId, uint64_t requestedTick)
 {
 	if (questId == 0)

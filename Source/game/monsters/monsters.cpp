@@ -82,6 +82,9 @@
 #include "ui/movie.h"
 #include "network/protocol/msg.h"
 #include "network/protocol/multi.h"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "game/objects/objects.hpp"
 #include "persistence/options.h"
 #include "game/players/players.hpp"
@@ -4662,6 +4665,21 @@ void TalktoMonster(Player &player, Monster &monster)
 {
 	if (&player == MyPlayer)
 		monster.mode = MonsterMode::Talk;
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		auto &runtime = authoritative::GetServerBackedRuntime();
+		const auto monsterEntityId = runtime.MonsterEntityIdAt(monster.position.tile.x, monster.position.tile.y);
+		if (monsterEntityId.has_value()) {
+			const auto questId = runtime.ActiveQuestForMonster(*monsterEntityId);
+			if (questId.has_value()) {
+				if (auto result = runtime.TalkToQuest(*questId, *monsterEntityId, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Failed to submit the authoritative quest dialogue: {}", result.error());
+				return;
+			}
+		}
+	}
+#endif
 
 	if (monster.uniqueType == UniqueMonsterType::SnotSpill
 	    && Quests[Q_LTBANNER].IsAvailable() && Quests[Q_LTBANNER]._qvar1 == 2) {

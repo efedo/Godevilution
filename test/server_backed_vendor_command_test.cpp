@@ -64,6 +64,22 @@ TEST(ServerBackedVendorCommand, RejectsInvalidQuestTurnInIdentifiers)
 	EXPECT_FALSE(MakeTurnInQuestCommand(3011, UINT8_MAX + 1U, 1).has_value());
 }
 
+TEST(ServerBackedVendorCommand, BuildsQuestDialogueIntent)
+{
+	const auto command = MakeTalkToQuestCommand(3021, 44, 17);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_talk_to_quest_requested());
+	EXPECT_EQ(command->requested_tick(), 17U);
+	EXPECT_EQ(command->talk_to_quest_requested().quest_id(), 3021U);
+	EXPECT_EQ(command->talk_to_quest_requested().target_entity_id(), 44U);
+}
+
+TEST(ServerBackedVendorCommand, RejectsInvalidQuestDialogueIdentifiers)
+{
+	EXPECT_FALSE(MakeTalkToQuestCommand(0, 44, 1).has_value());
+	EXPECT_FALSE(MakeTalkToQuestCommand(3021, 0, 1).has_value());
+}
+
 TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 {
 	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 6, .stableItemId = 702 };
@@ -201,6 +217,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	const auto drop = MakeDropHeldItemCommand(-2, 5, 25);
 	const auto object = MakeOperateObjectCommand(30, 25);
 	const auto quest = MakeAdvanceQuestCommand(40, 26);
+	const auto talkToQuest = MakeTalkToQuestCommand(3021, 44, 27);
 	const auto turnIn = MakeTurnInQuestCommand(3011, 0, 27);
 	const auto friendlyMode = MakeSetFriendlyModeCommand(false, 27);
 	const auto restartTown = MakeRestartTownCommand(28);
@@ -212,6 +229,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	ASSERT_TRUE(drop.has_value());
 	ASSERT_TRUE(object.has_value());
 	ASSERT_TRUE(quest.has_value());
+	ASSERT_TRUE(talkToQuest.has_value());
 	ASSERT_TRUE(turnIn.has_value());
 	ASSERT_TRUE(friendlyMode.has_value());
 	ASSERT_TRUE(restartTown.has_value());
@@ -226,6 +244,8 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	EXPECT_EQ(drop->drop_held_item_requested().target_y(), 5);
 	EXPECT_EQ(object->operate_object_requested().object_entity_id(), 30U);
 	EXPECT_EQ(quest->advance_quest_requested().quest_id(), 40U);
+	EXPECT_EQ(talkToQuest->talk_to_quest_requested().quest_id(), 3021U);
+	EXPECT_EQ(talkToQuest->talk_to_quest_requested().target_entity_id(), 44U);
 	EXPECT_EQ(turnIn->turn_in_quest_requested().quest_id(), 3011U);
 	EXPECT_EQ(turnIn->turn_in_quest_requested().towner_id(), 0U);
 	EXPECT_TRUE(friendlyMode->has_set_friendly_mode_requested());

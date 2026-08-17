@@ -78,9 +78,12 @@ public:
 	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> TalkToQuest(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
 	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForTowner(uint32_t townerId) const noexcept;
+	/** Returns the lowest-ID active quest authored for a projected unique monster. */
+	[[nodiscard]] std::optional<uint32_t> ActiveQuestForMonster(uint32_t monsterEntityId) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Poll(uint64_t nowMs);

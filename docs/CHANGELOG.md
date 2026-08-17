@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route authored unique-monster quest conversations through
+  `TalkToQuestRequested`. Native snapshots now carry the optional opaque unique
+  identity, the client selects the active matching quest, and the server owns
+  target identity, live-state, level, adjacency, activation, and dialogue
+  validation. The Hellfire Defiler path is the first shipped definition; legacy
+  monster conversations remain compatible outside the authoritative path.
+
 - Add schema 1.326 content-owned towner turn-ins. Quest snapshots now carry
   optional validated towner metadata, so the native authoritative client can
   route any active authored turn-in without a hardcoded quest/towner pairing.

@@ -228,6 +228,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	auto *second = snapshot.add_monsters();
 	second->set_entity_id(9);
 	second->set_monster_id(12);
+	second->set_is_unique(true);
+	second->set_unique_identity("Defiler");
 	second->set_level_id(2);
 	second->set_position_x(4);
 	second->set_position_y(5);
@@ -260,6 +262,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeMonsters)
 	EXPECT_FALSE((*projected)[0].alive);
 	EXPECT_EQ((*projected)[1].entityId, 9U);
 	EXPECT_EQ((*projected)[1].monsterId, 12U);
+	EXPECT_TRUE((*projected)[1].isUnique);
+	EXPECT_EQ((*projected)[1].uniqueIdentity, "Defiler");
 	EXPECT_EQ((*projected)[1].hitPoints, 7);
 	EXPECT_EQ((*projected)[1].hitPointsQ6, 432);
 	EXPECT_EQ((*projected)[1].maxHitPointsQ6, 1280);
@@ -515,6 +519,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterOccupancy)
 	monster->set_future_position_x(2);
 	monster->set_future_position_y(1);
 	EXPECT_FALSE(ProjectMonsterSnapshots(inconsistentStationary).has_value());
+
+	protocol::Snapshot invalidIdentity;
+	monster = invalidIdentity.add_monsters();
+	monster->set_entity_id(8);
+	monster->set_unique_identity("Defiler");
+	EXPECT_FALSE(ProjectMonsterSnapshots(invalidIdentity).has_value());
+
+	protocol::Snapshot oversizedIdentity;
+	monster = oversizedIdentity.add_monsters();
+	monster->set_entity_id(8);
+	monster->set_is_unique(true);
+	monster->set_unique_identity(std::string(129, 'x'));
+	EXPECT_FALSE(ProjectMonsterSnapshots(oversizedIdentity).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMovingDestinationOutsideNativeDungeon)

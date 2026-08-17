@@ -214,6 +214,11 @@ tl::expected<void, std::string> ServerBackedSession::AdvanceQuest(uint32_t quest
 	return SubmitGameplayCommand(MakeAdvanceQuestCommand(questId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::TalkToQuest(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeTalkToQuestCommand(questId, targetEntityId, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeTurnInQuestCommand(questId, townerId, requestedTick), nowMs);
@@ -241,6 +246,23 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || quest.unavailable()) {
 			continue;
 		}
+		if (!result.has_value() || quest.quest_id() < *result)
+			result = quest.quest_id();
+	}
+	return result;
+}
+
+std::optional<uint32_t> ServerBackedSession::ActiveQuestForUniqueIdentity(std::string_view uniqueIdentity) const noexcept
+{
+	if (uniqueIdentity.empty())
+		return std::nullopt;
+	std::optional<uint32_t> result;
+	for (const auto &quest : questStates_) {
+		if (quest.initial()
+		    || quest.completed()
+		    || quest.unavailable()
+		    || quest.completion_unique_identity() != uniqueIdentity)
+			continue;
 		if (!result.has_value() || quest.quest_id() < *result)
 			result = quest.quest_id();
 	}
