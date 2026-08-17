@@ -1,2 +1,3 @@
 item_id	item_symbol	quest_id	quest_symbol	effect_kind	effect_amount
 43	cathedral_map	3017	grave_matters	ActivateQuest	1
+2135	magic_rock	3001	magic_rock	ActivateQuest	1

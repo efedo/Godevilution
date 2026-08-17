@@ -95,6 +95,10 @@ Status date: 2026-08-17
   object through `OperateObjectRequested`; the server validates the stable item,
   consumes the bomb, completes Farmer's Orchard, and exposes the gated Nest warp.
 
+- Hellfire Magic Rock pickup is now an external `item_quest_effects.tsv`
+  transition. The authoritative pickup path activates and logs quest 3001 and
+  advances its native first variable; legacy native pickup remains compatible.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

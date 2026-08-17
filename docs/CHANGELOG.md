@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   Orchard, and gates the normalized town-to-Nest warp; legacy mode retains the
   native local path.
 
+- Externalize Hellfire Magic Rock pickup as a validated item-to-quest effect.
+  Connected authoritative pickup now activates and logs the Magic Rock quest
+  through server-owned state instead of relying on native local mutation.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

@@ -1446,12 +1446,23 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             composed.GetRequiredTable("item_quest_effects.tsv").ToCanonicalTsv());
         itemQuestEffects.ValidateItems(items);
-        var mapEffect = Assert.Single(itemQuestEffects.Definitions);
+        Assert.Equal(2, itemQuestEffects.Definitions.Count);
+        var mapEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 43);
         Assert.Equal((43U, 3017U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
             mapEffect.ItemId,
             mapEffect.QuestId,
             mapEffect.EffectKind,
             mapEffect.EffectAmount));
+        var rockEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 2135);
+        Assert.Equal((2135U, 3001U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
+            rockEffect.ItemId,
+            rockEffect.QuestId,
+            rockEffect.EffectKind,
+            rockEffect.EffectAmount));
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,

@@ -1384,9 +1384,11 @@ always includes movement-blocked cells, and falls back to `blocked_percent`
 when the column is omitted. This preserves older procedural rows while
 allowing native-compatible missile occlusion to diverge from movement walls.
 
-Schema 1.325 adds the Hellfire Hive entrance projection: Rune Bomb completion
-objects consume the normalized bomb through `OperateObjectRequested`, and the
-town-to-Nest warp remains gated by Farmer's Orchard completion.
+The shipped Hellfire pack adds a content-owned Hive entrance projection: Rune
+Bomb completion objects consume the normalized bomb through
+`OperateObjectRequested`, and the town-to-Nest warp remains gated by Farmer's
+Orchard completion. It also maps Magic Rock pickup to the existing validated
+item-to-quest transition hook; both changes use the existing 1.324 table schema.
 
 Schema 1.301 adds optional `counselor_move_chance_percent` to
 `monster_types.tsv`. Shipped Counselor-family rows carry the native 30-percent

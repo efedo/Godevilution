@@ -108,7 +108,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint startingReflectCharges = 0,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null,
-        AuthoritativePlayerClassDefinition? startingPlayerClass = null)
+        AuthoritativePlayerClassDefinition? startingPlayerClass = null,
+        AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -129,6 +130,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 Projectiles = startingProjectiles,
                 Objects = startingObjects,
                 Quests = startingQuests,
+                ItemQuestEffects = startingItemQuestEffects,
                 Spells = startingSpells,
                 CombatRules = startingCombatRules,
                 Items = startingItems,

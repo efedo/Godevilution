@@ -1840,6 +1840,84 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void PickupAppliesServerOwnedMagicRockQuestTransition()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                2135,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 9,
+                Name = "Magic Rock",
+                IdentifiedName = "Magic Rock",
+            },
+            new AuthoritativeItemDefinition(
+                24,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+                Name = "Ear",
+                IdentifiedName = "Ear",
+            },
+        ]);
+        var itemQuestEffects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                2135,
+                3001,
+                AuthoritativeItemQuestEffectKind.ActivateQuest,
+                1),
+        ]);
+        var quest = new AuthoritativeQuestState(3001, 1, 3, active: false);
+        var itemState = AuthoritativeItemState.Empty with {
+            StableItemId = 2135,
+            ItemIndex = 9,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingItems: items,
+            startingItemQuestEffects: itemQuestEffects,
+            startingQuests: [quest],
+            startingWorldItems: [new AuthoritativeWorldItem(20, 0, 1, 0, 99, 0, itemState)]);
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = 20 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Single(player.Inventory);
+        Assert.True(player.Inventory[0].State.StableItemId == 2135);
+        var snapshotQuest = Assert.Single(executor.CreateSnapshot("player-a", 7, 1).Quests);
+        Assert.False(snapshotQuest.Initial);
+        Assert.True(snapshotQuest.Logged);
+        Assert.Equal(1, snapshotQuest.Variable1);
+    }
+
+    [Fact]
     public void DropHeldItemCommandReturnsServerOwnedCursorStateToWorld()
     {
         var heldItem = new OwnedStoreItem(
