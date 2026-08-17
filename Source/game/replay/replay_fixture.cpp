@@ -615,6 +615,8 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			if (projectile.behavior == MonsterArrowBehavior) {
 				hasher.AppendString("godevilution-projectile-monster-arrow-v1");
 				hasher.AppendInt32(projectile.damage);
+				hasher.AppendInt32(projectile.damageMinimum);
+				hasher.AppendInt32(projectile.damageMaximum);
 				hasher.AppendUint32(projectile.sourceEntityId);
 				hasher.AppendUint32(projectile.targetEntityId);
 			}
@@ -3072,6 +3074,82 @@ void AdvanceReplayWeaponArrowsOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+/** Advances a seeded native MonsterArrow projectile through travel and impact frames. */
+void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != MonsterArrowBehavior) {
+			++iterator;
+			continue;
+		}
+		if (projectile.phase == 1) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0)
+				iterator = state.projectiles.erase(iterator);
+			else
+				++iterator;
+			continue;
+		}
+		if (projectile.sourceEntityId != state.combatTargetEntityId) {
+			iterator = state.projectiles.erase(iterator);
+			continue;
+		}
+		const int32_t travelSteps = std::max(1, projectile.speed);
+		bool removed = false;
+		for (int32_t step = 0; step < travelSteps; ++step) {
+			const int32_t nextX = projectile.positionX
+			    + (projectile.targetX > projectile.positionX)
+			        - (projectile.targetX < projectile.positionX);
+			const int32_t nextY = projectile.positionY
+			    + (projectile.targetY > projectile.positionY)
+			        - (projectile.targetY < projectile.positionY);
+			if (nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40) {
+				iterator = state.projectiles.erase(iterator);
+				removed = true;
+				break;
+			}
+			projectile.positionX = nextX;
+			projectile.positionY = nextY;
+			if (state.levelId == projectile.levelId
+			    && state.life > 0
+			    && nextX == state.positionX
+			    && nextY == state.positionY) {
+				int32_t damage = projectile.damage;
+				if (damage > 0 && projectile.damageMinimum > 0
+				    && projectile.damageMaximum >= projectile.damageMinimum) {
+					damage = projectile.damageMinimum
+					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
+				}
+				state.life = std::max(0, state.life - std::max(0, damage));
+				if (projectile.impactLifetime > 0) {
+					projectile.phase = 1;
+					projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
+				} else {
+					iterator = state.projectiles.erase(iterator);
+					removed = true;
+				}
+				break;
+			}
+			if (nextX == projectile.targetX && nextY == projectile.targetY)
+				break;
+		}
+		if (removed)
+			continue;
+		if (projectile.phase == 0) {
+			if (projectile.remainingTicks > 0)
+				--projectile.remainingTicks;
+			if (projectile.remainingTicks == 0)
+				iterator = state.projectiles.erase(iterator);
+			else
+				++iterator;
+		} else {
+			++iterator;
+		}
+	}
+}
+
 bool ApplyReplayAttack(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
@@ -4278,6 +4356,7 @@ void AdvanceReplayStateToTick(
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
 		AdvanceReplayWeaponArrowsOneTick(state);
+		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state);
 		AdvanceFireballsOneTick(state, simulationTick);
@@ -4359,6 +4438,8 @@ private:
 			return ParseQuestSelection();
 		if (key == "initial_state")
 			return ParseInitialState();
+		if (key == "initial_projectiles")
+			return ParseInitialProjectiles();
 		if (key == "legacy_store_state")
 			return ParseStoreState();
 		if (key == "player_action_timing")
@@ -4659,6 +4740,81 @@ private:
 				return ParseSecondaryPlayer();
 			return SkipValue();
 		});
+	}
+
+	bool ParseInitialProjectiles()
+	{
+		if (!Consume('['))
+			return Fail("expected initial projectile array");
+		fixture_.initialProjectiles.clear();
+		SkipWhitespace();
+		if (Consume(']'))
+			return true;
+		while (true) {
+			ReplayFixtureInitialProjectile projectile;
+			if (!ParseObject([this, &projectile](std::string_view key) {
+				if (key == "entity_id")
+					return ParseUnsigned(projectile.entityId);
+				if (key == "source_entity_id")
+					return ParseUnsigned(projectile.sourceEntityId);
+				if (key == "target_entity_id")
+					return ParseUnsigned(projectile.targetEntityId);
+				if (key == "spell_id")
+					return ParseUnsigned(projectile.spellId);
+				if (key == "level_id")
+					return ParseUnsigned(projectile.levelId);
+				if (key == "position_x")
+					return ParseSigned(projectile.positionX);
+				if (key == "position_y")
+					return ParseSigned(projectile.positionY);
+				if (key == "target_x")
+					return ParseSigned(projectile.targetX);
+				if (key == "target_y")
+					return ParseSigned(projectile.targetY);
+				if (key == "damage")
+					return ParseSigned(projectile.damage);
+				if (key == "damage_type")
+					return ParseSigned(projectile.damageType);
+				if (key == "area_radius")
+					return ParseSigned(projectile.areaRadius);
+				if (key == "remaining_ticks")
+					return ParseUnsigned(projectile.remainingTicks);
+				if (key == "behavior")
+					return ParseSigned(projectile.behavior);
+				if (key == "phase")
+					return ParseSigned(projectile.phase);
+				if (key == "speed")
+					return ParseSigned(projectile.speed);
+				if (key == "impact_lifetime")
+					return ParseSigned(projectile.impactLifetime);
+				if (key == "damage_minimum")
+					return ParseSigned(projectile.damageMinimum);
+				if (key == "damage_maximum")
+					return ParseSigned(projectile.damageMaximum);
+				return SkipValue();
+			})) {
+				return false;
+			}
+			if (projectile.entityId == 0 || projectile.sourceEntityId == 0
+			    || projectile.damage < 0 || projectile.damageType < 0
+			    || projectile.areaRadius < 0 || projectile.remainingTicks == 0
+			    || projectile.behavior < 0 || projectile.phase < 0
+			    || projectile.speed < 0 || projectile.impactLifetime < 0
+			    || projectile.damageMinimum < 0
+			    || projectile.damageMaximum < projectile.damageMinimum
+			    || std::any_of(fixture_.initialProjectiles.begin(), fixture_.initialProjectiles.end(), [&](const auto &existing) {
+				return existing.entityId == projectile.entityId;
+			    })) {
+				return Fail("initial projectile contains invalid or duplicate state");
+			}
+			fixture_.initialProjectiles.push_back(std::move(projectile));
+			SkipWhitespace();
+			if (Consume(']'))
+				return true;
+			if (!Consume(','))
+				return Fail("expected comma or closing bracket");
+			SkipWhitespace();
+		}
 	}
 
 	bool ParseSecondaryPlayer()
@@ -5539,6 +5695,33 @@ bool ExecuteReplayFixture(
 		state.combatTargetMaxHitPointsQ6 = static_cast<int32_t>(maxHitPointsQ6);
 		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 		state.combatTargetMaxHitPoints = ToWholeCeilingQ6(state.combatTargetMaxHitPointsQ6);
+	}
+	if (state.projectiles.empty() && !fixture.initialProjectiles.empty()) {
+		for (const auto &source : fixture.initialProjectiles) {
+			ReplayFixtureProjectileState projectile;
+			projectile.entityId = source.entityId;
+			projectile.sourceEntityId = source.sourceEntityId;
+			projectile.targetEntityId = source.targetEntityId;
+			projectile.spellId = source.spellId;
+			projectile.levelId = source.levelId;
+			projectile.positionX = source.positionX;
+			projectile.positionY = source.positionY;
+			projectile.targetX = source.targetX;
+			projectile.targetY = source.targetY;
+			projectile.startX = source.positionX;
+			projectile.startY = source.positionY;
+			projectile.damage = source.damage;
+			projectile.damageType = source.damageType;
+			projectile.areaRadius = source.areaRadius;
+			projectile.remainingTicks = source.remainingTicks;
+			projectile.behavior = source.behavior;
+			projectile.phase = source.phase;
+			projectile.speed = source.speed;
+			projectile.impactLifetime = source.impactLifetime;
+			projectile.damageMinimum = source.damageMinimum;
+			projectile.damageMaximum = source.damageMaximum;
+			state.projectiles.push_back(std::move(projectile));
+		}
 	}
 	ApplyReplayQuestSelection(state, fixture);
 	std::vector<ReplayFixtureCommand> commands = fixture.commands;

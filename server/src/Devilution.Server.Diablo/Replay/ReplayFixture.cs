@@ -217,6 +217,37 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
     public ReplaySecondaryPlayer? SecondaryPlayer { get; init; }
 }
 
+/** Seeded server-owned projectile state used by cross-runner lifecycle fixtures. */
+public sealed record ReplayInitialProjectile(
+    uint EntityId,
+    uint SourceEntityId,
+    uint TargetEntityId,
+    uint LevelId,
+    int PositionX,
+    int PositionY,
+    int TargetX,
+    int TargetY,
+    int Damage,
+    int DamageType,
+    uint RemainingTicks)
+{
+    public uint SpellId { get; init; }
+
+    public int AreaRadius { get; init; }
+
+    public int Behavior { get; init; }
+
+    public int Phase { get; init; }
+
+    public int Speed { get; init; }
+
+    public int ImpactLifetime { get; init; } = 1;
+
+    public int DamageMinimum { get; init; }
+
+    public int DamageMaximum { get; init; }
+}
+
 public sealed record ReplayLegacyStoreState(
     int ActiveStore,
     int PremiumItemCount,
@@ -306,6 +337,9 @@ public sealed record ReplayFixture(
     IReadOnlyList<ReplayFixtureCommand> Commands,
     IReadOnlyList<ReplayCheckpoint> Checkpoints)
 {
+    /** Optional deterministic projectiles present before the first simulation tick. */
+    public IReadOnlyList<ReplayInitialProjectile> InitialProjectiles { get; init; } = [];
+
     public ReplayLegacyStoreState LegacyStoreState { get; init; } = new(1, 0, 3, [42]);
 
     /** Null when loading the legacy array-shaped content_manifest metadata. */

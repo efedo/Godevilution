@@ -20,6 +20,7 @@ public static class ReplayFixtureLoader
             ParseInitialState(root.GetProperty("initial_state")),
             ParseCommands(root.GetProperty("commands")),
             ParseCheckpoints(root.GetProperty("checkpoints"))) {
+            InitialProjectiles = ParseInitialProjectiles(root),
             LegacyStoreState = ParseLegacyStoreState(root),
             ContentManifest = ParseContentManifest(root),
             QuestSelection = ParseQuestSelection(root),
@@ -343,6 +344,62 @@ public static class ReplayFixtureLoader
             Belt = ParseBelt(value),
             SecondaryPlayer = ParseSecondaryPlayer(value),
         };
+    }
+
+    private static IReadOnlyList<ReplayInitialProjectile> ParseInitialProjectiles(JsonElement root)
+    {
+        if (!root.TryGetProperty("initial_projectiles", out var value))
+            return [];
+        if (value.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException("Replay fixture initial_projectiles must be an array.");
+
+        var projectiles = value.EnumerateArray()
+            .Select(projectile => new ReplayInitialProjectile(
+                RequiredUInt(projectile, "entity_id"),
+                RequiredUInt(projectile, "source_entity_id"),
+                GetOptionalUInt(projectile, "target_entity_id"),
+                GetOptionalUInt(projectile, "level_id"),
+                RequiredInt(projectile, "position_x"),
+                RequiredInt(projectile, "position_y"),
+                RequiredInt(projectile, "target_x"),
+                RequiredInt(projectile, "target_y"),
+                RequiredInt(projectile, "damage"),
+                GetOptionalInt(projectile, "damage_type"),
+                RequiredUInt(projectile, "remaining_ticks")) {
+                SpellId = GetOptionalUInt(projectile, "spell_id"),
+                AreaRadius = GetOptionalInt(projectile, "area_radius"),
+                Behavior = GetOptionalInt(projectile, "behavior"),
+                Phase = GetOptionalInt(projectile, "phase"),
+                Speed = GetOptionalInt(projectile, "speed"),
+                ImpactLifetime = projectile.TryGetProperty(
+                    "impact_lifetime",
+                    out var impactLifetime)
+                    ? impactLifetime.GetInt32()
+                    : 1,
+                DamageMinimum = GetOptionalInt(projectile, "damage_minimum"),
+                DamageMaximum = GetOptionalInt(projectile, "damage_maximum"),
+            })
+            .ToArray();
+        if (projectiles.Any(projectile =>
+                projectile.EntityId == 0
+                || projectile.SourceEntityId == 0
+                || projectile.Damage < 0
+                || projectile.DamageType < 0
+                || !Enum.IsDefined((AuthoritativeDamageType)projectile.DamageType)
+                || projectile.RemainingTicks == 0
+                || projectile.AreaRadius < 0
+                || !Enum.IsDefined((AuthoritativeProjectileBehavior)projectile.Behavior)
+                || !Enum.IsDefined((AuthoritativeProjectilePhase)projectile.Phase)
+                || projectile.Speed < 0
+                || projectile.ImpactLifetime < 0
+                || projectile.DamageMinimum < 0
+                || projectile.DamageMaximum < projectile.DamageMinimum)
+            || projectiles.Select(projectile => projectile.EntityId).Distinct().Count()
+                != projectiles.Length) {
+            throw new InvalidDataException(
+                "Replay fixture initial_projectiles contains invalid or duplicate state.");
+        }
+        return projectiles;
     }
 
     private static DiabloGameVariant ParseGameVariant(JsonElement root)

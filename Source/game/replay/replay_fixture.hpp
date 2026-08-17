@@ -196,6 +196,29 @@ struct ReplayFixturePlayerActionTiming {
 	uint32_t deathFrames = 0;
 };
 
+/** Seeded projectile state used by cross-runner lifecycle fixtures. */
+struct ReplayFixtureInitialProjectile {
+	uint32_t entityId = 0;
+	uint32_t sourceEntityId = 0;
+	uint32_t targetEntityId = 0;
+	uint32_t spellId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	int32_t targetX = 0;
+	int32_t targetY = 0;
+	int32_t damage = 0;
+	int32_t damageType = 0;
+	int32_t areaRadius = 0;
+	uint32_t remainingTicks = 0;
+	int32_t behavior = 0;
+	int32_t phase = 0;
+	int32_t speed = 0;
+	int32_t impactLifetime = 1;
+	int32_t damageMinimum = 0;
+	int32_t damageMaximum = 0;
+};
+
 struct ReplayFixture {
 	uint32_t formatVersion = 0;
 	std::string fixtureId;
@@ -207,6 +230,7 @@ struct ReplayFixture {
 	ReplayFixtureContentManifest contentManifest;
 	ReplayFixtureQuestSelection questSelection;
 	ReplayFixtureInitialState initialState;
+	std::vector<ReplayFixtureInitialProjectile> initialProjectiles;
 	ReplayFixtureStoreState storeState;
 	ReplayFixturePlayerActionTiming playerActionTiming;
 	std::vector<ReplayFixtureCommand> commands;
@@ -324,6 +348,8 @@ struct ReplayFixtureProjectileState {
 	int32_t targetX = 0;
 	int32_t targetY = 0;
 	int32_t damage = 0;
+	int32_t damageMinimum = 0;
+	int32_t damageMaximum = 0;
 	int32_t damageQ6 = 0;
 	int32_t elementalFireDamage = 0;
 	int32_t elementalLightningDamage = 0;

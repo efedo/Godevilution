@@ -1,0 +1,64 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-resolution",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-arrow-resolution-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "level_id": 1,
+      "position_x": 2,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 4,
+      "damage_type": 0,
+      "remaining_ticks": 4,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "8e0d59c83c66b0c3a39362f3ae77d64bf72e1fa2d576dffd662062069d2a2f24" },
+    { "tick": 2, "state_sha256": "7b077d0d9ae8ad21554d800618f3eb58079ef70feced2df4150429fd77fc9ee0" },
+    { "tick": 3, "state_sha256": "04573131e0870098455d75a10c5facede7d6e856330f88ad1f29be45494ac0e0" }
+  ]
+}
