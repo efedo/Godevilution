@@ -160,6 +160,12 @@ conversation is the first shipped definition. Unauthored legacy monster
 conversations retain their local fallback until their content actions are
 externalized.
 
+Content-declared quest objects now use the same `OperateObjectRequested`
+boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
+quest-state changes, item consumption, and activation in the server snapshot;
+the Hellfire Na-Krul tome sequence is the first shipped definition. Objects
+without an authored quest effect retain the legacy local behavior.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

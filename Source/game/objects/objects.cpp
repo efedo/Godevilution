@@ -11,6 +11,12 @@
 
 #include <algorithm>
 
+#ifdef USE_SDL3
+#include <SDL3/SDL_timer.h>
+#else
+#include <SDL.h>
+#endif
+
 #include <expected.hpp>
 #include <fmt/core.h>
 
@@ -46,6 +52,9 @@
 #include "tables/leveldat.h"
 #include "tables/objdat.h"
 #include "game/towners/towners.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "engine/track.h"
 #include "utils/algorithm/container.hpp"
 #include "utils/endian/endian_swap.hpp"
@@ -4564,6 +4573,16 @@ void RegisterObjectBehaviors()
 
 void OperateObject(Player &player, Object &object)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		auto &runtime = authoritative::GetServerBackedRuntime();
+		if (const auto entityId = runtime.QuestObjectEntityIdAt(object.position.x, object.position.y); entityId.has_value()) {
+			if (auto result = runtime.OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Failed to submit the authoritative quest object operation: {}", result.error());
+			return;
+		}
+	}
+#endif
 	const bool sendmsg = &player == MyPlayer;
 	const std::string &behavior = object.data().behavior;
 	if (behavior.empty())

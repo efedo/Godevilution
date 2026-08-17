@@ -104,6 +104,15 @@ struct ProjectedWorldItemSnapshot {
 	Item item;
 };
 
+enum class ProjectedObjectEffectKind : int32_t {
+	None = 0,
+	Heal = 1,
+	Damage = 2,
+	Experience = 3,
+	QuestSequence = 4,
+	QuestItemCompletion = 5,
+};
+
 struct ProjectedObjectSnapshot {
 	uint32_t entityId = 0;
 	uint32_t objectId = 0;

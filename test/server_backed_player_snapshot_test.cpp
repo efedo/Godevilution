@@ -370,6 +370,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_position_y(9);
 	second->set_activated(true);
 	second->set_quest_id(30);
+	second->set_effect_kind(static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
+	second->set_effect_amount(2);
 	second->set_breakable(true);
 	second->set_destroyed(true);
 	auto *first = snapshot.add_objects();
@@ -388,6 +390,8 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].entityId, 20U);
 	EXPECT_TRUE((*projected)[1].activated);
 	EXPECT_EQ((*projected)[1].questId, 30U);
+	EXPECT_EQ((*projected)[1].effectKind, static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
+	EXPECT_EQ((*projected)[1].effectAmount, 2);
 	EXPECT_TRUE((*projected)[1].breakable);
 	EXPECT_TRUE((*projected)[1].destroyed);
 }
@@ -488,6 +492,18 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups
 	EXPECT_FALSE(projection.MonsterAt(6, 5).has_value());
 	EXPECT_FALSE(projection.WorldItemAt(4, 5).has_value());
 	EXPECT_EQ(projection.ObjectAt(4, 5), std::optional<uint32_t>(30));
+	EXPECT_FALSE(projection.QuestObjectAt(4, 5).has_value());
+	ProjectedObjectSnapshot questObject;
+	questObject.entityId = 32;
+	questObject.levelId = 1;
+	questObject.positionX = 7;
+	questObject.positionY = 8;
+	questObject.effectKind = static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence);
+	ASSERT_TRUE(projection.Apply({ monster }, { item }, { questObject }, 1).has_value());
+	EXPECT_EQ(projection.QuestObjectAt(7, 8), std::optional<uint32_t>(32));
+	questObject.activated = true;
+	ASSERT_TRUE(projection.Apply({ monster }, { item }, { questObject }, 1).has_value());
+	EXPECT_FALSE(projection.QuestObjectAt(7, 8).has_value());
 	object.activated = true;
 	ASSERT_TRUE(projection.Apply({ }, { item }, { object }, 1).has_value());
 	EXPECT_FALSE(projection.ObjectAt(4, 5).has_value());

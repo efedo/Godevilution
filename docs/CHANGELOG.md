@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route content-declared quest-object effects through
+  `OperateObjectRequested`. The native client now identifies active
+  `QuestSequence` and `QuestItemCompletion` objects from authoritative
+  snapshots, while the server owns ordering, quest state, item consumption,
+  and activation reconciliation. The Hellfire Na-Krul tome sequence is the
+  first shipped definition; unmodeled objects retain legacy behavior.
+
 - Route authored unique-monster quest conversations through
   `TalkToQuestRequested`. Native snapshots now carry the optional opaque unique
   identity, the client selects the active matching quest, and the server owns

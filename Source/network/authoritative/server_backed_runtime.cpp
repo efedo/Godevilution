@@ -690,6 +690,11 @@ std::optional<uint32_t> ServerBackedRuntime::ObjectEntityIdAt(int32_t positionX,
 	return worldProjection_.ObjectAt(positionX, positionY);
 }
 
+std::optional<uint32_t> ServerBackedRuntime::QuestObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
+{
+	return worldProjection_.QuestObjectAt(positionX, positionY);
+}
+
 std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept
 {
 	if (!session_)
