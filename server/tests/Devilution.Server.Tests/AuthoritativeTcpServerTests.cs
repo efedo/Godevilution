@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Host;
@@ -379,6 +381,57 @@ public sealed class AuthoritativeTcpServerTests
             await WaitUntilAsync(
                 () => saveProvider.ExportCount > 0,
                 cancellationToken);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FailedSaveImportIsRetriedInsteadOfCreatingFreshSessionState()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Invalid-Resume-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "invalid-save-resume-token";
+        var sessionId = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(resumeToken)))
+            .ToLowerInvariant();
+        try {
+            var saveStore = new AuthoritativeSaveStore(saveRoot);
+            saveStore.Save(sessionId, "invalid-save");
+            var executor = new RecordingExecutor();
+            var saveProvider = new RejectingSaveProvider();
+            var initializer = new RecordingParticipantInitializer();
+            var commandServer = new AuthoritativeCommandServer(executor);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            await using var server = new AuthoritativeTcpServer(
+                commandServer,
+                handshake,
+                () => 10,
+                saveStore: saveStore,
+                saveProvider: saveProvider,
+                participantInitializer: initializer);
+            server.Start();
+            var cancellationToken = TestContext.Current.CancellationToken;
+
+            for (var attempt = 0; attempt < 2; attempt++) {
+                using var client = new TcpClient();
+                await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                await using var stream = client.GetStream();
+                await SendHelloAsync(stream, cancellationToken, resumeToken);
+                var error = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+                Assert.NotNull(error);
+                Assert.Equal(Envelope.PayloadOneofCase.Error, error!.PayloadCase);
+                Assert.Equal(ProtocolErrorCode.InvalidMessage, error.Error.Code);
+            }
+
+            Assert.Equal(2, saveProvider.ImportCount);
+            Assert.Empty(initializer.Selections);
         } finally {
             if (Directory.Exists(saveRoot))
                 Directory.Delete(saveRoot, recursive: true);
@@ -798,6 +851,19 @@ public sealed class AuthoritativeTcpServerTests
 
         public void ImportPlayerSave(string sessionId, string serializedSave)
         {
+        }
+    }
+
+    private sealed class RejectingSaveProvider : IAuthoritativeSaveProvider
+    {
+        public int ImportCount { get; private set; }
+
+        public string ExportPlayerSave(string sessionId) => "{}";
+
+        public void ImportPlayerSave(string sessionId, string serializedSave)
+        {
+            ImportCount++;
+            throw new InvalidDataException("The save is invalid.");
         }
     }
 }

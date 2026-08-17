@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
 - Roll back authoritative TCP host startup when port binding fails, allowing a
   caller to release the port and retry without leaving a half-started host.
 
+- Preserve failed authoritative save imports as failures: a reconnect retries
+  the same stored state instead of silently creating and saving a fresh session.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

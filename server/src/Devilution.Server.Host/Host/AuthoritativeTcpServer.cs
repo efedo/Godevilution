@@ -351,15 +351,19 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     private bool RestoreSessionIfAvailable(SessionState session)
     {
-        if (session.SaveLoaded || saveStore is null || saveProvider is null)
-            return false;
-        session.SaveLoaded = true;
-        var serializedSave = saveStore.Load(session.Id);
-        if (serializedSave is null)
-            return false;
-        saveProvider.ImportSessionState(session.Id, serializedSave);
-        session.ParticipantInitialized = true;
-        return true;
+        lock (session) {
+            if (session.SaveLoaded || saveStore is null || saveProvider is null)
+                return false;
+            var serializedSave = saveStore.Load(session.Id);
+            if (serializedSave is null) {
+                session.SaveLoaded = true;
+                return false;
+            }
+            saveProvider.ImportSessionState(session.Id, serializedSave);
+            session.SaveLoaded = true;
+            session.ParticipantInitialized = true;
+            return true;
+        }
     }
 
     private void SaveSession(SessionState session)

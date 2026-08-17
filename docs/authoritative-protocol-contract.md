@@ -26,6 +26,10 @@ A successful handshake returns a server-issued `session_token`. Presenting a
 known token on reconnect restores the authoritative entity identity and command
 ledger. An unknown or omitted token starts a new session.
 
+If a server-owned save exists for a token but fails validation during restore,
+the handshake is rejected and the stored state is not replaced. Reconnecting
+with that token retries the same save until an operator repairs or removes it.
+
 `ServerHello.game_mode` additively declares whether the shared authoritative
 simulation uses single-player or multiplayer rules. It is server-owned process
 configuration, not inferred from connected participant count. Both native and
