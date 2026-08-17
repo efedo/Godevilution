@@ -1985,9 +1985,11 @@ spell level. Speed starts at 16 and gains two per effective level up to a
 34-point bonus. The server advances its 16.16 path through every swept tile;
 the first direct hit, blocking tile, or range expiry creates the native center-
 plus-eight-neighbor splash in fixed order, subject to origin-to-cell solid
-geometry. The direct collision and shifted splash retain their distinct native
-Q6 and resistance rules. The resulting stationary explosion persists for 14
-ticks. Damage, velocity, origin, phase, lifetime, RNG, and exact health cross
+geometry. Missile-blocking tiles and objects stop the projectile at the impact
+cell; a breakable object is destroyed before the splash is resolved. The direct
+collision and shifted splash retain their distinct native Q6 and resistance
+rules. The resulting stationary explosion persists for 14 ticks. Damage,
+velocity, origin, phase, lifetime, RNG, and exact health cross
 snapshots, compatible saves, protocol projection, both clients, and the shared
 native/C# replay.
 

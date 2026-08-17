@@ -28,7 +28,11 @@ Status date: 2026-08-16
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; the Diablo suite
-  passes all 1,200 tests and the server suite passes all 309 tests.
+  passes all 1,202 tests and the server suite passes all 309 tests.
+
+- Fireball now stops on native missile-blocking geometry, destroys a hit
+  breakable object, and starts its authoritative splash at the blocker tile;
+  the behavior is covered by regular and breakable-object tests.
 
 - The Godot world presentation now renders server-owned monster health bars
   from authoritative `MonsterSnapshot` vitality, preferring exact Q6 values and
