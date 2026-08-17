@@ -910,13 +910,37 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         int targetDistance)
     {
-        if (!HasUsableEquipmentFlag(
+        var speed = 32;
+        if (HasUsableEquipmentFlag(
                 player,
                 AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag)) {
-            return (0, checked((uint)Math.Max(1, targetDistance)));
+            speed = random.RandomIntBetween(16, 47);
         }
 
-        var speed = random.RandomIntBetween(16, 47);
+        var playerClass = GetPlayerClass(player);
+        var level = checked((int)player.CharacterLevel);
+        if (playerClass?.Symbol is "rogue")
+            speed = checked(speed + Math.Max(0, level - 1) / 4);
+        else if (playerClass?.Symbol is "warrior" or "bard")
+            speed = checked(speed + Math.Max(0, level - 1) / 8);
+
+        if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+            var flags = GetUsableEquipmentFlags(player);
+            if ((flags & QuickAttackFlag) != 0)
+                speed++;
+            if ((flags & FastAttackFlag) != 0)
+                speed = checked(speed + 2);
+            if ((flags & FasterAttackFlag) != 0)
+                speed = checked(speed + 4);
+            if ((flags & FastestAttackFlag) != 0)
+                speed = checked(speed + 8);
+        }
+
+        // Preserve the compact legacy representation when native AddArrow
+        // resolves to its default 32-pixel cadence.
+        if (speed == 32)
+            return (0, checked((uint)Math.Max(1, targetDistance)));
+
         var travelTiles = Math.Max(0, targetDistance - 1);
         var travelTicks = checked(
             (travelTiles * 32 + speed - 1) / speed);
@@ -9468,8 +9492,9 @@ public sealed class DiabloCombatCommandProcessor
         }
         if (projectile.RemainingTicks > 1) {
             // Legacy hand-built fixtures used Speed=1 as a one-step marker;
-            // only native RandomArrowVelocity values change the cadence.
-            var velocity = projectile.Speed is >= 16 and <= 47
+            // native AddArrow speeds occupy the 16..74 range after class and
+            // Hellfire attack-speed modifiers are applied.
+            var velocity = projectile.Speed is >= 16 and <= 74
                 ? projectile.Speed
                 : 32;
             var travelBudget = checked(velocity + projectile.PathTicks);

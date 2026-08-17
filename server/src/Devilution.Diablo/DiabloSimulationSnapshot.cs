@@ -934,7 +934,7 @@ public sealed partial class DiabloSimulation
                         || projectile.DamageType != AuthoritativeDamageType.Physical
                         || projectile.AreaRadius != 0
                         || projectile.Speed < 0
-                        || projectile.Speed > 47
+                        || projectile.Speed > 74
                         || projectile.Speed is > 0 and < 16
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.Damage != DiabloFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)

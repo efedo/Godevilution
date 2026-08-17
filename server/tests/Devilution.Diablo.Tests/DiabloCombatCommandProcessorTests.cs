@@ -1194,6 +1194,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireArrowVelocityIncludesClassAndAttackSpeedModifiers()
+    {
+        var target = new AuthoritativeCombatTarget(9, 15, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            // Native QuickAttack and FastestAttack item flags.
+            Flags = (1U << 17) | (1U << 20),
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            characterClassId: 1,
+            characterLevel: 12,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
+            playerClasses: LoadShippedPlayerClasses());
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        // 32 base + (12 - 1) / 4 Rogue + 1 Quick + 8 Fastest.
+        Assert.Equal(43, projectile.Speed);
+        Assert.Equal(8U, projectile.RemainingTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal((6, 5), (projectile.PositionX, projectile.PositionY));
+        Assert.Equal(11, projectile.PathTicks);
+    }
+
+    [Fact]
     public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
     {
         var blocker = new AuthoritativeWorldObject(

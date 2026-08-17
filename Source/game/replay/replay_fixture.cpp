@@ -29,6 +29,7 @@ constexpr uint32_t FireDamageFlag = 1U << 4;
 constexpr uint32_t LightningDamageFlag = 1U << 5;
 constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
+constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
@@ -2540,6 +2541,28 @@ bool HasReplayEquipmentFlag(
 	    });
 }
 
+int32_t ResolveReplayWeaponArrowSpeed(ReplayFixtureExecutionState &state)
+{
+	int32_t speed = HasReplayEquipmentFlag(state, RandomArrowVelocityFlag)
+	    ? 16 + GenerateRnd(state, 32)
+	    : 32;
+	if (state.characterClassId == 1)
+		speed += std::max<int32_t>(0, static_cast<int32_t>(state.characterLevel) - 1) / 4;
+	else if (state.characterClassId == 0 || state.characterClassId == 4)
+		speed += std::max<int32_t>(0, static_cast<int32_t>(state.characterLevel) - 1) / 8;
+	if (state.hellfire) {
+		if (HasReplayEquipmentFlag(state, QuickAttackFlag))
+			speed++;
+		if (HasReplayEquipmentFlag(state, FastAttackFlag))
+			speed += 2;
+		if (HasReplayEquipmentFlag(state, FasterAttackFlag))
+			speed += 4;
+		if (HasReplayEquipmentFlag(state, FastestAttackFlag))
+			speed += 8;
+	}
+	return speed;
+}
+
 void CreateReplayWeaponArrow(
     ReplayFixtureExecutionState &state,
     uint32_t targetEntityId,
@@ -2597,7 +2620,11 @@ void CreateReplayWeaponArrow(
 	projectile.elementalFireDamage = fireDamage;
 	projectile.elementalLightningDamage = lightningDamage;
 	projectile.damageType = 0;
-	projectile.remainingTicks = static_cast<uint32_t>(std::max(targetDistance, 1));
+	const int32_t speed = ResolveReplayWeaponArrowSpeed(state);
+	const int32_t travelTiles = std::max(targetDistance - 1, 0);
+	projectile.remainingTicks = static_cast<uint32_t>(
+	    (travelTiles * 32 + speed - 1) / speed + 1);
+	projectile.speed = speed == 32 ? 0 : speed;
 	projectile.behavior = WeaponArrowBehavior;
 	projectile.attackHit = true;
 	projectile.activationDelayTicks = arrowIndex == 0 ? 0 : 2;
@@ -2657,28 +2684,40 @@ void AdvanceReplayWeaponArrowsOneTick(ReplayFixtureExecutionState &state)
 			continue;
 		}
 		if (projectile.remainingTicks > 1) {
-			const int32_t nextX = projectile.positionX
-			    + (projectile.targetX > projectile.positionX)
-			        - (projectile.targetX < projectile.positionX);
-			const int32_t nextY = projectile.positionY
-			    + (projectile.targetY > projectile.positionY)
-			        - (projectile.targetY < projectile.positionY);
-			const bool outsideWorld = nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40;
-			const bool blockingObject = state.objectEntityId != 0
-			    && !state.objectActivated
-			    && !state.objectDestroyed
-			    && !state.objectMissilePassable
-			    && state.objectLevelId == projectile.levelId
-			    && state.objectPositionX == nextX
-			    && state.objectPositionY == nextY;
-			if (outsideWorld || blockingObject) {
-				if (blockingObject && state.objectBreakable)
-					state.objectDestroyed = true;
-				iterator = state.projectiles.erase(iterator);
-				continue;
+			const int32_t velocity = projectile.speed >= 16 && projectile.speed <= 74
+			    ? projectile.speed
+			    : 32;
+			const int32_t travelBudget = velocity + projectile.pathTicks;
+			const int32_t travelSteps = travelBudget / 32;
+			projectile.pathTicks = travelBudget % 32;
+			bool removed = false;
+			for (int32_t step = 0; step < travelSteps; ++step) {
+				const int32_t nextX = projectile.positionX
+				    + (projectile.targetX > projectile.positionX)
+				        - (projectile.targetX < projectile.positionX);
+				const int32_t nextY = projectile.positionY
+				    + (projectile.targetY > projectile.positionY)
+				        - (projectile.targetY < projectile.positionY);
+				const bool outsideWorld = nextX < 0 || nextX >= 40 || nextY < 0 || nextY >= 40;
+				const bool blockingObject = state.objectEntityId != 0
+				    && !state.objectActivated
+				    && !state.objectDestroyed
+				    && !state.objectMissilePassable
+				    && state.objectLevelId == projectile.levelId
+				    && state.objectPositionX == nextX
+				    && state.objectPositionY == nextY;
+				if (outsideWorld || blockingObject) {
+					if (blockingObject && state.objectBreakable)
+						state.objectDestroyed = true;
+					iterator = state.projectiles.erase(iterator);
+					removed = true;
+					break;
+				}
+				projectile.positionX = nextX;
+				projectile.positionY = nextY;
 			}
-			projectile.positionX = nextX;
-			projectile.positionY = nextY;
+			if (removed)
+				continue;
 			--projectile.remainingTicks;
 			++iterator;
 			continue;
