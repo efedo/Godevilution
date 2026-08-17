@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
   `MonsterArrow` mappings, preventing a clear close-range shot from becoming a
   no-op or falling through to melee.
 
+- Preserve Counselor's native three-projectile Charged Bolt attack and fixed
+  15-point monster payload, while retaining validated damage overrides.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

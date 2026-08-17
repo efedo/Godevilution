@@ -794,6 +794,11 @@ the player is adjacent and the missile lane is clear. The server emits the
 authoritative arrow impact while retaining the mapped-arrow suppression of
 adjacent melee fallback.
 
+Counselor Charged Bolt mappings now emit three independent server-owned
+`MonsterChargedBolt` projectiles per admitted native attack and use the native
+15-point monster payload unless validated `projectile_damage` supplies an
+override.
+
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.
