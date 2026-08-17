@@ -120,7 +120,7 @@ fixture.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash spell-timeline
-checkpoints pass in both runners; the native replay gate reports 72/72 tests.
+checkpoints pass in both runners; the native replay gate reports 73/73 tests.
 Remaining replay work is broader fixture coverage rather than a known hash
 mismatch.
 
