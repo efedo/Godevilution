@@ -53,6 +53,9 @@ All notable changes to this fork are documented below.
 - Add seeded MonsterArrow replay coverage for native travel, player impact,
   impact-phase lifetime, and canonical C++/C# checkpoint parity.
 
+- Route seeded MonsterArrow impacts to a secondary multiplayer participant in
+  the shared replay projection, preserving complete participant-state hashes.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

@@ -65,7 +65,8 @@ validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
 captured physical damage and per-tick player collision. Managed combat and
 snapshot tests cover this lifecycle, and the compact cross-runner fixture now
-covers seeded MonsterArrow travel, player impact, and impact-phase removal.
+covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
+and secondary-participant routing.
 Autonomous monster AI emission and target selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
@@ -128,7 +129,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 74 cases, including seeded MonsterArrow source coverage;
+gate now contains 75 cases, including seeded MonsterArrow source coverage;
 the managed replay suite passes locally, while native execution still requires
 the C++ toolchain described below.
 Remaining replay work is broader fixture coverage rather than a known hash
@@ -142,7 +143,8 @@ pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
-occupancy, and seeded MonsterArrow travel/impact/removal. The native and C# runners
+occupancy, seeded MonsterArrow travel/impact/removal, and a multiplayer
+MonsterArrow impact against the secondary participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -406,6 +408,8 @@ Notable shared fixtures include:
   admission and the Hellfire-only blocked-missile RNG draw;
 - `gameplay-monster-arrow-resolution.json` for seeded MonsterArrow travel,
   player impact damage, impact-phase lifetime, and cross-runner removal parity;
+- `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
+  routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept
   speed-26 movement, fire resistance, fractional health, impact, and RNG parity;
 - `gameplay-fireball-resolution.json` for two-roll damage, level-capped speed,
