@@ -1237,6 +1237,21 @@ public sealed class DiabloWorldCommandProcessor
             }
         }
 
+        var rewardOnActivation = quest.DialogueRewardOnActivation && !quest.Active;
+        if (rewardOnActivation
+            && (items is null
+                || (quest.DialogueRewardUniqueId == 0
+                    && quest.DialogueRewardItemId == 0))) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+        if ((rewardOnActivation || dialogueInventoryIndex >= 0)
+            && (quest.DialogueRewardUniqueId != 0 || quest.DialogueRewardItemId != 0)) {
+            var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
+            var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
+            if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
         if (dialogueInventoryIndex >= 0) {
             InventoryGridLayout.RemoveAndCompact(
                 player.InventoryGrid,
@@ -1256,48 +1271,7 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
 
-            var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
-            var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
-            if (quest.DialogueRewardUniqueId != 0) {
-                var itemSeed = AllocateGoldStackSeed();
-                var rewardState = items!.GenerateUnique(
-                    quest.DialogueRewardUniqueId,
-                    itemSeed,
-                    quest.DialogueRewardItemLevel);
-                var entityId = AllocateWorldItemEntityId([player]);
-                world.WorldItems[entityId] = new AuthoritativeWorldItem(
-                    entityId,
-                    target.LevelId,
-                    rewardX,
-                    rewardY,
-                    itemSeed,
-                    0,
-                    rewardState);
-            }
-            if (quest.DialogueRewardItemId != 0) {
-                var itemSeed = AllocateGoldStackSeed();
-                var rewardState = spellBooks is not null
-                    && spellBooks.IsBookTemplate(items!, quest.DialogueRewardItemId)
-                    ? spellBooks.GenerateRandom(
-                        items!,
-                        itemSeed,
-                        quest.DialogueRewardItemLevel,
-                        gameMode,
-                        quest.DialogueRewardItemId)
-                    : items!.Generate(
-                        quest.DialogueRewardItemId,
-                        itemSeed,
-                        quest.DialogueRewardItemLevel);
-                var entityId = AllocateWorldItemEntityId([player]);
-                world.WorldItems[entityId] = new AuthoritativeWorldItem(
-                    entityId,
-                    target.LevelId,
-                    rewardX,
-                    rewardY,
-                    itemSeed,
-                    checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                    rewardState);
-            }
+            SpawnDialogueReward(quest, target, player);
 
             return quest.DialogueCompletionMessageId == 0
                 ? DiabloWorldIntentResult.Accepted
@@ -1316,6 +1290,8 @@ public sealed class DiabloWorldCommandProcessor
         quest.Logged = true;
         quest.Variable1 = Math.Max(quest.Variable1, quest.DialogueVariable1);
         quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
+        if (rewardOnActivation)
+            SpawnDialogueReward(quest, target, player);
         return DiabloWorldIntentResult.AcceptedWith(
             new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Dialogue,
@@ -1325,6 +1301,56 @@ public sealed class DiabloWorldCommandProcessor
                 MessageId = quest.MessageId,
                 QuestId = quest.QuestId,
             });
+    }
+
+    /** Generates the authored one-time reward at the unique-monster dialogue position. */
+    private void SpawnDialogueReward(
+        AuthoritativeQuestState quest,
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState player)
+    {
+        var rewardX = checked(target.PositionX + quest.DialogueRewardOffsetX);
+        var rewardY = checked(target.PositionY + quest.DialogueRewardOffsetY);
+        if (quest.DialogueRewardUniqueId != 0) {
+            var itemSeed = AllocateGoldStackSeed();
+            var rewardState = items!.GenerateUnique(
+                quest.DialogueRewardUniqueId,
+                itemSeed,
+                quest.DialogueRewardItemLevel);
+            var entityId = AllocateWorldItemEntityId([player]);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                target.LevelId,
+                rewardX,
+                rewardY,
+                itemSeed,
+                0,
+                rewardState);
+        }
+        if (quest.DialogueRewardItemId != 0) {
+            var itemSeed = AllocateGoldStackSeed();
+            var rewardState = spellBooks is not null
+                && spellBooks.IsBookTemplate(items!, quest.DialogueRewardItemId)
+                ? spellBooks.GenerateRandom(
+                    items!,
+                    itemSeed,
+                    quest.DialogueRewardItemLevel,
+                    gameMode,
+                    quest.DialogueRewardItemId)
+                : items!.Generate(
+                    quest.DialogueRewardItemId,
+                    itemSeed,
+                    quest.DialogueRewardItemLevel);
+            var entityId = AllocateWorldItemEntityId([player]);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                target.LevelId,
+                rewardX,
+                rewardY,
+                itemSeed,
+                checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                rewardState);
+        }
     }
 
     /** Applies a content-defined native towner turn-in, including item consumption and reward spawn. */

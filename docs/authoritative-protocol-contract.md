@@ -146,8 +146,10 @@ the quest's content-owned native dialogue variables advance monotonically as
 part of the same authoritative transition. A dialogue definition may instead
 declare a required inventory item and authored relative reward; the server
 consumes the item, completes the quest, spawns the reward, and emits the
-completion message atomically. Clients do not choose message text or mutate
-quest state.
+completion message atomically. It may also declare a one-time activation
+reward; the server spawns it during the first accepted conversation while
+leaving the quest active and suppressing duplicate rewards. Clients do not
+choose message text or mutate quest state.
 
 `TurnInQuestRequested` is the additive command at field 34. It names a
 content-owned quest and native towner; the server validates the active quest,

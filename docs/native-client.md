@@ -158,10 +158,12 @@ projected live unique identity matches an active quest, the native client sends
 and adjacency before returning the dialogue event. Dialogue definitions may
 also declare an inventory hand-in and relative unique or normal-item reward;
 the server consumes the item, completes the quest, and emits the authored
-completion dialogue. Hellfire Defiler is the first conversation-only definition
-and Lachdanan is the first hand-in definition. Unauthored legacy monster
-conversations retain their local fallback until their content actions are
-externalized.
+completion dialogue. Definitions may instead generate a one-time reward during
+the first conversation while leaving the quest active; base Zhar is the first
+activation-reward definition and uses a generated level-14 spell book. Hellfire
+Defiler is the first conversation-only definition and Lachdanan is the first
+hand-in definition. Unauthored legacy monster conversations retain their local
+fallback until their content actions are externalized.
 
 Content-declared quest objects now use the same `OperateObjectRequested`
 boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,

@@ -121,7 +121,8 @@ public sealed class AuthoritativeQuestState
         int dialogueRewardOffsetX = 0,
         int dialogueRewardOffsetY = 0,
         int dialogueCompletionMessageId = 0,
-        uint dialogueRewardItemId = 0)
+        uint dialogueRewardItemId = 0,
+        bool dialogueRewardOnActivation = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -198,6 +199,7 @@ public sealed class AuthoritativeQuestState
         DialogueRewardOffsetY = dialogueRewardOffsetY;
         DialogueCompletionMessageId = dialogueCompletionMessageId;
         DialogueRewardItemId = dialogueRewardItemId;
+        DialogueRewardOnActivation = dialogueRewardOnActivation;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -272,6 +274,8 @@ public sealed class AuthoritativeQuestState
     public int DialogueCompletionMessageId { get; }
     /** Optional normal item generated relative to the unique-monster target. */
     public uint DialogueRewardItemId { get; }
+    /** Whether the authored dialogue reward is generated on first conversation rather than hand-in. */
+    public bool DialogueRewardOnActivation { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -377,7 +381,8 @@ public static class AuthoritativeQuestCatalog
                     row,
                     stableIds,
                     "dialogue_reward_item_id",
-                    "dialogue_reward_item_symbol")) {
+                    "dialogue_reward_item_symbol"),
+                dialogueRewardOnActivation: row.OptionalBoolean("dialogue_reward_on_activation")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -439,11 +444,16 @@ public static class AuthoritativeQuestCatalog
         ArgumentNullException.ThrowIfNull(uniqueItems);
         foreach (var quest in quests.Where(quest => quest.DialogueItemId != 0
                                                     || quest.DialogueRewardUniqueId != 0
-                                                    || quest.DialogueRewardItemId != 0)) {
-            if (quest.DialogueItemId == 0
-                || !items.TryGet(quest.DialogueItemId, out _))
+                                                    || quest.DialogueRewardItemId != 0
+                                                    || quest.DialogueRewardOnActivation)) {
+            if (!quest.DialogueRewardOnActivation
+                && (quest.DialogueItemId == 0
+                    || !items.TryGet(quest.DialogueItemId, out _)))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown dialogue item {quest.DialogueItemId}.");
+            if (quest.DialogueRewardOnActivation && quest.DialogueItemId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} cannot combine an activation dialogue reward with an item hand-in.");
             if (string.IsNullOrWhiteSpace(quest.CompletionUniqueIdentity))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} dialogue hand-in requires a unique-monster identity.");
@@ -458,6 +468,11 @@ public static class AuthoritativeQuestCatalog
             if (quest.DialogueRewardUniqueId != 0 && quest.DialogueRewardItemId != 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares both a dialogue unique reward and item reward.");
+            if (quest.DialogueRewardOnActivation
+                && quest.DialogueRewardUniqueId == 0
+                && quest.DialogueRewardItemId == 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} enables an activation dialogue reward without a reward item.");
         }
     }
 

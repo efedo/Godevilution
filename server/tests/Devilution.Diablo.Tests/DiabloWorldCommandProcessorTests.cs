@@ -1169,6 +1169,81 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredDialogueActivationRewardSpawnsOnlyOnFirstConversation()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+        ]);
+        var spellBooks = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 8,
+            unique: true,
+            uniqueIdentity: "Zhar");
+        var quest = new AuthoritativeQuestState(
+            3004,
+            8,
+            1,
+            active: false,
+            messageId: 148,
+            completionUniqueIdentity: "Zhar",
+            dialogueVariable1: 2,
+            dialogueRewardItemId: 114,
+            dialogueRewardItemLevel: 8,
+            dialogueRewardOffsetX: 1,
+            dialogueRewardOffsetY: 1,
+            dialogueRewardOnActivation: true);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            gameMode: DiabloGameMode.SinglePlayer,
+            items: items,
+            spellBooks: spellBooks);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 8,
+            entityId: 7);
+
+        var first = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3004, 20),
+            1,
+            [player]);
+
+        Assert.True(first.Succeeded);
+        Assert.True(quest.Active);
+        Assert.Equal(2, quest.Variable1);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(7, reward.State.SpellId);
+        Assert.Equal("Book of Firebolt", reward.State.BaseName);
+        Assert.Equal((21, 21), (reward.PositionX, reward.PositionY));
+
+        var second = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3004, 20),
+            2,
+            [player]);
+
+        Assert.True(second.Succeeded);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void NativeTownerTurnInStartsQuestConversationThenConsumesItemAndSpawnsUniqueReward()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

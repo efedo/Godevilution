@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.328.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.329.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1428,7 +1428,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.328.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.329.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1650,6 +1650,12 @@ public sealed class ShippedContentTests
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetX,
             activation.Simulation.WorldState.Quests[3005].DialogueRewardOffsetY,
             activation.Simulation.WorldState.Quests[3005].DialogueCompletionMessageId));
+        Assert.Equal((2203U, 8, 1, 1, true), (
+            activation.Simulation.WorldState.Quests[3004].DialogueRewardItemId,
+            activation.Simulation.WorldState.Quests[3004].DialogueRewardItemLevel,
+            activation.Simulation.WorldState.Quests[3004].DialogueRewardOffsetX,
+            activation.Simulation.WorldState.Quests[3004].DialogueRewardOffsetY,
+            activation.Simulation.WorldState.Quests[3004].DialogueRewardOnActivation));
         Assert.Equal(144, activation.Simulation.WorldState.Quests[3003].MessageId);
         Assert.Equal(148, activation.Simulation.WorldState.Quests[3004].MessageId);
         Assert.Equal(110, activation.Simulation.WorldState.Quests[3012].MessageId);

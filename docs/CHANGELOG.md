@@ -14,6 +14,11 @@ All notable changes to this fork are documented below.
   generates the same deterministic spell identity, name, cost, and read-book
   action as other authoritative book drops.
 
+- Add schema 1.329 one-time dialogue activation rewards. Base Zhar now starts
+  its authored quest conversation and spawns the level-14 dynamic spell book
+  exactly once through `TalkToQuestRequested`; the server owns the activation
+  guard, reward placement, and generated book state.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

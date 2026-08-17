@@ -153,6 +153,23 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadOneTimeDialogueActivationReward()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tcompletion_unique_identity\tdialogue_reward_item_id\tdialogue_reward_item_level\tdialogue_reward_offset_x\tdialogue_reward_offset_y\tdialogue_reward_on_activation\n"
+                + "3004\t8\t1\tZhar\t2203\t8\t1\t1\t1\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((2203U, 8, 1, 1), (
+            quest.DialogueRewardItemId,
+            quest.DialogueRewardItemLevel,
+            quest.DialogueRewardOffsetX,
+            quest.DialogueRewardOffsetY));
+        Assert.True(quest.DialogueRewardOnActivation);
+    }
+
+    [Fact]
     public void QuestStateCanLoadCompletionVariableTransitions()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(
