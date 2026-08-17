@@ -10338,6 +10338,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
         Assert.Equal(AuthoritativeDamageType.Fire, projectile.DamageType);
         Assert.Equal(16, projectile.Speed);
+        Assert.Equal((2, 0), (projectile.PositionX, projectile.PositionY));
         Assert.Equal(3, projectile.Damage);
         Assert.Equal(100, player.Life);
 
