@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   Connected authoritative pickup now activates and logs the Magic Rock quest
   through server-owned state instead of relying on native local mutation.
 
+- Externalize Hellfire Anvil of Fury pickup as a validated item-to-quest effect.
+  Connected authoritative pickup now activates and logs the Anvil quest through
+  server-owned state while legacy pickup remains compatible.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

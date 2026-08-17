@@ -1861,6 +1861,23 @@ public sealed class StoreSimulationExecutorTests
                 IdentifiedName = "Magic Rock",
             },
             new AuthoritativeItemDefinition(
+                2138,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 18,
+                Name = "Anvil of Fury",
+                IdentifiedName = "Anvil of Fury",
+            },
+            new AuthoritativeItemDefinition(
                 24,
                 0,
                 0,
@@ -1885,8 +1902,14 @@ public sealed class StoreSimulationExecutorTests
                 3001,
                 AuthoritativeItemQuestEffectKind.ActivateQuest,
                 1),
+            new AuthoritativeItemQuestEffectDefinition(
+                2138,
+                3011,
+                AuthoritativeItemQuestEffectKind.ActivateQuest,
+                1),
         ]);
         var quest = new AuthoritativeQuestState(3001, 1, 3, active: false);
+        var anvilQuest = new AuthoritativeQuestState(3011, 10, 1, active: false);
         var itemState = AuthoritativeItemState.Empty with {
             StableItemId = 2135,
             ItemIndex = 9,
@@ -1899,8 +1922,21 @@ public sealed class StoreSimulationExecutorTests
             startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
             startingItems: items,
             startingItemQuestEffects: itemQuestEffects,
-            startingQuests: [quest],
-            startingWorldItems: [new AuthoritativeWorldItem(20, 0, 1, 0, 99, 0, itemState)]);
+            startingQuests: [quest, anvilQuest],
+            startingWorldItems: [
+                new AuthoritativeWorldItem(20, 0, 1, 0, 99, 0, itemState),
+                new AuthoritativeWorldItem(
+                    21,
+                    0,
+                    1,
+                    1,
+                    99,
+                    0,
+                    itemState with {
+                        StableItemId = 2138,
+                        ItemIndex = 18,
+                    }),
+            ]);
         var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
             ClientSequence = 1,
             RequestedTick = 1,
@@ -1909,12 +1945,33 @@ public sealed class StoreSimulationExecutorTests
 
         Assert.Equal(CommandStatus.Accepted, result.Status);
         var player = executor.GetPlayerState("player-a");
-        Assert.Single(player.Inventory);
-        Assert.True(player.Inventory[0].State.StableItemId == 2135);
-        var snapshotQuest = Assert.Single(executor.CreateSnapshot("player-a", 7, 1).Quests);
+        var firstItem = Assert.Single(player.Inventory);
+        Assert.Equal(2135U, firstItem.State.StableItemId);
+        var snapshotQuest = Assert.Single(
+            executor.CreateSnapshot("player-a", 7, 1).Quests,
+            questSnapshot => questSnapshot.QuestId == 3001);
         Assert.False(snapshotQuest.Initial);
         Assert.True(snapshotQuest.Logged);
         Assert.Equal(1, snapshotQuest.Variable1);
+
+        var anvilResult = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = 21 },
+        }, 2);
+
+        Assert.Equal(CommandStatus.Accepted, anvilResult.Status);
+        var updatedPlayer = executor.GetPlayerState("player-a");
+        Assert.Collection(
+            updatedPlayer.Inventory,
+            first => Assert.Equal(2135U, first.State.StableItemId),
+            second => Assert.Equal(2138U, second.State.StableItemId));
+        var anvilSnapshot = Assert.Single(
+            executor.CreateSnapshot("player-a", 7, 1).Quests,
+            questSnapshot => questSnapshot.QuestId == 3011);
+        Assert.False(anvilSnapshot.Initial);
+        Assert.True(anvilSnapshot.Logged);
+        Assert.Equal(1, anvilSnapshot.Variable1);
     }
 
     [Fact]

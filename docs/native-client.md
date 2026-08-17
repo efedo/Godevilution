@@ -138,6 +138,7 @@ World-item pickup is also server-owned in connected mode. The Hellfire Magic
 Rock now activates its content-defined quest transition as part of the accepted
 `PickupWorldItemRequested` command; the native client presents the returned
 quest and inventory snapshot.
+The Anvil of Fury follows the same server-owned pickup boundary.
 
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the

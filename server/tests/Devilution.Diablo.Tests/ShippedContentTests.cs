@@ -1446,7 +1446,7 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             composed.GetRequiredTable("item_quest_effects.tsv").ToCanonicalTsv());
         itemQuestEffects.ValidateItems(items);
-        Assert.Equal(2, itemQuestEffects.Definitions.Count);
+        Assert.Equal(3, itemQuestEffects.Definitions.Count);
         var mapEffect = Assert.Single(
             itemQuestEffects.Definitions,
             effect => effect.ItemId == 43);
@@ -1463,6 +1463,14 @@ public sealed class ShippedContentTests
             rockEffect.QuestId,
             rockEffect.EffectKind,
             rockEffect.EffectAmount));
+        var anvilEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 2138);
+        Assert.Equal((2138U, 3011U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
+            anvilEffect.ItemId,
+            anvilEffect.QuestId,
+            anvilEffect.EffectKind,
+            anvilEffect.EffectAmount));
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,
@@ -1544,7 +1552,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(14, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(15, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

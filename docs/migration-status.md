@@ -99,6 +99,10 @@ Status date: 2026-08-17
   transition. The authoritative pickup path activates and logs quest 3001 and
   advances its native first variable; legacy native pickup remains compatible.
 
+- Hellfire Anvil of Fury pickup now uses the same external item-to-quest
+  transition catalog. The authoritative pickup path activates and logs quest
+  3011; legacy native pickup remains compatible.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
