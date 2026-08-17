@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Add a shared deterministic Firebolt player-versus-player replay covering
   server-owned hit resolution, damage, and projectile checkpoint state.
 
+- Preserve Hellfire Firebolt shield blocks as authoritative impact collisions,
+  including the native variant RNG draw and resumable removal timing.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

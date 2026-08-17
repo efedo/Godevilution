@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,215 tests and the server suite passes all 310 tests.
+  all 1,215 tests and the server suite passes all 311 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
@@ -63,6 +63,10 @@ Status date: 2026-08-16
   Firebolt cast, covering server-owned spell damage, player hit admission, and
   the resumable projectile checkpoint lifecycle.
 
+- Hellfire Firebolt shield blocks now preserve the native player block result,
+  consume the variant rotation draw, and enter the authoritative impact phase;
+  a shared replay checkpoints spawn, impact, and removal.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
@@ -87,7 +91,7 @@ Status date: 2026-08-16
   version-1 saves preserve their zero player ID until import.
 
 - All 22 checked-in base and Hellfire replay fixtures now bind the active
-  content-manifest identities; the full 309-test server assembly passes again.
+  content-manifest identities; the full 311-test server assembly passes again.
 
 - Host shutdown now disposes the active authoritative adapter as well as
   drained retired generations, closing the ruleset lifecycle ownership gap.

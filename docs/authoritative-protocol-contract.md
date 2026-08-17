@@ -760,6 +760,9 @@ Firebolt uses the same server-owned player-target admission boundary, with its
 native magic hit roll and Q6 damage retained through the resumable projectile
 state; the checked-in two-participant replay exercises this path without client
 damage or RNG decisions.
+In Hellfire, a shield block is still a collision even though the projectile is
+retained for its impact lifetime; the server consumes the native rotation draw
+and publishes the retained phase before removal.
 
 `PlayerSnapshot.facing_direction` field 27 mirrors native `Direction` values
 South through SouthEast. South/zero is the additive legacy default. Accepted
