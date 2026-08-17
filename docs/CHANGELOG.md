@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
   adapter, closing the server-owned resource lifecycle on construction failure
   and early shutdown paths.
 
+- Roll back authoritative TCP host startup when port binding fails, allowing a
+  caller to release the port and retry without leaving a half-started host.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

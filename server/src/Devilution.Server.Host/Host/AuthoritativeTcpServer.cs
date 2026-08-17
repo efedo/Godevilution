@@ -171,10 +171,20 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         if (cancellation is not null)
             throw new InvalidOperationException("The server has already started.");
 
-        cancellation = new CancellationTokenSource();
-        listener.Start();
-        acceptLoop = AcceptLoopAsync(cancellation.Token);
-        simulationLoop = SimulationLoopAsync(cancellation.Token);
+        var startupCancellation = new CancellationTokenSource();
+        try {
+            listener.Start();
+            cancellation = startupCancellation;
+            acceptLoop = AcceptLoopAsync(startupCancellation.Token);
+            simulationLoop = SimulationLoopAsync(startupCancellation.Token);
+        } catch {
+            listener.Stop();
+            startupCancellation.Dispose();
+            cancellation = null;
+            acceptLoop = null;
+            simulationLoop = null;
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()

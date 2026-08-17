@@ -14,6 +14,32 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeTcpServerTests
 {
     [Fact]
+    public async Task FailedStartRollsBackSoTheServerCanRetryAfterThePortIsReleased()
+    {
+        using var portHolder = new TcpListener(IPAddress.Loopback, 0);
+        portHolder.Start();
+        var port = ((IPEndPoint)portHolder.LocalEndpoint).Port;
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            port);
+
+        Assert.Throws<SocketException>(() => server.Start());
+        portHolder.Stop();
+
+        server.Start();
+        Assert.Equal(port, server.Port);
+    }
+
+    [Fact]
     public async Task HandshakeAndCommandBatchRoundTripOverLoopback()
     {
         var executor = new RecordingExecutor();
