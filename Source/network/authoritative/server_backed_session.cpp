@@ -244,7 +244,9 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || quest.unavailable()) {
 			continue;
 		}
-		const bool activeTurnIn = !quest.initial() && !quest.completed();
+		const bool activeTurnIn = quest.turn_in_activation_only()
+		    ? quest.initial() && !quest.completed()
+		    : !quest.initial() && !quest.completed();
 		const bool completionTurnIn = quest.completed()
 		    && quest.turn_in_on_completion()
 		    && quest.has_turn_in_completion_variable2()

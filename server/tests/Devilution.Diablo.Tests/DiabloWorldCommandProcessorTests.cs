@@ -1589,6 +1589,59 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredTownerActivationConsumesItemAndUsesExplicitNativeMarker()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(34, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var staff = items.Generate(34, 42);
+        var player = CreatePlayer(
+            positionX: 61,
+            positionY: 71,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, staff.CreateInfo, 0, 0, staff)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3016,
+            15,
+            1,
+            active: false,
+            completionVariable1: 7,
+            turnInTownerId: 4,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 71,
+            turnInItemId: 34,
+            turnInMessageId: 35,
+            turnInActivationOnly: true,
+            turnInActivationVariable1: 2);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        Assert.Equal(35, quest.TurnInMessageId);
+        Assert.True(quest.TurnInActivationOnly);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3016, 4),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(2, quest.Variable1);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(35, Assert.Single(result.Events).MessageId);
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3016, 4),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void AuthoredTownerCompletionStageSpawnsAuricOnce()
     {
         var items = new AuthoritativeItemCatalog([

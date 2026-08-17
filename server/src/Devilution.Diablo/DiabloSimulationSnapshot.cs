@@ -271,7 +271,8 @@ public sealed record DiabloQuestState(
     bool TurnInOnCompletion = false,
     int TurnInCompletionVariable2 = -1,
     uint TurnInAlternateItemId = 0,
-    int TurnInAlternateMessageId = 0);
+    int TurnInAlternateMessageId = 0,
+    bool TurnInActivationOnly = false);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -599,7 +600,8 @@ public sealed partial class DiabloSimulation
                     quest.TurnInOnCompletion,
                     quest.TurnInCompletionVariable2,
                     quest.TurnInAlternateItemId,
-                    quest.TurnInAlternateMessageId))
+                    quest.TurnInAlternateMessageId,
+                    quest.TurnInActivationOnly))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -2021,7 +2023,8 @@ public sealed partial class DiabloSimulation
                     turnInOnCompletion: quest.TurnInOnCompletion,
                     turnInCompletionVariable2: quest.TurnInCompletionVariable2,
                     turnInAlternateItemId: quest.TurnInAlternateItemId,
-                    turnInAlternateMessageId: quest.TurnInAlternateMessageId));
+                    turnInAlternateMessageId: quest.TurnInAlternateMessageId,
+                    turnInActivationOnly: quest.TurnInActivationOnly));
             }
         }
     }

@@ -1431,9 +1431,29 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         if (quest.TurnInActivationOnly) {
+            if (quest.TurnInItemId != 0) {
+                if (!items.TryGet(quest.TurnInItemId, out var requiredActivationItem))
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                var activationInventoryIndex = -1;
+                for (var index = 0; index < player.Inventory.Count; index++) {
+                    if (items.IsStateForDefinition(player.Inventory[index].State, requiredActivationItem)) {
+                        activationInventoryIndex = index;
+                        break;
+                    }
+                }
+                if (activationInventoryIndex < 0)
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                InventoryGridLayout.RemoveAndCompact(
+                    player.InventoryGrid,
+                    activationInventoryIndex);
+                player.Inventory.RemoveAt(activationInventoryIndex);
+            }
             quest.Active = true;
             quest.Logged = true;
-            quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+            var activationVariable1 = quest.TurnInActivationVariable1 >= 0
+                ? quest.TurnInActivationVariable1
+                : quest.CompletionVariable1;
+            quest.Variable1 = Math.Max(quest.Variable1, activationVariable1);
             if (quest.TurnInRewardItemId != 0
                 && items.TryGet(quest.TurnInRewardItemId, out var activationItem)
                 && !player.Inventory.Any(item =>
@@ -1453,7 +1473,10 @@ public sealed class DiabloWorldCommandProcessor
                     checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
                     rewardState);
             }
-            return quest.MessageId == 0
+            var activationMessageId = quest.TurnInMessageId != 0
+                ? quest.TurnInMessageId
+                : quest.MessageId;
+            return activationMessageId == 0
                 ? DiabloWorldIntentResult.Accepted
                 : DiabloWorldIntentResult.AcceptedWith(
                     new DiabloGameplayEvent(
@@ -1461,7 +1484,7 @@ public sealed class DiabloWorldCommandProcessor
                         player.EntityId,
                         townerId,
                         0) {
-                        MessageId = quest.MessageId,
+                        MessageId = activationMessageId,
                         QuestId = quest.QuestId,
                     });
         }

@@ -133,7 +133,8 @@ public sealed class AuthoritativeQuestState
         int turnInCompletionRewardPositionY = 0,
         uint turnInCompletionRewardItemId = 0,
         uint turnInAlternateItemId = 0,
-        int turnInAlternateMessageId = 0)
+        int turnInAlternateMessageId = 0,
+        int turnInActivationVariable1 = -1)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -171,6 +172,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInCompletionRewardItemLevel));
         if (turnInAlternateMessageId < 0 || turnInAlternateMessageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInAlternateMessageId));
+        if (turnInActivationVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInActivationVariable1));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -230,6 +233,7 @@ public sealed class AuthoritativeQuestState
         TurnInCompletionRewardItemId = turnInCompletionRewardItemId;
         TurnInAlternateItemId = turnInAlternateItemId;
         TurnInAlternateMessageId = turnInAlternateMessageId;
+        TurnInActivationVariable1 = turnInActivationVariable1;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -312,6 +316,8 @@ public sealed class AuthoritativeQuestState
     public uint TurnInAlternateItemId { get; }
     /** Dialogue identity emitted after consuming the alternate towner item. */
     public int TurnInAlternateMessageId { get; }
+    /** Optional native _qvar1 marker written by an activation-only towner interaction. */
+    public int TurnInActivationVariable1 { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -454,7 +460,8 @@ public static class AuthoritativeQuestCatalog
                     stableIds,
                     "turn_in_alternate_item_id",
                     "turn_in_alternate_item_symbol"),
-                turnInAlternateMessageId: row.OptionalInt32("turn_in_alternate_message_id")) {
+                turnInAlternateMessageId: row.OptionalInt32("turn_in_alternate_message_id"),
+                turnInActivationVariable1: row.OptionalInt32("turn_in_activation_variable1", -1)) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -487,10 +494,10 @@ public static class AuthoritativeQuestCatalog
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(uniqueItems);
         foreach (var quest in quests.Where(quest => quest.TurnInTownerId >= 0)) {
-            if (quest.TurnInActivationOnly
-                && quest.TurnInItemId != 0)
+            if (!quest.TurnInActivationOnly
+                && quest.TurnInActivationVariable1 >= 0)
                 throw new InvalidDataException(
-                    $"Quest {quest.QuestId} activation-only turn-in cannot require an item.");
+                    $"Quest {quest.QuestId} declares an activation variable without enabling an activation-only turn-in.");
             if (quest.TurnInActivationOnly
                 && quest.TurnInRewardUniqueId != 0)
                 throw new InvalidDataException(
@@ -518,9 +525,11 @@ public static class AuthoritativeQuestCatalog
                 && quest.TurnInAlternateMessageId != 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares an alternate turn-in message without an item.");
-            if (!quest.TurnInActivationOnly
-                && (quest.TurnInItemId == 0
-                    || !items.TryGet(quest.TurnInItemId, out _)))
+            if (quest.TurnInItemId != 0
+                && !items.TryGet(quest.TurnInItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
+            if (!quest.TurnInActivationOnly && quest.TurnInItemId == 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
             if (quest.TurnInRewardUniqueId != 0

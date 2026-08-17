@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   now consumes Grey Suit and emits its native tease dialogue without changing
   quest state before the Brown Suit completion path.
 
+- Add schema 1.333 activation-only item and marker support. Base Cain now
+  consumes Staff of Lazarus, writes the native quest marker, and starts the
+  authored Lazarus conversation through `TurnInQuestRequested`.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

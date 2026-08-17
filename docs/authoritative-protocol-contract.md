@@ -192,7 +192,9 @@ interaction at the same towner; the server consumes that item without advancing
 the quest. Their absence is preserved for older peers and means the native client
 keeps its legacy local interaction; when present, the fields are included in the
 canonical state hash and let the client route the quest without a hardcoded
-quest/towner pairing.
+quest/towner pairing. Field 19 marks an activation-only towner row. The native
+client routes that row only while the quest is in its initial state, preventing a
+repeat activation command after the server has consumed its optional item.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are
