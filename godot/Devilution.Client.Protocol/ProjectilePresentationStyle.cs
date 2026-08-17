@@ -27,6 +27,7 @@ public static class ProjectilePresentationStyle
 {
     private const int Lightning = 3;
     private const int LightningSegment = 4;
+    private const int ChargedBolt = 1;
     private const int ResurrectionBeam = 11;
     private const int StoneCurse = 13;
     private const int Teleport = 9;
@@ -124,7 +125,8 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.Fire;
         if (behavior == ApocalypseBoom)
             return ProjectilePresentationKind.FireImpact;
-        if (behavior is Lightning
+        if (behavior is ChargedBolt
+                or Lightning
                 or LightningSegment
                 or ChainLightningController
                 or ChainLightningBolt

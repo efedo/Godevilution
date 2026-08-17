@@ -22,6 +22,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(56, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(51, 0, ProjectilePresentationKind.Acid)]
     [InlineData(59, 0, ProjectilePresentationKind.Arrow)]
+    [InlineData(1, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(9, 0, ProjectilePresentationKind.Teleport)]
     [InlineData(15, 0, ProjectilePresentationKind.Phasing)]
     public void ResolvesAuthoritativeProjectileFamilies(
