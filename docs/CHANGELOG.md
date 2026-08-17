@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   monster range, retaining fixed `projectile_damage` overrides and resumable
   range state through snapshots and saves.
 
+- Preserve Hork Spawn's native current-tile player collision before movement or
+  expiry, including non-arrow hit/block RNG, one-point minimum damage, and the
+  subsequent summon path.
+
 - Preserve native per-impact monster Fireball damage rolls for mapped direct
   and splash collisions, while retaining fixed `projectile_damage` overrides.
 

@@ -805,6 +805,12 @@ range and roll it at impact, matching native `ProcessArrow`; a positive
 validated `projectile_damage` remains a fixed payload. The range is included
 in snapshots, saves, protocol projection, and canonical hashing.
 
+Hork Spawn now performs native current-tile `PlayerMHit` collision before each
+movement/expiry decision. Its non-arrow zero-payload hit uses the authoritative
+monster accuracy, block, one-point minimum damage, and player hit/death path;
+a successful collision removes the missile and continues through native summon
+expiry behavior.
+
 Counselor Charged Bolt mappings now emit three independent server-owned
 `MonsterChargedBolt` projectiles per admitted native attack and use the native
 15-point monster payload unless validated `projectile_damage` supplies an

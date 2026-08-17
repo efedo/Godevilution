@@ -69,6 +69,10 @@ Status date: 2026-08-16
   physical damage at impact, while fixed `projectile_damage` mappings remain
   unchanged.
 
+- Hork Spawn now checks its current tile against living players before each
+  movement/expiry decision, preserving native non-arrow `PlayerMHit` hit,
+  block, minimum-damage, and RNG behavior before the summon path continues.
+
 - Snake adjacent and distant delay bands are now validated `SnakeCharge`
   missile fields, preserving native intelligence reduction and deterministic
   zero-clamped timing while retaining fallback behavior for older packs.
