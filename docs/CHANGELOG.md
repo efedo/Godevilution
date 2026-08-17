@@ -72,6 +72,10 @@ All notable changes to this fork are documented below.
   service and cast-source requests, and the server rejects stale slot bindings
   while retaining zero-valued positional compatibility.
 
+- Add executable Godot presentation-boundary checks so the protocol client
+  cannot acquire server dependencies and the Godot project remains limited to
+  the shared protocol and presentation protocol assemblies.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

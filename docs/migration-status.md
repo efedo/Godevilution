@@ -54,6 +54,11 @@ Status date: 2026-08-17
   it from authoritative snapshots for item services and spell sources, while
   the server treats zero as legacy positional addressing.
 
+- The Godot presentation project and protocol client now have executable
+  dependency-boundary coverage: the protocol client may reference only the
+  shared protocol assembly, and the Godot project may reference only those two
+  presentation/protocol projects, never the server or Diablo module.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
