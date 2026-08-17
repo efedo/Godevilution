@@ -141,6 +141,9 @@ Status date: 2026-08-17
 - Charged Bolt behavior `1` now projects the server-owned `Lightning` family,
   including the legacy behavior fallback.
 
+- Elemental behavior `35` now projects the server-owned `Fire` family across
+  travel and burst phases, including the legacy behavior fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

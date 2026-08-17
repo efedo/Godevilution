@@ -657,6 +657,12 @@ additive presentation projection classifies the controller as `Fire` and the
 persistent boom as `FireImpact`, while legacy clients use the same behavior
 fallback.
 
+An Elemental cast uses behavior value `35` for its retargeting projectile and
+nine-cell burst. The server owns destination selection, retargeting, line of
+sight, collision, damage, and burst order; the additive presentation projection
+uses `Fire` for both travel and burst phases, matching the native `firerun`
+visual family.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is
