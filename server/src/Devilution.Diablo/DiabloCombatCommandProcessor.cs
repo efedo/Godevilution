@@ -7642,52 +7642,71 @@ public sealed class DiabloCombatCommandProcessor
             player.PositionX,
             player.PositionY,
             speed);
-        var projectile = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
-            ? CreateMonsterInfernoController(
-                AllocateProjectileEntityId(),
-                monster,
-                player,
-                spellId,
-                speed,
-                lifetime,
-                impactLifetime,
-                damageType,
-                missile.ProjectileDamage)
-            : new AuthoritativeProjectile(
-                AllocateProjectileEntityId(),
-                monster.EntityId,
-                player.EntityId,
-                spellId,
-                monster.LevelId,
-                monster.PositionX,
-                monster.PositionY,
-                player.PositionX,
-                player.PositionY,
-                missile.ProjectileDamage > 0
-                    ? missile.ProjectileDamage
-                    : missile.ProjectileBehavior switch {
-                        AuthoritativeProjectileBehavior.Lightning => 0,
-                        _ => SelectEffectiveMonsterDamage(
-                            monster,
-                            special: false,
-                            seed: attackSeed),
-                    },
-                damageType,
-                0,
-                checked((uint)lifetime)) {
-            Behavior = missile.ProjectileBehavior,
-            VelocityX = velocityX,
-            VelocityY = velocityY,
-            OriginalDirection = direction,
-            Speed = speed,
-            ImpactLifetime = impactLifetime,
-            ResistantDamageDivisor = 1,
-        };
-        if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
-            projectile.VelocityX = velocityX;
-            projectile.VelocityY = velocityY;
+        var projectileCount = missile.ProjectileBehavior
+            == AuthoritativeProjectileBehavior.MonsterChargedBolt
+            ? 3
+            : 1;
+        var projectileDamage = missile.ProjectileDamage > 0
+            ? missile.ProjectileDamage
+            : missile.ProjectileBehavior switch {
+                // Native AddChargedBolt assigns monster-fired bolts a fixed
+                // 15-point payload; validated content may override it.
+                AuthoritativeProjectileBehavior.MonsterChargedBolt => 15,
+                AuthoritativeProjectileBehavior.Lightning => 0,
+                _ => SelectEffectiveMonsterDamage(
+                    monster,
+                    special: false,
+                    seed: attackSeed),
+            };
+        for (var projectileIndex = 0; projectileIndex < projectileCount; projectileIndex++) {
+            var projectile = missile.ProjectileBehavior
+                == AuthoritativeProjectileBehavior.InfernoController
+                ? CreateMonsterInfernoController(
+                    AllocateProjectileEntityId(),
+                    monster,
+                    player,
+                    spellId,
+                    speed,
+                    lifetime,
+                    impactLifetime,
+                    damageType,
+                    missile.ProjectileDamage)
+                : new AuthoritativeProjectile(
+                    AllocateProjectileEntityId(),
+                    monster.EntityId,
+                    player.EntityId,
+                    spellId,
+                    monster.LevelId,
+                    monster.PositionX,
+                    monster.PositionY,
+                    player.PositionX,
+                    player.PositionY,
+                    projectileDamage,
+                    damageType,
+                    0,
+                    checked((uint)lifetime)) {
+                    Behavior = missile.ProjectileBehavior,
+                    VelocityX = velocityX,
+                    VelocityY = velocityY,
+                    OriginalDirection = direction,
+                    Speed = speed,
+                    ImpactLifetime = impactLifetime,
+                    ResistantDamageDivisor = 1,
+                };
+            if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterChargedBolt) {
+                var pathRandomRange = spell?.ChargedBoltPathRandomRange > 0
+                    ? spell.ChargedBoltPathRandomRange
+                    : 15;
+                projectile.PathIndex = random.GenerateRnd(pathRandomRange) + 1;
+                // Native AddChargedBolt also rolls a presentation frame.
+                _ = random.RandomIntBetween(1, 8);
+            }
+            if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController) {
+                projectile.VelocityX = velocityX;
+                projectile.VelocityY = velocityY;
+            }
+            world.Projectiles.Add(projectile.EntityId, projectile);
         }
-        world.Projectiles.Add(projectile.EntityId, projectile);
         if (isCounselor)
             monster.StartCounselorDelay(
                 ResolveCounselorAttackDelay(monster, attackSeed));

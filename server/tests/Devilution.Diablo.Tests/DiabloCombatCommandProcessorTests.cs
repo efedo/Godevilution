@@ -8647,10 +8647,19 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        var projectile = Assert.Single(world.Projectiles.Values);
-        Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
-        Assert.Equal(30U, projectile.SpellId);
-        Assert.Equal(8, projectile.Speed);
+        var projectiles = world.Projectiles.Values
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(3, projectiles.Length);
+        Assert.All(
+            projectiles,
+            projectile => {
+                Assert.Equal(AuthoritativeProjectileBehavior.MonsterChargedBolt, projectile.Behavior);
+                Assert.Equal(30U, projectile.SpellId);
+                Assert.Equal(8, projectile.Speed);
+                Assert.Equal(15, projectile.Damage);
+                Assert.InRange(projectile.PathIndex, 1, 15);
+            });
         Assert.Equal(7, monster.CounselorDelayTicks);
         Assert.Equal(100, player.Life);
 
