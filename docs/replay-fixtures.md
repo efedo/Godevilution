@@ -251,6 +251,12 @@ draw and retained impact phase; the same impact applies the non-blocked splash
 to leave Q6 life at `1987`, and tick 17 proves removal. Both runners validate
 the same two checkpoints.
 
+`gameplay-bone-spirit-pvp.json` places a second participant on the swept path
+of a level-2 Bone Spirit cast. The fixture proves native current-life damage,
+including the non-arrow half-damage step, immediate self-damage, the single
+player-hit RNG draw, impact entry, and seven-tick projectile removal. Both
+runners validate the same two checkpoints and final participant projection.
+
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified
 lightning-resistant target, and seed `0x12345678`. Ticks 1 and 2 prove native

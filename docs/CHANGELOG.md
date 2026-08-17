@@ -38,6 +38,10 @@ All notable changes to this fork are documented below.
 - Preserve Hellfire Fireball shield-block retention and variant rotation RNG,
   while allowing the retained impact splash to resolve against the participant.
 
+- Preserve native Bone Spirit player damage by applying the configured
+  current-life divisor followed by the non-arrow half-damage step; add a shared
+  C++/C# replay covering self-damage, hit RNG, impact lifetime, and removal.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
