@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
 - Make Godot client handshakes transactional: rejected or incomplete attempts
   now close their TCP transport before a reconnect or retry.
 
+- Refresh live Godot overlay fixtures to the active `devilution.diablo@1.324.0`
+  schema so the protocol-client integration suite matches shipped content.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.
