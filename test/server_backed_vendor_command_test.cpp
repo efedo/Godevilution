@@ -127,15 +127,17 @@ TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 
 TEST(ServerBackedVendorCommand, BuildsExplicitInventoryToBeltTransfer)
 {
-	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };
-	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 5 };
+	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2, .stableItemId = 702 };
+	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 5, .stableItemId = 703 };
 	const auto command = MakeMoveItemCommand(inventory, belt, 17);
 	ASSERT_TRUE(command.has_value()) << command.error();
 	ASSERT_TRUE(command->has_move_item_requested());
 	EXPECT_EQ(command->move_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
 	EXPECT_EQ(command->move_item_requested().item().slot(), 2U);
+	EXPECT_EQ(command->move_item_requested().item().stable_item_id(), 702U);
 	EXPECT_EQ(command->move_item_requested().destination().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
 	EXPECT_EQ(command->move_item_requested().destination().slot(), 5U);
+	EXPECT_EQ(command->move_item_requested().destination().stable_item_id(), 703U);
 }
 
 TEST(ServerBackedVendorCommand, BuildsStableInventoryMoveIntent)

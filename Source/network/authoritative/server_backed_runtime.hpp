@@ -92,6 +92,10 @@ public:
 	[[nodiscard]] std::optional<uint32_t> ObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the authoritative location of an item, including while it is held by the legacy cursor. */
 	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept;
+	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
+	[[nodiscard]] bool BeginInventoryItemDrag(uint32_t itemSeed) noexcept;
+	/** Cancels the presentation-only inventory drag selection. */
+	void CancelInventoryItemDrag() noexcept;
 
 private:
 	tl::expected<void, std::string> StartImpl(const ServerBackedRuntimeConfiguration &configuration, StoreManager &storeManager, Player *player);
@@ -102,6 +106,8 @@ private:
 	std::unique_ptr<ServerBackedVendorUiAdapter> vendorUiAdapter_;
 	Player *player_ = nullptr;
 	bool authoritativeMode_ = false;
+	std::optional<ServerBackedItemReference> pendingInventoryItemDrag_;
+	std::optional<uint32_t> pendingInventoryItemDragSeed_;
 	ServerBackedWorldProjection worldProjection_;
 	ServerBackedWorldPresentation worldPresentation_;
 };

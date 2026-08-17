@@ -2,6 +2,7 @@
 
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/protocol/multi.h"
+#include "engine/cursor.h"
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -16,6 +17,13 @@ constexpr uint32_t WitchStoreId = 2;
 constexpr uint32_t WirtStoreId = 3;
 constexpr uint32_t HealerStoreId = 4;
 constexpr uint32_t AdriaStoreId = 10;
+
+bool SameItemReference(const ServerBackedItemReference &left, const ServerBackedItemReference &right)
+{
+	return left.location == right.location
+	    && left.slot == right.slot
+	    && left.stableItemId == right.stableItemId;
+}
 
 std::string LoadResumeToken(const std::string &path)
 {
@@ -135,6 +143,8 @@ void ServerBackedRuntime::Stop() noexcept
 	vendorUiAdapter_.reset();
 	session_.reset();
 	authoritativeMode_ = false;
+	pendingInventoryItemDrag_.reset();
+	pendingInventoryItemDragSeed_.reset();
 	worldProjection_.Clear();
 	worldPresentation_.Clear();
 	player_ = nullptr;
@@ -390,9 +400,9 @@ tl::expected<void, std::string> ServerBackedRuntime::MoveItem(ServerBackedItemRe
 		return tl::make_unexpected("The server-backed runtime is not connected.");
 	if (auto result = session_->MoveItem(item, destination, requestedTick, nowMs); !result.has_value())
 		return result;
-	if (auto result = EnsureCommandAccepted(); !result.has_value())
+	if (auto result = ApplyCurrentPlayerSnapshot(); !result.has_value())
 		return result;
-	return ApplyCurrentPlayerSnapshot();
+	return EnsureCommandAccepted();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::Move(int32_t directionX, int32_t directionY, uint64_t requestedTick, uint64_t nowMs)
@@ -622,6 +632,22 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 	return std::nullopt;
 }
 
+bool ServerBackedRuntime::BeginInventoryItemDrag(uint32_t itemSeed) noexcept
+{
+	const auto reference = PlayerItemReferenceForSeed(itemSeed);
+	if (!reference.has_value())
+		return false;
+	pendingInventoryItemDrag_ = *reference;
+	pendingInventoryItemDragSeed_ = itemSeed;
+	return true;
+}
+
+void ServerBackedRuntime::CancelInventoryItemDrag() noexcept
+{
+	pendingInventoryItemDrag_.reset();
+	pendingInventoryItemDragSeed_.reset();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot()
 {
 	if (!session_ || player_ == nullptr)
@@ -629,13 +655,33 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
 	if (snapshot == nullptr)
 		return tl::make_unexpected("The server-backed session has no player snapshot.");
+	std::optional<Item> pendingItem;
+	if (pendingInventoryItemDrag_.has_value() && pendingInventoryItemDragSeed_.has_value()) {
+		if (!player_->HoldItem.isEmpty()
+		    && player_->HoldItem._iSeed == *pendingInventoryItemDragSeed_) {
+			pendingItem = player_->HoldItem;
+		} else if (player_->HoldItem.isEmpty()) {
+			CancelInventoryItemDrag();
+		}
+	}
 	if (auto result = worldProjection_.Apply(session_->MonsterState(), session_->WorldItemState(), session_->ObjectState(), snapshot->levelId); !result.has_value())
 		return result;
 	if (auto result = worldPresentation_.Apply(worldProjection_, snapshot->levelId); !result.has_value())
 		return result;
 	for (const auto &eventBatch : session_->TakePendingEventBatches())
 		ApplyServerBackedEventBatch(*player_, eventBatch, session_->EntityId());
-	return ApplyServerBackedPlayerSnapshot(*player_, *snapshot);
+	if (auto result = ApplyServerBackedPlayerSnapshot(*player_, *snapshot); !result.has_value())
+		return result;
+	if (!pendingInventoryItemDrag_.has_value() || !pendingItem.has_value())
+		return { };
+	const auto currentReference = PlayerItemReferenceForSeed(*pendingInventoryItemDragSeed_);
+	if (!currentReference.has_value() || !SameItemReference(*currentReference, *pendingInventoryItemDrag_)) {
+		CancelInventoryItemDrag();
+		return { };
+	}
+	player_->HoldItem = *pendingItem;
+	NewCursor(player_->HoldItem);
+	return { };
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::EnsureCommandAccepted() const

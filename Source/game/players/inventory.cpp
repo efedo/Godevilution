@@ -592,6 +592,33 @@ void CheckInvPaste(Player &player, Point cursorPosition)
 			return;
 	}
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+		const auto source = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(player.HoldItem._iSeed);
+		if (!source.has_value()) {
+			LogError("Could not resolve the held item in the authoritative inventory snapshot.");
+			return;
+		}
+
+		authoritative::ServerBackedItemReference destination;
+		if (location == ILOC_UNEQUIPABLE) {
+			destination.location = authoritative::ServerBackedItemLocation::Inventory;
+			destination.slot = static_cast<uint32_t>(slot - SLOTXY_INV_FIRST);
+		} else if (location == ILOC_BELT) {
+			destination.location = authoritative::ServerBackedItemLocation::Belt;
+			destination.slot = static_cast<uint32_t>(slot - SLOTXY_BELT_FIRST);
+		} else {
+			destination.location = authoritative::ServerBackedItemLocation::Equipment;
+			destination.slot = static_cast<uint32_t>(slot);
+		}
+
+		authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
+		if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
+			LogError("Server-backed inventory placement failed: {}", result.error());
+		return;
+	}
+#endif
+
 	if (&player == MyPlayer) {
 		PlaySFX(ItemInvSnds[ItemCAnimTbl[player.HoldItem._iCurs]]);
 	}
@@ -770,6 +797,26 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 	}
 
 	const inv_xy_slot r = *maybeSlot;
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (!automaticMove && &player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+		const Item *draggedItem = nullptr;
+		if (r >= SLOTXY_HEAD && r <= SLOTXY_CHEST) {
+			draggedItem = &player.InvBody[MapSlotToInvBodyLoc(r)];
+		} else if (r >= SLOTXY_INV_FIRST && r <= SLOTXY_INV_LAST) {
+			const int inventoryIndex = std::abs(player.InvGrid[r - SLOTXY_INV_FIRST]) - 1;
+			if (inventoryIndex >= 0)
+				draggedItem = &player.InvList[inventoryIndex];
+		} else if (r >= SLOTXY_BELT_FIRST) {
+			draggedItem = &player.SpdList[r - SLOTXY_BELT_FIRST];
+		}
+		if (draggedItem != nullptr && !draggedItem->isEmpty()
+		    && !authoritative::GetServerBackedRuntime().BeginInventoryItemDrag(draggedItem->_iSeed)) {
+			LogError("Could not resolve the selected item in the authoritative inventory snapshot.");
+			return;
+		}
+	}
+#endif
 
 	Item &holdItem = player.HoldItem;
 	holdItem.clear();
