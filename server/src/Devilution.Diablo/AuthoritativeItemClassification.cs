@@ -52,9 +52,16 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
-            return IsStaff(definition);
+        if (items is not null) {
+            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+                return IsStaff(definition);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
+                if (tags.Contains("Staff"))
+                    return true;
+                if (HasExplicitEquipmentSubtype(tags))
+                    return false;
+            }
+        }
         return state.ItemType == 10;
     }
 

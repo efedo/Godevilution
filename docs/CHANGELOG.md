@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   recharge validation, so normalized charged-item metadata is honored even
   when saved state has no native item-index match.
 
+- Let active item catalogs resolve semantic `Staff` tags by unambiguous misc ID
+  when native item-index state is unavailable, preserving native type fallback
+  for older or ambiguous rows.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

@@ -466,7 +466,9 @@ full-item no-op and zero-maximum exhaustion behavior. Source-zero requests
 retain full paid vendor recharge; both clients submit only item selection and
 project the returned state. Store validation now consumes the same active
 catalog source metadata, including unambiguous miscellaneous-ID mappings,
-before retaining the native staff/type fallback for legacy rows.
+before retaining the native staff/type fallback for legacy rows. Active item
+classification also resolves an unambiguous `Staff` tag by misc ID when a
+compatibility item index is unavailable.
 
 Spell `10` now selects schema-0.22 `Phasing` behavior. At the effect frame, the
 module ignores client target coordinates and enumerates the native 36 offset

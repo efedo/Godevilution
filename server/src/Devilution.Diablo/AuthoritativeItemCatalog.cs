@@ -257,6 +257,29 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves non-empty, unambiguous semantic item tags by misc ID. */
+    public bool TryGetGenerationTagsByMiscId(
+        int miscId,
+        out IReadOnlySet<string> generationTags)
+    {
+        generationTags = null!;
+        if (miscId <= 0)
+            return false;
+
+        var matches = definitions.Values
+            .Where(definition => definition.MiscId == miscId)
+            .ToArray();
+        if (matches.Length == 0 || matches[0].GenerationTags.Count == 0)
+            return false;
+
+        var firstTags = matches[0].GenerationTags;
+        if (matches.Any(match => !firstTags.SetEquals(match.GenerationTags)))
+            return false;
+
+        generationTags = firstTags;
+        return true;
+    }
+
     public AuthoritativeItemDefinition GetRequired(uint itemId)
     {
         return TryGet(itemId, out var definition)
