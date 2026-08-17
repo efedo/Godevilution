@@ -50,6 +50,9 @@ All notable changes to this fork are documented below.
   authoritative combat boundary as the primary participant, with shared C++/C#
   checkpoint coverage for identity routing and unarmed damage.
 
+- Add seeded MonsterArrow replay coverage for native travel, player impact,
+  impact-phase lifetime, and canonical C++/C# checkpoint parity.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

@@ -25,6 +25,12 @@ pool seed and stable `pool_id`/`quest_ids` entries. Both runners sort pools,
 select the same unavailable quest identities without consuming gameplay RNG,
 and reject subsequent advancement of an unavailable quest.
 
+An optional top-level `initial_projectiles` array seeds server-owned projectiles
+before the first simulation tick. It carries the stable entity/source/target
+identities, level and travel coordinates, damage channel, behavior, speed,
+remaining lifetime, and impact-phase metadata needed to replay a native
+projectile lifecycle without moving AI admission into the fixture format.
+
 Both runners initialize their authoritative gameplay RNG from `rng_seed`.
 Canonical state includes the current nonzero RNG state, and behavior-specific
 projectile runtime fields are hashed in stable entity order, so an incorrect
@@ -58,8 +64,9 @@ Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
 captured physical damage and per-tick player collision. Managed combat and
-snapshot tests cover this lifecycle; a compact cross-runner autonomous
-monster-arrow fixture remains future replay work.
+snapshot tests cover this lifecycle, and the compact cross-runner fixture now
+covers seeded MonsterArrow travel, player impact, and impact-phase removal.
+Autonomous monster AI emission and target selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -119,8 +126,9 @@ fixture.
 
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
-Ordinary-death and Firebolt, Fireball, Lightning, and Flash spell-timeline
-checkpoints pass in both runners; the native replay gate reports 73/73 tests.
+Ordinary-death and Firebolt, Fireball, Lightning, Flash, and seeded MonsterArrow
+spell/projectile-timeline checkpoints pass in both runners; the native replay
+gate reports 74/74 tests.
 Remaining replay work is broader fixture coverage rather than a known hash
 mismatch.
 
@@ -131,8 +139,8 @@ and checked-in content, movement and combat, healing, portals, world-item
 pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
-commands, a secondary-session melee attack timeline, and multi-level world
-occupancy. The native and C# runners preserve
+commands, a secondary-session melee attack timeline, multi-level world
+occupancy, and seeded MonsterArrow travel/impact/removal. The native and C# runners preserve
 the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -394,6 +402,8 @@ Notable shared fixtures include:
   hit/damage RNG parity;
 - `gameplay-charged-bolt-hellfire-block.json` for animation-mode block
   admission and the Hellfire-only blocked-missile RNG draw;
+- `gameplay-monster-arrow-resolution.json` for seeded MonsterArrow travel,
+  player impact damage, impact-phase lifetime, and cross-runner removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept
   speed-26 movement, fire resistance, fractional health, impact, and RNG parity;
 - `gameplay-fireball-resolution.json` for two-roll damage, level-capped speed,
@@ -435,7 +445,8 @@ dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Test
 ```
 
 Future fixtures should prioritize uncovered legacy parity rather than repeat
-already-characterized transitions: seeded quest pools, mod/content reload
+already-characterized transitions: seeded quest pools, autonomous monster-arrow
+AI admission, mod/content reload
 ordering, an end-to-end Hellfire replay beyond the live overlay and loadout
 activation smoke tests, cursor-held pickup overflow, and broader combat/event
 ordering.
