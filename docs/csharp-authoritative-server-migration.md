@@ -10,6 +10,12 @@ systems move behind a shared protocol.
 This document defines the intended architecture and invariants. Current progress
 is tracked separately in [migration-status.md](migration-status.md).
 
+The current parity slice also preserves Nova Ball's native interaction with
+shrines: regular missile-blocking objects terminate a ball, while an optional
+validated shrine on its target tile lets the ball continue. The capability is
+transported as authoritative object state and remains invisible to client-side
+gameplay logic.
+
 ## Components
 
 | Component | Responsibility |

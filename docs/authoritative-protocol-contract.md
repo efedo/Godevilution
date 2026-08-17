@@ -606,6 +606,13 @@ nine-point quarter-radius order and mirrored emissions, then owns ball movement,
 target collision, resistance, lifetime, and RNG. Clients render the resulting
 authoritative projectiles and never emit balls or apply damage.
 
+Nova Ball movement also honors the authoritative world-object boundary. A
+non-passable object removes the ball on collision, except when the object is a
+validated shrine on the ball's target tile; that native shrine interaction
+keeps the ball alive for its remaining lifetime. The optional shrine capability
+is carried through snapshots, saves, protocol projections, and canonical hash
+state, while clients only render the resulting projectile.
+
 An Apocalypse cast uses behavior value `32` for its row-major scan controller
 and value `33` for each persistent Physical boom. The server owns cursor
 progression, blocked-cell and player-minion filtering, Hellfire line-of-sight,
@@ -652,6 +659,9 @@ removes them from native presentation. Object and projectile collision
 extensions use separate tagged canonical-hash sections so all-default legacy
 snapshots preserve their prior hashes. Version-1 save envelopes remain
 wire-compatible and preserve the additive raw fields in their Protobuf payload.
+Field 15 carries the optional native shrine capability used by Nova Ball's
+target-tile collision rule; it is likewise persisted and included in the
+canonical hash when enabled.
 
 Player class identity is authoritative and persists through snapshots and
 server-owned saves. `PlayerSnapshot.character_class_id` field 19 carries the

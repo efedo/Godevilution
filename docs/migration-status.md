@@ -24,6 +24,12 @@ Status date: 2026-08-16
 
 ## Implemented authoritative systems
 
+- Nova Ball now preserves the native shrine collision exception: regular
+  missile-blocking objects terminate a ball, while a validated shrine on its
+  target tile lets the ball continue. The optional object capability is carried
+  through snapshots, protocol, saves, and canonical hashing; the Diablo suite
+  passes all 1,200 tests and the server suite passes all 309 tests.
+
 - The Godot world presentation now renders server-owned monster health bars
   from authoritative `MonsterSnapshot` vitality, preferring exact Q6 values and
   falling back to rounded legacy fields without moving combat state into the
@@ -39,7 +45,7 @@ Status date: 2026-08-16
   version-1 saves preserve their zero player ID until import.
 
 - All 22 checked-in base and Hellfire replay fixtures now bind the active
-  content-manifest identities; the full 308-test server assembly passes again.
+  content-manifest identities; the full 309-test server assembly passes again.
 
 - Host shutdown now disposes the active authoritative adapter as well as
   drained retired generations, closing the ruleset lifecycle ownership gap.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve Nova Ball's native shrine collision exception through validated
+  world-object metadata and the authoritative snapshot, protocol, save, and
+  hash boundaries.
+
 - Clarify current architecture and content documentation that schema 1.278
   completed dynamic spell-book assignment and book-cost behavior.
 
