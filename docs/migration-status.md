@@ -124,6 +124,10 @@ Status date: 2026-08-17
   secondary participant when the primary is unavailable, preserving target
   identity, Q6 damage, and complete multiplayer checkpoint state.
 
+- The shared protocol now projects an explicit `MonsterMagic` projectile
+  presentation family, and Godot renders that server-owned family without
+  inferring gameplay behavior from a generic fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

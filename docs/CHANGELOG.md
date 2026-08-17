@@ -74,6 +74,8 @@ All notable changes to this fork are documented below.
   projectile travel, and failed-collision identity parity.
 - Add multiplayer Lich MonsterMagic replay coverage for secondary-participant
   target selection, impact damage, and complete participant-state hashing.
+- Add an additive `MonsterMagic` projectile presentation family to the shared
+  protocol and Godot client, preserving server-owned visual classification.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
