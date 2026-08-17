@@ -16205,6 +16205,44 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NovaBallBreaksARegularBlockingObjectBeforeRemoval()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            2,
+            2,
+            breakable: true);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            7,
+            0,
+            18,
+            0,
+            2,
+            2,
+            2,
+            2,
+            1,
+            AuthoritativeDamageType.Lightning,
+            0,
+            2) {
+            Behavior = AuthoritativeProjectileBehavior.NovaBall,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(entityId: 7);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void NovaControllerUsesConfiguredProjectileCount()
     {
         var world = new DiabloWorldState();

@@ -11889,6 +11889,10 @@ public sealed class DiabloCombatCommandProcessor
                         out var blockingObject)
                     && blockingObject!.IsShrine;
                 if (!isTargetShrine) {
+                    BreakMissileBlockingObject(
+                        projectile.LevelId,
+                        tile.X,
+                        tile.Y);
                     world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
