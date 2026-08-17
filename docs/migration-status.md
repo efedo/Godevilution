@@ -1067,8 +1067,9 @@ Status date: 2026-08-17
   states retain the native type/index fallback.
 
 - Belt eligibility is now centralized in the same content-first item
-  classification seam for loadout validation; legacy rows retain the native
-  equipment-location/item-class fallback.
+  classification seam for loadout validation, including unambiguous misc-ID
+  tag mappings when the compatibility item index is unavailable; legacy rows
+  retain the native equipment-location/item-class fallback.
 
 - Two-handed equipment classification is now centralized for loadout topology
   and dual-wield admission; active rows use `TwoHanded` tags while legacy

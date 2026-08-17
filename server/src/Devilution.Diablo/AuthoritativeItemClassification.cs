@@ -140,9 +140,13 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
-            return IsBelt(definition);
+        if (items is not null) {
+            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+                return IsBelt(definition);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
+                && tags.Contains("Belt"))
+                return true;
+        }
         return state.EquipLocation == 7 && state.ItemClass == 3;
     }
 

@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   when native item-index state is unavailable, preserving native type fallback
   for older or ambiguous rows.
 
+- Extend the same unambiguous misc-ID tag resolution to belt eligibility, so
+  server inventory placement can recognize content-defined belt items without a
+  native item-index match.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

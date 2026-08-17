@@ -149,6 +149,27 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void BeltTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Misc", "Belt"]) with {
+            ItemType = 99,
+            EquipLocation = 0,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemType = 99,
+            EquipLocation = 0,
+            ItemClass = 0,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsBelt(state, catalog));
+    }
+
+    [Fact]
     public void ExplicitTwoHandedTagOverridesConflictingLegacyEquipmentLocation()
     {
         var definition = CreateDefinition(itemClass: 1, tags: ["Weapon", "TwoHanded"])

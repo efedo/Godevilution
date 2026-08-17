@@ -468,7 +468,8 @@ project the returned state. Store validation now consumes the same active
 catalog source metadata, including unambiguous miscellaneous-ID mappings,
 before retaining the native staff/type fallback for legacy rows. Active item
 classification also resolves an unambiguous `Staff` tag by misc ID when a
-compatibility item index is unavailable.
+compatibility item index is unavailable, and belt eligibility uses the same
+semantic-tag fallback for inventory placement.
 
 Spell `10` now selects schema-0.22 `Phasing` behavior. At the effect frame, the
 module ignores client target coordinates and enumerates the native 36 offset

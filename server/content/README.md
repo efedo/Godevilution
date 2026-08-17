@@ -1785,8 +1785,9 @@ Normalized `items.tsv` includes a stable content `item_id` and an explicit
 declares semantic item categories (`Weapon`, `Sword`, `Axe`, `Mace`, `Bow`,
 `Shield`, `Staff`, `Belt`, `OneHanded`, `TwoHanded`, `BodyArmor`, `Helmet`,
 `Ring`, `Amulet`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for
-active rows; combat and loadout validation use these tags before the native numeric
-fallback. `charges` and
+active rows; combat and loadout validation use these tags before the native
+numeric fallback, including unambiguous misc-ID tag mappings when compatibility
+item indices are unavailable. `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
 matching uses the normalized `spell_id` and no longer depends on native
