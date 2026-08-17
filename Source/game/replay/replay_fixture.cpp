@@ -3112,17 +3112,27 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 			}
 			projectile.positionX = nextX;
 			projectile.positionY = nextY;
+			int32_t *hitLife = nullptr;
 			if (state.levelId == projectile.levelId
 			    && state.life > 0
 			    && nextX == state.positionX
 			    && nextY == state.positionY) {
+				hitLife = &state.life;
+			} else if (state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && nextX == state.secondaryPlayerPositionX
+			    && nextY == state.secondaryPlayerPositionY) {
+				hitLife = &state.secondaryPlayerLife;
+			}
+			if (hitLife != nullptr) {
 				int32_t damage = projectile.damage;
 				if (damage > 0 && projectile.damageMinimum > 0
 				    && projectile.damageMaximum >= projectile.damageMinimum) {
 					damage = projectile.damageMinimum
 					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
 				}
-				state.life = std::max(0, state.life - std::max(0, damage));
+				*hitLife = std::max(0, *hitLife - std::max(0, damage));
 				if (projectile.impactLifetime > 0) {
 					projectile.phase = 1;
 					projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
