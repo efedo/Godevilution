@@ -113,10 +113,11 @@ Spell-book use follows the same boundary: a connected authoritative client sends
 returned snapshot. The local book-consumption path remains available only for
 the explicit legacy runtime.
 
-Potion and rejuvenation use now follows the same boundary. A connected client
-sends `UseConsumableRequested` for the projected inventory or belt reference;
-the server applies native Q6 resource restoration, class multipliers, and
-`NoMana` suppression before consuming the item. Elixirs, oils, and other
+Potion, rejuvenation, and elixir use now follows the same boundary. A connected
+client sends `UseConsumableRequested` for the projected inventory or belt
+reference; the server applies native Q6 resource restoration, class
+multipliers, elixir stat/resource transitions, Hellfire full-resource effects,
+and `NoMana` suppression before consuming the item. Oils and other
 cursor-driven miscellaneous items remain local follow-up seams until their
 content actions and state transitions are externalized.
 

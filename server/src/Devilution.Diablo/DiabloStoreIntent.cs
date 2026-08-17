@@ -53,7 +53,7 @@ public sealed record DiabloReadBookIntent(
     DiabloPlayerItemReference? Item,
     uint LegacyInventoryIndex) : DiabloStoreIntent;
 
-/** Consumes a content-owned potion and applies its server-owned resource effect. */
+/** Consumes a content-owned item action and applies its server-owned effect. */
 public sealed record DiabloUseConsumableIntent(
     DiabloPlayerItemReference Item) : DiabloStoreIntent;
 

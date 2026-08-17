@@ -70,11 +70,12 @@ Windows toolchain command.
   native mana refund, and book consumption. Clients never mutate learned-spell
   state locally.
 - `UseConsumableRequested` consumes an exact owned inventory or belt reference.
-  The server validates the content-owned potion action, applies native Q6 life
-  and mana restoration (including class multipliers and `NoMana` suppression),
-  consumes the item, and returns the authoritative resource snapshot. The
-  native client does not apply potion effects locally; elixirs and oils remain
-  a later item-action seam.
+  The server validates the content-owned potion, rejuvenation, or elixir
+  action, applies native Q6 life/mana restoration, class multipliers, elixir
+  stat/resource transitions, Hellfire full-resource effects, and `NoMana`
+  suppression, then consumes the item and returns the authoritative snapshot.
+  The native client does not apply these effects locally; oils remain a later
+  item-action seam.
 - `MoveInventoryItemRequested.item` is an additive exact inventory reference.
   When present, the server rejects a stale slot before changing the inventory
   grid; an absent or zero-valued reference retains positional compatibility.

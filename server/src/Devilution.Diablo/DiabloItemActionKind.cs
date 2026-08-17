@@ -12,4 +12,8 @@ public enum DiabloItemActionKind
     RestoreFullMana,
     RestorePartialLifeAndMana,
     RestoreFullLifeAndMana,
+    IncreaseStrength,
+    IncreaseMagic,
+    IncreaseDexterity,
+    IncreaseVitality,
 }

@@ -85,6 +85,10 @@ enum ItemActionKind {
 	ITEM_ACTION_KIND_RESTORE_FULL_MANA = 6;
 	ITEM_ACTION_KIND_RESTORE_PARTIAL_LIFE_AND_MANA = 7;
 	ITEM_ACTION_KIND_RESTORE_FULL_LIFE_AND_MANA = 8;
+	ITEM_ACTION_KIND_INCREASE_STRENGTH = 9;
+	ITEM_ACTION_KIND_INCREASE_MAGIC = 10;
+	ITEM_ACTION_KIND_INCREASE_DEXTERITY = 11;
+	ITEM_ACTION_KIND_INCREASE_VITALITY = 12;
 }
 
 message CommandBatch {
@@ -233,8 +237,8 @@ message AutoEquipItemRequested {
 	optional uint32 equipment_slot = 2;
 }
 
-// Consumes a server-classified potion from inventory or belt. The stable item
-// reference prevents a stale slot from consuming a different item.
+// Consumes a server-classified item action from inventory or belt. The stable
+// item reference prevents a stale slot from consuming a different item.
 message UseConsumableRequested {
 	PlayerItemReference item = 1;
 }

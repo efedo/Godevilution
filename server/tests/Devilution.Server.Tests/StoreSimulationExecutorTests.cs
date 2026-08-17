@@ -459,6 +459,41 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolUseConsumableAppliesAuthoritativeElixirAttributeEffect()
+    {
+        var elixir = new OwnedStoreItem(0, 0, 43, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseDexterity,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingAttributes: new PlayerAttributesState(
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(0, 0),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(0, 0)),
+            startingInventory: [elixir]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Empty(player.Inventory);
+        Assert.Equal(21, player.Attributes.Dexterity.Base);
+        Assert.Equal(21, player.Attributes.Dexterity.Current);
+    }
+
+    [Fact]
     public void ProtocolRepairAbilityUsesAuthoritativeClassSkillAndNativeRandomRule()
     {
         const uint repairSpellId = 26;

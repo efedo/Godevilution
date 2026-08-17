@@ -722,6 +722,177 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ElixirOfStrengthIncreasesTheNativeBaseAndCurrentAttributes()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            43,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseStrength,
+            });
+        var player = CreatePlayer(
+            playerClass: LoadClass("warrior"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            inventory: [elixir]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(31, player.Attributes.Strength.Base);
+        Assert.Equal(31, player.Attributes.Strength.Current);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
+    public void HellfireElixirOfMagicIncreasesResourcesAndRestoresMana()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            44,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseMagic,
+            });
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 640,
+            playerClass: LoadClass("sorcerer"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(15, 15),
+                new PlayerAttributeState(35, 35),
+                new PlayerAttributeState(15, 15),
+                new PlayerAttributeState(20, 20)),
+            inventory: [elixir]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            combatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(36, player.Attributes.Magic.Base);
+        Assert.Equal(768, player.BaseManaMaximum);
+        Assert.Equal(768, player.ManaMaximum);
+        Assert.Equal(768, player.Mana);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
+    public void NoManaSuppressesHellfireMagicElixirRestoration()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            45,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseMagic,
+            });
+        var noMana = new EquippedStoreItem(
+            0,
+            99,
+            AuthoritativeItemState.Empty with {
+                StatFlag = true,
+                Flags = AuthoritativeEquipmentManaRules.NoManaFlag,
+            });
+        var player = CreatePlayer(
+            mana: 100,
+            manaMaximum: 640,
+            equipment: [noMana],
+            playerClass: LoadClass("sorcerer"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(15, 15),
+                new PlayerAttributeState(35, 35),
+                new PlayerAttributeState(15, 15),
+                new PlayerAttributeState(20, 20)),
+            inventory: [elixir]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            combatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(768, player.ManaMaximum);
+        Assert.Equal(100, player.Mana);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
+    public void HellfireElixirOfVitalityIncreasesResourcesAndRestoresLife()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            46,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseVitality,
+            });
+        var player = CreatePlayer(
+            life: 100,
+            playerClass: LoadClass("warrior"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            inventory: [elixir]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            combatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(26, player.Attributes.Vitality.Base);
+        Assert.Equal(768, player.BaseLifeMaximum);
+        Assert.Equal(768, player.LifeMaximum);
+        Assert.Equal(768, player.Life);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
     public void AppliesCompleteVendorLifecycleWithoutProtocolTypes()
     {
         var itemState = AuthoritativeItemState.Empty with {
@@ -1729,6 +1900,7 @@ public sealed class DiabloStoreCommandProcessorTests
 
     private static AuthoritativePlayerState CreatePlayer(
         uint gold = 100,
+        int life = 640,
         int mana = 0,
         int manaMaximum = 0,
         IReadOnlyList<EquippedStoreItem>? equipment = null,
@@ -1743,7 +1915,7 @@ public sealed class DiabloStoreCommandProcessorTests
         return new AuthoritativePlayerState(
             gold,
             0,
-            640,
+            life,
             mana,
             manaMaximum,
             attributes ?? PlayerAttributesState.Zero,
@@ -1763,11 +1935,14 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     private static AuthoritativePlayerClassDefinition LoadWarriorClass()
+        => LoadClass("warrior");
+
+    private static AuthoritativePlayerClassDefinition LoadClass(string symbol)
     {
         var root = FindRepositoryRoot();
         var path = Path.Combine(root, "server", "content", "base", "classes.tsv");
         return AuthoritativePlayerClassCatalog.LoadTsv(path, File.ReadAllText(path))
-            .Resolve("warrior");
+            .Resolve(symbol);
     }
 
     private static string FindRepositoryRoot()

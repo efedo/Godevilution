@@ -8,7 +8,12 @@ All notable changes to this fork are documented below.
   server-owned `UseConsumableRequested` intent. External content now classifies
   their actions; the Diablo module applies native Q6 restoration, class
   multipliers, `NoMana` suppression, deterministic RNG, and item consumption.
-  Elixirs and oils remain follow-up action seams.
+
+- Route native Strength, Magic, Dexterity, and Vitality elixirs through the
+  same server-owned intent. External content classifies each stat transition;
+  the Diablo module owns native stat ceilings, Q6 resource growth, Hellfire
+  full-resource restoration, `NoMana` suppression, persistence, and item
+  consumption. Oils remain a follow-up action seam.
 
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server

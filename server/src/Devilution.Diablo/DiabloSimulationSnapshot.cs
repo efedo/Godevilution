@@ -1592,6 +1592,10 @@ public sealed partial class DiabloSimulation
         destination.Inventory.AddRange(source.Inventory);
         destination.Equipment.Clear();
         destination.Equipment.AddRange(source.Equipment);
+        if (source.BaseLifeMaximum > 0)
+            destination.BaseLifeMaximum = source.BaseLifeMaximum;
+        if (source.BaseManaMaximum > 0)
+            destination.BaseManaMaximum = source.BaseManaMaximum;
         destination.AdoptEquipmentAttributeSnapshot();
         destination.RecalculateEquipmentResources();
         destination.Life = source.Life;
@@ -2060,8 +2064,6 @@ public sealed partial class DiabloSimulation
                     or DiabloPlayerCombatMode.GotHit)
                 && source.CombatModeEndTick == 0)
             || !IsValidPlayerAction(source)
-            || baseLifeMaximum != destination.BaseLifeMaximum
-            || baseManaMaximum != destination.BaseManaMaximum
             || source.LifeMaximum != expectedResources.LifeQ6
             || source.ManaMaximum != expectedResources.ManaQ6
             || source.Attributes is null

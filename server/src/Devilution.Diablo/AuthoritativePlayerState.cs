@@ -269,7 +269,8 @@ public sealed class AuthoritativePlayerState(
 
     public int Life { get; set; } = Math.Clamp(life, 0, Math.Max(lifeMaximum, 0));
 
-    public int BaseLifeMaximum { get; } = Math.Max(
+    /** Native base life maximum, before equipment conversions. */
+    public int BaseLifeMaximum { get; internal set; } = Math.Max(
         baseLifeMaximum >= 0 ? baseLifeMaximum : lifeMaximum,
         0);
 
@@ -382,7 +383,8 @@ public sealed class AuthoritativePlayerState(
 
     public int Mana { get; set; } = mana;
 
-    public int BaseManaMaximum { get; } = Math.Max(
+    /** Native base mana maximum, before equipment conversions. */
+    public int BaseManaMaximum { get; internal set; } = Math.Max(
         baseManaMaximum >= 0 ? baseManaMaximum : manaMaximum,
         0);
 
@@ -431,6 +433,69 @@ public sealed class AuthoritativePlayerState(
             0,
             ManaMaximum);
         RecalculateEquipmentArmor();
+    }
+
+    /** Applies one native elixir stat point and its resource side effect. */
+    public bool ApplyElixir(DiabloItemActionKind action, bool restoreHellfireResource)
+    {
+        if (action is not (DiabloItemActionKind.IncreaseStrength
+            or DiabloItemActionKind.IncreaseMagic
+            or DiabloItemActionKind.IncreaseDexterity
+            or DiabloItemActionKind.IncreaseVitality)) {
+            return false;
+        }
+
+        var maximum = action switch {
+            DiabloItemActionKind.IncreaseStrength => PlayerClass?.MaximumStrength,
+            DiabloItemActionKind.IncreaseMagic => PlayerClass?.MaximumMagic,
+            DiabloItemActionKind.IncreaseDexterity => PlayerClass?.MaximumDexterity,
+            DiabloItemActionKind.IncreaseVitality => PlayerClass?.MaximumVitality,
+            _ => null,
+        } ?? MaximumAttribute;
+
+        var attributes = Attributes;
+        var attribute = action switch {
+            DiabloItemActionKind.IncreaseStrength => attributes.Strength,
+            DiabloItemActionKind.IncreaseMagic => attributes.Magic,
+            DiabloItemActionKind.IncreaseDexterity => attributes.Dexterity,
+            DiabloItemActionKind.IncreaseVitality => attributes.Vitality,
+            _ => throw new InvalidOperationException("Validated elixir action was not handled."),
+        };
+        var available = Math.Max(maximum - attribute.Base, 0);
+        var delta = Math.Min(1, available);
+        var updatedAttribute = attribute with {
+            Base = checked(attribute.Base + delta),
+            Current = Math.Clamp(checked(attribute.Current + delta), 0, MaximumAttribute),
+        };
+        Attributes = action switch {
+            DiabloItemActionKind.IncreaseStrength => attributes with { Strength = updatedAttribute },
+            DiabloItemActionKind.IncreaseMagic => attributes with { Magic = updatedAttribute },
+            DiabloItemActionKind.IncreaseDexterity => attributes with { Dexterity = updatedAttribute },
+            DiabloItemActionKind.IncreaseVitality => attributes with { Vitality = updatedAttribute },
+            _ => attributes,
+        };
+
+        if (action == DiabloItemActionKind.IncreaseMagic) {
+            var amount = checked(delta * (PlayerClass?.ManaPerMagicQ6 ?? 0));
+            BaseManaMaximum = checked(BaseManaMaximum + amount);
+            ManaMaximum = checked(ManaMaximum + amount);
+            if (!AuthoritativeEquipmentManaRules.HasNoManaItem(Equipment))
+                Mana = checked(Mana + amount);
+        } else if (action == DiabloItemActionKind.IncreaseVitality) {
+            var amount = checked(delta * (PlayerClass?.LifePerVitalityQ6 ?? 0));
+            BaseLifeMaximum = checked(BaseLifeMaximum + amount);
+            LifeMaximum = checked(LifeMaximum + amount);
+            Life = checked(Life + amount);
+        }
+
+        RecalculateEquipmentResources();
+        if (restoreHellfireResource
+            && action == DiabloItemActionKind.IncreaseMagic
+            && !AuthoritativeEquipmentManaRules.HasNoManaItem(Equipment))
+            Mana = ManaMaximum;
+        if (restoreHellfireResource && action == DiabloItemActionKind.IncreaseVitality)
+            Life = LifeMaximum;
+        return true;
     }
 
     /** Recomputes effective primary attributes without changing resources. */

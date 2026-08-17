@@ -107,7 +107,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint trapDisarmAbilitySpellId = 0,
         uint startingReflectCharges = 0,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
-        AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null)
+        AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null,
+        AuthoritativePlayerClassDefinition? startingPlayerClass = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -168,7 +169,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             characterName: startingCharacterName,
             manaShieldActive: startingManaShieldActive,
             reflectCharges: startingReflectCharges,
-            items: startingItems);
+            items: startingItems,
+            playerClass: startingPlayerClass);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
         this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();

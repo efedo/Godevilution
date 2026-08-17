@@ -444,7 +444,11 @@ public sealed class DiabloStoreCommandProcessor
                 or DiabloItemActionKind.RestorePartialMana
                 or DiabloItemActionKind.RestoreFullMana
                 or DiabloItemActionKind.RestorePartialLifeAndMana
-                or DiabloItemActionKind.RestoreFullLifeAndMana)) {
+                or DiabloItemActionKind.RestoreFullLifeAndMana
+                or DiabloItemActionKind.IncreaseStrength
+                or DiabloItemActionKind.IncreaseMagic
+                or DiabloItemActionKind.IncreaseDexterity
+                or DiabloItemActionKind.IncreaseVitality)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -473,8 +477,16 @@ public sealed class DiabloStoreCommandProcessor
             player.Life = player.LifeMaximum;
             RestoreFullMana(player);
             break;
+        case DiabloItemActionKind.IncreaseStrength:
+        case DiabloItemActionKind.IncreaseMagic:
+        case DiabloItemActionKind.IncreaseDexterity:
+        case DiabloItemActionKind.IncreaseVitality:
+            player.ApplyElixir(
+                action,
+                combatRules.GameVariant == DiabloGameVariant.Hellfire);
+            break;
         default:
-            throw new InvalidOperationException("Validated consumable action was not handled.");
+            throw new InvalidOperationException("Validated item action was not handled.");
         }
 
         DiabloPlayerItemAccess.Remove(player, intent.Item);

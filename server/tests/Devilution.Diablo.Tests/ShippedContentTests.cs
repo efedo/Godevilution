@@ -260,6 +260,10 @@ public sealed class ShippedContentTests
                     7 => DiabloItemActionKind.RestoreFullMana,
                     19 => DiabloItemActionKind.RestorePartialLifeAndMana,
                     20 => DiabloItemActionKind.RestoreFullLifeAndMana,
+                    11 => DiabloItemActionKind.IncreaseStrength,
+                    12 => DiabloItemActionKind.IncreaseMagic,
+                    13 => DiabloItemActionKind.IncreaseDexterity,
+                    14 => DiabloItemActionKind.IncreaseVitality,
                     _ => DiabloItemActionKind.None,
                 },
                 item.ItemActionKind);
@@ -2113,7 +2117,15 @@ public sealed class ShippedContentTests
             Assert.Equal(1, item.DropRate);
             Assert.True(item.Usable);
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
-            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+            Assert.Equal(
+                itemId switch {
+                    2156 => DiabloItemActionKind.IncreaseStrength,
+                    2157 => DiabloItemActionKind.IncreaseMagic,
+                    2158 => DiabloItemActionKind.IncreaseDexterity,
+                    2159 => DiabloItemActionKind.IncreaseVitality,
+                    _ => DiabloItemActionKind.None,
+                },
+                item.ItemActionKind);
         }
         Assert.Equal(("the_undead_crown", "The Undead Crown", 82), (
             hellfireItems.GetRequired(111).StableSymbol,

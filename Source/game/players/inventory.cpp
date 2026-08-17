@@ -2389,7 +2389,18 @@ bool UseInvItem(int cii)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()
-	    && IsAnyOf(item->_iMiscId, IMISC_HEAL, IMISC_FULLHEAL, IMISC_MANA, IMISC_FULLMANA, IMISC_REJUV, IMISC_FULLREJUV, IMISC_ARENAPOT)) {
+	    && IsAnyOf(item->_iMiscId,
+	        IMISC_HEAL,
+	        IMISC_FULLHEAL,
+	        IMISC_MANA,
+	        IMISC_FULLMANA,
+	        IMISC_REJUV,
+	        IMISC_FULLREJUV,
+	        IMISC_ARENAPOT,
+	        IMISC_ELIXSTR,
+	        IMISC_ELIXMAG,
+	        IMISC_ELIXDEX,
+	        IMISC_ELIXVIT)) {
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
 		if (!reference.has_value()) {
 			LogError("Server-backed consumable use has no authoritative item reference.");
