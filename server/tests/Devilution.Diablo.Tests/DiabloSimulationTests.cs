@@ -2718,6 +2718,84 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreRejectsUnknownStableItemIdWhenCatalogIsActive()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, false),
+            new AuthoritativeItemDefinition(24, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+            },
+        ]);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Items = items,
+            });
+        var source = CreatePlayer();
+        var snapshot = simulation.CaptureSnapshot(source, 1) with {
+            Player = simulation.CapturePlayerState(source) with {
+                HeldItem = new OwnedStoreItem(
+                    0,
+                    0,
+                    42,
+                    5,
+                    0,
+                    AuthoritativeItemState.Empty with {
+                        StableItemId = 999,
+                        ItemIndex = 7,
+                        ItemType = 1,
+                    }),
+            },
+        };
+        var destination = CreatePlayer();
+
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(destination, snapshot));
+        Assert.Null(destination.HeldItem);
+    }
+
+    [Fact]
+    public void SnapshotRestoreAcceptsLegacyZeroStableItemIdWhenCatalogIsActive()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, false),
+            new AuthoritativeItemDefinition(24, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+            },
+        ]);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                Items = items,
+            });
+        var source = CreatePlayer();
+        var snapshot = simulation.CaptureSnapshot(source, 1) with {
+            Player = simulation.CapturePlayerState(source) with {
+                HeldItem = new OwnedStoreItem(
+                    0,
+                    0,
+                    42,
+                    5,
+                    0,
+                    AuthoritativeItemState.Empty with {
+                        ItemIndex = 7,
+                        ItemType = 1,
+                    }),
+            },
+        };
+        var destination = CreatePlayer();
+
+        simulation.RestoreSnapshot(destination, snapshot);
+
+        Assert.Equal(7, destination.HeldItem!.State.ItemIndex);
+        Assert.Equal(0U, destination.HeldItem.State.StableItemId);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsTypedStatusAndRejectsMalformedStatusState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

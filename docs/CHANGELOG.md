@@ -64,6 +64,10 @@ All notable changes to this fork are documented below.
   quest-item completion, and PvP-ear deduplication, retaining native-index
   matching for legacy state without a stable ID.
 
+- Validate nonzero stable item IDs against the active item catalog during
+  snapshot restoration, while preserving zero-valued legacy saves and
+  catalog-less compatibility simulations.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

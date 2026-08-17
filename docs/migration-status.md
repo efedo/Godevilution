@@ -46,6 +46,10 @@ Status date: 2026-08-17
   PvP-ear deduplication now use that stable identity before the native index,
   so shared native projections cannot select the wrong content definition.
 
+- Snapshot restoration rejects unknown nonzero stable item IDs when an active
+  item catalog is present; legacy zero-valued IDs and catalog-less simulations
+  remain compatible.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

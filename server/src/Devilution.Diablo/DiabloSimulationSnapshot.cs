@@ -778,6 +778,7 @@ public sealed partial class DiabloSimulation
 
         var restoredWorldItems = snapshot.WorldItems.Select(item => {
             if (item.State is null
+                || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || !WorldState.IsWalkable(item.LevelId, item.PositionX, item.PositionY)
                 || IsMalformedGoldWorldItem(item)) {
@@ -1546,7 +1547,9 @@ public sealed partial class DiabloSimulation
         if (store is null
             || store.StoreId != player.ActiveStoreId
             || !storeCatalog.ContainsStore(store.StoreId)
-            || store.Items.Any(item => item is null || item.State is null)
+            || store.Items.Any(item => item is null
+                || item.State is null
+                || !HasKnownStableItemIdentity(item.State))
             || store.Items.Select(item => item.StoreSlot).Distinct().Count() != store.Items.Count) {
             throw new InvalidDataException(
                 "The authoritative save contains invalid active-store state.");
@@ -2192,6 +2195,7 @@ public sealed partial class DiabloSimulation
         foreach (var item in source.Inventory) {
             if (item is null
                 || item.State is null
+                || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || !InventoryGridLayout.HasValidDimensions(
                     item.State.InventoryWidth,
@@ -2210,6 +2214,7 @@ public sealed partial class DiabloSimulation
         foreach (var item in source.Equipment) {
             if (item is null
                 || item.State is null
+                || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || item.Slot >= 7
                 || !InventoryGridLayout.HasValidDimensions(
@@ -2231,6 +2236,7 @@ public sealed partial class DiabloSimulation
         foreach (var item in source.Belt) {
             if (item is null
                 || item.State is null
+                || !HasKnownStableItemIdentity(item.State)
                 || !HasValidItemIdentity(item.ItemSeed, item.State)
                 || item.Slot >= 8
                 || !InventoryGridLayout.HasValidDimensions(
@@ -2251,6 +2257,7 @@ public sealed partial class DiabloSimulation
         }
         if (source.HeldItem is { } heldItem
             && (heldItem.State is null
+                || !HasKnownStableItemIdentity(heldItem.State)
                 || !HasValidItemIdentity(heldItem.ItemSeed, heldItem.State)
                 || !InventoryGridLayout.HasValidDimensions(
                     heldItem.State.InventoryWidth,
@@ -2310,5 +2317,12 @@ public sealed partial class DiabloSimulation
         return hasValidNames
             && (!state.NativeCursorGraphic.HasValue
                 || state.NativeCursorGraphic is >= 0 and <= byte.MaxValue);
+    }
+
+    private bool HasKnownStableItemIdentity(AuthoritativeItemState state)
+    {
+        return Items is null
+            || state.StableItemId == 0
+            || Items.TryGet(state.StableItemId, out _);
     }
 }
