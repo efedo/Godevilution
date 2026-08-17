@@ -150,8 +150,8 @@ conversation variables, required-item consumption, quest completion, activation,
 normal or unique reward spawning, and the dialogue event; the adapter projects
 that dialogue into the native quest-text UI. The Hellfire Farmer activation and
 post-Hive reward, Magic Rock and Anvil of Fury/Blacksmith paths, Little Girl, and
-Jersey's Jersey/Complete Nut are shipped definitions; additional legacy towner
-paths remain local until authored.
+Jersey's Jersey/Complete Nut (including its Grey Suit tease) are shipped
+definitions; additional legacy towner paths remain local until authored.
 Legacy local towner behavior stays available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the

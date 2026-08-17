@@ -1621,6 +1621,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void AlternateItemQuestTurnInChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3024, RequiredProgress = 1 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Quests[0].TurnInAlternateItemId = 2105;
+        changed.Quests[0].TurnInAlternateMessageId = 303;
+
+        Assert.True(changed.Quests[0].HasTurnInAlternateItemId);
+        Assert.True(changed.Quests[0].HasTurnInAlternateMessageId);
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void ObjectQuestProgressAmountChangesTheHash()
     {
         var baseline = new Snapshot {

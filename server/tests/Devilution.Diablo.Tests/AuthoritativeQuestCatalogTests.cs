@@ -206,6 +206,19 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadAlternateTownerItemMetadata()
+    {
+        var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\tturn_in_towner_id\tturn_in_item_id\tturn_in_alternate_item_id\tturn_in_alternate_message_id\n"
+                + "3024\t9\t1\t12\t2104\t2105\t303\n"));
+
+        Assert.Equal((2105U, 303), (
+            quest.TurnInAlternateItemId,
+            quest.TurnInAlternateMessageId));
+    }
+
+    [Fact]
     public void QuestStateCanLoadCompletionVariableTransitions()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

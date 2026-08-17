@@ -539,6 +539,11 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-quest-turn-in-towner-v1");
                     hasher.AppendInt32(quest.TurnInTownerId);
                 }
+                if (quest.TurnInAlternateItemId != 0 || quest.TurnInAlternateMessageId != 0) {
+                    hasher.AppendString("godevilution-quest-turn-in-alternate-v1");
+                    hasher.AppendUInt32(quest.TurnInAlternateItemId);
+                    hasher.AppendInt32(quest.TurnInAlternateMessageId);
+                }
                 if (quest.TurnInOnCompletion) {
                     hasher.AppendString("godevilution-quest-turn-in-completion-v1");
                     hasher.AppendBool(true);

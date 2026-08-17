@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
   post-Hive conversation now advances its authored marker, creates Auric, and
   emits completion dialogue through the server boundary.
 
+- Add schema 1.332 alternate-item towner interactions. Hellfire Jersey's Jersey
+  now consumes Grey Suit and emits its native tease dialogue without changing
+  quest state before the Brown Suit completion path.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

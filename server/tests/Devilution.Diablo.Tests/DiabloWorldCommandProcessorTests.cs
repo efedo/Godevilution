@@ -1495,6 +1495,49 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredTownerAlternateItemConsumesGreySuitWithoutCompletingQuest()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2104, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(2105, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var greySuit = items.Generate(2105, 42);
+        var player = CreatePlayer(
+            positionX: 60,
+            positionY: 22,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, greySuit.CreateInfo, 0, 0, greySuit)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3024,
+            9,
+            1,
+            active: true,
+            turnInTownerId: 12,
+            turnInLevelId: 0,
+            turnInPositionX: 61,
+            turnInPositionY: 22,
+            turnInItemId: 2104,
+            turnInAlternateItemId: 2105,
+            turnInAlternateMessageId: 303);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3024, 12),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.False(quest.Completed);
+        Assert.True(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(303, Assert.Single(result.Events).MessageId);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
     public void AuthoredTownerActivationSpawnsInitialRuneBombOnce()
     {
         var items = new AuthoritativeItemCatalog([

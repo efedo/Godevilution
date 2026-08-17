@@ -1490,6 +1490,34 @@ public sealed class DiabloWorldCommandProcessor
                     });
         }
 
+        if (quest.TurnInAlternateItemId != 0
+            && items.TryGet(quest.TurnInAlternateItemId, out var alternateItem)) {
+            var alternateInventoryIndex = -1;
+            for (var index = 0; index < player.Inventory.Count; index++) {
+                if (items.IsStateForDefinition(player.Inventory[index].State, alternateItem)) {
+                    alternateInventoryIndex = index;
+                    break;
+                }
+            }
+            if (alternateInventoryIndex >= 0) {
+                InventoryGridLayout.RemoveAndCompact(
+                    player.InventoryGrid,
+                    alternateInventoryIndex);
+                player.Inventory.RemoveAt(alternateInventoryIndex);
+                return quest.TurnInAlternateMessageId == 0
+                    ? DiabloWorldIntentResult.Accepted
+                    : DiabloWorldIntentResult.AcceptedWith(
+                        new DiabloGameplayEvent(
+                            DiabloGameplayEventKind.Dialogue,
+                            player.EntityId,
+                            townerId,
+                            0) {
+                            MessageId = quest.TurnInAlternateMessageId,
+                            QuestId = quest.QuestId,
+                        });
+            }
+        }
+
         var inventoryIndex = -1;
         for (var index = 0; index < player.Inventory.Count; index++) {
             if (items.IsStateForDefinition(player.Inventory[index].State, requiredItem)) {

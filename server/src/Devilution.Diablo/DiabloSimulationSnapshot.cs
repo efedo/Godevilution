@@ -269,7 +269,9 @@ public sealed record DiabloQuestState(
     string CompletionUniqueIdentity = "",
     int TurnInTownerId = -1,
     bool TurnInOnCompletion = false,
-    int TurnInCompletionVariable2 = -1);
+    int TurnInCompletionVariable2 = -1,
+    uint TurnInAlternateItemId = 0,
+    int TurnInAlternateMessageId = 0);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -595,7 +597,9 @@ public sealed partial class DiabloSimulation
                     quest.CompletionUniqueIdentity,
                     quest.TurnInTownerId,
                     quest.TurnInOnCompletion,
-                    quest.TurnInCompletionVariable2))
+                    quest.TurnInCompletionVariable2,
+                    quest.TurnInAlternateItemId,
+                    quest.TurnInAlternateMessageId))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1453,6 +1457,7 @@ public sealed partial class DiabloSimulation
                 || quest.Variable2 is < 0 or > byte.MaxValue
                 || quest.MessageId is < 0 or > short.MaxValue
                 || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
                 || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
@@ -2014,7 +2019,9 @@ public sealed partial class DiabloSimulation
                     quest.CompletionUniqueIdentity,
                     turnInTownerId: quest.TurnInTownerId,
                     turnInOnCompletion: quest.TurnInOnCompletion,
-                    turnInCompletionVariable2: quest.TurnInCompletionVariable2));
+                    turnInCompletionVariable2: quest.TurnInCompletionVariable2,
+                    turnInAlternateItemId: quest.TurnInAlternateItemId,
+                    turnInAlternateMessageId: quest.TurnInAlternateMessageId));
             }
         }
     }

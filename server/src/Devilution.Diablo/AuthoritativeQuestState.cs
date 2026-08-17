@@ -131,7 +131,9 @@ public sealed class AuthoritativeQuestState
         int turnInCompletionRewardItemLevel = 0,
         int turnInCompletionRewardPositionX = 0,
         int turnInCompletionRewardPositionY = 0,
-        uint turnInCompletionRewardItemId = 0)
+        uint turnInCompletionRewardItemId = 0,
+        uint turnInAlternateItemId = 0,
+        int turnInAlternateMessageId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -167,6 +169,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInCompletionMessageId));
         if (turnInCompletionRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(turnInCompletionRewardItemLevel));
+        if (turnInAlternateMessageId < 0 || turnInAlternateMessageId > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInAlternateMessageId));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -224,6 +228,8 @@ public sealed class AuthoritativeQuestState
         TurnInCompletionRewardPositionX = turnInCompletionRewardPositionX;
         TurnInCompletionRewardPositionY = turnInCompletionRewardPositionY;
         TurnInCompletionRewardItemId = turnInCompletionRewardItemId;
+        TurnInAlternateItemId = turnInAlternateItemId;
+        TurnInAlternateMessageId = turnInAlternateMessageId;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -302,6 +308,10 @@ public sealed class AuthoritativeQuestState
     public int TurnInCompletionRewardPositionY { get; }
     /** Optional normal item generated after the completion-stage interaction. */
     public uint TurnInCompletionRewardItemId { get; }
+    /** Optional alternate item consumed by the same towner without changing quest state. */
+    public uint TurnInAlternateItemId { get; }
+    /** Dialogue identity emitted after consuming the alternate towner item. */
+    public int TurnInAlternateMessageId { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -438,7 +448,13 @@ public static class AuthoritativeQuestCatalog
                     row,
                     stableIds,
                     "turn_in_completion_reward_item_id",
-                    "turn_in_completion_reward_item_symbol")) {
+                    "turn_in_completion_reward_item_symbol"),
+                turnInAlternateItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_alternate_item_id",
+                    "turn_in_alternate_item_symbol"),
+                turnInAlternateMessageId: row.OptionalInt32("turn_in_alternate_message_id")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -482,6 +498,26 @@ public static class AuthoritativeQuestCatalog
             if (quest.TurnInActivationOnly && quest.ActivateOnRoute)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} activation-only turn-in cannot activate on route entry.");
+            if (quest.TurnInAlternateItemId != 0
+                && quest.TurnInActivationOnly)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} activation-only turn-in cannot declare an alternate item.");
+            if (quest.TurnInAlternateItemId != 0
+                && !items.TryGet(quest.TurnInAlternateItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown alternate turn-in item {quest.TurnInAlternateItemId}.");
+            if (quest.TurnInAlternateItemId != 0
+                && quest.TurnInAlternateItemId == quest.TurnInItemId)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} cannot use the same item for primary and alternate turn-in.");
+            if (quest.TurnInAlternateItemId != 0
+                && quest.TurnInAlternateMessageId == 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} alternate turn-in requires a dialogue message.");
+            if (quest.TurnInAlternateItemId == 0
+                && quest.TurnInAlternateMessageId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares an alternate turn-in message without an item.");
             if (!quest.TurnInActivationOnly
                 && (quest.TurnInItemId == 0
                     || !items.TryGet(quest.TurnInItemId, out _)))

@@ -730,6 +730,10 @@ message QuestSnapshot {
 	bool turn_in_on_completion = 15;
 	// Native _qvar2 marker required and written for the completion-stage interaction.
 	optional int32 turn_in_completion_variable2 = 16;
+	// Optional alternate item consumed by the same towner without changing quest state.
+	optional uint32 turn_in_alternate_item_id = 17;
+	// Dialogue identity emitted after consuming the alternate towner item.
+	optional int32 turn_in_alternate_message_id = 18;
 }
 
 message ProjectileSnapshot {
