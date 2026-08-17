@@ -203,6 +203,9 @@ Status date: 2026-08-16
   at each direct or splash impact, while validated `projectile_damage` values
   remain fixed overrides.
 
+- Mapped `MagmaBall` projectiles now preserve the native three-velocity-quanta
+  launch offset before their first authoritative simulation tick.
+
 - Mega delegated Skeleton movement-delay admission is now validated
   `mega_delay_chance_base` and `mega_delay_chance_intelligence_scale`
   monster-type data, preserving the native 35-minus-four-times-intelligence

@@ -584,6 +584,8 @@ native delay instead of falling through to generic melee.
 Mapped monster Fireball rows retain the native per-impact monster damage roll;
 positive `projectile_damage` values instead provide a fixed direct and splash
 payload.
+The validated `MagmaBall` row also retains the native three-velocity-quanta
+launch offset before the first simulation tick.
 Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserves
 Mega's distance- and intelligence-based special-attack admission, speed-32
 Inferno controller, three-segment limit, and monster damage roll through the

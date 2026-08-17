@@ -803,6 +803,9 @@ Mapped monster Fireball impacts now roll the native monster damage range at each
 direct or splash collision; a positive validated `projectile_damage` remains a
 fixed override, and player-cast Fireball behavior is unchanged.
 
+Mapped `MagmaBall` projectiles retain the native three-velocity-quanta launch
+offset before the first authoritative tick.
+
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.
