@@ -678,6 +678,9 @@ public sealed class DiabloCombatCommandProcessor
                 arrowPositionX = player.PositionX;
                 arrowPositionY = player.PositionY;
             }
+            var (arrowSpeed, arrowLifetime) = ResolveWeaponArrowTravelTiming(
+                player,
+                targetDistance);
             var projectile = new AuthoritativeProjectile(
                 AllocateProjectileEntityId(),
                 player.EntityId == 0 ? 1U : player.EntityId,
@@ -691,7 +694,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
                 AuthoritativeDamageType.Physical,
                 0,
-                checked((uint)Math.Max(1, targetDistance)),
+                arrowLifetime,
                 allowZeroSpellId: true) {
                 Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
                 DamageQ6 = Math.Max(0, damageQ6),
@@ -701,6 +704,7 @@ public sealed class DiabloCombatCommandProcessor
                 PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
                 DoppelgangerProc = doppelgangerProc,
                 ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+                Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);
             ApplyHellfireWeaponDecay(player);
@@ -867,6 +871,9 @@ public sealed class DiabloCombatCommandProcessor
                 arrowPositionX = player.PositionX;
                 arrowPositionY = player.PositionY;
             }
+            var (arrowSpeed, arrowLifetime) = ResolveWeaponArrowTravelTiming(
+                player,
+                targetDistance);
             var projectile = new AuthoritativeProjectile(
                 AllocateProjectileEntityId(),
                 player.EntityId == 0 ? 1U : player.EntityId,
@@ -880,7 +887,7 @@ public sealed class DiabloCombatCommandProcessor
                 DiabloFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
                 AuthoritativeDamageType.Physical,
                 0,
-                checked((uint)Math.Max(1, targetDistance)),
+                arrowLifetime,
                 allowZeroSpellId: true) {
                 Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
                 DamageQ6 = Math.Max(0, damageQ6),
@@ -890,11 +897,30 @@ public sealed class DiabloCombatCommandProcessor
                 PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
                 DoppelgangerProc = doppelgangerProc,
                 ActivationDelayTicks = arrowIndex == 0 ? 0U : 2U,
+                Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);
             ApplyHellfireWeaponDecay(player);
         }
         return DiabloCombatIntentResult.Accepted;
+    }
+
+    /** Native AddArrow velocity and the corresponding tile-travel lifetime. */
+    private (int Speed, uint Lifetime) ResolveWeaponArrowTravelTiming(
+        AuthoritativePlayerState player,
+        int targetDistance)
+    {
+        if (!HasUsableEquipmentFlag(
+                player,
+                AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag)) {
+            return (0, checked((uint)Math.Max(1, targetDistance)));
+        }
+
+        var speed = random.RandomIntBetween(16, 47);
+        var travelTiles = Math.Max(0, targetDistance - 1);
+        var travelTicks = checked(
+            (travelTiles * 32 + speed - 1) / speed);
+        return (speed, checked((uint)(travelTicks + 1)));
     }
 
     /** Applies native fire/lightning weapon channels after a physical hit. */
@@ -9441,30 +9467,49 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
         if (projectile.RemainingTicks > 1) {
-            var nextX = projectile.PositionX
-                + Math.Sign(projectile.TargetX - projectile.PositionX);
-            var nextY = projectile.PositionY
-                + Math.Sign(projectile.TargetY - projectile.PositionY);
-            if (world.IsMissileBlocked(projectile.LevelId, nextX, nextY)
-                || !world.HasMissileLineOfSight(
-                    projectile.LevelId,
-                    projectile.PositionX,
-                    projectile.PositionY,
-                    nextX,
-                    nextY)) {
-                BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
-                world.Projectiles.Remove(projectile.EntityId);
-                return;
-            }
-            projectile.PositionX = nextX;
-            projectile.PositionY = nextY;
-            if (TryResolveWeaponArrowTileCollision(
+            // Legacy hand-built fixtures used Speed=1 as a one-step marker;
+            // only native RandomArrowVelocity values change the cadence.
+            var velocity = projectile.Speed is >= 16 and <= 47
+                ? projectile.Speed
+                : 32;
+            var travelBudget = checked(velocity + projectile.PathTicks);
+            var travelSteps = travelBudget / 32;
+            projectile.PathTicks = travelBudget % 32;
+            if (travelSteps == 0
+                && TryResolveWeaponArrowTileCollision(
                     tick,
                     projectile,
                     players,
                     events)) {
                 world.Projectiles.Remove(projectile.EntityId);
                 return;
+            }
+            for (var step = 0; step < travelSteps; step++) {
+                var nextX = projectile.PositionX
+                    + Math.Sign(projectile.TargetX - projectile.PositionX);
+                var nextY = projectile.PositionY
+                    + Math.Sign(projectile.TargetY - projectile.PositionY);
+                if (world.IsMissileBlocked(projectile.LevelId, nextX, nextY)
+                    || !world.HasMissileLineOfSight(
+                        projectile.LevelId,
+                        projectile.PositionX,
+                        projectile.PositionY,
+                        nextX,
+                        nextY)) {
+                    BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
+                projectile.PositionX = nextX;
+                projectile.PositionY = nextY;
+                if (TryResolveWeaponArrowTileCollision(
+                        tick,
+                        projectile,
+                        players,
+                        events)) {
+                    world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
             }
             projectile.RemainingTicks--;
             return;

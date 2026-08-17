@@ -469,7 +469,9 @@ public sealed class AuthoritativeUniqueItemCatalog
                 FireMaxDamage = 0,
             },
             "MULT_ARROWS" => state with { Flags = state.Flags | 0x00000200U },
-            "RNDARROWVEL" => state with { Flags = state.Flags | 0x00000004U },
+            "RNDARROWVEL" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
+            },
             "RNDSTEALLIFE" => state with { Flags = state.Flags | 0x00000002U },
             "STEALMANA" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00002000U : 0x00004000U) },
             "STEALLIFE" => state with { Flags = state.Flags | (power.Value1 == 3 ? 0x00008000U : 0x00010000U) },

@@ -505,7 +505,9 @@ public sealed class AuthoritativeItemAffixCatalog
             "FASTATTACK" => state with { Flags = state.Flags | (affix.Value1 switch { 1 => 0x00020000U, 2 => 0x00040000U, 3 => 0x00080000U, _ => 0x00100000U }) },
             "FASTRECOVER" => state with { Flags = state.Flags | (affix.Value1 switch { 1 => 0x00200000U, 2 => 0x00400000U, _ => 0x00800000U }) },
             "FASTBLOCK" => state with { Flags = state.Flags | 0x01000000U },
-            "RNDARROWVEL" => state with { Flags = state.Flags | 0x00000004U },
+            "RNDARROWVEL" => state with {
+                Flags = state.Flags | AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
+            },
             "SETDAM" => state with { MinDamage = affix.Value1, MaxDamage = affix.Value2 },
             "SETDUR" => state with { Durability = affix.Value1, MaxDurability = affix.Value1 },
             "NOMINSTR" => state with { MinimumStrength = 0 },

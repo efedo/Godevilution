@@ -1159,6 +1159,41 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RandomArrowVelocityUsesAResumableNativeSpeedAndTravelRemainder()
+    {
+        var target = new AuthoritativeCombatTarget(9, 10, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+            Flags = AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0x12345678));
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.InRange(projectile.Speed, 16, 47);
+        var travelTiles = 4;
+        var expectedLifetime = (uint)((travelTiles * 32 + projectile.Speed - 1) / projectile.Speed + 1);
+        Assert.Equal(expectedLifetime, projectile.RemainingTicks);
+        Assert.Equal(0, projectile.PathTicks);
+
+        processor.AdvanceTick(1, [player]);
+
+        var expectedSteps = projectile.Speed / 32;
+        Assert.Equal(5 + expectedSteps, projectile.PositionX);
+        Assert.Equal(projectile.Speed % 32, projectile.PathTicks);
+    }
+
+    [Fact]
     public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
     {
         var blocker = new AuthoritativeWorldObject(

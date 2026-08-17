@@ -933,7 +933,9 @@ public sealed partial class DiabloSimulation
                         || projectile.TargetEntityId == 0
                         || projectile.DamageType != AuthoritativeDamageType.Physical
                         || projectile.AreaRadius != 0
-                        || projectile.Speed != 0
+                        || projectile.Speed < 0
+                        || projectile.Speed > 47
+                        || projectile.Speed is > 0 and < 16
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.Damage != DiabloFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
                         || projectile.ActivationDelayTicks > 2
@@ -941,7 +943,8 @@ public sealed partial class DiabloSimulation
                         || projectile.VelocityY != 0
                         || projectile.OriginalDirection != 0
                         || projectile.PathIndex != 0
-                        || projectile.PathTicks != 0
+                        || projectile.PathTicks is < 0 or > 31
+                        || projectile.Speed == 0 && projectile.PathTicks != 0
                         || projectile.ImpactLifetime != 1
                         || projectile.ResistantDamageDivisor != 1
                         || projectile.EffectiveSpellLevel != 0

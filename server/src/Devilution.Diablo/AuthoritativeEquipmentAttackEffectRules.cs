@@ -30,6 +30,9 @@ public static class AuthoritativeEquipmentAttackEffectRules
     /** Native ItemSpecialEffect::MultipleArrows flag. */
     public const uint MultipleArrowsFlag = 1U << 9;
 
+    /** Native ItemSpecialEffect::RandomArrowVelocity flag. */
+    public const uint RandomArrowVelocityFlag = 1U << 2;
+
     /** Resource gains in the simulation's native Q6 unit. */
     public readonly record struct ResourceGain(int LifeQ6, int ManaQ6);
 

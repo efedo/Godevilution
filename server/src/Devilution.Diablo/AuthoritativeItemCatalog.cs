@@ -766,7 +766,7 @@ public sealed class AuthoritativeItemCatalog
         foreach (var effect in (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
             uint? flag = effect.ToUpperInvariant() switch {
                 "RANDOMSTEALLIFE" => 0x00000002U,
-                "RANDOMARROWVELOCITY" => 0x00000004U,
+                "RANDOMARROWVELOCITY" => AuthoritativeEquipmentAttackEffectRules.RandomArrowVelocityFlag,
                 "FIREARROWS" => AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag,
                 "FIREDAMAGE" => AuthoritativeEquipmentElementalDamageRules.FireDamageFlag,
                 "LIGHTNINGDAMAGE" => AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
