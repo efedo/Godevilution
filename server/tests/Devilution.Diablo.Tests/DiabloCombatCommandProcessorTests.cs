@@ -9349,6 +9349,65 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TorchantFireballRollsMonsterDamageAtImpactInsteadOfLaunch()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            aggroRange: 8,
+            minDamage: 3,
+            maxDamage: 9,
+            monsterLevel: 5,
+            nativeAi: "Torchant",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([CreateFireballSpell()]),
+            random: new DiabloRandom(0),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100,
+                monsterMagicToHitMonsterLevelScale: 0,
+                monsterMagicToHitPlayerLevelScale: 0,
+                monsterMagicToHitBaseBonus: 100,
+                monsterMagicDistancePenalty: 0),
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "Torchant",
+                    "Fireball",
+                    AuthoritativeProjectileBehavior.Fireball),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100,
+            characterLevel: 1);
+
+        processor.AdvanceTick(1, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(4, projectile.Damage);
+
+        var deliveries = new List<DiabloDirectedGameplayEvent>();
+        for (ulong tick = 2; tick < 64 && world.Projectiles.Count != 0; tick++)
+            deliveries.AddRange(processor.AdvanceTick(tick, [player]));
+
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7
+                && delivery.Event.AmountQ6 == 6 * DiabloFixedPointQ6.Scale);
+    }
+
+    [Fact]
     public void MegaAiFiresValidatedInfernoAndOwnsPersistentSegments()
     {
         var monster = new AuthoritativeCombatTarget(

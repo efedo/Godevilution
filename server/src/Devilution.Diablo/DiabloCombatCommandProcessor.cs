@@ -12811,12 +12811,15 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
+        var projectileDamage = ResolveMonsterMagicProjectileDamage(
+            projectile,
+            monster);
         var damageQ6 = checked(
             Math.Max(
                 1,
                 damageShifted
-                    ? random.RandomIntBetween(projectile.Damage, projectile.Damage)
-                    : projectile.Damage)
+                    ? random.RandomIntBetween(projectileDamage, projectileDamage)
+                    : projectileDamage)
                 * DiabloFixedPointQ6.Scale
             + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
                 * DiabloFixedPointQ6.Scale);
@@ -12845,6 +12848,21 @@ public sealed class DiabloCombatCommandProcessor
             && ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
             StartHit(target, targetClass, tick);
         return true;
+    }
+
+    /** Native monster Fireball rolls its damage range at each collision. */
+    private int ResolveMonsterMagicProjectileDamage(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget monster)
+    {
+        if (projectile.Behavior != AuthoritativeProjectileBehavior.Fireball
+            || !TryGetMonsterMissile(monster, out var missile)
+            || missile.ProjectileBehavior != AuthoritativeProjectileBehavior.Fireball
+            || missile.ProjectileDamage > 0)
+            return projectile.Damage;
+
+        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
+        return random.RandomIntBetween(damageRange.Minimum, damageRange.Maximum);
     }
 
     /** Native PlayerMHit branch used by the persistent AcidPuddle missile. */
