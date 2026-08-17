@@ -2760,6 +2760,61 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkSpawnChecksABlockedDestinationOnTheFollowingTick()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            100,
+            monsterLevel: 10,
+            aggroRange: 0);
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            monster.EntityId,
+            7,
+            117,
+            0,
+            0,
+            0,
+            3,
+            0,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            3,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+            Speed = 8,
+            VelocityX = 1 << 21,
+            VelocityY = 1 << 20,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, []);
+
+        Assert.Same(projectile, Assert.Single(world.Projectiles.Values));
+        Assert.Equal((1, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.False(blocker.Destroyed);
+
+        processor.AdvanceTick(2, []);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void HorkSpawnMissKeepsItsControllerForTheNextTick()
     {
         var monster = new AuthoritativeCombatTarget(

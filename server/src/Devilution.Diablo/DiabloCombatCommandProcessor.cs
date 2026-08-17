@@ -9955,15 +9955,8 @@ public sealed class DiabloCombatCommandProcessor
                         projectile.LevelId,
                         tile.X,
                         tile.Y)) {
-                    if (world.TryGetMissileBlockingObject(
-                            projectile.LevelId,
-                            tile.X,
-                            tile.Y,
-                            out var @object)
-                        && @object!.Breakable) {
-                        @object.Destroyed = true;
-                    }
-                    world.Projectiles.Remove(projectile.EntityId);
+                    // Native ProcessHorkSpawn moves into the blocked tile and
+                    // checks it on the following tick before expiry/summoning.
                     return;
                 }
             }
