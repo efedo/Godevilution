@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-magic-autonomous",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-magic-autonomous-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Lich",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "ac7d7040e39af375490a125e188a460683d25c60d2823925fa6560adf764eb57" },
+    { "tick": 27, "state_sha256": "9c1d104ea03def4435486565055141aeb4074d0f4c65e4229108167a1aaab9f9" }
+  ]
+}
