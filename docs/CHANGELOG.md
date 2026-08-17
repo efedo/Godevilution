@@ -72,6 +72,8 @@ All notable changes to this fork are documented below.
   travel, deterministic hit RNG, Q6 damage, and impact-phase parity.
 - Add a seeded Lich MonsterMagic miss replay covering preserved player state,
   projectile travel, and failed-collision identity parity.
+- Add multiplayer Lich MonsterMagic replay coverage for secondary-participant
+  target selection, impact damage, and complete participant-state hashing.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.

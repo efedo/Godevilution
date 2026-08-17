@@ -69,9 +69,9 @@ covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
 and secondary-participant routing. Companion fixtures cover autonomous
 GoatRanged nearest-player selection, SkeletonRanged clear-lane admission, and
 Succubus BloodStar admission/travel/impact state, including secondary-player
-block resolution, and Lich-family MonsterMagic admission, hit, and miss
-resolution; broader monster-AI branches and multi-actor selection remain future
-replay work.
+block resolution, and Lich-family MonsterMagic admission, hit, miss, and
+secondary-participant impact resolution; broader monster-AI branches and
+multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -133,9 +133,9 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 82 cases, including seeded and autonomous MonsterArrow source
+gate now contains 83 cases, including seeded and autonomous MonsterArrow source
 coverage, autonomous Succubus BloodStar admission/impact/block lanes, and a
-Lich-family MonsterMagic admission/hit/miss lane;
+Lich-family MonsterMagic admission/hit/miss/secondary-impact lane;
 the managed replay suite passes locally, while native execution still requires
 the C++ toolchain described below.
 Remaining replay work is broader fixture coverage rather than a known hash
@@ -152,8 +152,8 @@ commands, a secondary-session melee attack timeline, multi-level world
 occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
 SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
 travel, player impact, and secondary-player block, a Lich-family MonsterMagic
-impact and miss, and a multiplayer MonsterArrow impact against the secondary
-participant. The native and C# runners
+impact, miss, and secondary-participant impact, and a multiplayer MonsterArrow
+impact against the secondary participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -432,6 +432,8 @@ Notable shared fixtures include:
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
 - `gameplay-monster-magic-miss.json` for a seeded MonsterMagic miss that
   preserves player life, projectile travel, and failed-collision identity;
+- `gameplay-monster-magic-secondary-impact.json` for secondary-participant
+  target selection, Q6 impact damage, and complete participant hashing;
 - `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
   routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept
