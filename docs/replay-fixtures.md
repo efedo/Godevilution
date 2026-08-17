@@ -126,9 +126,11 @@ fixture.
 
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
-Ordinary-death and Firebolt, Fireball, Lightning, Flash, and seeded MonsterArrow
-spell/projectile-timeline checkpoints pass in both runners; the native replay
-gate reports 74/74 tests.
+Ordinary-death and Firebolt, Fireball, Lightning, and Flash
+spell/projectile-timeline checkpoints pass in both runners. The native replay
+gate now contains 74 cases, including seeded MonsterArrow source coverage;
+the managed replay suite passes locally, while native execution still requires
+the C++ toolchain described below.
 Remaining replay work is broader fixture coverage rather than a known hash
 mismatch.
 
@@ -140,8 +142,8 @@ pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
-occupancy, and seeded MonsterArrow travel/impact/removal. The native and C# runners preserve
-the same baseline resources,
+occupancy, and seeded MonsterArrow travel/impact/removal. The native and C# runners
+are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
 world items in their canonical projections. Spell fixtures now reject unowned

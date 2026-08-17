@@ -90,7 +90,9 @@ Status date: 2026-08-17
 
 - Seeded MonsterArrow projectiles now advance through native travel, player
   impact damage, and the retained impact phase in both replay runners; a shared
-  fixture checks the three-tick lifecycle and canonical checkpoint hashes.
+  fixture checks the three-tick lifecycle and canonical checkpoint hashes. The
+  managed replay suite passes locally; native GTest source coverage is added but
+  awaits a local C++ toolchain run.
 
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
