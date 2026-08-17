@@ -28,6 +28,9 @@ All notable changes to this fork are documented below.
 - Refresh live Godot overlay fixtures to the active `devilution.diablo@1.324.0`
   schema so the protocol-client integration suite matches shipped content.
 
+- Route native Counselor Flash projectiles through the validated stable `flash`
+  spell identity, retaining numeric ID `4` for legacy hand-built simulations.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

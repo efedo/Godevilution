@@ -8903,6 +8903,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CounselorFlashLayersUseTheConfiguredStableSpellIdentity()
+    {
+        const uint flashSpellId = 99;
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            20,
+            maxHitPoints: 20,
+            monsterLevel: 5,
+            aggroRange: 8,
+            levelId: 1,
+            nativeAi: "Counselor",
+            intelligence: 0);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            spells: new AuthoritativeSpellCatalog([
+                CreateFlashSpell() with { SpellId = flashSpellId },
+            ]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
+            random: new DiabloRandom(0),
+            monsterFlashSpellId: flashSpellId);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 1,
+            positionY: 0,
+            levelId: 1,
+            life: 6_400,
+            lifeMaximum: 6_400);
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(2, world.Projectiles.Count);
+        Assert.All(world.Projectiles.Values, projectile => Assert.Equal(flashSpellId, projectile.SpellId));
+    }
+
+    [Fact]
     public void CounselorUsesNativeRangedAdmissionBeforeItsMappedMissile()
     {
         var monster = new AuthoritativeCombatTarget(
@@ -20266,7 +20308,8 @@ public sealed class DiabloCombatCommandProcessorTests
         bool useNativePlayerActionTiming = false,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeWorldRules? worldRules = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId)
     {
         if (playerAnimations is null && playerClasses is not null)
             playerAnimations = LoadShippedPlayerAnimations(playerClasses);
@@ -20288,7 +20331,8 @@ public sealed class DiabloCombatCommandProcessorTests
             monsterTypes: monsterTypes,
             difficulty: difficulty,
             worldRules: worldRules,
-            spellBooks: spellBooks);
+            spellBooks: spellBooks,
+            monsterFlashSpellId: monsterFlashSpellId);
     }
 
     private static AuthoritativeMonsterMissileCatalog CreateArrowMissileCatalog(

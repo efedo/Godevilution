@@ -18,6 +18,8 @@ public enum DiabloDifficulty
 /** Construction data for one protocol-independent Diablo simulation. */
 public sealed class DiabloSimulationOptions
 {
+    public const uint LegacyMonsterFlashSpellId = 4;
+
     public DiabloSimulationOptions(StoreCatalog storeCatalog, IDiabloStoreRules storeRules)
     {
         StoreCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
@@ -60,6 +62,9 @@ public sealed class DiabloSimulationOptions
     public IReadOnlyList<AuthoritativeCorpse>? Corpses { get; init; }
 
     public AuthoritativeSpellCatalog? Spells { get; init; }
+
+    /** Validated stable spell identity used by native Counselor Flash layers. */
+    public uint MonsterFlashSpellId { get; init; } = LegacyMonsterFlashSpellId;
 
     /** Validated native dynamic spell-book metadata used by item rewards. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; init; }
@@ -216,7 +221,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.MonsterTypes,
                 options.Difficulty,
                 options.WorldRules,
-                options.SpellBooks),
+                options.SpellBooks,
+                options.MonsterFlashSpellId),
             spells,
             random,
             combatRules,

@@ -26,6 +26,7 @@ public sealed class DiabloCombatCommandProcessor
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private readonly AuthoritativeMonsterMissileCatalog? monsterMissiles;
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
+    private readonly uint monsterFlashSpellId;
     private readonly AuthoritativePlayerDamageResolver playerDamage;
     private readonly DiabloWorldCommandProcessor? worldCommands;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
@@ -143,7 +144,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeWorldRules? worldRules = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        uint monsterFlashSpellId = DiabloSimulationOptions.LegacyMonsterFlashSpellId)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.spells = spells ?? throw new ArgumentNullException(nameof(spells));
@@ -165,6 +167,9 @@ public sealed class DiabloCombatCommandProcessor
         this.monsterMissiles = monsterMissiles;
         this.monsterSpawnPlanner = monsterSpawnPlanner;
         this.monsterTypes = monsterTypes;
+        this.monsterFlashSpellId = monsterFlashSpellId == 0
+            ? throw new ArgumentOutOfRangeException(nameof(monsterFlashSpellId))
+            : monsterFlashSpellId;
         this.worldRules = worldRules?.Validate();
         this.playerDamage = playerDamage ?? new AuthoritativePlayerDamageResolver(spells);
         this.worldCommands = worldCommands;
@@ -3994,7 +3999,7 @@ public sealed class DiabloCombatCommandProcessor
     /** Native CounselorAi emits fixed-damage Flash layers from the monster. */
     private void CreateMonsterFlashLayers(AuthoritativeCombatTarget monster)
     {
-        const uint flashSpellId = 4;
+        var flashSpellId = monsterFlashSpellId;
         var hasFlashSpell = spells.TryGet(flashSpellId, out var flashSpell);
         var damageType = hasFlashSpell
             ? flashSpell.DamageType

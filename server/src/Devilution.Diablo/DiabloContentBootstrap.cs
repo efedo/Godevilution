@@ -376,6 +376,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var repairAbilitySpellId = ResolveAbilityId(stableIds, "repair");
         var rechargeAbilitySpellId = ResolveAbilityId(stableIds, "recharge");
         var trapDisarmAbilitySpellId = ResolveAbilityId(stableIds, "trap_disarm");
+        var monsterFlashSpellId = ResolveSpellId(stableIds, "flash");
         if (spells is not null)
             itemCatalog!.ValidateSpellReferences(spells);
         if (world is not null)
@@ -615,6 +616,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             RepairAbilitySpellId = repairAbilitySpellId,
             RechargeAbilitySpellId = rechargeAbilitySpellId,
             TrapDisarmAbilitySpellId = trapDisarmAbilitySpellId,
+            MonsterFlashSpellId = monsterFlashSpellId,
             AdriaStoreId = worldRules.AdriaStoreId,
             PlayerClasses = playerClasses,
             PlayerAnimations = playerAnimations,
@@ -683,5 +685,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return stableIds.TryResolve("ability", symbol, out var abilityId)
             ? abilityId
             : stableIds.Resolve("spell", symbol);
+    }
+
+    private static uint ResolveSpellId(StableContentIdCatalog? stableIds, string symbol)
+    {
+        if (stableIds is null)
+            return DiabloSimulationOptions.LegacyMonsterFlashSpellId;
+        return stableIds.Resolve("spell", symbol);
     }
 }
