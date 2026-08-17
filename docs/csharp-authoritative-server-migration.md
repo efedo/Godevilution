@@ -857,9 +857,10 @@ the validated active native spell-table span and walk native spell IDs
 cyclically before mapping the selected spell to its stable content ID; explicit
 spell references retain their direct behavior. `ReadBookRequested` now owns
 native intelligence gating, learned-spell level mutation, mana refund, and book
-consumption through the shared protocol. The selector also applies native
-single-player exclusions for Resurrect and Heal Other while retaining both in
-multiplayer. Store rows, static/procedural monster drops, and quest rewards now
+consumption through the shared protocol. The selector derives single-player
+exclusions from validated `Resurrection` and `HealOther` spell behavior while
+retaining native-ID fallback for older packs and both spells in multiplayer.
+Store rows, static/procedural monster drops, and quest rewards now
 retain their supplied native book-template identity while passing it through
 the same generator, so the server owns dynamic spell selection, names, costs,
 and cursor projections before stock, quest-reward, or world-item snapshots are

@@ -33,6 +33,10 @@ Status date: 2026-08-17
   and reveal-gated trap presentation families, while older or unknown metadata
   retains the generic Godot object path.
 
+- Dynamic spell-book selection now derives single-player exclusions from the
+  validated `Resurrection` and `HealOther` spell behaviors, while retaining the
+  native-ID fallback needed by older content packs and multiplayer availability.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
