@@ -532,6 +532,10 @@ Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
 world-item presentation. `Gold` and `Ear` identify the shipped currency and
 dynamic PvP-ear families; zero or unknown values retain generic item rendering,
 and clients do not infer these identities from native numeric fields.
+`ObjectSnapshot.presentation_kind` is additive server-owned object metadata for
+the shrine, quest, breakable, and revealed-trap visual families. Trap metadata
+is emitted only when the existing trap-reveal boundary permits it; zero or
+unknown values retain generic object rendering.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The

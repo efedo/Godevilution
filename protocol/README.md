@@ -95,6 +95,10 @@ Windows toolchain command.
   family. `GOLD` and `EAR` identify dynamic item visuals without making the
   client infer item identity from native numeric fields; zero or unknown values
   retain the generic item presentation.
+- `ObjectSnapshot.presentation_kind` is additive server-owned object
+  presentation metadata. `SHRINE`, `QUEST`, and `BREAKABLE` identify safe
+  visual families; `TRAP` is emitted only when trap state is already revealed.
+  Zero or unknown values retain the generic object presentation.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

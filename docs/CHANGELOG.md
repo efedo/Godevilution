@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Add a local standalone-server operator console with status, transactional
   ruleset reload, help, and graceful quit commands.
 
+- Add additive server-owned object presentation families for shrines, quests,
+  breakables, and revealed traps, with generic compatibility fallback.
+
 - Add protocol presentation value `FLASH` and project native Flash behaviors
   `5`, `6`, and `7` through the server and Godot client as a dedicated family.
 

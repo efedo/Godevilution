@@ -29,6 +29,10 @@ Status date: 2026-08-17
   content/module candidates and uses the existing transactional session
   migration barrier, while failed candidates leave the active ruleset intact.
 
+- Object snapshots now project additive server-owned shrine, quest, breakable,
+  and reveal-gated trap presentation families, while older or unknown metadata
+  retains the generic Godot object path.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
