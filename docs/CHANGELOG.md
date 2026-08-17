@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Preserve native player-arrow class and Hellfire attack-speed velocity bonuses
   through resumable `Speed`/`PathTicks` state and the shared replay gate.
 
+- Preserve Hellfire blocked player-arrow impact state and native rotation RNG
+  consumption through the authoritative projectile lifecycle.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

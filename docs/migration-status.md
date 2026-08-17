@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,214 tests and the server suite passes all 309 tests.
+  all 1,215 tests and the server suite passes all 309 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
@@ -54,6 +54,10 @@ Status date: 2026-08-16
   attack-speed modifiers in their persisted pixel velocity. The compact replay
   fixture and both C++/C# runners retain the same fractional cadence and
   checkpoint hashes.
+
+- Hellfire player-versus-player arrows now retain the native blocked-missile
+  impact phase and consume the native rotation RNG draw instead of disappearing
+  immediately on a shield block.
 
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.

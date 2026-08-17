@@ -560,7 +560,8 @@ velocity, including class-level and Hellfire Quick/Fast/Faster/Fastest bonuses;
 the fractional tile remainder and `RemainingTicks` is derived from that speed,
 so cadence and collision path survive snapshots, saves, hashes, and protocol
 projection without a new wire field. Legacy arrows retain the default 32-pixel
-one-tile cadence.
+one-tile cadence. Hellfire PvP shield blocks retain the arrow's authoritative
+impact phase and native rotation RNG draw before the projectile is retired.
 
 Persistent Acid puddles check their occupied tile on every active tick. A
 breakable missile-blocking object is destroyed through the same server-owned
