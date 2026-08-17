@@ -69,8 +69,8 @@ covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
 and secondary-participant routing. Companion fixtures cover autonomous
 GoatRanged nearest-player selection, SkeletonRanged clear-lane admission, and
 Succubus BloodStar admission/travel/impact state, including secondary-player
-block resolution; broader monster-AI branches and multi-actor selection remain
-future replay work.
+block resolution, and Lich-family MonsterMagic admission/impact; broader
+monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -132,9 +132,9 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 80 cases, including seeded and autonomous MonsterArrow source
-coverage plus the autonomous Succubus BloodStar admission, impact, and block
-lanes;
+gate now contains 81 cases, including seeded and autonomous MonsterArrow source
+coverage, autonomous Succubus BloodStar admission/impact/block lanes, and a
+Lich-family MonsterMagic lane;
 the managed replay suite passes locally, while native execution still requires
 the C++ toolchain described below.
 Remaining replay work is broader fixture coverage rather than a known hash
@@ -150,7 +150,8 @@ autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
 occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
 SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
-travel, player impact, and secondary-player block, and a multiplayer MonsterArrow impact against the secondary
+travel, player impact, and secondary-player block, a Lich-family MonsterMagic
+impact, and a multiplayer MonsterArrow impact against the secondary
 participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
@@ -426,6 +427,8 @@ Notable shared fixtures include:
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,
   shield-capable block admission, block animation timing, and RNG parity;
+- `gameplay-monster-magic-autonomous.json` for validated Lich-family
+  MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
 - `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
   routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept

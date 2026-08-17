@@ -68,6 +68,8 @@ All notable changes to this fork are documented below.
   hit RNG, Q6 player damage, impact-phase retention, and removal-boundary parity.
 - Add secondary-player BloodStar block replay coverage for shield admission,
   block-animation timing, and deterministic hit/block RNG parity.
+- Add Lich-family MonsterMagic replay coverage for validated admission, native
+  travel, deterministic hit RNG, Q6 damage, and impact-phase parity.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
