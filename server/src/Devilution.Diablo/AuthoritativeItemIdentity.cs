@@ -40,6 +40,7 @@ internal static class AuthoritativeItemIdentity
     public static string ReadSymbol(TsvRow row, string symbolColumn = "item_symbol")
         => row.TryGet(symbolColumn, out var symbol)
             && !string.IsNullOrWhiteSpace(symbol)
+            && !string.Equals(symbol, "NONE", StringComparison.OrdinalIgnoreCase)
             ? symbol
             : string.Empty;
 

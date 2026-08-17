@@ -147,9 +147,9 @@ mushroom state check.
 The native authoritative adapter now submits `TurnInQuestRequested` when an
 active quest's content-declared towner is presented. The server owns adjacency,
 native conversation variables, required-item consumption, quest completion,
-unique-reward spawning, and the dialogue event; the adapter projects that
+normal or unique reward spawning, and the dialogue event; the adapter projects that
 dialogue into the native quest-text UI. The Hellfire Anvil of Fury/Blacksmith
-path is the first shipped definition. Legacy local towner behavior stays
+and Little Girl paths are the first shipped definitions. Legacy local towner behavior stays
 available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the

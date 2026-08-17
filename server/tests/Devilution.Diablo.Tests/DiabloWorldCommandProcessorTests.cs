@@ -1113,6 +1113,48 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTownerTurnInSpawnsConfiguredNormalItemReward()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 1, 2, 0, 20, 20, 1, 1, true),
+            new AuthoritativeItemDefinition(171, 13, 1200, 1200, 0, 0, 0, 0, 0, 1, 1, false),
+        ]);
+        var requiredItem = items.Generate(7, 42);
+        var player = CreatePlayer(
+            positionX: 77,
+            positionY: 43,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, requiredItem.CreateInfo, 0, 0, requiredItem)]);
+        var quest = new AuthoritativeQuestState(
+            3019,
+            17,
+            1,
+            turnInTownerId: 11,
+            turnInLevelId: 0,
+            turnInPositionX: 77,
+            turnInPositionY: 43,
+            turnInItemId: 7,
+            turnInRewardItemId: 171,
+            turnInRewardItemLevel: 13,
+            turnInRewardPositionX: 77,
+            turnInRewardPositionY: 43);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3019, 11),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(171U, reward.State.StableItemId);
+        Assert.Equal((77, 43), (reward.PositionX, reward.PositionY));
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(

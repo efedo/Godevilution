@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.326.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.327.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1428,7 +1428,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.326.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.327.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2036,6 +2036,19 @@ public sealed class ShippedContentTests
             anvilQuest.TurnInRewardItemLevel,
             anvilQuest.TurnInRewardPositionX,
             anvilQuest.TurnInRewardPositionY));
+        var girlQuest = Assert.Single(quests, quest => quest.QuestId == 3019);
+        Assert.Equal((283, 285, 11, 0U, 77, 43, 2102U, 171U, 13, 77, 43), (
+            girlQuest.MessageId,
+            girlQuest.TurnInMessageId,
+            girlQuest.TurnInTownerId,
+            girlQuest.TurnInLevelId,
+            girlQuest.TurnInPositionX,
+            girlQuest.TurnInPositionY,
+            girlQuest.TurnInItemId,
+            girlQuest.TurnInRewardItemId,
+            girlQuest.TurnInRewardItemLevel,
+            girlQuest.TurnInRewardPositionX,
+            girlQuest.TurnInRewardPositionY));
         var hellfireCursors = AuthoritativeItemCursorCatalog.LoadTsv(
             "item_cursor_graphics.tsv",
             composed.GetRequiredTable("item_cursor_graphics.tsv").ToCanonicalTsv());

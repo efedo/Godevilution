@@ -1313,6 +1313,22 @@ public sealed class DiabloWorldCommandProcessor
                 0,
                 rewardState);
         }
+        if (quest.TurnInRewardItemId != 0) {
+            var itemSeed = AllocateGoldStackSeed();
+            var rewardState = items.Generate(
+                quest.TurnInRewardItemId,
+                itemSeed,
+                quest.TurnInRewardItemLevel);
+            var entityId = AllocateWorldItemEntityId([player]);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                quest.TurnInLevelId,
+                quest.TurnInRewardPositionX,
+                quest.TurnInRewardPositionY,
+                itemSeed,
+                checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                rewardState);
+        }
 
         return quest.TurnInMessageId == 0
             ? DiabloWorldIntentResult.Accepted

@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend content-owned towner turn-ins with validated normal-item rewards.
+  Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
+  server generates the authored item at the native reward level and position.
+  Hellfire Little Girl now consumes Theodore and creates the level-13 amulet
+  reward through `TurnInQuestRequested`.
+
 - Route content-declared quest-object effects through
   `OperateObjectRequested`. The native client now identifies active
   `QuestSequence` and `QuestItemCompletion` objects from authoritative

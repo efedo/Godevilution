@@ -113,7 +113,8 @@ public sealed class AuthoritativeQuestState
         int turnInRewardItemLevel = 0,
         int turnInRewardPositionX = 0,
         int turnInRewardPositionY = 0,
-        int turnInMessageId = 0)
+        int turnInMessageId = 0,
+        uint turnInRewardItemId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -178,6 +179,7 @@ public sealed class AuthoritativeQuestState
         TurnInRewardPositionX = turnInRewardPositionX;
         TurnInRewardPositionY = turnInRewardPositionY;
         TurnInMessageId = turnInMessageId;
+        TurnInRewardItemId = turnInRewardItemId;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -237,6 +239,8 @@ public sealed class AuthoritativeQuestState
     public int TurnInRewardItemLevel { get; }
     public int TurnInRewardPositionX { get; }
     public int TurnInRewardPositionY { get; }
+    /** Optional normal item generated at the native towner position. */
+    public uint TurnInRewardItemId { get; }
     /** Optional native dialogue identity emitted after a successful turn-in. */
     public int TurnInMessageId { get; }
 }
@@ -320,7 +324,12 @@ public static class AuthoritativeQuestCatalog
                 turnInRewardItemLevel: row.OptionalInt32("turn_in_reward_item_level"),
                 turnInRewardPositionX: row.OptionalInt32("turn_in_reward_position_x"),
                 turnInRewardPositionY: row.OptionalInt32("turn_in_reward_position_y"),
-                turnInMessageId: row.OptionalInt32("turn_in_message_id")) {
+                turnInMessageId: row.OptionalInt32("turn_in_message_id"),
+                turnInRewardItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_reward_item_id",
+                    "turn_in_reward_item_symbol")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -361,6 +370,13 @@ public static class AuthoritativeQuestCatalog
                 && !uniqueItems.TryGet(quest.TurnInRewardUniqueId, out _))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown turn-in unique reward {quest.TurnInRewardUniqueId}.");
+            if (quest.TurnInRewardItemId != 0
+                && !items.TryGet(quest.TurnInRewardItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown turn-in item reward {quest.TurnInRewardItemId}.");
+            if (quest.TurnInRewardUniqueId != 0 && quest.TurnInRewardItemId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares both a turn-in unique reward and item reward.");
         }
     }
 
@@ -376,7 +392,7 @@ public static class AuthoritativeQuestCatalog
                     quest.TurnInLevelId,
                     quest.TurnInPositionX,
                     quest.TurnInPositionY)
-                || (quest.TurnInRewardUniqueId != 0
+                || ((quest.TurnInRewardUniqueId != 0 || quest.TurnInRewardItemId != 0)
                     && !world.IsWalkable(
                         quest.TurnInLevelId,
                         quest.TurnInRewardPositionX,

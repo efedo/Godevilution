@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.326.0` schema in
+It declares its identity and `devilution.diablo@1.327.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1400,13 +1400,20 @@ protocol projects the accepting towner as optional
 `QuestSnapshot.turn_in_towner_id`, allowing native clients to route active
 turn-ins without hardcoded quest/towner pairs.
 
+Schema 1.327 adds optional normal-item turn-in rewards through
+`turn_in_reward_item_id`/`turn_in_reward_item_symbol`. The server generates the
+validated item at the authored reward position using the native reward level;
+unique and normal-item rewards are mutually exclusive. The Hellfire Little
+Girl path is the first shipped normal-item reward and consumes Theodore before
+creating a level-13 amulet.
+
 The shipped Hellfire pack adds a content-owned Hive entrance projection: Rune
 Bomb completion objects consume the normalized bomb through
 `OperateObjectRequested`, and the town-to-Nest warp remains gated by Farmer's
 Orchard completion. It also maps Magic Rock pickup to the existing validated
 item-to-quest transition hook, along with Anvil of Fury pickup activating the
 Anvil quest. Optic Amulet and Arkaine's Valor rows complete their active
-quests; these rows use the 1.326 table schema. CompleteQuest effects
+quests; these rows use the 1.327 table schema. CompleteQuest effects
 are ignored while the referenced quest is inactive, preserving the native
 pickup precondition.
 
@@ -2197,7 +2204,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.326.0"
+    "version": "1.327.0"
   },
   "dependencyConstraints": [
     {
@@ -2229,7 +2236,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.326.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.327.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
