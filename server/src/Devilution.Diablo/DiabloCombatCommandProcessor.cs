@@ -13445,7 +13445,9 @@ public sealed class DiabloCombatCommandProcessor
                 - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
-        var damageQ6 = target.Life / damageHitPointsDivisor;
+        // Native Plr2PlrMHit computes Bone Spirit damage from current life and
+        // then applies the shared non-arrow half-damage step.
+        var damageQ6 = target.Life / damageHitPointsDivisor / 2;
         if (resistance > 0) {
             damageQ6 -= damageQ6 * resistance / 100;
         } else if (blockRoll < blockChance) {
