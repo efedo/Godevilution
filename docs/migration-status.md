@@ -1667,8 +1667,9 @@ Status date: 2026-08-17
 - Schema 1.323 adds optional `procedural_levels.tsv` definitions. Activation
   materializes deterministic connected geometry from each row's generation seed
   combined with the server world seed, composes generated levels with static
-  levels, and rejects invalid or duplicate definitions. Full native map
-  synthesis and richer authored geometry remain follow-up work.
+  levels, and rejects invalid or duplicate definitions, including non-Boolean
+  default-start and multiplayer-death-drop flags. Full native map synthesis and
+  richer authored geometry remain follow-up work.
 
 - Schema 1.278 adds validated metadata for all 23 native bookable spells and a
   deterministic server-owned generator for spell names, book costs, intelligence

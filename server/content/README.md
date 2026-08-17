@@ -1371,9 +1371,9 @@ an authoritative level ID, dimensions, generation seed, blocked-cell density,
 and optional default-start/death-drop flags. Activation combines generated
 levels with any static `levels.tsv` rows, derives deterministic connected
 geometry from the row seed and server world seed, and rejects duplicate level
-IDs or invalid dimensions/densities. Static maps remain unchanged when the
-optional table is absent; full native map-synthesis parity remains a later
-stage.
+IDs, invalid dimensions/densities, or non-Boolean flag values. Static maps
+remain unchanged when the optional table is absent; full native map-synthesis
+parity remains a later stage.
 
 Schema 1.301 adds optional `counselor_move_chance_percent` to
 `monster_types.tsv`. Shipped Counselor-family rows carry the native 30-percent

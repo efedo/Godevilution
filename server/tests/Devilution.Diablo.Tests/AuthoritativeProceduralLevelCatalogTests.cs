@@ -52,6 +52,21 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
             ]));
     }
 
+    [Fact]
+    public void RejectsNonBooleanFlagsInExternalRows()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeProceduralLevelCatalog.LoadTsv(
+                "procedural_levels.tsv",
+                "level_id\twidth\theight\tdefault_start\n"
+                    + "7\t12\t12\t2\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeProceduralLevelCatalog.LoadTsv(
+                "procedural_levels.tsv",
+                "level_id\twidth\theight\tsuppress_multiplayer_death_drops\n"
+                    + "7\t12\t12\t-1\n"));
+    }
+
     private static void AssertConnected(AuthoritativeLevel level)
     {
         var walkable = Enumerable.Range(0, level.Width * level.Height)
