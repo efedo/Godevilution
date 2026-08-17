@@ -31,6 +31,7 @@ public static class ProjectilePresentationStyle
     private const int StoneCurse = 13;
     private const int Teleport = 9;
     private const int Phasing = 15;
+    private const int Firebolt = 2;
     private const int Fireball = 16;
     private const int HolyBolt = 19;
     private const int BloodStar = 20;
@@ -107,7 +108,7 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.Phasing;
         if (behavior == StoneCurse)
             return ProjectilePresentationKind.StoneCurse;
-        if (behavior == Fireball)
+        if (behavior is Firebolt or Fireball)
             return phase == ImpactPhase
                 ? ProjectilePresentationKind.FireImpact
                 : ProjectilePresentationKind.Fire;

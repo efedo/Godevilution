@@ -8,6 +8,8 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ProjectilePresentationStyleTests
 {
     [Theory]
+    [InlineData(2, 0, ProjectilePresentationKind.Fire)]
+    [InlineData(2, 1, ProjectilePresentationKind.FireImpact)]
     [InlineData(16, 0, ProjectilePresentationKind.Fire)]
     [InlineData(16, 1, ProjectilePresentationKind.FireImpact)]
     [InlineData(32, 0, ProjectilePresentationKind.Fire)]
