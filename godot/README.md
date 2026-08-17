@@ -136,7 +136,8 @@ Godot never clears the trap locally.
 Teleport behavior `9` and Phasing behavior `15` are invisible movement
 controllers. Godot renders only the resulting authoritative player coordinates
 and never predicts either relocation.
-Firebolt behavior `2` and Fireball behavior `16` are presentation-only: Godot
+Charged Bolt behavior `1` is a typed Lightning projectile. Firebolt behavior
+`2` and Fireball behavior `16` are presentation-only: Godot
 renders an orange travel projectile for phase `0` and a larger orange explosion
 for phase `1`. The server owns each path, direct collision, splash targets,
 damage, and expiry.

@@ -526,8 +526,8 @@ per-tick collision/RNG boundary.
 presentation family. Current servers populate it for every projectile so
 presentation clients do not need to maintain the behavior-to-visual mapping;
 older peers may omit it and clients retain their behavior/phase compatibility
-fallback. Firebolt behavior `2` and Fireball behavior `16` use `Fire` during
-travel and `FireImpact` during impact.
+fallback. Charged Bolt behavior `1` uses `Lightning`; Firebolt behavior `2` and
+Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The

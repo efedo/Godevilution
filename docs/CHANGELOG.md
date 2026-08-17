@@ -83,6 +83,8 @@ All notable changes to this fork are documented below.
   matching legacy fallback coverage.
 - Classify Firebolt behavior `2` as `Fire` during travel and `FireImpact` during
   impact, matching the existing Fireball presentation contract.
+- Classify Charged Bolt behavior `1` as the server-owned `Lightning` family,
+  including behavior-based fallback for older peers.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.

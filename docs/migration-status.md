@@ -138,6 +138,9 @@ Status date: 2026-08-17
 - Firebolt behavior `2` now shares the server-owned `Fire`/`FireImpact`
   projection with Fireball behavior `16`, including the legacy fallback.
 
+- Charged Bolt behavior `1` now projects the server-owned `Lightning` family,
+  including the legacy behavior fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
