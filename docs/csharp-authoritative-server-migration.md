@@ -464,7 +464,9 @@ single recharge-strength roll, decrements maximum charges before every
 restoration step, clamps current charges to the reduced maximum, and preserves
 full-item no-op and zero-maximum exhaustion behavior. Source-zero requests
 retain full paid vendor recharge; both clients submit only item selection and
-project the returned state.
+project the returned state. Store validation now consumes the same active
+catalog source metadata, including unambiguous miscellaneous-ID mappings,
+before retaining the native staff/type fallback for legacy rows.
 
 Spell `10` now selects schema-0.22 `Phasing` behavior. At the effect frame, the
 module ignores client target coordinates and enumerates the native 36 offset

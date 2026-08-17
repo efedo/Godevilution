@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   content-owned miscellaneous IDs when legacy state lacks a native item index;
   ambiguous or older metadata continues to use the native fallback.
 
+- Apply the same content-owned miscellaneous-ID source resolution to store
+  recharge validation, so normalized charged-item metadata is honored even
+  when saved state has no native item-index match.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

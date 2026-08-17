@@ -1809,8 +1809,8 @@ accepted cast decrements `charges`. A consumable cast must name the matching
 source in inventory or belt; an accepted cast removes that exact item. Legacy
 tables without `spell_source_kind` retain the native miscellaneous-ID fallback
 until they are normalized. Store recharge likewise honors explicit
-`ChargedItem`/non-charged source metadata from state or active item content
-before applying legacy fallback, and
+`ChargedItem`/non-charged source metadata from state or active item content,
+including unambiguous miscellaneous-ID mappings, before applying legacy fallback, and
 uses the active item's validated `Staff` tag before the native type and
 miscellaneous-ID fallback when source metadata is absent.
 The Sorcerer Recharge class ability additionally requires the validated `Staff`
