@@ -340,7 +340,9 @@ Before movement or expiry, the authoritative controller checks its current
 tile for a living player using native non-arrow `PlayerMHit` behavior. A hit or
 block removes the missile and continues through the expiry summon path; a miss
 preserves the controller for its next tick. A breakable missile-blocking object
-on that current tile is destroyed before the same expiry/summon transition.
+on that current tile is destroyed before the same expiry/summon transition. A
+newly blocked destination is retained for the following tick, matching native
+movement before the current-tile expiry check.
 The optional `ai_avoidance_movement_minimum_distance` and
 `ai_avoidance_movement_chance_modulo` columns externalize the shared
 AiAvoidance Move-goal gate. Legacy GoatMelee, Gargoyle, and Gharbad rows retain

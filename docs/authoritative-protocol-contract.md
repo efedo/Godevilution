@@ -568,8 +568,9 @@ player on the missile tile with the non-arrow `PlayerMHit` rules. A successful
 hit or block removes the missile and proceeds through the normal expiry summon
 path; a miss leaves the controller available for its next tick. A breakable
 missile-blocking object on the current tile is destroyed before that same
-expiry/summon transition. The collision is authoritative gameplay state, not a
-client-side visual effect.
+expiry/summon transition. A newly blocked destination remains authoritative
+until the following tick's current-tile check, matching native movement. The
+collision is authoritative gameplay state, not a client-side visual effect.
 
 A Phasing cast uses projectile behavior value `15` as the same shape of
 invisible two-tick movement controller. The server selects its random

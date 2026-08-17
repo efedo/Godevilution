@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,209 tests and the server suite passes all 309 tests.
+  all 1,210 tests and the server suite passes all 309 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
@@ -98,6 +98,9 @@ Status date: 2026-08-16
 
 - Hork Spawn now also breaks a breakable missile-blocking object on its current
   tile before taking the native expiry/summon path.
+
+- Hork Spawn now retains a newly blocked destination for the following tick,
+  matching native movement before the current-tile expiry check.
 
 - Snake adjacent and distant delay bands are now validated `SnakeCharge`
   missile fields, preserving native intelligence reduction and deterministic
