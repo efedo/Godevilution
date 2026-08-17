@@ -760,6 +760,10 @@ Firebolt uses the same server-owned player-target admission boundary, with its
 native magic hit roll and Q6 damage retained through the resumable projectile
 state; the checked-in two-participant replay exercises this path without client
 damage or RNG decisions.
+Fireball uses that same boundary for its direct travel collision and then
+reuses the server-owned player-target rules during the ordered impact splash;
+the complete participant snapshot carries any Q6 damage, death, and combat-mode
+transition while the projectile remains resumable through its impact lifetime.
 In Hellfire, a shield block is still a collision even though the projectile is
 retained for its impact lifetime; the server consumes the native rotation draw
 and publishes the retained phase before removal.

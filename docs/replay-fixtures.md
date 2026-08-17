@@ -239,6 +239,12 @@ the direct hit, exact shifted center splash, and impact entry; ticks 16 and 17
 prove the final active explosion tick, expiry, exact Q6 health, and final RNG
 state. Both runners validate all four checkpoints.
 
+`gameplay-fireball-pvp.json` places a second participant on the first travel
+tile of a level-3 Fireball cast in multiplayer mode. Tick 1 proves the native
+player hit and Q6 damage boundary, direct-to-impact transition, and complete
+participant/death projection; tick 17 proves the 14-tick impact lifetime and
+projectile removal. Both runners validate the same two checkpoints.
+
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified
 lightning-resistant target, and seed `0x12345678`. Ticks 1 and 2 prove native
@@ -368,6 +374,8 @@ Notable shared fixtures include:
   speed-26 movement, fire resistance, fractional health, impact, and RNG parity;
 - `gameplay-fireball-resolution.json` for two-roll damage, level-capped speed,
   swept direct collision, shifted splash, persistent impact, and RNG parity;
+- `gameplay-fireball-pvp.json` for direct player collision, impact splash,
+  complete participant state, Q6 damage, and projectile-lifetime parity;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;

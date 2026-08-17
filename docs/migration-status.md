@@ -1,13 +1,13 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-16
+Status date: 2026-08-17
 
 ## Current state
 
 | Area | State | Remaining work |
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, additive live authoritative level-geometry projections, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, live single-player and multiplayer handshakes/cast slices, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias, server-owned adjacent melee plus line-of-sight ranged player-versus-player admission with native timing, physical/elemental damage, target resistance, shield/class blocking, equipment knockback, lethal death/ear handling, targeted Firebolt/Charged Bolt/Bone Spirit admission for living remote players, live Firebolt, Charged Bolt, Bone Spirit, Heal Other, and Resurrection player-target coverage, live two-client coverage including effect-tick shield resolution, typed Diablo victory events for client presentation, and Normal/Nightmare/Hell difficulty projection in authoritative snapshots | Add broader reconnect/multiplayer fixtures and production-client soak coverage |
-| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with server-owned corpse tiles, native per-tick monster regeneration, refreshed ordinary-death and spell-timeline checkpoints, deterministic quest-pool selection/rejection, a 1,000-tick autonomous regeneration soak, a multiplayer autonomous-tick participant fixture with explicit secondary-session command routing, shared melee and ranged elemental-equipment fixtures covering native fire/lightning and arrow channels, resistance, and RNG, native/C# chained-action timing coverage for first-frame attack skips, live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus a composed-manifest Hellfire ranged replay | Expand broader multi-actor autonomous and reconnect replay coverage |
+| Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with server-owned corpse tiles, native per-tick monster regeneration, refreshed ordinary-death and spell-timeline checkpoints, deterministic quest-pool selection/rejection, a 1,000-tick autonomous regeneration soak, a multiplayer autonomous-tick participant fixture with explicit secondary-session command routing, shared melee and ranged elemental-equipment fixtures covering native fire/lightning and arrow channels, resistance, and RNG, native/C# chained-action timing coverage for first-frame attack skips, live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus composed-manifest Hellfire ranged replay and shared Fireball player-target replay | Expand broader multi-actor autonomous and reconnect replay coverage |
 | Stores and inventory | C# remote for the shipped vendor slice | Expand content coverage and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec, validated saved-class reconstruction for cold sessions, and live process-restart restoration of movement/class state through the shared protocol | Add concrete migrations when formats change and broader recovery/soak testing |
@@ -29,7 +29,7 @@ Status date: 2026-08-16
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,215 tests and the server suite passes all 311 tests.
+  all 1,215 tests and the server suite passes all 312 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
@@ -67,6 +67,11 @@ Status date: 2026-08-16
   consume the variant rotation draw, and enter the authoritative impact phase;
   a shared replay checkpoints spawn, impact, and removal.
 
+- Fireball now resolves direct and impact-phase player collisions through the
+  same authoritative player-target boundary as native `Plr2PlrMHit`; the
+  shared replay covers Q6 damage, death state, splash timing, and projectile
+  removal in both C++ and C#.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
@@ -90,8 +95,8 @@ Status date: 2026-08-16
   allocators skip occupied portal/corpse/player IDs, while identity-neutral
   version-1 saves preserve their zero player ID until import.
 
-- All 22 checked-in base and Hellfire replay fixtures now bind the active
-  content-manifest identities; the full 311-test server assembly passes again.
+- All 23 checked-in replay fixtures now bind the active
+  content-manifest identities; the full 312-test server assembly passes again.
 
 - Host shutdown now disposes the active authoritative adapter as well as
   drained retired generations, closing the ruleset lifecycle ownership gap.
