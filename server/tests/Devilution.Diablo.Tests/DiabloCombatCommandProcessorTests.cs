@@ -6342,8 +6342,8 @@ public sealed class DiabloCombatCommandProcessorTests
             levelId: 0,
             attackDamage: 2,
             aggroRange: 8,
-            minDamage: 9,
-            maxDamage: 12,
+            minDamage: 2,
+            maxDamage: 9,
             toHit: 35,
             nativeAi: "SkeletonRanged",
             intelligence: 3);
@@ -6369,7 +6369,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Empty(deliveries);
         var arrow = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
-        Assert.Equal(4, arrow.Damage);
+        Assert.Equal(2, arrow.Damage);
         Assert.Equal(3, arrow.Speed);
         Assert.Equal(8U, arrow.RemainingTicks);
 
@@ -6377,10 +6377,10 @@ public sealed class DiabloCombatCommandProcessorTests
             deliveries = deliveries.Concat(processor.AdvanceTick(tick, [player])).ToList();
 
         Assert.Empty(world.Projectiles);
-        Assert.Equal(96, player.Life);
+        Assert.Equal(98, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(4, damage.Amount);
+        Assert.Equal(2, damage.Amount);
     }
 
     [Fact]
@@ -6422,7 +6422,7 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(15, [player]);
 
         Assert.Equal((7, 0), (arrow.PositionX, arrow.PositionY));
-        Assert.Equal(96, player.Life);
+        Assert.Equal(98, player.Life);
         Assert.Equal(AuthoritativeProjectilePhase.Impact, arrow.Phase);
         processor.AdvanceTick(16, [player]);
         Assert.Empty(world.Projectiles);
@@ -6518,7 +6518,7 @@ public sealed class DiabloCombatCommandProcessorTests
             processor.AdvanceTick(tick, [player]);
 
         Assert.Empty(world.Projectiles);
-        Assert.Equal(98, player.Life);
+        Assert.Equal(99, player.Life);
     }
 
     [Fact]

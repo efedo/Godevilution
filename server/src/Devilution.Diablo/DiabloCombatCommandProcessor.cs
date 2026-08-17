@@ -8320,8 +8320,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         int distance,
         uint attackSeed,
-        AuthoritativeMonsterMissileDefinition? missile = null,
-        int? nativeFixedDamage = null)
+        AuthoritativeMonsterMissileDefinition? missile = null)
     {
         missile ??= TryGetMonsterMissile(monster, out var mappedMissile)
             ? mappedMissile
@@ -8337,16 +8336,12 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
-        // SkeletonBowAi passes var2=4; AiRanged callers retain their damage roll.
-        var fixedDamage = nativeFixedDamage.GetValueOrDefault();
         var baseDamage = missile?.ProjectileDamage > 0
             ? missile.ProjectileDamage
-            : fixedDamage > 0
-                ? fixedDamage
-                : SelectEffectiveMonsterDamage(
-                    monster,
-                    special: false,
-                    seed: attackSeed);
+            : SelectEffectiveMonsterDamage(
+                monster,
+                special: false,
+                seed: attackSeed);
         var damage = rules.ResolveMonsterRangedAttackDamage(
             baseDamage,
             GetEffectiveMonsterToHit(monster, special: false),
@@ -8503,8 +8498,7 @@ public sealed class DiabloCombatCommandProcessor
             monster,
             player,
             distance,
-            attackSeed,
-            nativeFixedDamage: 4);
+            attackSeed);
     }
 
     private (
