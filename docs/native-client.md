@@ -150,7 +150,7 @@ conversation variables, required-item consumption, quest completion, activation,
 normal or unique reward spawning, and the dialogue event; the adapter projects
 that dialogue into the native quest-text UI. The Hellfire Farmer activation and
 post-Hive reward, base Cain's Staff of Lazarus activation, base and Hellfire
-Magic Rock, Ogden's Sign, Anvil of Fury/Blacksmith, Butcher/Dead Guy, Little Girl, and Jersey's
+Magic Rock, Ogden's Sign, Anvil of Fury/Blacksmith, Skeleton King, Butcher/Dead Guy, Little Girl, and Jersey's
 Jersey/Complete Nut
 (including its Grey Suit tease) are shipped
 definitions; additional legacy towner paths remain local until authored.

@@ -1416,6 +1416,37 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SkeletonKingDeathCompletesItsAuthoredQuest()
+    {
+        var quest = new AuthoritativeQuestState(
+            3013,
+            3,
+            1,
+            active: true,
+            completionMonsterId: 52);
+        var target = new AuthoritativeCombatTarget(
+            17,
+            1,
+            0,
+            8,
+            levelId: 3,
+            monsterId: 52);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100));
+        var player = CreatePlayer(entityId: 7, levelId: 3);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(17), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(1U, quest.Progress);
+        Assert.Empty(world.CombatTargets);
+    }
+
+    [Fact]
     public void DefilerDeathCompletesItsQuestAndLeavesTheCathedralMap()
     {
         var quest = new AuthoritativeQuestState(

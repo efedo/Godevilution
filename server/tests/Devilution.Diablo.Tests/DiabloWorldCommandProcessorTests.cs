@@ -224,6 +224,35 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void EnteringSkeletonKingRouteActivatesItsAuthoredQuest()
+    {
+        var portal = new AuthoritativePortal(5, 1, 0, 0, 3, 3, 4);
+        var quest = new AuthoritativeQuestState(
+            3013,
+            3,
+            1,
+            active: false,
+            completionMonsterId: 52);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3013, 3, "The Curse of King Leoric", 3, -1, "DTYPE_CATHEDRAL", 1, false),
+        ]);
+        var world = new DiabloWorldState(portals: [portal], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(positionX: 0, positionY: 0, levelId: 1, entityId: 1);
+
+        var result = processor.Execute(player, new DiabloUsePortalIntent(5), 1, [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3U, player.LevelId);
+        Assert.True(quest.Active);
+        Assert.Equal(52U, quest.CompletionMonsterId);
+    }
+
+    [Fact]
     public void MultiplayerRouteDoesNotActivateSinglePlayerOnlyQuest()
     {
         var portal = new AuthoritativePortal(5, 1, 0, 0, 2, 3, 4);

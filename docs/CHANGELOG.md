@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.338 base Skeleton King quest content. The route-level quest
+  activation and normalized native Skeleton King completion monster now use
+  authored server-owned data.
+
 - Add schema 1.337 base Butcher quest content. The Dead Guy activation and
   normalized The Butcher completion monster now use authored server-owned data.
 
