@@ -29,6 +29,8 @@ ledger. An unknown or omitted token starts a new session.
 If a server-owned save exists for a token but fails validation during restore,
 the handshake is rejected and the stored state is not replaced. Reconnecting
 with that token retries the same save until an operator repairs or removes it.
+Concurrent first connections presenting one token are serialized and share the
+same authoritative session; only the first connection's creation hints apply.
 
 `ServerHello.game_mode` additively declares whether the shared authoritative
 simulation uses single-player or multiplayer rules. It is server-owned process

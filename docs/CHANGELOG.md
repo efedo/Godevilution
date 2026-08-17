@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Preserve failed authoritative save imports as failures: a reconnect retries
   the same stored state instead of silently creating and saving a fresh session.
 
+- Serialize concurrent first connections for one resume token so they share a
+  single authoritative session and participant initialization.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

@@ -439,6 +439,53 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task ConcurrentConnectionsForOneTokenShareOneParticipantInitialization()
+    {
+        var executor = new RecordingExecutor();
+        var initializer = new BlockingParticipantInitializer();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor,
+            participantInitializer: initializer);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var firstClient = new TcpClient();
+        using var secondClient = new TcpClient();
+        await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var firstStream = firstClient.GetStream();
+        await using var secondStream = secondClient.GetStream();
+        const string resumeToken = "concurrent-session-token";
+        await Task.WhenAll(
+            SendHelloAsync(firstStream, cancellationToken, resumeToken, requestedClassId: 2).AsTask(),
+            SendHelloAsync(secondStream, cancellationToken, resumeToken, requestedClassId: 5).AsTask());
+
+        try {
+            await initializer.Entered.Task.WaitAsync(cancellationToken);
+            initializer.Release();
+            var firstHello = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.ServerHello;
+            var secondHello = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.ServerHello;
+            Assert.Equal(firstHello.SessionToken, secondHello.SessionToken);
+            var firstSnapshot = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
+            var secondSnapshot = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.Snapshot;
+            Assert.Equal(
+                Assert.Single(firstSnapshot.Players).EntityId,
+                Assert.Single(secondSnapshot.Players).EntityId);
+            Assert.Equal(1, initializer.CallCount);
+        } finally {
+            initializer.Release();
+        }
+    }
+
+    [Fact]
     public async Task ResumeTokenPreservesSessionLedgerAndEntityIdAcrossReconnect()
     {
         var executor = new RecordingExecutor();
@@ -822,10 +869,13 @@ public sealed class AuthoritativeTcpServerTests
         public TaskCompletionSource Entered { get; } = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public int CallCount { get; private set; }
+
         public void InitializeParticipant(
             string sessionId,
             AuthoritativeParticipantSelection selection)
         {
+            CallCount++;
             Entered.TrySetResult();
             if (!release.Wait(TimeSpan.FromSeconds(5)))
                 throw new TimeoutException("The participant initializer was not released.");

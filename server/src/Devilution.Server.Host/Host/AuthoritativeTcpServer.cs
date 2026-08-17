@@ -36,6 +36,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private readonly StableEntityIdAllocator entityIds = new();
     private readonly ConcurrentDictionary<TcpClient, byte> clients = new();
     private readonly ConcurrentDictionary<string, SessionState> sessionsByToken = new(StringComparer.Ordinal);
+    private readonly object sessionCreationSynchronization = new();
     private CancellationTokenSource? cancellation;
     private Task? acceptLoop;
     private Task? simulationLoop;
@@ -271,20 +272,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
             var session = GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
             var restored = RestoreSessionIfAvailable(session);
-            if (!restored && !session.ParticipantInitialized) {
-                var requestedClassId = helloEnvelope.ClientHello.HasRequestedCharacterClassId
-                    ? helloEnvelope.ClientHello.RequestedCharacterClassId
-                    : (uint?)null;
-                var requestedCharacterName = helloEnvelope.ClientHello.HasRequestedCharacterName
-                    ? helloEnvelope.ClientHello.RequestedCharacterName
-                    : null;
-                participantInitializer?.InitializeParticipant(
-                    session.Id,
-                    new AuthoritativeParticipantSelection(requestedClassId) {
-                        CharacterName = requestedCharacterName,
-                    });
-                session.ParticipantInitialized = true;
-            }
+            if (!restored)
+                InitializeParticipantIfNeeded(session, helloEnvelope.ClientHello);
             var serverHello = handshakeResult.ServerHello!.Clone();
             serverHello.SessionToken = session.Token;
             await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
@@ -335,18 +324,41 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     private SessionState GetOrCreateSession(string resumeToken)
     {
-        if (!string.IsNullOrWhiteSpace(resumeToken) && sessionsByToken.TryGetValue(resumeToken, out var resumed))
-            return resumed;
+        lock (sessionCreationSynchronization) {
+            if (!string.IsNullOrWhiteSpace(resumeToken)
+                && sessionsByToken.TryGetValue(resumeToken, out var resumed))
+                return resumed;
 
-        var token = string.IsNullOrWhiteSpace(resumeToken)
-            ? Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant()
-            : resumeToken;
-        var sessionId = Convert.ToHexString(
-            SHA256.HashData(Encoding.UTF8.GetBytes(token)))
-            .ToLowerInvariant();
-        var session = new SessionState(sessionId, token, entityIds.Allocate());
-        sessionsByToken.TryAdd(session.Token, session);
-        return session;
+            var token = string.IsNullOrWhiteSpace(resumeToken)
+                ? Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant()
+                : resumeToken;
+            var sessionId = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(token)))
+                .ToLowerInvariant();
+            var session = new SessionState(sessionId, token, entityIds.Allocate());
+            sessionsByToken.TryAdd(session.Token, session);
+            return session;
+        }
+    }
+
+    private void InitializeParticipantIfNeeded(SessionState session, ClientHello hello)
+    {
+        lock (session) {
+            if (session.ParticipantInitialized)
+                return;
+            var requestedClassId = hello.HasRequestedCharacterClassId
+                ? hello.RequestedCharacterClassId
+                : (uint?)null;
+            var requestedCharacterName = hello.HasRequestedCharacterName
+                ? hello.RequestedCharacterName
+                : null;
+            participantInitializer?.InitializeParticipant(
+                session.Id,
+                new AuthoritativeParticipantSelection(requestedClassId) {
+                    CharacterName = requestedCharacterName,
+                });
+            session.ParticipantInitialized = true;
+        }
     }
 
     private bool RestoreSessionIfAvailable(SessionState session)
