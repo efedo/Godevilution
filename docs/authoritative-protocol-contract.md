@@ -554,6 +554,11 @@ player target must still occupy its endpoint tile; leaving that path produces
 an authoritative miss and projectile removal. The resulting impact and
 projectile removal remain server-owned and resumable through the existing
 fields.
+For validated `RandomArrowVelocity` equipment, `Speed` carries the native
+16–47 pixel velocity and `PathTicks` carries its fractional tile remainder;
+`RemainingTicks` is derived from that speed, so the cadence and collision path
+survive snapshots, saves, hashes, and protocol projection without a new wire
+field. Legacy arrows retain the default 32-pixel one-tile cadence.
 
 Persistent Acid puddles check their occupied tile on every active tick. A
 breakable missile-blocking object is destroyed through the same server-owned

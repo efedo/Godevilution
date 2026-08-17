@@ -16,6 +16,9 @@ All notable changes to this fork are documented below.
 - Preserve native player-arrow misses when the declared endpoint target leaves
   the arrow's spatial path before impact.
 
+- Preserve Hellfire `RandomArrowVelocity` timing with server-owned 16–47 pixel
+  speeds and resumable fractional travel state.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
