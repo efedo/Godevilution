@@ -8146,6 +8146,7 @@ public sealed class DiabloCombatCommandProcessorTests
     [Fact]
     public void ValidatedMappedRangedContentAdmitsAnOtherwiseUnroutedNativeAi()
     {
+        // Use a non-degenerate range to verify native launch damage and RNG order.
         var monster = new AuthoritativeCombatTarget(
             9,
             1,
@@ -8153,7 +8154,7 @@ public sealed class DiabloCombatCommandProcessorTests
             20,
             aggroRange: 8,
             minDamage: 4,
-            maxDamage: 4,
+            maxDamage: 9,
             monsterLevel: 5,
             nativeAi: "Counselor");
         var world = new DiabloWorldState(combatTargets: [monster]);
@@ -8177,7 +8178,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.Firebolt, projectile.Behavior);
         Assert.Equal(9U, projectile.SourceEntityId);
-        Assert.Equal(4, projectile.Damage);
+        // Native CounselorAi consumes GenerateRnd(100), then AddFirebolt
+        // captures RandomIntBetween(min_damage, max_damage) at launch.
+        Assert.Equal(8, projectile.Damage);
     }
 
     [Theory]
@@ -9259,6 +9262,11 @@ public sealed class DiabloCombatCommandProcessorTests
         var processor = CreateProcessor(
             world,
             spells,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
             random: new DiabloRandom(0),
             monsterMissiles: monsterMissiles);
         var player = CreatePlayer(
@@ -10115,14 +10123,19 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             20,
             aggroRange: 8,
-            minDamage: 3,
-            maxDamage: 3,
+            minDamage: 4,
+            maxDamage: 10,
             monsterLevel: 5,
             nativeAi: nativeAi,
             intelligence: 0);
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
             world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
             random: new DiabloRandom(0),
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(
@@ -10143,6 +10156,8 @@ public sealed class DiabloCombatCommandProcessorTests
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
         Assert.Equal(9U, projectile.SourceEntityId);
+        // Native AddGenericMagicMissile captures the monster range at launch.
+        Assert.Equal(4, projectile.Damage);
         Assert.Equal(100, player.Life);
 
         var deliveries = new List<DiabloDirectedGameplayEvent>();
@@ -10154,7 +10169,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(3 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
+        Assert.Equal(4 * DiabloFixedPointQ6.Scale, damage.AmountQ6);
     }
 
     [Fact]
@@ -10361,6 +10376,11 @@ public sealed class DiabloCombatCommandProcessorTests
         var world = new DiabloWorldState(combatTargets: [monster]);
         var processor = CreateProcessor(
             world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                monsterMagicMinimumHitChance: 100),
             random: new DiabloRandom(0),
             monsterMissiles: new AuthoritativeMonsterMissileCatalog([
                 new AuthoritativeMonsterMissileDefinition(

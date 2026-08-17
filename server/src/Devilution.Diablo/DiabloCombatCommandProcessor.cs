@@ -5449,6 +5449,12 @@ public sealed class DiabloCombatCommandProcessor
         if (monster.AdvanceCounselorDelay())
             return true;
 
+        // Native CounselorAi always consumes its initial GenerateRnd(100)
+        // before evaluating the current goal. Admission remains server-owned
+        // through the validated deterministic band, but preserve this shared
+        // RNG boundary for subsequent native missile construction.
+        _ = random.GenerateRnd(100);
+
         if (monster.CounselorRetreatTicks != 0) {
             var retreat = FindNativeCounselorRetreatStep(
                 monster,
@@ -7653,6 +7659,14 @@ public sealed class DiabloCombatCommandProcessor
                 // 15-point payload; validated content may override it.
                 AuthoritativeProjectileBehavior.MonsterChargedBolt => 15,
                 AuthoritativeProjectileBehavior.Lightning => 0,
+                // Native AddFirebolt and AddGenericMagicMissile roll the
+                // monster range while constructing the missile, rather than
+                // deriving the payload from the AI admission seed.
+                AuthoritativeProjectileBehavior.Firebolt
+                    or AuthoritativeProjectileBehavior.MonsterMagic
+                    => random.RandomIntBetween(
+                        GetEffectiveMonsterDamageRange(monster, special: false).Minimum,
+                        GetEffectiveMonsterDamageRange(monster, special: false).Maximum),
                 _ => SelectEffectiveMonsterDamage(
                     monster,
                     special: false,
