@@ -61,6 +61,10 @@ All notable changes to this fork are documented below.
   removal now share canonical checkpoints between the C# server and native
   compatibility runner.
 
+- Add autonomous Succubus BloodStar replay coverage for validated admission,
+  native velocity/lifetime state, and pre-impact travel parity between the C#
+  server and native compatibility runner.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
