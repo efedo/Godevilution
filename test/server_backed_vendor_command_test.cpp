@@ -89,6 +89,18 @@ TEST(ServerBackedVendorCommand, BuildsStableReadBookIntent)
 	EXPECT_EQ(command->read_book_requested().item().stable_item_id(), 2127U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStableUseConsumableIntent)
+{
+	const ServerBackedItemReference potion { .location = ServerBackedItemLocation::Belt, .slot = 3, .stableItemId = 2185 };
+	const auto command = MakeUseConsumableCommand(potion, 15);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_use_consumable_requested());
+	EXPECT_EQ(command->requested_tick(), 15U);
+	EXPECT_EQ(command->use_consumable_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
+	EXPECT_EQ(command->use_consumable_requested().item().slot(), 3U);
+	EXPECT_EQ(command->use_consumable_requested().item().stable_item_id(), 2185U);
+}
+
 TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 {
 	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };

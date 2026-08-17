@@ -182,6 +182,11 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeReadBookComma
 	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_read_book_requested(); });
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeUseConsumableCommand(ServerBackedItemReference item, uint64_t requestedTick)
+{
+	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_use_consumable_requested(); });
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRefillManaCommand(uint64_t requestedTick)
 {
 	protocol::v1::Command command;

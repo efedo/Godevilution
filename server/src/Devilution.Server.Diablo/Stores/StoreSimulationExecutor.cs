@@ -247,6 +247,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     player,
                     command.ReadBookRequested,
                     appliedTick),
+                Command.IntentOneofCase.UseConsumableRequested => ExecuteUseConsumableIntent(
+                    player,
+                    command.UseConsumableRequested,
+                    appliedTick),
                 Command.IntentOneofCase.MoveInventoryItemRequested => ExecuteMoveInventoryItemIntent(
                     player,
                     command.MoveInventoryItemRequested,
@@ -566,6 +570,21 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         return ExecuteStoreIntent(
             player,
             new DiabloReadBookIntent(item, request.InventoryIndex),
+            appliedTick);
+    }
+
+    private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteUseConsumableIntent(
+        AuthoritativePlayerState player,
+        UseConsumableRequested request,
+        ulong appliedTick)
+    {
+        if (!TryMapItemReference(request.Item, out var item) || !item.HasValue) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
+        return ExecuteStoreIntent(
+            player,
+            new DiabloUseConsumableIntent(item.Value),
             appliedTick);
     }
 

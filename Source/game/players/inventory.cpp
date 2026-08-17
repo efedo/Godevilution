@@ -2385,7 +2385,25 @@ bool UseInvItem(int cii)
 		return true;
 	}
 
+	const int idata = ItemCAnimTbl[item->_iCurs];
+
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()
+	    && IsAnyOf(item->_iMiscId, IMISC_HEAL, IMISC_FULLHEAL, IMISC_MANA, IMISC_FULLMANA, IMISC_REJUV, IMISC_FULLREJUV, IMISC_ARENAPOT)) {
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+		if (!reference.has_value()) {
+			LogError("Server-backed consumable use has no authoritative item reference.");
+			return true;
+		}
+		if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+			LogError("Server-backed consumable use failed: {}", result.error());
+			return true;
+		}
+		PlaySFX(ItemInvSnds[idata]);
+		NewCursor(CURSOR_HAND);
+		return true;
+	}
+
 	if (item->_iMiscId == IMISC_BOOK && authoritative::GetServerBackedRuntime().IsConnected()) {
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
 		if (!reference.has_value()) {
@@ -2402,7 +2420,6 @@ bool UseInvItem(int cii)
 	}
 #endif
 
-	const int idata = ItemCAnimTbl[item->_iCurs];
 	if (item->_iMiscId == IMISC_BOOK)
 		PlaySFX(SfxID::ReadBook);
 	else if (&player == MyPlayer)

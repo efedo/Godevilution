@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route native healing, mana, rejuvenation, and arena potions through the
+  server-owned `UseConsumableRequested` intent. External content now classifies
+  their actions; the Diablo module applies native Q6 restoration, class
+  multipliers, `NoMana` suppression, deterministic RNG, and item consumption.
+  Elixirs and oils remain follow-up action seams.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

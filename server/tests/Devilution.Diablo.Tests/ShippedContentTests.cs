@@ -252,7 +252,17 @@ public sealed class ShippedContentTests
             Assert.Contains("Belt", item.GenerationTags, StringComparer.OrdinalIgnoreCase);
             Assert.True(item.Usable);
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
-            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+            Assert.Equal(
+                miscId switch {
+                    3 => DiabloItemActionKind.RestorePartialLife,
+                    2 => DiabloItemActionKind.RestoreFullLife,
+                    6 => DiabloItemActionKind.RestorePartialMana,
+                    7 => DiabloItemActionKind.RestoreFullMana,
+                    19 => DiabloItemActionKind.RestorePartialLifeAndMana,
+                    20 => DiabloItemActionKind.RestoreFullLifeAndMana,
+                    _ => DiabloItemActionKind.None,
+                },
+                item.ItemActionKind);
         }
         var baseJewelryExpectations = new[] {
             ("ring_level_5", 2195U, 156, 5, 26, 1000),
@@ -284,7 +294,7 @@ public sealed class ShippedContentTests
         Assert.True(arenaPotion.Usable);
         Assert.Contains("Misc", arenaPotion.GenerationTags, StringComparer.OrdinalIgnoreCase);
         Assert.Equal(DiabloItemSpellSourceKind.None, arenaPotion.SpellSourceKind);
-        Assert.Equal(DiabloItemActionKind.None, arenaPotion.ItemActionKind);
+        Assert.Equal(DiabloItemActionKind.RestoreFullLifeAndMana, arenaPotion.ItemActionKind);
 
         var bookTemplateExpectations = new[] {
             ("book_template_level_2", 2201U, 114, 2),
@@ -2070,7 +2080,17 @@ public sealed class ShippedContentTests
             Assert.Equal(dropRate, potion.DropRate);
             Assert.Equal(usable, potion.Usable);
             Assert.Equal(DiabloItemSpellSourceKind.None, potion.SpellSourceKind);
-            Assert.Equal(DiabloItemActionKind.None, potion.ItemActionKind);
+            Assert.Equal(
+                miscId switch {
+                    3 => DiabloItemActionKind.RestorePartialLife,
+                    2 => DiabloItemActionKind.RestoreFullLife,
+                    6 => DiabloItemActionKind.RestorePartialMana,
+                    7 => DiabloItemActionKind.RestoreFullMana,
+                    19 => DiabloItemActionKind.RestorePartialLifeAndMana,
+                    20 => DiabloItemActionKind.RestoreFullLifeAndMana,
+                    _ => DiabloItemActionKind.None,
+                },
+                potion.ItemActionKind);
         }
         var hellfireOilAndElixirExpectations = new[] {
             ("oil_of_blacksmith", 2152U, 83, 37, 30, 1, 100),

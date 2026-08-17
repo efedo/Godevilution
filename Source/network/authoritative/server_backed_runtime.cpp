@@ -361,6 +361,17 @@ tl::expected<void, std::string> ServerBackedRuntime::ReadBook(ServerBackedItemRe
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::UseConsumable(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->UseConsumable(item, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::RefillMana(uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)

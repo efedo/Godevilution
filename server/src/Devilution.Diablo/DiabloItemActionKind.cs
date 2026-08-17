@@ -6,4 +6,10 @@ public enum DiabloItemActionKind
     None,
     Identify,
     ReadBook,
+    RestorePartialLife,
+    RestoreFullLife,
+    RestorePartialMana,
+    RestoreFullMana,
+    RestorePartialLifeAndMana,
+    RestoreFullLifeAndMana,
 }

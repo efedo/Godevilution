@@ -79,6 +79,12 @@ enum ItemActionKind {
 	ITEM_ACTION_KIND_UNSPECIFIED = 0;
 	ITEM_ACTION_KIND_IDENTIFY = 1;
 	ITEM_ACTION_KIND_READ_BOOK = 2;
+	ITEM_ACTION_KIND_RESTORE_PARTIAL_LIFE = 3;
+	ITEM_ACTION_KIND_RESTORE_FULL_LIFE = 4;
+	ITEM_ACTION_KIND_RESTORE_PARTIAL_MANA = 5;
+	ITEM_ACTION_KIND_RESTORE_FULL_MANA = 6;
+	ITEM_ACTION_KIND_RESTORE_PARTIAL_LIFE_AND_MANA = 7;
+	ITEM_ACTION_KIND_RESTORE_FULL_LIFE_AND_MANA = 8;
 }
 
 message CommandBatch {
@@ -114,6 +120,7 @@ message Command {
 		TalkToQuestRequested talk_to_quest_requested = 30;
 		ReadBookRequested read_book_requested = 31;
 		AutoEquipItemRequested auto_equip_item_requested = 32;
+		UseConsumableRequested use_consumable_requested = 33;
 	}
 }
 
@@ -224,6 +231,12 @@ message AutoEquipItemRequested {
 	// inventory drag. Automatic placement omits this field and lets the server
 	// apply the native first-fit policy.
 	optional uint32 equipment_slot = 2;
+}
+
+// Consumes a server-classified potion from inventory or belt. The stable item
+// reference prevents a stale slot from consuming a different item.
+message UseConsumableRequested {
+	PlayerItemReference item = 1;
 }
 
 message UsePortalRequested {

@@ -64,6 +64,7 @@ public sealed class DiabloStoreCommandProcessor
             DiabloRechargeItemIntent recharge => Recharge(player, recharge),
             DiabloIdentifyItemIntent identify => Identify(player, identify),
             DiabloReadBookIntent readBook => ReadBook(player, readBook),
+            DiabloUseConsumableIntent useConsumable => UseConsumable(player, useConsumable),
             DiabloRefillManaIntent => RefillMana(player),
             DiabloMoveInventoryItemIntent moveInventory => MoveInventoryItem(
                 player,
@@ -424,6 +425,98 @@ public sealed class DiabloStoreCommandProcessor
                 return byte.MaxValue;
         }
         return minimumMagic;
+    }
+
+    private DiabloIntentResult UseConsumable(
+        AuthoritativePlayerState player,
+        DiabloUseConsumableIntent intent)
+    {
+        if (intent.Item.Location is not (DiabloPlayerItemLocation.Inventory
+            or DiabloPlayerItemLocation.Belt)
+            || !DiabloPlayerItemAccess.TryGet(player, intent.Item, out var item)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        var action = item.State.ItemActionKind;
+        if (item.State.Deleted
+            || action is not (DiabloItemActionKind.RestorePartialLife
+                or DiabloItemActionKind.RestoreFullLife
+                or DiabloItemActionKind.RestorePartialMana
+                or DiabloItemActionKind.RestoreFullMana
+                or DiabloItemActionKind.RestorePartialLifeAndMana
+                or DiabloItemActionKind.RestoreFullLifeAndMana)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        switch (action) {
+        case DiabloItemActionKind.RestorePartialLife:
+            player.Life = Math.Min(
+                player.LifeMaximum,
+                checked(player.Life + ResolvePartialResource(player.LifeMaximum, player)));
+            break;
+        case DiabloItemActionKind.RestoreFullLife:
+            player.Life = player.LifeMaximum;
+            break;
+        case DiabloItemActionKind.RestorePartialMana:
+            RestorePartialMana(player);
+            break;
+        case DiabloItemActionKind.RestoreFullMana:
+            RestoreFullMana(player);
+            break;
+        case DiabloItemActionKind.RestorePartialLifeAndMana:
+            player.Life = Math.Min(
+                player.LifeMaximum,
+                checked(player.Life + ResolvePartialResource(player.LifeMaximum, player)));
+            RestorePartialMana(player);
+            break;
+        case DiabloItemActionKind.RestoreFullLifeAndMana:
+            player.Life = player.LifeMaximum;
+            RestoreFullMana(player);
+            break;
+        default:
+            throw new InvalidOperationException("Validated consumable action was not handled.");
+        }
+
+        DiabloPlayerItemAccess.Remove(player, intent.Item);
+        return DiabloIntentResult.Accepted;
+    }
+
+    private void RestorePartialMana(AuthoritativePlayerState player)
+    {
+        if (AuthoritativeEquipmentManaRules.HasNoManaItem(player.Equipment))
+            return;
+        player.Mana = Math.Min(
+            player.ManaMaximum,
+            checked(player.Mana + ResolvePartialResource(player.ManaMaximum, player, mana: true)));
+    }
+
+    private void RestoreFullMana(AuthoritativePlayerState player)
+    {
+        if (!AuthoritativeEquipmentManaRules.HasNoManaItem(player.Equipment))
+            player.Mana = player.ManaMaximum;
+    }
+
+    private int ResolvePartialResource(
+        int maximumQ6,
+        AuthoritativePlayerState player,
+        bool mana = false)
+    {
+        var wholePoints = Math.Max(maximumQ6, 0) >> 6;
+        var amount = checked((wholePoints / 8 + random.RandomIntLessThan(wholePoints / 4)) << 6);
+        var classSymbol = player.PlayerClass?.Symbol;
+        if (mana) {
+            if (string.Equals(classSymbol, "sorcerer", StringComparison.OrdinalIgnoreCase))
+                amount = checked(amount * 2);
+        } else if (string.Equals(classSymbol, "warrior", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(classSymbol, "barbarian", StringComparison.OrdinalIgnoreCase)) {
+            amount = checked(amount * 2);
+        }
+        if (string.Equals(classSymbol, "rogue", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(classSymbol, "monk", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(classSymbol, "bard", StringComparison.OrdinalIgnoreCase)) {
+            amount = checked(amount + amount / 2);
+        }
+        return amount;
     }
 
     private DiabloIntentResult Identify(

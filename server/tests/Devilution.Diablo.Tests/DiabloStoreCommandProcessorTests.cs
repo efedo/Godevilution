@@ -652,6 +652,76 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void FullRejuvenationConsumesInventoryItemAndRestoresBothResources()
+    {
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+                StableItemId = 42,
+                StatFlag = true,
+            });
+        var player = CreatePlayer(
+            mana: 64,
+            manaMaximum: 640,
+            inventory: [potion]);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    42)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
+    public void WarriorPartialHealingUsesNativeQ6RandomAndClassMultiplier()
+    {
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestorePartialLife,
+                StatFlag = true,
+            });
+        var player = CreatePlayer(
+            playerClass: LoadWarriorClass(),
+            inventory: [potion]);
+        player.Life = 0;
+        var random = new DiabloRandom(0);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: random);
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(128, player.Life);
+        Assert.Equal(1U, random.State);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
     public void AppliesCompleteVendorLifecycleWithoutProtocolTypes()
     {
         var itemState = AuthoritativeItemState.Empty with {

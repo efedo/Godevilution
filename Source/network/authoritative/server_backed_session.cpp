@@ -121,6 +121,11 @@ tl::expected<void, std::string> ServerBackedSession::ReadBook(ServerBackedItemRe
 	return SubmitInventoryCommand(MakeReadBookCommand(item, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::UseConsumable(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeUseConsumableCommand(item, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::RefillMana(uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitInventoryCommand(MakeRefillManaCommand(requestedTick), nowMs);

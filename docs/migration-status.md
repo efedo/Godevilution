@@ -77,6 +77,12 @@ Status date: 2026-08-17
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
 
+- Native authoritative potion and rejuvenation use now submits
+  `UseConsumableRequested` with a stable inventory or belt reference. The Diablo
+  module owns native Q6 life/mana restoration, class multipliers, `NoMana`
+  suppression, deterministic RNG, and item consumption. Elixir, oil, and other
+  miscellaneous cursor actions remain explicit follow-up seams.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

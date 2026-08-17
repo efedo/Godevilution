@@ -424,6 +424,41 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolUseConsumableUsesAuthoritativeResourceEffectAndConsumesItem()
+    {
+        var potion = new OwnedStoreItem(0, 0, 42, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+                StatFlag = true,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 64,
+            startingLifeMaximum: 640,
+            startingMana: 64,
+            startingManaMaximum: 640,
+            startingInventory: [potion]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Empty(player.Inventory);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
     public void ProtocolRepairAbilityUsesAuthoritativeClassSkillAndNativeRandomRule()
     {
         const uint repairSpellId = 26;
