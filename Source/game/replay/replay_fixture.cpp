@@ -4383,10 +4383,19 @@ void AdvanceReplayAutonomousBloodStarsOneTick(ReplayFixtureExecutionState &state
 			    && state.levelId == projectile.levelId
 			    && state.positionX == x
 			    && state.positionY == y;
-			if (!primaryPlayerAtTile)
+			const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			if (!primaryPlayerAtTile && !secondaryPlayerAtTile)
 				return false;
-			const uint32_t targetEntityId = state.entityId;
-			const int32_t targetLevel = static_cast<int32_t>(state.characterLevel);
+			const uint32_t targetEntityId = primaryPlayerAtTile
+			    ? state.entityId
+			    : state.secondaryPlayerEntityId;
+			const int32_t targetLevel = primaryPlayerAtTile
+			    ? static_cast<int32_t>(state.characterLevel)
+			    : static_cast<int32_t>(state.secondaryPlayerCharacterLevel);
 			const int32_t distance = std::max(
 			    std::abs(x - state.combatTargetPositionX),
 			    std::abs(y - state.combatTargetPositionY));
@@ -4398,7 +4407,25 @@ void AdvanceReplayAutonomousBloodStarsOneTick(ReplayFixtureExecutionState &state
 			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 				return false;
 
-			state.life = std::max(0, state.life - std::max(1, projectile.damage) * 64);
+			const bool canBlock = secondaryPlayerAtTile
+			    && state.secondaryPlayerBlockCapable
+			    && (state.secondaryPlayerCombatMode == 0
+			        || state.secondaryPlayerCombatMode == 4);
+			const int32_t blockChance = std::clamp(
+				(secondaryPlayerAtTile ? state.secondaryPlayerDexterity : 0)
+				    + 2 * targetLevel
+				    - 2 * state.combatTargetMonsterLevel,
+				0,
+				100);
+			const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
+			if (canBlock && blockRoll < blockChance) {
+				state.secondaryPlayerCombatMode = 6;
+				state.secondaryPlayerCombatModeEndTick = state.lastAppliedTick + 1 + 4;
+			} else if (primaryPlayerAtTile) {
+				state.life = std::max(0, state.life - std::max(1, projectile.damage) * 64);
+			} else {
+				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - std::max(1, projectile.damage) * 64);
+			}
 			projectile.lastCollisionTargetEntityId = targetEntityId;
 			EnterReplayProjectileImpact(projectile);
 			return true;
@@ -4411,7 +4438,13 @@ void AdvanceReplayAutonomousBloodStarsOneTick(ReplayFixtureExecutionState &state
 			        && state.positionX == projectile.positionX
 			        && state.positionY == projectile.positionY)
 			    ? state.entityId
-			    : 0;
+			    : (state.secondaryPlayerEntityId != 0
+			        && state.secondaryPlayerLife > 0
+			        && state.secondaryPlayerLevelId == projectile.levelId
+			        && state.secondaryPlayerPositionX == projectile.positionX
+			        && state.secondaryPlayerPositionY == projectile.positionY)
+			        ? state.secondaryPlayerEntityId
+			        : 0;
 			if (projectile.lastCollisionTargetEntityId != targetEntityId
 			    && resolvePlayerAt(projectile.positionX, projectile.positionY)) {
 				++iterator;

@@ -2840,6 +2840,74 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarImpactAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSuccubusBloodStarSecondaryBlockAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-blood-star-secondary-block.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_TRUE(fixture.initialProjectiles.empty());
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
+	state.secondaryPlayerCharacterName = fixture.initialState.secondaryPlayer.characterName;
+	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
+	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
+	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
+	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
+	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
+	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
+	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
+	state.secondaryPlayerCharacterClassId = fixture.initialState.secondaryPlayer.characterClass;
+	state.secondaryPlayerMagic = fixture.initialState.secondaryPlayer.magic;
+	state.secondaryPlayerDexterity = fixture.initialState.secondaryPlayer.dexterity;
+	state.secondaryPlayerFriendlyMode = fixture.initialState.secondaryPlayer.friendlyMode;
+	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
+	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
+	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 2U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_TRUE(result.transitions[1].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 27U);
+	EXPECT_EQ(state.life, 0);
+	EXPECT_EQ(state.secondaryPlayerLife, 6400);
+	EXPECT_EQ(state.secondaryPlayerCombatMode, 6U);
+	EXPECT_EQ(state.secondaryPlayerCombatModeEndTick, 31U);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(state.projectiles[0].behavior, 20);
+	EXPECT_EQ(state.projectiles[0].phase, 1);
+	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
+	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 8U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesStatusExpiryByAuthoritativeTick)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-status-expiry.json");
