@@ -1098,6 +1098,44 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void MovesStableSingleCellItemsBetweenInventoryAndBelt()
+    {
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 902,
+            ItemType = 1,
+        };
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 44, 0, 0, state)],
+            inventoryGrid: grid);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var toBelt = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 902),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 0)),
+            1);
+
+        Assert.True(toBelt.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(44U, Assert.Single(player.Belt).ItemSeed);
+
+        var toInventory = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 0, 902),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 8)),
+            2);
+
+        Assert.True(toInventory.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.Equal(44U, Assert.Single(player.Inventory).ItemSeed);
+        Assert.Equal(0, player.InventoryGrid[8]);
+    }
+
+    [Fact]
     public void SwapsMultiCellInventoryItemsAtomically()
     {
         var large = AuthoritativeItemState.Empty with {

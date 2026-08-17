@@ -9,6 +9,10 @@ All notable changes to this fork are documented below.
   one-cell footprint rule while catalog-less compatibility simulations remain
   supported.
 
+- Route native automatic equipment-to-inventory, belt-to-inventory, and
+  inventory-to-belt placement through stable-reference authoritative transfers.
+  Automatic multi-item equipment swaps remain pending an atomic server intent.
+
 - Route normal native authoritative inventory-cursor placement through the
   existing stable-reference `MoveItemRequested` transfer, keeping cursor
   selection as presentation state and reconciling rejected transfers from the

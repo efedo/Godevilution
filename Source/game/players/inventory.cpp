@@ -781,6 +781,70 @@ bool CouldFitItemInInventory(const Player &player, const Item &item, int itemInd
 	return static_cast<bool>(FindSlotForItem(player, GetInventorySize(item), itemIndexToIgnore));
 }
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+namespace {
+
+std::optional<bool> TryServerBackedAutomaticMoveToInventory(Player &player, const Item &item)
+{
+	if (&player != MyPlayer || !authoritative::GetServerBackedRuntime().IsConnected())
+		return std::nullopt;
+
+	auto &runtime = authoritative::GetServerBackedRuntime();
+	const auto source = runtime.PlayerItemReferenceForSeed(item._iSeed);
+	if (!source.has_value()) {
+		LogError("Could not resolve the automatic inventory move source in the authoritative snapshot.");
+		return false;
+	}
+	const auto targetSlot = FindSlotForItem(player, GetInventorySize(item));
+	if (!targetSlot.has_value())
+		return false;
+
+	const authoritative::ServerBackedItemReference destination {
+		.location = authoritative::ServerBackedItemLocation::Inventory,
+		.slot = static_cast<uint32_t>(*targetSlot),
+	};
+	if (auto result = runtime.MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value()) {
+		LogError("Server-backed automatic inventory placement failed: {}", result.error());
+		return false;
+	}
+	return true;
+}
+
+std::optional<bool> TryServerBackedAutomaticMoveToBelt(Player &player, const Item &item)
+{
+	if (&player != MyPlayer || !authoritative::GetServerBackedRuntime().IsConnected())
+		return std::nullopt;
+
+	auto &runtime = authoritative::GetServerBackedRuntime();
+	const auto source = runtime.PlayerItemReferenceForSeed(item._iSeed);
+	if (!source.has_value()) {
+		LogError("Could not resolve the automatic belt move source in the authoritative snapshot.");
+		return false;
+	}
+	std::optional<uint32_t> targetSlot;
+	for (uint32_t slot = 0; slot < sizeof(player.SpdList) / sizeof(player.SpdList[0]); ++slot) {
+		if (player.SpdList[slot].isEmpty()) {
+			targetSlot = slot;
+			break;
+		}
+	}
+	if (!targetSlot.has_value())
+		return false;
+
+	const authoritative::ServerBackedItemReference destination {
+		.location = authoritative::ServerBackedItemLocation::Belt,
+		.slot = *targetSlot,
+	};
+	if (auto result = runtime.MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value()) {
+		LogError("Server-backed automatic belt placement failed: {}", result.error());
+		return false;
+	}
+	return true;
+}
+
+} // namespace
+#endif
+
 void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool dropItem)
 {
 	if (player._pmode > PM_WALK_SIDEWAYS) {
@@ -831,10 +895,20 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 		if (!player.InvBody[invloc].isEmpty()) {
 			if (automaticMove) {
 				attemptedMove = true;
-				automaticallyMoved = AutoPlaceItemInInventory(player, player.InvBody[invloc]);
+				const Item item = player.InvBody[invloc];
+				bool movedByServer = false;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				const auto serverMove = TryServerBackedAutomaticMoveToInventory(player, item);
+				if (serverMove.has_value()) {
+					automaticallyMoved = *serverMove;
+					movedByServer = true;
+				} else
+#endif
+					automaticallyMoved = AutoPlaceItemInInventory(player, item);
 				if (automaticallyMoved) {
-					successSound = ItemInvSnds[ItemCAnimTbl[player.InvBody[invloc]._iCurs]];
-					RemoveEquipment(player, invloc, false);
+					successSound = ItemInvSnds[ItemCAnimTbl[item._iCurs]];
+					if (!movedByServer)
+						RemoveEquipment(player, invloc, false);
 				} else {
 					failedSpeech = HeroSpeech::IHaveNoRoom;
 				}
@@ -852,14 +926,30 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 			if (automaticMove) {
 				attemptedMove = true;
 				if (CanBePlacedOnBelt(player, player.InvList[iv])) {
-					automaticallyMoved = AutoPlaceItemInBelt(player, player.InvList[iv], true, &player == MyPlayer);
+					const Item item = player.InvList[iv];
+					bool movedByServer = false;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					const auto serverMove = TryServerBackedAutomaticMoveToBelt(player, item);
+					if (serverMove.has_value()) {
+						automaticallyMoved = *serverMove;
+						movedByServer = true;
+					} else
+#endif
+						automaticallyMoved = AutoPlaceItemInBelt(player, item, true, &player == MyPlayer);
 					if (automaticallyMoved) {
 						successSound = SfxID::GrabItem;
-						player.RemoveInvItem(iv, false);
+						if (!movedByServer)
+							player.RemoveInvItem(iv, false);
 					} else {
 						failedSpeech = HeroSpeech::IHaveNoRoom;
 					}
 				} else if (CanEquip(player.InvList[iv])) {
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
+					failedSpeech = HeroSpeech::ICantDoThat;
+					// Automatic equipment swaps still require a dedicated atomic server intent.
+				} else {
+				#endif
 					failedSpeech = HeroSpeech::IHaveNoRoom; // Default to saying "I have no room" if auto-equip fails
 
 					/*
@@ -954,6 +1044,9 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 						// We somehow failed to equip the item in the slot we already checked should hold it? Better put this item back...
 						player.InvBody[invloc] = holdItem.pop();
 					}
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				}
+				#endif
 				}
 			} else if (IsVisualStoreOpen && CanSellToCurrentVendor(player.InvList[iv]) && dropItem) {
 				// If visual store is open, ctrl-click sells the item
@@ -971,10 +1064,20 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 		if (!beltItem.isEmpty()) {
 			if (automaticMove) {
 				attemptedMove = true;
-				automaticallyMoved = AutoPlaceItemInInventory(player, beltItem);
+				const Item item = beltItem;
+				bool movedByServer = false;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				const auto serverMove = TryServerBackedAutomaticMoveToInventory(player, item);
+				if (serverMove.has_value()) {
+					automaticallyMoved = *serverMove;
+					movedByServer = true;
+				} else
+#endif
+					automaticallyMoved = AutoPlaceItemInInventory(player, item);
 				if (automaticallyMoved) {
 					successSound = SfxID::GrabItem;
-					player.RemoveSpdBarItem(r - SLOTXY_BELT_FIRST);
+					if (!movedByServer)
+						player.RemoveSpdBarItem(r - SLOTXY_BELT_FIRST);
 				} else {
 					failedSpeech = HeroSpeech::IHaveNoRoom;
 				}
