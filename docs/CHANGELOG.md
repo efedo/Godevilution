@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.337 base Butcher quest content. The Dead Guy activation and
+  normalized The Butcher completion monster now use authored server-owned data.
+
 - Add schema 1.328 unique-monster dialogue hand-ins. Hellfire Lachdanan now
   consumes Golden Elixir and spawns the authored Veil of Steel reward through
   the shared `TalkToQuestRequested` boundary; the server owns completion,

@@ -1747,6 +1747,51 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeButcherActivationUsesAuthoredDeadGuyInteraction()
+    {
+        var quest = new AuthoritativeQuestState(
+            3007,
+            2,
+            1,
+            active: false,
+            messageId: 65,
+            completionMonsterId: 53,
+            turnInTownerId: 2,
+            turnInLevelId: 0,
+            turnInPositionX: 24,
+            turnInPositionY: 32,
+            turnInActivationOnly: true,
+            turnInActivationVariable1: 1);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: new AuthoritativeItemCatalog([
+                new AuthoritativeItemDefinition(1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            ]));
+        var player = CreatePlayer(positionX: 23, positionY: 32, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3007, 2),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(1, quest.Variable1);
+        Assert.Equal(65, Assert.Single(result.Events).MessageId);
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3007, 2),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void AuthoredTownerActivationConsumesItemAndUsesExplicitNativeMarker()
     {
         var items = new AuthoritativeItemCatalog([

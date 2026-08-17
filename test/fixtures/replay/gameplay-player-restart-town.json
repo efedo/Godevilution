@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "devilution.base",
     "version": "0.1.0",
-"sha256": "5a143d6e1f2eec3c34c853102513ad0d0c83b913e48863715f0b28e82569e001"
+"sha256": "c2b2477e844c57a0eeef18c44bd1efae61fa21f2b7dad8ec87836cfbcc679be4"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,

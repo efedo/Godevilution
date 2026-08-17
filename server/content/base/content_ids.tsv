@@ -218,6 +218,7 @@ spell	nova	18
 spell	golem	52
 spell	etherealize	53
 monster	base_monster	1
+monster	the_butcher_native_51	53
 class	warrior	0
 class	rogue	1
 class	sorcerer	2

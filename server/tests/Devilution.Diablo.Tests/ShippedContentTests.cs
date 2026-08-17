@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.336.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.337.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -135,6 +135,33 @@ public sealed class ShippedContentTests
             harlequinCrest.BaseItemId,
             harlequinCrest.Value,
             harlequinCrest.Powers.Count));
+
+        var butcherQuest = Assert.Single(
+            AuthoritativeQuestCatalog.LoadTsv(
+                "quest_states.tsv",
+                pack.Tables.Single(table => table.SourcePath == "quest_states.tsv").ToCanonicalTsv(),
+                questTypes,
+                stableIds),
+            quest => quest.QuestId == 3007);
+        Assert.Equal((65, 53U, 2, 0U, 24, 32, true, 1), (
+            butcherQuest.MessageId,
+            butcherQuest.CompletionMonsterId,
+            butcherQuest.TurnInTownerId,
+            butcherQuest.TurnInLevelId,
+            butcherQuest.TurnInPositionX,
+            butcherQuest.TurnInPositionY,
+            butcherQuest.TurnInActivationOnly,
+            butcherQuest.TurnInActivationVariable1));
+
+        var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            "monster_types.tsv",
+            pack.Tables.Single(table => table.SourcePath == "monster_types.tsv").ToCanonicalTsv(),
+            stableIds);
+        var butcher = Assert.Single(monsterTypes.Definitions, monster => monster.MonsterId == 53);
+        Assert.Equal((51U, "The Butcher", "Butcher"), (
+            butcher.NativeMonsterId,
+            butcher.Name,
+            butcher.NativeAi));
     }
 
     [Fact]
@@ -1543,7 +1570,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.336.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.337.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1731,7 +1758,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(19, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(20, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)
