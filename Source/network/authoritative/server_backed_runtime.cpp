@@ -145,6 +145,7 @@ void ServerBackedRuntime::Stop() noexcept
 	authoritativeMode_ = false;
 	pendingInventoryItemDrag_.reset();
 	pendingInventoryItemDragSeed_.reset();
+	pendingOilUse_.reset();
 	worldProjection_.Clear();
 	worldPresentation_.Clear();
 	player_ = nullptr;
@@ -369,6 +370,18 @@ tl::expected<void, std::string> ServerBackedRuntime::UseConsumable(ServerBackedI
 		return result;
 	if (auto result = EnsureCommandAccepted(); !result.has_value())
 		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::UseConsumable(ServerBackedItemReference item, ServerBackedItemReference target, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->UseConsumable(item, target, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	pendingOilUse_.reset();
 	return ApplyCurrentPlayerSnapshot();
 }
 
@@ -679,6 +692,24 @@ void ServerBackedRuntime::CancelInventoryItemDrag() noexcept
 {
 	pendingInventoryItemDrag_.reset();
 	pendingInventoryItemDragSeed_.reset();
+}
+
+bool ServerBackedRuntime::BeginOilUse(ServerBackedItemReference item) noexcept
+{
+	if (!session_)
+		return false;
+	pendingOilUse_ = item;
+	return true;
+}
+
+std::optional<ServerBackedItemReference> ServerBackedRuntime::PendingOilUse() const noexcept
+{
+	return pendingOilUse_;
+}
+
+void ServerBackedRuntime::CancelOilUse() noexcept
+{
+	pendingOilUse_.reset();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot()

@@ -264,6 +264,10 @@ public sealed class ShippedContentTests
                     12 => DiabloItemActionKind.IncreaseMagic,
                     13 => DiabloItemActionKind.IncreaseDexterity,
                     14 => DiabloItemActionKind.IncreaseVitality,
+                    37 => DiabloItemActionKind.ApplyBlacksmithOil,
+                    32 => DiabloItemActionKind.ApplyAccuracyOil,
+                    34 => DiabloItemActionKind.ApplySharpnessOil,
+                    31 => DiabloItemActionKind.ApplyFortitudeOil,
                     _ => DiabloItemActionKind.None,
                 },
                 item.ItemActionKind);
@@ -2119,6 +2123,10 @@ public sealed class ShippedContentTests
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
             Assert.Equal(
                 itemId switch {
+                    2152 => DiabloItemActionKind.ApplyBlacksmithOil,
+                    2153 => DiabloItemActionKind.ApplyAccuracyOil,
+                    2154 => DiabloItemActionKind.ApplySharpnessOil,
+                    2155 => DiabloItemActionKind.ApplyFortitudeOil,
                     2156 => DiabloItemActionKind.IncreaseStrength,
                     2157 => DiabloItemActionKind.IncreaseMagic,
                     2158 => DiabloItemActionKind.IncreaseDexterity,

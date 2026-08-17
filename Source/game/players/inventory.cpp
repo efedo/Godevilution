@@ -2415,6 +2415,28 @@ bool UseInvItem(int cii)
 		return true;
 	}
 
+	if (authoritative::GetServerBackedRuntime().IsConnected()
+	    && item->_iMiscId > IMISC_OILFIRST
+	    && item->_iMiscId < IMISC_OILLAST) {
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+		if (!reference.has_value()) {
+			LogError("Server-backed oil use has no authoritative item reference.");
+			return true;
+		}
+		if (!authoritative::GetServerBackedRuntime().BeginOilUse(*reference)) {
+			LogError("Server-backed oil use could not arm its authoritative source.");
+			return true;
+		}
+		player._pOilType = item->_iMiscId;
+		if (SpellbookFlag)
+			SpellbookFlag = false;
+		if (!invflag)
+			invflag = true;
+		PlaySFX(ItemInvSnds[idata]);
+		NewCursor(CURSOR_OIL);
+		return true;
+	}
+
 	if (item->_iMiscId == IMISC_BOOK && authoritative::GetServerBackedRuntime().IsConnected()) {
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
 		if (!reference.has_value()) {

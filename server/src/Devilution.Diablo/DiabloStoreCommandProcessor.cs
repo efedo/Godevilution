@@ -448,9 +448,16 @@ public sealed class DiabloStoreCommandProcessor
                 or DiabloItemActionKind.IncreaseStrength
                 or DiabloItemActionKind.IncreaseMagic
                 or DiabloItemActionKind.IncreaseDexterity
-                or DiabloItemActionKind.IncreaseVitality)) {
+                or DiabloItemActionKind.IncreaseVitality
+                or DiabloItemActionKind.ApplyBlacksmithOil
+                or DiabloItemActionKind.ApplyAccuracyOil
+                or DiabloItemActionKind.ApplySharpnessOil
+                or DiabloItemActionKind.ApplyFortitudeOil)) {
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
+
+        if (IsOilAction(action))
+            return ApplyOil(player, intent, action);
 
         switch (action) {
         case DiabloItemActionKind.RestorePartialLife:
@@ -491,6 +498,100 @@ public sealed class DiabloStoreCommandProcessor
 
         DiabloPlayerItemAccess.Remove(player, intent.Item);
         return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult ApplyOil(
+        AuthoritativePlayerState player,
+        DiabloUseConsumableIntent intent,
+        DiabloItemActionKind action)
+    {
+        if (intent.Target is not { } targetReference
+            || targetReference.Location is not (DiabloPlayerItemLocation.Inventory
+                or DiabloPlayerItemLocation.Equipment)
+            || SameLocation(intent.Item, targetReference)
+            || !DiabloPlayerItemAccess.TryGet(player, targetReference, out var target)
+            || target.State.Deleted
+            || IsOilTargetClass(target.State)
+            || (action is DiabloItemActionKind.ApplyAccuracyOil
+                or DiabloItemActionKind.ApplySharpnessOil)
+                && IsArmor(target.State)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        var state = target.State;
+        switch (action) {
+        case DiabloItemActionKind.ApplyBlacksmithOil:
+            if (state.MaxDurability != byte.MaxValue) {
+                if (state.Durability < state.MaxDurability) {
+                    state = state with {
+                        Durability = Math.Min(
+                            checked(state.Durability + (state.MaxDurability + 4) / 5),
+                            state.MaxDurability),
+                    };
+                } else if (state.MaxDurability < 100) {
+                    state = state with {
+                        Durability = state.MaxDurability + 1,
+                        MaxDurability = state.MaxDurability + 1,
+                    };
+                }
+            }
+            break;
+        case DiabloItemActionKind.ApplyAccuracyOil:
+            if (state.PlusToHit < 50)
+                state = state with { PlusToHit = checked(state.PlusToHit + random.RandomIntBetween(1, 2)) };
+            break;
+        case DiabloItemActionKind.ApplySharpnessOil:
+            if (state.MaxDamage - state.MinDamage < 30 && state.MaxDamage < byte.MaxValue)
+                state = state with { MaxDamage = state.MaxDamage + 1 };
+            break;
+        case DiabloItemActionKind.ApplyFortitudeOil:
+            if (state.MaxDurability != byte.MaxValue && state.MaxDurability < 200) {
+                var increase = random.RandomIntBetween(10, 50);
+                state = state with {
+                    MaxDurability = checked(state.MaxDurability + increase),
+                    Durability = checked(state.Durability + increase),
+                };
+            }
+            break;
+        default:
+            throw new InvalidOperationException("Validated item action was not an oil action.");
+        }
+
+        DiabloPlayerItemAccess.Replace(player, targetReference, target with { State = state });
+        DiabloPlayerItemAccess.Remove(player, intent.Item);
+        if (targetReference.Location == DiabloPlayerItemLocation.Equipment)
+            player.RecalculateEquipmentResources();
+        return DiabloIntentResult.Accepted;
+    }
+
+    private static bool IsOilAction(DiabloItemActionKind action)
+    {
+        return action is DiabloItemActionKind.ApplyBlacksmithOil
+            or DiabloItemActionKind.ApplyAccuracyOil
+            or DiabloItemActionKind.ApplySharpnessOil
+            or DiabloItemActionKind.ApplyFortitudeOil;
+    }
+
+    private bool IsOilTargetClass(AuthoritativeItemState state)
+    {
+        if (state.ItemClass is 3 or 4 or 5)
+            return true;
+        if (items is not null
+            && items.TryGetByState(state, out var definition)) {
+            return definition.GenerationTags.Contains("Misc")
+                || definition.GenerationTags.Contains("Gold")
+                || definition.GenerationTags.Contains("Quest");
+        }
+        return false;
+    }
+
+    private bool IsArmor(AuthoritativeItemState state)
+    {
+        if (state.ItemClass == 2)
+            return true;
+        return items is not null
+            && items.TryGetByState(state, out var definition)
+            && definition.GenerationTags.Contains("Armor");
     }
 
     private void RestorePartialMana(AuthoritativePlayerState player)

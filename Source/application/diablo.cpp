@@ -3107,11 +3107,34 @@ bool TryIconCurs()
 
 	if (pcurs == CURSOR_OIL) {
 		bool changeCursor = true;
-		if (pcursinvitem != -1 && !IsInspectingPlayer())
+		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				const auto target = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
+				const auto source = authoritative::GetServerBackedRuntime().PendingOilUse();
+				if (!target.has_value() || !source.has_value()) {
+					LogError("Server-backed oil use has no authoritative source or target reference.");
+					changeCursor = false;
+				} else if (auto result = authoritative::GetServerBackedRuntime().UseConsumable(*source, *target, 0, SDL_GetTicks()); !result.has_value()) {
+					LogError("Server-backed oil use failed: {}", result.error());
+					changeCursor = false;
+				}
+				if (!changeCursor)
+					return true;
+			} else
+#endif
 			changeCursor = DoOil(myPlayer, pcursinvitem);
-		else if (pcursstashitem != StashStruct::EmptyCell) {
+		} else if (pcursstashitem != StashStruct::EmptyCell) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				LogError("Server-backed oil use does not support stash targets.");
+				changeCursor = false;
+			} else
+#endif
+		{
 			Item &item = Stash.stashList[pcursstashitem];
 			changeCursor = ApplyOilToItem(item, myPlayer);
+		}
 		}
 		if (changeCursor)
 			NewCursor(CURSOR_HAND);

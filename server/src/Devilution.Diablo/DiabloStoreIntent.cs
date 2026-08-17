@@ -55,7 +55,8 @@ public sealed record DiabloReadBookIntent(
 
 /** Consumes a content-owned item action and applies its server-owned effect. */
 public sealed record DiabloUseConsumableIntent(
-    DiabloPlayerItemReference Item) : DiabloStoreIntent;
+    DiabloPlayerItemReference Item,
+    DiabloPlayerItemReference? Target = null) : DiabloStoreIntent;
 
 public sealed record DiabloRefillManaIntent : DiabloStoreIntent;
 

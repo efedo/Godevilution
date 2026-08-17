@@ -61,6 +61,7 @@ public:
 	tl::expected<void, std::string> IdentifyItemWithAbility(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> ReadBook(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> UseConsumable(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> UseConsumable(ServerBackedItemReference item, ServerBackedItemReference target, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RefillMana(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> MoveInventoryItem(uint32_t inventoryIndex, uint32_t targetCell, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> MoveInventoryItem(ServerBackedItemReference item, uint32_t targetCell, uint64_t requestedTick, uint64_t nowMs);
@@ -99,6 +100,12 @@ public:
 	[[nodiscard]] bool BeginInventoryItemDrag(uint32_t itemSeed) noexcept;
 	/** Cancels the presentation-only inventory drag selection. */
 	void CancelInventoryItemDrag() noexcept;
+	/** Arms a native oil cursor action with its authoritative source reference. */
+	[[nodiscard]] bool BeginOilUse(ServerBackedItemReference item) noexcept;
+	/** Returns the authoritative source retained by the native oil cursor. */
+	[[nodiscard]] std::optional<ServerBackedItemReference> PendingOilUse() const noexcept;
+	/** Cancels the presentation-only native oil cursor action. */
+	void CancelOilUse() noexcept;
 
 private:
 	tl::expected<void, std::string> StartImpl(const ServerBackedRuntimeConfiguration &configuration, StoreManager &storeManager, Player *player);
@@ -111,6 +118,7 @@ private:
 	bool authoritativeMode_ = false;
 	std::optional<ServerBackedItemReference> pendingInventoryItemDrag_;
 	std::optional<uint32_t> pendingInventoryItemDragSeed_;
+	std::optional<ServerBackedItemReference> pendingOilUse_;
 	ServerBackedWorldProjection worldProjection_;
 	ServerBackedWorldPresentation worldPresentation_;
 };

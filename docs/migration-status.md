@@ -8,7 +8,7 @@ Status date: 2026-08-17
 | --- | --- | --- |
 | Protocol and sessions | Operational vertical slice with one generated C# protocol assembly shared by Server and Godot, including self-first complete multiplayer snapshots, additive live authoritative level-geometry projections, per-session class selection, class-skill/learned-spell state, explicit cast sources, resume precedence, live single-player and multiplayer handshakes/cast slices, a twelve-cycle server soak plus an eight-cycle live Godot-client reconnect soak while another participant remains connected, protocol v0.2 independent content/ruleset handshake identities adopted by production launchers while preserving the v0.1 alias, server-owned adjacent melee plus line-of-sight ranged player-versus-player admission with native timing, physical/elemental damage, target resistance, shield/class blocking, equipment knockback, lethal death/ear handling, targeted Firebolt/Charged Bolt/Bone Spirit admission for living remote players, live Firebolt, Charged Bolt, Bone Spirit, Heal Other, and Resurrection player-target coverage, live two-client coverage including effect-tick shield resolution, typed Diablo victory events for client presentation, and Normal/Nightmare/Hell difficulty projection in authoritative snapshots | Add broader reconnect/multiplayer fixtures and production-client soak coverage |
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with server-owned corpse tiles, native per-tick monster regeneration, refreshed ordinary-death and spell-timeline checkpoints, deterministic quest-pool selection/rejection, a 1,000-tick autonomous regeneration soak, multiplayer autonomous-tick participant fixtures with explicit secondary-session movement and melee-attack routing, shared melee and ranged elemental-equipment fixtures covering native fire/lightning and arrow channels, resistance, and RNG, native/C# chained-action timing coverage for first-frame attack skips, seeded and autonomous GoatRanged and SkeletonRanged MonsterArrow admission/travel/impact/removal parity including secondary-participant routing, autonomous Succubus BloodStar admission/travel/player-impact parity with deterministic monster-magic hit/block RNG, Q6 damage, and block-animation state, plus Lich-family MonsterMagic admission/travel/player-impact parity for deterministic hits, misses, and secondary-participant impacts, live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus composed-manifest Hellfire ranged replay and shared Firebolt, Fireball, Bone Spirit player-target, and Bone Spirit homing/resistant-monster replays | Expand broader multi-actor autonomous and reconnect replay coverage |
-| Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, and elixir consumption, and authoritative inventory relocation, with stable item references carried by native and Godot clients; content-backed moves now enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, and all native automatic equipment, inventory, belt, potion, rejuvenation, and elixir paths use stable server-owned intents | Expand oil and remaining miscellaneous-item coverage, add broader live-client coverage, and continue exact legacy edge-case characterization |
+| Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, elixir, and Blacksmith/Accuracy/Sharpness/Fortitude oil consumption, and authoritative inventory relocation, with stable item references carried by native and Godot clients; content-backed moves now enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, and all native automatic equipment, inventory, belt, potion, rejuvenation, elixir, and oil paths use stable server-owned intents | Expand remaining miscellaneous-item coverage, add broader live-client coverage, and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice | Expand AI, level generation, quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec, validated saved-class reconstruction for cold sessions, live process-restart restoration of movement/class state through the shared protocol, and a durable save-root world seed that keeps generated geometry stable across restarts | Add concrete migrations when formats change and broader recovery/soak testing |
 | Native client | Explicit legacy or authoritative runtime mode; normal item-cursor inventory/belt placement uses stable-reference transfers, normal equipment drags carry the selected slot through atomic `AutoEquipItemRequested`, and automatic inventory/equipment/belt relocation remains server-owned | Continue removing compatibility-pool assumptions as Godot presentation matures |
@@ -77,19 +77,22 @@ Status date: 2026-08-17
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
 
-- Native authoritative potion, rejuvenation, and elixir use now submits
+- Native authoritative potion, rejuvenation, elixir, and supported oil use now submits
   `UseConsumableRequested` with a stable inventory or belt reference. The Diablo
   module owns native Q6 life/mana restoration, class multipliers, deterministic
   RNG, elixir stat ceilings, Q6 resource growth, Hellfire full-resource effects,
-  `NoMana` suppression, persistence, and item consumption. Oils and other
-  miscellaneous cursor actions remain explicit follow-up seams.
+  `NoMana` suppression, persistence, and item consumption. Oil selection retains
+  a presentation-only cursor until the server receives the exact source and
+  target references; the server owns target restrictions, mutations, and
+  atomic source consumption. Remaining miscellaneous cursor actions are still
+  explicit follow-up seams.
 
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,238 tests and the server suite passes all 347 tests.
+  all 1,258 tests and the server suite passes all 352 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;

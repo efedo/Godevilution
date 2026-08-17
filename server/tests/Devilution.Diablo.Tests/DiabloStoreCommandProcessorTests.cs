@@ -892,6 +892,176 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.Empty(player.Inventory);
     }
 
+    [Theory]
+    [InlineData(DiabloItemActionKind.ApplyBlacksmithOil, 5, 20, 0, 0, 0, 9, 20)]
+    [InlineData(DiabloItemActionKind.ApplySharpnessOil, 0, 0, 5, 10, 0, 0, 0)]
+    public void OilActionsMutateTheReferencedTargetAndConsumeTheSource(
+        DiabloItemActionKind action,
+        int durability,
+        int maxDurability,
+        int minDamage,
+        int maxDamage,
+        int plusToHit,
+        int expectedDurability,
+        int expectedMaxDurability)
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            70,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = action,
+                ItemClass = 3,
+            });
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            71,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 1,
+                Durability = durability,
+                MaxDurability = maxDurability,
+                MinDamage = minDamage,
+                MaxDamage = maxDamage,
+                PlusToHit = plusToHit,
+            });
+        var player = CreatePlayer(inventory: [oil, target]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: new DiabloRandom(0));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1);
+
+        Assert.True(result.Succeeded);
+        var applied = Assert.Single(player.Inventory);
+        Assert.Equal(71U, applied.ItemSeed);
+        Assert.Equal(expectedDurability, applied.State.Durability);
+        Assert.Equal(expectedMaxDurability, applied.State.MaxDurability);
+        if (action == DiabloItemActionKind.ApplySharpnessOil)
+            Assert.Equal(11, applied.State.MaxDamage);
+    }
+
+    [Fact]
+    public void AccuracyAndFortitudeOilsUseNativeBoundedRandomEffects()
+    {
+        var accuracy = new OwnedStoreItem(
+            0,
+            0,
+            72,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplyAccuracyOil,
+                ItemClass = 3,
+            });
+        var target = new OwnedStoreItem(
+            0,
+            0,
+            73,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 1,
+                PlusToHit = 0,
+            });
+        var player = CreatePlayer(inventory: [accuracy, target]);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            random: new DiabloRandom(0));
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            1).Succeeded);
+        Assert.InRange(Assert.Single(player.Inventory).State.PlusToHit, 1, 2);
+
+        var fortitude = new OwnedStoreItem(
+            0,
+            0,
+            74,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplyFortitudeOil,
+                ItemClass = 3,
+            });
+        var durabilityTarget = new OwnedStoreItem(
+            0,
+            0,
+            75,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 2,
+                Durability = 10,
+                MaxDurability = 20,
+            });
+        player.Inventory.Add(fortitude);
+        player.Inventory.Add(durabilityTarget);
+        Assert.True(processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 2)),
+            2).Succeeded);
+        var applied = Assert.Single(player.Inventory, item => item.ItemSeed == 75);
+        Assert.InRange(applied.State.MaxDurability, 30, 70);
+        Assert.Equal(applied.State.MaxDurability - 10, applied.State.Durability);
+    }
+
+    [Fact]
+    public void OilRejectsMissingOrIncompatibleTargetsWithoutConsumingTheSource()
+    {
+        var oil = new OwnedStoreItem(
+            0,
+            0,
+            76,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplyAccuracyOil,
+                ItemClass = 3,
+            });
+        var armor = new OwnedStoreItem(
+            0,
+            0,
+            77,
+            100,
+            0,
+            AuthoritativeItemState.Empty with { ItemClass = 2 });
+        var player = CreatePlayer(inventory: [oil, armor]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var missing = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+        var incompatible = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 1)),
+            2);
+
+        Assert.False(missing.Succeeded);
+        Assert.False(incompatible.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, missing.Failure);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, incompatible.Failure);
+        Assert.Equal(2, player.Inventory.Count);
+    }
+
     [Fact]
     public void AppliesCompleteVendorLifecycleWithoutProtocolTypes()
     {

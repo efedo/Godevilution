@@ -13,7 +13,13 @@ All notable changes to this fork are documented below.
   same server-owned intent. External content classifies each stat transition;
   the Diablo module owns native stat ceilings, Q6 resource growth, Hellfire
   full-resource restoration, `NoMana` suppression, persistence, and item
-  consumption. Oils remain a follow-up action seam.
+  consumption.
+
+- Route native Blacksmith, Accuracy, Sharpness, and Fortitude oils through the
+  server-owned `UseConsumableRequested` intent with an additive target item
+  reference. External content classifies each oil; the Diablo module owns the
+  native target restrictions, durability/damage/to-hit mutations, deterministic
+  random ranges, atomic source consumption, and equipment recalculation.
 
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server

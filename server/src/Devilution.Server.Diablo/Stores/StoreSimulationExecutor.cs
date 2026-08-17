@@ -584,9 +584,13 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
                 CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
         }
+        if (!TryMapItemReference(request.TargetItem, out var target)) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
         return ExecuteStoreIntent(
             player,
-            new DiabloUseConsumableIntent(item.Value),
+            new DiabloUseConsumableIntent(item.Value, target),
             appliedTick);
     }
 

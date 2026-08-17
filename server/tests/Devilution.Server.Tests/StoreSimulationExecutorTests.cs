@@ -494,6 +494,51 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolUseConsumableAppliesOilToTheReferencedTarget()
+    {
+        var oil = new OwnedStoreItem(0, 0, 44, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.ApplySharpnessOil,
+                ItemClass = 3,
+                StableItemId = 44,
+            });
+        var weapon = new OwnedStoreItem(0, 0, 45, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemClass = 1,
+                MinDamage = 5,
+                MaxDamage = 10,
+                StableItemId = 45,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventory: [oil, weapon]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 44,
+                },
+                TargetItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 1,
+                    StableItemId = 45,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        var applied = Assert.Single(player.Inventory);
+        Assert.Equal(45U, applied.ItemSeed);
+        Assert.Equal(11, applied.State.MaxDamage);
+    }
+
+    [Fact]
     public void ProtocolRepairAbilityUsesAuthoritativeClassSkillAndNativeRandomRule()
     {
         const uint repairSpellId = 26;

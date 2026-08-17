@@ -113,13 +113,15 @@ Spell-book use follows the same boundary: a connected authoritative client sends
 returned snapshot. The local book-consumption path remains available only for
 the explicit legacy runtime.
 
-Potion, rejuvenation, and elixir use now follows the same boundary. A connected
-client sends `UseConsumableRequested` for the projected inventory or belt
-reference; the server applies native Q6 resource restoration, class
+Potion, rejuvenation, elixir, and supported oil use now follows the same
+boundary. A connected client sends `UseConsumableRequested` for the projected
+inventory or belt reference; oil application adds the exact selected inventory
+or equipment target. The server applies native Q6 resource restoration, class
 multipliers, elixir stat/resource transitions, Hellfire full-resource effects,
-and `NoMana` suppression before consuming the item. Oils and other
-cursor-driven miscellaneous items remain local follow-up seams until their
-content actions and state transitions are externalized.
+oil target restrictions and mutations, and `NoMana` suppression before
+consuming the source item. The oil cursor is presentation-only and remains
+armed when the server rejects a target. Other cursor-driven miscellaneous
+items remain local follow-up seams until their content actions are externalized.
 
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the

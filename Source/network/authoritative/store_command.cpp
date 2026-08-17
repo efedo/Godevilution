@@ -187,6 +187,18 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeUseConsumable
 	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_use_consumable_requested(); });
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeUseConsumableCommand(ServerBackedItemReference item, ServerBackedItemReference target, uint64_t requestedTick)
+{
+	auto command = MakeUseConsumableCommand(item, requestedTick);
+	if (!command.has_value())
+		return command;
+	auto targetReference = MakeItemReference(target);
+	if (!targetReference.has_value())
+		return tl::make_unexpected(targetReference.error());
+	command->mutable_use_consumable_requested()->mutable_target_item()->CopyFrom(*targetReference);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRefillManaCommand(uint64_t requestedTick)
 {
 	protocol::v1::Command command;

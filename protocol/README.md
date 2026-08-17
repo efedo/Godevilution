@@ -70,12 +70,15 @@ Windows toolchain command.
   native mana refund, and book consumption. Clients never mutate learned-spell
   state locally.
 - `UseConsumableRequested` consumes an exact owned inventory or belt reference.
+  An optional `target_item` carries the exact inventory or equipment item for
+  cursor-based oils; the source and target are validated atomically.
   The server validates the content-owned potion, rejuvenation, or elixir
   action, applies native Q6 life/mana restoration, class multipliers, elixir
   stat/resource transitions, Hellfire full-resource effects, and `NoMana`
-  suppression, then consumes the item and returns the authoritative snapshot.
-  The native client does not apply these effects locally; oils remain a later
-  item-action seam.
+  suppression, or applies a validated Blacksmith, Accuracy, Sharpness, or
+  Fortitude oil to the target, then consumes the source and returns the
+  authoritative snapshot. The native client does not apply these effects
+  locally.
 - `MoveInventoryItemRequested.item` is an additive exact inventory reference.
   When present, the server rejects a stale slot before changing the inventory
   grid; an absent or zero-valued reference retains positional compatibility.

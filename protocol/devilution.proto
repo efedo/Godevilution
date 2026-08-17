@@ -241,6 +241,8 @@ message AutoEquipItemRequested {
 // item reference prevents a stale slot from consuming a different item.
 message UseConsumableRequested {
 	PlayerItemReference item = 1;
+	// Optional equipment/inventory target for cursor-based oil actions.
+	PlayerItemReference target_item = 2;
 }
 
 message UsePortalRequested {

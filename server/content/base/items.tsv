@@ -120,10 +120,10 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2183	potion_full_mana	0	150	150	0	0	0	0	0	1	1	0	Misc,Belt	7	3	7	0		0	0	0	0	80	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	1	true			0	0	RestoreFullMana
 2184	potion_rejuvenation_standard	0	120	120	0	0	0	0	0	1	1	0	Misc,Belt	7	3	19	0		0	0	0	0	81	0	0	None	Potion of Rejuvenation	Potion of Rejuvenation	POTION_OF_REJUVENATION	3	1	true			0	0	RestorePartialLifeAndMana
 2185	potion_full_rejuvenation_standard	0	600	600	0	0	0	0	0	1	1	0	Misc,Belt	7	3	20	0		0	0	0	0	82	0	0	None	Potion of Full Rejuvenation	Potion of Full Rejuvenation	POTION_OF_FULL_REJUVENATION	7	1	true			0	0	RestoreFullLifeAndMana
-2186	oil_of_blacksmith_standard	0	100	100	0	0	0	0	0	1	1	0	Misc,Belt	7	3	37	0		0	0	0	0	83	0	0	None	Blacksmith Oil	Blacksmith Oil	OIL	1	1	true			0	0	None
-2187	oil_of_accuracy_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	32	0		0	0	0	0	84	0	0	None	Oil of Accuracy	Oil of Accuracy	OIL	1	1	true			0	0	None
-2188	oil_of_sharpness_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	34	0		0	0	0	0	85	0	0	None	Oil of Sharpness	Oil of Sharpness	OIL	1	1	true			0	0	None
-2189	oil_standard	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	31	0		0	0	0	0	86	0	0	None	Oil	Oil	OIL	10	1	true			0	0	None
+2186	oil_of_blacksmith_standard	0	100	100	0	0	0	0	0	1	1	0	Misc,Belt	7	3	37	0		0	0	0	0	83	0	0	None	Blacksmith Oil	Blacksmith Oil	OIL	1	1	true			0	0	ApplyBlacksmithOil
+2187	oil_of_accuracy_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	32	0		0	0	0	0	84	0	0	None	Oil of Accuracy	Oil of Accuracy	OIL	1	1	true			0	0	ApplyAccuracyOil
+2188	oil_of_sharpness_standard	0	500	500	0	0	0	0	0	1	1	0	Misc,Belt	7	3	34	0		0	0	0	0	85	0	0	None	Oil of Sharpness	Oil of Sharpness	OIL	1	1	true			0	0	ApplySharpnessOil
+2189	oil_standard	0	0	0	0	0	0	0	0	1	1	0	Misc,Belt	7	3	31	0		0	0	0	0	86	0	0	None	Oil	Oil	OIL	10	1	true			0	0	ApplyFortitudeOil
 2190	elixir_of_strength_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	11	0		0	0	0	0	87	0	0	None	Elixir of Strength	Elixir of Strength	ELIXIR_OF_STRENGTH	15	1	true			0	0	IncreaseStrength
 2191	elixir_of_magic_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	12	0		0	0	0	0	88	0	0	None	Elixir of Magic	Elixir of Magic	ELIXIR_OF_MAGIC	15	1	true			0	0	IncreaseMagic
 2192	elixir_of_dexterity_standard	0	5000	5000	0	0	0	0	0	1	1	0	Misc,Belt	7	3	13	0		0	0	0	0	89	0	0	None	Elixir of Dexterity	Elixir of Dexterity	ELIXIR_OF_DEXTERITY	15	1	true			0	0	IncreaseDexterity
