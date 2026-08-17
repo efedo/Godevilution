@@ -92,6 +92,25 @@ public sealed class RetryReconnectTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task FailedHandshakeClosesTheTransportBeforeTheClientRetries()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunRejectedHandshakeServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash"));
+
+        await Assert.ThrowsAsync<InvalidDataException>(
+            async () => await client.ConnectAsync(TestContext.Current.CancellationToken));
+        Assert.False(client.IsConnected);
+        await serverTask;
+    }
+
     private static async Task<CommandResult> WaitForAcknowledgementAsync(AuthoritativeClient client, ulong sequence)
     {
         for (var attempt = 0; attempt < 50; attempt++) {
@@ -184,6 +203,23 @@ public sealed class RetryReconnectTests
                 },
             });
         }
+        listener.Stop();
+    }
+
+    private static async Task RunRejectedHandshakeServerAsync(TcpListener listener)
+    {
+        using var client = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+        await using var stream = client.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Error = new ProtocolError {
+                Code = ProtocolErrorCode.ContentMismatch,
+                Detail = "content mismatch",
+            },
+        });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var buffer = new byte[1];
+        Assert.Equal(0, await stream.ReadAsync(buffer, timeout.Token));
         listener.Stop();
     }
 

@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Serialize concurrent first connections for one resume token so they share a
   single authoritative session and participant initialization.
 
+- Make Godot client handshakes transactional: rejected or incomplete attempts
+  now close their TCP transport before a reconnect or retry.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

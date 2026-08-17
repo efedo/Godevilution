@@ -79,51 +79,56 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             throw new InvalidOperationException(
                 "DEVILUTION_RULESET_HASH is required by this protocol version.");
 
-        tcpClient = new TcpClient();
-        await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
-        stream = tcpClient.GetStream();
-        var clientHello = new ClientHello {
-            ClientBuildId = options.ClientBuildId,
-            ProtocolSchemaVersion = options.ProtocolSchemaVersion,
-            ContentManifestHash = options.ContentManifestHash,
-            RulesetIdentityHash = options.RulesetIdentityHash,
-            ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
-        };
-        if (options.RequestedCharacterClassId.HasValue) {
-            clientHello.RequestedCharacterClassId
-                = options.RequestedCharacterClassId.Value;
+        try {
+            tcpClient = new TcpClient();
+            await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
+            stream = tcpClient.GetStream();
+            var clientHello = new ClientHello {
+                ClientBuildId = options.ClientBuildId,
+                ProtocolSchemaVersion = options.ProtocolSchemaVersion,
+                ContentManifestHash = options.ContentManifestHash,
+                RulesetIdentityHash = options.RulesetIdentityHash,
+                ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
+            };
+            if (options.RequestedCharacterClassId.HasValue) {
+                clientHello.RequestedCharacterClassId
+                    = options.RequestedCharacterClassId.Value;
+            }
+            if (!string.IsNullOrEmpty(options.RequestedCharacterName))
+                clientHello.RequestedCharacterName = options.RequestedCharacterName;
+            await WriteEnvelopeAsync(new Envelope { ClientHello = clientHello }, cancellationToken);
+
+            var hello = await ReadEnvelopeAsync(stream, cancellationToken)
+                ?? throw new EndOfStreamException("The server closed the connection during handshake.");
+            if (hello.PayloadCase == Envelope.PayloadOneofCase.Error)
+                throw new InvalidDataException(hello.Error.Detail);
+            if (hello.PayloadCase != Envelope.PayloadOneofCase.ServerHello)
+                throw new InvalidDataException("The first server response must be ServerHello.");
+            if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
+                || hello.ServerHello.ContentManifestHash != options.ContentManifestHash
+                || (!string.IsNullOrWhiteSpace(options.RulesetIdentityHash)
+                    && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash))
+                throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
+
+            SessionToken = hello.ServerHello.SessionToken;
+            ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
+            ServerGameMode = hello.ServerHello.GameMode;
+
+            var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
+                ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");
+            Enqueue(initialSnapshot);
+            var connectedStream = stream;
+            var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+            var connectionGeneration = Interlocked.Increment(ref transportGeneration);
+            transportLifetime = connectionLifetime;
+            Volatile.Write(ref transportConnected, 1);
+            receiveTask = Task.Run(
+                () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token, connectionGeneration),
+                CancellationToken.None);
+        } catch {
+            await CloseTransportAsync();
+            throw;
         }
-        if (!string.IsNullOrEmpty(options.RequestedCharacterName))
-            clientHello.RequestedCharacterName = options.RequestedCharacterName;
-        await WriteEnvelopeAsync(new Envelope { ClientHello = clientHello }, cancellationToken);
-
-        var hello = await ReadEnvelopeAsync(stream, cancellationToken)
-            ?? throw new EndOfStreamException("The server closed the connection during handshake.");
-        if (hello.PayloadCase == Envelope.PayloadOneofCase.Error)
-            throw new InvalidDataException(hello.Error.Detail);
-        if (hello.PayloadCase != Envelope.PayloadOneofCase.ServerHello)
-            throw new InvalidDataException("The first server response must be ServerHello.");
-        if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
-            || hello.ServerHello.ContentManifestHash != options.ContentManifestHash
-            || (!string.IsNullOrWhiteSpace(options.RulesetIdentityHash)
-                && hello.ServerHello.RulesetIdentityHash != options.RulesetIdentityHash))
-            throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
-
-        SessionToken = hello.ServerHello.SessionToken;
-        ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
-        ServerGameMode = hello.ServerHello.GameMode;
-
-        var initialSnapshot = await ReadEnvelopeAsync(stream, cancellationToken)
-            ?? throw new EndOfStreamException("The server closed the connection before the initial snapshot.");
-        Enqueue(initialSnapshot);
-        var connectedStream = stream;
-        var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-        var connectionGeneration = Interlocked.Increment(ref transportGeneration);
-        transportLifetime = connectionLifetime;
-        Volatile.Write(ref transportConnected, 1);
-        receiveTask = Task.Run(
-            () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token, connectionGeneration),
-            CancellationToken.None);
     }
 
     /**
