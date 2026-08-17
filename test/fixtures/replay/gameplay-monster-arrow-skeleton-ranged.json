@@ -1,0 +1,54 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-skeleton-ranged",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-arrow-skeleton-ranged-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 4,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "SkeletonRanged",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 9,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 9, "state_sha256": "7a858564e7776bad66bfef8489420136b68e1bce48b20861b58a3a534ee200e7" },
+    { "tick": 10, "state_sha256": "134ee0268776e8d5504782b179496ce3830da74ca9e4fa8ef3b503b751310a9d" },
+    { "tick": 11, "state_sha256": "e8e5be8f6c11702aba032bf624427b7865499744e7e09bea0e570048fe6b7e14" },
+    { "tick": 12, "state_sha256": "4ec9146aeaf0453c25acbd6e2be751a794a3e14b249dfed2036539e4d665aa7f" },
+    { "tick": 13, "state_sha256": "4ec9146aeaf0453c25acbd6e2be751a794a3e14b249dfed2036539e4d665aa7f" }
+  ]
+}

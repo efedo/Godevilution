@@ -423,6 +423,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-native-ai-v1");
 			hasher.AppendString(state.combatTargetNativeAi);
 		}
+		if (state.combatTargetIntelligence != 0) {
+			hasher.AppendString("godevilution-monster-intelligence-v1");
+			hasher.AppendInt32(state.combatTargetIntelligence);
+		}
 	}
 
 	if (!state.corpses.empty()) {
@@ -4355,10 +4359,12 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
  * keeps target ordering and the server-owned projectile lifecycle portable.
  */
 void AdmitReplayAutonomousMonsterArrow(
-    ReplayFixtureExecutionState &state)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	if (state.combatTargetEntityId == 0
-	    || state.combatTargetNativeAi != "GoatRanged"
+	    || (state.combatTargetNativeAi != "GoatRanged"
+	        && state.combatTargetNativeAi != "SkeletonRanged")
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetToHit <= 0
@@ -4398,6 +4404,16 @@ void AdmitReplayAutonomousMonsterArrow(
 	const Candidate &target = candidates.front();
 	if (candidateDistance(target) > state.combatTargetAggroRange)
 		return;
+	if (state.combatTargetNativeAi == "SkeletonRanged") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ target.entityId;
+		const int32_t attackChance = std::min(
+		    100,
+		    3 + 2 * state.combatTargetIntelligence);
+		if (attackSeed % 100U >= static_cast<uint32_t>(attackChance))
+			return;
+	}
 
 	uint32_t nextEntityId = 0x80000000U;
 	for (const auto &projectile : state.projectiles)
@@ -4446,7 +4462,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
-		AdmitReplayAutonomousMonsterArrow(state);
+		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
