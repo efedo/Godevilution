@@ -26,6 +26,10 @@ All notable changes to this fork are documented below.
   native attribute ceilings, life/mana resource growth, persistence, and item
   consumption.
 
+- Externalize item-action magnitudes in the validated item catalog. Spectral
+  Elixir now carries its native three-point magnitude in content, while legacy
+  states retain the compatible fallback.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

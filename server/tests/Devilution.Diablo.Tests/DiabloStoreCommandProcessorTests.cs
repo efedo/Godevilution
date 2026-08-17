@@ -766,6 +766,7 @@ public sealed class DiabloStoreCommandProcessorTests
             0,
             AuthoritativeItemState.Empty with {
                 ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+                StableItemId = 2142,
             });
         var player = CreatePlayer(
             life: 100,
@@ -780,13 +781,18 @@ public sealed class DiabloStoreCommandProcessorTests
             inventory: [elixir]);
         var initialLifeMaximum = player.LifeMaximum;
         var initialManaMaximum = player.ManaMaximum;
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_tags\tnative_item_index\titem_action_kind\titem_action_amount\n"
+                + "2142\t0\t0\t0\tMisc\t20\tIncreaseAllAttributes\t3\n");
         var processor = new DiabloStoreCommandProcessor(
             new StoreCatalog(),
             combatRules: new AuthoritativeCombatRules(
                 10,
                 1,
                 100,
-                gameVariant: DiabloGameVariant.Hellfire));
+                gameVariant: DiabloGameVariant.Hellfire),
+            items: items);
 
         var result = processor.Execute(
             player,

@@ -494,7 +494,7 @@ public sealed class DiabloStoreCommandProcessor
                 combatRules.GameVariant == DiabloGameVariant.Hellfire);
             break;
         case DiabloItemActionKind.IncreaseAllAttributes:
-            for (var i = 0; i < 3; i++) {
+            for (var i = 0; i < ResolveItemActionAmount(item.State, action); i++) {
                 player.ApplyElixir(DiabloItemActionKind.IncreaseStrength, false);
                 player.ApplyElixir(DiabloItemActionKind.IncreaseMagic, false);
                 player.ApplyElixir(DiabloItemActionKind.IncreaseDexterity, false);
@@ -507,6 +507,20 @@ public sealed class DiabloStoreCommandProcessor
 
         DiabloPlayerItemAccess.Remove(player, intent.Item);
         return DiabloIntentResult.Accepted;
+    }
+
+    private int ResolveItemActionAmount(
+        AuthoritativeItemState state,
+        DiabloItemActionKind action)
+    {
+        if (items is not null
+            && state.StableItemId != 0
+            && items.TryGet(state.StableItemId, out var definition))
+            return definition.ItemActionAmount;
+
+        // Preserve the native Spectral Elixir behavior for legacy states that
+        // predate stable content identities and cannot resolve a catalog row.
+        return action == DiabloItemActionKind.IncreaseAllAttributes ? 3 : 1;
     }
 
     private DiabloIntentResult ApplyOil(

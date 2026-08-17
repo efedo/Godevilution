@@ -87,6 +87,28 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsValidatedItemActionMagnitudeFromContent()
+    {
+        var catalog = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_action_kind\titem_action_amount\n"
+                + "2142\t0\t0\t0\tIncreaseAllAttributes\t3\n");
+
+        var definition = catalog.GetRequired(2142);
+        Assert.Equal(DiabloItemActionKind.IncreaseAllAttributes, definition.ItemActionKind);
+        Assert.Equal(3, definition.ItemActionAmount);
+    }
+
+    [Fact]
+    public void RejectsNonPositiveItemActionMagnitude()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\titem_action_amount\n"
+                + "7\t1\t75\t100\t0\n"));
+    }
+
+    [Fact]
     public void StateDefinitionMatchingPrefersStableIdentityAndRetainsLegacyFallback()
     {
         var definition = new AuthoritativeItemDefinition(7, 1, 75, 100, 1, 2, 0, 0, 0, 1, 1, true) {

@@ -2071,6 +2071,7 @@ public sealed class ShippedContentTests
                     ? DiabloItemActionKind.IncreaseAllAttributes
                     : DiabloItemActionKind.None,
                 item.ItemActionKind);
+            Assert.Equal(itemId == 2142 ? 3 : 1, item.ItemActionAmount);
         }
         var hellfirePotionExpectations = new[] {
             ("potion_of_full_healing_fixed", 2144U, 29, 35, 2, 1, 0, true),
