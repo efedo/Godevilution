@@ -94,6 +94,10 @@ convenience entry points use that same projection lookup before submitting a
 command. An out-of-range or removed inventory slot is rejected locally instead
 of being sent as a positional reference that could target a different item.
 
+Inventory relocation now follows the same boundary: the native indexed move
+entry point resolves the latest projected item and sends its stable identity,
+while the legacy positional protocol field remains available for older peers.
+
 Spell-book use follows the same boundary: a connected authoritative client sends
 `ReadBookRequested` with the projected stable item reference and applies the
 returned snapshot. The local book-consumption path remains available only for

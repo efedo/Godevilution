@@ -54,6 +54,11 @@ Status date: 2026-08-17
   it from authoritative snapshots for item services and spell sources, while
   the server treats zero as legacy positional addressing.
 
+- Inventory relocation now carries the same additive `PlayerItemReference`.
+  Native and Godot indexed moves resolve the latest authoritative item before
+  submission, and the C# module rejects stale identities without changing the
+  inventory grid; the legacy index-only fields remain compatible.
+
 - The Godot presentation project and protocol client now have executable
   dependency-boundary coverage: the protocol client may reference only the
   shared protocol assembly, and the Godot project may reference only those two

@@ -201,6 +201,9 @@ enum ItemServiceSourceKind {
 message MoveInventoryItemRequested {
 	uint32 inventory_index = 1;
 	uint32 target_cell = 2;
+	// Optional stable identity for stale-slot protection; zero-valued references
+	// preserve compatibility with older clients and snapshots.
+	PlayerItemReference item = 3;
 }
 
 message RefillManaRequested {}

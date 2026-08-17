@@ -689,6 +689,71 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void InventoryMoveUsesStableReferenceWhenPresent()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 700,
+                ItemType = 1,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(inventory: [item], inventoryGrid: grid);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveInventoryItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 700),
+                0,
+                8),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(-1, player.InventoryGrid[0]);
+        Assert.Equal(0, player.InventoryGrid[8]);
+    }
+
+    [Fact]
+    public void InventoryMoveRejectsStaleStableReference()
+    {
+        var item = new OwnedStoreItem(
+            0,
+            0,
+            42,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 700,
+                ItemType = 1,
+            });
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(inventory: [item], inventoryGrid: grid);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveInventoryItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 701),
+                0,
+                8),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, result.Failure);
+        Assert.Equal(0, player.InventoryGrid[0]);
+        Assert.Equal(-1, player.InventoryGrid[8]);
+    }
+
+    [Fact]
     public void AppliesManaAndEquipmentServicesThroughModuleReferences()
     {
         var serviceState = AuthoritativeItemState.Empty with {

@@ -128,7 +128,15 @@ tl::expected<void, std::string> ServerBackedSession::RefillMana(uint64_t request
 
 tl::expected<void, std::string> ServerBackedSession::MoveInventoryItem(uint32_t inventoryIndex, uint32_t targetCell, uint64_t requestedTick, uint64_t nowMs)
 {
-	return SubmitInventoryCommand(MakeMoveInventoryItemCommand(inventoryIndex, targetCell, requestedTick), nowMs);
+	const auto item = PlayerInventoryItemReference(inventoryIndex);
+	if (!item.has_value())
+		return tl::make_unexpected("The authoritative inventory item is no longer present.");
+	return MoveInventoryItem(*item, targetCell, requestedTick, nowMs);
+}
+
+tl::expected<void, std::string> ServerBackedSession::MoveInventoryItem(ServerBackedItemReference item, uint32_t targetCell, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeMoveInventoryItemCommand(item, targetCell, requestedTick), nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::MoveItem(ServerBackedItemReference item, ServerBackedItemReference destination, uint64_t requestedTick, uint64_t nowMs)

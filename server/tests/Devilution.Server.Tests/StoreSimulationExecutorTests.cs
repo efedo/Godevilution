@@ -712,7 +712,12 @@ public sealed class StoreSimulationExecutorTests
     [Fact]
     public void InventoryPlacementHonorsMultiCellItemFootprints()
     {
-        var itemState = AuthoritativeItemState.Empty with { ItemType = 1, InventoryWidth = 2, InventoryHeight = 2 };
+        var itemState = AuthoritativeItemState.Empty with {
+            StableItemId = 700,
+            ItemType = 1,
+            InventoryWidth = 2,
+            InventoryHeight = 2,
+        };
         var executor = new StoreSimulationExecutor(
             CreateCatalog(new StoreItem(0, 42, 10, itemState)),
             startingGold: 100,
@@ -724,7 +729,15 @@ public sealed class StoreSimulationExecutorTests
         var move = new Command {
             ClientSequence = 3,
             RequestedTick = 13,
-            MoveInventoryItemRequested = new MoveInventoryItemRequested { InventoryIndex = 0, TargetCell = 8 },
+            MoveInventoryItemRequested = new MoveInventoryItemRequested {
+                InventoryIndex = 0,
+                TargetCell = 8,
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 700,
+                },
+            },
         };
         Assert.Equal(CommandStatus.Accepted, server.Process("player-a", move, 13).Status);
         var grid = executor.GetPlayerState("player-a").InventoryGrid;

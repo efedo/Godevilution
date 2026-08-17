@@ -67,6 +67,7 @@ public sealed class DiabloStoreCommandProcessor
             DiabloRefillManaIntent => RefillMana(player),
             DiabloMoveInventoryItemIntent moveInventory => MoveInventoryItem(
                 player,
+                moveInventory.Item,
                 moveInventory.InventoryIndex,
                 moveInventory.TargetCell),
             DiabloMoveItemIntent move => MoveItem(player, move),
@@ -533,23 +534,30 @@ public sealed class DiabloStoreCommandProcessor
 
     private static DiabloIntentResult MoveInventoryItem(
         AuthoritativePlayerState player,
+        DiabloPlayerItemReference? reference,
         uint inventoryIndex,
         uint targetCell)
     {
-        if (!TryGetInventoryItem(player, inventoryIndex, out var item))
+        if (reference is { Location: not DiabloPlayerItemLocation.Inventory }
+            || (reference is not null
+                && (!DiabloPlayerItemAccess.TryGet(player, reference.Value, out _)
+                    || reference.Value.Slot >= player.Inventory.Count)))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        var resolvedIndex = reference?.Slot ?? inventoryIndex;
+        if (!TryGetInventoryItem(player, resolvedIndex, out var item))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!InventoryGridLayout.CanPlace(
                 player.InventoryGrid,
                 targetCell,
                 item.State.InventoryWidth,
                 item.State.InventoryHeight,
-                (int)inventoryIndex))
+                (int)resolvedIndex))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        InventoryGridLayout.Clear(player.InventoryGrid, (int)inventoryIndex);
+        InventoryGridLayout.Clear(player.InventoryGrid, (int)resolvedIndex);
         InventoryGridLayout.Fill(
             player.InventoryGrid,
             (int)targetCell,
-            (int)inventoryIndex,
+            (int)resolvedIndex,
             item.State.InventoryWidth,
             item.State.InventoryHeight);
         return DiabloIntentResult.Accepted;

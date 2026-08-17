@@ -202,6 +202,22 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveInventory
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveInventoryItemCommand(ServerBackedItemReference item, uint32_t targetCell, uint64_t requestedTick)
+{
+	if (item.location != ServerBackedItemLocation::Inventory || item.slot == UINT32_MAX || targetCell == UINT32_MAX)
+		return tl::make_unexpected("Cannot move an invalid inventory item or cell.");
+	auto reference = MakeItemReference(item);
+	if (!reference.has_value())
+		return tl::make_unexpected(reference.error());
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_move_inventory_item_requested();
+	request->set_inventory_index(item.slot);
+	request->set_target_cell(targetCell);
+	request->mutable_item()->CopyFrom(*reference);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveItemCommand(ServerBackedItemReference item, ServerBackedItemReference destination, uint64_t requestedTick)
 {
 	if (item.slot == UINT32_MAX || destination.slot == UINT32_MAX)

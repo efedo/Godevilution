@@ -69,6 +69,9 @@ Windows toolchain command.
   native intelligence requirement, then owns spell learning, level increases,
   native mana refund, and book consumption. Clients never mutate learned-spell
   state locally.
+- `MoveInventoryItemRequested.item` is an additive exact inventory reference.
+  When present, the server rejects a stale slot before changing the inventory
+  grid; an absent or zero-valued reference retains positional compatibility.
 - `ClientHello.requested_character_class_id` is an optional new-session
   selection from the active game module's validated catalog. When it is absent,
   the module selects its content default. Existing in-memory or restored save

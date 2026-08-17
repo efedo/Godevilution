@@ -56,8 +56,16 @@ public sealed record DiabloReadBookIntent(
 public sealed record DiabloRefillManaIntent : DiabloStoreIntent;
 
 public sealed record DiabloMoveInventoryItemIntent(
+    DiabloPlayerItemReference? Item,
     uint InventoryIndex,
-    uint TargetCell) : DiabloStoreIntent;
+    uint TargetCell) : DiabloStoreIntent
+{
+    /** Retains the positional constructor used by legacy callers. */
+    public DiabloMoveInventoryItemIntent(uint inventoryIndex, uint targetCell)
+        : this(null, inventoryIndex, targetCell)
+    {
+    }
+}
 
 public sealed record DiabloMoveItemIntent(
     DiabloPlayerItemReference Item,

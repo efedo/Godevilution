@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Carry an additive stable item reference on inventory-move intents. Native and
+  Godot clients now send the projected identity, and the C# module rejects
+  stale item slots before changing the authoritative inventory grid.
+
 - Resolve native indexed item-service convenience calls through the latest
   authoritative inventory snapshot, carrying stable item IDs and rejecting
   missing slots before submission.

@@ -138,6 +138,19 @@ TEST(ServerBackedVendorCommand, BuildsExplicitInventoryToBeltTransfer)
 	EXPECT_EQ(command->move_item_requested().destination().slot(), 5U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStableInventoryMoveIntent)
+{
+	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2, .stableItemId = 702 };
+	const auto command = MakeMoveInventoryItemCommand(inventory, 4, 17);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_move_inventory_item_requested());
+	EXPECT_EQ(command->move_inventory_item_requested().inventory_index(), 2U);
+	EXPECT_EQ(command->move_inventory_item_requested().target_cell(), 4U);
+	EXPECT_EQ(command->move_inventory_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(command->move_inventory_item_requested().item().slot(), 2U);
+	EXPECT_EQ(command->move_inventory_item_requested().item().stable_item_id(), 702U);
+}
+
 TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 {
 	const auto move = MakeMoveCommand(1, -1, 20);
