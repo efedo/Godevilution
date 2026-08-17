@@ -51,6 +51,10 @@ All notable changes to this fork are documented below.
   ring and amulet content remains authoritative without a native item-index
   match while legacy location fallback remains available.
 
+- Extend the semantic misc-ID fallback to weapon and two-handed admission for
+  unambiguous staff/weapon rows, retaining native item-class and location rules
+  for legacy or ambiguous mappings.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

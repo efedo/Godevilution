@@ -56,6 +56,27 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void WeaponAndTwoHandedTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var definition = CreateDefinition(itemClass: 0, tags: ["Staff", "TwoHanded"]) with {
+            ItemType = 99,
+            EquipLocation = 0,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            ItemClass = 0,
+            EquipLocation = 0,
+            MiscId = 121,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsWeapon(state, catalog));
+        Assert.True(AuthoritativeItemClassification.IsTwoHanded(state, catalog));
+    }
+
+    [Fact]
     public void EquipmentSubtypeHelpersUseTagsBeforeNativeFallbacks()
     {
         var definition = CreateDefinition(

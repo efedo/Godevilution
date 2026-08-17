@@ -470,7 +470,8 @@ before retaining the native staff/type fallback for legacy rows. Active item
 classification also resolves an unambiguous `Staff` tag by misc ID when a
 compatibility item index is unavailable, and belt eligibility uses the same
 semantic-tag fallback for inventory placement; equipment-slot projection uses
-the same path for ring and amulet rows.
+the same path for ring and amulet rows, while weapon/two-handed admission uses
+the consistent staff/weapon tags before native fallback.
 
 Spell `10` now selects schema-0.22 `Phasing` behavior. At the effect frame, the
 module ignores client target coordinates and enumerates the native 36 offset

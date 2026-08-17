@@ -1073,7 +1073,8 @@ Status date: 2026-08-17
 
 - Two-handed equipment classification is now centralized for loadout topology
   and dual-wield admission; active rows use `TwoHanded` tags while legacy
-  states retain the native equipment-location fallback.
+  states retain the native equipment-location fallback. Unambiguous misc-ID
+  tags cover compatibility states that lack a native item-index match.
 
 - Loadout equipment-slot admission is now content-first for hand, two-handed,
   body-armor, helmet, ring, and amulet locations; untagged legacy rows retain

@@ -1789,6 +1789,8 @@ active rows; combat and loadout validation use these tags before the native
 numeric fallback, including unambiguous misc-ID tag mappings when compatibility
 item indices are unavailable. Equipment-slot projection also uses those
 unambiguous tag mappings before falling back to native `equip_location`.
+Weapon and two-handed admission use the same mapping before native item-class
+and equipment-location fallback.
 `charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
