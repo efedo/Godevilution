@@ -649,6 +649,17 @@ message ObjectSnapshot {
 	uint32 quest_progress_amount = 14;
 	// Native shrine capability used by Nova Ball target-tile collision.
 	bool is_shrine = 15;
+	// Additive server-owned world-object presentation family.
+	ObjectPresentationKind presentation_kind = 16;
+}
+
+enum ObjectPresentationKind {
+	OBJECT_PRESENTATION_KIND_UNSPECIFIED = 0;
+	OBJECT_PRESENTATION_KIND_GENERIC = 1;
+	OBJECT_PRESENTATION_KIND_SHRINE = 2;
+	OBJECT_PRESENTATION_KIND_QUEST = 3;
+	OBJECT_PRESENTATION_KIND_BREAKABLE = 4;
+	OBJECT_PRESENTATION_KIND_TRAP = 5;
 }
 
 message QuestSnapshot {

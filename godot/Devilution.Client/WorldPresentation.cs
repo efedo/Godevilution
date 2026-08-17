@@ -3,6 +3,7 @@ using Devilution.Protocol.V1;
 using Godot;
 using ProjectilePresentationKind = Devilution.Client.Protocol.ProjectilePresentationKind;
 using ItemPresentationKind = Devilution.Client.Protocol.ItemPresentationKind;
+using ObjectPresentationKind = Devilution.Client.Protocol.ObjectPresentationKind;
 
 namespace Devilution.Client;
 
@@ -288,7 +289,14 @@ public partial class WorldPresentation : Node2D
 
     private void DrawObject(ObjectSnapshot @object)
     {
-        var color = @object.Activated ? new Color("4b4b62") : new Color("a68bca");
+        var kind = ObjectPresentationStyle.Resolve(@object);
+        var color = kind switch {
+            ObjectPresentationKind.Shrine => new Color("7d8cff"),
+            ObjectPresentationKind.Quest => new Color("e5bd52"),
+            ObjectPresentationKind.Breakable => new Color("c69a6b"),
+            ObjectPresentationKind.Trap => new Color("f05d5e"),
+            _ => @object.Activated ? new Color("4b4b62") : new Color("a68bca"),
+        };
         var center = PositionFor(@object.EntityId, @object.PositionX, @object.PositionY);
         DrawTextureOrRect("object", center, new Vector2(22, 22), color, true);
         if (@object.TrapArmed) {

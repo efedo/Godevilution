@@ -243,7 +243,12 @@ public sealed class ClientModelTests
             Snapshot: new Snapshot {
                 Players = { new PlayerSnapshot { EntityId = 7 } },
                 Objects = {
-                    new ObjectSnapshot { EntityId = 20, ObjectId = 4, TrapArmed = true },
+                    new ObjectSnapshot {
+                        EntityId = 20,
+                        ObjectId = 4,
+                        TrapArmed = true,
+                        PresentationKind = Devilution.Protocol.V1.ObjectPresentationKind.Trap,
+                    },
                     new ObjectSnapshot { EntityId = 21, ObjectId = 5, TrapArmed = false },
                 },
             }));
@@ -251,6 +256,9 @@ public sealed class ClientModelTests
         var trap = Assert.Single(model.ArmedTrapObjects);
         Assert.Equal(20U, trap.EntityId);
         Assert.True(trap.TrapArmed);
+        Assert.Equal(
+            Devilution.Protocol.V1.ObjectPresentationKind.Trap,
+            trap.PresentationKind);
     }
 
     [Fact]

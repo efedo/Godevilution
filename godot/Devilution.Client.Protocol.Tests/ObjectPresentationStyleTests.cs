@@ -1,0 +1,39 @@
+using Devilution.Client.Protocol;
+using Devilution.Protocol.V1;
+using Xunit;
+using ProtocolObjectPresentationKind = Devilution.Protocol.V1.ObjectPresentationKind;
+
+namespace Devilution.Client.Protocol.Tests;
+
+public sealed class ObjectPresentationStyleTests
+{
+    [Theory]
+    [InlineData(ProtocolObjectPresentationKind.Unspecified, false, false, false, 0, ObjectPresentationKind.Generic)]
+    [InlineData(ProtocolObjectPresentationKind.Generic, false, false, false, 0, ObjectPresentationKind.Generic)]
+    [InlineData(ProtocolObjectPresentationKind.Shrine, false, false, false, 0, ObjectPresentationKind.Shrine)]
+    [InlineData(ProtocolObjectPresentationKind.Quest, false, false, false, 0, ObjectPresentationKind.Quest)]
+    [InlineData(ProtocolObjectPresentationKind.Breakable, false, false, false, 0, ObjectPresentationKind.Breakable)]
+    [InlineData(ProtocolObjectPresentationKind.Trap, false, false, false, 0, ObjectPresentationKind.Trap)]
+    [InlineData(ProtocolObjectPresentationKind.Unspecified, true, false, false, 0, ObjectPresentationKind.Shrine)]
+    [InlineData(ProtocolObjectPresentationKind.Unspecified, false, true, false, 0, ObjectPresentationKind.Trap)]
+    [InlineData(ProtocolObjectPresentationKind.Unspecified, false, false, true, 0, ObjectPresentationKind.Breakable)]
+    [InlineData(ProtocolObjectPresentationKind.Unspecified, false, false, false, 12, ObjectPresentationKind.Quest)]
+    public void ResolvesServerOwnedObjectPresentationFamilies(
+        ProtocolObjectPresentationKind wireKind,
+        bool shrine,
+        bool trap,
+        bool breakable,
+        uint questId,
+        ObjectPresentationKind expected)
+    {
+        var state = new ObjectSnapshot {
+            PresentationKind = wireKind,
+            IsShrine = shrine,
+            TrapArmed = trap,
+            Breakable = breakable,
+            QuestId = questId,
+        };
+
+        Assert.Equal(expected, ObjectPresentationStyle.Resolve(state));
+    }
+}

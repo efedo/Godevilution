@@ -1470,6 +1470,9 @@ public sealed class LiveAuthoritativeServerTests
             Assert.Equal(PlayerAbilityKind.TrapDisarm, player.AbilityKind);
             var trap = Assert.Single(model.Snapshot.Objects, @object => @object.EntityId == 2001);
             Assert.True(trap.TrapArmed);
+            Assert.Equal(
+                Devilution.Protocol.V1.ObjectPresentationKind.Trap,
+                trap.PresentationKind);
 
             await using var warriorClient = new AuthoritativeClient(
                 CreateOptions(server, "godot-warrior-trap-view", requestedClassId: 0));

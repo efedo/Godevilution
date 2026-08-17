@@ -160,6 +160,7 @@ internal static class DiabloProtocolMapper
                 Destroyed = @object.Destroyed,
                 TrapArmed = revealTraps && @object.TrapArmed,
                 IsShrine = @object.IsShrine,
+                PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
         foreach (var quest in source.Quests) {
@@ -1115,6 +1116,23 @@ internal static class DiabloProtocolMapper
         // Keep the additive field at its zero value for ordinary items so
         // legacy snapshots and clients remain byte-for-byte compatible.
         return ItemPresentationKind.Unspecified;
+    }
+
+    private static ObjectPresentationKind ResolveObjectPresentationKind(
+        DiabloObjectState state,
+        bool revealTraps)
+    {
+        if (state.IsShrine)
+            return ObjectPresentationKind.Shrine;
+        if (state.QuestId != 0
+            || state.EffectKind is AuthoritativeObjectEffectKind.QuestSequence
+                or AuthoritativeObjectEffectKind.QuestItemCompletion)
+            return ObjectPresentationKind.Quest;
+        if (state.Breakable)
+            return ObjectPresentationKind.Breakable;
+        if (revealTraps && state.TrapArmed)
+            return ObjectPresentationKind.Trap;
+        return ObjectPresentationKind.Unspecified;
     }
 
     private static string ResolveSpellDisplayName(
