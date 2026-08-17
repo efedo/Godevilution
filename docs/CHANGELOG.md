@@ -70,6 +70,8 @@ All notable changes to this fork are documented below.
   block-animation timing, and deterministic hit/block RNG parity.
 - Add Lich-family MonsterMagic replay coverage for validated admission, native
   travel, deterministic hit RNG, Q6 damage, and impact-phase parity.
+- Add a seeded Lich MonsterMagic miss replay covering preserved player state,
+  projectile travel, and failed-collision identity parity.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
