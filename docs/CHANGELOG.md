@@ -78,6 +78,9 @@ All notable changes to this fork are documented below.
   protocol and Godot client, preserving server-owned visual classification.
 - Add an additive `HorkSpawn` projectile presentation family to the shared
   protocol and Godot client for server-owned summon-controller visuals.
+- Classify Apocalypse behavior `32` as `Fire` and persistent behavior `33` as
+  `FireImpact` in the server-owned projectile presentation projection, with
+  matching legacy fallback coverage.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.

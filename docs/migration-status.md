@@ -131,6 +131,10 @@ Status date: 2026-08-17
 - The shared protocol and Godot client now classify server-owned `HorkSpawn`
   summon controllers explicitly, while older peers retain behavior fallback.
 
+- Apocalypse behavior `32` now projects the server-owned fire controller as
+  `Fire`, while persistent behavior `33` booms use the larger `FireImpact`
+  family; older peers retain the same behavior fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

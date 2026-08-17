@@ -651,7 +651,10 @@ clients only render the resulting projectile.
 An Apocalypse cast uses behavior value `32` for its row-major scan controller
 and value `33` for each persistent Physical boom. The server owns cursor
 progression, blocked-cell and player-minion filtering, Hellfire line-of-sight,
-and first-hit persistence; clients only render the resulting state.
+and first-hit persistence; clients only render the resulting state. The
+additive presentation projection classifies the controller as `Fire` and the
+persistent boom as `FireImpact`, while legacy clients use the same behavior
+fallback.
 
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
