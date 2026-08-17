@@ -24,6 +24,9 @@ All notable changes to this fork are documented below.
 - Preserve the native three-velocity-quanta launch offset for mapped
   `MagmaBall` projectiles.
 
+- Preserve Storm/ThinLightning's native per-tick doubled monster damage roll
+  when creating authoritative lightning segments.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

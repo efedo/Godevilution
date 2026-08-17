@@ -806,6 +806,9 @@ fixed override, and player-cast Fireball behavior is unchanged.
 Mapped `MagmaBall` projectiles retain the native three-velocity-quanta launch
 offset before the first authoritative tick.
 
+Storm/ThinLightning controller ticks now roll the native doubled monster damage
+range before creating each persistent lightning segment.
+
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.
