@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce content-defined equipment slot topology for authoritative item moves,
+  including multi-cell body armor transfers; belt placement retains the native
+  one-cell footprint rule while catalog-less compatibility simulations remain
+  supported.
+
 - Route normal native authoritative inventory-cursor placement through the
   existing stable-reference `MoveItemRequested` transfer, keeping cursor
   selection as presentation state and reconciling rejected transfers from the

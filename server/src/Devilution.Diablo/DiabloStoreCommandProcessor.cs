@@ -838,7 +838,7 @@ public sealed class DiabloStoreCommandProcessor
             || state.StableItemId == reference.StableItemId;
     }
 
-    private static bool IsValidDestination(
+    private bool IsValidDestination(
         AuthoritativePlayerState player,
         DiabloPlayerItemReference reference,
         AuthoritativeItemState state)
@@ -849,11 +849,34 @@ public sealed class DiabloStoreCommandProcessor
                 reference.Slot,
                 state.InventoryWidth,
                 state.InventoryHeight),
-            DiabloPlayerItemLocation.Belt or DiabloPlayerItemLocation.Equipment => reference.Slot < 8
-                && state.InventoryWidth <= 1
-                && state.InventoryHeight <= 1,
+            DiabloPlayerItemLocation.Belt => reference.Slot < 8
+                && state.InventoryWidth == 1
+                && state.InventoryHeight == 1,
+            DiabloPlayerItemLocation.Equipment => IsValidEquipmentDestination(reference.Slot, state),
             _ => false,
         };
+    }
+
+    private bool IsValidEquipmentDestination(
+        uint slot,
+        AuthoritativeItemState state)
+    {
+        if (slot >= 7)
+            return false;
+
+        // Catalog-less simulations retain the historical permissive behavior while
+        // content-backed sessions enforce the same slot topology as loadout validation.
+        if (items is null)
+            return true;
+
+        if (!items.TryGetByState(state, out _)
+            && !items.TryGetGenerationTagsByMiscId(state.MiscId, out _)) {
+            return true;
+        }
+
+        return AuthoritativeItemClassification.IsCompatibleWithEquipmentSlot(
+            AuthoritativeItemClassification.GetEquipmentSlotKind(state, items),
+            slot);
     }
 
     private static bool DestinationSlotOccupied(

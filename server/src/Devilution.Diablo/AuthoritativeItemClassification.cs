@@ -14,6 +14,22 @@ public enum DiabloEquipmentSlotKind
 /** Shared content-first equipment classification with native compatibility fallback. */
 public static class AuthoritativeItemClassification
 {
+    /** Returns whether a classified item can occupy a native equipment slot. */
+    public static bool IsCompatibleWithEquipmentSlot(
+        DiabloEquipmentSlotKind kind,
+        uint slot)
+    {
+        return kind switch {
+            DiabloEquipmentSlotKind.Hand => slot is 4 or 5,
+            DiabloEquipmentSlotKind.TwoHanded => slot == 4,
+            DiabloEquipmentSlotKind.BodyArmor => slot == 6,
+            DiabloEquipmentSlotKind.Helmet => slot == 0,
+            DiabloEquipmentSlotKind.Ring => slot is 1 or 2,
+            DiabloEquipmentSlotKind.Amulet => slot == 3,
+            _ => false,
+        };
+    }
+
     public static bool IsWeapon(
         AuthoritativeItemDefinition definition)
     {

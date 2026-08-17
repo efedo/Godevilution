@@ -1002,6 +1002,102 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ContentBackedEquipmentTransfersUseSemanticSlotsAndIgnoreInventoryFootprint()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            900,
+            7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            2,
+            true) {
+            GenerationTags = new HashSet<string>(["Armor", "BodyArmor"], StringComparer.OrdinalIgnoreCase),
+            EquipLocation = 3,
+            ItemClass = 2,
+            NativeItemIndex = 900,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(42);
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        grid[1] = 0;
+        grid[8] = 0;
+        grid[9] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 42, 0, 0, state)],
+            inventoryGrid: grid,
+            items: items);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 900),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 6)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(42U, Assert.Single(player.Equipment).ItemSeed);
+        Assert.Equal(6U, player.Equipment[0].Slot);
+    }
+
+    [Fact]
+    public void ContentBackedEquipmentTransfersRejectMismatchedSemanticSlots()
+    {
+        var definition = new AuthoritativeItemDefinition(
+            901,
+            7,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+            GenerationTags = new HashSet<string>(["Armor", "Helmet"], StringComparer.OrdinalIgnoreCase),
+            EquipLocation = 4,
+            ItemClass = 2,
+            NativeItemIndex = 901,
+        };
+        var items = new AuthoritativeItemCatalog([definition]);
+        var state = definition.Generate(43);
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 43, 0, 0, state)],
+            inventoryGrid: grid,
+            items: items);
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 901),
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Equipment, 6)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, result.Failure);
+        Assert.Equal(43U, Assert.Single(player.Inventory).ItemSeed);
+        Assert.Empty(player.Equipment);
+        Assert.Equal(0, player.InventoryGrid[0]);
+    }
+
+    [Fact]
     public void SwapsMultiCellInventoryItemsAtomically()
     {
         var large = AuthoritativeItemState.Empty with {
