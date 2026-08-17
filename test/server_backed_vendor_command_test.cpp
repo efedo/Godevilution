@@ -153,6 +153,18 @@ TEST(ServerBackedVendorCommand, BuildsStableInventoryMoveIntent)
 	EXPECT_EQ(command->move_inventory_item_requested().item().stable_item_id(), 702U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStableAutoEquipIntent)
+{
+	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2, .stableItemId = 702 };
+	const auto command = MakeAutoEquipItemCommand(inventory, 17);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_auto_equip_item_requested());
+	EXPECT_EQ(command->auto_equip_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(command->auto_equip_item_requested().item().slot(), 2U);
+	EXPECT_EQ(command->auto_equip_item_requested().item().stable_item_id(), 702U);
+	EXPECT_EQ(command->requested_tick(), 17U);
+}
+
 TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 {
 	const auto move = MakeMoveCommand(1, -1, 20);

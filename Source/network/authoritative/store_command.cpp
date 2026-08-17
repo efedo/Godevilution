@@ -236,6 +236,11 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveItemComma
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeAutoEquipItemCommand(ServerBackedItemReference item, uint64_t requestedTick)
+{
+	return MakeItemCommand(item, requestedTick, [](protocol::v1::Command &command) { return command.mutable_auto_equip_item_requested(); });
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeMoveCommand(int32_t directionX, int32_t directionY, uint64_t requestedTick)
 {
 	if (directionX < -1 || directionX > 1 || directionY < -1 || directionY > 1 || (directionX == 0 && directionY == 0))

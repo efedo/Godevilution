@@ -710,6 +710,50 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void AutoEquipCommandDispatchesAtomicEquipmentSwap()
+    {
+        var sourceState = AuthoritativeItemState.Empty with {
+            StableItemId = 905,
+            EquipLocation = 1,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var displacedState = AuthoritativeItemState.Empty with {
+            StableItemId = 906,
+            EquipLocation = 1,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingInventoryGrid: grid,
+            startingInventory: [new OwnedStoreItem(0, 0, 42, 0, 0, sourceState)],
+            startingEquipment: [new EquippedStoreItem(4, 43, displacedState)]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            AutoEquipItemRequested = new AutoEquipItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = 905,
+                },
+            },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var state = executor.GetPlayerState("player-a");
+        Assert.Equal(42U, Assert.Single(state.Equipment).ItemSeed);
+        Assert.Equal(43U, Assert.Single(state.Inventory).ItemSeed);
+        Assert.Equal(0, state.InventoryGrid[30]);
+    }
+
+    [Fact]
     public void InventoryPlacementHonorsMultiCellItemFootprints()
     {
         var itemState = AuthoritativeItemState.Empty with {

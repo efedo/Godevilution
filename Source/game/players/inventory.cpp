@@ -842,6 +842,24 @@ std::optional<bool> TryServerBackedAutomaticMoveToBelt(Player &player, const Ite
 	return true;
 }
 
+std::optional<bool> TryServerBackedAutomaticAutoEquip(Player &player, const Item &item)
+{
+	if (&player != MyPlayer || !authoritative::GetServerBackedRuntime().IsConnected())
+		return std::nullopt;
+
+	auto &runtime = authoritative::GetServerBackedRuntime();
+	const auto source = runtime.PlayerItemReferenceForSeed(item._iSeed);
+	if (!source.has_value()) {
+		LogError("Could not resolve the automatic equipment source in the authoritative snapshot.");
+		return false;
+	}
+	if (auto result = runtime.AutoEquipItem(*source, 0, SDL_GetTicks()); !result.has_value()) {
+		LogError("Server-backed automatic equipment placement failed: {}", result.error());
+		return false;
+	}
+	return true;
+}
+
 } // namespace
 #endif
 
@@ -945,9 +963,11 @@ void CheckInvCut(Player &player, Point cursorPosition, bool automaticMove, bool 
 					}
 				} else if (CanEquip(player.InvList[iv])) {
 				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-				if (&player == MyPlayer && authoritative::GetServerBackedRuntime().IsConnected()) {
-					failedSpeech = HeroSpeech::ICantDoThat;
-					// Automatic equipment swaps still require a dedicated atomic server intent.
+				const auto serverMove = TryServerBackedAutomaticAutoEquip(player, player.InvList[iv]);
+				if (serverMove.has_value()) {
+					automaticallyMoved = *serverMove;
+					if (automaticallyMoved)
+						successSound = ItemInvSnds[ItemCAnimTbl[player.InvList[iv]._iCurs]];
 				} else {
 				#endif
 					failedSpeech = HeroSpeech::IHaveNoRoom; // Default to saying "I have no room" if auto-equip fails

@@ -102,9 +102,10 @@ cell, equipment slot, or belt slot, the final placement now uses the
 authoritative `MoveItemRequested` transfer. The cursor selection is
 presentation-only while the server snapshot remains the source of truth;
 rejected transfers reconcile the native projection instead of applying a local
-swap. Automatic moves from equipment or belt to inventory, and from inventory
-to an eligible belt slot, use the same server transfer path. Automatic
-multi-item equipment swaps remain pending an atomic server intent.
+swap. Automatic moves from equipment or belt to inventory, from inventory to an
+eligible belt slot, and from inventory to equipment use server-owned intents.
+The inventory-to-equipment path uses `AutoEquipItemRequested`, so displaced
+equipment is placed back into inventory atomically using native placement order.
 
 Spell-book use follows the same boundary: a connected authoritative client sends
 `ReadBookRequested` with the projected stable item reference and applies the

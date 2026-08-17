@@ -255,6 +255,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     player,
                     command.MoveItemRequested,
                     appliedTick),
+                Command.IntentOneofCase.AutoEquipItemRequested => ExecuteAutoEquipItemIntent(
+                    player,
+                    command.AutoEquipItemRequested,
+                    appliedTick),
                 Command.IntentOneofCase.RefillManaRequested => ExecuteStoreIntent(
                     player,
                     new DiabloRefillManaIntent(),
@@ -647,6 +651,22 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         return ExecuteStoreIntent(
             player,
             new DiabloMoveItemIntent(item.Value, destination.Value),
+            appliedTick);
+    }
+
+    private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteAutoEquipItemIntent(
+        AuthoritativePlayerState player,
+        AutoEquipItemRequested request,
+        ulong appliedTick)
+    {
+        if (!TryMapItemReference(request.Item, out var item) || !item.HasValue) {
+            return new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
+                CommandExecutionResult.Rejected(CommandRejectReason.Malformed));
+        }
+
+        return ExecuteStoreIntent(
+            player,
+            new DiabloAutoEquipItemIntent(item.Value),
             appliedTick);
     }
 

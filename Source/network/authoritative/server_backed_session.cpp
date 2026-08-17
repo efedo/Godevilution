@@ -144,6 +144,11 @@ tl::expected<void, std::string> ServerBackedSession::MoveItem(ServerBackedItemRe
 	return SubmitInventoryCommand(MakeMoveItemCommand(item, destination, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::AutoEquipItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitInventoryCommand(MakeAutoEquipItemCommand(item, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Move(int32_t directionX, int32_t directionY, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeMoveCommand(directionX, directionY, requestedTick), nowMs);

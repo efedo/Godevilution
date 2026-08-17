@@ -10,8 +10,9 @@ All notable changes to this fork are documented below.
   supported.
 
 - Route native automatic equipment-to-inventory, belt-to-inventory, and
-  inventory-to-belt placement through stable-reference authoritative transfers.
-  Automatic multi-item equipment swaps remain pending an atomic server intent.
+  inventory-to-belt placement through stable-reference authoritative transfers,
+  and add `AutoEquipItemRequested` for atomic inventory-to-equipment swaps that
+  return displaced equipment through native inventory placement order.
 
 - Route normal native authoritative inventory-cursor placement through the
   existing stable-reference `MoveItemRequested` transfer, keeping cursor

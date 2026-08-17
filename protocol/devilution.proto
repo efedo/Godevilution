@@ -113,6 +113,7 @@ message Command {
 		DisarmTrapRequested disarm_trap_requested = 29;
 		TalkToQuestRequested talk_to_quest_requested = 30;
 		ReadBookRequested read_book_requested = 31;
+		AutoEquipItemRequested auto_equip_item_requested = 32;
 	}
 }
 
@@ -213,6 +214,12 @@ message RefillManaRequested {}
 message MoveItemRequested {
 	PlayerItemReference item = 1;
 	PlayerItemReference destination = 2;
+}
+
+// Atomically equips an inventory item and returns displaced equipment to the
+// authoritative inventory using native placement order.
+message AutoEquipItemRequested {
+	PlayerItemReference item = 1;
 }
 
 message UsePortalRequested {
