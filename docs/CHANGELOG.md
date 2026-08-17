@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   server inventory placement can recognize content-defined belt items without a
   native item-index match.
 
+- Extend unambiguous misc-ID tag resolution to equipment-slot projection, so
+  ring and amulet content remains authoritative without a native item-index
+  match while legacy location fallback remains available.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

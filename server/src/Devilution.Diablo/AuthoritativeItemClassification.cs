@@ -200,10 +200,40 @@ public static class AuthoritativeItemClassification
         AuthoritativeItemCatalog? items = null)
     {
         ArgumentNullException.ThrowIfNull(state);
-        if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
-            return GetEquipmentSlotKind(definition);
+        if (items is not null) {
+            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+                return GetEquipmentSlotKind(definition);
+            if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags))
+                return GetEquipmentSlotKind(tags, state.EquipLocation);
+        }
         return state.EquipLocation switch {
+            1 => DiabloEquipmentSlotKind.Hand,
+            2 => DiabloEquipmentSlotKind.TwoHanded,
+            3 => DiabloEquipmentSlotKind.BodyArmor,
+            4 => DiabloEquipmentSlotKind.Helmet,
+            5 => DiabloEquipmentSlotKind.Ring,
+            6 => DiabloEquipmentSlotKind.Amulet,
+            _ => DiabloEquipmentSlotKind.Unknown,
+        };
+    }
+
+    private static DiabloEquipmentSlotKind GetEquipmentSlotKind(
+        IReadOnlySet<string> tags,
+        int fallbackEquipLocation)
+    {
+        if (tags.Contains("TwoHanded"))
+            return DiabloEquipmentSlotKind.TwoHanded;
+        if (tags.Contains("OneHanded"))
+            return DiabloEquipmentSlotKind.Hand;
+        if (tags.Contains("BodyArmor"))
+            return DiabloEquipmentSlotKind.BodyArmor;
+        if (tags.Contains("Helmet"))
+            return DiabloEquipmentSlotKind.Helmet;
+        if (tags.Contains("Ring"))
+            return DiabloEquipmentSlotKind.Ring;
+        if (tags.Contains("Amulet"))
+            return DiabloEquipmentSlotKind.Amulet;
+        return fallbackEquipLocation switch {
             1 => DiabloEquipmentSlotKind.Hand,
             2 => DiabloEquipmentSlotKind.TwoHanded,
             3 => DiabloEquipmentSlotKind.BodyArmor,

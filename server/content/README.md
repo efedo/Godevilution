@@ -1787,7 +1787,9 @@ declares semantic item categories (`Weapon`, `Sword`, `Axe`, `Mace`, `Bow`,
 `Ring`, `Amulet`, `LightArmor`, `MediumArmor`, `HeavyArmor`, and `Gold`) for
 active rows; combat and loadout validation use these tags before the native
 numeric fallback, including unambiguous misc-ID tag mappings when compatibility
-item indices are unavailable. `charges` and
+item indices are unavailable. Equipment-slot projection also uses those
+unambiguous tag mappings before falling back to native `equip_location`.
+`charges` and
 `max_charges` preserve charged-item state. `spell_source_kind` explicitly
 classifies an item as `None`, `ChargedItem`, or `ConsumableItem`; source
 matching uses the normalized `spell_id` and no longer depends on native

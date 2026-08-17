@@ -1077,7 +1077,8 @@ Status date: 2026-08-17
 
 - Loadout equipment-slot admission is now content-first for hand, two-handed,
   body-armor, helmet, ring, and amulet locations; untagged legacy rows retain
-  the native `equip_location` mapping.
+  the native `equip_location` mapping, while unambiguous misc-ID tags cover
+  compatibility states that lack a native item-index match.
 
 - Schema 1.146 adds normalized `Sword`, `Axe`, `Mace`, `Bow`, `Shield`,
   `Staff`, `Belt`, `OneHanded`, `TwoHanded`, `BodyArmor`, `Helmet`, `Ring`,

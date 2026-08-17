@@ -229,6 +229,26 @@ public sealed class AuthoritativeItemClassificationTests
             AuthoritativeItemClassification.GetEquipmentSlotKind(definition));
     }
 
+    [Fact]
+    public void EquipmentSlotTagsResolveByMiscIdWhenNativeItemIndexIsAbsent()
+    {
+        var definition = CreateDefinition(itemClass: 2, tags: ["Misc", "Ring"]) with {
+            EquipLocation = 5,
+            MiscId = 121,
+            NativeItemIndex = 101,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+        var state = AuthoritativeItemState.Empty with {
+            ItemIndex = 999,
+            EquipLocation = 0,
+            MiscId = 121,
+        };
+
+        Assert.Equal(
+            DiabloEquipmentSlotKind.Ring,
+            AuthoritativeItemClassification.GetEquipmentSlotKind(state, catalog));
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         int itemClass,
         params string[] tags)
