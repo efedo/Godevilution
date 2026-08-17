@@ -523,7 +523,8 @@ public sealed record AuthoritativeSpellDefinition(
 public sealed class AuthoritativeSpellCatalog
 {
     private const uint MaximumNativeSpellId = 51;
-    private const int FirstRuneMiscId = 47;
+    public const int LegacyRuneFireConsumableMiscId = 47;
+    private const int FirstRuneMiscId = LegacyRuneFireConsumableMiscId;
     private const int LastRuneMiscId = 51;
     private readonly Dictionary<uint, AuthoritativeSpellDefinition> spells;
     private readonly Dictionary<uint, AuthoritativeSpellDefinition> nativeSpells;
@@ -535,7 +536,7 @@ public sealed class AuthoritativeSpellCatalog
         spells = new Dictionary<uint, AuthoritativeSpellDefinition>();
         nativeSpells = new Dictionary<uint, AuthoritativeSpellDefinition>();
         consumableSpells = new Dictionary<int, AuthoritativeSpellDefinition>();
-        foreach (var definition in definitions) {
+        foreach (var definition in definitions.Select(NormalizeLegacyConsumableBehavior)) {
             if (definition.SpellId == 0 || definition.ManaCost <= 0 || definition.HealingAmount < 0 || definition.DamageAmount < 0)
                 throw new InvalidDataException("Spell definitions require a non-zero ID, positive mana cost, and non-negative effects.");
             if (definition.DisplayName is null || definition.DisplayName.Contains('\0'))
@@ -2042,6 +2043,17 @@ public sealed class AuthoritativeSpellCatalog
             throw new InvalidDataException(
                 "The spell catalog can define at most one Heal Other behavior.");
         }
+    }
+
+    /** Translates the legacy Rune of Fire misc ID at the data boundary. */
+    private static AuthoritativeSpellDefinition NormalizeLegacyConsumableBehavior(
+        AuthoritativeSpellDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return definition.ConsumableBehavior is null
+            && definition.ConsumableMiscId == LegacyRuneFireConsumableMiscId
+            ? definition with { ConsumableBehavior = AuthoritativeConsumableBehavior.RuneFire }
+            : definition;
     }
 
     public IReadOnlyList<AuthoritativeSpellDefinition> Definitions => spells.Values.OrderBy(spell => spell.SpellId).ToArray();

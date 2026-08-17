@@ -151,6 +151,20 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void TranslatesLegacyRuneFireMiscIdentityAtCatalogBoundary()
+    {
+        var catalog = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(12, 16, 0, 0, 0, 0) {
+                ConsumableMiscId = AuthoritativeSpellCatalog.LegacyRuneFireConsumableMiscId,
+            },
+        ]);
+
+        Assert.Equal(
+            AuthoritativeConsumableBehavior.RuneFire,
+            Assert.Single(catalog.Definitions).ConsumableBehavior);
+    }
+
+    [Fact]
     public void RejectsUnknownConsumableBehavior()
     {
         var exception = Assert.Throws<InvalidDataException>(() => AuthoritativeSpellCatalog.LoadTsv(

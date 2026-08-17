@@ -1852,8 +1852,8 @@ transition; its behavior-specific damage, resistance, impact, speed, and
 lifetime values remain external data rather than host policy.
 `consumable_behavior` optionally selects special handling for consumable spell
 casts (`Standard` or `RuneFire`). The checked-in Rune of Fire row declares
-`RuneFire`; older tables without the column retain the native miscellaneous-ID
-fallback.
+`RuneFire`; older tables without the column are translated at catalog activation
+from the legacy Rune of Fire miscellaneous identity before gameplay runs.
 
 Spell `1` uses `Firebolt` behavior. Its mana columns reproduce the native
 post-first-level adjustment, Firebolt-specific adjustment divisor, minimum,

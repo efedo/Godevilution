@@ -3428,8 +3428,7 @@ public sealed class DiabloCombatCommandProcessor
 
     private static bool IsRuneFireSpell(AuthoritativeSpellDefinition spell)
     {
-        return spell.ConsumableBehavior == AuthoritativeConsumableBehavior.RuneFire
-            || (spell.ConsumableBehavior is null && spell.ConsumableMiscId == 47);
+        return spell.ConsumableBehavior == AuthoritativeConsumableBehavior.RuneFire;
     }
 
     private AuthoritativeProjectile CreateLightningController(
