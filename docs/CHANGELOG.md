@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Harden external TSV validation with one strict Boolean parser across quest,
+  object, warp, item, monster, affix, store, and combat catalogs; malformed
+  Boolean values now reject the complete content candidate.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

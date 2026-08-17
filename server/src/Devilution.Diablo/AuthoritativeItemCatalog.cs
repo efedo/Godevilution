@@ -360,7 +360,7 @@ public sealed class AuthoritativeItemCatalog
             row.OptionalInt32("max_durability"),
             Math.Max(1, row.OptionalInt32("inventory_width", 1)),
             Math.Max(1, row.OptionalInt32("inventory_height", 1)),
-            row.OptionalInt32("identified") != 0) {
+            row.OptionalBoolean("identified")) {
                 StableSymbol = AuthoritativeItemIdentity.ReadSymbol(row),
                 GenerationTags = row.TryGet("item_tags", out var tags) && !string.IsNullOrWhiteSpace(tags)
                     ? tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

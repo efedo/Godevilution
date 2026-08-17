@@ -165,7 +165,7 @@ public sealed class AuthoritativeMonsterCatalog
                         dropItemId,
                         dropItemSeed,
                         row.OptionalInt32("drop_item_level"),
-                        row.OptionalInt32("drop_only_good") != 0,
+                        row.OptionalBoolean("drop_only_good"),
                         spellBooks: spellBooks,
                         gameMode: gameMode);
             }

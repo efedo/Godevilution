@@ -17,6 +17,9 @@ engine-independent `Devilution.Data` assembly. Diablo-specific table schemas
 and deterministic catalog rules are owned by `Devilution.Diablo`; the server
 only composes the selected content and module.
 
+Boolean TSV fields accept only `0`, `1`, `false`, or `true` (case-insensitive);
+other numeric values are rejected during content activation.
+
 The normalized TSV files define stable IDs and authoritative rules for player
 classes, animation timing, initial loadouts, levels, world rules, items, affixes, stores and
 services, spells, combat, monsters, portals, objects, and quests. Legacy `itemdat.tsv` and

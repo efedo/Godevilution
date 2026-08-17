@@ -217,8 +217,8 @@ public sealed class AuthoritativeItemAffixCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         return new AuthoritativeItemAffixCatalog(
-            table.Rows.Where(row => row.OptionalInt32("is_suffix") == 0).Select(row => Parse(row)),
-            table.Rows.Where(row => row.OptionalInt32("is_suffix") != 0).Select(row => Parse(row)),
+            table.Rows.Where(row => !row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
+            table.Rows.Where(row => row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             generationRules);
     }
 
@@ -249,7 +249,7 @@ public sealed class AuthoritativeItemAffixCatalog
             row.OptionalInt32("min_level"),
             tags,
             row.OptionalInt32("chance", 1),
-            row.OptionalInt32("useful", 1) != 0);
+            row.OptionalBoolean("useful", true));
     }
 
     private static AuthoritativeItemAffix ParseLegacy(TsvRow row)

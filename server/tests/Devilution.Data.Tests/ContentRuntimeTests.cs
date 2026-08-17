@@ -20,6 +20,26 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void ParsesStrictBooleanTsvValues()
+    {
+        var table = TsvTable.Parse(
+            "flags.tsv",
+            "id\tenabled\tvisible\n"
+                + "one\ttrue\t0\n"
+                + "two\t1\tfalse\n");
+
+        Assert.True(table.Rows[0].RequiredBoolean("enabled"));
+        Assert.False(table.Rows[0].RequiredBoolean("visible"));
+        Assert.True(table.Rows[1].OptionalBoolean("enabled"));
+        Assert.False(table.Rows[1].OptionalBoolean("visible"));
+        Assert.False(table.Rows[0].OptionalBoolean("missing"));
+        Assert.Throws<InvalidDataException>(() =>
+            TsvTable.Parse("bad-flags.tsv", "id\tenabled\nrow\t2\n")
+                .Rows[0]
+                .RequiredBoolean("enabled"));
+    }
+
+    [Fact]
     public void ContentManifestHashMatchesNativeGoldenVectors()
     {
         var items = TsvTable.Parse("items.tsv", "id\tname\nshort-sword\tShort Sword\nbuckler\tBuckler\n");

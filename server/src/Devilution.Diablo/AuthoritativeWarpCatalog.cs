@@ -106,7 +106,7 @@ public static class AuthoritativeWarpCatalog
                     stableIds,
                     "required_quest_id",
                     "required_quest_symbol"),
-                row.OptionalInt32("required_quest_completed") != 0) {
+                row.OptionalBoolean("required_quest_completed")) {
                 StableSymbol = AuthoritativeWarpIdentity.ReadSymbol(row),
             };
             if (!world.ContainsLevel(target.SourceLevelId)

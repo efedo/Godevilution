@@ -109,7 +109,7 @@ public static class AuthoritativeWorldObjectCatalog
                     "level_symbol"),
                 row.RequiredInt32("position_x"),
                 row.RequiredInt32("position_y"),
-                row.OptionalInt32("activated") != 0,
+                row.OptionalBoolean("activated"),
                 AuthoritativeQuestIdentity.ResolveOptional(
                     row,
                     stableIds,
@@ -118,11 +118,11 @@ public static class AuthoritativeWorldObjectCatalog
                 effectKind,
                 ParseEffectAmount(row, effectKind, stableIds),
                 row.OptionalUInt32("quest_progress", 1),
-                row.OptionalInt32("missile_passable") != 0,
-                row.OptionalInt32("breakable") != 0,
-                row.OptionalInt32("destroyed") != 0,
-                row.OptionalInt32("trap_armed") != 0,
-                row.OptionalInt32("is_shrine") != 0);
+                row.OptionalBoolean("missile_passable"),
+                row.OptionalBoolean("breakable"),
+                row.OptionalBoolean("destroyed"),
+                row.OptionalBoolean("trap_armed"),
+                row.OptionalBoolean("is_shrine"));
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");

@@ -62,6 +62,28 @@ public sealed record TsvRow(int LineNumber, IReadOnlyDictionary<string, string> 
                 $"Column '{column}' on TSV row {LineNumber} must be an unsigned 32-bit integer.");
         return result;
     }
+
+    public bool RequiredBoolean(string column)
+        => ParseBoolean(Required(column), column);
+
+    public bool OptionalBoolean(string column, bool defaultValue = false)
+    {
+        if (!TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
+            return defaultValue;
+        return ParseBoolean(value, column);
+    }
+
+    private bool ParseBoolean(string value, string column)
+    {
+        if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+            || value == "1")
+            return true;
+        if (string.Equals(value, "false", StringComparison.OrdinalIgnoreCase)
+            || value == "0")
+            return false;
+        throw new InvalidDataException(
+            $"Column '{column}' on TSV row {LineNumber} must be Boolean (true/false or 1/0).");
+    }
 }
 
 /** A validated TSV table whose row and overlay ordering is preserved. */

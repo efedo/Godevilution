@@ -147,6 +147,9 @@ external content. Generic mechanics belong in the domain kernel. Diablo-specific
 behavior that cannot be expressed clearly as data belongs in a versioned C#
 gameplay module.
 
+The shared Data runtime accepts only `0`, `1`, `false`, or `true` for Boolean
+TSV fields, so malformed pack values fail before module activation.
+
 Gameplay modules are trusted server assemblies installed by the server
 administrator. Clients cannot upload or select executable server code. The
 ordered content packs and gameplay modules form one ruleset identity recorded

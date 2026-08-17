@@ -920,7 +920,7 @@ public sealed class AuthoritativeCombatRules
             row.OptionalInt32("hit_chance_percent", 100),
             row.OptionalInt32("critical_chance_percent"),
             row.OptionalInt32("critical_multiplier", 2),
-            row.OptionalInt32("friendly_fire", 1) != 0,
+            row.OptionalBoolean("friendly_fire", true),
             ParseGameVariant(row),
             AuthoritativeLevelIdentity.ResolveOptional(
                 row,
