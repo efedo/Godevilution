@@ -98,6 +98,10 @@ public sealed class DiabloWorldCommandProcessor
                 player,
                 talk.QuestId,
                 talk.TargetEntityId),
+            DiabloTurnInQuestIntent turnIn => TurnInQuest(
+                player,
+                turnIn.QuestId,
+                turnIn.TownerId),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
@@ -1224,6 +1228,93 @@ public sealed class DiabloWorldCommandProcessor
                 MessageId = quest.MessageId,
                 QuestId = quest.QuestId,
             });
+    }
+
+    /** Applies a content-defined native towner turn-in, including item consumption and reward spawn. */
+    private DiabloWorldIntentResult TurnInQuest(
+        AuthoritativePlayerState player,
+        uint questId,
+        uint townerId)
+    {
+        if (items is null
+            || !world.Quests.TryGetValue(questId, out var quest)
+            || quest.TurnInTownerId < 0
+            || quest.TurnInTownerId != townerId
+            || quest.Unavailable
+            || quest.Completed
+            || !quest.Active
+            || quest.TurnInLevelId != player.LevelId
+            || Math.Max(
+                Math.Abs(quest.TurnInPositionX - player.PositionX),
+                Math.Abs(quest.TurnInPositionY - player.PositionY)) > 1
+            || quest.TurnInItemId == 0
+            || !items.TryGet(quest.TurnInItemId, out var requiredItem)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        if (quest.TurnInRequiredVariable2 >= 0
+            && quest.Variable2 != quest.TurnInRequiredVariable2) {
+            if (quest.Variable2 > quest.TurnInRequiredVariable2)
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            quest.Variable2 = quest.TurnInRequiredVariable2;
+            quest.Logged = true;
+            return DiabloWorldIntentResult.Accepted;
+        }
+
+        var inventoryIndex = -1;
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            if (items.IsStateForDefinition(player.Inventory[index].State, requiredItem)) {
+                inventoryIndex = index;
+                break;
+            }
+        }
+        if (inventoryIndex < 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, inventoryIndex);
+        player.Inventory.RemoveAt(inventoryIndex);
+        quest.Progress = quest.RequiredProgress;
+        quest.Completed = true;
+        quest.Active = false;
+        quest.Logged = true;
+        quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+        quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
+
+        if (quest.CompletionActivateQuestId != 0
+            && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
+            && !nextQuest.Unavailable
+            && !nextQuest.Completed) {
+            nextQuest.Active = true;
+        }
+
+        if (quest.TurnInRewardUniqueId != 0) {
+            var itemSeed = AllocateGoldStackSeed();
+            var rewardState = items.GenerateUnique(
+                quest.TurnInRewardUniqueId,
+                itemSeed,
+                quest.TurnInRewardItemLevel);
+            var entityId = AllocateWorldItemEntityId([player]);
+            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                entityId,
+                quest.TurnInLevelId,
+                quest.TurnInRewardPositionX,
+                quest.TurnInRewardPositionY,
+                itemSeed,
+                0,
+                rewardState);
+        }
+
+        return quest.TurnInMessageId == 0
+            ? DiabloWorldIntentResult.Accepted
+            : DiabloWorldIntentResult.AcceptedWith(
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    townerId,
+                    0) {
+                    MessageId = quest.TurnInMessageId,
+                    QuestId = quest.QuestId,
+                });
     }
 
     private static DiabloWorldIntentResult SetFriendlyMode(

@@ -3,13 +3,14 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.325.0` schema in
+It declares its identity and `devilution.diablo@1.326.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
-`combat.tsv` variant selector, so operators can activate the native Hellfire
-ruleset with `--content-overlay server/content/hellfire` while remaining
-Hellfire tables are migrated incrementally.
+`combat.tsv` variant selector plus the first content-owned towner turn-in row,
+so operators can activate the native Hellfire ruleset with
+`--content-overlay server/content/hellfire` while remaining Hellfire tables are
+migrated incrementally.
 
 Generic TSV parsing, ordered pack loading, deterministic overlays, transactional
 composition, manifest hashing, and stable IDs are owned by the
@@ -1389,6 +1390,13 @@ Schema 1.325 adds the optional `required_variable1` column to
 native quest variable before applying, preserving conditional quest-item
 pickup state while older rows remain unconditional.
 
+Schema 1.326 adds optional native towner turn-in columns to `quests.tsv` and
+`quest_states.tsv`. A turn-in declares its accepting towner, level and
+position, required item, optional `_qvar2` gate, unique reward and reward
+position, and optional dialogue message. Activation validates the referenced
+item and unique catalogs; the server consumes the item, completes the quest,
+and spawns the reward through `TurnInQuestRequested`.
+
 The shipped Hellfire pack adds a content-owned Hive entrance projection: Rune
 Bomb completion objects consume the normalized bomb through
 `OperateObjectRequested`, and the town-to-Nest warp remains gated by Farmer's
@@ -2149,8 +2157,8 @@ the complete target header even when they upsert only one row.
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning, including Bat movement bands, Counselor ranged-admission and movement chances, Mega delegated delay-admission chance, Mega intermediate movement chance, SkeletonRanged fresh-mode movement bonus, SkeletonKing and HorkDemon RoundWalk admission modulo, shared AiAvoidance and Fat/Overlord fresh-mode movement bonuses, shared AiAvoidance Move-goal gating, Rhino ordinary movement bands and movement-goal gating. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; other effects retain numeric amounts. |
-| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, and optional single-player pool exclusion state. |
-| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, and `completion_reward_item_symbol` resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, and optional completion-reward item fields. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, and content-owned towner turn-ins with towner/level/position, required item, `_qvar2` gate, unique reward, reward position, and dialogue message metadata. |
+| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, and `completion_reward_item_symbol` resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, completion-trigger, optional completion-reward item, and content-owned towner turn-in fields. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
@@ -2186,7 +2194,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.325.0"
+    "version": "1.326.0"
   },
   "dependencyConstraints": [
     {
@@ -2218,7 +2226,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.325.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.326.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

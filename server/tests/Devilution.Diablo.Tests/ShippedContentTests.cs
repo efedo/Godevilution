@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.325.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.326.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1428,7 +1428,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.325.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.326.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -2017,6 +2017,23 @@ public sealed class ShippedContentTests
         Assert.Equal("The Magic Rock", questTypes.Definitions[0].Name);
         Assert.Equal("The Jersey's Jersey", questTypes.Definitions[^1].Name);
         Assert.Equal(23U, questTypes.Definitions[^1].NativeQuestId);
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            composed.GetRequiredTable("quests.tsv").ToCanonicalTsv(),
+            questTypes,
+            stableIds);
+        var anvilQuest = Assert.Single(quests, quest => quest.QuestId == 3011);
+        Assert.Equal((0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
+            anvilQuest.TurnInTownerId,
+            anvilQuest.TurnInLevelId,
+            anvilQuest.TurnInPositionX,
+            anvilQuest.TurnInPositionY,
+            anvilQuest.TurnInItemId,
+            anvilQuest.TurnInRequiredVariable2,
+            anvilQuest.TurnInRewardUniqueId,
+            anvilQuest.TurnInRewardItemLevel,
+            anvilQuest.TurnInRewardPositionX,
+            anvilQuest.TurnInRewardPositionY));
         var hellfireCursors = AuthoritativeItemCursorCatalog.LoadTsv(
             "item_cursor_graphics.tsv",
             composed.GetRequiredTable("item_cursor_graphics.tsv").ToCanonicalTsv());

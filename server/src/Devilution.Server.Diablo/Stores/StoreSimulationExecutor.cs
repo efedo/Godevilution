@@ -330,6 +330,13 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                         command.TalkToQuestRequested.QuestId,
                         command.TalkToQuestRequested.TargetEntityId),
                     appliedTick),
+                Command.IntentOneofCase.TurnInQuestRequested => ExecuteWorldIntent(
+                    player,
+                    participants,
+                    new DiabloTurnInQuestIntent(
+                        command.TurnInQuestRequested.QuestId,
+                        command.TurnInQuestRequested.TownerId),
+                    appliedTick),
                 Command.IntentOneofCase.SetFriendlyModeRequested => ExecuteWorldIntent(
                     player,
                     participants,

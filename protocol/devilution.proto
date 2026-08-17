@@ -125,6 +125,7 @@ message Command {
 		ReadBookRequested read_book_requested = 31;
 		AutoEquipItemRequested auto_equip_item_requested = 32;
 		UseConsumableRequested use_consumable_requested = 33;
+	TurnInQuestRequested turn_in_quest_requested = 34;
 	}
 }
 
@@ -273,6 +274,11 @@ message AdvanceQuestRequested {
 message TalkToQuestRequested {
 	uint32 quest_id = 1;
 	uint32 target_entity_id = 2;
+}
+
+message TurnInQuestRequested {
+	uint32 quest_id = 1;
+	uint32 towner_id = 2;
 }
 
 enum GameDifficulty {

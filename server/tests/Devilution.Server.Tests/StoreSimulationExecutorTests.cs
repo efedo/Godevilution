@@ -2221,6 +2221,65 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void TurnInQuestProtocolCommandReachesAuthoritativeTownerBoundary()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(24, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+            },
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3011,
+            10,
+            1,
+            active: true,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 2,
+            turnInPositionY: 1,
+            turnInItemId: 7,
+            turnInRequiredVariable2: 1);
+        var inventoryItem = new OwnedStoreItem(
+            0,
+            0,
+            99,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 7,
+                ItemIndex = 7,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingPositionX: 1,
+            startingPositionY: 1,
+            startingInventory: [inventoryItem],
+            startingItems: items,
+            startingQuests: [quest]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            TurnInQuestRequested = new TurnInQuestRequested {
+                QuestId = 3011,
+                TownerId = 0,
+            },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var snapshot = executor.CreateSnapshot("player-a", 7, 1);
+        var projectedQuest = Assert.Single(snapshot.Quests);
+        Assert.Equal(1, projectedQuest.Variable2);
+        Assert.Single(executor.GetPlayerState("player-a").Inventory);
+    }
+
+    [Fact]
     public void QuestDialogueCommandActivatesOnlyTheMatchingUniqueEncounter()
     {
         var executor = new StoreSimulationExecutor(

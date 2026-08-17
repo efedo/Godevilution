@@ -146,6 +146,13 @@ the quest's content-owned native dialogue variables advance monotonically as
 part of the same authoritative transition. Clients do not choose message text
 or mutate quest state.
 
+`TurnInQuestRequested` is the additive command at field 34. It names a
+content-owned quest and native towner; the server validates the active quest,
+level, adjacency, authored conversation variable, required item, and authored
+geometry before consuming the item, completing the quest, and spawning an
+optional unique reward. The first shipped use is the Hellfire Blacksmith Anvil
+turn-in.
+
 ## State, Events, and Persistence
 
 `Snapshot` is a complete projection for the receiving session. The server owns

@@ -102,7 +102,18 @@ public sealed class AuthoritativeQuestState
         bool activateOnRoute = true,
         bool completionDiablo = false,
         uint completionRewardItemId = 0,
-        int completionRewardItemLevel = 0)
+        int completionRewardItemLevel = 0,
+        int turnInTownerId = -1,
+        uint turnInLevelId = 0,
+        int turnInPositionX = 0,
+        int turnInPositionY = 0,
+        uint turnInItemId = 0,
+        int turnInRequiredVariable2 = -1,
+        uint turnInRewardUniqueId = 0,
+        int turnInRewardItemLevel = 0,
+        int turnInRewardPositionX = 0,
+        int turnInRewardPositionY = 0,
+        int turnInMessageId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -124,6 +135,14 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(completionVariable2));
         if (completionRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(completionRewardItemLevel));
+        if (turnInTownerId is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInTownerId));
+        if (turnInRequiredVariable2 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInRequiredVariable2));
+        if (turnInRewardItemLevel is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(turnInRewardItemLevel));
+        if (turnInMessageId < 0 || turnInMessageId > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInMessageId));
         if (completionUniqueIdentity.Length > 128)
             throw new ArgumentOutOfRangeException(nameof(completionUniqueIdentity));
         QuestId = questId;
@@ -148,6 +167,17 @@ public sealed class AuthoritativeQuestState
         CompletionDiablo = completionDiablo;
         CompletionRewardItemId = completionRewardItemId;
         CompletionRewardItemLevel = completionRewardItemLevel;
+        TurnInTownerId = turnInTownerId;
+        TurnInLevelId = turnInLevelId;
+        TurnInPositionX = turnInPositionX;
+        TurnInPositionY = turnInPositionY;
+        TurnInItemId = turnInItemId;
+        TurnInRequiredVariable2 = turnInRequiredVariable2;
+        TurnInRewardUniqueId = turnInRewardUniqueId;
+        TurnInRewardItemLevel = turnInRewardItemLevel;
+        TurnInRewardPositionX = turnInRewardPositionX;
+        TurnInRewardPositionY = turnInRewardPositionY;
+        TurnInMessageId = turnInMessageId;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -192,6 +222,23 @@ public sealed class AuthoritativeQuestState
     public uint CompletionRewardItemId { get; }
     /** Optional native item level used when generating the completion reward. */
     public int CompletionRewardItemLevel { get; }
+    /** Optional native towner identity that accepts this quest's turn-in. */
+    public int TurnInTownerId { get; }
+    /** Level containing the configured towner and reward position. */
+    public uint TurnInLevelId { get; }
+    public int TurnInPositionX { get; }
+    public int TurnInPositionY { get; }
+    /** Required normalized inventory item consumed by the turn-in. */
+    public uint TurnInItemId { get; }
+    /** Optional exact native _qvar2 required before turn-in. */
+    public int TurnInRequiredVariable2 { get; }
+    /** Optional stable unique reward generated at the native towner position. */
+    public uint TurnInRewardUniqueId { get; }
+    public int TurnInRewardItemLevel { get; }
+    public int TurnInRewardPositionX { get; }
+    public int TurnInRewardPositionY { get; }
+    /** Optional native dialogue identity emitted after a successful turn-in. */
+    public int TurnInMessageId { get; }
 }
 
 /** External quest definitions and initial progress. */
@@ -250,7 +297,30 @@ public static class AuthoritativeQuestCatalog
                     stableIds,
                     "completion_reward_item_id",
                     "completion_reward_item_symbol"),
-                completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level")) {
+                completionRewardItemLevel: row.OptionalInt32("completion_reward_item_level"),
+                turnInTownerId: row.OptionalInt32("turn_in_towner_id", -1),
+                turnInLevelId: AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_level_id",
+                    "turn_in_level_symbol"),
+                turnInPositionX: row.OptionalInt32("turn_in_position_x"),
+                turnInPositionY: row.OptionalInt32("turn_in_position_y"),
+                turnInItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_item_id",
+                    "turn_in_item_symbol"),
+                turnInRequiredVariable2: row.OptionalInt32("turn_in_required_variable2", -1),
+                turnInRewardUniqueId: AuthoritativeUniqueItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_reward_unique_id",
+                    "turn_in_reward_unique_symbol"),
+                turnInRewardItemLevel: row.OptionalInt32("turn_in_reward_item_level"),
+                turnInRewardPositionX: row.OptionalInt32("turn_in_reward_position_x"),
+                turnInRewardPositionY: row.OptionalInt32("turn_in_reward_position_y"),
+                turnInMessageId: row.OptionalInt32("turn_in_message_id")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -270,6 +340,49 @@ public static class AuthoritativeQuestCatalog
             if (!items.TryGet(quest.CompletionRewardItemId, out _))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown completion reward item {quest.CompletionRewardItemId}.");
+        }
+    }
+
+    /** Validates content-owned towner turn-in items and unique rewards. */
+    public static void ValidateTurnInRewards(
+        IReadOnlyList<AuthoritativeQuestState> quests,
+        AuthoritativeItemCatalog items,
+        AuthoritativeUniqueItemCatalog uniqueItems)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(uniqueItems);
+        foreach (var quest in quests.Where(quest => quest.TurnInTownerId >= 0)) {
+            if (quest.TurnInItemId == 0
+                || !items.TryGet(quest.TurnInItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
+            if (quest.TurnInRewardUniqueId != 0
+                && !uniqueItems.TryGet(quest.TurnInRewardUniqueId, out _))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} references unknown turn-in unique reward {quest.TurnInRewardUniqueId}.");
+        }
+    }
+
+    /** Validates authored towner and reward positions against active geometry. */
+    public static void ValidateTurnInPositions(
+        IReadOnlyList<AuthoritativeQuestState> quests,
+        AuthoritativeWorld world)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(world);
+        foreach (var quest in quests.Where(quest => quest.TurnInTownerId >= 0)) {
+            if (!world.IsWalkable(
+                    quest.TurnInLevelId,
+                    quest.TurnInPositionX,
+                    quest.TurnInPositionY)
+                || (quest.TurnInRewardUniqueId != 0
+                    && !world.IsWalkable(
+                        quest.TurnInLevelId,
+                        quest.TurnInRewardPositionX,
+                        quest.TurnInRewardPositionY)))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} contains a blocked towner or reward position.");
         }
     }
 

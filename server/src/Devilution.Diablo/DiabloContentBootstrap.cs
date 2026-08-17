@@ -540,6 +540,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                         "Quest completion rewards require an active item catalog.");
                 AuthoritativeQuestCatalog.ValidateRewardItems(quests, itemCatalog);
             }
+            if (quests.Any(quest => quest.TurnInTownerId >= 0)) {
+                if (itemCatalog is null || uniqueItems is null)
+                    throw new InvalidDataException(
+                        "Quest towner turn-ins require active item and unique-item catalogs.");
+                AuthoritativeQuestCatalog.ValidateTurnInRewards(
+                    quests,
+                    itemCatalog,
+                    uniqueItems);
+                if (world is not null)
+                    AuthoritativeQuestCatalog.ValidateTurnInPositions(quests, world);
+            }
         }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null

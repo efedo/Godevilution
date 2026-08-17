@@ -79,6 +79,10 @@ Windows toolchain command.
   Fortitude oil to the target, then consumes the source and returns the
   authoritative snapshot. The native client does not apply these effects
   locally.
+- `TurnInQuestRequested` identifies a content-owned quest and native towner.
+  The server validates the active quest, level, towner adjacency, native
+  conversation variable, and required item before consuming the item,
+  completing the quest, and spawning any validated unique reward.
 - `MoveInventoryItemRequested.item` is an additive exact inventory reference.
   When present, the server rejects a stale slot before changing the inventory
   grid; an absent or zero-valued reference retains positional compatibility.

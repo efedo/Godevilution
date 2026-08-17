@@ -1021,6 +1021,94 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTownerTurnInStartsQuestConversationThenConsumesItemAndSpawnsUniqueReward()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1001, "Reward Blade", 7, 1, 100, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 1, 2, 0, 20, 20, 1, 1, true),
+        ], uniqueItems: uniques);
+        var requiredItem = items.Generate(7, 42);
+        var inventory = new OwnedStoreItem(0, 0, requiredItem.CreateInfo, 0, 0, requiredItem);
+        var player = CreatePlayer(
+            positionX: 61,
+            positionY: 63,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [inventory],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3011,
+            10,
+            1,
+            variable2: 0,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 7,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1001,
+            turnInRewardItemLevel: 1,
+            turnInRewardPositionX: 61,
+            turnInRewardPositionY: 64);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var started = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3011, 0),
+            1,
+            [player]);
+
+        Assert.True(started.Succeeded);
+        Assert.Equal(1, quest.Variable2);
+        Assert.Single(player.Inventory);
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3011, 0),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1001, reward.State.UniqueId);
+        Assert.Equal((61, 64), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
+    public void NativeTownerTurnInRejectsWrongTownerOrMissingItemWithoutMutation()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 1, 2, 0, 20, 20, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3011,
+            10,
+            1,
+            variable2: 1,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 7,
+            turnInRequiredVariable2: 1);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 61, positionY: 63, entityId: 7);
+
+        AssertRejected(
+            processor.Execute(player, new DiabloTurnInQuestIntent(3011, 1), 1, [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.False(quest.Completed);
+        Assert.Empty(world.WorldItems);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(

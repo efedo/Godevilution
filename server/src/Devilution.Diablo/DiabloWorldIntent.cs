@@ -20,6 +20,9 @@ public sealed record DiabloAdvanceQuestIntent(uint QuestId) : DiabloWorldIntent;
 /** Starts a validated quest conversation with a server-owned unique encounter. */
 public sealed record DiabloTalkToQuestIntent(uint QuestId, uint TargetEntityId) : DiabloWorldIntent;
 
+/** Completes a content-defined quest turn-in at an adjacent native towner. */
+public sealed record DiabloTurnInQuestIntent(uint QuestId, uint TownerId) : DiabloWorldIntent;
+
 public sealed record DiabloSetFriendlyModeIntent(bool FriendlyMode) : DiabloWorldIntent;
 
 public sealed record DiabloRestartTownIntent : DiabloWorldIntent;
