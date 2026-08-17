@@ -557,6 +557,11 @@ Compatibility generic projectiles likewise destroy a breakable missile-blocking
 object before their blocked travel is removed; clients observe only the
 resulting authoritative object and projectile state.
 
+Apocalypse booms retain their persistent lifetime when they collide with a
+breakable missile-blocking object: the server destroys the object through the
+native collision transition and continues publishing the boom state until its
+authoritative expiry.
+
 Hork Spawn uses the same current-tile collision boundary as native
 `ProcessHorkSpawn`: before movement or expiry, the server checks a living
 player on the missile tile with the non-arrow `PlayerMHit` rules. A successful

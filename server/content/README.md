@@ -2000,6 +2000,10 @@ velocity, origin, phase, lifetime, RNG, and exact health cross
 snapshots, compatible saves, protocol projection, both clients, and the shared
 native/C# replay.
 
+Apocalypse behavior uses the server-owned row-major scan controller and
+persistent Physical boom. A boom breaks a hit breakable missile-blocking object
+through native `CheckMissileCol` while retaining its remaining lifetime.
+
 Spell `23` uses `Teleport` behavior. Cast resolution searches the requested
 tile and radii `1` through `5` in the exact native `DoCrawl` order, rejecting
 static geometry, active monsters, other living players, and active objects.
