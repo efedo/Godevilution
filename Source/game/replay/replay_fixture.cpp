@@ -4354,13 +4354,7 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 }
 
-/**
- * Advances the compact autonomous BloodStar lane through native travel.
- *
- * The checked-in fixture deliberately stops before player impact so this
- * projection verifies admission, velocity, and server-owned runtime state;
- * monster-magic hit/block parity remains a separate follow-up boundary.
- */
+/** Advances the compact autonomous BloodStar lane through native travel and impact. */
 void AdvanceReplayAutonomousBloodStarsOneTick(ReplayFixtureExecutionState &state)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
@@ -4384,7 +4378,62 @@ void AdvanceReplayAutonomousBloodStarsOneTick(ReplayFixtureExecutionState &state
 			iterator = state.projectiles.erase(iterator);
 			continue;
 		}
-		static_cast<void>(MoveReplayNativeProjectile(projectile));
+		const auto resolvePlayerAt = [&](int32_t x, int32_t y) {
+			const bool primaryPlayerAtTile = state.life > 0
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
+			if (!primaryPlayerAtTile)
+				return false;
+			const uint32_t targetEntityId = state.entityId;
+			const int32_t targetLevel = static_cast<int32_t>(state.characterLevel);
+			const int32_t distance = std::max(
+			    std::abs(x - state.combatTargetPositionX),
+			    std::abs(y - state.combatTargetPositionY));
+			const int32_t hitChance = std::clamp(
+			    std::max(10, 40 + 2 * state.combatTargetMonsterLevel
+			        - 2 * targetLevel - 2 * distance),
+			    0,
+			    100);
+			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
+				return false;
+
+			state.life = std::max(0, state.life - std::max(1, projectile.damage) * 64);
+			projectile.lastCollisionTargetEntityId = targetEntityId;
+			EnterReplayProjectileImpact(projectile);
+			return true;
+		};
+
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		if (visitedTiles.empty()) {
+			const uint32_t targetEntityId = (state.life > 0
+			        && state.levelId == projectile.levelId
+			        && state.positionX == projectile.positionX
+			        && state.positionY == projectile.positionY)
+			    ? state.entityId
+			    : 0;
+			if (projectile.lastCollisionTargetEntityId != targetEntityId
+			    && resolvePlayerAt(projectile.positionX, projectile.positionY)) {
+				++iterator;
+				continue;
+			}
+			projectile.lastCollisionTargetEntityId = targetEntityId;
+			++iterator;
+			continue;
+		}
+		for (const auto &tile : visitedTiles) {
+			projectile.positionX = tile.x;
+			projectile.positionY = tile.y;
+			projectile.traveledX = tile.traveledX;
+			projectile.traveledY = tile.traveledY;
+			if (resolvePlayerAt(tile.x, tile.y))
+				break;
+			projectile.lastCollisionTargetEntityId = 0;
+		}
+		if (projectile.phase == 1) {
+			++iterator;
+			continue;
+		}
 		++iterator;
 	}
 }
