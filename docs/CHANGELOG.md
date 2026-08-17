@@ -84,6 +84,10 @@ All notable changes to this fork are documented below.
   use them for native service, store, and cast-source commands, retaining zero
   as the compatibility value for older snapshots.
 
+- Route native authoritative spell-book use through the existing
+  `ReadBookRequested` intent so book learning, mana gain, and item removal stay
+  server-owned while the legacy runtime retains its local path.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

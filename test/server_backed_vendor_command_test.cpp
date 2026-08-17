@@ -77,6 +77,18 @@ TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 	EXPECT_EQ(refill->intent_case(), protocol::Command::kRefillManaRequested);
 }
 
+TEST(ServerBackedVendorCommand, BuildsStableReadBookIntent)
+{
+	const ServerBackedItemReference book { .location = ServerBackedItemLocation::Inventory, .slot = 8, .stableItemId = 2127 };
+	const auto command = MakeReadBookCommand(book, 14);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_read_book_requested());
+	EXPECT_EQ(command->requested_tick(), 14U);
+	EXPECT_EQ(command->read_book_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	EXPECT_EQ(command->read_book_requested().item().slot(), 8U);
+	EXPECT_EQ(command->read_book_requested().item().stable_item_id(), 2127U);
+}
+
 TEST(ServerBackedVendorCommand, DistinguishesClassAbilitiesFromVendorServices)
 {
 	const ServerBackedItemReference inventory { .location = ServerBackedItemLocation::Inventory, .slot = 2 };

@@ -48,9 +48,14 @@
 #include "utils/string/format_int.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
+#include "utils/log.hpp"
 #include "utils/sdl/sdl_geometry.h"
 #include "utils/string/str_cat.hpp"
 #include "utils/string/utf8.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -2198,6 +2203,23 @@ bool UseInvItem(int cii)
 		player.Say(HeroSpeech::ThatWontWorkHere);
 		return true;
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (item->_iMiscId == IMISC_BOOK && authoritative::GetServerBackedRuntime().IsConnected()) {
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+		if (!reference.has_value()) {
+			LogError("Server-backed spell-book use has no authoritative item reference.");
+			return true;
+		}
+		if (auto result = authoritative::GetServerBackedRuntime().ReadBook(*reference, 0, SDL_GetTicks()); !result.has_value()) {
+			LogError("Server-backed spell-book use failed: {}", result.error());
+			return true;
+		}
+		PlaySFX(SfxID::ReadBook);
+		NewCursor(CURSOR_HAND);
+		return true;
+	}
+#endif
 
 	const int idata = ItemCAnimTbl[item->_iCurs];
 	if (item->_iMiscId == IMISC_BOOK)

@@ -89,6 +89,11 @@ their item references from the latest authoritative projection, carrying the
 stable content item ID when present. Older servers and snapshots retain the
 zero-valued positional compatibility path.
 
+Spell-book use follows the same boundary: a connected authoritative client sends
+`ReadBookRequested` with the projected stable item reference and applies the
+returned snapshot. The local book-consumption path remains available only for
+the explicit legacy runtime.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

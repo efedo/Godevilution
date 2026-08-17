@@ -68,12 +68,16 @@ Status date: 2026-08-17
   store, and spell-source commands resolve references from the authoritative
   snapshot instead of relying on positional slots alone.
 
+- Native authoritative inventory use now submits spell-book consumption through
+  `ReadBookRequested`; the legacy client keeps its local book path only outside
+  the connected server-backed mode.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
   through snapshots, protocol, saves, and canonical hashing; regular breakable
   blockers are destroyed before the ball is removed. The Diablo suite passes
-  all 1,215 tests and the server suite passes all 326 tests.
+  all 1,238 tests and the server suite passes all 347 tests.
 
 - Fireball now stops on native missile-blocking geometry, destroys a hit
   breakable object, and starts its authoritative splash at the blocker tile;
