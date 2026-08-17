@@ -1,0 +1,54 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/firebolt-pvp",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "firebolt-pvp-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "mana": 640,
+    "mana_maximum": 640,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 640,
+      "position_x": 1,
+      "position_y": 0,
+      "character_level": 1
+    },
+    "memorized_spells": [
+      { "spell_id": 1, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 1,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d9be081461056d66e6835d354b0d58caccfde5fa92d885a0b39ea03b0f793b5c" },
+    { "tick": 5, "state_sha256": "6601df1bc704784ea7d8d910a73b967a2458c437f3f9189c1bfe0047e291ddbf" }
+  ]
+}
