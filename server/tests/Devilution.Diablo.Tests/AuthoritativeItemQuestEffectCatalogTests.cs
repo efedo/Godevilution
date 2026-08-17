@@ -315,6 +315,104 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
     }
 
     [Fact]
+    public void BlackMushroomPickupAdvancesSpawnedQuestState()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(2139, 19)]);
+        var effects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                2139,
+                3002,
+                AuthoritativeItemQuestEffectKind.SetVariable1,
+                4,
+                RequiredVariable1: 3),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            active: true,
+            variable1: 3);
+        var item = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            99,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 2139,
+                ItemIndex = 19,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [item], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            itemQuestEffects: effects);
+        var player = CreatePlayer();
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            7,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(4, quest.Variable1);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
+    public void BlackMushroomPickupLeavesUnexpectedQuestStateUntouched()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(2139, 19)]);
+        var effects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                2139,
+                3002,
+                AuthoritativeItemQuestEffectKind.SetVariable1,
+                4,
+                RequiredVariable1: 3),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            active: true,
+            variable1: 2);
+        var item = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            99,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 2139,
+                ItemIndex = 19,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [item], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            itemQuestEffects: effects);
+        var player = CreatePlayer();
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            7,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, quest.Variable1);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
     public void GraveObjectConsumesCathedralMapAndCompletesQuest()
     {
         var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);

@@ -748,6 +748,10 @@ public sealed class DiabloWorldCommandProcessor
                 || quest.Unavailable) {
                 continue;
             }
+            if (effect.RequiredVariable1 is int requiredVariable1
+                && quest.Variable1 != requiredVariable1) {
+                continue;
+            }
 
             switch (effect.EffectKind) {
             case AuthoritativeItemQuestEffectKind.ActivateQuest:
@@ -766,6 +770,8 @@ public sealed class DiabloWorldCommandProcessor
                 quest.Variable1 = Math.Max(quest.Variable1, effect.EffectAmount);
                 break;
             case AuthoritativeItemQuestEffectKind.SetVariable1:
+                if (!quest.Active)
+                    continue;
                 quest.Variable1 = effect.EffectAmount;
                 break;
             default:

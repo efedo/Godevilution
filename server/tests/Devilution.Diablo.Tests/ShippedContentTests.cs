@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.324.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.325.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1428,7 +1428,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.324.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.325.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1446,7 +1446,7 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             composed.GetRequiredTable("item_quest_effects.tsv").ToCanonicalTsv());
         itemQuestEffects.ValidateItems(items);
-        Assert.Equal(5, itemQuestEffects.Definitions.Count);
+        Assert.Equal(6, itemQuestEffects.Definitions.Count);
         var mapEffect = Assert.Single(
             itemQuestEffects.Definitions,
             effect => effect.ItemId == 43);
@@ -1487,6 +1487,15 @@ public sealed class ShippedContentTests
             valorEffect.QuestId,
             valorEffect.EffectKind,
             valorEffect.EffectAmount));
+        var mushroomEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 2139);
+        Assert.Equal((2139U, 3002U, AuthoritativeItemQuestEffectKind.SetVariable1, 4), (
+            mushroomEffect.ItemId,
+            mushroomEffect.QuestId,
+            mushroomEffect.EffectKind,
+            mushroomEffect.EffectAmount));
+        Assert.Equal(3, mushroomEffect.RequiredVariable1);
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,
@@ -1568,7 +1577,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(16, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(17, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

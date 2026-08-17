@@ -2055,6 +2055,87 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void PickupAppliesConditionalBlackMushroomQuestTransition()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                2139,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 19,
+                Name = "Black Mushroom",
+                IdentifiedName = "Black Mushroom",
+            },
+            new AuthoritativeItemDefinition(
+                24,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+                Name = "Ear",
+                IdentifiedName = "Ear",
+            },
+        ]);
+        var itemQuestEffects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                2139,
+                3002,
+                AuthoritativeItemQuestEffectKind.SetVariable1,
+                4,
+                RequiredVariable1: 3),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            active: true,
+            variable1: 3);
+        var itemState = AuthoritativeItemState.Empty with {
+            StableItemId = 2139,
+            ItemIndex = 19,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            startingItems: items,
+            startingItemQuestEffects: itemQuestEffects,
+            startingQuests: [quest],
+            startingWorldItems: [new AuthoritativeWorldItem(20, 0, 1, 0, 99, 0, itemState)]);
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = 20 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var snapshotQuest = Assert.Single(
+            executor.CreateSnapshot("player-a", 7, 1).Quests,
+            questSnapshot => questSnapshot.QuestId == 3002);
+        Assert.Equal(4, snapshotQuest.Variable1);
+    }
+
+    [Fact]
     public void DropHeldItemCommandReturnsServerOwnedCursorStateToWorld()
     {
         var heldItem = new OwnedStoreItem(

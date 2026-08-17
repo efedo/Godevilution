@@ -15,7 +15,8 @@ public sealed record AuthoritativeItemQuestEffectDefinition(
     uint ItemId,
     uint QuestId,
     AuthoritativeItemQuestEffectKind EffectKind,
-    int EffectAmount);
+    int EffectAmount,
+    int? RequiredVariable1 = null);
 
 /** Validated content-owned quest effects applied at the server pickup boundary. */
 public sealed class AuthoritativeItemQuestEffectCatalog
@@ -31,7 +32,8 @@ public sealed class AuthoritativeItemQuestEffectCatalog
                 definition.ItemId == 0
                 || definition.QuestId == 0
                 || !Enum.IsDefined(definition.EffectKind)
-                || definition.EffectAmount is < 0 or > byte.MaxValue)) {
+                || definition.EffectAmount is < 0 or > byte.MaxValue
+                || definition.RequiredVariable1 is < 0 or > byte.MaxValue)) {
             throw new InvalidDataException("Item quest effects contain invalid values.");
         }
         if (ordered.GroupBy(definition =>
@@ -88,7 +90,15 @@ public sealed class AuthoritativeItemQuestEffectCatalog
                     "quest_id",
                     "quest_symbol"),
                 ParseEffectKind(row.Required("effect_kind"), sourcePath, row.LineNumber),
-                row.OptionalInt32("effect_amount"))));
+                row.OptionalInt32("effect_amount"),
+                row.TryGet("required_variable1", out var requiredVariable1)
+                    && !string.IsNullOrWhiteSpace(requiredVariable1)
+                    && !string.Equals(
+                        requiredVariable1,
+                        "NONE",
+                        StringComparison.OrdinalIgnoreCase)
+                    ? row.OptionalInt32("required_variable1")
+                    : null)));
     }
 
     private static AuthoritativeItemQuestEffectKind ParseEffectKind(

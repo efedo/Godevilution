@@ -51,6 +51,10 @@ All notable changes to this fork are documented below.
   validated item-to-quest effects. The server completes only an already-active
   quest, matching the native quest-item boundary.
 
+- Externalize Hellfire Black Mushroom pickup progression as a conditional
+  item-to-quest effect. The server advances the quest only from the native
+  spawned-mushroom state.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed
@@ -104,7 +108,7 @@ All notable changes to this fork are documented below.
 - Make Godot client handshakes transactional: rejected or incomplete attempts
   now close their TCP transport before a reconnect or retry.
 
-- Refresh live Godot overlay fixtures to the active `devilution.diablo@1.324.0`
+- Refresh live Godot overlay fixtures to the active `devilution.diablo@1.325.0`
   schema so the protocol-client integration suite matches shipped content.
 
 - Route native Counselor Flash projectiles through the validated stable `flash`

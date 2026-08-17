@@ -107,6 +107,10 @@ Status date: 2026-08-17
   content-defined quests through the same catalog (quests 3009 and 3012).
   Inactive quests retain the native no-completion behavior.
 
+- Hellfire Black Mushroom pickup now advances quest 3002 from
+  QS_MUSHSPAWNED to QS_MUSHPICKED through the content-owned
+  required_variable1 precondition; unexpected quest states remain unchanged.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
