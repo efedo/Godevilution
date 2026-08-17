@@ -336,6 +336,10 @@ Status date: 2026-08-17
   `MonsterChargedBolt` projectiles with their native fixed 15-point payload;
   validated `projectile_damage` values remain authoritative overrides.
 
+- Counselor `MonsterChargedBolt` projectiles now retain their typed Lightning
+  presentation in the server-to-Godot mapping instead of falling back to a
+  generic projectile visual.
+
 - Counselor's native admission now preserves its initial `GenerateRnd(100)`
   boundary, and mapped Firebolt/MonsterMagic projectiles capture the inclusive
   monster damage roll at launch, while fixed payload overrides consume no roll.

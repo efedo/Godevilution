@@ -114,6 +114,8 @@ All notable changes to this fork are documented below.
 
 - Preserve Counselor's native three-projectile Charged Bolt attack and fixed
   15-point monster payload, while retaining validated damage overrides.
+- Classify server-owned Counselor `MonsterChargedBolt` projectiles as
+  Lightning for Godot presentation, including behavior-based fallback.
 
 - Preserve Counselor's initial native admission RNG draw and capture mapped
   Firebolt/MonsterMagic damage from the monster range at missile launch, while
