@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fireball-hellfire-block",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "fireball-hellfire-block-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "mana": 2000,
+    "mana_maximum": 2000,
+    "magic": 35,
+    "character_level": 1,
+    "position_x": 0,
+    "position_y": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2000,
+      "life_maximum": 2000,
+      "position_x": 1,
+      "position_y": 0,
+      "character_level": 1,
+      "dexterity": 100,
+      "block_capable": true
+    },
+    "memorized_spells": [
+      { "spell_id": 12, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 12,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "afce17a87fac2a0d8e5ce8f9c6b431eb64faa415156ba2e66930316f404d94d0" },
+    { "tick": 17, "state_sha256": "4441fea175fd056eeee2fde1ba0ab0dd99dadf426d0c28053f9577f4299c6b23" }
+  ]
+}

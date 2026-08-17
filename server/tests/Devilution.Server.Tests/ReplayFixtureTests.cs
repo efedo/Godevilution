@@ -522,6 +522,81 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void HellfireFireballBlockFixtureRetainsImpactAndResolvesSplash()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-fireball-hellfire-block.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(12, 16, 0, 0, 0, 0) {
+                Range = 112,
+                AreaRadius = 1,
+                DamageType = AuthoritativeDamageType.Fire,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Fireball,
+                ManaAdjustment = 1,
+                MinimumManaCost = 10,
+                ManaCostScale = 64,
+                RandomDamageRange = 10,
+                DamageBonus = 4,
+                DamageScale = 2,
+                RandomDamageIterationsBonus = 2,
+                CharacterLevelDamageDivisor = 1,
+                SpellEffectScaleDivisor = 8,
+                ProjectileSpeedSpellLevelStep = 2,
+                ProjectileSpeedMaximumBonus = 34,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 14,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.Life,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var victim = executor.GetPlayerState(secondary.Player);
+        Assert.Equal(1987, victim.Life);
+        Assert.Equal(DiabloGameVariant.Hellfire, fixture.GameVariant);
+        Assert.Equal(17UL, result.FinalSnapshot.Tick);
+        Assert.Equal(2, result.Checkpoints.Count);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void HellfireChargedBoltBlockFixturePreservesLifeAndConsumesVariantRng()
     {
         var path = Path.Combine(
