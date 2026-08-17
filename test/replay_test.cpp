@@ -1889,7 +1889,7 @@ TEST(ReplayFixture, ExecutesFireballPvpAgainstCSharpCheckpoints)
 
 	ReplayFixtureExecutionResult result;
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
-	EXPECT_LT(state.secondaryPlayerLife, fixture.initialState.secondaryPlayer.life);
+	EXPECT_EQ(state.secondaryPlayerLife, 1123);
 	EXPECT_EQ(state.lastAppliedTick, 17U);
 	EXPECT_TRUE(state.projectiles.empty());
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);

@@ -25,7 +25,8 @@
     "secondary_player": {
       "player": "B",
       "entity_id": 8,
-      "life": 640,
+      "life": 2000,
+      "life_maximum": 2000,
       "position_x": 1,
       "position_y": 0,
       "character_level": 1
@@ -48,7 +49,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "6a33709b208ad989ed06e0b48cf6beb3bb5c61a7afae4b60b6b0d59716ae311e" },
-    { "tick": 17, "state_sha256": "6be6fed2c96e8c630c84bbf1bb1f6503a6ab81757bdf944a14eb9e8b38812869" }
+    { "tick": 1, "state_sha256": "b978ca8fe7f6f85642ff1a47204791652eec0bf3d7be4de83750b680c50bc64b" },
+    { "tick": 17, "state_sha256": "49741d8c15e522863036508526f4219a381f98861d11393cb31e9f77456acb46" }
   ]
 }

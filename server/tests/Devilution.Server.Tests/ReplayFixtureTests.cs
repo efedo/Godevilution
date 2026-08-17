@@ -512,7 +512,7 @@ public sealed class ReplayFixtureTests
 
         var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
         var victim = executor.GetPlayerState(secondary.Player);
-        Assert.True(victim.Life < secondary.Life);
+        Assert.Equal(1123, victim.Life);
         Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
         Assert.Equal(17UL, result.FinalSnapshot.Tick);
         Assert.Empty(result.FinalSnapshot.Projectiles);
