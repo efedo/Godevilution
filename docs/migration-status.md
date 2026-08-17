@@ -209,6 +209,9 @@ Status date: 2026-08-16
 - Storm/ThinLightning controller ticks now roll `2 * RandomIntBetween` from
   the monster damage range before creating each lightning segment.
 
+- SkeletonRanged arrows now preserve the native fixed four-point payload;
+  validated `projectile_damage` values remain authoritative overrides.
+
 - Mega delegated Skeleton movement-delay admission is now validated
   `mega_delay_chance_base` and `mega_delay_chance_intelligence_scale`
   monster-type data, preserving the native 35-minus-four-times-intelligence

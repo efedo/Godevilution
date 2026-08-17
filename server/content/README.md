@@ -588,6 +588,8 @@ The validated `MagmaBall` row also retains the native three-velocity-quanta
 launch offset before the first simulation tick.
 Storm/ThinLightning controller ticks retain the native per-tick
 `2 * RandomIntBetween(min_damage, max_damage)` segment roll.
+SkeletonRanged's native `Arrow` attack retains its fixed four-point payload;
+validated `projectile_damage` values remain authoritative overrides.
 Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserves
 Mega's distance- and intelligence-based special-attack admission, speed-32
 Inferno controller, three-segment limit, and monster damage roll through the
