@@ -676,7 +676,12 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         var displacementSlots = new List<uint>();
-        var targetSlot = ResolveAutoEquipTarget(player, source.State, kind, displacementSlots);
+        var targetSlot = ResolveAutoEquipTarget(
+            player,
+            source.State,
+            kind,
+            intent.EquipmentSlot,
+            displacementSlots);
         if (targetSlot < 0)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
@@ -717,8 +722,17 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativeItemState state,
         DiabloEquipmentSlotKind kind,
+        uint? requestedSlot,
         List<uint> displacementSlots)
     {
+        if (requestedSlot.HasValue)
+            return ResolveRequestedAutoEquipTarget(
+                player,
+                state,
+                kind,
+                requestedSlot.Value,
+                displacementSlots);
+
         if (kind is DiabloEquipmentSlotKind.Helmet
             or DiabloEquipmentSlotKind.BodyArmor
             or DiabloEquipmentSlotKind.Amulet) {
@@ -787,6 +801,43 @@ public sealed class DiabloStoreCommandProcessor
             return 5;
         }
         return -1;
+    }
+
+    private int ResolveRequestedAutoEquipTarget(
+        AuthoritativePlayerState player,
+        AuthoritativeItemState state,
+        DiabloEquipmentSlotKind kind,
+        uint requestedSlot,
+        List<uint> displacementSlots)
+    {
+        if (!AuthoritativeItemClassification.IsCompatibleWithEquipmentSlot(kind, requestedSlot))
+            return -1;
+
+        if (kind == DiabloEquipmentSlotKind.TwoHanded)
+            return ResolveAutoEquipTarget(player, state, kind, null, displacementSlots);
+
+        if (kind != DiabloEquipmentSlotKind.Hand) {
+            if (TryGetEquipment(player, requestedSlot, out _))
+                displacementSlots.Add(requestedSlot);
+            return checked((int)requestedSlot);
+        }
+
+        var selectedSlot = requestedSlot;
+        var otherSlot = selectedSlot == 4 ? 5U : 4U;
+        var hasOther = TryGetEquipment(player, otherSlot, out var otherItem);
+        var dualWield = player.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.DualWield) == true;
+        var pasteIntoSelected = !hasOther
+            || otherItem!.State.ItemClass != state.ItemClass
+            || (dualWield
+                && otherItem.State.ItemClass == 1
+                && state.ItemClass == 1);
+        var dequipTwoHanded = hasOther
+            && AuthoritativeItemClassification.IsTwoHanded(otherItem!.State, items);
+        var pasteSlot = pasteIntoSelected ? selectedSlot : otherSlot;
+        var displacementSlot = dequipTwoHanded ? otherSlot : pasteSlot;
+        if (TryGetEquipment(player, displacementSlot, out _))
+            displacementSlots.Add(displacementSlot);
+        return checked((int)pasteSlot);
     }
 
     private List<int>? PlanDisplacedInventoryCells(

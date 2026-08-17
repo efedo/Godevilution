@@ -416,6 +416,17 @@ tl::expected<void, std::string> ServerBackedRuntime::AutoEquipItem(ServerBackedI
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::AutoEquipItem(ServerBackedItemReference item, uint32_t equipmentSlot, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->AutoEquipItem(item, equipmentSlot, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::Move(int32_t directionX, int32_t directionY, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)

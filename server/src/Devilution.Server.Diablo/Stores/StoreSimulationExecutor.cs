@@ -666,7 +666,9 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
 
         return ExecuteStoreIntent(
             player,
-            new DiabloAutoEquipItemIntent(item.Value),
+            new DiabloAutoEquipItemIntent(
+                item.Value,
+                request.HasEquipmentSlot ? request.EquipmentSlot : null),
             appliedTick);
     }
 

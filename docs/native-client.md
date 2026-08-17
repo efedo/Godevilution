@@ -98,14 +98,15 @@ Inventory relocation now follows the same boundary: the native indexed move
 entry point resolves the latest projected item and sends its stable identity,
 while the legacy positional protocol field remains available for older peers.
 When the native inventory cursor completes a normal drag into another inventory
-cell, equipment slot, or belt slot, the final placement now uses the
-authoritative `MoveItemRequested` transfer. The cursor selection is
-presentation-only while the server snapshot remains the source of truth;
-rejected transfers reconcile the native projection instead of applying a local
-swap. Automatic moves from equipment or belt to inventory, from inventory to an
-eligible belt slot, and from inventory to equipment use server-owned intents.
-The inventory-to-equipment path uses `AutoEquipItemRequested`, so displaced
-equipment is placed back into inventory atomically using native placement order.
+cell or belt slot, the final placement uses the authoritative
+`MoveItemRequested` transfer. Equipment placement uses `AutoEquipItemRequested`
+with the selected equipment slot, so hand selection and two-handed displacement
+are resolved atomically by the server. The cursor selection is presentation-only
+while the server snapshot remains the source of truth; rejected transfers
+reconcile the native projection instead of applying a local swap. Automatic
+moves from equipment or belt to inventory, from inventory to an eligible belt
+slot, and from inventory to equipment omit the optional target and retain the
+server-owned native first-fit policy.
 
 Spell-book use follows the same boundary: a connected authoritative client sends
 `ReadBookRequested` with the projected stable item reference and applies the

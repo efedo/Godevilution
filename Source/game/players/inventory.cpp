@@ -600,21 +600,32 @@ void CheckInvPaste(Player &player, Point cursorPosition)
 			return;
 		}
 
-		authoritative::ServerBackedItemReference destination;
 		if (location == ILOC_UNEQUIPABLE) {
-			destination.location = authoritative::ServerBackedItemLocation::Inventory;
-			destination.slot = static_cast<uint32_t>(slot - SLOTXY_INV_FIRST);
-		} else if (location == ILOC_BELT) {
-			destination.location = authoritative::ServerBackedItemLocation::Belt;
-			destination.slot = static_cast<uint32_t>(slot - SLOTXY_BELT_FIRST);
-		} else {
-			destination.location = authoritative::ServerBackedItemLocation::Equipment;
-			destination.slot = static_cast<uint32_t>(slot);
+			authoritative::ServerBackedItemReference destination {
+				.location = authoritative::ServerBackedItemLocation::Inventory,
+				.slot = static_cast<uint32_t>(slot - SLOTXY_INV_FIRST),
+			};
+			authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
+			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Server-backed inventory placement failed: {}", result.error());
+			return;
+		}
+		if (location == ILOC_BELT) {
+			authoritative::ServerBackedItemReference destination {
+				.location = authoritative::ServerBackedItemLocation::Belt,
+				.slot = static_cast<uint32_t>(slot - SLOTXY_BELT_FIRST),
+			};
+			authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
+			if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Server-backed belt placement failed: {}", result.error());
+			return;
 		}
 
+		// Equipment placement uses the atomic server auto-equip intent so that
+		// hand selection and two-handed displacement are resolved authoritatively.
 		authoritative::GetServerBackedRuntime().CancelInventoryItemDrag();
-		if (auto result = authoritative::GetServerBackedRuntime().MoveItem(*source, destination, 0, SDL_GetTicks()); !result.has_value())
-			LogError("Server-backed inventory placement failed: {}", result.error());
+		if (auto result = authoritative::GetServerBackedRuntime().AutoEquipItem(*source, static_cast<uint32_t>(slot), 0, SDL_GetTicks()); !result.has_value())
+			LogError("Server-backed equipment placement failed: {}", result.error());
 		return;
 	}
 #endif

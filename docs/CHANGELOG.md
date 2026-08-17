@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve the native equipment slot selected by an authoritative inventory
+  drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
+  now owns explicit hand selection, ring replacement, and atomic two-handed
+  displacement while automatic placement keeps its first-fit behavior.
+
 - Enforce content-defined equipment slot topology for authoritative item moves,
   including multi-cell body armor transfers; belt placement retains the native
   one-cell footprint rule while catalog-less compatibility simulations remain

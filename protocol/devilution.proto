@@ -220,6 +220,10 @@ message MoveItemRequested {
 // authoritative inventory using native placement order.
 message AutoEquipItemRequested {
 	PlayerItemReference item = 1;
+	// When present, preserve the equipment slot selected by an explicit native
+	// inventory drag. Automatic placement omits this field and lets the server
+	// apply the native first-fit policy.
+	optional uint32 equipment_slot = 2;
 }
 
 message UsePortalRequested {

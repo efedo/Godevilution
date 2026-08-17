@@ -162,7 +162,15 @@ TEST(ServerBackedVendorCommand, BuildsStableAutoEquipIntent)
 	EXPECT_EQ(command->auto_equip_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_INVENTORY);
 	EXPECT_EQ(command->auto_equip_item_requested().item().slot(), 2U);
 	EXPECT_EQ(command->auto_equip_item_requested().item().stable_item_id(), 702U);
+	EXPECT_FALSE(command->auto_equip_item_requested().has_equipment_slot());
 	EXPECT_EQ(command->requested_tick(), 17U);
+
+	const auto targeted = MakeAutoEquipItemCommand(inventory, 5, 18);
+	ASSERT_TRUE(targeted.has_value()) << targeted.error();
+	ASSERT_TRUE(targeted->has_auto_equip_item_requested());
+	EXPECT_TRUE(targeted->auto_equip_item_requested().has_equipment_slot());
+	EXPECT_EQ(targeted->auto_equip_item_requested().equipment_slot(), 5U);
+	EXPECT_EQ(targeted->requested_tick(), 18U);
 }
 
 TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)

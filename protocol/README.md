@@ -74,8 +74,10 @@ Windows toolchain command.
   grid; an absent or zero-valued reference retains positional compatibility.
 - `AutoEquipItemRequested` accepts an exact inventory item reference and owns
   the native automatic equipment selection and any atomic displacement back to
-  inventory. The server rejects stale, unequippable, or over-capacity requests
-  without partially changing the loadout.
+  inventory. An optional `equipment_slot` preserves the hand, ring, or other
+  equipment slot selected by an explicit native drag; omission retains the
+  automatic first-fit policy. The server rejects stale, incompatible, or
+  over-capacity requests without partially changing the loadout.
 - `ClientHello.requested_character_class_id` is an optional new-session
   selection from the active game module's validated catalog. When it is absent,
   the module selects its content default. Existing in-memory or restored save

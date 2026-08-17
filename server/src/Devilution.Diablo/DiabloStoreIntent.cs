@@ -73,7 +73,8 @@ public sealed record DiabloMoveItemIntent(
 
 /** Atomically auto-equips an inventory item and returns displaced equipment to inventory. */
 public sealed record DiabloAutoEquipItemIntent(
-    DiabloPlayerItemReference Item) : DiabloStoreIntent;
+    DiabloPlayerItemReference Item,
+    uint? EquipmentSlot = null) : DiabloStoreIntent;
 
 /** Result of a module-owned transition before mapping to a wire protocol. */
 public readonly record struct DiabloIntentResult(
