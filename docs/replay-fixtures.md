@@ -68,8 +68,8 @@ snapshot tests cover this lifecycle, and the compact cross-runner fixture now
 covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
 and secondary-participant routing. Companion fixtures cover autonomous
 GoatRanged nearest-player selection, SkeletonRanged clear-lane admission, and
-Succubus BloodStar admission/travel state before impact; broader monster-AI
-branches, monster-magic hit/block resolution, and multi-actor selection remain
+Succubus BloodStar admission/travel/impact state; broader monster-AI branches,
+block-specific monster-magic resolution, and multi-actor selection remain
 future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
@@ -132,8 +132,8 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 78 cases, including seeded and autonomous MonsterArrow source
-coverage plus the autonomous Succubus BloodStar lane;
+gate now contains 79 cases, including seeded and autonomous MonsterArrow source
+coverage plus the autonomous Succubus BloodStar admission and impact lanes;
 the managed replay suite passes locally, while native execution still requires
 the C++ toolchain described below.
 Remaining replay work is broader fixture coverage rather than a known hash
@@ -148,8 +148,8 @@ selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
 occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
-SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission
-and travel, and a multiplayer MonsterArrow impact against the secondary
+SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
+travel, and player impact, and a multiplayer MonsterArrow impact against the secondary
 participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
@@ -421,6 +421,8 @@ Notable shared fixtures include:
   clear-lane admission, long-range travel, impact damage, and lifecycle parity;
 - `gameplay-blood-star-autonomous.json` for validated Succubus BloodStar
   admission, native velocity/runtime state, and pre-impact lifecycle parity;
+- `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
+  Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
   routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept

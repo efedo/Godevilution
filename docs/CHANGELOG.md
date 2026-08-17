@@ -64,6 +64,8 @@ All notable changes to this fork are documented below.
 - Add autonomous Succubus BloodStar replay coverage for validated admission,
   native velocity/lifetime state, and pre-impact travel parity between the C#
   server and native compatibility runner.
+- Add Succubus BloodStar impact replay coverage for deterministic monster-magic
+  hit RNG, Q6 player damage, impact-phase retention, and removal-boundary parity.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
