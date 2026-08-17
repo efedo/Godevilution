@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.323.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.324.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -36,8 +36,8 @@ public sealed class ShippedContentTests
             .Append(TsvTable.Parse("level_generation.tsv", generation))
             .Append(TsvTable.Parse(
                 "procedural_levels.tsv",
-                "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tdefault_start\n"
-                    + "25\tgenerated_test\t25\t21\t1234\t60\t0\n"))
+                "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tmissile_blocked_percent\tdefault_start\n"
+                    + "25\tgenerated_test\t25\t21\t1234\t60\t70\t0\n"))
             .ToArray();
         var pack = new ContentPack(
             basePack.Id,
@@ -55,6 +55,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("generated_test", generated.StableSymbol);
         Assert.True(generated.BlockedCells.Count > 0);
+        Assert.True(generated.MissileBlockedCells.Count >= generated.BlockedCells.Count);
         Assert.True(generated.IsWalkable(1, 1));
     }
 
@@ -1374,7 +1375,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.323.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.324.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

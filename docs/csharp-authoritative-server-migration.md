@@ -1434,7 +1434,10 @@ also rejects a composed world with an uncovered level, and the catalog owns
 the deterministic encounter-count calculation consumed by the spawn planner;
 the optional `procedural_levels.tsv` table now materializes deterministic
 connected layouts from row and world seeds while preserving static-map
-compatibility. Full native map-synthesis parity remains a later migration stage.
+compatibility. Schema 1.324 also permits a distinct deterministic
+`missile_blocked_percent` density while retaining movement-blocked cells as
+missile blockers. Full native map-synthesis parity remains a later migration
+stage.
 
 The Hellfire monster catalog now also carries native IDs 6 through 11 with
 validated baseline level, health, damage, and undead/capability metadata.

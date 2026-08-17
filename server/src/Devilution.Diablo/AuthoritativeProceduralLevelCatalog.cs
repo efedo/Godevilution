@@ -10,7 +10,8 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     uint GenerationSeed,
     int BlockedPercent,
     bool IsDefaultStart = false,
-    bool SuppressMultiplayerDeathDrops = false)
+    bool SuppressMultiplayerDeathDrops = false,
+    int? MissileBlockedPercent = null)
 {
     /** Stable level symbol retained for composed-pack identity diagnostics. */
     public string StableSymbol { get; init; } = string.Empty;
@@ -23,6 +24,9 @@ public sealed record AuthoritativeProceduralLevelDefinition(
         if (BlockedPercent is < 0 or > 80)
             throw new InvalidDataException(
                 $"Procedural level {LevelId} blocked percent must be between 0 and 80.");
+        if (MissileBlockedPercent is < 0 or > 80)
+            throw new InvalidDataException(
+                $"Procedural level {LevelId} missile-blocked percent must be between 0 and 80.");
         return this;
     }
 
@@ -31,7 +35,9 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     {
         Validate();
         var seed = GenerationSeed ^ worldSeed;
-        var blocked = new List<int>();
+        var missileBlockedPercent = MissileBlockedPercent ?? BlockedPercent;
+        var blocked = new HashSet<int>();
+        var missileBlocked = new HashSet<int>();
         for (var y = 1; y < Height - 1; y++) {
             for (var x = 1; x < Width - 1; x++) {
                 // Keep a one-cell lattice of corridors and only block pocket
@@ -39,17 +45,23 @@ public sealed record AuthoritativeProceduralLevelDefinition(
                 // remains connected even when the authored density is high.
                 if (x % 4 != 2 || y % 4 != 2)
                     continue;
-                var hash = Mix(seed + checked((uint)(y * Width + x)) * 0x9E3779B9U);
+                var cell = y * Width + x;
+                var hash = Mix(seed + checked((uint)cell) * 0x9E3779B9U);
                 if (hash % 100U < (uint)BlockedPercent)
-                    blocked.Add(y * Width + x);
+                    blocked.Add(cell);
+                var missileHash = Mix(
+                    seed + checked((uint)cell) * 0x9E3779B9U ^ 0xA511E9B3U);
+                if (missileHash % 100U < (uint)missileBlockedPercent)
+                    missileBlocked.Add(cell);
             }
         }
+        missileBlocked.UnionWith(blocked);
         return new AuthoritativeLevel(
             LevelId,
             Width,
             Height,
             blocked,
-            blocked,
+            missileBlocked,
             IsDefaultStart,
             SuppressMultiplayerDeathDrops) {
             StableSymbol = StableSymbol,
@@ -111,7 +123,10 @@ public sealed class AuthoritativeProceduralLevelCatalog
                 row.OptionalUInt32("generation_seed"),
                 row.OptionalInt32("blocked_percent"),
                 ParseBooleanFlag(row, "default_start"),
-                ParseBooleanFlag(row, "suppress_multiplayer_death_drops")) {
+                ParseBooleanFlag(row, "suppress_multiplayer_death_drops"),
+                row.TryGet("missile_blocked_percent", out _)
+                    ? row.OptionalInt32("missile_blocked_percent")
+                    : null) {
                 StableSymbol = row.TryGet("level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,

@@ -10,8 +10,8 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
     {
         var catalog = AuthoritativeProceduralLevelCatalog.LoadTsv(
             "procedural_levels.tsv",
-            "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tdefault_start\n"
-                + "7\tgenerated_test\t25\t21\t1234\t65\t1\n");
+            "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tmissile_blocked_percent\tdefault_start\n"
+                + "7\tgenerated_test\t25\t21\t1234\t65\t70\t1\n");
 
         var first = catalog.GenerateWorld(0xA5A5A5A5).Levels.Single();
         var second = catalog.GenerateWorld(0xA5A5A5A5).Levels.Single();
@@ -21,6 +21,27 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
         Assert.Equal("generated_test", first.StableSymbol);
         Assert.True(first.IsDefaultStart);
         AssertConnected(first);
+    }
+
+    [Fact]
+    public void OptionalMissileDensityAddsIndependentOcclusion()
+    {
+        var catalog = new AuthoritativeProceduralLevelCatalog([
+            new AuthoritativeProceduralLevelDefinition(
+                7,
+                25,
+                21,
+                1234,
+                0,
+                MissileBlockedPercent: 70),
+        ]);
+
+        var level = catalog.GenerateWorld(0).Levels.Single();
+
+        Assert.Empty(level.BlockedCells);
+        Assert.NotEmpty(level.MissileBlockedCells);
+        Assert.All(level.MissileBlockedCells, cell =>
+            Assert.True(level.IsWalkable(cell % level.Width, cell / level.Width)));
     }
 
     [Fact]
@@ -45,6 +66,14 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
             new AuthoritativeProceduralLevelDefinition(1, 2, 10, 0, 10).Validate());
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 81).Validate());
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                10,
+                10,
+                0,
+                10,
+                MissileBlockedPercent: 81).Validate());
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelCatalog([
                 new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 10),

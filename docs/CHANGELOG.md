@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.324's optional `missile_blocked_percent` procedural-level
+  field, preserving separate deterministic missile occlusion while retaining
+  `blocked_percent` as the compatibility fallback.
+
 - Add optional schema 1.323 `procedural_levels.tsv` definitions for
   deterministic, connected server-owned level geometry. Generated levels are
   composed additively with static maps using row and world seeds; native map
