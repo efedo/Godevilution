@@ -22,6 +22,9 @@ All notable changes to this fork are documented below.
 - Preserve native breakable-object destruction for regular Nova Ball blockers
   while retaining the validated shrine exception.
 
+- Preserve native Hork Spawn current-tile breakable-object destruction before
+  its expiry summon path.
+
 - Preserve Nova Ball's native shrine collision exception through validated
   world-object metadata and the authoritative snapshot, protocol, save, and
   hash boundaries.

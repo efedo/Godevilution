@@ -566,8 +566,10 @@ Hork Spawn uses the same current-tile collision boundary as native
 `ProcessHorkSpawn`: before movement or expiry, the server checks a living
 player on the missile tile with the non-arrow `PlayerMHit` rules. A successful
 hit or block removes the missile and proceeds through the normal expiry summon
-path; a miss leaves the controller available for its next tick. The collision
-is authoritative gameplay state, not a client-side visual effect.
+path; a miss leaves the controller available for its next tick. A breakable
+missile-blocking object on the current tile is destroyed before that same
+expiry/summon transition. The collision is authoritative gameplay state, not a
+client-side visual effect.
 
 A Phasing cast uses projectile behavior value `15` as the same shape of
 invisible two-tick movement controller. The server selects its random

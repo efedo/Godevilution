@@ -96,6 +96,9 @@ Status date: 2026-08-16
   movement/expiry decision, preserving native non-arrow `PlayerMHit` hit,
   block, minimum-damage, and RNG behavior before the summon path continues.
 
+- Hork Spawn now also breaks a breakable missile-blocking object on its current
+  tile before taking the native expiry/summon path.
+
 - Snake adjacent and distant delay bands are now validated `SnakeCharge`
   missile fields, preserving native intelligence reduction and deterministic
   zero-clamped timing while retaining fallback behavior for older packs.
