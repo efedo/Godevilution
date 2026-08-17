@@ -1359,19 +1359,75 @@ public sealed class DiabloWorldCommandProcessor
         uint questId,
         uint townerId)
     {
+        var completionStage = world.Quests.TryGetValue(questId, out var candidateQuest)
+            && candidateQuest.TurnInOnCompletion
+            && candidateQuest.Completed
+            && candidateQuest.TurnInCompletionVariable2 >= 0
+            && candidateQuest.Variable2 < candidateQuest.TurnInCompletionVariable2;
         if (items is null
             || !world.Quests.TryGetValue(questId, out var quest)
             || quest.TurnInTownerId < 0
             || quest.TurnInTownerId != townerId
             || quest.Unavailable
-            || quest.Completed
-            || (!quest.TurnInActivationOnly && !quest.Active)
-            || (quest.TurnInActivationOnly && quest.Active)
+            || (!completionStage
+                && (quest.Completed
+                    || (!quest.TurnInActivationOnly && !quest.Active)
+                    || (quest.TurnInActivationOnly && quest.Active)))
+            || (completionStage && !quest.Completed)
             || quest.TurnInLevelId != player.LevelId
             || Math.Max(
                 Math.Abs(quest.TurnInPositionX - player.PositionX),
                 Math.Abs(quest.TurnInPositionY - player.PositionY)) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        if (completionStage) {
+            quest.Variable2 = Math.Max(
+                quest.Variable2,
+                quest.TurnInCompletionVariable2);
+            if (quest.TurnInCompletionRewardUniqueId != 0) {
+                var itemSeed = AllocateGoldStackSeed();
+                var rewardState = items.GenerateUnique(
+                    quest.TurnInCompletionRewardUniqueId,
+                    itemSeed,
+                    quest.TurnInCompletionRewardItemLevel);
+                var entityId = AllocateWorldItemEntityId([player]);
+                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                    entityId,
+                    quest.TurnInLevelId,
+                    quest.TurnInCompletionRewardPositionX,
+                    quest.TurnInCompletionRewardPositionY,
+                    itemSeed,
+                    0,
+                    rewardState);
+            }
+            if (quest.TurnInCompletionRewardItemId != 0) {
+                var itemSeed = AllocateGoldStackSeed();
+                var rewardState = items.Generate(
+                    quest.TurnInCompletionRewardItemId,
+                    itemSeed,
+                    quest.TurnInCompletionRewardItemLevel);
+                var entityId = AllocateWorldItemEntityId([player]);
+                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                    entityId,
+                    quest.TurnInLevelId,
+                    quest.TurnInCompletionRewardPositionX,
+                    quest.TurnInCompletionRewardPositionY,
+                    itemSeed,
+                    checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                    rewardState);
+            }
+            return quest.TurnInCompletionMessageId == 0
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.AcceptedWith(
+                    new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Dialogue,
+                        player.EntityId,
+                        townerId,
+                        0) {
+                        MessageId = quest.TurnInCompletionMessageId,
+                        QuestId = quest.QuestId,
+                    });
         }
 
         if (quest.TurnInActivationOnly) {

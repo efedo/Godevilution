@@ -123,7 +123,15 @@ public sealed class AuthoritativeQuestState
         int dialogueCompletionMessageId = 0,
         uint dialogueRewardItemId = 0,
         bool dialogueRewardOnActivation = false,
-        bool turnInActivationOnly = false)
+        bool turnInActivationOnly = false,
+        bool turnInOnCompletion = false,
+        int turnInCompletionVariable2 = -1,
+        int turnInCompletionMessageId = 0,
+        uint turnInCompletionRewardUniqueId = 0,
+        int turnInCompletionRewardItemLevel = 0,
+        int turnInCompletionRewardPositionX = 0,
+        int turnInCompletionRewardPositionY = 0,
+        uint turnInCompletionRewardItemId = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -153,6 +161,12 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInRewardItemLevel));
         if (turnInMessageId < 0 || turnInMessageId > short.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInMessageId));
+        if (turnInCompletionVariable2 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInCompletionVariable2));
+        if (turnInCompletionMessageId < 0 || turnInCompletionMessageId > short.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInCompletionMessageId));
+        if (turnInCompletionRewardItemLevel is < 0 or > 255)
+            throw new ArgumentOutOfRangeException(nameof(turnInCompletionRewardItemLevel));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -202,6 +216,14 @@ public sealed class AuthoritativeQuestState
         DialogueRewardItemId = dialogueRewardItemId;
         DialogueRewardOnActivation = dialogueRewardOnActivation;
         TurnInActivationOnly = turnInActivationOnly;
+        TurnInOnCompletion = turnInOnCompletion;
+        TurnInCompletionVariable2 = turnInCompletionVariable2;
+        TurnInCompletionMessageId = turnInCompletionMessageId;
+        TurnInCompletionRewardUniqueId = turnInCompletionRewardUniqueId;
+        TurnInCompletionRewardItemLevel = turnInCompletionRewardItemLevel;
+        TurnInCompletionRewardPositionX = turnInCompletionRewardPositionX;
+        TurnInCompletionRewardPositionY = turnInCompletionRewardPositionY;
+        TurnInCompletionRewardItemId = turnInCompletionRewardItemId;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -267,6 +289,19 @@ public sealed class AuthoritativeQuestState
     public int TurnInMessageId { get; }
     /** Whether the towner interaction activates the quest and creates its initial item instead of completing it. */
     public bool TurnInActivationOnly { get; }
+    /** Whether the towner has a one-shot interaction after this quest completes. */
+    public bool TurnInOnCompletion { get; }
+    /** Native _qvar2 marker written after the completion-stage interaction. */
+    public int TurnInCompletionVariable2 { get; }
+    /** Optional dialogue identity emitted after the completion-stage interaction. */
+    public int TurnInCompletionMessageId { get; }
+    /** Optional unique reward generated after the completion-stage interaction. */
+    public uint TurnInCompletionRewardUniqueId { get; }
+    public int TurnInCompletionRewardItemLevel { get; }
+    public int TurnInCompletionRewardPositionX { get; }
+    public int TurnInCompletionRewardPositionY { get; }
+    /** Optional normal item generated after the completion-stage interaction. */
+    public uint TurnInCompletionRewardItemId { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -387,7 +422,23 @@ public static class AuthoritativeQuestCatalog
                     "dialogue_reward_item_id",
                     "dialogue_reward_item_symbol"),
                 dialogueRewardOnActivation: row.OptionalBoolean("dialogue_reward_on_activation"),
-                turnInActivationOnly: row.OptionalBoolean("turn_in_activation_only")) {
+                turnInActivationOnly: row.OptionalBoolean("turn_in_activation_only"),
+                turnInOnCompletion: row.OptionalBoolean("turn_in_on_completion"),
+                turnInCompletionVariable2: row.OptionalInt32("turn_in_completion_variable2", -1),
+                turnInCompletionMessageId: row.OptionalInt32("turn_in_completion_message_id"),
+                turnInCompletionRewardUniqueId: AuthoritativeUniqueItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_completion_reward_unique_id",
+                    "turn_in_completion_reward_unique_symbol"),
+                turnInCompletionRewardItemLevel: row.OptionalInt32("turn_in_completion_reward_item_level"),
+                turnInCompletionRewardPositionX: row.OptionalInt32("turn_in_completion_reward_position_x"),
+                turnInCompletionRewardPositionY: row.OptionalInt32("turn_in_completion_reward_position_y"),
+                turnInCompletionRewardItemId: AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "turn_in_completion_reward_item_id",
+                    "turn_in_completion_reward_item_symbol")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -447,6 +498,32 @@ public static class AuthoritativeQuestCatalog
             if (quest.TurnInRewardUniqueId != 0 && quest.TurnInRewardItemId != 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares both a turn-in unique reward and item reward.");
+            if (quest.TurnInOnCompletion) {
+                if (quest.TurnInCompletionVariable2 < 0)
+                    throw new InvalidDataException(
+                        $"Quest {quest.QuestId} completion-stage turn-in requires a variable-2 marker.");
+                if (quest.TurnInCompletionRewardUniqueId == 0
+                    && quest.TurnInCompletionRewardItemId == 0)
+                    throw new InvalidDataException(
+                        $"Quest {quest.QuestId} completion-stage turn-in requires a reward.");
+                if (quest.TurnInCompletionRewardUniqueId != 0
+                    && !uniqueItems.TryGet(quest.TurnInCompletionRewardUniqueId, out _))
+                    throw new InvalidDataException(
+                        $"Quest {quest.QuestId} references unknown completion-stage unique reward {quest.TurnInCompletionRewardUniqueId}.");
+                if (quest.TurnInCompletionRewardItemId != 0
+                    && !items.TryGet(quest.TurnInCompletionRewardItemId, out _))
+                    throw new InvalidDataException(
+                        $"Quest {quest.QuestId} references unknown completion-stage item reward {quest.TurnInCompletionRewardItemId}.");
+                if (quest.TurnInCompletionRewardUniqueId != 0
+                    && quest.TurnInCompletionRewardItemId != 0)
+                    throw new InvalidDataException(
+                        $"Quest {quest.QuestId} declares both a completion-stage unique reward and item reward.");
+            } else if (quest.TurnInCompletionVariable2 >= 0
+                       || quest.TurnInCompletionRewardUniqueId != 0
+                       || quest.TurnInCompletionRewardItemId != 0) {
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares completion-stage turn-in fields without enabling the stage.");
+            }
         }
     }
 
@@ -509,7 +586,14 @@ public static class AuthoritativeQuestCatalog
                     && !world.IsWalkable(
                         quest.TurnInLevelId,
                         quest.TurnInRewardPositionX,
-                        quest.TurnInRewardPositionY)))
+                        quest.TurnInRewardPositionY))
+                || (quest.TurnInOnCompletion
+                    && (quest.TurnInCompletionRewardUniqueId != 0
+                        || quest.TurnInCompletionRewardItemId != 0)
+                    && !world.IsWalkable(
+                        quest.TurnInLevelId,
+                        quest.TurnInCompletionRewardPositionX,
+                        quest.TurnInCompletionRewardPositionY)))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} contains a blocked towner or reward position.");
         }

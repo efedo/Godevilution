@@ -267,7 +267,9 @@ public sealed record DiabloQuestState(
     int MessageId = 0,
     uint CompletionMonsterId = 0,
     string CompletionUniqueIdentity = "",
-    int TurnInTownerId = -1);
+    int TurnInTownerId = -1,
+    bool TurnInOnCompletion = false,
+    int TurnInCompletionVariable2 = -1);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -591,7 +593,9 @@ public sealed partial class DiabloSimulation
                     quest.MessageId,
                     quest.CompletionMonsterId,
                     quest.CompletionUniqueIdentity,
-                    quest.TurnInTownerId))
+                    quest.TurnInTownerId,
+                    quest.TurnInOnCompletion,
+                    quest.TurnInCompletionVariable2))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1448,7 +1452,8 @@ public sealed partial class DiabloSimulation
                 || quest.Variable1 is < 0 or > byte.MaxValue
                 || quest.Variable2 is < 0 or > byte.MaxValue
                 || quest.MessageId is < 0 or > short.MaxValue
-                || quest.TurnInTownerId is < -1 or > byte.MaxValue) {
+                || quest.TurnInTownerId is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -2007,7 +2012,9 @@ public sealed partial class DiabloSimulation
                     quest.MessageId,
                     quest.CompletionMonsterId,
                     quest.CompletionUniqueIdentity,
-                    turnInTownerId: quest.TurnInTownerId));
+                    turnInTownerId: quest.TurnInTownerId,
+                    turnInOnCompletion: quest.TurnInOnCompletion,
+                    turnInCompletionVariable2: quest.TurnInCompletionVariable2));
             }
         }
     }

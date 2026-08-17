@@ -726,6 +726,10 @@ message QuestSnapshot {
 	string completion_unique_identity = 13;
 	// Optional content-owned towner identity that accepts this quest's turn-in.
 	optional int32 turn_in_towner_id = 14;
+	// Whether a one-shot towner interaction becomes available after completion.
+	bool turn_in_on_completion = 15;
+	// Native _qvar2 marker required and written for the completion-stage interaction.
+	optional int32 turn_in_completion_variable2 = 16;
 }
 
 message ProjectileSnapshot {

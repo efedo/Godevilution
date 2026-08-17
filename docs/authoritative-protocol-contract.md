@@ -185,10 +185,11 @@ snapshot.
 
 `QuestSnapshot` fields 9-13 preserve native quest variables and completion
 identities. Optional proto3 field 14, `turn_in_towner_id`, carries the validated
-content-owned towner ordinal for active quest turn-ins. Its absence is preserved
-for older peers and means the native client keeps its legacy local interaction;
-when present, the ordinal is included in the canonical state hash and lets the
-client route the quest without a hardcoded quest/towner pairing.
+content-owned towner ordinal for authored quest interactions. Fields 15-16 add a
+one-shot completion-stage interaction and its native `_qvar2` marker. Their
+absence is preserved for older peers and means the native client keeps its legacy
+local interaction; when present, the fields are included in the canonical state
+hash and let the client route the quest without a hardcoded quest/towner pairing.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are

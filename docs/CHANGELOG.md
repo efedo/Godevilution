@@ -27,6 +27,10 @@ All notable changes to this fork are documented below.
   Orchard now activates through the authored Farmer row and creates its initial
   Rune Bomb on the server; the existing Hive object remains the completion path.
 
+- Add schema 1.331 completion-stage towner interactions. Hellfire Farmer's
+  post-Hive conversation now advances its authored marker, creates Auric, and
+  emits completion dialogue through the server boundary.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

@@ -181,6 +181,9 @@ internal static class DiabloProtocolMapper
             };
             if (quest.TurnInTownerId >= 0)
                 projectedQuest.TurnInTownerId = quest.TurnInTownerId;
+            projectedQuest.TurnInOnCompletion = quest.TurnInOnCompletion;
+            if (quest.TurnInCompletionVariable2 >= 0)
+                projectedQuest.TurnInCompletionVariable2 = quest.TurnInCompletionVariable2;
             snapshot.Quests.Add(projectedQuest);
         }
         foreach (var projectile in source.Projectiles) {

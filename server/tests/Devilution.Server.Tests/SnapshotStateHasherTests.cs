@@ -1604,6 +1604,23 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void CompletionStageQuestTurnInChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3018, RequiredProgress = 1, Completed = true },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Quests[0].TurnInOnCompletion = true;
+        changed.Quests[0].TurnInCompletionVariable2 = 1;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void ObjectQuestProgressAmountChangesTheHash()
     {
         var baseline = new Snapshot {

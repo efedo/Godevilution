@@ -241,11 +241,16 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		if (!quest.has_turn_in_towner_id()
 		    || quest.turn_in_towner_id() < 0
 		    || static_cast<uint32_t>(quest.turn_in_towner_id()) != townerId
-		    || quest.initial()
-		    || quest.completed()
 		    || quest.unavailable()) {
 			continue;
 		}
+		const bool activeTurnIn = !quest.initial() && !quest.completed();
+		const bool completionTurnIn = quest.completed()
+		    && quest.turn_in_on_completion()
+		    && quest.has_turn_in_completion_variable2()
+		    && quest.variable_2() < quest.turn_in_completion_variable2();
+		if (!activeTurnIn && !completionTurnIn)
+			continue;
 		if (!result.has_value() || quest.quest_id() < *result)
 			result = quest.quest_id();
 	}

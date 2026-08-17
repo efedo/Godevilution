@@ -145,13 +145,13 @@ Black Mushroom pickup uses the same boundary and preserves the native spawned
 mushroom state check.
 
 The native authoritative adapter now submits `TurnInQuestRequested` when an
-active quest's content-declared towner is presented. The server owns adjacency,
-native conversation variables, required-item consumption, quest completion,
-normal or unique reward spawning, and the dialogue event; the adapter projects that
-dialogue into the native quest-text UI. The Hellfire Farmer activation, Magic
-Rock and Anvil of Fury/Blacksmith paths, Little Girl, and Jersey's Jersey/Complete
-Nut are shipped definitions; additional legacy towner paths remain local until
-authored.
+authored quest interaction is presented. The server owns adjacency, native
+conversation variables, required-item consumption, quest completion, activation,
+normal or unique reward spawning, and the dialogue event; the adapter projects
+that dialogue into the native quest-text UI. The Hellfire Farmer activation and
+post-Hive reward, Magic Rock and Anvil of Fury/Blacksmith paths, Little Girl, and
+Jersey's Jersey/Complete Nut are shipped definitions; additional legacy towner
+paths remain local until authored.
 Legacy local towner behavior stays available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the
