@@ -305,6 +305,8 @@ public partial class WorldPresentation : Node2D
     private void DrawProjectile(ProjectileSnapshot projectile)
     {
         var kind = ProjectilePresentationStyle.Resolve(projectile);
+        if (kind == ProjectilePresentationKind.Hidden)
+            return;
         var beam = kind == ProjectilePresentationKind.Beam;
         var stoneCurse = kind == ProjectilePresentationKind.StoneCurse;
         var guardian = kind == ProjectilePresentationKind.Guardian;

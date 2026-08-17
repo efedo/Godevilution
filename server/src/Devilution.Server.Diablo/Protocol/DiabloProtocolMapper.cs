@@ -1131,6 +1131,8 @@ internal static class DiabloProtocolMapper
             return ProjectilePresentationKind.Phasing;
         if (behavior == AuthoritativeProjectileBehavior.StoneCurse)
             return ProjectilePresentationKind.StoneCurse;
+        if (behavior == AuthoritativeProjectileBehavior.RageController)
+            return ProjectilePresentationKind.Hidden;
         if (behavior is AuthoritativeProjectileBehavior.Flash
                 or AuthoritativeProjectileBehavior.FlashBottom
                 or AuthoritativeProjectileBehavior.FlashTop)

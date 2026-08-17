@@ -17,6 +17,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(35, 0, ProjectilePresentationKind.Fire)]
     [InlineData(35, 1, ProjectilePresentationKind.Fire)]
     [InlineData(36, 0, ProjectilePresentationKind.Guardian)]
+    [InlineData(34, 0, ProjectilePresentationKind.Hidden)]
     [InlineData(5, 0, ProjectilePresentationKind.Flash)]
     [InlineData(6, 0, ProjectilePresentationKind.Flash)]
     [InlineData(7, 0, ProjectilePresentationKind.Flash)]
@@ -112,6 +113,19 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.Flash,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void ResolvesServerOwnedHiddenPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.Hidden,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.Hidden,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 

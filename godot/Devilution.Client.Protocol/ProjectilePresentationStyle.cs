@@ -22,6 +22,7 @@ public enum ProjectilePresentationKind
     MonsterMagic,
     HorkSpawn,
     Flash,
+    Hidden,
 }
 
 /** Maps authoritative behavior identities to client-only visual families. */
@@ -32,6 +33,7 @@ public static class ProjectilePresentationStyle
     private const int ChargedBolt = 1;
     private const int ResurrectionBeam = 11;
     private const int StoneCurse = 13;
+    private const int RageController = 34;
     private const int Flash = 5;
     private const int FlashBottom = 6;
     private const int FlashTop = 7;
@@ -90,6 +92,8 @@ public static class ProjectilePresentationStyle
                 => ProjectilePresentationKind.HorkSpawn,
             Devilution.Protocol.V1.ProjectilePresentationKind.Flash
                 => ProjectilePresentationKind.Flash,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Hidden
+                => ProjectilePresentationKind.Hidden,
             Devilution.Protocol.V1.ProjectilePresentationKind.BoneSpirit
                 => ProjectilePresentationKind.BoneSpirit,
             Devilution.Protocol.V1.ProjectilePresentationKind.Acid
@@ -120,6 +124,8 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.Phasing;
         if (behavior == StoneCurse)
             return ProjectilePresentationKind.StoneCurse;
+        if (behavior == RageController)
+            return ProjectilePresentationKind.Hidden;
         if (behavior is Flash or FlashBottom or FlashTop)
             return ProjectilePresentationKind.Flash;
         if (behavior is Firebolt or Fireball)
