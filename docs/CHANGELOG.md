@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   consumes Staff of Lazarus, writes the native quest marker, and starts the
   authored Lazarus conversation through `TurnInQuestRequested`.
 
+- Add schema 1.334 base Magic Rock quest content. Griswold's staged conversation
+  now advances the authored gate before requiring the item, then consumes Magic
+  Rock and spawns the normalized level-5 Empyrean Band through the server.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

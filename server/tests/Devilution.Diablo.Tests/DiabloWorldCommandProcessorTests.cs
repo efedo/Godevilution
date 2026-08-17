@@ -1371,6 +1371,41 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeTownerConversationGateRunsBeforeRequiredItemValidation()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2135, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3001,
+            1,
+            3,
+            messageId: 115,
+            variable2: 0,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 2135,
+            turnInRequiredVariable2: 1,
+            turnInMessageId: 117);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 61, positionY: 63, entityId: 7);
+
+        var started = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            1,
+            [player]);
+
+        Assert.True(started.Succeeded);
+        Assert.Equal(1, quest.Variable2);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(115, Assert.Single(started.Events).MessageId);
+    }
+
+    [Fact]
     public void NativeTownerTurnInRejectsWrongTownerOrMissingItemWithoutMutation()
     {
         var items = new AuthoritativeItemCatalog([

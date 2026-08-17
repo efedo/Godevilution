@@ -1,6 +1,7 @@
 kind	symbol	numeric_id
 unique	the_ember_blade	1001
 unique	the_ward_shield	1002
+unique	empyrean_band	1004
 item	short_sword	1
 item	buckler	2
 item	dagger	127
@@ -117,6 +118,7 @@ item	scroll_of_teleport	2131
 item	scroll_of_apocalypse	2132
 item	scroll_of_identify_fixed	2133
 item	scroll_of_identify	2134
+item	magic_rock	2135
 item	potion_healing_standard	2180
 item	potion_full_healing	2181
 item	potion_mana_standard	2182

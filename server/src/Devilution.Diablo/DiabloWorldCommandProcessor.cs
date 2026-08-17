@@ -1489,11 +1489,6 @@ public sealed class DiabloWorldCommandProcessor
                     });
         }
 
-        if (quest.TurnInItemId == 0
-            || !items.TryGet(quest.TurnInItemId, out var requiredItem)) {
-            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        }
-
         if (quest.TurnInRequiredVariable2 >= 0
             && quest.Variable2 != quest.TurnInRequiredVariable2) {
             if (quest.Variable2 > quest.TurnInRequiredVariable2)
@@ -1511,6 +1506,11 @@ public sealed class DiabloWorldCommandProcessor
                         MessageId = quest.MessageId,
                         QuestId = quest.QuestId,
                     });
+        }
+
+        if (quest.TurnInItemId == 0
+            || !items.TryGet(quest.TurnInItemId, out var requiredItem)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
         if (quest.TurnInAlternateItemId != 0

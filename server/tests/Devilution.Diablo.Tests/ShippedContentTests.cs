@@ -17,9 +17,66 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.333.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.334.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
+    }
+
+    [Fact]
+    public void BaseContentPackExternalizesMagicRockPickupAndGriswoldTurnIn()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            pack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            pack.Tables.Single(table => table.SourcePath == "items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+        var uniques = AuthoritativeUniqueItemCatalog.LoadTsv(
+            "unique_items.tsv",
+            pack.Tables.Single(table => table.SourcePath == "unique_items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+        var questTypes = AuthoritativeQuestTypeCatalog.LoadTsv(
+            "quest_types.tsv",
+            pack.Tables.Single(table => table.SourcePath == "quest_types.tsv").ToCanonicalTsv());
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            pack.Tables.Single(table => table.SourcePath == "quests.tsv").ToCanonicalTsv(),
+            questTypes,
+            stableIds);
+        var magicRock = Assert.Single(quests, quest => quest.QuestId == 3001);
+        Assert.Equal((115, 117, 0, 0U, 62, 63, 2135U, 1, 1004U, 5, 61, 64), (
+            magicRock.MessageId,
+            magicRock.TurnInMessageId,
+            magicRock.TurnInTownerId,
+            magicRock.TurnInLevelId,
+            magicRock.TurnInPositionX,
+            magicRock.TurnInPositionY,
+            magicRock.TurnInItemId,
+            magicRock.TurnInRequiredVariable2,
+            magicRock.TurnInRewardUniqueId,
+            magicRock.TurnInRewardItemLevel,
+            magicRock.TurnInRewardPositionX,
+            magicRock.TurnInRewardPositionY));
+        Assert.Equal("magic_rock", items.GetRequired(2135).StableSymbol);
+        Assert.True(uniques.TryGet(1004, out var empyreanBand));
+        Assert.NotNull(empyreanBand);
+        Assert.Equal((2195U, 8000, 4), (
+            empyreanBand.BaseItemId,
+            empyreanBand.Value,
+            empyreanBand.Powers.Count));
+        var effects = AuthoritativeItemQuestEffectCatalog.LoadTsv(
+            "item_quest_effects.tsv",
+            pack.Tables.Single(table => table.SourcePath == "item_quest_effects.tsv").ToCanonicalTsv(),
+            stableIds);
+        var pickupEffect = Assert.Single(effects.Definitions);
+        Assert.Equal((2135U, 3001U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
+            pickupEffect.ItemId,
+            pickupEffect.QuestId,
+            pickupEffect.EffectKind,
+            pickupEffect.EffectAmount));
     }
 
     [Fact]
@@ -1428,7 +1485,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.333.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.334.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

@@ -149,8 +149,9 @@ authored quest interaction is presented. The server owns adjacency, native
 conversation variables, required-item consumption, quest completion, activation,
 normal or unique reward spawning, and the dialogue event; the adapter projects
 that dialogue into the native quest-text UI. The Hellfire Farmer activation and
-post-Hive reward, base Cain's Staff of Lazarus activation, Magic Rock and Anvil
-of Fury/Blacksmith paths, Little Girl, and Jersey's Jersey/Complete Nut
+post-Hive reward, base Cain's Staff of Lazarus activation, base and Hellfire
+Magic Rock and Anvil of Fury/Blacksmith paths, Little Girl, and Jersey's
+Jersey/Complete Nut
 (including its Grey Suit tease) are shipped
 definitions; additional legacy towner paths remain local until authored.
 Legacy local towner behavior stays available outside the authoritative runtime.

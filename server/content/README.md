@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.333.0` schema in
+It declares its identity and `devilution.diablo@1.334.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1424,7 +1424,8 @@ Bomb completion objects consume the normalized bomb through
 Orchard completion. It also maps Magic Rock pickup to the existing validated
 item-to-quest transition hook, along with Anvil of Fury pickup activating the
 Anvil quest. Optic Amulet and Arkaine's Valor rows complete their active
-quests; these rows use the 1.333 table schema. CompleteQuest effects
+quests; these rows use the 1.334 table schema. The base pack now carries the
+same Magic Rock pickup effect and Griswold staged hand-in. CompleteQuest effects
 are ignored while the referenced quest is inactive, preserving the native
 pickup precondition.
 
@@ -1458,6 +1459,12 @@ Schema 1.333 adds `turn_in_activation_variable1` and allows
 explicit marker preserves native activation state when the later completion
 marker differs. Base Cain now consumes Staff of Lazarus, sets quest 3016's
 native `_qvar1` to 2, and emits the authored activation dialogue.
+
+Schema 1.334 adds the base Magic Rock item quest effect and authored Griswold
+turn-in. Picking up Magic Rock activates quest 3001; the first Blacksmith
+conversation advances `_qvar2` and emits the native prompt without requiring
+the item again, while the next conversation consumes Magic Rock and creates
+the level-5 Empyrean Band at the native southwest position.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
@@ -2251,7 +2258,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.333.0"
+    "version": "1.334.0"
   },
   "dependencyConstraints": [
     {
@@ -2283,7 +2290,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.333.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.334.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,
