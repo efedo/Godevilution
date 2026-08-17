@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a local standalone-server operator console with status, transactional
+  ruleset reload, help, and graceful quit commands.
+
 - Add protocol presentation value `FLASH` and project native Flash behaviors
   `5`, `6`, and `7` through the server and Godot client as a dedicated family.
 

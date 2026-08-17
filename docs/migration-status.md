@@ -24,6 +24,11 @@ Status date: 2026-08-17
 
 ## Implemented authoritative systems
 
+- The standalone authoritative executable now exposes a local operator console
+  with `status`, `reload`, `help`, and `quit`; `reload` re-reads validated
+  content/module candidates and uses the existing transactional session
+  migration barrier, while failed candidates leave the active ruleset intact.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

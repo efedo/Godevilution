@@ -166,8 +166,15 @@ path, so a later module or Diablo content-validation failure cannot expose a
 partial ruleset. The host also exposes a transactional replacement API that
 exports and imports every initialized session under an operation barrier,
 updates the handshake identity only after migration succeeds, and retires old
-adapters after in-flight leases drain. The standalone executable does not yet
-provide an operator-facing reload command; callers use the host API directly.
+adapters after in-flight leases drain. The standalone executable also provides
+an operator-facing reload command through its local console.
+
+When attached to an interactive console, the standalone executable accepts the
+local operator commands `status`, `reload`, `help`, and `quit`. `reload` reads
+the configured content and module-package roots again, validates the candidate,
+and invokes the same transactional session migration barrier as the host API;
+failed candidates leave the active ruleset unchanged. End-of-input does not
+stop the server, which remains controlled by `quit` or Ctrl+C.
 
 ## Gameplay-module packages
 
