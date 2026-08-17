@@ -25,6 +25,9 @@ All notable changes to this fork are documented below.
 - Preserve Hellfire blocked player-arrow impact state and native rotation RNG
   consumption through the authoritative projectile lifecycle.
 
+- Add a shared deterministic Firebolt player-versus-player replay covering
+  server-owned hit resolution, damage, and projectile checkpoint state.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

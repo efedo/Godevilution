@@ -756,6 +756,10 @@ player collision is globally active. Charged Bolt then preserves native
 hit-roll, eligible block-roll, and damage-roll order, emits exact Q6 damage to
 the victim, derives lightning resistance and blocking from authoritative class
 and equipped-item state, and treats positive resistance as overriding a block.
+Firebolt uses the same server-owned player-target admission boundary, with its
+native magic hit roll and Q6 damage retained through the resumable projectile
+state; the checked-in two-participant replay exercises this path without client
+damage or RNG decisions.
 
 `PlayerSnapshot.facing_direction` field 27 mirrors native `Direction` values
 South through SouthEast. South/zero is the additive legacy default. Accepted
