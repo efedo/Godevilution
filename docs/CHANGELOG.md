@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
 - Route native Counselor Flash projectiles through the validated stable `flash`
   spell identity, retaining numeric ID `4` for legacy hand-built simulations.
 
+- Let active item catalogs resolve charged and consumable spell sources by
+  content-owned miscellaneous IDs when legacy state lacks a native item index;
+  ambiguous or older metadata continues to use the native fallback.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

@@ -1578,6 +1578,11 @@ numeric-only behavior.
 content pack to expose stable rows such as Etherealize `53` while native
 compatibility fields continue to carry their separate `native_spell_id` values.
 
+When an active item catalog supplies explicit `spell_source_kind` metadata, the
+server can also resolve a charged or consumable source by its content-owned
+miscellaneous ID when a legacy item state has no usable native item index. An
+ambiguous or metadata-free misc ID retains the native compatibility fallback.
+
 Schema 0.64 adds the native-compatible `quest_types.tsv` catalog and makes
 external quest-state rows reject unknown quest identities. Schema 0.63 adds the
 native-compatible `monster_types.tsv` catalog and makes

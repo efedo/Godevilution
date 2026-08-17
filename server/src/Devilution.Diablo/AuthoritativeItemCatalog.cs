@@ -235,6 +235,28 @@ public sealed class AuthoritativeItemCatalog
         return true;
     }
 
+    /** Resolves an unambiguous content-owned spell-source kind by misc ID. */
+    public bool TryGetSpellSourceKindByMiscId(
+        int miscId,
+        out DiabloItemSpellSourceKind sourceKind)
+    {
+        sourceKind = DiabloItemSpellSourceKind.None;
+        if (miscId <= 0)
+            return false;
+
+        var kinds = definitions.Values
+            .Where(definition => definition.MiscId == miscId
+                && definition.SpellSourceKind is { } kind)
+            .Select(definition => definition.SpellSourceKind!.Value)
+            .Distinct()
+            .ToArray();
+        if (kinds.Length != 1)
+            return false;
+
+        sourceKind = kinds[0];
+        return true;
+    }
+
     public AuthoritativeItemDefinition GetRequired(uint itemId)
     {
         return TryGet(itemId, out var definition)

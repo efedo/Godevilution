@@ -112,6 +112,64 @@ public sealed class DiabloCastSourceRulesTests
     }
 
     [Fact]
+    public void ExternalItemSourceMetadataCanResolveWithoutANativeItemIndex()
+    {
+        var chargedDefinition = new AuthoritativeItemDefinition(
+            7,
+            99,
+            100,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            true) {
+                NativeItemIndex = 101,
+                MiscId = 121,
+                SpellId = 7,
+                MaxCharges = 40,
+                SpellSourceKind = DiabloItemSpellSourceKind.ChargedItem,
+            };
+        var consumableDefinition = chargedDefinition with {
+            ItemId = 8,
+            NativeItemIndex = 102,
+            MiscId = 122,
+            SpellSourceKind = DiabloItemSpellSourceKind.ConsumableItem,
+        };
+        var items = new AuthoritativeItemCatalog([
+            chargedDefinition,
+            consumableDefinition,
+        ]);
+        var charged = AuthoritativeItemState.Empty with {
+            MiscId = 121,
+            SpellId = 7,
+            MaxCharges = 40,
+        };
+        var consumable = AuthoritativeItemState.Empty with {
+            MiscId = 122,
+            SpellId = 7,
+        };
+
+        Assert.Equal(
+            DiabloItemSpellSourceKind.ChargedItem,
+            DiabloCastSourceRules.ClassifyItem(charged, items: items));
+        Assert.Equal(
+            DiabloItemSpellSourceKind.ConsumableItem,
+            DiabloCastSourceRules.ClassifyItem(consumable, items: items));
+        Assert.Equal(7U, DiabloCastSourceRules.GetItemSpellId(charged, items: items));
+        Assert.Equal(7U, DiabloCastSourceRules.GetItemSpellId(consumable, items: items));
+        Assert.True(DiabloCastSourceRules.IsMatchingChargedItem(charged, 7, items));
+        Assert.True(DiabloCastSourceRules.IsMatchingConsumableItem(
+            consumable,
+            7,
+            spells: null,
+            items));
+    }
+
+    [Fact]
     public void ExplicitlyUnusableConsumableItemsCannotBeCast()
     {
         var spells = new AuthoritativeSpellCatalog([
