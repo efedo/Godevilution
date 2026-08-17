@@ -1091,6 +1091,84 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredDialogueNormalRewardUsesValidatedSpellBookGeneration()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(114, 6, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
+            },
+            new AuthoritativeItemDefinition(2137, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var spellBooks = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                7,
+                "Firebolt",
+                1,
+                25,
+                AuthoritativeSpellBookMagicType.Fire,
+                15),
+        ]);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 14,
+            unique: true,
+            uniqueIdentity: "Lachdanan");
+        var quest = new AuthoritativeQuestState(
+            3005,
+            14,
+            1,
+            active: false,
+            messageId: 81,
+            completionUniqueIdentity: "Lachdanan",
+            dialogueItemId: 2137,
+            dialogueRewardItemId: 114,
+            dialogueRewardItemLevel: 1,
+            dialogueRewardOffsetY: 1,
+            dialogueCompletionMessageId: 83);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            gameMode: DiabloGameMode.SinglePlayer,
+            items: items,
+            spellBooks: spellBooks);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 14,
+            entityId: 7,
+            inventoryGrid: Enumerable.Repeat(-1, 40).ToArray());
+
+        var initial = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            1,
+            [player]);
+        Assert.True(initial.Succeeded);
+
+        var elixir = items.Generate(2137, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, elixir.CreateInfo, 0, 0, elixir));
+        player.InventoryGrid[0] = 0;
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3005, 20),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(114, reward.State.ItemIndex);
+        Assert.Equal(7, reward.State.SpellId);
+        Assert.Equal(DiabloItemActionKind.ReadBook, reward.State.ItemActionKind);
+        Assert.Equal("Book of Firebolt", reward.State.BaseName);
+        Assert.Equal((20, 21), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void NativeTownerTurnInStartsQuestConversationThenConsumesItemAndSpawnsUniqueReward()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

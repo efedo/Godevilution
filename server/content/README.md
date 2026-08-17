@@ -1414,7 +1414,9 @@ and completion dialogue message. The server validates the unique target and
 adjacency, consumes the item, completes the quest, and spawns the authored
 reward through `TalkToQuestRequested`. Hellfire Lachdanan is the first shipped
 definition, consuming Golden Elixir and spawning Veil of Steel one tile south
-of the encounter.
+of the encounter. If a normal-item reward references a dynamic book template,
+the server uses the validated spell-book catalog to generate its spell identity
+and read-book state deterministically.
 
 The shipped Hellfire pack adds a content-owned Hive entrance projection: Rune
 Bomb completion objects consume the normalized bomb through

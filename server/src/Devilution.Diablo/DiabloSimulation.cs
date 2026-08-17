@@ -188,7 +188,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.GameMode,
             options.Items,
             options.ItemCombinations,
-            options.ItemQuestEffects);
+            options.ItemQuestEffects,
+            options.SpellBooks);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

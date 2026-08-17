@@ -17,6 +17,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeItemCatalog? items;
     private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
     private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
+    private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -31,7 +32,8 @@ public sealed class DiabloWorldCommandProcessor
         DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
         AuthoritativeItemCatalog? items = null,
         AuthoritativeItemCombinationCatalog? itemCombinations = null,
-        AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null)
+        AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null,
+        AuthoritativeSpellBookCatalog? spellBooks = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -45,6 +47,7 @@ public sealed class DiabloWorldCommandProcessor
         this.items = items;
         this.itemCombinations = itemCombinations;
         this.itemQuestEffects = itemQuestEffects;
+        this.spellBooks = spellBooks;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -1273,10 +1276,18 @@ public sealed class DiabloWorldCommandProcessor
             }
             if (quest.DialogueRewardItemId != 0) {
                 var itemSeed = AllocateGoldStackSeed();
-                var rewardState = items!.Generate(
-                    quest.DialogueRewardItemId,
-                    itemSeed,
-                    quest.DialogueRewardItemLevel);
+                var rewardState = spellBooks is not null
+                    && spellBooks.IsBookTemplate(items!, quest.DialogueRewardItemId)
+                    ? spellBooks.GenerateRandom(
+                        items!,
+                        itemSeed,
+                        quest.DialogueRewardItemLevel,
+                        gameMode,
+                        quest.DialogueRewardItemId)
+                    : items!.Generate(
+                        quest.DialogueRewardItemId,
+                        itemSeed,
+                        quest.DialogueRewardItemLevel);
                 var entityId = AllocateWorldItemEntityId([player]);
                 world.WorldItems[entityId] = new AuthoritativeWorldItem(
                     entityId,

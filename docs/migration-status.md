@@ -1803,7 +1803,9 @@ Status date: 2026-08-17
   tables. The server validates the required item and authored relative reward,
   then consumes, completes, spawns, and emits completion dialogue atomically.
   Hellfire Lachdanan consumes Golden Elixir and spawns Veil of Steel one tile
-  south of the encounter.
+  south of the encounter. Normal-item dialogue rewards now use the validated
+  spell-book catalog when the authored item is a dynamic book template, so
+  generated spell identity and read-book state remain server-owned.
 
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item

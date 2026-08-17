@@ -9,6 +9,11 @@ All notable changes to this fork are documented below.
   the shared `TalkToQuestRequested` boundary; the server owns completion,
   relative reward placement, and completion dialogue.
 
+- Make authored dialogue normal-item rewards use the validated spell-book
+  catalog when their item identity is a dynamic book template. The server now
+  generates the same deterministic spell identity, name, cost, and read-book
+  action as other authoritative book drops.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.
