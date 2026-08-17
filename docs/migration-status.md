@@ -128,6 +128,9 @@ Status date: 2026-08-17
   presentation family, and Godot renders that server-owned family without
   inferring gameplay behavior from a generic fallback.
 
+- The shared protocol and Godot client now classify server-owned `HorkSpawn`
+  summon controllers explicitly, while older peers retain behavior fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

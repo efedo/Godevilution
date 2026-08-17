@@ -76,6 +76,8 @@ All notable changes to this fork are documented below.
   target selection, impact damage, and complete participant-state hashing.
 - Add an additive `MonsterMagic` projectile presentation family to the shared
   protocol and Godot client, preserving server-owned visual classification.
+- Add an additive `HorkSpawn` projectile presentation family to the shared
+  protocol and Godot client for server-owned summon-controller visuals.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
