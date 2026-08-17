@@ -1098,10 +1098,23 @@ internal static class DiabloProtocolMapper
             SpellDisplayName = state.SpellId > 0
                 ? ResolveSpellDisplayName(checked((uint)state.SpellId), spells, spellBooks)
                 : string.Empty,
+            PresentationKind = ResolveItemPresentationKind(state),
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;
         return snapshot;
+    }
+
+    private static ItemPresentationKind ResolveItemPresentationKind(
+        AuthoritativeItemState state)
+    {
+        if (state.ItemType == 11 || state.ItemClass == 4)
+            return ItemPresentationKind.Gold;
+        if (state.MiscId == 44 && state.ItemClass == 3)
+            return ItemPresentationKind.Ear;
+        // Keep the additive field at its zero value for ordinary items so
+        // legacy snapshots and clients remain byte-for-byte compatible.
+        return ItemPresentationKind.Unspecified;
     }
 
     private static string ResolveSpellDisplayName(

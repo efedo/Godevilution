@@ -1,6 +1,7 @@
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Xunit;
+using ProtocolItemPresentationKind = Devilution.Protocol.V1.ItemPresentationKind;
 
 namespace Devilution.Client.Protocol.Tests;
 
@@ -292,6 +293,7 @@ public sealed class ClientModelTests
                         BaseName = "Ear of A",
                         IdentifiedName = "A",
                         NativeCursorGraphic = 21,
+                        PresentationKind = ProtocolItemPresentationKind.Ear,
                     },
                 },
             },
@@ -313,6 +315,7 @@ public sealed class ClientModelTests
         Assert.Equal("Ear of A", ear.State.BaseName);
         Assert.Equal("A", ear.State.IdentifiedName);
         Assert.Equal(21, ear.State.NativeCursorGraphic);
+        Assert.Equal(ProtocolItemPresentationKind.Ear, ear.State.PresentationKind);
 
         var missingDynamicName = snapshot.Clone();
         missingDynamicName.WorldItems[0].State.IdentifiedName = "";

@@ -860,6 +860,16 @@ message ItemStateSnapshot {
 	ItemActionKind item_action_kind = 65;
 	// Optional server-owned spell presentation metadata for item-backed sources.
 	string spell_display_name = 66;
+	// Additive server-owned world-item presentation family; zero preserves the
+	// generic legacy rendering path.
+	ItemPresentationKind presentation_kind = 67;
+}
+
+enum ItemPresentationKind {
+	ITEM_PRESENTATION_KIND_UNSPECIFIED = 0;
+	ITEM_PRESENTATION_KIND_GENERIC = 1;
+	ITEM_PRESENTATION_KIND_GOLD = 2;
+	ITEM_PRESENTATION_KIND_EAR = 3;
 }
 
 message PlayerAttributesSnapshot {

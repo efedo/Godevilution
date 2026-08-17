@@ -2,6 +2,7 @@ using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
 using ProjectilePresentationKind = Devilution.Client.Protocol.ProjectilePresentationKind;
+using ItemPresentationKind = Devilution.Client.Protocol.ItemPresentationKind;
 
 namespace Devilution.Client;
 
@@ -270,8 +271,17 @@ public partial class WorldPresentation : Node2D
 
     private void DrawItem(WorldItemSnapshot item, bool searchActive)
     {
+        var kind = ItemPresentationStyle.Resolve(item.State);
         var center = PositionFor(item.EntityId, item.PositionX, item.PositionY);
-        DrawTextureOrRect("item", center, new Vector2(18, 18), new Color("e5bd52"));
+        var color = kind switch {
+            ItemPresentationKind.Gold => new Color("e5bd52"),
+            ItemPresentationKind.Ear => new Color("c48cff"),
+            _ => new Color("8fb8d8"),
+        };
+        var size = kind == ItemPresentationKind.Ear
+            ? new Vector2(20, 20)
+            : new Vector2(18, 18);
+        DrawTextureOrRect("item", center, size, color);
         if (searchActive)
             DrawArc(center, 14, 0, Mathf.Tau, 24, new Color("fff0a8"), 3);
     }

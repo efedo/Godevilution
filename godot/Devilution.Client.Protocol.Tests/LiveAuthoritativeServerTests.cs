@@ -1912,6 +1912,9 @@ public sealed class LiveAuthoritativeServerTests
             var gold = Assert.Single(player.Inventory);
             Assert.Equal(100U, gold.Price);
             Assert.Equal(11, gold.State.ItemType);
+            Assert.Equal(
+                Devilution.Protocol.V1.ItemPresentationKind.Gold,
+                gold.State.PresentationKind);
             Assert.Equal(0, player.InventoryGrid[30]);
             sorcererToken = sorcerer.SessionToken;
         }
