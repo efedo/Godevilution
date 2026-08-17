@@ -9,6 +9,10 @@ All notable changes to this fork are documented below.
   monster-missile, affix, store, and combat catalogs; malformed Boolean values
   now reject the complete content candidate.
 
+- Ensure an unstarted authoritative TCP host still disposes its leased active
+  adapter, closing the server-owned resource lifecycle on construction failure
+  and early shutdown paths.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.

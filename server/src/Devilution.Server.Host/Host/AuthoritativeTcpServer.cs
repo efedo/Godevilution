@@ -179,8 +179,11 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (cancellation is null)
+        if (cancellation is null) {
+            if (gameAdapter is LeasedAuthoritativeGameHostAdapter unstartedLeasedAdapter)
+                unstartedLeasedAdapter.Dispose();
             return;
+        }
 
         cancellation.Cancel();
         listener.Stop();

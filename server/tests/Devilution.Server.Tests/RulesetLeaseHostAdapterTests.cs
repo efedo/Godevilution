@@ -208,6 +208,27 @@ public sealed class RulesetLeaseHostAdapterTests
     }
 
     [Fact]
+    public async Task TcpHostDisposesAnUnstartedLeasedAdapter()
+    {
+        var initial = new FakeAdapter("initial");
+        var runtime = CreateRuntime(new Queue<FakeAdapter>([initial]));
+        var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "initial-content",
+            20));
+        await using (var server = new AuthoritativeTcpServer(
+                         new AuthoritativeCommandServer(adapter),
+                         handshake,
+                         new DelegateAuthoritativeClock(() => 0),
+                         adapter)) {
+        }
+
+        Assert.True(initial.Disposed);
+    }
+
+    [Fact]
     public void DisposingTheLeasedAdapterDisposesRetiredTargetsAndRejectsNewOperations()
     {
         var initial = new FakeAdapter("initial");
