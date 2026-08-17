@@ -9218,7 +9218,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.HorkSpawn) {
-                    AdvanceHorkSpawn(projectile, players);
+                    AdvanceHorkSpawn(tick, projectile, players, events);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt) {
@@ -9888,10 +9888,29 @@ public sealed class DiabloCombatCommandProcessor
 
     /** Native ProcessHorkSpawn travel and expiry summon admission. */
     private void AdvanceHorkSpawn(
+        ulong tick,
         AuthoritativeProjectile projectile,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
     {
         projectile.RemainingTicks--;
+        var playerTarget = FindProjectilePlayer(
+            projectile,
+            players,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (playerTarget is not null
+            && TryResolveHorkSpawnPlayerHit(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events)) {
+            world.Projectiles.Remove(projectile.EntityId);
+            CompleteHorkSpawn(projectile, players);
+            return;
+        }
+
         if (projectile.RemainingTicks != 0) {
             foreach (var tile in MoveNativeProjectile(projectile)) {
                 projectile.PositionX = tile.X;
@@ -9918,6 +9937,14 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         world.Projectiles.Remove(projectile.EntityId);
+        CompleteHorkSpawn(projectile, players);
+    }
+
+    /** Native Hork Spawn expiry admission and summon creation. */
+    private void CompleteHorkSpawn(
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
         if (monsterSpawnPlanner is null
             || world.CombatTargets.Count >= 256)
             return;
@@ -12887,6 +12914,76 @@ public sealed class DiabloCombatCommandProcessor
                 PlayerDeathReason.MonsterOrTrap);
         else if (resistance == 0
             && ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
+            StartHit(target, targetClass, tick);
+        return true;
+    }
+
+    /** Native ProcessHorkSpawn collision: a zero-payload non-arrow PlayerMHit. */
+    private bool TryResolveHorkSpawnPlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.CombatTargets.TryGetValue(projectile.SourceEntityId, out var monster)
+            || IsPlayerProtectedByFlash(target))
+            return false;
+
+        var distance = Math.Max(
+            Math.Abs(target.PositionX - monster.PositionX),
+            Math.Abs(target.PositionY - monster.PositionY));
+        if (random.RandomIntLessThan(100)
+            >= rules.ResolveMonsterMagicProjectileHitChance(
+                GetEffectiveMonsterLevel(monster),
+                target.CharacterLevel,
+                target.LevelId,
+                distance))
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
+                - (rules.MonsterPlayerBlockLevelScale * GetEffectiveMonsterLevel(monster)),
+            0,
+            100);
+        if (blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            return true;
+        }
+
+        // PlayerMHit always rolls the zero-width damage range before applying
+        // its one-point minimum, so preserve that RNG consumption.
+        var damageQ6 = checked(
+            Math.Max(64, random.RandomIntBetween(0, 0))
+            + AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(target.Equipment)
+                * DiabloFixedPointQ6.Scale);
+        var damageResult = playerDamage.Apply(target, damageQ6);
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    monster.EntityId,
+                    target.EntityId,
+                    DiabloFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0)
+            StartPlayerDeath(
+                target,
+                monster.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.MonsterOrTrap);
+        else if (ShouldStartHit(target, targetClass, damageResult.IncomingDamageQ6))
             StartHit(target, targetClass, tick);
         return true;
     }

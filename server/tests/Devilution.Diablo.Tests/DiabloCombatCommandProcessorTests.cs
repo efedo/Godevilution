@@ -2622,6 +2622,56 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkSpawnChecksItsCurrentTileBeforeSummoning()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            100,
+            monsterLevel: 10,
+            aggroRange: 0);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            monster.EntityId,
+            7,
+            117,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            characterLevel: 1);
+
+        var deliveries = processor.AdvanceTick(1, [player]).ToList();
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(6336, player.Life);
+        var damage = Assert.Single(
+            deliveries.Select(delivery => delivery.Event),
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Damage);
+        Assert.Equal(monster.EntityId, damage.SourceEntityId);
+        Assert.Equal(player.EntityId, damage.TargetEntityId);
+        Assert.Equal(64, damage.AmountQ6);
+    }
+
+    [Fact]
     public void HorkDemonUsesValidatedSpawnAdmissionTuning()
     {
         var nativeWorld = new AuthoritativeWorld();
