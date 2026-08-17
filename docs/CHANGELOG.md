@@ -46,6 +46,10 @@ All notable changes to this fork are documented below.
   damage, including monster regeneration and the retained impact phase, with a
   shared C++/C# replay fixture.
 
+- Route secondary replay-participant melee attacks through the same
+  authoritative combat boundary as the primary participant, with shared C++/C#
+  checkpoint coverage for identity routing and unarmed damage.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
