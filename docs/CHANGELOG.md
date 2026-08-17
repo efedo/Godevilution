@@ -60,6 +60,10 @@ All notable changes to this fork are documented below.
   prefers that identity before the native item-index compatibility projection;
   zero-valued legacy state and existing replay hashes remain compatible.
 
+- Use stable item identity for authoritative quest effects, item combinations,
+  quest-item completion, and PvP-ear deduplication, retaining native-index
+  matching for legacy state without a stable ID.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

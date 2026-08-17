@@ -743,7 +743,7 @@ public sealed class DiabloWorldCommandProcessor
 
         foreach (var effect in itemQuestEffects.Definitions) {
             if (!items.TryGet(effect.ItemId, out var itemDefinition)
-                || itemState.ItemIndex != itemDefinition.NativeItemIndex
+                || !items.IsStateForDefinition(itemState, itemDefinition)
                 || !world.Quests.TryGetValue(effect.QuestId, out var quest)
                 || quest.Unavailable) {
                 continue;
@@ -796,7 +796,9 @@ public sealed class DiabloWorldCommandProcessor
                     var matchingIndex = -1;
                     for (var index = 0; index < player.Inventory.Count; index++) {
                         if (!usedIndices.Contains(index)
-                            && player.Inventory[index].State.ItemIndex == itemDefinition.NativeItemIndex) {
+                            && items.IsStateForDefinition(
+                                player.Inventory[index].State,
+                                itemDefinition)) {
                             matchingIndex = index;
                             break;
                         }
@@ -1033,7 +1035,9 @@ public sealed class DiabloWorldCommandProcessor
 
         var inventoryIndex = -1;
         for (var index = 0; index < player.Inventory.Count; index++) {
-            if (player.Inventory[index].State.ItemIndex == itemDefinition.NativeItemIndex) {
+            if (items.IsStateForDefinition(
+                    player.Inventory[index].State,
+                    itemDefinition)) {
                 inventoryIndex = index;
                 break;
             }

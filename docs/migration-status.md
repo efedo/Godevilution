@@ -42,6 +42,10 @@ Status date: 2026-08-17
   retained native item index; zero-valued legacy state and the legacy replay
   hash remain compatible.
 
+- Server-owned item quest effects, combinations, quest-item completion, and
+  PvP-ear deduplication now use that stable identity before the native index,
+  so shared native projections cannot select the wrong content definition.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

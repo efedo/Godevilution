@@ -87,6 +87,31 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void StateDefinitionMatchingPrefersStableIdentityAndRetainsLegacyFallback()
+    {
+        var definition = new AuthoritativeItemDefinition(7, 1, 75, 100, 1, 2, 0, 0, 0, 1, 1, true) {
+            NativeItemIndex = 99,
+        };
+        var catalog = new AuthoritativeItemCatalog([definition]);
+
+        Assert.True(catalog.IsStateForDefinition(
+            AuthoritativeItemState.Empty with {
+                StableItemId = 7,
+                ItemIndex = 12,
+            },
+            definition));
+        Assert.False(catalog.IsStateForDefinition(
+            AuthoritativeItemState.Empty with {
+                StableItemId = 8,
+                ItemIndex = 99,
+            },
+            definition));
+        Assert.True(catalog.IsStateForDefinition(
+            AuthoritativeItemState.Empty with { ItemIndex = 99 },
+            definition));
+    }
+
+    [Fact]
     public void RejectsMalformedNormalizedBooleanMetadata()
     {
         Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(

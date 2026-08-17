@@ -14011,7 +14011,7 @@ public sealed class DiabloCombatCommandProcessor
             player.CharacterName);
         if (world.WorldItems.Values.Any(item =>
                 item.ItemSeed == itemSeed
-                && item.State.ItemIndex == definition.NativeItemIndex
+                && items.IsStateForDefinition(item.State, definition)
                 && item.State.CreateInfo == createInfo)) {
             return;
         }

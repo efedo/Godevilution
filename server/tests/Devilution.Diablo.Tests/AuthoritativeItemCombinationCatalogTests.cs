@@ -119,6 +119,39 @@ public sealed class AuthoritativeItemCombinationCatalogTests
         Assert.Empty(world.WorldItems);
     }
 
+    [Fact]
+    public void PickupCombinationUsesStableItemIdentityWhenNativeIndexesOverlap()
+    {
+        var items = new AuthoritativeItemCatalog([
+            CreateDefinition(2001, 42),
+            CreateDefinition(2002, 42),
+            CreateDefinition(2003, 44),
+            CreateDefinition(2004, 45),
+        ]);
+        var combinations = new AuthoritativeItemCombinationCatalog([
+            new AuthoritativeItemCombinationDefinition(2004, [2001, 2002, 2003]),
+        ]);
+        var world = new DiabloWorldState(worldItems: [
+            CreateWorldItem(20, 1, 0, 99, 101, stableItemId: 2001),
+            CreateWorldItem(21, 1, 1, 99, 102, stableItemId: 2002),
+            CreateWorldItem(22, 0, 1, 98, 103, stableItemId: 2003),
+        ]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            itemCombinations: combinations);
+        var player = CreatePlayer();
+
+        foreach (var entityId in new uint[] { 20, 21, 22 })
+            Assert.True(processor.Execute(
+                player,
+                new DiabloPickupWorldItemIntent(entityId),
+                entityId,
+                [player]).Succeeded);
+
+        Assert.Equal(2004U, Assert.Single(player.Inventory).State.StableItemId);
+    }
+
     private static AuthoritativeItemDefinition CreateDefinition(
         uint itemId,
         int nativeItemIndex)
@@ -147,7 +180,8 @@ public sealed class AuthoritativeItemCombinationCatalogTests
         int positionX,
         int positionY,
         int itemIndex,
-        uint itemSeed)
+        uint itemSeed,
+        uint stableItemId = 0)
     {
         return new AuthoritativeWorldItem(
             entityId,
@@ -157,6 +191,7 @@ public sealed class AuthoritativeItemCombinationCatalogTests
             itemSeed,
             0,
             AuthoritativeItemState.Empty with {
+                StableItemId = stableItemId,
                 ItemIndex = itemIndex,
                 InventoryWidth = 1,
                 InventoryHeight = 1,

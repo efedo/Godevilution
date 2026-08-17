@@ -194,6 +194,18 @@ public sealed class AuthoritativeItemCatalog
         return TryGetByNativeItemIndex(state.ItemIndex, out definition!);
     }
 
+    /** Matches one item state to a definition through stable identity before native fallback. */
+    public bool IsStateForDefinition(
+        AuthoritativeItemState state,
+        AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(definition);
+        return state.StableItemId != 0
+            ? state.StableItemId == definition.ItemId
+            : state.ItemIndex == definition.NativeItemIndex;
+    }
+
     /** Validates item spell identities against the active spell catalog. */
     public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)
     {
