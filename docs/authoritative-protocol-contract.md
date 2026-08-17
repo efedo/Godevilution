@@ -528,6 +528,10 @@ presentation clients do not need to maintain the behavior-to-visual mapping;
 older peers may omit it and clients retain their behavior/phase compatibility
 fallback. Charged Bolt behavior `1` uses `Lightning`; Firebolt behavior `2` and
 Fireball behavior `16` use `Fire` during travel and `FireImpact` during impact.
+`ItemStateSnapshot.presentation_kind` is additive server-owned metadata for
+world-item presentation. `Gold` and `Ear` identify the shipped currency and
+dynamic PvP-ear families; zero or unknown values retain generic item rendering,
+and clients do not infer these identities from native numeric fields.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The

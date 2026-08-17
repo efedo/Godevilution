@@ -93,6 +93,9 @@ mutates the item locally.
 Dynamic world items such as PvP ears carry authoritative runtime names and a
 native cursor identity. Godot validates and renders those fields from the
 snapshot; it does not recreate them from the victim or local class data.
+World-item snapshots also carry server-owned `GOLD` and `EAR` presentation
+families, so the client can distinguish currency and PvP ears without inferring
+their identity from native numeric item fields.
 
 Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates

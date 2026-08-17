@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Clarify that Teleport and Phasing transition families are presentation-only
   cues while movement destinations, occupancy, and RNG remain server-owned.
 
+- Add additive world-item presentation metadata for server-owned Gold and PvP
+  ear rendering, with generic fallback for older or unknown item state.
+
 - Preserve native Fireball collision with missile-blocking tiles and objects,
   including breakable-object destruction before the authoritative splash.
 

@@ -91,6 +91,10 @@ Windows toolchain command.
   monster/turret/spell visuals, while `HIDDEN` marks server-only controllers
   such as Rage. Godot uses these values for presentation; older peers may
   ignore them and fall back to the behavior identity.
+- `ItemStateSnapshot.presentation_kind` is an additive server-owned world-item
+  family. `GOLD` and `EAR` identify dynamic item visuals without making the
+  client infer item identity from native numeric fields; zero or unknown values
+  retain the generic item presentation.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

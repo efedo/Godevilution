@@ -155,6 +155,10 @@ Status date: 2026-08-17
   current Godot clients suppress the invisible controller instead of drawing a
   generic projectile; older peers retain behavior-based fallback.
 
+- World-item snapshots now project additive server-owned `GOLD` and `EAR`
+  families for currency and dynamic PvP-ear presentation, while zero or unknown
+  metadata retains the generic client path.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
