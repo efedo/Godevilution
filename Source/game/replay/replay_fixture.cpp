@@ -865,6 +865,21 @@ int32_t GetReplayFireballManaCost(
 	return std::max(wholeCost, 10) * 64;
 }
 
+int32_t GetReplayBoneSpiritManaCost(
+    const ReplayFixtureExecutionState &state,
+    int32_t spellLevel)
+{
+	int32_t wholeCost = std::max(24 - std::max(spellLevel - 1, 0), 0);
+	if (state.hellfire && state.characterClassId == 2) {
+		wholeCost /= 2;
+	} else if (state.characterClassId == 1
+	    || state.characterClassId == 3
+	    || state.characterClassId == 4) {
+		wholeCost -= wholeCost / 4;
+	}
+	return std::max(wholeCost, 12) * 64;
+}
+
 int32_t GetReplayChargedBoltManaCost(const ReplayFixtureExecutionState &state)
 {
 	int32_t wholeCost = 6;
@@ -998,6 +1013,54 @@ void CreateFireball(
 	projectile.impactLifetime = 14;
 	projectile.resistantDamageDivisor = 4;
 	projectile.effectiveSpellLevel = spellLevel;
+	state.projectiles.push_back(projectile);
+}
+
+void CreateBoneSpirit(
+    ReplayFixtureExecutionState &state,
+    const ReplayFixtureCommand &command)
+{
+	const int32_t direction = GetDirection(
+	    state.positionX,
+	    state.positionY,
+	    command.targetX,
+	    command.targetY);
+	int32_t velocityTargetX = command.targetX;
+	int32_t velocityTargetY = command.targetY;
+	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+		velocityTargetX += DirectionDisplacements[direction].first;
+		velocityTargetY += DirectionDisplacements[direction].second;
+	}
+	const auto velocity = CalculateVelocity(
+	    state.positionX,
+	    state.positionY,
+	    velocityTargetX,
+	    velocityTargetY,
+	    16);
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.entityId == 0 ? 1U : state.entityId;
+	projectile.spellId = 38;
+	projectile.levelId = state.levelId;
+	projectile.positionX = state.positionX;
+	projectile.positionY = state.positionY;
+	projectile.targetX = command.targetX;
+	projectile.targetY = command.targetY;
+	projectile.damageType = 3;
+	projectile.remainingTicks = 256;
+	projectile.behavior = 21;
+	projectile.startX = state.positionX;
+	projectile.startY = state.positionY;
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.originalDirection = direction;
+	projectile.speed = 16;
+	projectile.impactLifetime = 7;
+	projectile.resistantDamageDivisor = 4;
 	state.projectiles.push_back(projectile);
 }
 
@@ -1996,6 +2059,222 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 		}
 		if (impacted || expiresAfterMovement)
 			enterImpact();
+		++iterator;
+	}
+}
+
+void AdvanceBoneSpiritsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
+{
+	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+		auto &projectile = *iterator;
+		if (projectile.behavior != 21) {
+			++iterator;
+			continue;
+		}
+		if (projectile.phase == 1) {
+			if (--projectile.remainingTicks == 0)
+				iterator = state.projectiles.erase(iterator);
+			else
+				++iterator;
+			continue;
+		}
+
+		--projectile.remainingTicks;
+		const bool expiresAfterMovement = projectile.remainingTicks == 0;
+		const auto hitTargetAt = [&](int32_t x, int32_t y) {
+			const bool targetAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && ((state.combatTargetPositionX == x
+			            && state.combatTargetPositionY == y)
+			        || (state.combatTargetMoving
+			            && state.combatTargetPetrified
+			            && state.combatTargetFuturePositionX == x
+			            && state.combatTargetFuturePositionY == y));
+			const bool playerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.multiplayer
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			bool hitTarget = false;
+			if (targetAtTile && state.combatTargetMagicResistance < 100) {
+				const int32_t hitChance = std::clamp(
+				    state.attributes[3]
+				        + GetReplayBaseMagicToHit(state.characterClassId)
+				        - state.combatTargetMonsterLevel * 2,
+				    5,
+				    95);
+				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+				if (state.combatTargetPetrified || hitRoll < hitChance) {
+					int32_t damageQ6 = state.combatTargetHitPointsQ6 / 3 / 64 * 64;
+					if (state.combatTargetMagicResistance > 0)
+						damageQ6 /= projectile.resistantDamageDivisor;
+					state.combatTargetHitPointsQ6 = std::max(
+					    0,
+					    state.combatTargetHitPointsQ6 - damageQ6);
+					state.combatTargetHitPoints = ToWholeCeilingQ6(
+					    state.combatTargetHitPointsQ6);
+					if (state.combatTargetHitPointsQ6 == 0)
+						DefeatReplayCombatTarget(state);
+					hitTarget = true;
+				}
+			}
+			if (playerAtTile) {
+				const int32_t hitChance = std::clamp(
+				    state.attributes[3]
+				        + GetReplayBaseMagicToHit(state.characterClassId)
+				        - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
+				    5,
+				    95);
+				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+				if (hitRoll < hitChance) {
+					const bool canBlock = state.secondaryPlayerBlockCapable
+					    && (state.secondaryPlayerCombatMode == 0
+					        || state.secondaryPlayerCombatMode == 4);
+					const int32_t blockRoll = canBlock
+					    ? std::max(GenerateRnd(state, 100), 0)
+					    : 100;
+					const int32_t blockChance = std::clamp(
+					    state.secondaryPlayerDexterity
+					        + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
+					        - static_cast<int32_t>(state.characterLevel) * 2,
+					    0,
+					    100);
+					if (blockRoll < blockChance) {
+						state.secondaryPlayerCombatMode = 6;
+						state.secondaryPlayerCombatModeEndTick = tick + 4;
+						if (state.hellfire)
+							static_cast<void>(GenerateRnd(state, 2));
+					} else {
+						const int32_t damageQ6 = state.secondaryPlayerLife / 3 / 2;
+						state.secondaryPlayerLife = std::max(
+						    0,
+						    state.secondaryPlayerLife - damageQ6);
+						if (state.secondaryPlayerLife == 0)
+							StartReplaySecondaryPlayerDeath(state);
+						else if ((damageQ6 >> 6)
+						    >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+							state.secondaryPlayerCombatMode = 7;
+							state.secondaryPlayerCombatModeEndTick = tick + 6;
+						}
+					}
+					hitTarget = true;
+				}
+			}
+			return hitTarget;
+		};
+		const auto resolveCollision = [&](int32_t x, int32_t y) {
+			const bool targetAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && ((state.combatTargetPositionX == x
+			            && state.combatTargetPositionY == y)
+			        || (state.combatTargetMoving
+			            && state.combatTargetPetrified
+			            && state.combatTargetFuturePositionX == x
+			            && state.combatTargetFuturePositionY == y));
+			const bool playerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.multiplayer
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			const bool hitTarget = hitTargetAt(x, y);
+			const bool blockingObject = state.objectEntityId != 0
+			    && !state.objectActivated
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == x
+			    && state.objectPositionY == y;
+			if (blockingObject && state.objectBreakable)
+				state.objectDestroyed = true;
+			const bool outsideWorld = x < 0 || x >= 40 || y < 0 || y >= 40;
+			return std::pair<bool, uint32_t> {
+				hitTarget || blockingObject || outsideWorld,
+				targetAtTile
+				    ? state.combatTargetEntityId
+				    : playerAtTile ? state.secondaryPlayerEntityId : 0,
+			};
+		};
+		const auto retarget = [&]() {
+			projectile.pathIndex = 1;
+			int32_t targetX = projectile.positionX;
+			int32_t targetY = projectile.positionY;
+			if (state.combatTargetEntityId != 0
+			    && state.combatTargetHitPointsQ6 > 0
+			    && std::max(
+			           std::abs(state.combatTargetPositionX - projectile.positionX),
+			           std::abs(state.combatTargetPositionY - projectile.positionY))
+			        <= 19) {
+				targetX = state.combatTargetPositionX;
+				targetY = state.combatTargetPositionY;
+			} else {
+				targetX += DirectionDisplacements[state.facingDirection % 8].first;
+				targetY += DirectionDisplacements[state.facingDirection % 8].second;
+			}
+			const int32_t direction = GetDirection(
+			    projectile.positionX,
+			    projectile.positionY,
+			    targetX,
+			    targetY);
+			if (targetX == projectile.positionX && targetY == projectile.positionY) {
+				targetX += DirectionDisplacements[direction].first;
+				targetY += DirectionDisplacements[direction].second;
+			}
+			const auto velocity = CalculateVelocity(
+			    projectile.positionX,
+			    projectile.positionY,
+			    targetX,
+			    targetY,
+			    projectile.speed);
+			projectile.velocityX = velocity.first;
+			projectile.velocityY = velocity.second;
+		};
+		bool impacted = false;
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		if (visitedTiles.empty()) {
+			const auto collision = resolveCollision(
+			    projectile.positionX,
+			    projectile.positionY);
+			if (projectile.lastCollisionTargetEntityId != collision.second
+			    && collision.first) {
+				if (projectile.pathIndex == 0
+				    && projectile.positionX == projectile.targetX
+				    && projectile.positionY == projectile.targetY) {
+					retarget();
+				} else {
+					impacted = true;
+				}
+			}
+			projectile.lastCollisionTargetEntityId = collision.second;
+		} else {
+			for (const auto &tile : visitedTiles) {
+				projectile.positionX = tile.x;
+				projectile.positionY = tile.y;
+				projectile.traveledX = tile.traveledX;
+				projectile.traveledY = tile.traveledY;
+				const auto collision = resolveCollision(tile.x, tile.y);
+				projectile.lastCollisionTargetEntityId = collision.second;
+				if (collision.first) {
+					if (projectile.pathIndex == 0
+					    && tile.x == projectile.targetX
+					    && tile.y == projectile.targetY) {
+						retarget();
+					} else {
+						impacted = true;
+					}
+					break;
+				}
+			}
+		}
+		if (!impacted
+		    && projectile.pathIndex == 0
+		    && projectile.positionX == projectile.targetX
+		    && projectile.positionY == projectile.targetY) {
+			retarget();
+		}
+		if (impacted || expiresAfterMovement)
+			EnterReplayProjectileImpact(projectile);
 		++iterator;
 	}
 }
@@ -3003,6 +3282,27 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		}
 		return true;
 	}
+	if (command.spellId == 38
+	    && state.spellProjectileBehavior == 21
+	    && (isAbility || isMemorized)
+	    && command.targetX >= 0
+	    && command.targetX < 40
+	    && command.targetY >= 0
+	    && command.targetY < 40) {
+		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
+		const int32_t manaCost = GetReplayBoneSpiritManaCost(state, spellLevel);
+		if (!isAbility && state.mana < manaCost)
+			return false;
+		if (applyEffects) {
+			CreateBoneSpirit(state, command);
+			state.life = std::max(0, state.life - 6 * 64);
+			if (!isAbility)
+				state.mana -= manaCost;
+		}
+		return true;
+	}
 	if (command.spellId == 1 && (isAbility || isMemorized)
 	    && (isAbility || state.mana >= static_cast<int32_t>(state.spellManaCost))
 	    && state.life < state.lifeMaximum) {
@@ -3981,6 +4281,7 @@ void AdvanceReplayStateToTick(
 		AdvanceChargedBoltsOneTick(state, simulationTick);
 		AdvanceFireboltsOneTick(state);
 		AdvanceFireballsOneTick(state, simulationTick);
+		AdvanceBoneSpiritsOneTick(state, simulationTick);
 		AdvanceLightningOneTick(state, simulationTick);
 		AdvanceFlashOneTick(state);
 		AdvanceMovementControllersOneTick(state);

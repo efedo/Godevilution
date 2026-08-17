@@ -522,6 +522,69 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void BoneSpiritPvpFixtureAppliesNativeCurrentLifeHalfDamage()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-bone-spirit-pvp.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(38, 24, 0, 0, 0, 0) {
+                Range = 112,
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileSpeed = 16,
+                ProjectileLifetime = 256,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.BoneSpirit,
+                ManaAdjustment = 1,
+                ManaAdjustmentDivisor = 1,
+                MinimumManaCost = 12,
+                ManaCostScale = 64,
+                ResistantDamageDivisor = 4,
+                ProjectileImpactLifetime = 7,
+                SelfDamage = 6,
+            },
+        ]);
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var victim = executor.GetPlayerState(secondary.Player);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(1667, victim.Life);
+        Assert.Equal(896, result.FinalSnapshot.Players[0].Life);
+        Assert.Equal(10UL, result.FinalSnapshot.Tick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void HellfireFireballBlockFixtureRetainsImpactAndResolvesSplash()
     {
         var path = Path.Combine(

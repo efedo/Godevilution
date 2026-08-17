@@ -1895,6 +1895,38 @@ TEST(ReplayFixture, ExecutesFireballPvpAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesBoneSpiritPvpAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-bone-spirit-pvp.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 21;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_EQ(state.life, 896);
+	EXPECT_EQ(state.mana, 528);
+	EXPECT_EQ(state.secondaryPlayerLife, 1667);
+	EXPECT_EQ(state.lastAppliedTick, 10U);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesHellfireFireballBlockAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-fireball-hellfire-block.json");
