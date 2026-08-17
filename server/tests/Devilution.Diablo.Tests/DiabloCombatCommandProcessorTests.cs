@@ -11446,6 +11446,45 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void AcidPuddleBreaksABlockingObjectWithoutEndingThePuddle()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            1,
+            breakable: true);
+        var puddle = new AuthoritativeProjectile(
+            100,
+            9,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            AuthoritativeDamageType.Acid,
+            0,
+            10U,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.AcidPuddle,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [puddle]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, []);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Equal(9U, puddle.RemainingTicks);
+        Assert.Contains(puddle, world.Projectiles.Values);
+    }
+
+    [Fact]
     public void AcidAiDefersItsProjectileOutsideTheNativeHalfRateAvoidanceBand()
     {
         var monster = new AuthoritativeCombatTarget(

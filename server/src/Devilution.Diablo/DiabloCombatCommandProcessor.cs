@@ -10214,6 +10214,13 @@ public sealed class DiabloCombatCommandProcessor
                 events);
         }
 
+        // Native CheckMissileCol still breaks a breakable blocker even though
+        // the persistent puddle restores its duration after the collision.
+        BreakMissileBlockingObject(
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.PositionY);
+
         if (projectile.RemainingTicks == 0) {
             projectile.Phase = AuthoritativeProjectilePhase.Impact;
             var impactLifetime = 2;
