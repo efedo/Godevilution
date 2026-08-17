@@ -158,6 +158,10 @@ Status date: 2026-08-16
 - MonsterArrow impacts now consume mapped `projectile_damage` after the native
   ranged hit roll, while older mappings retain native damage derivation.
 
+- Validated `MonsterArrow` mappings now admit a clear native `AiRanged` lane at
+  adjacent distance, preserving the native arrow attack instead of producing a
+  no-op; mapped ranged-only monsters still suppress adjacent melee fallback.
+
 - Mega post-action delays are now validated `InfernoController` missile
   fields (`mega_delay_base` and `mega_delay_random_range`), retaining
   native-compatible fallback behavior for older packs.

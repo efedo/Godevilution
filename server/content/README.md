@@ -618,8 +618,9 @@ impact path and applies the target's matching resistance; optional
 while omitted values retain native damage derivation. Omitted `damage_type`
 values retain the native physical arrow behavior. Mapped arrow rows also keep
 ranged-only monsters from falling through to adjacent melee when the content label
-monsters from falling through to adjacent melee when the content label is
-changed.
+is changed. They also retain native `AiRanged` arrow admission at adjacent
+distance when the missile lane is clear; the server does not replace that
+close-range shot with melee or silently discard the tick.
 The shipped `Acid` and `AcidUnique` mappings also carry the native speed-16
 projectile transport explicitly; older rows retain the compatibility speed
 fallback while their validated lifetime and puddle terms remain authoritative.

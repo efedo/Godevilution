@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
   including both stationary layers, monster-level magic damage, and the native
   post-attack delay.
 
+- Preserve native `AiRanged` adjacent arrow admission for validated
+  `MonsterArrow` mappings, preventing a clear close-range shot from becoming a
+  no-op or falling through to melee.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

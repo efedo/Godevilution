@@ -789,6 +789,11 @@ boundary: the server emits both stationary Flash layers with
 `2 * monster_level` magic damage and retains Counselor's post-attack delay,
 so the authoritative path no longer falls through to generic melee.
 
+Validated MonsterArrow mappings also preserve native `AiRanged` admission when
+the player is adjacent and the missile lane is clear. The server emits the
+authoritative arrow impact while retaining the mapped-arrow suppression of
+adjacent melee fallback.
+
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.
