@@ -757,6 +757,8 @@ public sealed class DiabloWorldCommandProcessor
                 quest.Variable1 = Math.Max(quest.Variable1, effect.EffectAmount);
                 break;
             case AuthoritativeItemQuestEffectKind.CompleteQuest:
+                if (!quest.Active)
+                    continue;
                 quest.Progress = quest.RequiredProgress;
                 quest.Completed = true;
                 quest.Active = false;

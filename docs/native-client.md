@@ -139,6 +139,8 @@ Rock now activates its content-defined quest transition as part of the accepted
 `PickupWorldItemRequested` command; the native client presents the returned
 quest and inventory snapshot.
 The Anvil of Fury follows the same server-owned pickup boundary.
+Optic Amulet and Arkaine's Valor pickups likewise return server-owned quest
+completion state only when their native quest is active.
 
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the

@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   Connected authoritative pickup now activates and logs the Anvil quest through
   server-owned state while legacy pickup remains compatible.
 
+- Externalize Hellfire Optic Amulet and Arkaine's Valor pickup completion as
+  validated item-to-quest effects. The server completes only an already-active
+  quest, matching the native quest-item boundary.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

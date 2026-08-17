@@ -103,6 +103,10 @@ Status date: 2026-08-17
   transition catalog. The authoritative pickup path activates and logs quest
   3011; legacy native pickup remains compatible.
 
+- Hellfire Optic Amulet and Arkaine's Valor pickup now complete their active
+  content-defined quests through the same catalog (quests 3009 and 3012).
+  Inactive quests retain the native no-completion behavior.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

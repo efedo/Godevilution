@@ -1389,7 +1389,10 @@ Bomb completion objects consume the normalized bomb through
 `OperateObjectRequested`, and the town-to-Nest warp remains gated by Farmer's
 Orchard completion. It also maps Magic Rock pickup to the existing validated
 item-to-quest transition hook, along with Anvil of Fury pickup activating the
-Anvil quest; all changes use the existing 1.324 table schema.
+Anvil quest. Optic Amulet and Arkaine's Valor rows complete their active
+quests; all changes use the existing 1.324 table schema. CompleteQuest effects
+are ignored while the referenced quest is inactive, preserving the native
+pickup precondition.
 
 Schema 1.301 adds optional `counselor_move_chance_percent` to
 `monster_types.tsv`. Shipped Counselor-family rows carry the native 30-percent

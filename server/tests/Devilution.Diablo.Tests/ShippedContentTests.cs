@@ -1446,7 +1446,7 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             composed.GetRequiredTable("item_quest_effects.tsv").ToCanonicalTsv());
         itemQuestEffects.ValidateItems(items);
-        Assert.Equal(3, itemQuestEffects.Definitions.Count);
+        Assert.Equal(5, itemQuestEffects.Definitions.Count);
         var mapEffect = Assert.Single(
             itemQuestEffects.Definitions,
             effect => effect.ItemId == 43);
@@ -1463,6 +1463,14 @@ public sealed class ShippedContentTests
             rockEffect.QuestId,
             rockEffect.EffectKind,
             rockEffect.EffectAmount));
+        var opticAmuletEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 114);
+        Assert.Equal((114U, 3009U, AuthoritativeItemQuestEffectKind.CompleteQuest, 0), (
+            opticAmuletEffect.ItemId,
+            opticAmuletEffect.QuestId,
+            opticAmuletEffect.EffectKind,
+            opticAmuletEffect.EffectAmount));
         var anvilEffect = Assert.Single(
             itemQuestEffects.Definitions,
             effect => effect.ItemId == 2138);
@@ -1471,6 +1479,14 @@ public sealed class ShippedContentTests
             anvilEffect.QuestId,
             anvilEffect.EffectKind,
             anvilEffect.EffectAmount));
+        var valorEffect = Assert.Single(
+            itemQuestEffects.Definitions,
+            effect => effect.ItemId == 118);
+        Assert.Equal((118U, 3012U, AuthoritativeItemQuestEffectKind.CompleteQuest, 0), (
+            valorEffect.ItemId,
+            valorEffect.QuestId,
+            valorEffect.EffectKind,
+            valorEffect.EffectAmount));
         Assert.Equal(2, combat.MonsterRegenerationLevelDivisor);
         Assert.Equal((2, 5, 95), (
             combat.PlayerMagicHitCharacterLevelScale,
@@ -1552,7 +1568,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(15, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(16, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

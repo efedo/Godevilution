@@ -224,6 +224,97 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
     }
 
     [Fact]
+    public void OpticAmuletPickupCompletesActiveQuest()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(114, 12)]);
+        var effects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                114,
+                3009,
+                AuthoritativeItemQuestEffectKind.CompleteQuest,
+                0),
+        ]);
+        var quest = new AuthoritativeQuestState(3009, 8, 1, active: true);
+        var item = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            99,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 114,
+                ItemIndex = 12,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [item], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            itemQuestEffects: effects);
+        var player = CreatePlayer();
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            7,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(1U, quest.Progress);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
+    public void QuestCompletionItemDoesNotCompleteInactiveQuest()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(114, 12)]);
+        var effects = new AuthoritativeItemQuestEffectCatalog([
+            new AuthoritativeItemQuestEffectDefinition(
+                114,
+                3009,
+                AuthoritativeItemQuestEffectKind.CompleteQuest,
+                0),
+        ]);
+        var quest = new AuthoritativeQuestState(3009, 8, 1, active: false);
+        var item = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            99,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 114,
+                ItemIndex = 12,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [item], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            itemQuestEffects: effects);
+        var player = CreatePlayer();
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(20),
+            7,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.False(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(0U, quest.Progress);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
     public void GraveObjectConsumesCathedralMapAndCompletesQuest()
     {
         var items = new AuthoritativeItemCatalog([CreateItem(43, 22)]);
