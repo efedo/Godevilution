@@ -5572,22 +5572,34 @@ bool ExecuteReplayFixture(
 				continue;
 			bool accepted = false;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move") {
-					error = "Secondary replay participant currently supports Move commands only.";
+				if (command.kind != "Move" && command.kind != "Attack") {
+					error = "Secondary replay participant currently supports Move and Attack commands only.";
 					return false;
 				}
-				const int32_t targetX = state.secondaryPlayerPositionX + command.directionX;
-				const int32_t targetY = state.secondaryPlayerPositionY + command.directionY;
-				const bool occupiedByPrimary = targetX == state.positionX
-				    && targetY == state.positionY
-				    && state.life > 0
-				    && state.levelId == state.secondaryPlayerLevelId;
-				if ((command.directionX != 0 || command.directionY != 0)
-				    && targetX >= 0 && targetX < 40
-				    && targetY >= 0 && targetY < 40
-				    && !occupiedByPrimary) {
-					state.secondaryPlayerPositionX = targetX;
-					state.secondaryPlayerPositionY = targetY;
+				if (command.kind == "Move") {
+					const int32_t targetX = state.secondaryPlayerPositionX + command.directionX;
+					const int32_t targetY = state.secondaryPlayerPositionY + command.directionY;
+					const bool occupiedByPrimary = targetX == state.positionX
+					    && targetY == state.positionY
+					    && state.life > 0
+					    && state.levelId == state.secondaryPlayerLevelId;
+					if ((command.directionX != 0 || command.directionY != 0)
+					    && targetX >= 0 && targetX < 40
+					    && targetY >= 0 && targetY < 40
+					    && !occupiedByPrimary) {
+						state.secondaryPlayerPositionX = targetX;
+						state.secondaryPlayerPositionY = targetY;
+						accepted = true;
+					}
+				} else if (command.targetEntityId == state.combatTargetEntityId
+				    && state.combatTargetHitPointsQ6 > 0
+				    && state.combatTargetLevelId == state.secondaryPlayerLevelId
+				    && std::max(
+					       std::abs(state.secondaryPlayerPositionX - state.combatTargetPositionX),
+					       std::abs(state.secondaryPlayerPositionY - state.combatTargetPositionY)) <= 1) {
+					const int32_t damage = std::max(1, 10 - state.combatTargetArmorClass);
+					state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damage * 64);
+					state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 					accepted = true;
 				}
 			} else if (command.kind == "OpenStore") {
@@ -5937,7 +5949,9 @@ bool ExecuteReplayFixture(
 						break;
 					}
 				}
-			} else if (accepted && command.kind == "Attack") {
+			} else if (accepted
+			    && command.kind == "Attack"
+			    && (command.player.empty() || command.player == fixture.initialState.player)) {
 				state.facingDirection = static_cast<uint32_t>(GetDirection(
 				    state.positionX,
 				    state.positionY,

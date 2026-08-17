@@ -1473,6 +1473,54 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMultiplayerSecondaryAttackMatchesNativeParticipantHash()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-multiplayer-secondary-attack.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            attackDamage: fixture.InitialState.CombatTargetAttackDamage,
+            aggroRange: fixture.InitialState.CombatTargetAggroRange,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(10, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(640, Assert.Single(result.FinalSnapshot.Monsters).HitPointsQ6);
+        Assert.Equal([1U, 8U], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayStatusExpiryFixtureAdvancesEffectsByAuthoritativeTick()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "gameplay-status-expiry.json");
@@ -1620,13 +1668,13 @@ public sealed class ReplayFixtureTests
             "Fixtures",
             "gameplay-multiplayer-autonomous-tick.json");
         var json = File.ReadAllText(path)
-            .Replace("\"kind\": \"Move\"", "\"kind\": \"Attack\"", StringComparison.Ordinal);
+            .Replace("\"kind\": \"Move\"", "\"kind\": \"OpenStore\"", StringComparison.Ordinal);
 
         var exception = Assert.Throws<InvalidDataException>(
             () => ReplayFixtureLoader.Load(json));
 
         Assert.Equal(
-            "Secondary replay participant currently supports Move commands only.",
+            "Secondary replay participant currently supports Move and Attack commands only.",
             exception.Message);
     }
 

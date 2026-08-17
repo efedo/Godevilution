@@ -72,6 +72,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-quest-selection.json" Link="Fixtures/gameplay-quest-selection.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-autonomous-regen-soak.json" Link="Fixtures/gameplay-autonomous-regen-soak.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json" Link="Fixtures/gameplay-multiplayer-autonomous-tick.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-attack.json" Link="Fixtures/gameplay-multiplayer-secondary-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-status-expiry.json" Link="Fixtures/gameplay-status-expiry.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multi-level-occupancy.json" Link="Fixtures/gameplay-multi-level-occupancy.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../protocol/test-vectors/command-delivery-retry.json" Link="Vectors/command-delivery-retry.json" CopyToOutputDirectory="PreserveNewest" />
