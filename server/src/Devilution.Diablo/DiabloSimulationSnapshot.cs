@@ -359,6 +359,12 @@ public sealed record DiabloProjectileState(
     public bool DoppelgangerProc { get; init; }
 
     public uint ActivationDelayTicks { get; init; }
+
+    /** Dynamic monster-arrow minimum damage rolled at impact; zero means fixed payload. */
+    public int DamageMinimum { get; init; }
+
+    /** Dynamic monster-arrow maximum damage rolled at impact; zero means fixed payload. */
+    public int DamageMaximum { get; init; }
 }
 
 /** Remaining stock for the store visible to the projected player. */
@@ -637,6 +643,8 @@ public sealed partial class DiabloSimulation
                     PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                     DoppelgangerProc = projectile.DoppelgangerProc,
                     ActivationDelayTicks = projectile.ActivationDelayTicks,
+                    DamageMinimum = projectile.DamageMinimum,
+                    DamageMaximum = projectile.DamageMaximum,
                 })
                 .ToArray(),
             activeStore) {
@@ -898,6 +906,14 @@ public sealed partial class DiabloSimulation
                     && !isMonsterArrow)
                 || projectile.RemainingTicks == 0
                 || projectile.Damage < 0
+                || projectile.DamageMinimum < 0
+                || projectile.DamageMaximum < 0
+                || (projectile.DamageMinimum == 0
+                    ? projectile.DamageMaximum != 0
+                    : projectile.DamageMaximum < projectile.DamageMinimum)
+                || (projectile.Behavior != AuthoritativeProjectileBehavior.MonsterArrow
+                    && (projectile.DamageMinimum != 0
+                        || projectile.DamageMaximum != 0))
                 || projectile.DamageQ6 < 0
                 || projectile.ElementalFireDamage < 0
                 || projectile.ElementalLightningDamage < 0
@@ -926,6 +942,8 @@ public sealed partial class DiabloSimulation
                         || projectile.ImpactLifetime != 1
                         || projectile.ResistantDamageDivisor != 1
                         || projectile.EffectiveSpellLevel != 0
+                        || projectile.DamageMinimum != 0
+                        || projectile.DamageMaximum != 0
                         || projectile.LastCollisionTargetEntityId != 0
                         || projectile.WallLeftX != 0
                         || projectile.WallLeftY != 0
@@ -1401,6 +1419,8 @@ public sealed partial class DiabloSimulation
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
+                DamageMinimum = projectile.DamageMinimum,
+                DamageMaximum = projectile.DamageMaximum,
             };
         }).ToArray();
         if (restoredProjectiles

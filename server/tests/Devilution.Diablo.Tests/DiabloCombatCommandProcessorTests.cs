@@ -6351,8 +6351,10 @@ public sealed class DiabloCombatCommandProcessorTests
             nativeAi: "SkeletonRanged",
             intelligence: 3);
         var world = new DiabloWorldState(combatTargets: [monster]);
+        var random = new DiabloRandom(0);
         var processor = CreateProcessor(
             world,
+            random: random,
             monsterMissiles: CreateArrowMissileCatalog(
                 "SkeletonRanged",
                 projectileSpeed: 3,
@@ -6373,17 +6375,21 @@ public sealed class DiabloCombatCommandProcessorTests
         var arrow = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
         Assert.Equal(2, arrow.Damage);
+        Assert.Equal((2, 9), (arrow.DamageMinimum, arrow.DamageMaximum));
         Assert.Equal(3, arrow.Speed);
         Assert.Equal(8U, arrow.RemainingTicks);
+        Assert.Equal(0U, random.State);
+        var expectedImpactDamage = new DiabloRandom(random.State)
+            .RandomIntBetween(arrow.DamageMinimum, arrow.DamageMaximum);
 
         for (ulong tick = 15; tick < 32 && world.Projectiles.Count != 0; tick++)
             deliveries = deliveries.Concat(processor.AdvanceTick(tick, [player])).ToList();
 
         Assert.Empty(world.Projectiles);
-        Assert.Equal(98, player.Life);
+        Assert.Equal(100 - expectedImpactDamage, player.Life);
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(2, damage.Amount);
+        Assert.Equal(expectedImpactDamage, damage.Amount);
     }
 
     [Fact]

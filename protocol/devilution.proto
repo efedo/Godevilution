@@ -735,6 +735,9 @@ message ProjectileSnapshot {
 	uint32 activation_delay_ticks = 52;
 	// Server-owned presentation family; zero preserves behavior-based fallback.
 	ProjectilePresentationKind presentation_kind = 53;
+	// Dynamic monster-arrow damage range rolled when the arrow impacts.
+	optional int32 damage_minimum = 54;
+	optional int32 damage_maximum = 55;
 }
 
 enum ProjectilePresentationKind {

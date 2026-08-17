@@ -315,6 +315,8 @@ public sealed class DiabloSimulationTests
                     Speed = 1,
                     ImpactLifetime = 1,
                     ResistantDamageDivisor = 1,
+                    DamageMinimum = 2,
+                    DamageMaximum = 9,
                 }],
             });
 
@@ -331,6 +333,7 @@ public sealed class DiabloSimulationTests
             projectile.SourceEntityId,
             projectile.TargetEntityId,
             projectile.Speed));
+        Assert.Equal((2, 9), (projectile.DamageMinimum, projectile.DamageMaximum));
     }
 
     [Fact]

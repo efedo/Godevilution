@@ -631,6 +631,8 @@ public static class SnapshotStateHasher
                 if (projectile.Behavior == MonsterArrowBehavior) {
                     hasher.AppendString("godevilution-projectile-monster-arrow-v1");
                     hasher.AppendInt32(projectile.Damage);
+                    hasher.AppendInt32(projectile.DamageMinimum);
+                    hasher.AppendInt32(projectile.DamageMaximum);
                     hasher.AppendUInt32(projectile.SourceEntityId);
                     hasher.AppendUInt32(projectile.TargetEntityId);
                 }

@@ -232,6 +232,8 @@ internal static class DiabloProtocolMapper
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
+                DamageMinimum = projectile.DamageMinimum,
+                DamageMaximum = projectile.DamageMaximum,
                 PresentationKind = ResolveProjectilePresentationKind(
                     projectile.Behavior,
                     projectile.Phase),
@@ -638,6 +640,8 @@ internal static class DiabloProtocolMapper
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
+                DamageMinimum = projectile.DamageMinimum,
+                DamageMaximum = projectile.DamageMaximum,
             }).ToArray(),
             activeStore) {
             RandomState = source.RandomState,

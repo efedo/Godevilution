@@ -64,6 +64,12 @@ public sealed class AuthoritativeProjectile
     /** Exact physical attack damage in native Q6 units for weapon arrows. */
     public int DamageQ6 { get; init; }
 
+    /** Dynamic monster-arrow minimum damage rolled at impact; zero means fixed payload. */
+    public int DamageMinimum { get; init; }
+
+    /** Dynamic monster-arrow maximum damage rolled at impact; zero means fixed payload. */
+    public int DamageMaximum { get; init; }
+
     /** Elemental channels captured when a weapon arrow is fired. */
     public int ElementalFireDamage { get; init; }
 

@@ -8349,8 +8349,10 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
-        var baseDamage = missile?.ProjectileDamage > 0
-            ? missile.ProjectileDamage
+        var hasConfiguredDamage = missile is not null
+            && missile.ProjectileDamage > 0;
+        var baseDamage = hasConfiguredDamage
+            ? missile!.ProjectileDamage
             : SelectEffectiveMonsterDamage(
                 monster,
                 special: false,
@@ -8398,6 +8400,12 @@ public sealed class DiabloCombatCommandProcessor
             Speed = projectileSpeed,
             ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
             ResistantDamageDivisor = 1,
+            DamageMinimum = hasConfiguredDamage
+                ? 0
+                : GetEffectiveMonsterDamageRange(monster, special: false).Minimum,
+            DamageMaximum = hasConfiguredDamage
+                ? 0
+                : GetEffectiveMonsterDamageRange(monster, special: false).Maximum,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
         return true;
@@ -9525,6 +9533,14 @@ public sealed class DiabloCombatCommandProcessor
         var targetClass = GetPlayerClass(target);
         var resistance = GetPlayerResistance(target, targetClass, projectile.DamageType);
         var damage = projectile.Damage;
+        if (damage > 0 && projectile.DamageMinimum > 0) {
+            // Native ProcessArrow supplies the monster range to PlayerMHit,
+            // which rolls physical damage when the arrow collides rather than
+            // when the AI admits the shot.
+            damage = random.RandomIntBetween(
+                projectile.DamageMinimum,
+                projectile.DamageMaximum);
+        }
         if (resistance > 0)
             damage -= damage * resistance / 100;
         var damageResult = playerDamage.Apply(target, Math.Max(0, damage));
