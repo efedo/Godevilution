@@ -1459,6 +1459,98 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void CathedralMapObjectInteractionConsumesServerOwnedMapAndCompletesQuest()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                43,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 22,
+                Name = "Cathedral Map",
+                IdentifiedName = "Cathedral Map",
+            },
+            new AuthoritativeItemDefinition(
+                24,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+                Name = "Ear",
+                IdentifiedName = "Ear",
+            },
+        ]);
+        var map = new OwnedStoreItem(
+            0,
+            0,
+            99,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 43,
+                ItemIndex = 22,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var quest = new AuthoritativeQuestState(
+            3017,
+            17,
+            1,
+            active: true,
+            logged: true,
+            completionVariable1: 7,
+            completionVariable2: 3,
+            completionActivateQuestId: 3018);
+        var followOnQuest = new AuthoritativeQuestState(3018, 17, 1, active: false);
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingInventory: [map],
+            startingItems: items,
+            startingObjects: [new AuthoritativeWorldObject(
+                40,
+                6004,
+                0,
+                1,
+                0,
+                questId: 3017,
+                effectKind: AuthoritativeObjectEffectKind.QuestItemCompletion,
+                effectAmount: 43)],
+            startingQuests: [quest, followOnQuest]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = 40 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Empty(executor.GetPlayerState("player-a").Inventory);
+        Assert.True(executor.CreateSnapshot("player-a", 7, 1).Objects.Single().Activated);
+        var snapshotQuests = executor.CreateSnapshot("player-a", 7, 1).Quests;
+        Assert.True(snapshotQuests.Single(quest => quest.QuestId == 3017).Completed);
+    }
+
+    [Fact]
     public void TrapDisarmProtocolIntentClearsServerOwnedArmedObject()
     {
         var executor = new StoreSimulationExecutor(

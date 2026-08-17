@@ -87,6 +87,10 @@ Status date: 2026-08-17
   atomic source consumption. Remaining miscellaneous cursor actions are still
   explicit follow-up seams.
 
+- Connected native Cathedral Map use now submits the projected grave object
+  through `OperateObjectRequested`; the server validates adjacency, quest state,
+  and the stable map definition before consuming it.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

@@ -123,6 +123,11 @@ consuming the source item. The oil cursor is presentation-only and remains
 armed when the server rejects a target. Other cursor-driven miscellaneous
 items remain local follow-up seams until their content actions are externalized.
 
+The Hellfire Cathedral Map is also server-backed: when its native adjacent-grave
+condition is met, the connected client submits the projected grave object through
+`OperateObjectRequested`. The server owns the quest-item completion and map
+consumption; the native client only presents the resulting snapshot.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

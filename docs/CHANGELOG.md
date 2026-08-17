@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   Elixir now carries its native three-point magnitude in content, while legacy
   states retain the compatible fallback.
 
+- Route connected native Cathedral Map use through the authoritative grave
+  object. The server now validates the projected object and consumes the map
+  through the existing quest-item completion path instead of local quest state.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed
