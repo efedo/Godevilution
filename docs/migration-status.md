@@ -64,6 +64,11 @@ Status date: 2026-08-16
   that direction into the summoned monster instead of deriving either value
   from the victim.
 
+- MonsterArrow projectiles now retain dynamic monster damage bounds through
+  the authoritative snapshot, save, protocol, and hash boundaries and roll
+  physical damage at impact, while fixed `projectile_damage` mappings remain
+  unchanged.
+
 - Snake adjacent and distant delay bands are now validated `SnakeCharge`
   missile fields, preserving native intelligence reduction and deterministic
   zero-clamped timing while retaining fallback behavior for older packs.

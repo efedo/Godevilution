@@ -26,6 +26,10 @@ All notable changes to this fork are documented below.
   protocol projection, and canonical hashing; Hork Spawn now uses the monster
   direction for its admission cell and summoned-monster facing.
 
+- Roll dynamic MonsterArrow physical damage at impact from the authoritative
+  monster range, retaining fixed `projectile_damage` overrides and resumable
+  range state through snapshots and saves.
+
 - Preserve native per-impact monster Fireball damage rolls for mapped direct
   and splash collisions, while retaining fixed `projectile_damage` overrides.
 

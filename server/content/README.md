@@ -632,7 +632,9 @@ present, and omitted values retain the native speed-one and distance-based
 lifetime fallbacks. The optional validated `damage_type` is carried into the
 impact path and applies the target's matching resistance; optional
 `projectile_damage` supplies a fixed impact value after ranged hit admission,
-while omitted values retain native damage derivation. Omitted `damage_type`
+while omitted values retain native damage derivation; omitted values now carry
+the monster's dynamic min/max range to impact so the physical roll occurs at
+collision time. Omitted `damage_type`
 values retain the native physical arrow behavior. Mapped arrow rows also keep
 ranged-only monsters from falling through to adjacent melee when the content label
 is changed. They also retain native `AiRanged` arrow admission at adjacent
