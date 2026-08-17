@@ -342,6 +342,12 @@ admission fails. It is server-owned, validated, persisted by version-1 saves,
 and included in the canonical hash; older peers may omit it and clients never
 execute HorkDemonAi policy.
 
+Optional `MonsterSnapshot.direction` field 84 carries the native monster
+direction (zero through seven). The server updates it from committed movement
+and uses it for direction-sensitive native behavior such as Hork Spawn's
+adjacent admission and summoned-monster facing; it is persisted and included
+in the canonical hash, while clients only render the resulting state.
+
 Optional `MonsterSnapshot.ranged_avoidance_delay_ticks` field 78 carries the
 remaining native `AiRangedAvoidance` no-action `AiDelay` countdown. It is
 server-owned, validated, persisted by version-1 saves, and included in the

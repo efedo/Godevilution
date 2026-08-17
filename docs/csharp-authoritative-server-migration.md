@@ -115,6 +115,12 @@ Gameplay-visible legacy behavior is preserved through fixed-point conventions,
 integer truncation, deterministic ordering, legacy-compatible random streams,
 stable IDs, shared replay fixtures, and canonical state hashes.
 
+Monster direction is server-owned state rather than a presentation hint. It is
+updated when movement commits, persisted through snapshots and saves, projected
+through the versioned protocol, and included in canonical hashing. Hork Spawn
+uses that direction for its native adjacent admission and carries it into the
+summoned monster while retaining a victim-directed projectile trajectory.
+
 Protobuf changes are additive within `devilution.protocol.v1`. Existing field
 numbers and meanings are immutable. Breaking changes require a new package and
 schema version.

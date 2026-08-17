@@ -58,6 +58,12 @@ Status date: 2026-08-16
   fields (`hork_demon_delay_base` and `hork_demon_delay_random_range`), with
   native-compatible fallback behavior for older packs.
 
+- Native monster direction is now authoritative state carried through internal
+  snapshots, the versioned protocol, saves, and canonical hashing. Hork Spawn
+  uses the monster's current direction for its adjacent admission and carries
+  that direction into the summoned monster instead of deriving either value
+  from the victim.
+
 - Snake adjacent and distant delay bands are now validated `SnakeCharge`
   missile fields, preserving native intelligence reduction and deterministic
   zero-clamped timing while retaining fallback behavior for older packs.

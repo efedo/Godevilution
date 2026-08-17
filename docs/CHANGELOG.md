@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
   Firebolt/MonsterMagic damage from the monster range at missile launch, while
   retaining fixed payload overrides and Fireball's per-impact roll.
 
+- Preserve native monster direction through authoritative snapshots, saves,
+  protocol projection, and canonical hashing; Hork Spawn now uses the monster
+  direction for its admission cell and summoned-monster facing.
+
 - Preserve native per-impact monster Fireball damage rolls for mapped direct
   and splash collisions, while retaining fixed `projectile_damage` overrides.
 
