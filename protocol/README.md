@@ -220,10 +220,12 @@ Windows toolchain command.
   changes an effective maximum, the tagged
   `godevilution-player-resource-base-v1` hash extension carries both values;
   equal base/effective maxima preserve legacy hashes.
-- `QuestSnapshot` fields 9-12 carry optional native quest synchronization values:
-  `_qvar1`, `_qvar2`, `_qmsg`, and a validated monster identity whose defeat
-  advances the quest. Zero values are additive defaults and preserve legacy
-  hashes and peer compatibility.
+- `QuestSnapshot` fields 9-14 carry optional native quest synchronization values:
+  `_qvar1`, `_qvar2`, `_qmsg`, a validated monster identity and unique identity
+  whose defeat advances the quest, plus an optional content-owned towner identity
+  for turn-in routing. The towner field is proto3-optional, so older snapshots
+  omit it and retain legacy behavior; when present it is a validated native
+  towner ordinal and participates in the canonical state hash.
 - `ItemStateSnapshot.base_name`, `identified_name`, and optional
   `native_cursor_graphic` fields 59-61 carry runtime-authored presentation for
   dynamic items such as PvP ears. A dynamic identity is complete only when

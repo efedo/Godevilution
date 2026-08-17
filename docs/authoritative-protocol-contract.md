@@ -177,6 +177,13 @@ it does not carry localized text or mutable quest state. Events are not a second
 source of truth. A reconnect or dropped event cannot invalidate the next
 snapshot.
 
+`QuestSnapshot` fields 9-13 preserve native quest variables and completion
+identities. Optional proto3 field 14, `turn_in_towner_id`, carries the validated
+content-owned towner ordinal for active quest turn-ins. Its absence is preserved
+for older peers and means the native client keeps its legacy local interaction;
+when present, the ordinal is included in the canonical state hash and lets the
+client route the quest without a hardcoded quest/towner pairing.
+
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are
 sorted before hashing. Presentation-only and localized values are excluded.

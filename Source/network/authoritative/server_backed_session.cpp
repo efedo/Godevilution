@@ -229,6 +229,24 @@ bool ServerBackedSession::HasActiveQuest(uint32_t questId) const noexcept
 	});
 }
 
+std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t townerId) const noexcept
+{
+	std::optional<uint32_t> result;
+	for (const auto &quest : questStates_) {
+		if (!quest.has_turn_in_towner_id()
+		    || quest.turn_in_towner_id() < 0
+		    || static_cast<uint32_t>(quest.turn_in_towner_id()) != townerId
+		    || quest.initial()
+		    || quest.completed()
+		    || quest.unavailable()) {
+			continue;
+		}
+		if (!result.has_value() || quest.quest_id() < *result)
+			result = quest.quest_id();
+	}
+	return result;
+}
+
 tl::expected<void, std::string> ServerBackedSession::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeSetFriendlyModeCommand(friendlyMode, requestedTick), nowMs);

@@ -535,6 +535,10 @@ public static class SnapshotStateHasher
                         hasher.AppendString(quest.CompletionUniqueIdentity);
                     }
                 }
+                if (quest.HasTurnInTownerId) {
+                    hasher.AppendString("godevilution-quest-turn-in-towner-v1");
+                    hasher.AppendInt32(quest.TurnInTownerId);
+                }
             }
         }
 

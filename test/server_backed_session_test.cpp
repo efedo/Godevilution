@@ -45,6 +45,15 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		WriteEnvelope(socket, serverHello);
 		protocol::Envelope initial;
 		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *activeQuest = initial.mutable_snapshot()->add_quests();
+		activeQuest->set_quest_id(3011);
+		activeQuest->set_required_progress(1);
+		activeQuest->set_turn_in_towner_id(0);
+		auto *completedQuest = initial.mutable_snapshot()->add_quests();
+		completedQuest->set_quest_id(3002);
+		completedQuest->set_required_progress(1);
+		completedQuest->set_completed(true);
+		completedQuest->set_turn_in_towner_id(0);
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -84,6 +93,8 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	};
 	auto session = ServerBackedSession::Connect(configuration);
 	ASSERT_TRUE(session.has_value()) << session.error();
+	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
+	EXPECT_FALSE((*session)->ActiveQuestForTowner(1).has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);
 	ASSERT_TRUE(open.has_value()) << open.error();
 	EXPECT_EQ((*session)->EntityId(), 7U);

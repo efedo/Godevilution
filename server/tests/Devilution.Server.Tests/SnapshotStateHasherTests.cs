@@ -1587,6 +1587,23 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ContentOwnedQuestTurnInTownerChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Quests = {
+                new QuestSnapshot { QuestId = 3011, RequiredProgress = 1 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Quests[0].TurnInTownerId = 0;
+
+        Assert.True(changed.Quests[0].HasTurnInTownerId);
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void ObjectQuestProgressAmountChangesTheHash()
     {
         var baseline = new Snapshot {

@@ -565,6 +565,13 @@ bool ServerBackedRuntime::HasActiveQuest(uint32_t questId) const noexcept
 	return session_ != nullptr && session_->HasActiveQuest(questId);
 }
 
+std::optional<uint32_t> ServerBackedRuntime::ActiveQuestForTowner(uint32_t townerId) const noexcept
+{
+	return session_ == nullptr
+	    ? std::nullopt
+	    : session_->ActiveQuestForTowner(townerId);
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)
 {
 	if (!session_)

@@ -724,6 +724,8 @@ message QuestSnapshot {
 	uint32 completion_monster_id = 12;
 	// Optional native unique-monster identity whose defeat advances this quest.
 	string completion_unique_identity = 13;
+	// Optional content-owned towner identity that accepts this quest's turn-in.
+	optional int32 turn_in_towner_id = 14;
 }
 
 message ProjectileSnapshot {

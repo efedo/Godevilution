@@ -164,7 +164,7 @@ internal static class DiabloProtocolMapper
             });
         }
         foreach (var quest in source.Quests) {
-            snapshot.Quests.Add(new QuestSnapshot {
+            var projectedQuest = new QuestSnapshot {
                 QuestId = quest.QuestId,
                 LevelId = quest.LevelId,
                 Progress = quest.Progress,
@@ -178,7 +178,10 @@ internal static class DiabloProtocolMapper
                 MessageId = quest.MessageId,
                 CompletionMonsterId = quest.CompletionMonsterId,
                 CompletionUniqueIdentity = quest.CompletionUniqueIdentity,
-            });
+            };
+            if (quest.TurnInTownerId >= 0)
+                projectedQuest.TurnInTownerId = quest.TurnInTownerId;
+            snapshot.Quests.Add(projectedQuest);
         }
         foreach (var projectile in source.Projectiles) {
             snapshot.Projectiles.Add(new ProjectileSnapshot {
@@ -585,7 +588,8 @@ internal static class DiabloProtocolMapper
                 quest.Variable2,
                 quest.MessageId,
                 quest.CompletionMonsterId,
-                quest.CompletionUniqueIdentity)).ToArray(),
+                quest.CompletionUniqueIdentity,
+                quest.HasTurnInTownerId ? quest.TurnInTownerId : -1)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

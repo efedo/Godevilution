@@ -266,7 +266,8 @@ public sealed record DiabloQuestState(
     int Variable2 = 0,
     int MessageId = 0,
     uint CompletionMonsterId = 0,
-    string CompletionUniqueIdentity = "");
+    string CompletionUniqueIdentity = "",
+    int TurnInTownerId = -1);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -589,7 +590,8 @@ public sealed partial class DiabloSimulation
                     quest.Variable2,
                     quest.MessageId,
                     quest.CompletionMonsterId,
-                    quest.CompletionUniqueIdentity))
+                    quest.CompletionUniqueIdentity,
+                    quest.TurnInTownerId))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1445,7 +1447,8 @@ public sealed partial class DiabloSimulation
                 || (quest.Unavailable && (quest.Completed || quest.Progress != 0))
                 || quest.Variable1 is < 0 or > byte.MaxValue
                 || quest.Variable2 is < 0 or > byte.MaxValue
-                || quest.MessageId is < 0 or > short.MaxValue) {
+                || quest.MessageId is < 0 or > short.MaxValue
+                || quest.TurnInTownerId is < -1 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -2003,7 +2006,8 @@ public sealed partial class DiabloSimulation
                     quest.Variable2,
                     quest.MessageId,
                     quest.CompletionMonsterId,
-                    quest.CompletionUniqueIdentity));
+                    quest.CompletionUniqueIdentity,
+                    turnInTownerId: quest.TurnInTownerId));
             }
         }
     }

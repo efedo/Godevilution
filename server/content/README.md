@@ -1395,7 +1395,10 @@ Schema 1.326 adds optional native towner turn-in columns to `quests.tsv` and
 position, required item, optional `_qvar2` gate, unique reward and reward
 position, and optional dialogue message. Activation validates the referenced
 item and unique catalogs; the server consumes the item, completes the quest,
-and spawns the reward through `TurnInQuestRequested`.
+and spawns the reward through `TurnInQuestRequested`. The authoritative
+protocol projects the accepting towner as optional
+`QuestSnapshot.turn_in_towner_id`, allowing native clients to route active
+turn-ins without hardcoded quest/towner pairs.
 
 The shipped Hellfire pack adds a content-owned Hive entrance projection: Rune
 Bomb completion objects consume the normalized bomb through

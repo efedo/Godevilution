@@ -11,7 +11,7 @@ Status date: 2026-08-17
 | Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, elixir (including Hellfire Spectral Elixir), and Blacksmith/Accuracy/Sharpness/Fortitude oil consumption, and authoritative inventory relocation, with stable item references carried by native and Godot clients; content-backed moves now enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, and all native automatic equipment, inventory, belt, potion, rejuvenation, elixir, and oil paths use stable server-owned intents | Expand remaining miscellaneous-item coverage, add broader live-client coverage, and continue exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice with content-owned quest item transitions and the first authoritative towner turn-in/reward path; the native authoritative client now submits the Hellfire Anvil turn-in and projects the server dialogue event | Expand AI, level generation, remaining quests, dialogs, towners, environmental behaviors, and multiplayer coverage |
 | Persistence | Server-owned snapshot saves with an explicit version-1 compatibility codec, validated saved-class reconstruction for cold sessions, live process-restart restoration of movement/class state through the shared protocol, and a durable save-root world seed that keeps generated geometry stable across restarts | Add concrete migrations when formats change and broader recovery/soak testing |
-| Native client | Explicit legacy or authoritative runtime mode; normal item-cursor inventory/belt placement uses stable-reference transfers, normal equipment drags carry the selected slot through atomic `AutoEquipItemRequested`, automatic inventory/equipment/belt relocation remains server-owned, and the Hellfire Anvil Blacksmith interaction submits `TurnInQuestRequested` with server dialogue projection | Continue removing compatibility-pool assumptions as Godot presentation matures |
+| Native client | Explicit legacy or authoritative runtime mode; normal item-cursor inventory/belt placement uses stable-reference transfers, normal equipment drags carry the selected slot through atomic `AutoEquipItemRequested`, automatic inventory/equipment/belt relocation remains server-owned, and content-declared towner turn-ins submit `TurnInQuestRequested` with server dialogue projection (first shipped by the Hellfire Anvil/Blacksmith path) | Continue removing compatibility-pool assumptions as Godot presentation matures |
 | Godot client | Complete for protocol-boundary demonstrations, including typed Monk Search, Rogue Trap Disarm, and Etherealize presentation, live Etherealize, Barbarian Rage, Monk Search, Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, a stable authoritative spell-source selector with server-owned memorized and item-backed spell display names, same-instance reconnect with bounded automatic retry, right-click authoritative monster and remote-player attack intent routing, behavior-driven cast-cursor remote-player targeting without client spell-ID tables, live entity-targeted monster, player attack, Firebolt, Heal Other, and Resurrection action coverage, server-owned stealth target presentation, authoritative player action indicators, and typed projectile presentation families | Production assets, broader prediction, menus, packaging, and complete play flow |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
 | Data runtime | Independent .NET 8 assembly with ordered overlays, schema identities, dependency-version constraints, strict TSV Boolean parsing, and transactional activation, depending only on Domain | Document future table extensions and broaden reload fixtures |
@@ -111,12 +111,14 @@ Status date: 2026-08-17
   QS_MUSHSPAWNED to QS_MUSHPICKED through the content-owned
   required_variable1 precondition; unexpected quest states remain unchanged.
 
-- The Hellfire Blacksmith Anvil turn-in is now content-owned. The server
+- Content-declared towner turn-ins are now generic. The server
   validates the towner, level, adjacency, native `_qvar2` conversation gate,
   and required Anvil item; it then consumes the item, completes quest 3011, and
-  spawns Griswold's Edge through `TurnInQuestRequested`. Legacy native behavior
+  spawns Griswold's Edge through `TurnInQuestRequested`. The first shipped
+  definition is the Hellfire Anvil/Blacksmith path. Legacy native behavior
   remains compatible outside authoritative mode; the connected native client
-  now submits the command and projects the returned dialogue event.
+  now selects the active quest from the content-declared towner metadata and
+  projects the returned dialogue event.
 
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its

@@ -35,10 +35,11 @@ public sealed class ContentAndGameplayModuleTests
             "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tactivated\n20\t4\t2\t3\t5\t0\n");
         var quests = AuthoritativeQuestCatalog.LoadTsv(
             "quests.tsv",
-            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\n30\t2\t3\t1\t0\n");
+            "quest_id\tlevel_id\trequired_progress\tprogress\tcompleted\tturn_in_towner_id\n30\t2\t3\t1\t0\t4\n");
 
         Assert.Equal(4U, Assert.Single(objects).ObjectId);
         Assert.Equal(1U, Assert.Single(quests).Progress);
+        Assert.Equal(4, quests[0].TurnInTownerId);
     }
 
     [Fact]

@@ -853,17 +853,19 @@ void TalkToTowner(Player &player, int t)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (&player == MyPlayer
-	    && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()
-	    && towner._ttype == TOWN_SMITH
-	    && authoritative::GetServerBackedRuntime().HasActiveQuest(3011)) {
-		if (auto result = authoritative::GetServerBackedRuntime().TurnInQuest(
-		        3011,
-		        static_cast<uint32_t>(TOWN_SMITH),
-		        0,
-		        SDL_GetTicks()); !result.has_value()) {
-			LogError("Failed to submit the authoritative Blacksmith quest turn-in: {}", result.error());
+	    && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		const auto questId = authoritative::GetServerBackedRuntime().ActiveQuestForTowner(
+		    static_cast<uint32_t>(towner._ttype));
+		if (questId.has_value()) {
+			if (auto result = authoritative::GetServerBackedRuntime().TurnInQuest(
+			        *questId,
+			        static_cast<uint32_t>(towner._ttype),
+			        0,
+			        SDL_GetTicks()); !result.has_value()) {
+				LogError("Failed to submit the authoritative quest turn-in: {}", result.error());
+			}
+			return;
 		}
-		return;
 	}
 #endif
 
