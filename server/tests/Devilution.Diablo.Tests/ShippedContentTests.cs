@@ -2036,6 +2036,20 @@ public sealed class ShippedContentTests
             anvilQuest.TurnInRewardItemLevel,
             anvilQuest.TurnInRewardPositionX,
             anvilQuest.TurnInRewardPositionY));
+        var magicRockQuest = Assert.Single(quests, quest => quest.QuestId == 3001);
+        Assert.Equal((115, 117, 0, 0U, 62, 63, 2135U, 1, 1004U, 5, 61, 64), (
+            magicRockQuest.MessageId,
+            magicRockQuest.TurnInMessageId,
+            magicRockQuest.TurnInTownerId,
+            magicRockQuest.TurnInLevelId,
+            magicRockQuest.TurnInPositionX,
+            magicRockQuest.TurnInPositionY,
+            magicRockQuest.TurnInItemId,
+            magicRockQuest.TurnInRequiredVariable2,
+            magicRockQuest.TurnInRewardUniqueId,
+            magicRockQuest.TurnInRewardItemLevel,
+            magicRockQuest.TurnInRewardPositionX,
+            magicRockQuest.TurnInRewardPositionY));
         var girlQuest = Assert.Single(quests, quest => quest.QuestId == 3019);
         Assert.Equal((283, 285, 11, 0U, 77, 43, 2102U, 171U, 13, 77, 43), (
             girlQuest.MessageId,

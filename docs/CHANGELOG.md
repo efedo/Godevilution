@@ -10,6 +10,10 @@ All notable changes to this fork are documented below.
   Hellfire Little Girl now consumes Theodore and creates the level-13 amulet
   reward through `TurnInQuestRequested`.
 
+- Route Hellfire Magic Rock turn-in through the same authored Griswold boundary.
+  The server now owns the native first-conversation gate, Magic Rock
+  consumption, and Empyrean Band reward.
+
 - Route content-declared quest-object effects through
   `OperateObjectRequested`. The native client now identifies active
   `QuestSequence` and `QuestItemCompletion` objects from authoritative

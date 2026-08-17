@@ -1085,6 +1085,69 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeMagicRockTurnInUsesTheAuthoredConversationGateAndEmpyreanBand()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1004, "Empyrean Band", 113, 1, 8000, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(113, 1, 8000, 8000, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(2135, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var requiredItem = items.Generate(2135, 42);
+        var player = CreatePlayer(
+            positionX: 61,
+            positionY: 63,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, requiredItem.CreateInfo, 0, 0, requiredItem)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3001,
+            1,
+            3,
+            messageId: 115,
+            variable2: 0,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 2135,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1004,
+            turnInRewardItemLevel: 5,
+            turnInRewardPositionX: 61,
+            turnInRewardPositionY: 64,
+            turnInMessageId: 117);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var started = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            1,
+            [player]);
+
+        Assert.True(started.Succeeded);
+        Assert.Equal(1, quest.Variable2);
+        Assert.Single(player.Inventory);
+        Assert.Equal(115, Assert.Single(started.Events).MessageId);
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.Empty(player.Inventory);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1004, reward.State.UniqueId);
+        Assert.Equal((61, 64), (reward.PositionX, reward.PositionY));
+        Assert.Equal(117, Assert.Single(completed.Events).MessageId);
+    }
+
+    [Fact]
     public void NativeTownerTurnInRejectsWrongTownerOrMissingItemWithoutMutation()
     {
         var items = new AuthoritativeItemCatalog([
