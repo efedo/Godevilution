@@ -1456,7 +1456,14 @@ void DiabloDeinit()
 {
 	FreeItemGFX();
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	// Lua was never initialized for authoritative mode, so do not tear down a
+	// compatibility runtime that does not exist.
+	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative)
+		LuaShutdown();
+#else
 	LuaShutdown();
+#endif
 	ShutDownScreenReader();
 
 	if (gbSndInited)
@@ -2246,12 +2253,20 @@ void InitKeymapActions()
 		    ReorganizeInventory(*MyPlayer);
 	    });
 #ifdef _DEBUG
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	// Authoritative mode delegates gameplay and content ownership to the server;
+	// keep the legacy Lua REPL and compatibility callbacks out of that path.
+	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative) {
+#endif
 	options.Keymapper.AddAction(
 	    "OpenConsole",
 	    N_("Console"),
 	    N_("Opens Lua console."),
 	    SDLK_GRAVE,
 	    OpenConsole);
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	}
+#endif
 	options.Keymapper.AddAction(
 	    "DebugToggle",
 	    "Debug toggle",
@@ -2897,7 +2912,14 @@ int DiabloMain(int argc, char **argv)
 	LoadLanguageArchive();
 
 	ApplicationInit();
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	// Keep Lua available for explicit legacy launches, but leave the
+	// server-authoritative presentation path Lua-free.
+	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative)
+		LuaInitialize();
+#else
 	LuaInitialize();
+#endif
 	if (!demo::IsRunning()) SaveOptions();
 
 	// Finally load game data

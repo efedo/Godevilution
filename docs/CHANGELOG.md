@@ -76,6 +76,10 @@ All notable changes to this fork are documented below.
   cannot acquire server dependencies and the Godot project remains limited to
   the shared protocol and presentation protocol assemblies.
 
+- Keep the native authoritative client out of the legacy Lua lifecycle: its
+  server-backed mode no longer initializes or exposes the Lua REPL, while the
+  explicit legacy mode remains unchanged.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

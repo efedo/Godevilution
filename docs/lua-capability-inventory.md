@@ -20,6 +20,10 @@ The native `GameEventBus` already gives legacy Lua callbacks stable event
 sources for mod loading, data loading, game lifecycle, stores, damage, and
 experience. Pointer-derived Lua identities, including the legacy monster ID,
 must never cross the protocol boundary; stable server entity IDs are required.
+The native client now skips Lua initialization, shutdown, and debug-console
+registration when launched in authoritative server-backed mode. Explicit
+legacy mode retains the complete Lua lifecycle and console for backward
+compatibility.
 The authoritative Data runtime now provides validated ordered content overlays
 and transactional activation, so new server data extensions no longer require
 Lua reload hooks. Native `ModManager` now owns archive selection, sound

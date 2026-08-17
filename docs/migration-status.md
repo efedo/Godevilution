@@ -59,6 +59,10 @@ Status date: 2026-08-17
   shared protocol assembly, and the Godot project may reference only those two
   presentation/protocol projects, never the server or Diablo module.
 
+- The native client now skips Lua initialization, shutdown, and debug-console
+  registration in explicit authoritative server-backed mode. Legacy mode keeps
+  the existing Lua compatibility lifecycle.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

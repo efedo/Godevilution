@@ -127,6 +127,31 @@ public sealed class ServerAssemblyBoundaryTests
         Assert.Empty(forbiddenReferences);
     }
 
+    [Fact]
+    public void AuthoritativeNativeClientKeepsLuaBehindTheLegacyModeGuard()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "Source",
+            "application",
+            "diablo.cpp"));
+        const string modeGuard =
+            "authoritative::GetServerBackedRuntimeConfiguration().mode != "
+            + "authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative";
+
+        Assert.Equal(
+            3,
+            Regex.Matches(source, Regex.Escape(modeGuard)).Count);
+        Assert.Contains(
+            "// Authoritative mode delegates gameplay and content ownership to the server;",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "// Keep Lua available for explicit legacy launches, but leave the",
+            source,
+            StringComparison.Ordinal);
+    }
+
     private static string[] GodevilutionDependencies(Assembly assembly)
     {
         return assembly
