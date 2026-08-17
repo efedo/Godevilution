@@ -11,6 +11,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(16, 0, ProjectilePresentationKind.Fire)]
     [InlineData(16, 1, ProjectilePresentationKind.FireImpact)]
     [InlineData(20, 0, ProjectilePresentationKind.BloodStar)]
+    [InlineData(50, 0, ProjectilePresentationKind.MonsterMagic)]
     [InlineData(21, 0, ProjectilePresentationKind.BoneSpirit)]
     [InlineData(31, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(51, 0, ProjectilePresentationKind.Acid)]
@@ -46,6 +47,19 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.Fire,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void ResolvesServerOwnedMonsterMagicPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.MonsterMagic,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.MonsterMagic,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 

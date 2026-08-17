@@ -323,6 +323,7 @@ public partial class WorldPresentation : Node2D
             ProjectilePresentationKind.Lightning => new Color("f4d35e"),
             ProjectilePresentationKind.Holy => new Color("f8d66d"),
             ProjectilePresentationKind.BloodStar => new Color("d86bff"),
+            ProjectilePresentationKind.MonsterMagic => new Color("b78cff"),
             ProjectilePresentationKind.BoneSpirit => new Color("dce3eb"),
             ProjectilePresentationKind.Acid => new Color("8be28b"),
             ProjectilePresentationKind.Arrow => new Color("d29b5f"),

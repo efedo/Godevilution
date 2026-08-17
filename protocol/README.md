@@ -86,6 +86,10 @@ Windows toolchain command.
   accepted drops preserve the item seed, price, and full state.
 - A snapshot is the complete authoritative projection for its session. Events
   are transient presentation aids and never replace the following snapshot.
+- `ProjectileSnapshot.presentation_kind` is an additive server-owned visual
+  family. `MONSTER_MAGIC` identifies native monster magic projectiles for
+  Godot presentation; older peers may ignore the value and fall back to the
+  behavior identity.
 - `Snapshot.players` contains every assigned participant. The receiving
   participant is first so a presentation client can identify its local player;
   the remaining participants are sorted by stable entity ID. Player entity IDs

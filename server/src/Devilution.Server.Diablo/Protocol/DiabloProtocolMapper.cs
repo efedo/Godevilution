@@ -1156,6 +1156,8 @@ internal static class DiabloProtocolMapper
             return ProjectilePresentationKind.Holy;
         if (behavior == AuthoritativeProjectileBehavior.BloodStar)
             return ProjectilePresentationKind.BloodStar;
+        if (behavior == AuthoritativeProjectileBehavior.MonsterMagic)
+            return ProjectilePresentationKind.MonsterMagic;
         if (behavior == AuthoritativeProjectileBehavior.BoneSpirit)
             return ProjectilePresentationKind.BoneSpirit;
         if (behavior is AuthoritativeProjectileBehavior.Acid
