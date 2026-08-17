@@ -1094,6 +1094,41 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerArrowResolvesTheFirstCombatantOnItsTravelPath()
+    {
+        var endpoint = new AuthoritativeCombatTarget(9, 8, 5, 5000);
+        var intervening = new AuthoritativeCombatTarget(10, 6, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [endpoint, intervening]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(endpoint.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Single(world.Projectiles);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(4990, intervening.HitPoints);
+        Assert.Equal(5000, endpoint.HitPoints);
+        var damage = Assert.Single(deliveries).Event;
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(10, damage.Amount);
+        Assert.Equal(640, damage.AmountQ6);
+        Assert.Equal(intervening.EntityId, damage.TargetEntityId);
+    }
+
+    [Fact]
     public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
     {
         var blocker = new AuthoritativeWorldObject(

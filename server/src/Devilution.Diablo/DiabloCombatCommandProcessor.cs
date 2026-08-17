@@ -9458,7 +9458,24 @@ public sealed class DiabloCombatCommandProcessor
             }
             projectile.PositionX = nextX;
             projectile.PositionY = nextY;
+            if (TryResolveWeaponArrowTileCollision(
+                    tick,
+                    projectile,
+                    players,
+                    events)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
             projectile.RemainingTicks--;
+            return;
+        }
+
+        if (TryResolveWeaponArrowTileCollision(
+                tick,
+                projectile,
+                players,
+                events)) {
+            world.Projectiles.Remove(projectile.EntityId);
             return;
         }
 
@@ -9481,6 +9498,39 @@ public sealed class DiabloCombatCommandProcessor
                 events);
         }
         world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native ProcessArrow collision check for each traversed tile. */
+    private bool TryResolveWeaponArrowTileCollision(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var target = FindProjectileTarget(
+            projectile.LevelId,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (target is not null) {
+            ResolveWeaponArrowImpact(tick, projectile, target, players, events);
+            return true;
+        }
+
+        var playerTarget = FindProjectilePlayer(
+            projectile,
+            players,
+            projectile.PositionX,
+            projectile.PositionY);
+        if (playerTarget is null)
+            return false;
+
+        ResolvePlayerWeaponArrowImpact(
+            tick,
+            projectile,
+            playerTarget,
+            players,
+            events);
+        return true;
     }
 
     /** Advances a content-declared native Arrow from a monster to its player target. */
