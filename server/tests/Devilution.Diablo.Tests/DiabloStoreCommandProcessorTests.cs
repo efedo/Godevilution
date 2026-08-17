@@ -1136,6 +1136,87 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void AutoEquipMovesAnOccupiedHandBackToInventoryAtomically()
+    {
+        var sourceState = AuthoritativeItemState.Empty with {
+            StableItemId = 903,
+            EquipLocation = 1,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var displacedState = AuthoritativeItemState.Empty with {
+            StableItemId = 904,
+            EquipLocation = 1,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 45, 0, 0, sourceState)],
+            inventoryGrid: grid,
+            equipment: [new EquippedStoreItem(4, 46, displacedState)]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloAutoEquipItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 903)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(45U, Assert.Single(player.Equipment).ItemSeed);
+        Assert.Equal(4U, player.Equipment[0].Slot);
+        Assert.Equal(46U, Assert.Single(player.Inventory).ItemSeed);
+        Assert.Equal(0, player.InventoryGrid[30]);
+    }
+
+    [Fact]
+    public void AutoEquipTwoHandedItemDisplacesBothHandsInNativeOrder()
+    {
+        var sourceState = AuthoritativeItemState.Empty with {
+            StableItemId = 905,
+            EquipLocation = 2,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var leftState = AuthoritativeItemState.Empty with {
+            StableItemId = 906,
+            EquipLocation = 1,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var rightState = AuthoritativeItemState.Empty with {
+            StableItemId = 907,
+            EquipLocation = 1,
+            ItemClass = 2,
+            StatFlag = true,
+        };
+        var grid = Enumerable.Repeat(-1, 40).ToArray();
+        grid[0] = 0;
+        var player = CreatePlayer(
+            inventory: [new OwnedStoreItem(0, 0, 47, 0, 0, sourceState)],
+            inventoryGrid: grid,
+            equipment: [
+                new EquippedStoreItem(4, 48, leftState),
+                new EquippedStoreItem(5, 49, rightState),
+            ]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloAutoEquipItemIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 905)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(47U, Assert.Single(player.Equipment).ItemSeed);
+        Assert.Equal(4U, player.Equipment[0].Slot);
+        Assert.Equal([49U, 48U], player.Inventory.Select(item => item.ItemSeed));
+        Assert.Equal([0, 1], [player.InventoryGrid[30], player.InventoryGrid[31]]);
+    }
+
+    [Fact]
     public void SwapsMultiCellInventoryItemsAtomically()
     {
         var large = AuthoritativeItemState.Empty with {

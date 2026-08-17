@@ -71,6 +71,7 @@ public sealed class DiabloStoreCommandProcessor
                 moveInventory.InventoryIndex,
                 moveInventory.TargetCell),
             DiabloMoveItemIntent move => MoveItem(player, move),
+            DiabloAutoEquipItemIntent autoEquip => AutoEquipItem(player, autoEquip),
             _ => DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
     }
@@ -655,6 +656,273 @@ public sealed class DiabloStoreCommandProcessor
             intent.Item,
             intent.Destination);
         return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult AutoEquipItem(
+        AuthoritativePlayerState player,
+        DiabloAutoEquipItemIntent intent)
+    {
+        if (intent.Item.Location != DiabloPlayerItemLocation.Inventory
+            || !TryGetTransfer(player, intent.Item, out var source)
+            || source.State.Deleted
+            || !source.State.StatFlag) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+        if (player.CombatMode > DiabloPlayerCombatMode.WalkSideways)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        var kind = AuthoritativeItemClassification.GetEquipmentSlotKind(source.State, items);
+        if (kind == DiabloEquipmentSlotKind.Unknown)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        var displacementSlots = new List<uint>();
+        var targetSlot = ResolveAutoEquipTarget(player, source.State, kind, displacementSlots);
+        if (targetSlot < 0)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        var plannedCells = PlanDisplacedInventoryCells(
+            player,
+            intent.Item.Slot,
+            displacementSlots,
+            out var plannedDisplacements);
+        if (plannedCells is null)
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        RemoveTransfer(player, intent.Item);
+        foreach (var displacement in plannedDisplacements)
+            RemoveTransfer(
+                player,
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Equipment,
+                    displacement.Slot));
+
+        AddTransfer(
+            player,
+            new DiabloPlayerItemReference(
+                DiabloPlayerItemLocation.Equipment,
+                checked((uint)targetSlot)),
+            source);
+        for (var index = 0; index < plannedDisplacements.Count; index++)
+            AddTransfer(
+                player,
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    checked((uint)plannedCells[index])),
+                plannedDisplacements[index].Item);
+        player.RecalculateEquipmentResources();
+        return DiabloIntentResult.Accepted;
+    }
+
+    private int ResolveAutoEquipTarget(
+        AuthoritativePlayerState player,
+        AuthoritativeItemState state,
+        DiabloEquipmentSlotKind kind,
+        List<uint> displacementSlots)
+    {
+        if (kind is DiabloEquipmentSlotKind.Helmet
+            or DiabloEquipmentSlotKind.BodyArmor
+            or DiabloEquipmentSlotKind.Amulet) {
+            var target = kind switch {
+                DiabloEquipmentSlotKind.Helmet => 0U,
+                DiabloEquipmentSlotKind.BodyArmor => 6U,
+                _ => 3U,
+            };
+            if (TryGetEquipment(player, target, out _))
+                displacementSlots.Add(target);
+            return checked((int)target);
+        }
+
+        if (kind == DiabloEquipmentSlotKind.Ring) {
+            if (!TryGetEquipment(player, 1, out _))
+                return 1;
+            if (!TryGetEquipment(player, 2, out _))
+                return 2;
+            return -1;
+        }
+
+        if (kind == DiabloEquipmentSlotKind.TwoHanded) {
+            var leftOccupied = TryGetEquipment(player, 4, out _);
+            var rightOccupied = TryGetEquipment(player, 5, out _);
+            if (!leftOccupied && !rightOccupied)
+                return 4;
+            if (!rightOccupied) {
+                displacementSlots.Add(4);
+                return 4;
+            }
+            if (!leftOccupied) {
+                displacementSlots.Add(5);
+                return 4;
+            }
+
+            // Native ChangeInvCut prefers moving the off-hand first, then the main
+            // hand; PlanDisplacedInventoryCells preserves that order and capacity
+            // decision. If the first item cannot fit, the native fallback reverses it.
+            displacementSlots.Add(5);
+            displacementSlots.Add(4);
+            return 4;
+        }
+
+        if (kind != DiabloEquipmentSlotKind.Hand)
+            return -1;
+
+        var leftItem = TryGetEquipment(player, 4, out var leftEquipped) ? leftEquipped : null;
+        var rightItem = TryGetEquipment(player, 5, out var rightEquipped) ? rightEquipped : null;
+        if (leftItem is null)
+            return 4;
+        if (rightItem is null) {
+            if (state.ItemClass == leftItem.State.ItemClass
+                || AuthoritativeItemClassification.IsTwoHanded(leftItem.State, items)) {
+                displacementSlots.Add(4);
+                return 4;
+            }
+            return 5;
+        }
+        if (state.ItemClass == leftItem.State.ItemClass
+            || AuthoritativeItemClassification.IsTwoHanded(leftItem.State, items)) {
+            displacementSlots.Add(4);
+            return 4;
+        }
+        if (state.ItemClass == rightItem.State.ItemClass) {
+            displacementSlots.Add(5);
+            return 5;
+        }
+        return -1;
+    }
+
+    private List<int>? PlanDisplacedInventoryCells(
+        AuthoritativePlayerState player,
+        uint sourceInventoryIndex,
+        IReadOnlyList<uint> displacementSlots,
+        out List<(uint Slot, TransferItem Item)> displacements)
+    {
+        displacements = [];
+        var planningGrid = player.InventoryGrid.ToList();
+        if (sourceInventoryIndex >= (uint)player.Inventory.Count)
+            return null;
+        InventoryGridLayout.Clear(planningGrid, checked((int)sourceInventoryIndex));
+
+        foreach (var slot in displacementSlots) {
+            if (!TryGetTransfer(
+                    player,
+                    new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Equipment,
+                        slot),
+                    out var displacement)) {
+                displacements.Clear();
+                return null;
+            }
+            var targetCell = FindNativeInventoryPlacement(
+                planningGrid,
+                displacement.State.InventoryWidth,
+                displacement.State.InventoryHeight);
+            if (targetCell < 0) {
+                // Match native two-handed auto-equip's one permitted fallback: if
+                // the first displacement fails, try the reverse order once.
+                if (displacements.Count == 0 && displacementSlots.Count == 2)
+                    return PlanDisplacedInventoryCellsReversed(
+                        player,
+                        sourceInventoryIndex,
+                        displacementSlots,
+                        out displacements);
+                displacements.Clear();
+                return null;
+            }
+            displacements.Add((slot, displacement));
+            InventoryGridLayout.Fill(
+                planningGrid,
+                targetCell,
+                player.Inventory.Count + displacements.Count,
+                displacement.State.InventoryWidth,
+                displacement.State.InventoryHeight);
+        }
+
+        return FindPlannedCells(player, sourceInventoryIndex, displacements);
+    }
+
+    private List<int>? PlanDisplacedInventoryCellsReversed(
+        AuthoritativePlayerState player,
+        uint sourceInventoryIndex,
+        IReadOnlyList<uint> displacementSlots,
+        out List<(uint Slot, TransferItem Item)> displacements)
+    {
+        var reversed = displacementSlots.Reverse().ToArray();
+        var cells = PlanDisplacedInventoryCellsWithoutFallback(
+            player,
+            sourceInventoryIndex,
+            reversed,
+            out displacements);
+        return cells;
+    }
+
+    private List<int>? PlanDisplacedInventoryCellsWithoutFallback(
+        AuthoritativePlayerState player,
+        uint sourceInventoryIndex,
+        IReadOnlyList<uint> displacementSlots,
+        out List<(uint Slot, TransferItem Item)> displacements)
+    {
+        displacements = [];
+        var planningGrid = player.InventoryGrid.ToList();
+        InventoryGridLayout.Clear(planningGrid, checked((int)sourceInventoryIndex));
+        var cells = new List<int>(displacementSlots.Count);
+        foreach (var slot in displacementSlots) {
+            if (!TryGetTransfer(
+                    player,
+                    new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Equipment,
+                        slot),
+                    out var displacement))
+                return null;
+            var targetCell = FindNativeInventoryPlacement(
+                planningGrid,
+                displacement.State.InventoryWidth,
+                displacement.State.InventoryHeight);
+            if (targetCell < 0)
+                return null;
+            cells.Add(targetCell);
+            displacements.Add((slot, displacement));
+            InventoryGridLayout.Fill(
+                planningGrid,
+                targetCell,
+                player.Inventory.Count + displacements.Count,
+                displacement.State.InventoryWidth,
+                displacement.State.InventoryHeight);
+        }
+        return cells;
+    }
+
+    private static List<int> FindPlannedCells(
+        AuthoritativePlayerState player,
+        uint sourceInventoryIndex,
+        IReadOnlyList<(uint Slot, TransferItem Item)> displacements)
+    {
+        var planningGrid = player.InventoryGrid.ToList();
+        InventoryGridLayout.Clear(planningGrid, checked((int)sourceInventoryIndex));
+        var cells = new List<int>(displacements.Count);
+        foreach (var displacement in displacements) {
+            var targetCell = FindNativeInventoryPlacement(
+                planningGrid,
+                displacement.Item.State.InventoryWidth,
+                displacement.Item.State.InventoryHeight);
+            if (targetCell < 0)
+                throw new InvalidOperationException("Planned displacement no longer fits.");
+            cells.Add(targetCell);
+            InventoryGridLayout.Fill(
+                planningGrid,
+                targetCell,
+                player.Inventory.Count + cells.Count,
+                displacement.Item.State.InventoryWidth,
+                displacement.Item.State.InventoryHeight);
+        }
+        return cells;
+    }
+
+    private static bool TryGetEquipment(
+        AuthoritativePlayerState player,
+        uint slot,
+        out EquippedStoreItem item)
+    {
+        item = player.Equipment.FirstOrDefault(candidate => candidate.Slot == slot)!;
+        return item is not null;
     }
 
     private static DiabloIntentResult SwapTransfers(
