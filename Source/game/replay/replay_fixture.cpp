@@ -4380,6 +4380,20 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 			iterator = state.projectiles.erase(iterator);
 			continue;
 		}
+		const auto playerEntityAt = [&](int32_t x, int32_t y) {
+			const bool primaryPlayerAtTile = state.life > 0
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
+			if (primaryPlayerAtTile)
+				return state.entityId;
+			const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			return secondaryPlayerAtTile ? state.secondaryPlayerEntityId : 0U;
+		};
 		const auto resolvePlayerAt = [&](int32_t x, int32_t y) {
 			const bool primaryPlayerAtTile = state.life > 0
 			    && state.levelId == projectile.levelId
@@ -4435,18 +4449,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 
 		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
 		if (visitedTiles.empty()) {
-			const uint32_t targetEntityId = (state.life > 0
-			        && state.levelId == projectile.levelId
-			        && state.positionX == projectile.positionX
-			        && state.positionY == projectile.positionY)
-			    ? state.entityId
-			    : (state.secondaryPlayerEntityId != 0
-			        && state.secondaryPlayerLife > 0
-			        && state.secondaryPlayerLevelId == projectile.levelId
-			        && state.secondaryPlayerPositionX == projectile.positionX
-			        && state.secondaryPlayerPositionY == projectile.positionY)
-			        ? state.secondaryPlayerEntityId
-			        : 0;
+			const uint32_t targetEntityId = playerEntityAt(projectile.positionX, projectile.positionY);
 			if (projectile.lastCollisionTargetEntityId != targetEntityId
 			    && resolvePlayerAt(projectile.positionX, projectile.positionY)) {
 				++iterator;
@@ -4463,7 +4466,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(ReplayFixtureExecutionState &sta
 			projectile.traveledY = tile.traveledY;
 			if (resolvePlayerAt(tile.x, tile.y))
 				break;
-			projectile.lastCollisionTargetEntityId = 0;
+			projectile.lastCollisionTargetEntityId = playerEntityAt(tile.x, tile.y);
 		}
 		if (projectile.phase == 1) {
 			++iterator;
