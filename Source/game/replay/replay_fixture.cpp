@@ -414,6 +414,15 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-stone-curse-immunity-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetToHit != 0) {
+			hasher.AppendString("godevilution-monster-accuracy-v1");
+			hasher.AppendInt32(state.combatTargetToHit);
+			hasher.AppendInt32(0);
+		}
+		if (!state.combatTargetNativeAi.empty()) {
+			hasher.AppendString("godevilution-monster-native-ai-v1");
+			hasher.AppendString(state.combatTargetNativeAi);
+		}
 	}
 
 	if (!state.corpses.empty()) {
@@ -4340,6 +4349,78 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 }
 
+/**
+ * Admits the compact GoatRanged native arrow branch before projectile travel.
+ * The full native AI remains outside this replay projection; this boundary
+ * keeps target ordering and the server-owned projectile lifecycle portable.
+ */
+void AdmitReplayAutonomousMonsterArrow(
+    ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "GoatRanged"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0
+	    || state.combatTargetToHit <= 0
+	    || state.combatTargetMaxDamage <= 0
+	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+			return projectile.sourceEntityId == state.combatTargetEntityId
+			    && projectile.behavior == MonsterArrowBehavior;
+		}))
+		return;
+
+	struct Candidate {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Candidate> candidates;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		candidates.push_back({ state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		candidates.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (candidates.empty())
+		return;
+	const auto candidateDistance = [&](const Candidate &candidate) {
+		return std::max(
+		    std::abs(candidate.positionX - state.combatTargetPositionX),
+		    std::abs(candidate.positionY - state.combatTargetPositionY));
+	};
+	std::sort(candidates.begin(), candidates.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = candidateDistance(left);
+		const int32_t rightDistance = candidateDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Candidate &target = candidates.front();
+	if (candidateDistance(target) > state.combatTargetAggroRange)
+		return;
+
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = target.entityId;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = target.positionX;
+	projectile.targetY = target.positionY;
+	projectile.damage = state.combatTargetMaxDamage;
+	projectile.remainingTicks = static_cast<uint32_t>(std::max(1, candidateDistance(target)));
+	projectile.behavior = MonsterArrowBehavior;
+	projectile.speed = 1;
+	projectile.impactLifetime = 1;
+	state.projectiles.push_back(std::move(projectile));
+}
+
 void AdvanceReplayStateToTick(
     ReplayFixtureExecutionState &state,
     const ReplayFixture &fixture,
@@ -4365,6 +4446,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdmitReplayAutonomousMonsterArrow(state);
 		AdvanceReplayWeaponArrowsOneTick(state);
 		AdvanceReplayMonsterArrowsOneTick(state);
 		AdvanceChargedBoltsOneTick(state, simulationTick);
@@ -4710,6 +4792,18 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetAttackDamage);
 			if (key == "combat_target_aggro_range")
 				return ParseSigned(fixture_.initialState.combatTargetAggroRange);
+			if (key == "combat_target_native_ai")
+				return ParseString(fixture_.initialState.combatTargetNativeAi);
+			if (key == "combat_target_monster_id")
+				return ParseUnsigned(fixture_.initialState.combatTargetMonsterId);
+			if (key == "combat_target_to_hit")
+				return ParseSigned(fixture_.initialState.combatTargetToHit);
+			if (key == "combat_target_min_damage")
+				return ParseSigned(fixture_.initialState.combatTargetMinDamage);
+			if (key == "combat_target_max_damage")
+				return ParseSigned(fixture_.initialState.combatTargetMaxDamage);
+			if (key == "combat_target_intelligence")
+				return ParseSigned(fixture_.initialState.combatTargetIntelligence);
 			if (key == "combat_target_fire_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetFireResistance);
 			if (key == "combat_target_lightning_resistance")
@@ -5446,9 +5540,15 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	            || target.combatTargetHitPoints != 0
 	            || target.combatTargetMaxHitPoints != 0
 	            || target.combatTargetArmorClass != 0
-	            || target.combatTargetAttackDamage != 0
-	            || target.combatTargetAggroRange != 0
-	            || target.combatTargetFireResistance != 0
+			|| target.combatTargetAttackDamage != 0
+			|| target.combatTargetAggroRange != 0
+			|| !target.combatTargetNativeAi.empty()
+			|| target.combatTargetMonsterId != 0
+			|| target.combatTargetToHit != 0
+			|| target.combatTargetMinDamage != 0
+			|| target.combatTargetMaxDamage != 0
+			|| target.combatTargetIntelligence != 0
+			|| target.combatTargetFireResistance != 0
 	            || target.combatTargetLightningResistance != 0
 	            || target.combatTargetMagicResistance != 0
 	            || target.combatTargetMonsterLevel != 0
@@ -5458,8 +5558,12 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	    || target.combatTargetHitPoints < 0
 	    || target.combatTargetMaxHitPoints < target.combatTargetHitPoints
 	    || target.combatTargetArmorClass < 0
-	    || target.combatTargetAttackDamage < 0
-	    || target.combatTargetAggroRange < 0
+		|| target.combatTargetAttackDamage < 0
+		|| target.combatTargetAggroRange < 0
+		|| target.combatTargetToHit < 0 || target.combatTargetToHit > 255
+		|| target.combatTargetMinDamage < 0
+		|| target.combatTargetMaxDamage < target.combatTargetMinDamage
+		|| target.combatTargetIntelligence < 0 || target.combatTargetIntelligence > 255
 	    || target.combatTargetFireResistance < -100
 	    || target.combatTargetFireResistance > 100
 	    || target.combatTargetLightningResistance < -100
@@ -5662,6 +5766,12 @@ bool ExecuteReplayFixture(
 		state.combatTargetArmorClass = fixture.initialState.combatTargetArmorClass;
 		state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
 		state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+		state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+		state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+		state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+		state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+		state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;

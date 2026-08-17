@@ -106,7 +106,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint rechargeAbilitySpellId = 0,
         uint trapDisarmAbilitySpellId = 0,
         uint startingReflectCharges = 0,
-        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -140,6 +141,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 RandomSeed = startingRandomSeed,
                 GameMode = gameMode,
                 Difficulty = difficulty,
+                MonsterMissiles = startingMonsterMissiles,
             });
         var compatibilityTemplate = new DiabloPlayerTemplate(
             startingGold,

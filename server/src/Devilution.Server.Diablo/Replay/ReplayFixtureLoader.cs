@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Devilution.Diablo;
 
 namespace Devilution.Server.Replay;
 
@@ -76,6 +77,12 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetArmorClass != 0
                     || initialTarget.CombatTargetAttackDamage != 0
                     || initialTarget.CombatTargetAggroRange != 0
+                    || !string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
+                    || initialTarget.CombatTargetMonsterId != 0
+                    || initialTarget.CombatTargetToHit != 0
+                    || initialTarget.CombatTargetMinDamage != 0
+                    || initialTarget.CombatTargetMaxDamage != 0
+                    || initialTarget.CombatTargetIntelligence != 0
                     || initialTarget.CombatTargetFireResistance != 0
                     || initialTarget.CombatTargetLightningResistance != 0
                     || initialTarget.CombatTargetMagicResistance != 0
@@ -90,6 +97,13 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetArmorClass < 0
             || initialTarget.CombatTargetAttackDamage < 0
             || initialTarget.CombatTargetAggroRange < 0
+            || initialTarget.CombatTargetToHit is < 0 or > 255
+            || initialTarget.CombatTargetMinDamage < 0
+            || initialTarget.CombatTargetMaxDamage < initialTarget.CombatTargetMinDamage
+            || initialTarget.CombatTargetIntelligence is < 0 or > 255
+            || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
+                && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(
+                    initialTarget.CombatTargetNativeAi))
             || initialTarget.CombatTargetFireResistance is < -100 or > 100
             || initialTarget.CombatTargetLightningResistance is < -100 or > 100
             || initialTarget.CombatTargetMagicResistance is < -100 or > 100
@@ -313,6 +327,12 @@ public static class ReplayFixtureLoader
             CombatTargetMonsterLevel = GetOptionalInt(
                 value,
                 "combat_target_monster_level"),
+            CombatTargetNativeAi = OptionalString(value, "combat_target_native_ai") ?? string.Empty,
+            CombatTargetMonsterId = GetOptionalUInt(value, "combat_target_monster_id"),
+            CombatTargetToHit = GetOptionalInt(value, "combat_target_to_hit"),
+            CombatTargetMinDamage = GetOptionalInt(value, "combat_target_min_damage"),
+            CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
+            CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
             CombatTargetMoving = GetOptionalBool(value, "combat_target_moving"),
             CombatTargetFuturePositionX = value.TryGetProperty(
                 "combat_target_future_position_x",

@@ -1591,6 +1591,77 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMonsterArrowAutonomousAdmissionMatchesNativeLifecycle()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-autonomous.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        Assert.Empty(fixture.InitialProjectiles);
+        var target = new AuthoritativeCombatTarget(
+            fixture.InitialState.CombatTargetEntityId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetHitPoints,
+            maxHitPoints: fixture.InitialState.CombatTargetMaxHitPoints,
+            levelId: fixture.InitialState.CombatTargetLevelId,
+            monsterId: fixture.InitialState.CombatTargetMonsterId,
+            aggroRange: fixture.InitialState.CombatTargetAggroRange,
+            attackDamage: fixture.InitialState.CombatTargetAttackDamage,
+            minDamage: fixture.InitialState.CombatTargetMinDamage,
+            maxDamage: fixture.InitialState.CombatTargetMaxDamage,
+            monsterLevel: fixture.InitialState.CombatTargetMonsterLevel,
+            toHit: fixture.InitialState.CombatTargetToHit,
+            nativeAi: fixture.InitialState.CombatTargetNativeAi,
+            intelligence: fixture.InitialState.CombatTargetIntelligence);
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                fixture.InitialState.CombatTargetNativeAi,
+                "Arrow",
+                AuthoritativeProjectileBehavior.MonsterArrow,
+                ProjectileSpeed: 1,
+                ProjectileLifetime: 2,
+                ProjectileImpactLifetime: 1,
+                ProjectileDamage: 4,
+                RangedRetreatMinimumDistance: 1,
+                RangedRetreatChanceBase: 1,
+                RangedRetreatChanceIntelligenceScale: 1),
+        ]);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            fixture.InitialState.Gold,
+            fixture.InitialState.Experience,
+            fixture.InitialState.Life,
+            fixture.InitialState.Mana,
+            startingLifeMaximum: fixture.InitialState.LifeMaximum,
+            startingPositionX: fixture.InitialState.PositionX,
+            startingPositionY: fixture.InitialState.PositionY,
+            startingLevelId: fixture.InitialState.LevelId,
+            startingCharacterLevel: fixture.InitialState.CharacterLevel,
+            startingCombatTargets: [target],
+            startingMonsterMissiles: missiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = result.FinalSnapshot.Players.Single(candidate => candidate.EntityId == 1);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(76, result.FinalSnapshot.Players.Single(candidate => candidate.EntityId == 8).Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerMonsterArrowRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(

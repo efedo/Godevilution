@@ -184,6 +184,19 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetMonsterLevel { get; init; }
 
+    /** Optional native AI identity used by autonomous monster replay fixtures. */
+    public string CombatTargetNativeAi { get; init; } = string.Empty;
+
+    public uint CombatTargetMonsterId { get; init; }
+
+    public int CombatTargetToHit { get; init; }
+
+    public int CombatTargetMinDamage { get; init; }
+
+    public int CombatTargetMaxDamage { get; init; }
+
+    public int CombatTargetIntelligence { get; init; }
+
     public bool CombatTargetMoving { get; init; }
 
     public int CombatTargetFuturePositionX { get; init; }
