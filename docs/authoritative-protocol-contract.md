@@ -547,6 +547,10 @@ damage range only on collision. A zero spell ID is valid for this monster-owned
 behavior; snapshots, saves, hashes, and the additive range fields carry the
 complete resumable state. Player-owned arrows follow the same native
 breakable-object transition through the shared protocol-neutral simulation.
+During travel, the server checks each traversed tile in native order and
+resolves the first living monster or non-owner player encountered before the
+declared endpoint target; the resulting impact and projectile removal remain
+server-owned and resumable through the existing fields.
 
 Persistent Acid puddles check their occupied tile on every active tick. A
 breakable missile-blocking object is destroyed through the same server-owned

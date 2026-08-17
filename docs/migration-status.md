@@ -38,6 +38,10 @@ Status date: 2026-08-16
 - Player- and monster-owned arrows now preserve native breakable-object
   destruction when they collide with a missile-blocking object before removal.
 
+- Player-owned arrows now resolve the first living combatant encountered on
+  each traversed tile, matching native `ProcessArrow` path collision instead
+  of requiring the declared endpoint target to remain the first occupant.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
