@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Add protocol presentation value `HIDDEN` so Rage controller behavior `34` is
   suppressed by current Godot clients instead of rendered as a generic sprite.
 
+- Clarify that Teleport and Phasing transition families are presentation-only
+  cues while movement destinations, occupancy, and RNG remain server-owned.
+
 - Preserve native Fireball collision with missile-blocking tiles and objects,
   including breakable-object destruction before the authoritative splash.
 

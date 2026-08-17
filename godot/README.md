@@ -133,9 +133,10 @@ overlay, and enables the typed disarm command only for ability spell `28` on
 the same level. Non-TrapSense recipients receive the same object without the
 armed flag. The server validates range, ability identity, and state change;
 Godot never clears the trap locally.
-Teleport behavior `9` and Phasing behavior `15` are invisible movement
-controllers. Godot renders only the resulting authoritative player coordinates
-and never predicts either relocation.
+Teleport behavior `9` and Phasing behavior `15` are server-owned movement
+controllers. Godot may render their presentation-only transition cues, but it
+renders the resulting authoritative player coordinates and never predicts or
+chooses either relocation.
 Charged Bolt behavior `1` is a typed Lightning projectile. Firebolt behavior
 `2` and Fireball behavior `16` are presentation-only: Godot
 renders an orange travel projectile for phase `0` and a larger orange explosion

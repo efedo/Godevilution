@@ -533,11 +533,13 @@ physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The
 range is persisted and included in canonical hashing so a resumed arrow keeps
 the same native damage boundary.
-A Teleport cast uses the existing projectile behavior value `9` as an invisible
-two-tick controller. Its position and remaining lifetime are authoritative;
-the resulting player position continues to use the existing player snapshot
-coordinates. Version-1 peers therefore require no new wire field, and a
-resumed save revalidates occupancy before the controller's first movement.
+A Teleport cast uses the existing projectile behavior value `9` as a
+server-owned two-tick controller. Its position and remaining lifetime are
+authoritative; the resulting player position continues to use the existing
+player snapshot coordinates. The additive `Teleport` presentation family is a
+client-only transition cue and does not authorize prediction or destination
+selection. Version-1 peers therefore require no new wire field, and a resumed
+save revalidates occupancy before the controller's first movement.
 
 Native `Arrow` rows for GoatRanged and SkeletonRanged select behavior value
 `59`, `MonsterArrow`; older `Targeted` rows are accepted as a compatibility
@@ -589,10 +591,11 @@ until the following tick's current-tile check, matching native movement. The
 collision is authoritative gameplay state, not a client-side visual effect.
 
 A Phasing cast uses projectile behavior value `15` as the same shape of
-invisible two-tick movement controller. The server selects its random
+server-owned two-tick movement controller. The server selects its random
 destination, consumes the cast source even when no candidate exists, and
-revalidates occupancy before movement. Clients neither send a destination that
-governs the selection nor consume RNG; they observe the controller through
+revalidates occupancy before movement. The additive `Phasing` presentation
+family is only a client transition cue; clients neither send a destination that
+governs the selection nor consume RNG, and they observe the controller through
 existing projectile fields and the resulting authoritative player coordinates.
 Version-1 protocol and save envelopes therefore need no additive field.
 

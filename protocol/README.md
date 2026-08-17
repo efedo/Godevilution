@@ -237,12 +237,15 @@ Windows toolchain command.
   the same projectile lifecycle, and player impact resolution remains
   authoritative.
   Teleport uses behavior value `9` with the same existing position and lifetime
-  fields for an invisible two-tick controller; authoritative movement appears
+  fields for a server-owned two-tick controller; authoritative movement appears
   through the existing player coordinates, so no new protocol field is needed.
-  Phasing uses behavior value `15` for another invisible two-tick movement
-  controller. Its destination and RNG are server-owned, and a no-candidate cast
-  can consume its source without producing a projectile. Clients observe only
-  existing projectile fields and authoritative player coordinates.
+  Godot may render the additive `Teleport` transition cue, but never chooses or
+  predicts the destination. Phasing uses behavior value `15` for another
+  server-owned two-tick movement controller. Its destination and RNG are
+  server-owned, and a no-candidate cast can consume its source without
+  producing a projectile. Godot may render the additive `Phasing` transition
+  cue while observing only the existing projectile fields and authoritative
+  player coordinates.
   Fireball uses behavior value `16`; phase `0` is its server-owned 16.16 travel
   and phase `1` is its stationary 14-tick impact. Existing origin, movement,
   damage, resistance, lifetime, and spell-level fields preserve deterministic
