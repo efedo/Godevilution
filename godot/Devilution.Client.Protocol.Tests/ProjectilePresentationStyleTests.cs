@@ -17,6 +17,9 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(35, 0, ProjectilePresentationKind.Fire)]
     [InlineData(35, 1, ProjectilePresentationKind.Fire)]
     [InlineData(36, 0, ProjectilePresentationKind.Guardian)]
+    [InlineData(5, 0, ProjectilePresentationKind.Flash)]
+    [InlineData(6, 0, ProjectilePresentationKind.Flash)]
+    [InlineData(7, 0, ProjectilePresentationKind.Flash)]
     [InlineData(20, 0, ProjectilePresentationKind.BloodStar)]
     [InlineData(50, 0, ProjectilePresentationKind.MonsterMagic)]
     [InlineData(57, 0, ProjectilePresentationKind.HorkSpawn)]
@@ -96,6 +99,19 @@ public sealed class ProjectilePresentationStyleTests
 
         Assert.Equal(
             ProjectilePresentationKind.Guardian,
+            ProjectilePresentationStyle.Resolve(projectile));
+    }
+
+    [Fact]
+    public void ResolvesServerOwnedFlashPresentationMetadata()
+    {
+        var projectile = new ProjectileSnapshot {
+            Behavior = 999,
+            PresentationKind = ProtocolProjectilePresentationKind.Flash,
+        };
+
+        Assert.Equal(
+            ProjectilePresentationKind.Flash,
             ProjectilePresentationStyle.Resolve(projectile));
     }
 

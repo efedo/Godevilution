@@ -308,6 +308,7 @@ public partial class WorldPresentation : Node2D
         var beam = kind == ProjectilePresentationKind.Beam;
         var stoneCurse = kind == ProjectilePresentationKind.StoneCurse;
         var guardian = kind == ProjectilePresentationKind.Guardian;
+        var flash = kind == ProjectilePresentationKind.Flash;
         var fireImpact = kind == ProjectilePresentationKind.FireImpact;
         var movement = kind is ProjectilePresentationKind.Teleport
             or ProjectilePresentationKind.Phasing;
@@ -317,6 +318,8 @@ public partial class WorldPresentation : Node2D
                 ? new Vector2(18, 18)
                 : guardian
                     ? new Vector2(20, 20)
+                : flash
+                    ? new Vector2(24, 24)
                 : fireImpact
                     ? new Vector2(30, 30)
                     : movement ? new Vector2(20, 20) : new Vector2(12, 12);
@@ -335,6 +338,7 @@ public partial class WorldPresentation : Node2D
             ProjectilePresentationKind.Teleport => new Color("bd7cff"),
             ProjectilePresentationKind.Phasing => new Color("6fffe9"),
             ProjectilePresentationKind.Guardian => new Color("ffb347"),
+            ProjectilePresentationKind.Flash => new Color("8fd3ff"),
             _ => new Color("6fffe9"),
         };
         var radius = beam
@@ -343,6 +347,8 @@ public partial class WorldPresentation : Node2D
                 ? 8
                 : guardian
                     ? 9
+                : flash
+                    ? 11
                 : fireImpact
                     ? 14
                     : movement
