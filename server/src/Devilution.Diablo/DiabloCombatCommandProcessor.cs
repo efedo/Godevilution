@@ -12976,6 +12976,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         var hitTarget = target is not null
             && TryResolveFireboltHit(projectile, target, players, events);
+        var playerHit = false;
         var playerStopsProjectile = false;
         if (!hitTarget && playerTarget is not null) {
             if (projectile.Behavior == AuthoritativeProjectileBehavior.BloodStar
@@ -12995,7 +12996,7 @@ public sealed class DiabloCombatCommandProcessor
                     players,
                     events);
             } else {
-                _ = TryResolveFireboltPlayerHit(
+                playerHit = TryResolveFireboltPlayerHit(
                     tick,
                     projectile,
                     playerTarget,
@@ -13018,7 +13019,8 @@ public sealed class DiabloCombatCommandProcessor
             && @object!.Breakable) {
             @object.Destroyed = true;
         }
-        return blocked || hitTarget || playerStopsProjectile;
+        // Hellfire blocks retain the projectile, but still terminate travel in impact.
+        return blocked || hitTarget || playerHit || playerStopsProjectile;
     }
 
     private bool CheckHolyBoltCollision(
