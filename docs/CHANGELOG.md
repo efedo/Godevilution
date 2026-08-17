@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add protocol presentation value `FLASH` and project native Flash behaviors
+  `5`, `6`, and `7` through the server and Godot client as a dedicated family.
+
 - Preserve native Fireball collision with missile-blocking tiles and objects,
   including breakable-object destruction before the authoritative splash.
 

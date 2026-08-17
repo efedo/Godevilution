@@ -668,6 +668,11 @@ The server owns its duration, scan order, line-of-sight, firing RNG, and emitted
 Firebolt projectiles; the additive presentation projection uses `Guardian` so
 Godot can render the native turret state without simulating its behavior.
 
+Flash uses native behaviors `5`, `6`, and `7` for its controller and two visual
+layers. The server owns the repeated collision and damage timing; the additive
+`Flash` presentation projection lets Godot render the native blue flash without
+inferring spell behavior from a generic projectile.
+
 A Resurrection cast names another participant through the existing
 `CastRequested.target_entity_id`. Its runtime beam uses projectile behavior
 value `11` plus the existing target, position, and lifetime fields. Revival is

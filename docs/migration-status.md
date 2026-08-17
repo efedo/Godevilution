@@ -147,6 +147,10 @@ Status date: 2026-08-17
 - Guardian behavior `36` now projects an additive server-owned `Guardian`
   turret family, while older peers retain behavior-based fallback.
 
+- Flash behaviors `5`, `6`, and `7` now project an additive server-owned
+  `Flash` family for the native two-layer visual, while older peers retain
+  behavior-based fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 
