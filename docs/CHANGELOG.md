@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a live single-player protocol-client check that relocates an inventory
+  item by stable identity and confirms a stale reference is rejected without
+  mutating the authoritative grid.
+
 - Carry an additive stable item reference on inventory-move intents. Native and
   Godot clients now send the projected identity, and the C# module rejects
   stale item slots before changing the authoritative inventory grid.

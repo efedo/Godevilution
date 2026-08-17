@@ -93,6 +93,63 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerMovesInventoryByStableReferenceAndRejectsStaleMove()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-stable-inventory-move", requestedClassId: 2));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        var item = Assert.Single(player.Inventory);
+        Assert.NotEqual(0U, item.State.StableItemId);
+        Assert.Equal(0, player.InventoryGrid[30]);
+
+        var moveSequence = client.Queue(new Command {
+            MoveInventoryItemRequested = new MoveInventoryItemRequested {
+                InventoryIndex = 0,
+                TargetCell = 0,
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = item.State.StableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var moveAcknowledgement = await WaitForAcknowledgementAsync(client, moveSequence);
+        Assert.Equal(CommandStatus.Accepted, moveAcknowledgement.Status);
+
+        var moved = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().InventoryGrid.FirstOrDefault() == 0);
+        model.Apply(moved);
+        Assert.Equal(0, model.Snapshot!.Players.Single().InventoryGrid[0]);
+        Assert.Equal(-1, model.Snapshot.Players.Single().InventoryGrid[30]);
+
+        var staleSequence = client.Queue(new Command {
+            MoveInventoryItemRequested = new MoveInventoryItemRequested {
+                InventoryIndex = 0,
+                TargetCell = 1,
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                    StableItemId = item.State.StableItemId + 1,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var staleAcknowledgement = await WaitForAcknowledgementAsync(client, staleSequence);
+        Assert.Equal(CommandStatus.Rejected, staleAcknowledgement.Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, staleAcknowledgement.RejectReason);
+    }
+
+    [Fact]
     public async Task LiveServerRestoresAuthoritativeStateAfterProcessRestart()
     {
         var saveRoot = Path.Combine(
