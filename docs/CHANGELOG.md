@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
 - Preserve native breakable-object destruction for both player and monster
   arrows when an arrow collides with a missile-blocking object.
 
+- Preserve native breakable-object destruction for persistent Acid puddles
+  without prematurely ending their lifetime.
+
 - Preserve Nova Ball's native shrine collision exception through validated
   world-object metadata and the authoritative snapshot, protocol, save, and
   hash boundaries.

@@ -649,6 +649,9 @@ the arrow is removed, matching native `ProcessArrow` behavior.
 The shipped `Acid` and `AcidUnique` mappings also carry the native speed-16
 projectile transport explicitly; older rows retain the compatibility speed
 fallback while their validated lifetime and puddle terms remain authoritative.
+Persistent puddles continue checking their occupied tile each active tick and
+break a hit breakable missile-blocking object without ending the puddle, matching
+native `ProcessAcidPuddle` behavior.
 Validated `SnakeCharge` missile mappings select the native two-tile charge
 controller and server-owned collision path independently of the `Snake` label
 or `Rhino` missile name. Outside the charge boundary, the same mapping now

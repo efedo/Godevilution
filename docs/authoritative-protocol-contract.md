@@ -548,6 +548,11 @@ behavior; snapshots, saves, hashes, and the additive range fields carry the
 complete resumable state. Player-owned arrows follow the same native
 breakable-object transition through the shared protocol-neutral simulation.
 
+Persistent Acid puddles check their occupied tile on every active tick. A
+breakable missile-blocking object is destroyed through the same server-owned
+collision transition, while the puddle restores its active lifetime and only
+enters its existing impact phase at expiry.
+
 Hork Spawn uses the same current-tile collision boundary as native
 `ProcessHorkSpawn`: before movement or expiry, the server checks a living
 player on the missile tile with the non-arrow `PlayerMHit` rules. A successful

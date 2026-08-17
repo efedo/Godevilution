@@ -37,6 +37,9 @@ Status date: 2026-08-16
 - Player- and monster-owned arrows now preserve native breakable-object
   destruction when they collide with a missile-blocking object before removal.
 
+- Persistent Acid puddles now preserve native breakable-object destruction on
+  their occupied tile without ending the puddle lifetime.
+
 - The Godot world presentation now renders server-owned monster health bars
   from authoritative `MonsterSnapshot` vitality, preferring exact Q6 values and
   falling back to rounded legacy fields without moving combat state into the
