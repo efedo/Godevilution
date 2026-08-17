@@ -242,7 +242,7 @@ state. Both runners validate all four checkpoints.
 `gameplay-fireball-pvp.json` places a second participant on the first travel
 tile of a level-3 Fireball cast in multiplayer mode. Tick 1 proves the native
 player hit and Q6 damage boundary, direct-to-impact transition, and complete
-participant/death projection; tick 17 proves the 14-tick impact lifetime and
+participant projection; tick 17 proves the 14-tick impact lifetime and
 projectile removal. Both runners validate the same two checkpoints.
 
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12

@@ -69,7 +69,7 @@ Status date: 2026-08-17
 
 - Fireball now resolves direct and impact-phase player collisions through the
   same authoritative player-target boundary as native `Plr2PlrMHit`; the
-  shared replay covers Q6 damage, death state, splash timing, and projectile
+  shared replay covers nonlethal Q6 damage, splash timing, and projectile
   removal in both C++ and C#.
 
 - Persistent Acid puddles now preserve native breakable-object destruction on

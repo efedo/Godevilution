@@ -32,7 +32,7 @@ All notable changes to this fork are documented below.
   including the native variant RNG draw and resumable removal timing.
 
 - Add a shared deterministic Fireball player-versus-player replay covering
-  direct collision, impact splash, Q6 damage/death projection, and removal
+  direct collision, impact splash, Q6 damage, participant projection, and removal
   timing across the native and C# runners.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
