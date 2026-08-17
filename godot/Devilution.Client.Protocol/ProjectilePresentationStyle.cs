@@ -43,6 +43,8 @@ public static class ProjectilePresentationStyle
     private const int FlameWaveSegment = 25;
     private const int InfernoController = 26;
     private const int InfernoSegment = 27;
+    private const int ApocalypseController = 32;
+    private const int ApocalypseBoom = 33;
     private const int ChainLightningController = 28;
     private const int ChainLightningBolt = 29;
     private const int NovaController = 30;
@@ -116,8 +118,11 @@ public static class ProjectilePresentationStyle
                 or InfernoController
                 or InfernoSegment
                 or RingOfFireController
-                or ImmolationController)
+                or ImmolationController
+                or ApocalypseController)
             return ProjectilePresentationKind.Fire;
+        if (behavior == ApocalypseBoom)
+            return ProjectilePresentationKind.FireImpact;
         if (behavior is Lightning
                 or LightningSegment
                 or ChainLightningController

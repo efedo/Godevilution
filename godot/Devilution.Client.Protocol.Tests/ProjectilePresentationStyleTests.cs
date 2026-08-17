@@ -10,6 +10,8 @@ public sealed class ProjectilePresentationStyleTests
     [Theory]
     [InlineData(16, 0, ProjectilePresentationKind.Fire)]
     [InlineData(16, 1, ProjectilePresentationKind.FireImpact)]
+    [InlineData(32, 0, ProjectilePresentationKind.Fire)]
+    [InlineData(33, 0, ProjectilePresentationKind.FireImpact)]
     [InlineData(20, 0, ProjectilePresentationKind.BloodStar)]
     [InlineData(50, 0, ProjectilePresentationKind.MonsterMagic)]
     [InlineData(57, 0, ProjectilePresentationKind.HorkSpawn)]

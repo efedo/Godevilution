@@ -1142,8 +1142,11 @@ internal static class DiabloProtocolMapper
                 or AuthoritativeProjectileBehavior.InfernoController
                 or AuthoritativeProjectileBehavior.InfernoSegment
                 or AuthoritativeProjectileBehavior.RingOfFireController
-                or AuthoritativeProjectileBehavior.ImmolationController)
+                or AuthoritativeProjectileBehavior.ImmolationController
+                or AuthoritativeProjectileBehavior.ApocalypseController)
             return ProjectilePresentationKind.Fire;
+        if (behavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
+            return ProjectilePresentationKind.FireImpact;
         if (behavior is AuthoritativeProjectileBehavior.Lightning
                 or AuthoritativeProjectileBehavior.LightningSegment
                 or AuthoritativeProjectileBehavior.ChainLightningController
