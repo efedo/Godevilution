@@ -809,9 +809,6 @@ offset before the first authoritative tick.
 Storm/ThinLightning controller ticks now roll the native doubled monster damage
 range before creating each persistent lightning segment.
 
-SkeletonRanged arrows now preserve the native fixed four-point payload;
-validated `projectile_damage` values remain authoritative overrides.
-
 Schema 1.299 externalizes SkeletonKing movement-admission chance through
 optional `skeleton_king_movement_chance_*` fields on the validated monster-type
 mapping. Older packs retain the native 25-plus-intelligence band.
