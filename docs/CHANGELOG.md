@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
   now advances the authored gate before requiring the item, then consumes Magic
   Rock and spawns the normalized level-5 Empyrean Band through the server.
 
+- Add schema 1.335 base Ogden's Sign quest content. The staged Tavern
+  conversation now advances its native gate before consuming Tavern Sign and
+  spawning the normalized level-4 Harlequin Crest through the server.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

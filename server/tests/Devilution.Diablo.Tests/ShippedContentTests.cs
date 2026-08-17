@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.334.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.335.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -77,6 +77,34 @@ public sealed class ShippedContentTests
             pickupEffect.QuestId,
             pickupEffect.EffectKind,
             pickupEffect.EffectAmount));
+
+        var ogdenQuest = Assert.Single(
+            AuthoritativeQuestCatalog.LoadTsv(
+                "quest_states.tsv",
+                pack.Tables.Single(table => table.SourcePath == "quest_states.tsv").ToCanonicalTsv(),
+                questTypes,
+                stableIds),
+            quest => quest.QuestId == 3008);
+        Assert.Equal((12, 13, 3, 0U, 55, 62, 2136U, 1, 1007U, 4, 54, 63), (
+            ogdenQuest.MessageId,
+            ogdenQuest.TurnInMessageId,
+            ogdenQuest.TurnInTownerId,
+            ogdenQuest.TurnInLevelId,
+            ogdenQuest.TurnInPositionX,
+            ogdenQuest.TurnInPositionY,
+            ogdenQuest.TurnInItemId,
+            ogdenQuest.TurnInRequiredVariable2,
+            ogdenQuest.TurnInRewardUniqueId,
+            ogdenQuest.TurnInRewardItemLevel,
+            ogdenQuest.TurnInRewardPositionX,
+            ogdenQuest.TurnInRewardPositionY));
+        Assert.Equal("tavern_sign", items.GetRequired(2136).StableSymbol);
+        Assert.True(uniques.TryGet(1007, out var harlequinCrest));
+        Assert.NotNull(harlequinCrest);
+        Assert.Equal((116U, 4000, 5), (
+            harlequinCrest.BaseItemId,
+            harlequinCrest.Value,
+            harlequinCrest.Powers.Count));
     }
 
     [Fact]
@@ -1485,7 +1513,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.334.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.335.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1673,7 +1701,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(18, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(19, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

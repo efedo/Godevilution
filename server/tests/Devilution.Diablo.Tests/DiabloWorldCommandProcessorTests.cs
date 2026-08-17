@@ -1406,6 +1406,69 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeOgdenSignTurnInUsesAuthoredStagesAndHarlequinReward()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1007, "Harlequin Crest", 116, 1, 4000, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(116, 7, 4000, 4000, 0, 0, 0, 15, 15, 1, 1, true),
+            new AuthoritativeItemDefinition(2136, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var quest = new AuthoritativeQuestState(
+            3008,
+            4,
+            1,
+            active: true,
+            variable1: 1,
+            messageId: 12,
+            completionVariable1: 3,
+            turnInTownerId: 3,
+            turnInLevelId: 0,
+            turnInPositionX: 55,
+            turnInPositionY: 62,
+            turnInItemId: 2136,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1007,
+            turnInRewardItemLevel: 4,
+            turnInRewardPositionX: 54,
+            turnInRewardPositionY: 63,
+            turnInMessageId: 13);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 54, positionY: 62, entityId: 7);
+
+        var started = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3008, 3),
+            1,
+            [player]);
+
+        Assert.True(started.Succeeded);
+        Assert.Equal(1, quest.Variable2);
+        Assert.Equal(12, Assert.Single(started.Events).MessageId);
+
+        var sign = items.Generate(2136, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, sign.CreateInfo, 0, 0, sign));
+        player.InventoryGrid[0] = 0;
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3008, 3),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.Equal(3, quest.Variable1);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(13, Assert.Single(completed.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1007, reward.State.UniqueId);
+        Assert.Equal((54, 63), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void NativeTownerTurnInRejectsWrongTownerOrMissingItemWithoutMutation()
     {
         var items = new AuthoritativeItemCatalog([
