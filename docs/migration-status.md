@@ -135,6 +135,9 @@ Status date: 2026-08-17
   `Fire`, while persistent behavior `33` booms use the larger `FireImpact`
   family; older peers retain the same behavior fallback.
 
+- Firebolt behavior `2` now shares the server-owned `Fire`/`FireImpact`
+  projection with Fireball behavior `16`, including the legacy fallback.
+
 - Persistent Acid puddles now preserve native breakable-object destruction on
   their occupied tile without ending the puddle lifetime.
 

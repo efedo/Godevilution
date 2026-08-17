@@ -136,9 +136,10 @@ Godot never clears the trap locally.
 Teleport behavior `9` and Phasing behavior `15` are invisible movement
 controllers. Godot renders only the resulting authoritative player coordinates
 and never predicts either relocation.
-Fireball behavior `16` is also presentation-only: Godot renders an orange
-travel projectile for phase `0` and a larger orange explosion for phase `1`.
-The server owns its path, direct collision, splash targets, damage, and expiry.
+Firebolt behavior `2` and Fireball behavior `16` are presentation-only: Godot
+renders an orange travel projectile for phase `0` and a larger orange explosion
+for phase `1`. The server owns each path, direct collision, splash targets,
+damage, and expiry.
 Blood Star behavior `20` and Bone Spirit behavior `21` are likewise
 presentation-only. Godot renders their authoritative projectile state while
 the server owns movement, homing, resistance, impact lifetime, damage, and the

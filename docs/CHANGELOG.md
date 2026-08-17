@@ -81,6 +81,8 @@ All notable changes to this fork are documented below.
 - Classify Apocalypse behavior `32` as `Fire` and persistent behavior `33` as
   `FireImpact` in the server-owned projectile presentation projection, with
   matching legacy fallback coverage.
+- Classify Firebolt behavior `2` as `Fire` during travel and `FireImpact` during
+  impact, matching the existing Fireball presentation contract.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
