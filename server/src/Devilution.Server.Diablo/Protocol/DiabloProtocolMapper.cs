@@ -1149,6 +1149,8 @@ internal static class DiabloProtocolMapper
             return ProjectilePresentationKind.Fire;
         if (behavior == AuthoritativeProjectileBehavior.ApocalypseBoom)
             return ProjectilePresentationKind.FireImpact;
+        if (behavior == AuthoritativeProjectileBehavior.GuardianController)
+            return ProjectilePresentationKind.Guardian;
         if (behavior is AuthoritativeProjectileBehavior.ChargedBolt
                 or AuthoritativeProjectileBehavior.Lightning
                 or AuthoritativeProjectileBehavior.LightningSegment

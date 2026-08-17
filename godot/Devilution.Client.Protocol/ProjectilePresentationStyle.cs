@@ -14,6 +14,7 @@ public enum ProjectilePresentationKind
     BoneSpirit,
     Acid,
     Arrow,
+    Guardian,
     Beam,
     StoneCurse,
     Teleport,
@@ -48,6 +49,7 @@ public static class ProjectilePresentationStyle
     private const int ApocalypseController = 32;
     private const int ApocalypseBoom = 33;
     private const int Elemental = 35;
+    private const int GuardianController = 36;
     private const int ChainLightningController = 28;
     private const int ChainLightningBolt = 29;
     private const int NovaController = 30;
@@ -88,6 +90,8 @@ public static class ProjectilePresentationStyle
                 => ProjectilePresentationKind.Acid,
             Devilution.Protocol.V1.ProjectilePresentationKind.Arrow
                 => ProjectilePresentationKind.Arrow,
+            Devilution.Protocol.V1.ProjectilePresentationKind.Guardian
+                => ProjectilePresentationKind.Guardian,
             Devilution.Protocol.V1.ProjectilePresentationKind.Beam
                 => ProjectilePresentationKind.Beam,
             Devilution.Protocol.V1.ProjectilePresentationKind.StoneCurse
@@ -127,6 +131,8 @@ public static class ProjectilePresentationStyle
             return ProjectilePresentationKind.Fire;
         if (behavior == ApocalypseBoom)
             return ProjectilePresentationKind.FireImpact;
+        if (behavior == GuardianController)
+            return ProjectilePresentationKind.Guardian;
         if (behavior is ChargedBolt
                 or Lightning
                 or LightningSegment
