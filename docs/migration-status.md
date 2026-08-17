@@ -199,6 +199,10 @@ Status date: 2026-08-16
   `MonsterChargedBolt` projectiles with their native fixed 15-point payload;
   validated `projectile_damage` values remain authoritative overrides.
 
+- Mapped monster Fireball collisions now roll the native monster damage range
+  at each direct or splash impact, while validated `projectile_damage` values
+  remain fixed overrides.
+
 - Mega delegated Skeleton movement-delay admission is now validated
   `mega_delay_chance_base` and `mega_delay_chance_intelligence_scale`
   monster-type data, preserving the native 35-minus-four-times-intelligence

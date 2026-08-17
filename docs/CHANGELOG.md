@@ -18,6 +18,9 @@ All notable changes to this fork are documented below.
 - Preserve Counselor's native three-projectile Charged Bolt attack and fixed
   15-point monster payload, while retaining validated damage overrides.
 
+- Preserve native per-impact monster Fireball damage rolls for mapped direct
+  and splash collisions, while retaining fixed `projectile_damage` overrides.
+
 - Activate the validated Hellfire Familiar post-melee Lightning mapping in
   `monster_missiles.tsv`, including its native transport, impact lifetime, and
   `GenerateRnd(10)` damage bound.

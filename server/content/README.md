@@ -581,6 +581,9 @@ monster damage, and retains the player hit boundary. A positive validated
 monsters also retain the native adjacent Flash attack: the server emits both
 stationary Flash layers with `2 * monster_level` magic damage and keeps the
 native delay instead of falling through to generic melee.
+Mapped monster Fireball rows retain the native per-impact monster damage roll;
+positive `projectile_damage` values instead provide a fixed direct and splash
+payload.
 Schema 1.85 adds the native `Mega` `InfernoControl` mapping. The server preserves
 Mega's distance- and intelligence-based special-attack admission, speed-32
 Inferno controller, three-segment limit, and monster damage roll through the
