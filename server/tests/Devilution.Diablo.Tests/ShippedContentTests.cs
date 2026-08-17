@@ -17,13 +17,13 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.335.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.336.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
 
     [Fact]
-    public void BaseContentPackExternalizesMagicRockPickupAndGriswoldTurnIn()
+    public void BaseContentPackExternalizesMagicRockAndAnvilPickupAndGriswoldTurnIns()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
@@ -71,12 +71,42 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             pack.Tables.Single(table => table.SourcePath == "item_quest_effects.tsv").ToCanonicalTsv(),
             stableIds);
-        var pickupEffect = Assert.Single(effects.Definitions);
+        Assert.Equal(2, effects.Definitions.Count);
+        var pickupEffect = Assert.Single(effects.Definitions, effect => effect.ItemId == 2135);
         Assert.Equal((2135U, 3001U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
             pickupEffect.ItemId,
             pickupEffect.QuestId,
             pickupEffect.EffectKind,
             pickupEffect.EffectAmount));
+        var anvilPickupEffect = Assert.Single(effects.Definitions, effect => effect.ItemId == 2138);
+        Assert.Equal((2138U, 3011U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
+            anvilPickupEffect.ItemId,
+            anvilPickupEffect.QuestId,
+            anvilPickupEffect.EffectKind,
+            anvilPickupEffect.EffectAmount));
+
+        var anvilQuest = Assert.Single(quests, quest => quest.QuestId == 3011);
+        Assert.Equal((88, 90, 0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
+            anvilQuest.MessageId,
+            anvilQuest.TurnInMessageId,
+            anvilQuest.TurnInTownerId,
+            anvilQuest.TurnInLevelId,
+            anvilQuest.TurnInPositionX,
+            anvilQuest.TurnInPositionY,
+            anvilQuest.TurnInItemId,
+            anvilQuest.TurnInRequiredVariable2,
+            anvilQuest.TurnInRewardUniqueId,
+            anvilQuest.TurnInRewardItemLevel,
+            anvilQuest.TurnInRewardPositionX,
+            anvilQuest.TurnInRewardPositionY));
+        Assert.Equal("anvil_of_fury", items.GetRequired(2138).StableSymbol);
+        Assert.Equal("griswold_s_edge", items.GetRequired(119).StableSymbol);
+        Assert.True(uniques.TryGet(1010, out var griswoldsEdge));
+        Assert.NotNull(griswoldsEdge);
+        Assert.Equal((119U, 42000, 6), (
+            griswoldsEdge.BaseItemId,
+            griswoldsEdge.Value,
+            griswoldsEdge.Powers.Count));
 
         var ogdenQuest = Assert.Single(
             AuthoritativeQuestCatalog.LoadTsv(
@@ -1513,7 +1543,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.335.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.336.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   conversation now advances its native gate before consuming Tavern Sign and
   spawning the normalized level-4 Harlequin Crest through the server.
 
+- Add schema 1.336 base Anvil of Fury quest content. The staged Blacksmith
+  conversation now advances its native gate before consuming Anvil and
+  spawning the normalized Griswold's Edge through the server.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

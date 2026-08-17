@@ -3,9 +3,11 @@ unique	the_ember_blade	1001
 unique	the_ward_shield	1002
 unique	empyrean_band	1004
 unique	harlequin_crest	1007
+unique	griswold_s_edge	1010
 item	short_sword	1
 item	buckler	2
 item	harlequin_crest	116
+item	griswold_s_edge	119
 item	dagger	127
 item	short_sword_standard	2160
 item	falchion	129
@@ -122,6 +124,7 @@ item	scroll_of_identify_fixed	2133
 item	scroll_of_identify	2134
 item	magic_rock	2135
 item	tavern_sign	2136
+item	anvil_of_fury	2138
 item	potion_healing_standard	2180
 item	potion_full_healing	2181
 item	potion_mana_standard	2182

@@ -114,8 +114,8 @@ Status date: 2026-08-17
 - Content-declared towner turn-ins are now generic. The server
   validates the towner, level, adjacency, native `_qvar2` conversation gate,
   and required Anvil item; it then consumes the item, completes quest 3011, and
-  spawns Griswold's Edge through `TurnInQuestRequested`. The first shipped
-  definition is the Hellfire Anvil/Blacksmith path. Legacy native behavior
+  spawns Griswold's Edge through `TurnInQuestRequested`. The base and Hellfire
+  Anvil/Blacksmith paths use the same definition. Legacy native behavior
   remains compatible outside authoritative mode; the connected native client
   now selects the active quest from the content-declared towner metadata and
   projects the returned dialogue event.
@@ -175,6 +175,12 @@ Status date: 2026-08-17
   The pickup effect activates quest 3001; the first Blacksmith interaction
   advances `_qvar2` and emits the native prompt without consuming Magic Rock,
   while the second consumes it and spawns Empyrean Band at the native position.
+
+- Base Anvil of Fury pickup and Griswold's staged hand-in now use authored
+  content. The pickup effect activates quest 3011; the first Blacksmith
+  interaction advances `_qvar2` and emits the native prompt without consuming
+  Anvil, while the second consumes it and spawns Griswold's Edge at the native
+  position.
 
 - Base Ogden's Sign now uses authored quest state 3008. The first Tavern
   interaction advances `_qvar2` and emits the native prompt without consuming
@@ -1879,6 +1885,9 @@ Status date: 2026-08-17
 
 - Schema 1.335 adds the base Ogden's Sign staged towner row and normalized
   Tavern Sign/Harlequin Crest content through `TurnInQuestRequested`.
+
+- Schema 1.336 adds the base Anvil of Fury pickup effect, staged Griswold
+  turn-in, normalized Anvil item, and Griswold's Edge reward content.
 
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item

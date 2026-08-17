@@ -1371,6 +1371,66 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void NativeAnvilTurnInUsesTheAuthoredConversationGateAndGriswoldsEdge()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1010, "Griswold's Edge", 119, 1, 42000, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(119, 1, 750, 750, 4, 12, 0, 50, 50, 1, 1, true),
+            new AuthoritativeItemDefinition(2138, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var quest = new AuthoritativeQuestState(
+            3011,
+            10,
+            1,
+            active: true,
+            messageId: 88,
+            turnInTownerId: 0,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 63,
+            turnInItemId: 2138,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1010,
+            turnInRewardItemLevel: 1,
+            turnInRewardPositionX: 61,
+            turnInRewardPositionY: 64,
+            turnInMessageId: 90);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 61, positionY: 63, entityId: 7);
+
+        var started = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3011, 0),
+            1,
+            [player]);
+
+        Assert.True(started.Succeeded);
+        Assert.Equal(1, quest.Variable2);
+        Assert.Equal(88, Assert.Single(started.Events).MessageId);
+
+        var anvil = items.Generate(2138, 42);
+        player.Inventory.Add(new OwnedStoreItem(0, 0, anvil.CreateInfo, 0, 0, anvil));
+        player.InventoryGrid[0] = 0;
+
+        var completed = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3011, 0),
+            2,
+            [player]);
+
+        Assert.True(completed.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(90, Assert.Single(completed.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1010, reward.State.UniqueId);
+        Assert.Equal((61, 64), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void NativeTownerConversationGateRunsBeforeRequiredItemValidation()
     {
         var items = new AuthoritativeItemCatalog([
