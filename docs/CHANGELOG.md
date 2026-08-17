@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Persist the server/world RNG seed in the authoritative save root so
+  deterministic procedural geometry survives process restarts; an explicit
+  `--random-seed` must match an existing persisted seed.
+
 - Add schema 1.324's optional `missile_blocked_percent` procedural-level
   field, preserving separate deterministic missile occlusion while retaining
   `blocked_percent` as the compatibility fallback.

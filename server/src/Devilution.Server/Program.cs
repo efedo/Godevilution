@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Devilution.Server.Commands;
 using Devilution.Data;
 using Devilution.Engine;
@@ -49,6 +48,8 @@ internal static class Program
         }
 
         var contentManifest = LoadContentManifest();
+        var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
+        var worldSeedStore = new AuthoritativeWorldSeedStore(options.SaveRoot);
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
         var gameAdapters = BuiltInAuthoritativeGameHostAdapters.Create();
         var builtInModules = gameAdapters.CreateBuiltInModules();
@@ -77,8 +78,7 @@ internal static class Program
         }
 
         var moduleCandidates = LoadModuleCandidates(out var modulePackages);
-        var randomSeed = options.RandomSeed
-            ?? BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(sizeof(uint)));
+        var randomSeed = worldSeedStore.LoadOrCreate(options.RandomSeed);
         var playerStart = new AuthoritativePlayerStartConfiguration(
             options.StartingGold,
             options.StartingLife,
@@ -102,7 +102,6 @@ internal static class Program
         var ruleset = activeRuleset.Identity;
         var gameAdapter = new LeasedAuthoritativeGameHostAdapter(rulesetRuntime);
         var commandServer = new AuthoritativeCommandServer(gameAdapter);
-        var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
         var handshake = new ProtocolHandshake(ProtocolServerIdentity.FromRuleset(
             options.BuildId,
             options.ProtocolSchemaVersion,
@@ -129,7 +128,7 @@ internal static class Program
         Console.WriteLine($"Content manifest: {contentManifest.Sha256}");
         Console.WriteLine($"Ruleset identity: {ruleset.CombinedSha256}");
         Console.WriteLine($"Protocol schema: {options.ProtocolSchemaVersion}");
-        Console.WriteLine($"Simulation RNG seed: {randomSeed}");
+        Console.WriteLine($"Server/world RNG seed: {randomSeed}");
         Console.WriteLine($"Game mode: {options.GameMode}");
         if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
             Console.WriteLine(

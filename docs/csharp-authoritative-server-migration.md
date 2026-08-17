@@ -85,6 +85,11 @@ The server owns:
 - objects, quests, portals, level occupancy, and persistent world state;
 - saves, validation, migrations, active content, and gameplay modules.
 
+The host persists the server/world seed beside authoritative saves. A restart
+reuses that seed before content activation, so generated level geometry remains
+identical when saved participants are restored; an explicitly supplied
+`--random-seed` is rejected if it conflicts with the persisted seed.
+
 Clients own:
 
 - input collection and intent submission;

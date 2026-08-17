@@ -20,7 +20,7 @@ public sealed record ServerHostOptions(
 
     public int? StartingMana { get; init; }
 
-    /** Null requests a fresh server-owned seed at process startup. */
+    /** Null loads the save-root seed or creates it once for a new server. */
     public uint? RandomSeed { get; init; }
 
     public string SaveRoot { get; init; } = Path.Combine("server", "saves");
@@ -272,7 +272,7 @@ public sealed record ServerHostOptions(
           --starting-gold <amount>     Override content-defined initial wallet
           --starting-life <amount>     Override content-derived initial life (Q6)
           --starting-mana <amount>     Override content-derived initial mana (Q6)
-          --random-seed <uint32>       Deterministic simulation seed (default: generated)
+          --random-seed <uint32>       Initial server/world seed (persisted in save root)
           --game-mode <mode>           single-player or multiplayer (default: multiplayer)
           --difficulty <level>         normal, nightmare, or hell (default: normal)
           --procedural-monsters <n>    Replace static encounters with at most n generated monsters
