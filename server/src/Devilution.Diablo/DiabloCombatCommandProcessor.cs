@@ -9413,6 +9413,22 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    /** Native CheckMissileCol transition for a breakable arrow blocker. */
+    private void BreakMissileBlockingObject(
+        uint levelId,
+        int positionX,
+        int positionY)
+    {
+        if (world.TryGetMissileBlockingObject(
+                levelId,
+                positionX,
+                positionY,
+                out var blockingObject)
+            && blockingObject!.Breakable) {
+            blockingObject.Destroyed = true;
+        }
+    }
+
     private void AdvanceWeaponArrow(
         ulong tick,
         AuthoritativeProjectile projectile,
@@ -9435,6 +9451,7 @@ public sealed class DiabloCombatCommandProcessor
                     projectile.PositionY,
                     nextX,
                     nextY)) {
+                BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
                 world.Projectiles.Remove(projectile.EntityId);
                 return;
             }
@@ -9491,6 +9508,7 @@ public sealed class DiabloCombatCommandProcessor
                 + Math.Sign(projectile.TargetY - projectile.PositionY);
             if (!world.ContainsPosition(projectile.LevelId, nextX, nextY)
                 || world.IsMissileBlocked(projectile.LevelId, nextX, nextY)) {
+                BreakMissileBlockingObject(projectile.LevelId, nextX, nextY);
                 world.Projectiles.Remove(projectile.EntityId);
                 return;
             }

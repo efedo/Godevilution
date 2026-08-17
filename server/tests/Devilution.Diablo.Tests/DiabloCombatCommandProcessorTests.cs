@@ -1094,6 +1094,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var arrow = new AuthoritativeProjectile(
+            0x80000000,
+            7,
+            8,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            10,
+            AuthoritativeDamageType.Physical,
+            0,
+            3,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
+            Speed = 1,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            projectiles: [arrow]);
+        var processor = CreateProcessor(world);
+        var owner = CreatePlayer(entityId: 7);
+        var target = CreatePlayer(entityId: 8, positionX: 3);
+
+        processor.AdvanceTick(1, [owner, target]);
+
+        Assert.Equal((0, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MultipleArrowsEmitsOneImmediateAndTwoDelayedAuthoritativeMissiles()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
@@ -6540,6 +6582,54 @@ public sealed class DiabloCombatCommandProcessorTests
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
         Assert.Equal(expectedImpactDamage, damage.Amount);
+    }
+
+    [Fact]
+    public void MonsterArrowBreaksABlockingObjectBeforeRemoval()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            monsterLevel: 1);
+        var arrow = new AuthoritativeProjectile(
+            0x80000000,
+            9,
+            7,
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            2,
+            AuthoritativeDamageType.Physical,
+            0,
+            3,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+            Speed = 1,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            combatTargets: [monster],
+            projectiles: [arrow]);
+        var processor = CreateProcessor(world);
+        var target = CreatePlayer(entityId: 7, positionX: 3);
+
+        processor.AdvanceTick(1, [target]);
+
+        Assert.Equal((0, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
     }
 
     [Fact]
