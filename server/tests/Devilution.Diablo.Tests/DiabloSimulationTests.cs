@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-                new ContentSchemaIdentity("devilution.diablo", "1.338.0"),
+                new ContentSchemaIdentity("devilution.diablo", "1.339.0"),
             DiabloContentSchema.Current);
     }
 
@@ -373,7 +373,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.338.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.339.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1678,17 +1678,25 @@ public sealed class DiabloSimulationTests
                     variable1: 2,
                     variable2: 7,
                     messageId: 123,
-                    completionMonsterId: 12)],
+                    completionMonsterId: 12,
+                    routeActivationVariable1: 1)],
             });
         var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 3);
 
         var replacement = DiabloSimulationFactory.Instance.Create(
-            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules));
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                Quests = [new AuthoritativeQuestState(
+                    40,
+                    0,
+                    2,
+                    routeActivationVariable1: 1)],
+            });
         replacement.RestoreSnapshot(CreatePlayer(), snapshot);
 
         var quest = Assert.Single(replacement.WorldState.Quests.Values);
         Assert.Equal((2, 7, 123), (quest.Variable1, quest.Variable2, quest.MessageId));
         Assert.Equal(12U, quest.CompletionMonsterId);
+        Assert.Equal(1, quest.RouteActivationVariable1);
     }
 
     [Fact]

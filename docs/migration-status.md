@@ -186,7 +186,8 @@ Status date: 2026-08-17
 
 - Base Skeleton King now uses an authored route-activated quest state, with
   normalized native Skeleton King monster content supplying the completion
-  target for native monster identity 50.
+  target for native monster identity 50. Schema 1.339 also externalizes its
+  native route `_qvar1 = 1` activation marker.
 
 - Base Ogden's Sign now uses authored quest state 3008. The first Tavern
   interaction advances `_qvar2` and emits the native prompt without consuming
@@ -1899,7 +1900,8 @@ Status date: 2026-08-17
   monster, and authored Dead Guy quest state.
 
 - Schema 1.338 adds the base Skeleton King route quest state and normalized
-  native Skeleton King monster definition.
+  native Skeleton King monster definition. Schema 1.339 adds the authored
+  route activation `_qvar1` marker used by the native Skeleton King level.
 
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item

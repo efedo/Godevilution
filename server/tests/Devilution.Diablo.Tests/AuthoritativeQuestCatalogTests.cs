@@ -265,6 +265,31 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadRouteActivationVariable()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\troute_activation\troute_activation_variable1\n"
+                + "3013\t3\t1\t1\t1\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((true, 1), (quest.ActivateOnRoute, quest.RouteActivationVariable1));
+        AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
+    }
+
+    [Fact]
+    public void RouteActivationVariableRequiresRouteActivation()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quests.tsv",
+            "quest_id\tlevel_id\trequired_progress\troute_activation\troute_activation_variable1\n"
+                + "3013\t3\t1\t0\t1\n");
+
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeQuestCatalog.ValidateActivationTargets(quests));
+    }
+
+    [Fact]
     public void QuestStateCanLoadDiabloCompletionTrigger()
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(

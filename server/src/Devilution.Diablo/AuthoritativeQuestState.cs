@@ -134,7 +134,8 @@ public sealed class AuthoritativeQuestState
         uint turnInCompletionRewardItemId = 0,
         uint turnInAlternateItemId = 0,
         int turnInAlternateMessageId = 0,
-        int turnInActivationVariable1 = -1)
+        int turnInActivationVariable1 = -1,
+        int routeActivationVariable1 = -1)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -174,6 +175,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInAlternateMessageId));
         if (turnInActivationVariable1 is < -1 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInActivationVariable1));
+        if (routeActivationVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(routeActivationVariable1));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -199,6 +202,7 @@ public sealed class AuthoritativeQuestState
         CompletionVariable2 = completionVariable2;
         CompletionActivateQuestId = completionActivateQuestId;
         ActivateOnRoute = activateOnRoute;
+        RouteActivationVariable1 = routeActivationVariable1;
         CompletionDiablo = completionDiablo;
         CompletionRewardItemId = completionRewardItemId;
         CompletionRewardItemLevel = completionRewardItemLevel;
@@ -272,6 +276,8 @@ public sealed class AuthoritativeQuestState
     public uint CompletionActivateQuestId { get; }
     /** Whether native route-level entry may activate this quest automatically. */
     public bool ActivateOnRoute { get; }
+    /** Optional native _qvar1 marker written when route-level entry activates the quest. */
+    public int RouteActivationVariable1 { get; }
     /** Whether the native Diablo boss identity completes this quest. */
     public bool CompletionDiablo { get; }
     /** Optional item definition spawned at the native monster-defeat reward boundary. */
@@ -383,6 +389,7 @@ public static class AuthoritativeQuestCatalog
                     "completion_activate_quest_id",
                     "completion_activate_quest_symbol"),
                 activateOnRoute: row.OptionalBoolean("route_activation"),
+                routeActivationVariable1: row.OptionalInt32("route_activation_variable1", -1),
                 completionDiablo: row.OptionalBoolean("completion_diablo"),
                 completionRewardItemId: AuthoritativeItemIdentity.ResolveOptional(
                     row,
@@ -677,6 +684,11 @@ public static class AuthoritativeQuestCatalog
             if (!questIds.Contains(quest.CompletionActivateQuestId))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} activates unknown quest {quest.CompletionActivateQuestId}.");
+        }
+        foreach (var quest in values.Where(quest => quest.RouteActivationVariable1 >= 0)) {
+            if (!quest.ActivateOnRoute)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares a route activation variable without enabling route activation.");
         }
     }
 

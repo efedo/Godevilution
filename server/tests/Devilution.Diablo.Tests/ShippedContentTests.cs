@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.338.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.339.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -170,10 +170,11 @@ public sealed class ShippedContentTests
                 questTypes,
                 stableIds),
             quest => quest.QuestId == 3013);
-        Assert.Equal((3U, 52U, true, false), (
+        Assert.Equal((3U, 52U, true, 1, false), (
             skeletonKingQuest.LevelId,
             skeletonKingQuest.CompletionMonsterId,
             skeletonKingQuest.ActivateOnRoute,
+            skeletonKingQuest.RouteActivationVariable1,
             skeletonKingQuest.Active));
         var skeletonKing = Assert.Single(
             monsterTypes.Definitions,
@@ -1590,7 +1591,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.338.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.339.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

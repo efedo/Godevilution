@@ -232,7 +232,8 @@ public sealed class DiabloWorldCommandProcessorTests
             3,
             1,
             active: false,
-            completionMonsterId: 52);
+            completionMonsterId: 52,
+            routeActivationVariable1: 1);
         var questTypes = new AuthoritativeQuestTypeCatalog([
             new AuthoritativeQuestTypeDefinition(
                 3013, 3, "The Curse of King Leoric", 3, -1, "DTYPE_CATHEDRAL", 1, false),
@@ -249,6 +250,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(result.Succeeded);
         Assert.Equal(3U, player.LevelId);
         Assert.True(quest.Active);
+        Assert.Equal(1, quest.Variable1);
         Assert.Equal(52U, quest.CompletionMonsterId);
     }
 
