@@ -9482,13 +9482,16 @@ public sealed class DiabloCombatCommandProcessor
         if (projectile.TargetEntityId != 0
             && world.CombatTargets.TryGetValue(projectile.TargetEntityId, out var target)
             && target.HitPoints > 0
-            && (target.LevelId == 0 || target.LevelId == projectile.LevelId)) {
+            && (target.LevelId == 0 || target.LevelId == projectile.LevelId)
+            && IsWeaponArrowEndpointOccupied(projectile, target)) {
             ResolveWeaponArrowImpact(tick, projectile, target, players, events);
         } else if (projectile.TargetEntityId != 0
             && players.FirstOrDefault(candidate =>
                 candidate.EntityId == projectile.TargetEntityId
                 && candidate.Life > 0
-                && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId))
+                && (candidate.LevelId == 0 || candidate.LevelId == projectile.LevelId)
+                && candidate.PositionX == projectile.TargetX
+                && candidate.PositionY == projectile.TargetY)
                 is { } playerTarget) {
             ResolvePlayerWeaponArrowImpact(
                 tick,
@@ -9498,6 +9501,19 @@ public sealed class DiabloCombatCommandProcessor
                 events);
         }
         world.Projectiles.Remove(projectile.EntityId);
+    }
+
+    /** Native ProcessArrow only resolves the declared endpoint while it occupies that tile. */
+    private static bool IsWeaponArrowEndpointOccupied(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget target)
+    {
+        return target.PositionX == projectile.TargetX
+            && target.PositionY == projectile.TargetY
+            || target.IsMoving
+            && target.IsPetrified
+            && target.FuturePositionX == projectile.TargetX
+            && target.FuturePositionY == projectile.TargetY;
     }
 
     /** Native ProcessArrow collision check for each traversed tile. */

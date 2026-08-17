@@ -1129,6 +1129,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerArrowMissesWhenItsDeclaredEndpointTargetLeavesThePath()
+    {
+        var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        target.PositionY = 6;
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+        processor.AdvanceTick(3, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(5000, target.HitPoints);
+    }
+
+    [Fact]
     public void PlayerArrowBreaksABlockingObjectBeforeRemoval()
     {
         var blocker = new AuthoritativeWorldObject(
