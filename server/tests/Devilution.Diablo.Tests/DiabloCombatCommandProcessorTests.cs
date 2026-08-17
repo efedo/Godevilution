@@ -16901,6 +16901,77 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void FireballStopsAtARegularMissileBlockingObject()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            missilePassable: false);
+        var world = new DiabloWorldState(objects: [blocker]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireballSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 12,
+            abilitySpellId: 12,
+            memorizedSpells: [new MemorizedSpellState(12, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(12, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        _ = processor.AdvanceTick(1, [player]);
+        _ = processor.AdvanceTick(2, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((1, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.False(blocker.Destroyed);
+    }
+
+    [Fact]
+    public void FireballBreaksAHitBreakableMissileBlockingObject()
+    {
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            missilePassable: false,
+            breakable: true);
+        var world = new DiabloWorldState(objects: [blocker]);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateFireballSpell()]));
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 12,
+            abilitySpellId: 12,
+            memorizedSpells: [new MemorizedSpellState(12, 3)]);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloCastIntent(12, 0, 4, 0, DiabloCastSourceKind.Ability),
+            1).Succeeded);
+
+        _ = processor.AdvanceTick(1, [player]);
+        _ = processor.AdvanceTick(2, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((1, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.True(blocker.Destroyed);
+    }
+
+    [Fact]
     public void FireballDirectHitCreatesNativeShiftedSplashAndPersistentImpact()
     {
         var directTarget = new AuthoritativeCombatTarget(

@@ -11326,6 +11326,13 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             }
             projectile.LastCollisionTargetEntityId = targetEntityId;
+            if (TryStopFireballAtMissileBlocker(
+                    tick,
+                    projectile,
+                    players,
+                    events,
+                    ignoreStart: true))
+                return;
             if (expiresAfterMovement)
                 EnterFireballImpact(tick, projectile, players, events);
             return;
@@ -11358,10 +11365,46 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             }
             projectile.LastCollisionTargetEntityId = targetEntityId;
+            if (TryStopFireballAtMissileBlocker(
+                    tick,
+                    projectile,
+                    players,
+                    events))
+                return;
         }
 
         if (expiresAfterMovement)
             EnterFireballImpact(tick, projectile, players, events);
+    }
+
+    /** Native Fireball stops on missile geometry and breaks breakable objects. */
+    private bool TryStopFireballAtMissileBlocker(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events,
+        bool ignoreStart = false)
+    {
+        if (ignoreStart
+            && projectile.PositionX == projectile.StartX
+            && projectile.PositionY == projectile.StartY)
+            return false;
+        if (!world.IsMissileBlocked(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY))
+            return false;
+
+        if (world.TryGetMissileBlockingObject(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                out var blockingObject)
+            && blockingObject!.Breakable) {
+            blockingObject.Destroyed = true;
+        }
+        EnterFireballImpact(tick, projectile, players, events);
+        return true;
     }
 
     private void EnterFireballImpact(
