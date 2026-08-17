@@ -1540,6 +1540,20 @@ public sealed class ShippedContentTests
         Assert.Equal(10, familiar.ProjectileDamageRandomRange);
         Assert.True(familiar.IsPostMeleeMissile);
         itemQuestEffects.ValidateQuests(activation.Simulation.WorldState.Quests.Values);
+        var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
+        Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
+            jerseyQuest.MessageId,
+            jerseyQuest.TurnInMessageId,
+            jerseyQuest.TurnInTownerId,
+            jerseyQuest.TurnInLevelId,
+            jerseyQuest.TurnInPositionX,
+            jerseyQuest.TurnInPositionY,
+            jerseyQuest.TurnInItemId,
+            jerseyQuest.TurnInRequiredVariable2,
+            jerseyQuest.TurnInRewardUniqueId,
+            jerseyQuest.TurnInRewardItemLevel,
+            jerseyQuest.TurnInRewardPositionX,
+            jerseyQuest.TurnInRewardPositionY));
         Assert.Equal(
             [0U, 1U, 2U, 3U, 4U, 9U, 17U, 18U, 19U, 20U, 21U, 22U, 23U, 24U],
             activation.Simulation.WorldState.World!.Levels.Select(level => level.LevelId));

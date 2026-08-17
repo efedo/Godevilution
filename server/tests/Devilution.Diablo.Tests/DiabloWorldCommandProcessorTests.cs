@@ -1441,6 +1441,60 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredJerseyTurnInConsumesBrownSuitAndSpawnsBovinePlate()
+    {
+        var uniques = new AuthoritativeUniqueItemCatalog([
+            new AuthoritativeUniqueItemDefinition(1011, "Bovine Plate", 120, 1, 400, []),
+        ]);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(120, 9, 0, 0, 0, 0, 40, 40, 40, 2, 2, true),
+            new AuthoritativeItemDefinition(2104, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ], uniqueItems: uniques);
+        var suit = items.Generate(2104, 42);
+        var player = CreatePlayer(
+            positionX: 60,
+            positionY: 22,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, suit.CreateInfo, 0, 0, suit)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3024,
+            9,
+            1,
+            active: true,
+            messageId: 300,
+            variable2: 1,
+            turnInTownerId: 12,
+            turnInLevelId: 0,
+            turnInPositionX: 61,
+            turnInPositionY: 22,
+            turnInItemId: 2104,
+            turnInRequiredVariable2: 1,
+            turnInRewardUniqueId: 1011,
+            turnInRewardItemLevel: 1,
+            turnInRewardPositionX: 62,
+            turnInRewardPositionY: 23,
+            turnInMessageId: 304);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3024, 12),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(304, Assert.Single(result.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(1011, reward.State.UniqueId);
+        Assert.Equal((62, 23), (reward.PositionX, reward.PositionY));
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(

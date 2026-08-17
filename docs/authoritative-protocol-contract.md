@@ -155,8 +155,8 @@ choose message text or mutate quest state.
 content-owned quest and native towner; the server validates the active quest,
 level, adjacency, authored conversation variable, required item, and authored
 geometry before consuming the item, completing the quest, and spawning an
-optional unique reward. The first shipped use is the Hellfire Blacksmith Anvil
-turn-in.
+optional unique reward. Shipped uses include the Hellfire Blacksmith Anvil,
+Little Girl, and Jersey's Jersey turn-ins.
 
 ## State, Events, and Persistence
 

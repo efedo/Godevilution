@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   exactly once through `TalkToQuestRequested`; the server owns the activation
   guard, reward placement, and generated book state.
 
+- Externalize Hellfire Jersey's Jersey quest 3024 through the authored towner
+  boundary. Complete Nut now consumes Brown Suit and spawns the validated Bovine
+  Plate reward with native conversation gating and completion dialogue.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

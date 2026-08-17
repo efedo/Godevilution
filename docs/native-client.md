@@ -149,7 +149,8 @@ active quest's content-declared towner is presented. The server owns adjacency,
 native conversation variables, required-item consumption, quest completion,
 normal or unique reward spawning, and the dialogue event; the adapter projects that
 dialogue into the native quest-text UI. The Hellfire Magic Rock and Anvil of
-Fury/Blacksmith paths, followed by Little Girl, are the first shipped definitions.
+Fury/Blacksmith paths, Little Girl, and Jersey's Jersey/Complete Nut are shipped
+definitions; additional legacy towner paths remain local until authored.
 Legacy local towner behavior stays available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the

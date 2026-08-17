@@ -1434,6 +1434,11 @@ inventory item or completing the quest; later conversations do not duplicate
 the reward. Base Zhar is the first shipped activation-reward definition and
 spawns the level-14 dynamic book one tile southeast of the encounter.
 
+The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
+columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
+the native `_qvar2` conversation transition, consumes Brown Suit (2104), and
+spawns Bovine Plate (unique 1011) at 62,23 with the native completion dialogue.
+
 Schema 1.301 adds optional `counselor_move_chance_percent` to
 `monster_types.tsv`. Shipped Counselor-family rows carry the native 30-percent
 failed-ranged-admission movement branch, while older mappings retain the
