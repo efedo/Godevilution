@@ -2672,6 +2672,106 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkSpawnMissKeepsItsControllerForTheNextTick()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            100,
+            monsterLevel: 10,
+            aggroRange: 0);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            monster.EntityId,
+            7,
+            117,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            2) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(2));
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            characterLevel: 1);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Same(projectile, Assert.Single(world.Projectiles.Values));
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(6400, player.Life);
+    }
+
+    [Fact]
+    public void HorkSpawnCanBeBlockedByAStandingShieldBearer()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            100,
+            monsterLevel: 10,
+            aggroRange: 0);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            monster.EntityId,
+            7,
+            117,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+        };
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            equipment: [new EquippedStoreItem(4, 100, shield)],
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            characterLevel: 1);
+
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, player.CombatMode);
+    }
+
+    [Fact]
     public void HorkDemonUsesValidatedSpawnAdmissionTuning()
     {
         var nativeWorld = new AuthoritativeWorld();
