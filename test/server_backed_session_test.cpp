@@ -117,7 +117,12 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 		serverHello.mutable_server_hello()->set_session_token("session");
 		WriteEnvelope(socket, serverHello);
 		protocol::Envelope initial;
-		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *initialPlayer = initial.mutable_snapshot()->add_players();
+		initialPlayer->set_entity_id(7);
+		auto *initialItem = initialPlayer->add_inventory();
+		initialItem->set_item_seed(42);
+		initialItem->mutable_state()->set_stable_item_id(700);
+		initialItem->mutable_state()->set_item_type(1);
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -126,7 +131,10 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 		protocol::Envelope command;
 		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
 		    || command.command_batch().commands_size() != 1
-		    || !command.command_batch().commands(0).has_sell_item_requested())
+		    || !command.command_batch().commands(0).has_sell_item_requested()
+		    || command.command_batch().commands(0).sell_item_requested().item().location() != protocol::PLAYER_ITEM_LOCATION_INVENTORY
+		    || command.command_batch().commands(0).sell_item_requested().item().slot() != 0
+		    || command.command_batch().commands(0).sell_item_requested().item().stable_item_id() != 700)
 			return;
 		protocol::Envelope ack;
 		auto *result = ack.mutable_command_ack()->add_results();

@@ -221,7 +221,13 @@ tl::expected<void, std::string> ServerBackedRuntime::PurchaseHealer(uint32_t sto
 
 tl::expected<void, std::string> ServerBackedRuntime::SellItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return SellItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->SellItem(inventoryIndex, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::SellItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -237,7 +243,13 @@ tl::expected<void, std::string> ServerBackedRuntime::SellItem(ServerBackedItemRe
 
 tl::expected<void, std::string> ServerBackedRuntime::RepairItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return RepairItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->RepairItem(inventoryIndex, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::RepairItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -264,7 +276,13 @@ tl::expected<void, std::string> ServerBackedRuntime::RepairItemWithAbility(Serve
 
 tl::expected<void, std::string> ServerBackedRuntime::RechargeItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return RechargeItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->RechargeItem(inventoryIndex, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::RechargeItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -291,7 +309,13 @@ tl::expected<void, std::string> ServerBackedRuntime::RechargeItemWithAbility(Ser
 
 tl::expected<void, std::string> ServerBackedRuntime::IdentifyItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return IdentifyItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->IdentifyItem(inventoryIndex, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
 }
 
 tl::expected<void, std::string> ServerBackedRuntime::IdentifyItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)

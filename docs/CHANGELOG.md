@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Resolve native indexed item-service convenience calls through the latest
+  authoritative inventory snapshot, carrying stable item IDs and rejecting
+  missing slots before submission.
+
 - Harden external TSV validation with one strict Boolean parser across class,
   quest, quest-type, level, procedural-level, object, warp, item, monster,
   monster-missile, affix, store, and combat catalogs; malformed Boolean values

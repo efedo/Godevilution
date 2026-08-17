@@ -89,6 +89,11 @@ their item references from the latest authoritative projection, carrying the
 stable content item ID when present. Older servers and snapshots retain the
 zero-valued positional compatibility path.
 
+The indexed `SellItem`, `RepairItem`, `RechargeItem`, and `IdentifyItem`
+convenience entry points use that same projection lookup before submitting a
+command. An out-of-range or removed inventory slot is rejected locally instead
+of being sent as a positional reference that could target a different item.
+
 Spell-book use follows the same boundary: a connected authoritative client sends
 `ReadBookRequested` with the projected stable item reference and applies the
 returned snapshot. The local book-consumption path remains available only for

@@ -113,6 +113,7 @@ private:
 	tl::expected<void, std::string> SubmitInventoryCommand(tl::expected<protocol::Command, std::string> command, uint64_t nowMs);
 	tl::expected<void, std::string> SubmitGameplayCommand(tl::expected<protocol::Command, std::string> command, uint64_t nowMs);
 	void ApplyAcknowledgements(const protocol::CommandAck &acknowledgement, std::optional<uint64_t> focusSequence = std::nullopt);
+	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerInventoryItemReference(uint32_t inventoryIndex) const noexcept;
 
 	std::unique_ptr<ServerBackedClient> client_;
 	uint32_t entityId_ = 0;

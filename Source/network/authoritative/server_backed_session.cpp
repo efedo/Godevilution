@@ -51,7 +51,10 @@ tl::expected<void, std::string> ServerBackedSession::Purchase(uint32_t storeId, 
 
 tl::expected<void, std::string> ServerBackedSession::SellItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return SellItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	const auto item = PlayerInventoryItemReference(inventoryIndex);
+	if (!item.has_value())
+		return tl::make_unexpected("The authoritative inventory item is no longer present.");
+	return SellItem(*item, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::SellItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -61,7 +64,10 @@ tl::expected<void, std::string> ServerBackedSession::SellItem(ServerBackedItemRe
 
 tl::expected<void, std::string> ServerBackedSession::RepairItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return RepairItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	const auto item = PlayerInventoryItemReference(inventoryIndex);
+	if (!item.has_value())
+		return tl::make_unexpected("The authoritative inventory item is no longer present.");
+	return RepairItem(*item, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::RepairItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -76,7 +82,10 @@ tl::expected<void, std::string> ServerBackedSession::RepairItemWithAbility(Serve
 
 tl::expected<void, std::string> ServerBackedSession::RechargeItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return RechargeItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	const auto item = PlayerInventoryItemReference(inventoryIndex);
+	if (!item.has_value())
+		return tl::make_unexpected("The authoritative inventory item is no longer present.");
+	return RechargeItem(*item, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::RechargeItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -91,7 +100,10 @@ tl::expected<void, std::string> ServerBackedSession::RechargeItemWithAbility(Ser
 
 tl::expected<void, std::string> ServerBackedSession::IdentifyItem(uint32_t inventoryIndex, uint64_t requestedTick, uint64_t nowMs)
 {
-	return IdentifyItem({ .location = ServerBackedItemLocation::Inventory, .slot = inventoryIndex }, requestedTick, nowMs);
+	const auto item = PlayerInventoryItemReference(inventoryIndex);
+	if (!item.has_value())
+		return tl::make_unexpected("The authoritative inventory item is no longer present.");
+	return IdentifyItem(*item, requestedTick, nowMs);
 }
 
 tl::expected<void, std::string> ServerBackedSession::IdentifyItem(ServerBackedItemReference item, uint64_t requestedTick, uint64_t nowMs)
@@ -356,6 +368,19 @@ void ServerBackedSession::ApplyAcknowledgements(const protocol::CommandAck &ackn
 		// command that the server has already resolved.
 		pendingIntents_.erase(pending);
 	}
+}
+
+std::optional<ServerBackedItemReference> ServerBackedSession::PlayerInventoryItemReference(uint32_t inventoryIndex) const noexcept
+{
+	const auto *snapshot = playerState_.Snapshot();
+	if (snapshot == nullptr || static_cast<std::size_t>(inventoryIndex) >= snapshot->inventory.size())
+		return std::nullopt;
+	const auto &item = snapshot->inventory[static_cast<std::size_t>(inventoryIndex)];
+	return ServerBackedItemReference {
+		.location = ServerBackedItemLocation::Inventory,
+		.slot = inventoryIndex,
+		.stableItemId = item.stableItemId,
+	};
 }
 
 } // namespace devilution::authoritative
