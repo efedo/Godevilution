@@ -8736,6 +8736,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GoatRangedAiFiresAcrossAnAdjacentClearLaneInsteadOfFallingThroughToMelee()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 100,
+            nativeAi: "GoatRanged");
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "GoatRanged",
+                    "Arrow",
+                    AuthoritativeProjectileBehavior.MonsterArrow,
+                    RangedRetreatMinimumDistance: 2,
+                    RangedRetreatChanceBase: 1,
+                    RangedRetreatChanceIntelligenceScale: 1,
+                    ProjectileImpactLifetime: 2),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // 1 ^ 9 ^ 7 = 15, outside the configured one-per-100 retreat band.
+        var deliveries = processor.AdvanceTick(1, [player]);
+
+        Assert.Contains(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage
+                && delivery.Event.SourceEntityId == 9
+                && delivery.Event.TargetEntityId == 7);
+        Assert.True(player.Life < 100);
+        Assert.False(monster.IsMoving);
+        var arrow = Assert.Single(world.Projectiles).Value;
+        Assert.Equal(AuthoritativeProjectileBehavior.MonsterArrow, arrow.Behavior);
+        Assert.Equal((9U, 7U), (arrow.SourceEntityId, arrow.TargetEntityId));
+    }
+
+    [Fact]
     public void GoatRangedAiPreservesItsNativePostAttackDelay()
     {
         var monster = new AuthoritativeCombatTarget(

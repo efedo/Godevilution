@@ -6714,7 +6714,6 @@ public sealed class DiabloCombatCommandProcessor
             || missile.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.MonsterArrow
                 or AuthoritativeProjectileBehavior.Targeted)
-            || distance < 2
             || GetEffectiveMonsterToHit(monster, special: false) <= 0
             || GetEffectiveMonsterDamageRange(monster, special: false).Maximum <= 0
             || IsPlayerProtectedByFlash(player)
