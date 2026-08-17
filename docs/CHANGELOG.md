@@ -42,6 +42,10 @@ All notable changes to this fork are documented below.
   current-life divisor followed by the non-arrow half-damage step; add a shared
   C++/C# replay covering self-damage, hit RNG, impact lifetime, and removal.
 
+- Preserve native Bone Spirit nearest-monster homing and resistant-monster
+  damage, including monster regeneration and the retained impact phase, with a
+  shared C++/C# replay fixture.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

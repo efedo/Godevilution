@@ -257,6 +257,12 @@ including the non-arrow half-damage step, immediate self-damage, the single
 player-hit RNG draw, impact entry, and seven-tick projectile removal. Both
 runners validate the same two checkpoints and final participant projection.
 
+`gameplay-bone-spirit-homing.json` places a petrified, magic-resistant monster
+near a level-1 Bone Spirit path. The fixture proves native nearest-monster
+retargeting, current-life-third damage with monster resistance, monster
+regeneration, and the retained seven-tick impact phase. Both runners validate
+the same spawn and post-hit checkpoints.
+
 `gameplay-lightning-resolution.json` uses activated Lightning, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified
 lightning-resistant target, and seed `0x12345678`. Ticks 1 and 2 prove native
