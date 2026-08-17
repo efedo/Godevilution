@@ -4,9 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
-- Harden external TSV validation with one strict Boolean parser across quest,
-  object, warp, item, monster, affix, store, and combat catalogs; malformed
-  Boolean values now reject the complete content candidate.
+- Harden external TSV validation with one strict Boolean parser across class,
+  quest, quest-type, level, procedural-level, object, warp, item, monster,
+  monster-missile, affix, store, and combat catalogs; malformed Boolean values
+  now reject the complete content candidate.
 
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit

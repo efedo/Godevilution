@@ -912,14 +912,14 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 row.RequiredInt32("maximum_damage"),
                 row.OptionalInt32("minimum_special_damage"),
                 row.OptionalInt32("maximum_special_damage"),
-                ParseFlag(row, "stone_curse_immune"),
-                ParseFlag(row, "undead"),
-                ParseFlag(row, "berserk_immune")) {
+                row.OptionalBoolean("stone_curse_immune"),
+                row.OptionalBoolean("undead"),
+                row.OptionalBoolean("berserk_immune")) {
                 StableSymbol = AuthoritativeMonsterIdentity.ReadSymbol(row),
-                Demon = ParseFlag(row, "demon"),
-                Animal = ParseFlag(row, "animal"),
-                Knockback = ParseFlag(row, "knockback"),
-                Diablo = ParseFlag(row, "diablo"),
+                Demon = row.OptionalBoolean("demon"),
+                Animal = row.OptionalBoolean("animal"),
+                Knockback = row.OptionalBoolean("knockback"),
+                Diablo = row.OptionalBoolean("diablo"),
                 FireResistance = row.OptionalInt32("fire_resistance"),
                 LightningResistance = row.OptionalInt32("lightning_resistance"),
                 MagicResistance = row.OptionalInt32("magic_resistance"),
@@ -1047,15 +1047,6 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 AiAvoidanceMovementChanceModulo = row.OptionalInt32("ai_avoidance_movement_chance_modulo"),
                 AiAvoidanceMovementFreshChanceBonus = row.OptionalInt32("ai_avoidance_movement_fresh_chance_bonus"),
             }));
-    }
-
-    private static bool ParseFlag(TsvRow row, string column)
-    {
-        var value = row.OptionalInt32(column);
-        if (value is not (0 or 1))
-            throw new InvalidDataException(
-                $"Monster type row {row.LineNumber} has invalid {column} value {value}.");
-        return value == 1;
     }
 
     private static int? ReadOptionalResistance(TsvRow row, string column)

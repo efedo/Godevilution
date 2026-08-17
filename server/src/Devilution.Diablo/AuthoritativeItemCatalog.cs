@@ -389,7 +389,7 @@ public sealed class AuthoritativeItemCatalog
                 CursorGraphic = OptionalPresentationText(row, "cursor_graphic"),
                 MinimumMonsterLevel = row.OptionalInt32("min_monster_level"),
                 DropRate = row.OptionalInt32("drop_rate"),
-                Usable = ParseOptionalBoolean(row, "usable"),
+                Usable = row.OptionalNullableBoolean("usable"),
                 NativeCursorGraphic = ParseOptionalCursorGraphic(row, cursorCatalog),
             }).ToArray();
         return new AuthoritativeItemCatalog(definitions, affixes, uniqueItems);
@@ -560,21 +560,9 @@ public sealed class AuthoritativeItemCatalog
         return value == "-" ? string.Empty : value;
     }
 
-    private static bool? ParseOptionalBoolean(TsvRow row, string column)
-    {
-        if (!row.TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
-            return null;
-        if (bool.TryParse(value, out var result))
-            return result;
-        if (int.TryParse(value, out var numeric))
-            return numeric != 0;
-        throw new InvalidDataException(
-            $"TSV row {row.LineNumber} contains an invalid boolean '{value}'.");
-    }
-
     private static bool ParseLegacyUsable(TsvRow row)
     {
-        return ParseOptionalBoolean(row, "usable") ?? false;
+        return row.OptionalBoolean("usable");
     }
 
     private static int? ParseOptionalCursorGraphic(

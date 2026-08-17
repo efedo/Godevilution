@@ -73,6 +73,13 @@ public sealed record TsvRow(int LineNumber, IReadOnlyDictionary<string, string> 
         return ParseBoolean(value, column);
     }
 
+    public bool? OptionalNullableBoolean(string column)
+    {
+        if (!TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
+            return null;
+        return ParseBoolean(value, column);
+    }
+
     private bool ParseBoolean(string value, string column)
     {
         if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)

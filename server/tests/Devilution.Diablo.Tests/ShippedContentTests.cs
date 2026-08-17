@@ -60,6 +60,39 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseContentActivationRejectsMalformedBooleanCandidate()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var classes = basePack.Tables.Single(table => table.SourcePath == "classes.tsv");
+        var malformedClasses = TsvTable.Parse(
+            classes.SourcePath,
+            string.Join(
+                '\n',
+                classes.ToCanonicalTsv()
+                    .Split('\n')
+                    .Select((line, index) => index == 1
+                        ? line.Replace("\ttrue\t", "\t2\t", StringComparison.Ordinal)
+                        : line)));
+        var malformedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == classes.SourcePath ? malformedClasses : table)
+                .ToArray(),
+            dependencies: [],
+            overlays: [],
+            schema: basePack.Schema);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest("malformed", "1", [malformedPack]))));
+
+        Assert.Contains("Boolean", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("is_default", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedItemDefinitionsUseTheCompleteStableItemNamespace()
     {
         var repositoryRoot = FindRepositoryRoot();

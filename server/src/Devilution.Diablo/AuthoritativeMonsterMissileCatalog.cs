@@ -515,19 +515,9 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     "ranged_avoidance_adjacent_attack_chance_intelligence_scale"),
                 RangedAvoidanceAdjacentAttackChanceDivisor = row.OptionalInt32(
                     "ranged_avoidance_adjacent_attack_chance_divisor"),
-                IsPostMeleeMissile = ParseOptionalBoolean(row, "post_melee_missile"),
+                IsPostMeleeMissile = row.OptionalBoolean("post_melee_missile"),
             };
         }));
-    }
-
-    private static bool ParseOptionalBoolean(TsvRow row, string column)
-    {
-        if (!row.TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
-            return false;
-        if (bool.TryParse(value, out var result))
-            return result;
-        throw new InvalidDataException(
-            $"TSV row {row.LineNumber} contains an invalid boolean '{value}' in '{column}'.");
     }
 
     private static IReadOnlyList<int>? ParseSnakeDriftPattern(TsvRow row)

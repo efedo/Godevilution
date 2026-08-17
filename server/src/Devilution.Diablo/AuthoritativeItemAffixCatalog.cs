@@ -266,24 +266,13 @@ public sealed class AuthoritativeItemAffixCatalog
             row.OptionalInt32("minLevel"),
             tags,
             row.OptionalInt32("chance", 1),
-            ParseLegacyBool(row, "useful")) {
+            row.OptionalBoolean("useful", true)) {
                 Alignment = row.TryGet("alignment", out var alignment) && !string.IsNullOrWhiteSpace(alignment) ? alignment : "Any",
                 MinimumValue = row.OptionalInt32("minVal"),
                 MaximumValue = row.OptionalInt32("maxVal"),
                 ValueMultiplier = row.OptionalInt32("multVal"),
                 HasLegacyValueRange = true,
             };
-    }
-
-    private static bool ParseLegacyBool(TsvRow row, string column)
-    {
-        if (!row.TryGet(column, out var value) || string.IsNullOrWhiteSpace(value))
-            return true;
-        if (bool.TryParse(value, out var result))
-            return result;
-        if (int.TryParse(value, out var numeric))
-            return numeric != 0;
-        throw new InvalidDataException($"Affix row {row.LineNumber} contains an invalid boolean '{value}'.");
     }
 
     private static bool Percent(uint seed, int percentage)

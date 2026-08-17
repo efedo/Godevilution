@@ -33,6 +33,8 @@ public sealed class ContentRuntimeTests
         Assert.True(table.Rows[1].OptionalBoolean("enabled"));
         Assert.False(table.Rows[1].OptionalBoolean("visible"));
         Assert.False(table.Rows[0].OptionalBoolean("missing"));
+        Assert.Null(table.Rows[0].OptionalNullableBoolean("missing"));
+        Assert.True(table.Rows[0].OptionalNullableBoolean("enabled"));
         Assert.Throws<InvalidDataException>(() =>
             TsvTable.Parse("bad-flags.tsv", "id\tenabled\nrow\t2\n")
                 .Rows[0]

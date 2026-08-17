@@ -123,23 +123,13 @@ public sealed class AuthoritativeWorld
                 row.RequiredInt32("height"),
                 blocked,
                 missileBlocked,
-                ParseBooleanFlag(row, "default_start"),
-                ParseBooleanFlag(row, "suppress_multiplayer_death_drops")) {
+                row.OptionalBoolean("default_start"),
+                row.OptionalBoolean("suppress_multiplayer_death_drops")) {
                 StableSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
             };
             world.AddLevel(level);
         }
         return world;
-    }
-
-    private static bool ParseBooleanFlag(TsvRow row, string column)
-    {
-        var value = row.OptionalInt32(column);
-        if (value is not (0 or 1)) {
-            throw new InvalidDataException(
-                $"Level {row.Required("level_id")} has invalid {column} value {value}.");
-        }
-        return value == 1;
     }
 
     private static IReadOnlyList<int> ParseCells(TsvRow row, string column)

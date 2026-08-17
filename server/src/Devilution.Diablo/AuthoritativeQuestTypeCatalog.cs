@@ -68,7 +68,7 @@ public sealed class AuthoritativeQuestTypeCatalog
                     stableIds,
                     "set_level",
                     "set_level_symbol"),
-                ParseFlag(row, "single_player_only")) {
+                row.OptionalBoolean("single_player_only")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             }));
         if (setLevelNames is not null
@@ -78,15 +78,6 @@ public sealed class AuthoritativeQuestTypeCatalog
                 $"Quest type table '{sourcePath}' references an unknown set-level identity.");
         }
         return catalog;
-    }
-
-    private static bool ParseFlag(TsvRow row, string column)
-    {
-        var value = row.OptionalInt32(column);
-        if (value is not (0 or 1))
-            throw new InvalidDataException(
-                $"Quest type row {row.LineNumber} has invalid {column} value {value}.");
-        return value == 1;
     }
 
     private static string OptionalText(TsvRow row, string column)

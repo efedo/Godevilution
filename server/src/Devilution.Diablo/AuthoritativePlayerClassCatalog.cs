@@ -430,7 +430,7 @@ public sealed class AuthoritativePlayerClassCatalog
                 row.Required("symbol"),
                 row.Required("display_name"),
                 ParseAvailability(row),
-                ParseBoolean(row, "is_default"),
+                row.RequiredBoolean("is_default"),
                 ParseFlags(row),
                 row.RequiredInt32("base_strength"),
                 row.RequiredInt32("base_magic"),
@@ -623,15 +623,6 @@ public sealed class AuthoritativePlayerClassCatalog
         }
         throw new InvalidDataException(
             $"Player-class row {row.LineNumber} contains unknown availability '{value}'.");
-    }
-
-    private static bool ParseBoolean(TsvRow row, string column)
-    {
-        var value = row.Required(column);
-        if (bool.TryParse(value, out var result))
-            return result;
-        throw new InvalidDataException(
-            $"Column '{column}' on TSV row {row.LineNumber} must be true or false.");
     }
 
     private static DiabloPlayerClassFlags ParseFlags(TsvRow row)

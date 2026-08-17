@@ -122,8 +122,8 @@ public sealed class AuthoritativeProceduralLevelCatalog
                 row.RequiredInt32("height"),
                 row.OptionalUInt32("generation_seed"),
                 row.OptionalInt32("blocked_percent"),
-                ParseBooleanFlag(row, "default_start"),
-                ParseBooleanFlag(row, "suppress_multiplayer_death_drops"),
+                row.OptionalBoolean("default_start"),
+                row.OptionalBoolean("suppress_multiplayer_death_drops"),
                 row.TryGet("missile_blocked_percent", out _)
                     ? row.OptionalInt32("missile_blocked_percent")
                     : null) {
@@ -133,12 +133,4 @@ public sealed class AuthoritativeProceduralLevelCatalog
             }));
     }
 
-    private static bool ParseBooleanFlag(TsvRow row, string column)
-    {
-        var value = row.OptionalInt32(column);
-        if (value is not (0 or 1))
-            throw new InvalidDataException(
-                $"Procedural level {row.Required("level_id")} has invalid {column} value {value}.");
-        return value == 1;
-    }
 }

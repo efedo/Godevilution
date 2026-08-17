@@ -86,6 +86,15 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RejectsMalformedNormalizedBooleanMetadata()
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tidentified\tusable\n"
+                + "7\t1\t75\t100\t1\t2\n"));
+    }
+
+    [Fact]
     public void ProjectsExternalPresentationMetadataIntoGeneratedItemState()
     {
         var catalog = AuthoritativeItemCatalog.LoadTsv(
