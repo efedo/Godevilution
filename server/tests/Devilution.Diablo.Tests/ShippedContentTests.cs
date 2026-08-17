@@ -17,9 +17,45 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.322.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.323.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
+    }
+
+    [Fact]
+    public void OptionalProceduralLevelTableMaterializesAuthoritativeGeometry()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var generation = basePack.Tables
+            .Single(table => table.SourcePath == "level_generation.tsv")
+            .ToCanonicalTsv()
+            .Replace("7\t24\t30", "7\t25\t30", StringComparison.Ordinal);
+        var tables = basePack.Tables
+            .Where(table => table.SourcePath != "level_generation.tsv")
+            .Append(TsvTable.Parse("level_generation.tsv", generation))
+            .Append(TsvTable.Parse(
+                "procedural_levels.tsv",
+                "level_id\tlevel_symbol\twidth\theight\tgeneration_seed\tblocked_percent\tdefault_start\n"
+                    + "25\tgenerated_test\t25\t21\t1234\t60\t0\n"))
+            .ToArray();
+        var pack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            tables,
+            dependencies: [],
+            overlays: [],
+            schema: basePack.Schema);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("procedural-test", "1", [pack])));
+        var generated = Assert.Single(
+            activation.Simulation.WorldState.World!.Levels,
+            level => level.LevelId == 25);
+
+        Assert.Equal("generated_test", generated.StableSymbol);
+        Assert.True(generated.BlockedCells.Count > 0);
+        Assert.True(generated.IsWalkable(1, 1));
     }
 
     [Fact]
@@ -1338,7 +1374,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.322.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.323.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

@@ -331,6 +331,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        if (content.TryGetTable(
+                "procedural_levels.tsv",
+                out var proceduralLevelsTable)) {
+            var proceduralLevels = AuthoritativeProceduralLevelCatalog.LoadTsv(
+                proceduralLevelsTable.SourcePath,
+                proceduralLevelsTable.ToCanonicalTsv());
+            var generatedWorld = proceduralLevels.GenerateWorld(randomSeed);
+            if (world is null) {
+                world = generatedWorld;
+            } else {
+                foreach (var level in generatedWorld.Levels)
+                    world.AddLevel(level);
+            }
+        }
         var levelGeneration = content.TryGetTable(
             "level_generation.tsv",
             out var levelGenerationTable)
