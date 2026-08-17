@@ -152,11 +152,12 @@ leaving the quest active and suppressing duplicate rewards. Clients do not
 choose message text or mutate quest state.
 
 `TurnInQuestRequested` is the additive command at field 34. It names a
-content-owned quest and native towner; the server validates the active quest,
-level, adjacency, authored conversation variable, required item, and authored
-geometry before consuming the item, completing the quest, and spawning an
-optional unique reward. Shipped uses include the Hellfire Blacksmith Anvil,
-Little Girl, and Jersey's Jersey turn-ins.
+content-owned quest and native towner; the server validates the quest, level,
+adjacency, authored conversation variable, and geometry. A normal turn-in then
+consumes the required item, completes the quest, and spawns an optional reward.
+An explicit activation-only definition instead activates an inactive quest and
+may create its authored initial item without completing it. Shipped uses include
+the Hellfire Farmer, Blacksmith Anvil, Little Girl, and Jersey's Jersey paths.
 
 ## State, Events, and Persistence
 

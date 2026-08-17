@@ -1365,12 +1365,52 @@ public sealed class DiabloWorldCommandProcessor
             || quest.TurnInTownerId != townerId
             || quest.Unavailable
             || quest.Completed
-            || !quest.Active
+            || (!quest.TurnInActivationOnly && !quest.Active)
+            || (quest.TurnInActivationOnly && quest.Active)
             || quest.TurnInLevelId != player.LevelId
             || Math.Max(
                 Math.Abs(quest.TurnInPositionX - player.PositionX),
-                Math.Abs(quest.TurnInPositionY - player.PositionY)) > 1
-            || quest.TurnInItemId == 0
+                Math.Abs(quest.TurnInPositionY - player.PositionY)) > 1) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        if (quest.TurnInActivationOnly) {
+            quest.Active = true;
+            quest.Logged = true;
+            quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+            if (quest.TurnInRewardItemId != 0
+                && items.TryGet(quest.TurnInRewardItemId, out var activationItem)
+                && !player.Inventory.Any(item =>
+                    items.IsStateForDefinition(item.State, activationItem))) {
+                var itemSeed = AllocateGoldStackSeed();
+                var rewardState = items.Generate(
+                    quest.TurnInRewardItemId,
+                    itemSeed,
+                    quest.TurnInRewardItemLevel);
+                var entityId = AllocateWorldItemEntityId([player]);
+                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                    entityId,
+                    quest.TurnInLevelId,
+                    quest.TurnInRewardPositionX,
+                    quest.TurnInRewardPositionY,
+                    itemSeed,
+                    checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+                    rewardState);
+            }
+            return quest.MessageId == 0
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.AcceptedWith(
+                    new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Dialogue,
+                        player.EntityId,
+                        townerId,
+                        0) {
+                        MessageId = quest.MessageId,
+                        QuestId = quest.QuestId,
+                    });
+        }
+
+        if (quest.TurnInItemId == 0
             || !items.TryGet(quest.TurnInItemId, out var requiredItem)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }

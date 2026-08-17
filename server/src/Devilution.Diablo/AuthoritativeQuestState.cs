@@ -122,7 +122,8 @@ public sealed class AuthoritativeQuestState
         int dialogueRewardOffsetY = 0,
         int dialogueCompletionMessageId = 0,
         uint dialogueRewardItemId = 0,
-        bool dialogueRewardOnActivation = false)
+        bool dialogueRewardOnActivation = false,
+        bool turnInActivationOnly = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -200,6 +201,7 @@ public sealed class AuthoritativeQuestState
         DialogueCompletionMessageId = dialogueCompletionMessageId;
         DialogueRewardItemId = dialogueRewardItemId;
         DialogueRewardOnActivation = dialogueRewardOnActivation;
+        TurnInActivationOnly = turnInActivationOnly;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -263,6 +265,8 @@ public sealed class AuthoritativeQuestState
     public uint TurnInRewardItemId { get; }
     /** Optional native dialogue identity emitted after a successful turn-in. */
     public int TurnInMessageId { get; }
+    /** Whether the towner interaction activates the quest and creates its initial item instead of completing it. */
+    public bool TurnInActivationOnly { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -382,7 +386,8 @@ public static class AuthoritativeQuestCatalog
                     stableIds,
                     "dialogue_reward_item_id",
                     "dialogue_reward_item_symbol"),
-                dialogueRewardOnActivation: row.OptionalBoolean("dialogue_reward_on_activation")) {
+                dialogueRewardOnActivation: row.OptionalBoolean("dialogue_reward_on_activation"),
+                turnInActivationOnly: row.OptionalBoolean("turn_in_activation_only")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -415,8 +420,20 @@ public static class AuthoritativeQuestCatalog
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(uniqueItems);
         foreach (var quest in quests.Where(quest => quest.TurnInTownerId >= 0)) {
-            if (quest.TurnInItemId == 0
-                || !items.TryGet(quest.TurnInItemId, out _))
+            if (quest.TurnInActivationOnly
+                && quest.TurnInItemId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} activation-only turn-in cannot require an item.");
+            if (quest.TurnInActivationOnly
+                && quest.TurnInRewardUniqueId != 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} activation-only turn-in cannot generate a unique reward.");
+            if (quest.TurnInActivationOnly && quest.ActivateOnRoute)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} activation-only turn-in cannot activate on route entry.");
+            if (!quest.TurnInActivationOnly
+                && (quest.TurnInItemId == 0
+                    || !items.TryGet(quest.TurnInItemId, out _)))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
             if (quest.TurnInRewardUniqueId != 0

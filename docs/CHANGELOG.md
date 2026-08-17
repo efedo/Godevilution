@@ -23,6 +23,10 @@ All notable changes to this fork are documented below.
   boundary. Complete Nut now consumes Brown Suit and spawns the validated Bovine
   Plate reward with native conversation gating and completion dialogue.
 
+- Add schema 1.330 activation-only towner interactions. Hellfire Farmer's
+  Orchard now activates through the authored Farmer row and creates its initial
+  Rune Bomb on the server; the existing Hive object remains the completion path.
+
 - Extend content-owned towner turn-ins with validated normal-item rewards.
   Schema 1.327 adds `turn_in_reward_item_id`/`turn_in_reward_item_symbol`; the
   server generates the authored item at the native reward level and position.

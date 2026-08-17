@@ -1495,6 +1495,57 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredTownerActivationSpawnsInitialRuneBombOnce()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2101, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3018,
+            9,
+            1,
+            active: false,
+            activateOnRoute: false,
+            messageId: 277,
+            completionVariable1: 1,
+            turnInTownerId: 10,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 16,
+            turnInRewardItemId: 2101,
+            turnInRewardItemLevel: 1,
+            turnInRewardPositionX: 63,
+            turnInRewardPositionY: 16,
+            turnInActivationOnly: true);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 61, positionY: 16, entityId: 7);
+
+        var first = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3018, 10),
+            1,
+            [player]);
+
+        Assert.True(first.Succeeded);
+        Assert.True(quest.Active);
+        Assert.Equal(1, quest.Variable1);
+        Assert.Equal(277, Assert.Single(first.Events).MessageId);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(2101U, reward.State.StableItemId);
+        Assert.Equal((63, 16), (reward.PositionX, reward.PositionY));
+
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3018, 10),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(
