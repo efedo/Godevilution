@@ -1150,7 +1150,8 @@ internal static class DiabloProtocolMapper
                 or AuthoritativeProjectileBehavior.ChainLightningBolt
                 or AuthoritativeProjectileBehavior.NovaController
                 or AuthoritativeProjectileBehavior.NovaBall
-                or AuthoritativeProjectileBehavior.LightningWallController)
+                or AuthoritativeProjectileBehavior.LightningWallController
+                or AuthoritativeProjectileBehavior.MonsterChargedBolt)
             return ProjectilePresentationKind.Lightning;
         if (behavior == AuthoritativeProjectileBehavior.HolyBolt)
             return ProjectilePresentationKind.Holy;

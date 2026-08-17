@@ -55,6 +55,7 @@ public static class ProjectilePresentationStyle
     private const int AcidPuddle = 53;
     private const int WeaponArrow = 58;
     private const int MonsterArrow = 59;
+    private const int MonsterChargedBolt = 56;
     private const int ImpactPhase = 1;
 
     public static ProjectilePresentationKind Resolve(ProjectileSnapshot projectile)
@@ -123,7 +124,8 @@ public static class ProjectilePresentationStyle
                 or ChainLightningBolt
                 or NovaController
                 or NovaBall
-                or LightningWallController)
+                or LightningWallController
+                or MonsterChargedBolt)
             return ProjectilePresentationKind.Lightning;
         if (behavior == HolyBolt)
             return ProjectilePresentationKind.Holy;

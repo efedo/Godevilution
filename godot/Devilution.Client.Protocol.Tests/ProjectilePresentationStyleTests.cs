@@ -15,6 +15,7 @@ public sealed class ProjectilePresentationStyleTests
     [InlineData(57, 0, ProjectilePresentationKind.HorkSpawn)]
     [InlineData(21, 0, ProjectilePresentationKind.BoneSpirit)]
     [InlineData(31, 0, ProjectilePresentationKind.Lightning)]
+    [InlineData(56, 0, ProjectilePresentationKind.Lightning)]
     [InlineData(51, 0, ProjectilePresentationKind.Acid)]
     [InlineData(59, 0, ProjectilePresentationKind.Arrow)]
     [InlineData(9, 0, ProjectilePresentationKind.Teleport)]
