@@ -287,8 +287,9 @@ internal static class DiabloGoldInventory
             throw new ArgumentOutOfRangeException(nameof(value));
         var itemType = rules.DeathGoldItemType;
         var itemIndex = rules.DeathGoldItemIndex;
+        AuthoritativeItemDefinition? definition = null;
         if (items is not null) {
-            var definition = items.Definitions.FirstOrDefault(item =>
+            definition = items.Definitions.FirstOrDefault(item =>
                 item.GenerationTags.Contains("Gold")
                 || item.GenerationTags.Contains("Currency"));
             if (definition is not null) {
@@ -298,6 +299,7 @@ internal static class DiabloGoldInventory
         }
         return AuthoritativeItemState.Empty with {
             ItemType = itemType,
+            StableItemId = definition?.ItemId ?? 0,
             Value = checked((int)value),
             IdentifiedValue = checked((int)value),
             ItemIndex = itemIndex,

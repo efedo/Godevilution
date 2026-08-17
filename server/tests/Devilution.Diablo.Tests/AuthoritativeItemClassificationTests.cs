@@ -77,6 +77,27 @@ public sealed class AuthoritativeItemClassificationTests
     }
 
     [Fact]
+    public void StableItemIdentityTakesPrecedenceOverConflictingNativeIndex()
+    {
+        var stableDefinition = CreateDefinition(itemClass: 1, tags: ["Weapon"]) with {
+            NativeItemIndex = 101,
+        };
+        var conflictingDefinition = stableDefinition with {
+            ItemId = 2,
+            GenerationTags = new HashSet<string>(["Shield"], StringComparer.OrdinalIgnoreCase),
+        };
+        var catalog = new AuthoritativeItemCatalog([stableDefinition, conflictingDefinition]);
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = stableDefinition.ItemId,
+            ItemIndex = stableDefinition.NativeItemIndex,
+            ItemClass = 0,
+        };
+
+        Assert.True(AuthoritativeItemClassification.IsWeapon(state, catalog));
+        Assert.False(AuthoritativeItemClassification.IsShield(state, catalog));
+    }
+
+    [Fact]
     public void EquipmentSubtypeHelpersUseTagsBeforeNativeFallbacks()
     {
         var definition = CreateDefinition(

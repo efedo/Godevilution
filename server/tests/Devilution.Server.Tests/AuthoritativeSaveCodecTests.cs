@@ -27,6 +27,9 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(source.Player.CharacterClassId, restored.Player.CharacterClassId);
         Assert.Equal(source.Player.CharacterName, restored.Player.CharacterName);
         Assert.Equal(source.Player.ManaShieldActive, restored.Player.ManaShieldActive);
+        Assert.Equal(
+            source.Player.HeldItem!.State.StableItemId,
+            restored.Player.HeldItem!.State.StableItemId);
         Assert.Equal(source.Player.ReflectCharges, restored.Player.ReflectCharges);
         Assert.Equal(source.Player.DiabloKillLevel, restored.Player.DiabloKillLevel);
         Assert.Equal(source.Player.AbilitySpellId, restored.Player.AbilitySpellId);
@@ -48,6 +51,9 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Equal(5, restored.Monsters[0].FallenFearTicks);
         Assert.Equal(7, restored.Monsters[0].FallenFearDirection);
         Assert.Equal(source.WorldItems.ToArray(), restored.WorldItems.ToArray());
+        Assert.Equal(
+            source.WorldItems[0].State.StableItemId,
+            restored.WorldItems[0].State.StableItemId);
         Assert.Equal(source.Objects.ToArray(), restored.Objects.ToArray());
         Assert.Equal(source.Projectiles.ToArray(), restored.Projectiles.ToArray());
         Assert.Equal(source.RandomState, restored.RandomState);
@@ -629,6 +635,7 @@ public sealed class AuthoritativeSaveCodecTests
                 AuthoritativeItemState.Empty with {
                     ItemType = 11,
                     ItemIndex = 0,
+                    StableItemId = 1,
                     Value = 15,
                     IdentifiedValue = 15,
                     StatFlag = true,
@@ -671,6 +678,7 @@ public sealed class AuthoritativeSaveCodecTests
                     ItemClass = 3,
                     MiscId = 44,
                     ItemIndex = 23,
+                    StableItemId = 2,
                     Value = 3,
                     BaseName = "Ear of Dead-RogueDM",
                     IdentifiedName = "Dead-RogueDM",

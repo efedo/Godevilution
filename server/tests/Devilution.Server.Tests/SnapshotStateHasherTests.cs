@@ -182,6 +182,32 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void StableItemIdentityPreservesLegacySnapshotHash()
+    {
+        var baseline = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    HeldItem = new ItemSnapshot {
+                        ItemSeed = 42,
+                        State = new ItemStateSnapshot {
+                            ItemType = 1,
+                            ItemIndex = 7,
+                            Value = 75,
+                        },
+                    },
+                },
+            },
+        };
+        var withStableIdentity = baseline.Clone();
+        withStableIdentity.Players[0].HeldItem!.State.StableItemId = 700;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(withStableIdentity));
+    }
+
+    [Fact]
     public void ResourceConversionChangesHashOnlyWhenPresent()
     {
         var withoutConversion = new Snapshot {

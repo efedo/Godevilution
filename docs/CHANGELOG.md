@@ -55,6 +55,11 @@ All notable changes to this fork are documented below.
   unambiguous staff/weapon rows, retaining native item-class and location rules
   for legacy or ambiguous mappings.
 
+- Carry each generated item's stable content ID through authoritative state,
+  version-1 saves, and the shared protocol. State-based catalog resolution now
+  prefers that identity before the native item-index compatibility projection;
+  zero-valued legacy state and existing replay hashes remain compatible.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

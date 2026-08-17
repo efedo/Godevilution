@@ -163,7 +163,7 @@ public static class DiabloCastSourceRules
     {
         definition = null;
         return items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out definition);
+            && items.TryGetByState(state, out definition);
     }
 
     private static int GetEffectiveMiscId(

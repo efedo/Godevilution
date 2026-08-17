@@ -29,6 +29,12 @@ gameplay logic.
 | Godot client | Input, rendering, UI, audio, interpolation, bounded prediction, and presentation effects |
 | Protocol package | Versioned commands, snapshots, events, errors, identifiers, and ruleset identity |
 
+Generated item state now carries both the stable content item ID and the native
+item-index compatibility projection. The server resolves active catalog
+semantics through the stable ID first, while zero-valued IDs retain legacy
+state behavior; the additive protocol field also survives the version-1 save
+envelope without changing legacy replay hashes.
+
 The C# runtime boundaries are now separate assemblies, while the inherited
 native compatibility implementation remains a monolith during migration.
 `Devilution.Domain` is the dependency-free .NET 8 kernel and owns canonical

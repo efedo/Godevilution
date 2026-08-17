@@ -110,7 +110,7 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
         if (state.SpellSourceKind is { } explicitKind)
             return explicitKind == DiabloItemSpellSourceKind.ChargedItem;
         if (items is not null) {
-            var hasDefinition = items.TryGetByNativeItemIndex(state.ItemIndex, out var definition);
+            var hasDefinition = items.TryGetByState(state, out var definition);
             if (hasDefinition && definition.SpellSourceKind is { } contentKind)
                 return contentKind == DiabloItemSpellSourceKind.ChargedItem;
             var miscId = state.MiscId != 0

@@ -99,6 +99,7 @@ public sealed record AuthoritativeItemDefinition(
             SpellId = SpellId,
             SpellSourceKind = SpellSourceKind,
             ItemActionKind = ItemActionKind,
+            StableItemId = ItemId,
             Flags = Flags,
             HellfireDamageArmorFlags = HellfireDamageArmorFlags,
             MinimumStrength = MinimumStrength,
@@ -181,6 +182,17 @@ public sealed class AuthoritativeItemCatalog
     public IReadOnlyList<AuthoritativeItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.ItemId).ToArray();
 
     public bool TryGet(uint itemId, out AuthoritativeItemDefinition definition) => definitions.TryGetValue(itemId, out definition!);
+
+    /** Resolves an item state through stable content identity before native compatibility identity. */
+    public bool TryGetByState(
+        AuthoritativeItemState state,
+        out AuthoritativeItemDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (state.StableItemId != 0 && TryGet(state.StableItemId, out definition!))
+            return true;
+        return TryGetByNativeItemIndex(state.ItemIndex, out definition!);
+    }
 
     /** Validates item spell identities against the active spell catalog. */
     public void ValidateSpellReferences(AuthoritativeSpellCatalog spells)

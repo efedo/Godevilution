@@ -974,6 +974,7 @@ internal static class DiabloProtocolMapper
             ItemActionKind = source.ItemActionKind == ItemActionKind.Unspecified
                 ? DiabloItemActionKind.None
                 : (DiabloItemActionKind)source.ItemActionKind,
+            StableItemId = source.StableItemId,
             ItemIndex = source.ItemIndex,
             Charges = source.Charges,
             MaxCharges = source.MaxCharges,
@@ -1100,6 +1101,7 @@ internal static class DiabloProtocolMapper
                 ? ResolveSpellDisplayName(checked((uint)state.SpellId), spells, spellBooks)
                 : string.Empty,
             PresentationKind = ResolveItemPresentationKind(state),
+            StableItemId = state.StableItemId,
         };
         if (state.NativeCursorGraphic.HasValue)
             snapshot.NativeCursorGraphic = state.NativeCursorGraphic.Value;

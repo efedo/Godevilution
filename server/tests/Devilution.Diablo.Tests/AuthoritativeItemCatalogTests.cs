@@ -75,6 +75,7 @@ public sealed class AuthoritativeItemCatalogTests
 
         var state = catalog.Generate(7, 42);
         Assert.Equal(42U, state.CreateInfo);
+        Assert.Equal(7U, state.StableItemId);
         Assert.Equal(7, state.ItemIndex);
         Assert.Equal(100, state.IdentifiedValue);
         Assert.Equal(2, state.InventoryWidth);

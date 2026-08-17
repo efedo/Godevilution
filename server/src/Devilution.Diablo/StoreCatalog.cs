@@ -27,6 +27,9 @@ public sealed record AuthoritativeItemState(
     int Durability,
     int MaxDurability)
 {
+    /** Stable authoritative content ID; zero means legacy state has no stable identity. */
+    public uint StableItemId { get; init; }
+
     /** Explicit content-owned classification; null preserves legacy native fallback. */
     public DiabloItemSpellSourceKind? SpellSourceKind { get; init; }
 

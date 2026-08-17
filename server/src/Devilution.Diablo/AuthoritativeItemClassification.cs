@@ -31,7 +31,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null) {
-            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            if (items.TryGetByState(state, out var definition))
                 return IsWeapon(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
                 if (HasWeaponSubtype(tags))
@@ -60,7 +60,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null) {
-            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            if (items.TryGetByState(state, out var definition))
                 return IsStaff(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
                 if (tags.Contains("Staff"))
@@ -127,7 +127,7 @@ public static class AuthoritativeItemClassification
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(rules);
         if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition)
+            && items.TryGetByState(state, out var definition)
             && IsGold(definition)) {
             return true;
         }
@@ -148,7 +148,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null) {
-            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            if (items.TryGetByState(state, out var definition))
                 return IsBelt(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)
                 && tags.Contains("Belt"))
@@ -170,7 +170,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null) {
-            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            if (items.TryGetByState(state, out var definition))
                 return IsTwoHanded(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags)) {
                 if (tags.Contains("TwoHanded"))
@@ -215,7 +215,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null) {
-            if (items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            if (items.TryGetByState(state, out var definition))
                 return GetEquipmentSlotKind(definition);
             if (items.TryGetGenerationTagsByMiscId(state.MiscId, out var tags))
                 return GetEquipmentSlotKind(tags, state.EquipLocation);
@@ -303,7 +303,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            && items.TryGetByState(state, out var definition))
             return HasSubtype(definition, tag, legacyItemType);
         return state.ItemType == legacyItemType;
     }
@@ -329,7 +329,7 @@ public static class AuthoritativeItemClassification
     {
         ArgumentNullException.ThrowIfNull(state);
         if (items is not null
-            && items.TryGetByNativeItemIndex(state.ItemIndex, out var definition))
+            && items.TryGetByState(state, out var definition))
             return HasArmorSubtype(definition, tag, legacyItemType);
         return state.ItemType == legacyItemType;
     }

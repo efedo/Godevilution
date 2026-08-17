@@ -141,6 +141,12 @@ Windows toolchain command.
   runes from native miscellaneous IDs. `ItemStateSnapshot.spell_display_name`
   is additive server-owned presentation metadata for those sources; an empty
   value preserves compatibility for older snapshots and non-booked spells.
+- `ItemStateSnapshot.stable_item_id` is the additive stable content identity
+  carried with generated item state. It is authoritative for server catalog
+  resolution when present; `item_index` remains the native compatibility
+  projection. Zero preserves legacy snapshots and clients, and the field is
+  intentionally outside the legacy replay hash until a versioned hash
+  extension is introduced.
 - Spell state extends the canonical player hash only when the ability is
   nonzero or the learned-spell list is nonempty. The tagged
   `godevilution-player-spells-v1` suffix preserves every pre-extension hash for

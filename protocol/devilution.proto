@@ -874,6 +874,8 @@ message ItemStateSnapshot {
 	// Additive server-owned world-item presentation family; zero preserves the
 	// generic legacy rendering path.
 	ItemPresentationKind presentation_kind = 67;
+	// Stable authoritative content identity; zero preserves legacy snapshots.
+	uint32 stable_item_id = 68;
 }
 
 enum ItemPresentationKind {

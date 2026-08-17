@@ -37,6 +37,11 @@ Status date: 2026-08-17
   validated `Resurrection` and `HealOther` spell behaviors, while retaining the
   native-ID fallback needed by older content packs and multiplayer availability.
 
+- Generated authoritative item state now carries the stable content item ID
+  through protocol-backed saves. Catalog resolution prefers that ID before the
+  retained native item index; zero-valued legacy state and the legacy replay
+  hash remain compatible.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
