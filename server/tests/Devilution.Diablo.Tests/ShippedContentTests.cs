@@ -2066,7 +2066,11 @@ public sealed class ShippedContentTests
             Assert.Equal(usable, item.Usable);
             Assert.Equal(tags.Split(','), item.GenerationTags.OrderBy(tag => tag));
             Assert.Equal(DiabloItemSpellSourceKind.None, item.SpellSourceKind);
-            Assert.Equal(DiabloItemActionKind.None, item.ItemActionKind);
+            Assert.Equal(
+                itemId == 2142
+                    ? DiabloItemActionKind.IncreaseAllAttributes
+                    : DiabloItemActionKind.None,
+                item.ItemActionKind);
         }
         var hellfirePotionExpectations = new[] {
             ("potion_of_full_healing_fixed", 2144U, 29, 35, 2, 1, 0, true),

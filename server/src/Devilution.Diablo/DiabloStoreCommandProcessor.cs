@@ -449,6 +449,7 @@ public sealed class DiabloStoreCommandProcessor
                 or DiabloItemActionKind.IncreaseMagic
                 or DiabloItemActionKind.IncreaseDexterity
                 or DiabloItemActionKind.IncreaseVitality
+                or DiabloItemActionKind.IncreaseAllAttributes
                 or DiabloItemActionKind.ApplyBlacksmithOil
                 or DiabloItemActionKind.ApplyAccuracyOil
                 or DiabloItemActionKind.ApplySharpnessOil
@@ -491,6 +492,14 @@ public sealed class DiabloStoreCommandProcessor
             player.ApplyElixir(
                 action,
                 combatRules.GameVariant == DiabloGameVariant.Hellfire);
+            break;
+        case DiabloItemActionKind.IncreaseAllAttributes:
+            for (var i = 0; i < 3; i++) {
+                player.ApplyElixir(DiabloItemActionKind.IncreaseStrength, false);
+                player.ApplyElixir(DiabloItemActionKind.IncreaseMagic, false);
+                player.ApplyElixir(DiabloItemActionKind.IncreaseDexterity, false);
+                player.ApplyElixir(DiabloItemActionKind.IncreaseVitality, false);
+            }
             break;
         default:
             throw new InvalidOperationException("Validated item action was not handled.");

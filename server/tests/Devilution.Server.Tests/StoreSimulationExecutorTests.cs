@@ -494,6 +494,78 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void ProtocolUseConsumableAppliesSpectralElixirToAllAttributesAndResources()
+    {
+        var elixir = new OwnedStoreItem(0, 0, 47, 100, 0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+            });
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingLife: 100,
+            startingLifeMaximum: 640,
+            startingMana: 100,
+            startingManaMaximum: 640,
+            startingAttributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            startingPlayerClass: new AuthoritativePlayerClassDefinition(
+                1,
+                "spectral-test",
+                "Spectral Test",
+                DiabloPlayerClassAvailability.Hellfire,
+                true,
+                DiabloPlayerClassFlags.None,
+                30,
+                10,
+                20,
+                25,
+                750,
+                750,
+                750,
+                750,
+                0,
+                50,
+                50,
+                50,
+                0,
+                0,
+                0,
+                0,
+                64,
+                64,
+                0,
+                0),
+            startingInventory: [elixir]);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            ClientSequence = 1,
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = 0,
+                },
+            },
+        }, 0);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var player = executor.GetPlayerState("player-a");
+        Assert.Empty(player.Inventory);
+        Assert.Equal(33, player.Attributes.Strength.Base);
+        Assert.Equal(13, player.Attributes.Magic.Base);
+        Assert.Equal(23, player.Attributes.Dexterity.Base);
+        Assert.Equal(28, player.Attributes.Vitality.Base);
+        Assert.True(player.LifeMaximum > 640);
+        Assert.True(player.ManaMaximum > 640);
+        Assert.True(player.Life > 100);
+        Assert.True(player.Mana > 100);
+    }
+
+    [Fact]
     public void ProtocolUseConsumableAppliesOilToTheReferencedTarget()
     {
         var oil = new OwnedStoreItem(0, 0, 44, 100, 0,

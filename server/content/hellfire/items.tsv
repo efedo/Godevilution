@@ -73,7 +73,7 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2139	black_mushroom	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	17	0	0	None	Black Mushroom	Black Mushroom	BLACK_MUSHROOM	0	0	false			0	0	None
 2140	brain	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	18	0	0	None	Brain	Brain	BRAIN	0	0	false			0	0	None
 2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None
-2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	None
+2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	IncreaseAllAttributes
 2143	blood_stone	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	21	0	0	None	Blood Stone	Blood Stone	BLOOD_STONE	0	0	false			0	0	None
 2144	potion_of_full_healing_fixed	0	150	150	0	0	0	0	0	1	1	1	Misc,Belt	7	3	2	0		0	0	0	0	29	0	0	None	Potion of Full Healing	Potion of Full Healing	POTION_OF_FULL_HEALING	1	0	true			0	0	RestoreFullLife
 2145	potion_of_full_mana_fixed	0	150	150	0	0	0	0	0	1	1	1	Misc,Belt	7	3	7	0		0	0	0	0	30	0	0	None	Potion of Full Mana	Potion of Full Mana	POTION_OF_FULL_MANA	1	0	true			0	0	RestoreFullMana

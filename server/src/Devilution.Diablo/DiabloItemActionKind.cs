@@ -16,6 +16,7 @@ public enum DiabloItemActionKind
     IncreaseMagic,
     IncreaseDexterity,
     IncreaseVitality,
+    IncreaseAllAttributes,
     ApplyBlacksmithOil,
     ApplyAccuracyOil,
     ApplySharpnessOil,

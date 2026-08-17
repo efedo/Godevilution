@@ -756,6 +756,57 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireSpectralElixirIncreasesAllAttributesAndNativeResources()
+    {
+        var elixir = new OwnedStoreItem(
+            0,
+            0,
+            47,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.IncreaseAllAttributes,
+            });
+        var player = CreatePlayer(
+            life: 100,
+            mana: 100,
+            manaMaximum: 640,
+            playerClass: LoadClass("warrior"),
+            attributes: new PlayerAttributesState(
+                new PlayerAttributeState(30, 30),
+                new PlayerAttributeState(10, 10),
+                new PlayerAttributeState(20, 20),
+                new PlayerAttributeState(25, 25)),
+            inventory: [elixir]);
+        var initialLifeMaximum = player.LifeMaximum;
+        var initialManaMaximum = player.ManaMaximum;
+        var processor = new DiabloStoreCommandProcessor(
+            new StoreCatalog(),
+            combatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(33, player.Attributes.Strength.Base);
+        Assert.Equal(13, player.Attributes.Magic.Base);
+        Assert.Equal(23, player.Attributes.Dexterity.Base);
+        Assert.Equal(28, player.Attributes.Vitality.Base);
+        Assert.True(player.LifeMaximum > initialLifeMaximum);
+        Assert.True(player.ManaMaximum > initialManaMaximum);
+        Assert.True(player.Life > 100);
+        Assert.True(player.Mana > 100);
+        Assert.Empty(player.Inventory);
+    }
+
+    [Fact]
     public void HellfireElixirOfMagicIncreasesResourcesAndRestoresMana()
     {
         var elixir = new OwnedStoreItem(

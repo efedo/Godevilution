@@ -2400,7 +2400,8 @@ bool UseInvItem(int cii)
 	        IMISC_ELIXSTR,
 	        IMISC_ELIXMAG,
 	        IMISC_ELIXDEX,
-	        IMISC_ELIXVIT)) {
+	        IMISC_ELIXVIT,
+	        IMISC_SPECELIX)) {
 		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
 		if (!reference.has_value()) {
 			LogError("Server-backed consumable use has no authoritative item reference.");

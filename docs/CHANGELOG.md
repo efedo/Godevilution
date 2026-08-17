@@ -21,6 +21,11 @@ All notable changes to this fork are documented below.
   native target restrictions, durability/damage/to-hit mutations, deterministic
   random ranges, atomic source consumption, and equipment recalculation.
 
+- Route Hellfire Spectral Elixir through `UseConsumableRequested`. External
+  content classifies the +3-all-attributes transition; the Diablo module owns
+  native attribute ceilings, life/mana resource growth, persistence, and item
+  consumption.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed
