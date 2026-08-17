@@ -9486,6 +9486,12 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
+            projectile.RemainingTicks--;
+            if (projectile.RemainingTicks == 0)
+                world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
         if (projectile.ActivationDelayTicks > 0) {
             projectile.ActivationDelayTicks--;
             return;
@@ -9509,6 +9515,8 @@ public sealed class DiabloCombatCommandProcessor
                 world.Projectiles.Remove(projectile.EntityId);
                 return;
             }
+            if (projectile.Phase == AuthoritativeProjectilePhase.Impact)
+                return;
             for (var step = 0; step < travelSteps; step++) {
                 var nextX = projectile.PositionX
                     + Math.Sign(projectile.TargetX - projectile.PositionX);
@@ -9535,6 +9543,8 @@ public sealed class DiabloCombatCommandProcessor
                     world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
+                if (projectile.Phase == AuthoritativeProjectilePhase.Impact)
+                    return;
             }
             projectile.RemainingTicks--;
             return;
@@ -9548,6 +9558,8 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact)
+            return;
 
         if (projectile.TargetEntityId != 0
             && world.CombatTargets.TryGetValue(projectile.TargetEntityId, out var target)
@@ -9563,13 +9575,15 @@ public sealed class DiabloCombatCommandProcessor
                 && candidate.PositionX == projectile.TargetX
                 && candidate.PositionY == projectile.TargetY)
                 is { } playerTarget) {
-            ResolvePlayerWeaponArrowImpact(
+            _ = ResolvePlayerWeaponArrowImpact(
                 tick,
                 projectile,
                 playerTarget,
                 players,
                 events);
         }
+        if (projectile.Phase == AuthoritativeProjectilePhase.Impact)
+            return;
         world.Projectiles.Remove(projectile.EntityId);
     }
 
@@ -9610,13 +9624,12 @@ public sealed class DiabloCombatCommandProcessor
         if (playerTarget is null)
             return false;
 
-        ResolvePlayerWeaponArrowImpact(
+        return ResolvePlayerWeaponArrowImpact(
             tick,
             projectile,
             playerTarget,
             players,
             events);
-        return true;
     }
 
     /** Advances a content-declared native Arrow from a monster to its player target. */
@@ -9717,7 +9730,7 @@ public sealed class DiabloCombatCommandProcessor
                 PlayerDeathReason.MonsterOrTrap);
     }
 
-    private void ResolvePlayerWeaponArrowImpact(
+    private bool ResolvePlayerWeaponArrowImpact(
         ulong tick,
         AuthoritativeProjectile projectile,
         AuthoritativePlayerState target,
@@ -9728,7 +9741,7 @@ public sealed class DiabloCombatCommandProcessor
             player.EntityId == projectile.SourceEntityId
             || (projectile.SourceEntityId == 1 && player.EntityId == 0));
         if (owner is null)
-            return;
+            return true;
 
         var gameplayEvents = new List<DiabloGameplayEvent>();
         if (projectile.PerilSelfDamageQ6 > 0) {
@@ -9755,9 +9768,18 @@ public sealed class DiabloCombatCommandProcessor
 
         if (projectile.AttackHit
             && TryResolvePlayerBlock(owner, target, tick)) {
+            if (rules.GameVariant == DiabloGameVariant.Hellfire) {
+                // Native RotateBlockedMissile consumes GenerateRnd(2) and
+                // keeps a blocked missile alive through its impact animation.
+                random.RandomIntLessThan(2);
+                EnterProjectileImpact(projectile);
+                foreach (var gameplayEvent in gameplayEvents)
+                    events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+                return false;
+            }
             foreach (var gameplayEvent in gameplayEvents)
                 events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
-            return;
+            return true;
         }
 
         var damageResult = playerDamage.Apply(target, Math.Max(0, projectile.DamageQ6));
@@ -9798,6 +9820,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyEquipmentAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
         foreach (var gameplayEvent in gameplayEvents)
             events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
     }
 
     private void ResolveWeaponArrowImpact(

@@ -1051,6 +1051,62 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfireBlockedBowImpactRetainsItsProjectileImpactPhase()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
+            random: new DiabloRandom(0));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        processor.AdvanceTick(1, [attacker, victim]);
+        processor.AdvanceTick(2, [attacker, victim]);
+        processor.AdvanceTick(3, [attacker, victim]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(6400, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+
+        processor.AdvanceTick(4, [attacker, victim]);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void NormalBowAttackUsesOneAuthoritativeMissileAndResolvesOnImpact()
     {
         var target = new AuthoritativeCombatTarget(9, 8, 5, 5000);
