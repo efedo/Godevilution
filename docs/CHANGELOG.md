@@ -56,8 +56,8 @@ All notable changes to this fork are documented below.
 - Route seeded MonsterArrow impacts to a secondary multiplayer participant in
   the shared replay projection, preserving complete participant-state hashes.
 
-- Add autonomous GoatRanged MonsterArrow replay coverage: validated missile
-  admission, stable nearest-participant target selection, travel, impact, and
+- Add autonomous GoatRanged and SkeletonRanged MonsterArrow replay coverage:
+  validated admission, stable target selection, long-range travel, impact, and
   removal now share canonical checkpoints between the C# server and native
   compatibility runner.
 

@@ -66,9 +66,9 @@ compatible. The authoritative module projects `MonsterArrow` missiles with
 captured physical damage and per-tick player collision. Managed combat and
 snapshot tests cover this lifecycle, and the compact cross-runner fixture now
 covers seeded MonsterArrow travel, primary-player impact, impact-phase removal,
-and secondary-participant routing. A companion fixture covers autonomous
-GoatRanged admission and deterministic nearest-player target selection; broader
-monster-AI branches and multi-actor selection remain future replay work.
+and secondary-participant routing. Companion fixtures cover autonomous
+GoatRanged nearest-player selection and SkeletonRanged clear-lane admission;
+broader monster-AI branches and multi-actor selection remain future replay work.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -130,7 +130,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
 spell/projectile-timeline checkpoints pass in both runners. The native replay
-gate now contains 76 cases, including seeded and autonomous MonsterArrow source
+gate now contains 77 cases, including seeded and autonomous MonsterArrow source
 coverage;
 the managed replay suite passes locally, while native execution still requires
 the C++ toolchain described below.
@@ -145,9 +145,9 @@ pickup, status expiry, object-linked quest advancement, deterministic quest-pool
 selection, a 1,000-tick autonomous regeneration soak, a multiplayer
 autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
-occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged
-MonsterArrow admission, and a multiplayer MonsterArrow impact against the
-secondary participant. The native and C# runners
+occupancy, seeded MonsterArrow travel/impact/removal, autonomous GoatRanged and
+SkeletonRanged MonsterArrow admission, and a multiplayer MonsterArrow impact
+against the secondary participant. The native and C# runners
 are wired to preserve the same baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level
 state, class and spell knowledge, monsters, objects, quests, projectiles, and
@@ -414,6 +414,8 @@ Notable shared fixtures include:
 - `gameplay-monster-arrow-autonomous.json` for validated GoatRanged admission,
   stable nearest-player target selection, travel, impact damage, and lifecycle
   parity;
+- `gameplay-monster-arrow-skeleton-ranged.json` for validated SkeletonRanged
+  clear-lane admission, long-range travel, impact damage, and lifecycle parity;
 - `gameplay-multiplayer-monster-arrow.json` for secondary-participant target
   routing, complete participant hashing, and multiplayer impact/removal parity;
 - `gameplay-firebolt-resolution.json` for native mana/damage scaling, swept
