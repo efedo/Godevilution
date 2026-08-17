@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
 - Preserve Hellfire `RandomArrowVelocity` timing with server-owned 16–47 pixel
   speeds and resumable fractional travel state.
 
+- Preserve native player-arrow class and Hellfire attack-speed velocity bonuses
+  through resumable `Speed`/`PathTicks` state and the shared replay gate.
+
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 

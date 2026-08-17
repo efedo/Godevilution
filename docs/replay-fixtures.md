@@ -156,7 +156,10 @@ divergence and common final state. Their initialized Rogue
 attributes use the native equipment-damage profile; because the compact replay
 equipment shape omits base damage, the native unarmed one-damage fallback is
 used against a one-hit-point target. Focused module tests retain additional
-faster/fastest melee-speed coverage.
+faster/fastest melee-speed coverage. The Hellfire fixture also carries the
+Rogue class and Fast attack velocity modifier through the shared `Speed` and
+`PathTicks` projectile state, so its C++ and C# checkpoint hashes cover the
+fractional arrow cadence.
 
 `gameplay-player-death-lifecycle.json` starts a Warrior movement action while
 an autonomous monster approaches, attacks on tick 2, and cancels that action.
