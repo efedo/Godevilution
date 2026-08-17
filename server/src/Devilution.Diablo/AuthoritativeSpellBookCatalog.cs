@@ -37,6 +37,7 @@ public sealed class AuthoritativeSpellBookCatalog
     private const uint NativeResurrectSpellId = 32;
     private const uint NativeHealOtherSpellId = 34;
     private readonly Dictionary<uint, AuthoritativeSpellBookDefinition> definitions;
+    private IReadOnlySet<uint> singlePlayerExcludedSpellIds = new HashSet<uint>();
     private IReadOnlyDictionary<uint, AuthoritativeSpellBookDefinition> nativeDefinitions
         = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
     private IReadOnlyDictionary<uint, uint> nativeSpellIdsByStableId
@@ -91,6 +92,12 @@ public sealed class AuthoritativeSpellBookCatalog
         if (templates.Count == 0)
             throw new InvalidDataException(
                 "Spell-book metadata requires at least one item tagged Book.");
+        singlePlayerExcludedSpellIds = spells.Definitions
+            .Where(spell => spell.ProjectileBehavior is
+                AuthoritativeProjectileBehavior.Resurrection
+                or AuthoritativeProjectileBehavior.HealOther)
+            .Select(spell => spell.SpellId)
+            .ToHashSet();
         var validatedNativeDefinitions = new Dictionary<uint, AuthoritativeSpellBookDefinition>();
         var validatedNativeSpellIds = new Dictionary<uint, uint>();
         var maximumNativeSpellId = FirstNativeSpellId;
@@ -229,10 +236,12 @@ public sealed class AuthoritativeSpellBookCatalog
         AuthoritativeSpellBookDefinition definition,
         DiabloGameMode gameMode)
     {
-        if (gameMode == DiabloGameMode.Multiplayer
-            || !nativeSpellIdsByStableId.TryGetValue(definition.SpellId, out var nativeSpellId))
+        if (gameMode == DiabloGameMode.Multiplayer)
             return true;
-        return nativeSpellId is not NativeResurrectSpellId and not NativeHealOtherSpellId;
+        if (singlePlayerExcludedSpellIds.Contains(definition.SpellId))
+            return false;
+        return !nativeSpellIdsByStableId.TryGetValue(definition.SpellId, out var nativeSpellId)
+            || nativeSpellId is not NativeResurrectSpellId and not NativeHealOtherSpellId;
     }
 
     private AuthoritativeSpellBookDefinition SelectRandomSpell(

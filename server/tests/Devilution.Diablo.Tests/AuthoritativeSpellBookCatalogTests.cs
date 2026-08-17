@@ -101,6 +101,62 @@ public sealed class AuthoritativeSpellBookCatalogTests
     }
 
     [Fact]
+    public void SinglePlayerBookSelectionUsesSemanticSpellBehaviorForRemappedIds()
+    {
+        var items = CreateBookTemplateCatalog();
+        var spells = new AuthoritativeSpellCatalog([
+            CreateResurrectionSpell() with { SpellId = 700 },
+            CreateHealOtherSpell() with { SpellId = 800 },
+            new AuthoritativeSpellDefinition(900, 1, 0, 0, 0, 0),
+        ]);
+        var books = new AuthoritativeSpellBookCatalog([
+            new AuthoritativeSpellBookDefinition(
+                700,
+                "Resurrect",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+            new AuthoritativeSpellBookDefinition(
+                800,
+                "Heal Other",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+            new AuthoritativeSpellBookDefinition(
+                900,
+                "Blood Star",
+                1,
+                10,
+                AuthoritativeSpellBookMagicType.Magic,
+                1),
+        ]);
+
+        books.Validate(spells, items);
+
+        for (uint seed = 1; seed <= 128; seed++) {
+            var singlePlayer = books.GenerateRandom(
+                items,
+                seed,
+                itemLevel: 1,
+                gameMode: DiabloGameMode.SinglePlayer);
+            Assert.Equal(900, singlePlayer.SpellId);
+        }
+
+        var multiplayerSpellIds = Enumerable.Range(1, 128)
+            .Select(seed => books.GenerateRandom(
+                items,
+                (uint)seed,
+                itemLevel: 1,
+                gameMode: DiabloGameMode.Multiplayer).SpellId)
+            .ToHashSet();
+        Assert.Contains(700, multiplayerSpellIds);
+        Assert.Contains(800, multiplayerSpellIds);
+        Assert.Contains(900, multiplayerSpellIds);
+    }
+
+    [Fact]
     public void DropGenerationRetainsTheRequestedBookTemplate()
     {
         var items = new AuthoritativeItemCatalog([
@@ -140,5 +196,41 @@ public sealed class AuthoritativeSpellBookCatalogTests
                 GenerationTags = new HashSet<string>(["Book"], StringComparer.OrdinalIgnoreCase),
             },
         ]);
+    }
+
+    private static AuthoritativeSpellDefinition CreateHealOtherSpell()
+    {
+        return new AuthoritativeSpellDefinition(34, 5, 1, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 1,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.HealOther,
+            ManaAdjustment = 3,
+            CharacterLevelManaCost = 2,
+            MinimumManaCost = 1,
+            ManaCostScale = 64,
+            RandomHealingRange = 10,
+            CharacterLevelRandomHealingRange = 4,
+            CharacterLevelHealing = 1,
+            SpellLevelRandomHealingRange = 6,
+            SpellLevelHealing = 1,
+            HealingScale = 64,
+        };
+    }
+
+    private static AuthoritativeSpellDefinition CreateResurrectionSpell()
+    {
+        return new AuthoritativeSpellDefinition(32, 20, 0, 0, 0, 0) {
+            Range = 112,
+            DamageType = AuthoritativeDamageType.Magic,
+            ProjectileLifetime = 16,
+            ProjectileBehavior = AuthoritativeProjectileBehavior.Resurrection,
+            ManaAdjustment = 2,
+            MinimumManaCost = 20,
+            ManaCostScale = 64,
+            ResurrectionLife = 10,
+            ResurrectionLifeScale = 64,
+            ResurrectionSearchRadius = 50,
+        };
     }
 }

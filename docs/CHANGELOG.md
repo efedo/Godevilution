@@ -38,6 +38,10 @@ All notable changes to this fork are documented below.
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 
+- Derive single-player dynamic-book exclusions from validated `Resurrection` and
+  `HealOther` spell behavior, retaining native-ID fallback for older content
+  packs whose spell metadata predates semantic behavior fields.
+
 - Persist the server/world RNG seed in the authoritative save root so
   deterministic procedural geometry survives process restarts; an explicit
   `--random-seed` must match an existing persisted seed.
