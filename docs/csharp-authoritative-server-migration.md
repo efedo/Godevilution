@@ -1432,7 +1432,9 @@ density, multiplayer multiplier, and trap-percentage rules to the server-owned
 module without embedding them in the host or presentation client. Activation
 also rejects a composed world with an uncovered level, and the catalog owns
 the deterministic encounter-count calculation consumed by the spawn planner;
-procedural map synthesis remains a later migration stage.
+the optional `procedural_levels.tsv` table now materializes deterministic
+connected layouts from row and world seeds while preserving static-map
+compatibility. Full native map-synthesis parity remains a later migration stage.
 
 The Hellfire monster catalog now also carries native IDs 6 through 11 with
 validated baseline level, health, damage, and undead/capability metadata.

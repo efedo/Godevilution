@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional schema 1.323 `procedural_levels.tsv` definitions for
+  deterministic, connected server-owned level geometry. Generated levels are
+  composed additively with static maps using row and world seeds; native map
+  synthesis remains a later parity stage.
+
 - Add a local standalone-server operator console with status, transactional
   ruleset reload, help, and graceful quit commands.
 
