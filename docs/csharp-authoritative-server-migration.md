@@ -799,6 +799,11 @@ Counselor Charged Bolt mappings now emit three independent server-owned
 15-point monster payload unless validated `projectile_damage` supplies an
 override.
 
+Counselor admission now preserves the native initial `GenerateRnd(100)` draw.
+Mapped Firebolt and generic monster-magic missiles capture the inclusive
+monster damage range at launch; fixed validated payloads consume no launch
+roll, and mapped Fireball retains its separate per-impact damage roll.
+
 Mapped monster Fireball impacts now roll the native monster damage range at each
 direct or splash collision; a positive validated `projectile_damage` remains a
 fixed override, and player-cast Fireball behavior is unchanged.

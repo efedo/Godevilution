@@ -18,6 +18,10 @@ All notable changes to this fork are documented below.
 - Preserve Counselor's native three-projectile Charged Bolt attack and fixed
   15-point monster payload, while retaining validated damage overrides.
 
+- Preserve Counselor's initial native admission RNG draw and capture mapped
+  Firebolt/MonsterMagic damage from the monster range at missile launch, while
+  retaining fixed payload overrides and Fireball's per-impact roll.
+
 - Preserve native per-impact monster Fireball damage rolls for mapped direct
   and splash collisions, while retaining fixed `projectile_damage` overrides.
 

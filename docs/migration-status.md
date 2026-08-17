@@ -199,6 +199,10 @@ Status date: 2026-08-16
   `MonsterChargedBolt` projectiles with their native fixed 15-point payload;
   validated `projectile_damage` values remain authoritative overrides.
 
+- Counselor's native admission now preserves its initial `GenerateRnd(100)`
+  boundary, and mapped Firebolt/MonsterMagic projectiles capture the inclusive
+  monster damage roll at launch, while fixed payload overrides consume no roll.
+
 - Mapped monster Fireball collisions now roll the native monster damage range
   at each direct or splash impact, while validated `projectile_damage` values
   remain fixed overrides.

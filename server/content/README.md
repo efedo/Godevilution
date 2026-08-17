@@ -581,6 +581,11 @@ monster damage, and retains the player hit boundary. A positive validated
 monsters also retain the native adjacent Flash attack: the server emits both
 stationary Flash layers with `2 * monster_level` magic damage and keeps the
 native delay instead of falling through to generic melee.
+Counselor's admission preserves the native initial `GenerateRnd(100)` draw;
+mapped Firebolt and generic monster-magic missiles capture their inclusive
+monster damage range at launch, while fixed `projectile_damage` overrides do
+not consume that draw. Mapped Fireball rows retain their separate per-impact
+monster damage roll.
 Mapped monster Fireball rows retain the native per-impact monster damage roll;
 positive `projectile_damage` values instead provide a fixed direct and splash
 payload.
