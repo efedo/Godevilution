@@ -1403,7 +1403,7 @@ Bomb completion objects consume the normalized bomb through
 Orchard completion. It also maps Magic Rock pickup to the existing validated
 item-to-quest transition hook, along with Anvil of Fury pickup activating the
 Anvil quest. Optic Amulet and Arkaine's Valor rows complete their active
-quests; all changes use the existing 1.325 table schema. CompleteQuest effects
+quests; these rows use the 1.326 table schema. CompleteQuest effects
 are ignored while the referenced quest is inactive, preserving the native
 pickup precondition.
 

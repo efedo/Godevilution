@@ -391,6 +391,20 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAdvanceQuestC
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeTurnInQuestCommand(uint32_t questId, uint32_t townerId, uint64_t requestedTick)
+{
+	if (questId == 0)
+		return tl::make_unexpected("Cannot turn in an invalid quest.");
+	if (townerId > UINT8_MAX)
+		return tl::make_unexpected("Cannot turn in to an invalid towner.");
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_turn_in_quest_requested();
+	request->set_quest_id(questId);
+	request->set_towner_id(townerId);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyModeCommand(bool friendlyMode, uint64_t requestedTick)
 {
 	protocol::v1::Command command;

@@ -10,6 +10,8 @@
 #include "devilution.pb.h"
 #include "game/players/players.hpp"
 #include "network/authoritative/item_snapshot.hpp"
+#include "tables/textdat.h"
+#include "ui/minitext.h"
 
 namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
@@ -371,6 +373,12 @@ void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eve
 		}
 		if (event.has_experience() && event.experience().player_entity_id() == entityId)
 			player._pExperience += event.experience().amount();
+		if (event.has_dialogue()
+		    && event.dialogue().source_entity_id() == entityId
+		    && event.dialogue().message_id() >= 0
+		    && static_cast<std::size_t>(event.dialogue().message_id()) < Speeches.size()) {
+			InitQTextMsg(static_cast<_speech_id>(event.dialogue().message_id()));
+		}
 	}
 }
 

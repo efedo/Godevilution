@@ -144,11 +144,12 @@ completion state only when their native quest is active.
 Black Mushroom pickup uses the same boundary and preserves the native spawned
 mushroom state check.
 
-The protocol now exposes `TurnInQuestRequested` for content-owned towner
-turn-ins. The server owns adjacency, native conversation variables, required
-item consumption, quest completion, and unique-reward spawning. Native and
-Godot presentation integration remains incremental, so legacy local towner
-behavior stays available outside the authoritative runtime.
+The native authoritative adapter now submits `TurnInQuestRequested` when the
+active content-owned Anvil of Fury quest is presented to the Blacksmith. The
+server owns adjacency, native conversation variables, required-item
+consumption, quest completion, unique-reward spawning, and the dialogue event;
+the adapter projects that dialogue into the native quest-text UI. Legacy local
+towner behavior stays available outside the authoritative runtime.
 
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the

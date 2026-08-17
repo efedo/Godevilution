@@ -58,6 +58,12 @@ TEST(ServerBackedVendorCommand, RejectsSentinelInventoryValues)
 	EXPECT_FALSE(MakeMoveInventoryItemCommand(1, UINT32_MAX, 1).has_value());
 }
 
+TEST(ServerBackedVendorCommand, RejectsInvalidQuestTurnInIdentifiers)
+{
+	EXPECT_FALSE(MakeTurnInQuestCommand(0, 0, 1).has_value());
+	EXPECT_FALSE(MakeTurnInQuestCommand(3011, UINT8_MAX + 1U, 1).has_value());
+}
+
 TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 {
 	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 6, .stableItemId = 702 };
@@ -195,6 +201,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	const auto drop = MakeDropHeldItemCommand(-2, 5, 25);
 	const auto object = MakeOperateObjectCommand(30, 25);
 	const auto quest = MakeAdvanceQuestCommand(40, 26);
+	const auto turnIn = MakeTurnInQuestCommand(3011, 0, 27);
 	const auto friendlyMode = MakeSetFriendlyModeCommand(false, 27);
 	const auto restartTown = MakeRestartTownCommand(28);
 	ASSERT_TRUE(move.has_value());
@@ -205,6 +212,7 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	ASSERT_TRUE(drop.has_value());
 	ASSERT_TRUE(object.has_value());
 	ASSERT_TRUE(quest.has_value());
+	ASSERT_TRUE(turnIn.has_value());
 	ASSERT_TRUE(friendlyMode.has_value());
 	ASSERT_TRUE(restartTown.has_value());
 	EXPECT_EQ(move->move_requested().direction_x(), 1);
@@ -218,6 +226,8 @@ TEST(ServerBackedVendorCommand, BuildsAuthoritativeGameplayIntents)
 	EXPECT_EQ(drop->drop_held_item_requested().target_y(), 5);
 	EXPECT_EQ(object->operate_object_requested().object_entity_id(), 30U);
 	EXPECT_EQ(quest->advance_quest_requested().quest_id(), 40U);
+	EXPECT_EQ(turnIn->turn_in_quest_requested().quest_id(), 3011U);
+	EXPECT_EQ(turnIn->turn_in_quest_requested().towner_id(), 0U);
 	EXPECT_TRUE(friendlyMode->has_set_friendly_mode_requested());
 	EXPECT_FALSE(friendlyMode->set_friendly_mode_requested().friendly_mode());
 	EXPECT_EQ(restartTown->requested_tick(), 28U);

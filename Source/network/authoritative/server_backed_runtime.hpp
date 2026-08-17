@@ -78,6 +78,8 @@ public:
 	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
+	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Poll(uint64_t nowMs);

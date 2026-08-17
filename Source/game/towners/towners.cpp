@@ -9,6 +9,12 @@
 #include <cstdint>
 #include <unordered_map>
 
+#ifdef USE_SDL3
+#include <SDL3/SDL_timer.h>
+#else
+#include <SDL.h>
+#endif
+
 #include "engine/cursor.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "engine/load/load_cel.hpp"
@@ -18,10 +24,14 @@
 #include "game/players/inventory.hpp"
 #include "ui/minitext.h"
 #include "game/stores/stores.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "tables/textdat.h"
 #include "tables/townerdat.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
+#include "utils/log.hpp"
 #include "utils/string/str_case.hpp"
 
 namespace devilution {
@@ -840,6 +850,22 @@ void TalkToTowner(Player &player, int t)
 	if (!player.HoldItem.isEmpty()) {
 		return;
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (&player == MyPlayer
+	    && authoritative::GetServerBackedRuntime().IsAuthoritativeMode()
+	    && towner._ttype == TOWN_SMITH
+	    && authoritative::GetServerBackedRuntime().HasActiveQuest(3011)) {
+		if (auto result = authoritative::GetServerBackedRuntime().TurnInQuest(
+		        3011,
+		        static_cast<uint32_t>(TOWN_SMITH),
+		        0,
+		        SDL_GetTicks()); !result.has_value()) {
+			LogError("Failed to submit the authoritative Blacksmith quest turn-in: {}", result.error());
+		}
+		return;
+	}
+#endif
 
 	towner.talk(player, towner);
 }

@@ -214,6 +214,21 @@ tl::expected<void, std::string> ServerBackedSession::AdvanceQuest(uint32_t quest
 	return SubmitGameplayCommand(MakeAdvanceQuestCommand(questId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeTurnInQuestCommand(questId, townerId, requestedTick), nowMs);
+}
+
+bool ServerBackedSession::HasActiveQuest(uint32_t questId) const noexcept
+{
+	return std::any_of(questStates_.begin(), questStates_.end(), [questId](const auto &quest) {
+		return quest.quest_id() == questId
+		    && !quest.initial()
+		    && !quest.completed()
+		    && !quest.unavailable();
+	});
+}
+
 tl::expected<void, std::string> ServerBackedSession::SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeSetFriendlyModeCommand(friendlyMode, requestedTick), nowMs);
@@ -329,6 +344,7 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	if (!projectiles.has_value())
 		return tl::make_unexpected(projectiles.error());
 	projectileState_ = std::move(*projectiles);
+	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
 
 	vendorState_.SetEnabled(true);
 	vendorState_.SetConnected(true);

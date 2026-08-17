@@ -1258,7 +1258,17 @@ public sealed class DiabloWorldCommandProcessor
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             quest.Variable2 = quest.TurnInRequiredVariable2;
             quest.Logged = true;
-            return DiabloWorldIntentResult.Accepted;
+            return quest.MessageId == 0
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.AcceptedWith(
+                    new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Dialogue,
+                        player.EntityId,
+                        townerId,
+                        0) {
+                        MessageId = quest.MessageId,
+                        QuestId = quest.QuestId,
+                    });
         }
 
         var inventoryIndex = -1;

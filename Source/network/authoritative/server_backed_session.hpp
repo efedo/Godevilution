@@ -85,6 +85,9 @@ public:
 	tl::expected<void, std::string> DropHeldItem(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> OperateObject(uint32_t objectEntityId, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> AdvanceQuest(uint32_t questId, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> TurnInQuest(uint32_t questId, uint32_t townerId, uint64_t requestedTick, uint64_t nowMs);
+	/** Returns whether the latest authoritative snapshot has an active quest. */
+	[[nodiscard]] bool HasActiveQuest(uint32_t questId) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 
@@ -128,6 +131,7 @@ private:
 	std::vector<ProjectedWorldItemSnapshot> worldItemState_;
 	std::vector<ProjectedObjectSnapshot> objectState_;
 	std::vector<ProjectedProjectileSnapshot> projectileState_;
+	std::vector<protocol::QuestSnapshot> questStates_;
 	ServerBackedVendorState vendorState_;
 	std::map<uint64_t, PendingIntent> pendingIntents_;
 	CommandResolution lastCommandResolution_ = CommandResolution::None;

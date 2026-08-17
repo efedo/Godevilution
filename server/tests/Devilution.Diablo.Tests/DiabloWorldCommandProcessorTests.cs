@@ -1041,6 +1041,7 @@ public sealed class DiabloWorldCommandProcessorTests
             3011,
             10,
             1,
+            messageId: 88,
             variable2: 0,
             turnInTownerId: 0,
             turnInLevelId: 0,
@@ -1064,6 +1065,9 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(started.Succeeded);
         Assert.Equal(1, quest.Variable2);
         Assert.Single(player.Inventory);
+        var startDialogue = Assert.Single(started.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, startDialogue.Kind);
+        Assert.Equal(88, startDialogue.MessageId);
 
         var completed = processor.Execute(
             player,

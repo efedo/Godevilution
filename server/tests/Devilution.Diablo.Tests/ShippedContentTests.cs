@@ -2023,7 +2023,9 @@ public sealed class ShippedContentTests
             questTypes,
             stableIds);
         var anvilQuest = Assert.Single(quests, quest => quest.QuestId == 3011);
-        Assert.Equal((0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
+        Assert.Equal((88, 90, 0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
+            anvilQuest.MessageId,
+            anvilQuest.TurnInMessageId,
             anvilQuest.TurnInTownerId,
             anvilQuest.TurnInLevelId,
             anvilQuest.TurnInPositionX,

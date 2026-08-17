@@ -8,7 +8,8 @@ All notable changes to this fork are documented below.
   Anvil path now validates the towner, native `_qvar2` conversation gate,
   required item, and adjacency on the server, then consumes the Anvil,
   completes quest 3011, and spawns Griswold's Edge through
-  `TurnInQuestRequested`.
+  `TurnInQuestRequested`. The native authoritative client submits this command
+  from the Blacksmith interaction and projects the server-authored dialogue.
 
 - Route native healing, mana, rejuvenation, and arena potions through the
   server-owned `UseConsumableRequested` intent. External content now classifies
