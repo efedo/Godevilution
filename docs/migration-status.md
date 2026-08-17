@@ -63,6 +63,11 @@ Status date: 2026-08-17
   registration in explicit authoritative server-backed mode. Legacy mode keeps
   the existing Lua compatibility lifecycle.
 
+- The native authoritative adapter now carries stable item identities through
+  projected inventory, equipment, belt, and cast-source state. Native service,
+  store, and spell-source commands resolve references from the authoritative
+  snapshot instead of relying on positional slots alone.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

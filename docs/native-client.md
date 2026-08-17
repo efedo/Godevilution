@@ -84,6 +84,11 @@ class-ability source and projects the accepted snapshot instead of invoking the
 local recharge rule. Connected stash recharge remains blocked; paid Witch
 recharge retains its source-zero vendor path.
 
+Native service, store, and charged/consumable spell-source requests now resolve
+their item references from the latest authoritative projection, carrying the
+stable content item ID when present. Older servers and snapshots retain the
+zero-valued positional compatibility path.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

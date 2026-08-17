@@ -551,15 +551,27 @@ std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenc
 		return std::nullopt;
 	for (std::size_t index = 0; index < snapshot->inventory.size(); ++index) {
 		if (snapshot->inventory[index].itemSeed == itemSeed)
-			return ServerBackedItemReference { .location = ServerBackedItemLocation::Inventory, .slot = static_cast<uint32_t>(index) };
+			return ServerBackedItemReference {
+			    .location = ServerBackedItemLocation::Inventory,
+			    .slot = static_cast<uint32_t>(index),
+			    .stableItemId = snapshot->inventory[index].stableItemId,
+			};
 	}
 	for (const auto &beltItem : snapshot->belt) {
 		if (beltItem.itemSeed == itemSeed)
-			return ServerBackedItemReference { .location = ServerBackedItemLocation::Belt, .slot = beltItem.slot };
+			return ServerBackedItemReference {
+			    .location = ServerBackedItemLocation::Belt,
+			    .slot = beltItem.slot,
+			    .stableItemId = beltItem.stableItemId,
+			};
 	}
 	for (const auto &equipment : snapshot->equipment) {
 		if (equipment.itemSeed == itemSeed)
-			return ServerBackedItemReference { .location = ServerBackedItemLocation::Equipment, .slot = equipment.slot };
+			return ServerBackedItemReference {
+			    .location = ServerBackedItemLocation::Equipment,
+			    .slot = equipment.slot,
+			    .stableItemId = equipment.stableItemId,
+			};
 	}
 	return std::nullopt;
 }

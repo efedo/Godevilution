@@ -60,8 +60,8 @@ TEST(ServerBackedVendorCommand, RejectsSentinelInventoryValues)
 
 TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 {
-	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 6 };
-	const ServerBackedItemReference equipment { .location = ServerBackedItemLocation::Equipment, .slot = 3 };
+	const ServerBackedItemReference belt { .location = ServerBackedItemLocation::Belt, .slot = 6, .stableItemId = 702 };
+	const ServerBackedItemReference equipment { .location = ServerBackedItemLocation::Equipment, .slot = 3, .stableItemId = 701 };
 	const auto sell = MakeSellItemCommand(belt, 10);
 	const auto repair = MakeRepairItemCommand(equipment, 11);
 	const auto refill = MakeRefillManaCommand(12);
@@ -70,8 +70,10 @@ TEST(ServerBackedVendorCommand, BuildsStableEquipmentBeltAndManaIntents)
 	ASSERT_TRUE(refill.has_value());
 	EXPECT_EQ(sell->sell_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
 	EXPECT_EQ(sell->sell_item_requested().item().slot(), 6U);
+	EXPECT_EQ(sell->sell_item_requested().item().stable_item_id(), 702U);
 	EXPECT_EQ(repair->repair_item_requested().item().location(), protocol::PLAYER_ITEM_LOCATION_EQUIPMENT);
 	EXPECT_EQ(repair->repair_item_requested().item().slot(), 3U);
+	EXPECT_EQ(repair->repair_item_requested().item().stable_item_id(), 701U);
 	EXPECT_EQ(refill->intent_case(), protocol::Command::kRefillManaRequested);
 }
 

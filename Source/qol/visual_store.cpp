@@ -351,16 +351,20 @@ void VisualStoreRepairAll()
 		for (uint32_t slot = 0; slot < NUM_INVLOC; ++slot) {
 			if (GetRepairCost(myPlayer.InvBody[slot]) == 0)
 				continue;
-			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(
-			        { .location = authoritative::ServerBackedItemLocation::Equipment, .slot = slot }, 0, SDL_GetTicks()); !result.has_value())
+			const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(myPlayer.InvBody[slot]._iSeed);
+			if (!reference.has_value())
+				return;
+			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, SDL_GetTicks()); !result.has_value())
 				return;
 			repaired = true;
 		}
 		for (int index = 0; index < myPlayer._pNumInv; ++index) {
 			if (GetRepairCost(myPlayer.InvList[index]) == 0)
 				continue;
-			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(
-			        { .location = authoritative::ServerBackedItemLocation::Inventory, .slot = static_cast<uint32_t>(index) }, 0, SDL_GetTicks()); !result.has_value())
+			const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(myPlayer.InvList[index]._iSeed);
+			if (!reference.has_value())
+				return;
+			if (auto result = authoritative::GetServerBackedRuntime().RepairItem(*reference, 0, SDL_GetTicks()); !result.has_value())
 				return;
 			repaired = true;
 		}
@@ -424,15 +428,11 @@ void VisualStoreRepairItem(int invIndex)
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		std::optional<authoritative::ServerBackedItemReference> reference;
 		if (invIndex >= 0 && invIndex < INVITEM_INV_FIRST) {
-			reference = authoritative::ServerBackedItemReference {
-				.location = authoritative::ServerBackedItemLocation::Equipment,
-				.slot = static_cast<uint32_t>(invIndex),
-			};
+			reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+			    myPlayer.InvBody[invIndex]._iSeed);
 		} else if (invIndex >= INVITEM_INV_FIRST && invIndex <= INVITEM_INV_LAST) {
-			reference = authoritative::ServerBackedItemReference {
-				.location = authoritative::ServerBackedItemLocation::Inventory,
-				.slot = static_cast<uint32_t>(invIndex - INVITEM_INV_FIRST),
-			};
+			reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+			    myPlayer.InvList[invIndex - INVITEM_INV_FIRST]._iSeed);
 		}
 		if (!reference.has_value())
 			return;
@@ -883,8 +883,10 @@ void SellItemToVisualStore(int invIndex)
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
 		if (VisualStore.vendor != VisualStoreVendor::Smith)
 			return;
-		if (auto result = authoritative::GetServerBackedRuntime().SellItem(
-			        { .location = authoritative::ServerBackedItemLocation::Inventory, .slot = static_cast<uint32_t>(invIndex) }, 0, SDL_GetTicks()); !result.has_value())
+		const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+		if (!reference.has_value())
+			return;
+		if (auto result = authoritative::GetServerBackedRuntime().SellItem(*reference, 0, SDL_GetTicks()); !result.has_value())
 			return;
 		PlaySFX(SfxID::ItemGold);
 		RefreshVisualStoreLayout();

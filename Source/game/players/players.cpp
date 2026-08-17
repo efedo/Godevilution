@@ -3428,8 +3428,6 @@ tl::expected<authoritative::ServerBackedCastSource, std::string> MakeServerBacke
 {
 	using authoritative::ServerBackedCastSource;
 	using authoritative::ServerBackedCastSourceKind;
-	using authoritative::ServerBackedItemLocation;
-	using authoritative::ServerBackedItemReference;
 
 	switch (spellType) {
 	case SpellType::Skill:
@@ -3437,26 +3435,37 @@ tl::expected<authoritative::ServerBackedCastSource, std::string> MakeServerBacke
 	case SpellType::Spell:
 		return ServerBackedCastSource { ServerBackedCastSourceKind::MemorizedSpell, std::nullopt };
 	case SpellType::Charges:
-		return ServerBackedCastSource {
-			ServerBackedCastSourceKind::ChargedItem,
-			ServerBackedItemReference { ServerBackedItemLocation::Equipment, INVLOC_HAND_LEFT },
-		};
+		if (const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+		        player.InvBody[INVLOC_HAND_LEFT]._iSeed);
+		    reference.has_value()) {
+			return ServerBackedCastSource {
+				ServerBackedCastSourceKind::ChargedItem,
+				*reference,
+			};
+		}
+		return tl::make_unexpected("The authoritative charged-item source is no longer present.");
 	case SpellType::Scroll:
 		for (uint32_t index = 0; index < InventoryGridCells; ++index) {
 			const Item &item = player.InvList[index];
 			if (item.isScrollOf(spellId) || item.isRuneOf(spellId)) {
+				const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+				if (!reference.has_value())
+					return tl::make_unexpected("The authoritative scroll source is no longer present.");
 				return ServerBackedCastSource {
 					ServerBackedCastSourceKind::ConsumableItem,
-					ServerBackedItemReference { ServerBackedItemLocation::Inventory, index },
+					*reference,
 				};
 			}
 		}
 		for (uint32_t index = 0; index < MaxBeltItems; ++index) {
 			const Item &item = player.SpdList[index];
 			if (item.isScrollOf(spellId) || item.isRuneOf(spellId)) {
+				const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+				if (!reference.has_value())
+					return tl::make_unexpected("The authoritative scroll source is no longer present.");
 				return ServerBackedCastSource {
 					ServerBackedCastSourceKind::ConsumableItem,
-					ServerBackedItemReference { ServerBackedItemLocation::Belt, index },
+					*reference,
 				};
 			}
 		}

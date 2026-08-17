@@ -1832,10 +1832,19 @@ void StorytellerIdentifyItem(Item &item)
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 std::optional<authoritative::ServerBackedItemReference> MakeServerBackedItemReference(TalkID store, int8_t index)
 {
-	if (index >= 0)
-		return authoritative::ServerBackedItemReference { .location = authoritative::ServerBackedItemLocation::Inventory, .slot = static_cast<uint32_t>(index) };
-	if (store == TalkID::SmithSell || store == TalkID::WitchSell)
-		return authoritative::ServerBackedItemReference { .location = authoritative::ServerBackedItemLocation::Belt, .slot = static_cast<uint32_t>(-(index + 1)) };
+	if (index >= 0) {
+		if (index >= MyPlayer->_pNumInv)
+			return std::nullopt;
+		return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+		    MyPlayer->InvList[index]._iSeed);
+	}
+	if (store == TalkID::SmithSell || store == TalkID::WitchSell) {
+		const auto beltSlot = static_cast<uint32_t>(-(index + 1));
+		if (beltSlot >= MaxBeltItems)
+			return std::nullopt;
+		return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+		    MyPlayer->SpdList[beltSlot]._iSeed);
+	}
 
 	const auto equipmentSlot = [&](int8_t negativeIndex) -> std::optional<uint32_t> {
 		switch (negativeIndex) {
@@ -1852,7 +1861,8 @@ std::optional<authoritative::ServerBackedItemReference> MakeServerBackedItemRefe
 	const auto slot = equipmentSlot(index);
 	if (!slot.has_value())
 		return std::nullopt;
-	return authoritative::ServerBackedItemReference { .location = authoritative::ServerBackedItemLocation::Equipment, .slot = *slot };
+	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(
+	    MyPlayer->InvBody[*slot]._iSeed);
 }
 #endif
 

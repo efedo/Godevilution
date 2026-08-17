@@ -96,6 +96,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 			if (action.cast().has_source_item()) {
 				projectedAction.castSourceItemLocation = static_cast<uint32_t>(action.cast().source_item().location());
 				projectedAction.castSourceItemSlot = action.cast().source_item().slot();
+				projectedAction.castSourceItemStableId = action.cast().source_item().stable_item_id();
 			}
 		}
 		projected.currentAction = projectedAction;
@@ -115,6 +116,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		    .storeId = source.store_id(),
 		    .storeSlot = source.store_slot(),
 		    .itemSeed = source.item_seed(),
+		    .stableItemId = source.state().stable_item_id(),
 		    .price = source.price(),
 		    .purchasedAtTick = source.purchased_at_tick(),
 		    .item = std::move(*item),
@@ -131,6 +133,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 			.storeId = source.store_id(),
 			.storeSlot = source.store_slot(),
 			.itemSeed = source.item_seed(),
+			.stableItemId = source.state().stable_item_id(),
 			.price = source.price(),
 			.purchasedAtTick = source.purchased_at_tick(),
 			.item = std::move(*item),
@@ -141,14 +144,24 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), 0);
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());
-		projected.equipment.push_back({ .slot = source.slot(), .itemSeed = source.item_seed(), .item = std::move(*item) });
+		projected.equipment.push_back({
+		    .slot = source.slot(),
+		    .itemSeed = source.item_seed(),
+		    .stableItemId = source.state().stable_item_id(),
+		    .item = std::move(*item),
+		});
 	}
 	projected.belt.reserve(player->belt_size());
 	for (const auto &source : player->belt()) {
 		auto item = ProjectNativeItem(source.state(), source.item_seed(), 0);
 		if (!item.has_value())
 			return tl::make_unexpected(item.error());
-		projected.belt.push_back({ .slot = source.slot(), .itemSeed = source.item_seed(), .item = std::move(*item) });
+		projected.belt.push_back({
+		    .slot = source.slot(),
+		    .itemSeed = source.item_seed(),
+		    .stableItemId = source.state().stable_item_id(),
+		    .item = std::move(*item),
+		});
 	}
 	projected.inventoryGrid.assign(player->inventory_grid().begin(), player->inventory_grid().end());
 	return projected;

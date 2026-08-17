@@ -6,6 +6,7 @@
 #include "application/diablo.h"
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string_view>
 
 #ifdef USE_SDL3
@@ -2955,6 +2956,30 @@ int DiabloMain(int argc, char **argv)
 	return 0;
 }
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForInventoryCursor(
+    const Player &player,
+    int inventoryCursor)
+{
+	if (inventoryCursor < 0)
+		return std::nullopt;
+
+	uint32_t itemSeed = 0;
+	if (inventoryCursor < NUM_INVLOC) {
+		itemSeed = player.InvBody[inventoryCursor]._iSeed;
+	} else {
+		const int inventoryIndex = inventoryCursor - NUM_INVLOC;
+		if (inventoryIndex < 0 || inventoryIndex >= player._pNumInv)
+			return std::nullopt;
+		itemSeed = player.InvList[inventoryIndex]._iSeed;
+	}
+	if (itemSeed == 0)
+		return std::nullopt;
+
+	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(itemSeed);
+}
+#endif
+
 bool TryIconCurs()
 {
 	if (pcurs == CURSOR_RESURRECT) {
@@ -2988,20 +3013,12 @@ bool TryIconCurs()
 		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				authoritative::ServerBackedItemReference reference;
-				if (pcursinvitem < NUM_INVLOC) {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Equipment,
-						.slot = static_cast<uint32_t>(pcursinvitem),
-					};
-				} else {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Inventory,
-						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
-					};
-				}
-				if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value())
+				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Identify ability has no authoritative item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().IdentifyItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
 					LogError("Server-backed Identify ability failed: {}", result.error());
+				}
 				NewCursor(CURSOR_HAND);
 				return true;
 			}
@@ -3027,19 +3044,10 @@ bool TryIconCurs()
 		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected() && !IsVisualStoreOpen) {
-				authoritative::ServerBackedItemReference reference;
-				if (pcursinvitem < NUM_INVLOC) {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Equipment,
-						.slot = static_cast<uint32_t>(pcursinvitem),
-					};
-				} else {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Inventory,
-						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
-					};
-				}
-				if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value()) {
+				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Repair ability has no authoritative item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().RepairItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
 					LogError("Server-backed Repair ability failed: {}", result.error());
 				} else {
 					PlaySfxLoc(SfxID::SpellRepair, myPlayer.position.tile);
@@ -3071,20 +3079,12 @@ bool TryIconCurs()
 		if (pcursinvitem != -1 && !IsInspectingPlayer()) {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (authoritative::GetServerBackedRuntime().IsConnected()) {
-				authoritative::ServerBackedItemReference reference;
-				if (pcursinvitem < NUM_INVLOC) {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Equipment,
-						.slot = static_cast<uint32_t>(pcursinvitem),
-					};
-				} else {
-					reference = {
-						.location = authoritative::ServerBackedItemLocation::Inventory,
-						.slot = static_cast<uint32_t>(pcursinvitem - NUM_INVLOC),
-					};
-				}
-				if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(reference, 0, SDL_GetTicks()); !result.has_value())
+				const auto reference = ServerBackedReferenceForInventoryCursor(myPlayer, pcursinvitem);
+				if (!reference.has_value()) {
+					LogError("Server-backed Staff Recharge ability has no authoritative item reference.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().RechargeItemWithAbility(*reference, 0, SDL_GetTicks()); !result.has_value()) {
 					LogError("Server-backed Staff Recharge ability failed: {}", result.error());
+				}
 				NewCursor(CURSOR_HAND);
 				return true;
 			}

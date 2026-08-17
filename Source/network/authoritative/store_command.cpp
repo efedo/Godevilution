@@ -14,6 +14,7 @@ tl::expected<protocol::v1::PlayerItemReference, std::string> MakeItemReference(S
 {
 	protocol::v1::PlayerItemReference reference;
 	reference.set_slot(item.slot);
+	reference.set_stable_item_id(item.stableItemId);
 	switch (item.location) {
 	case ServerBackedItemLocation::Inventory:
 		reference.set_location(protocol::v1::PLAYER_ITEM_LOCATION_INVENTORY);

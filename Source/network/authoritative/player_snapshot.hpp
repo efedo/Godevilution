@@ -35,6 +35,8 @@ struct ProjectedInventoryItem {
 	uint32_t storeId = 0;
 	uint32_t storeSlot = 0;
 	uint32_t itemSeed = 0;
+	/** Stable content identity projected from the authoritative snapshot. */
+	uint32_t stableItemId = 0;
 	uint32_t price = 0;
 	uint64_t purchasedAtTick = 0;
 	Item item;
@@ -43,12 +45,14 @@ struct ProjectedInventoryItem {
 struct ProjectedEquippedItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
 	Item item;
 };
 
 struct ProjectedBeltItem {
 	uint32_t slot = 0;
 	uint32_t itemSeed = 0;
+	uint32_t stableItemId = 0;
 	Item item;
 };
 
@@ -164,6 +168,7 @@ struct ProjectedPlayerActionSnapshot {
 	bool hasCastSourceItem = false;
 	uint32_t castSourceItemLocation = 0;
 	uint32_t castSourceItemSlot = 0;
+	uint32_t castSourceItemStableId = 0;
 };
 
 struct ProjectedPlayerSnapshot {

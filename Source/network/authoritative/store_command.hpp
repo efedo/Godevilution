@@ -25,6 +25,8 @@ enum class ServerBackedItemLocation {
 struct ServerBackedItemReference {
 	ServerBackedItemLocation location = ServerBackedItemLocation::Inventory;
 	uint32_t slot = 0;
+	/** Stable content identity; zero preserves positional compatibility. */
+	uint32_t stableItemId = 0;
 };
 
 enum class ServerBackedItemServiceSourceKind {

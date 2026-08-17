@@ -80,6 +80,10 @@ All notable changes to this fork are documented below.
   server-backed mode no longer initializes or exposes the Lua REPL, while the
   explicit legacy mode remains unchanged.
 
+- Carry stable item identities through the native authoritative projection and
+  use them for native service, store, and cast-source commands, retaining zero
+  as the compatibility value for older snapshots.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

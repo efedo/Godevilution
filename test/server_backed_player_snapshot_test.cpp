@@ -54,19 +54,23 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	inventory->set_store_id(1);
 	inventory->set_store_slot(2);
 	inventory->set_item_seed(42);
+	inventory->mutable_state()->set_stable_item_id(700);
 	inventory->set_price(75);
 	inventory->set_purchased_at_tick(20);
 	inventory->mutable_state()->set_item_type(4);
 	auto *equipment = player->add_equipment();
 	equipment->set_slot(0);
 	equipment->set_item_seed(77);
+	equipment->mutable_state()->set_stable_item_id(701);
 	equipment->mutable_state()->set_item_type(5);
 	auto *belt = player->add_belt();
 	belt->set_slot(2);
 	belt->set_item_seed(88);
+	belt->mutable_state()->set_stable_item_id(702);
 	belt->mutable_state()->set_item_type(6);
 	auto *heldItem = player->mutable_held_item();
 	heldItem->set_item_seed(99);
+	heldItem->mutable_state()->set_stable_item_id(703);
 	heldItem->set_price(65);
 	heldItem->mutable_state()->set_item_type(static_cast<int32_t>(ItemType::Gold));
 	heldItem->mutable_state()->set_item_index(IDI_GOLD);
@@ -103,14 +107,18 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->strength.current, 12);
 	ASSERT_EQ(projected->inventory.size(), 1U);
 	EXPECT_EQ(projected->inventory[0].itemSeed, 42U);
+	EXPECT_EQ(projected->inventory[0].stableItemId, 700U);
 	EXPECT_EQ(projected->inventory[0].item._itype, static_cast<ItemType>(4));
 	ASSERT_EQ(projected->equipment.size(), 1U);
 	EXPECT_EQ(projected->equipment[0].itemSeed, 77U);
+	EXPECT_EQ(projected->equipment[0].stableItemId, 701U);
 	ASSERT_EQ(projected->belt.size(), 1U);
 	EXPECT_EQ(projected->belt[0].slot, 2U);
 	EXPECT_EQ(projected->belt[0].itemSeed, 88U);
+	EXPECT_EQ(projected->belt[0].stableItemId, 702U);
 	ASSERT_TRUE(projected->heldItem.has_value());
 	EXPECT_EQ(projected->heldItem->itemSeed, 99U);
+	EXPECT_EQ(projected->heldItem->stableItemId, 703U);
 	EXPECT_EQ(projected->heldItem->item._itype, ItemType::Gold);
 	EXPECT_EQ(projected->heldItem->item._ivalue, 65);
 	EXPECT_EQ(projected->inventoryGrid, std::vector<int32_t>({ 0, -1 }));
@@ -165,6 +173,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 	action->mutable_cast()->set_source(protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
 	action->mutable_cast()->mutable_source_item()->set_location(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT);
 	action->mutable_cast()->mutable_source_item()->set_slot(4);
+	action->mutable_cast()->mutable_source_item()->set_stable_item_id(704);
 
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
 
@@ -179,6 +188,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 	EXPECT_TRUE(projected->currentAction->hasCastSourceItem);
 	EXPECT_EQ(projected->currentAction->castSourceItemLocation, 2U);
 	EXPECT_EQ(projected->currentAction->castSourceItemSlot, 4U);
+	EXPECT_EQ(projected->currentAction->castSourceItemStableId, 704U);
 }
 
 TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySets)
