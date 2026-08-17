@@ -2714,6 +2714,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HorkSpawnBreaksACurrentTileBlockingObjectBeforeExpirySummon()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            100,
+            monsterLevel: 10,
+            aggroRange: 0);
+        var blocker = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            1,
+            breakable: true);
+        var projectile = new AuthoritativeProjectile(
+            50,
+            monster.EntityId,
+            7,
+            117,
+            0,
+            1,
+            1,
+            1,
+            1,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            2,
+            allowZeroSpellId: true) {
+            Behavior = AuthoritativeProjectileBehavior.HorkSpawn,
+        };
+        var world = new DiabloWorldState(
+            objects: [blocker],
+            combatTargets: [monster],
+            projectiles: [projectile]);
+        var processor = CreateProcessor(world);
+
+        processor.AdvanceTick(1, []);
+
+        Assert.True(blocker.Destroyed);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void HorkSpawnMissKeepsItsControllerForTheNextTick()
     {
         var monster = new AuthoritativeCombatTarget(

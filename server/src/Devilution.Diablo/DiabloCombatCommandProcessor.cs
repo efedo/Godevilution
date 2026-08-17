@@ -9930,6 +9930,21 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
 
+        // Native CheckMissileCol checks the current tile before the summon
+        // expiry branch, including breakable missile-blocking objects.
+        if (world.IsMissileBlocked(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY)) {
+            BreakMissileBlockingObject(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY);
+            world.Projectiles.Remove(projectile.EntityId);
+            CompleteHorkSpawn(projectile, players);
+            return;
+        }
+
         if (projectile.RemainingTicks != 0) {
             foreach (var tile in MoveNativeProjectile(projectile)) {
                 projectile.PositionX = tile.X;
