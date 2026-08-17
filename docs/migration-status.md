@@ -91,6 +91,10 @@ Status date: 2026-08-17
   through `OperateObjectRequested`; the server validates adjacency, quest state,
   and the stable map definition before consuming it.
 
+- Connected native Hellfire Rune Bomb use now submits a projected Hive entrance
+  object through `OperateObjectRequested`; the server validates the stable item,
+  consumes the bomb, completes Farmer's Orchard, and exposes the gated Nest warp.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

@@ -128,6 +128,12 @@ condition is met, the connected client submits the projected grave object throug
 `OperateObjectRequested`. The server owns the quest-item completion and map
 consumption; the native client only presents the resulting snapshot.
 
+Hellfire Rune Bomb use follows the same boundary. When the native Hive-opening
+condition is met, the connected client submits the nearest projected Hive
+entrance object through `OperateObjectRequested`. The server owns bomb
+consumption, Farmer's Orchard completion, and the resulting gated Nest warp;
+legacy mode retains the native `OpenHive()` path.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast

@@ -34,6 +34,11 @@ All notable changes to this fork are documented below.
   object. The server now validates the projected object and consumes the map
   through the existing quest-item completion path instead of local quest state.
 
+- Route connected native Hellfire Rune Bomb use through content-owned Hive
+  entrance objects. The server now consumes the bomb, completes Farmer's
+  Orchard, and gates the normalized town-to-Nest warp; legacy mode retains the
+  native local path.
+
 - Preserve the native equipment slot selected by an authoritative inventory
   drag through an optional `AutoEquipItemRequested.equipment_slot`; the server
   now owns explicit hand selection, ring replacement, and atomic two-handed

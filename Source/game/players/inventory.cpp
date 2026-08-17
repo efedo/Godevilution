@@ -2346,6 +2346,36 @@ bool UseInvItem(int cii)
 
 	if (player.isOnLevel(0)) {
 		if (UseItemOpensHive(*item, player.position.tile)) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				const auto reference = authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item->_iSeed);
+				if (!reference.has_value()) {
+					LogError("Server-backed Rune Bomb use has no authoritative item reference.");
+					return true;
+				}
+				bool foundObject = false;
+				const auto tryHiveObject = [&](Point target) {
+					const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(target.x, target.y);
+					if (!objectEntityId.has_value())
+						return false;
+					foundObject = true;
+					if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*objectEntityId, 0, SDL_GetTicks()); result.has_value())
+						return true;
+					LogError("Server-backed Rune Bomb use found a rejected hive object.");
+					return false;
+				};
+				if (tryHiveObject(player.position.tile))
+					return true;
+				for (auto dir : PathDirs) {
+					if (tryHiveObject(player.position.tile + dir))
+						return true;
+				}
+				LogError(foundObject
+				        ? "Server-backed Rune Bomb use found no accepted hive object."
+				        : "Server-backed Rune Bomb use found no authoritative hive object.");
+				return true;
+			}
+#endif
 			OpenHive();
 			player.RemoveInvItem(c);
 			return true;

@@ -485,6 +485,7 @@ public sealed class ShippedContentTests
         });
         stableIds.ValidateReferences("object", id => objects.Any(@object => @object.ObjectId == id));
         Assert.Equal("grave_matters_cathedral_map", stableIds.Resolve(6004, "object"));
+        Assert.Equal("hive_entrance", stableIds.Resolve(6005, "object"));
     }
 
     [Fact]
@@ -575,7 +576,8 @@ public sealed class ShippedContentTests
         Assert.Equal(warpIds.Length, warps.Count);
         Assert.All(warpsTable.Rows, row =>
             Assert.Equal(row.RequiredUInt32("warp_id"), stableIds.Resolve("warp", row.Required("warp_symbol"))));
-        Assert.Equal("grave_matters_dungeon", Assert.Single(warps).StableSymbol);
+        Assert.Contains(warps, warp => warp.StableSymbol == "grave_matters_dungeon");
+        Assert.Contains(warps, warp => warp.StableSymbol == "farmers_orchard_dungeon");
         stableIds.ValidateReferences("warp", id => warps.Any(warp => warp.WarpId == id));
     }
 
@@ -1547,6 +1549,17 @@ public sealed class ShippedContentTests
             graveObject.QuestId,
             graveObject.EffectKind,
             graveObject.EffectAmount));
+        var hiveObjects = activation.Simulation.WorldState.Objects.Values
+            .Where(@object => @object.ObjectId == 6005)
+            .OrderBy(@object => @object.EntityId)
+            .ToArray();
+        Assert.Equal(4, hiveObjects.Length);
+        Assert.All(hiveObjects, @object => {
+            Assert.Equal((3018U, AuthoritativeObjectEffectKind.QuestItemCompletion, 2101), (
+                @object.QuestId,
+                @object.EffectKind,
+                @object.EffectAmount));
+        });
         var cryptWarp = Assert.Single(
             activation.Simulation.WorldState.World!.WarpTargets,
             warp => warp.RequiredQuestId == 3017);
@@ -1558,6 +1571,17 @@ public sealed class ShippedContentTests
             cryptWarp.TargetX,
             cryptWarp.TargetY,
             cryptWarp.RequiredQuestCompleted));
+        var hiveWarp = Assert.Single(
+            activation.Simulation.WorldState.World!.WarpTargets,
+            warp => warp.RequiredQuestId == 3018);
+        Assert.Equal((0U, 80, 62, 17U, 20, 20, true), (
+            hiveWarp.SourceLevelId,
+            hiveWarp.TriggerX,
+            hiveWarp.TriggerY,
+            hiveWarp.TargetLevelId,
+            hiveWarp.TargetX,
+            hiveWarp.TargetY,
+            hiveWarp.RequiredQuestCompleted));
         Assert.Equal(3, activation.Simulation.WorldState.Quests[3022].CompletionVariable1);
         var baseQuest = activation.Simulation.WorldState.Quests[3001];
         Assert.Equal(

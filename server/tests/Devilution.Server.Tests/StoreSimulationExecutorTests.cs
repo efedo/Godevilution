@@ -1551,6 +1551,116 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void HiveObjectInteractionConsumesServerOwnedRuneBombAndCompletesQuest()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                2101,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 39,
+                Name = "Rune Bomb",
+                IdentifiedName = "Rune Bomb",
+            },
+            new AuthoritativeItemDefinition(
+                24,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                false) {
+                NativeItemIndex = 23,
+                MiscId = 44,
+                Name = "Ear",
+                IdentifiedName = "Ear",
+            },
+        ]);
+        var bomb = new OwnedStoreItem(
+            0,
+            0,
+            99,
+            0,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = 2101,
+                ItemIndex = 39,
+                InventoryWidth = 1,
+                InventoryHeight = 1,
+            });
+        var quest = new AuthoritativeQuestState(3018, 9, 1, active: false);
+        var hiveObject = new AuthoritativeWorldObject(
+            40,
+            6005,
+            0,
+            79,
+            61,
+            questId: 3018,
+            effectKind: AuthoritativeObjectEffectKind.QuestItemCompletion,
+            effectAmount: 2101);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 100, 100));
+        world.AddLevel(new AuthoritativeLevel(17, 100, 100));
+        world.AddWarpTarget(new AuthoritativeWarpTarget(
+            3,
+            0,
+            80,
+            62,
+            17,
+            20,
+            20,
+            requiredQuestId: 3018,
+            requiredQuestCompleted: true));
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingPositionX: 79,
+            startingPositionY: 62,
+            startingWorld: world,
+            startingInventory: [bomb],
+            startingItems: items,
+            startingObjects: [hiveObject],
+            startingQuests: [quest]);
+        var result = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 1,
+            RequestedTick = 1,
+            OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = 40 },
+        }, 1);
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Empty(executor.GetPlayerState("player-a").Inventory);
+        Assert.True(executor.CreateSnapshot("player-a", 1, 1).Objects.Single().Activated);
+        Assert.True(executor.CreateSnapshot("player-a", 1, 1).Quests.Single().Completed);
+
+        var warpResult = new AuthoritativeCommandServer(executor).Process("player-a", new Command {
+            ClientSequence = 2,
+            RequestedTick = 2,
+            MoveRequested = new MoveRequested {
+                DirectionX = 1,
+                DirectionY = 0,
+            },
+        }, 2);
+
+        Assert.Equal(CommandStatus.Accepted, warpResult.Status);
+        var player = Assert.Single(executor.CreateSnapshot("player-a", 1, 2).Players);
+        Assert.Equal((17U, 20, 20), (player.LevelId, player.PositionX, player.PositionY));
+    }
+
+    [Fact]
     public void TrapDisarmProtocolIntentClearsServerOwnedArmedObject()
     {
         var executor = new StoreSimulationExecutor(

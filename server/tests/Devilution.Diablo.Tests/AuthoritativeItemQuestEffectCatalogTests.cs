@@ -187,6 +187,46 @@ public sealed class AuthoritativeItemQuestEffectCatalogTests
         Assert.All(player.InventoryGrid, cell => Assert.Equal(-1, cell));
     }
 
+    [Fact]
+    public void HiveObjectConsumesRuneBombAndCompletesFarmersOrchard()
+    {
+        var items = new AuthoritativeItemCatalog([CreateItem(2101, 39)]);
+        var quest = new AuthoritativeQuestState(3018, 9, 1, active: false);
+        var worldObject = new AuthoritativeWorldObject(
+            40,
+            6005,
+            0,
+            79,
+            61,
+            questId: 3018,
+            effectKind: AuthoritativeObjectEffectKind.QuestItemCompletion,
+            effectAmount: 2101);
+        var world = new DiabloWorldState(objects: [worldObject], quests: [quest]);
+        var bombState = AuthoritativeItemState.Empty with {
+            StableItemId = 2101,
+            ItemIndex = 39,
+            InventoryWidth = 1,
+            InventoryHeight = 1,
+        };
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayerWithInventory(new OwnedStoreItem(0, 0, 99, 0, 0, bombState));
+        player.PositionX = 79;
+        player.PositionY = 62;
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(40),
+            8,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(worldObject.Activated);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Empty(player.Inventory);
+        Assert.All(player.InventoryGrid, cell => Assert.Equal(-1, cell));
+    }
+
     private static AuthoritativeItemDefinition CreateItem(
         uint itemId,
         int nativeItemIndex)
