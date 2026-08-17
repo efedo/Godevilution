@@ -66,6 +66,8 @@ All notable changes to this fork are documented below.
   server and native compatibility runner.
 - Add Succubus BloodStar impact replay coverage for deterministic monster-magic
   hit RNG, Q6 player damage, impact-phase retention, and removal-boundary parity.
+- Add secondary-player BloodStar block replay coverage for shield admission,
+  block-animation timing, and deterministic hit/block RNG parity.
 
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
