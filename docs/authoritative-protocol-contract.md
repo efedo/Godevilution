@@ -553,6 +553,10 @@ breakable missile-blocking object is destroyed through the same server-owned
 collision transition, while the puddle restores its active lifetime and only
 enters its existing impact phase at expiry.
 
+Compatibility generic projectiles likewise destroy a breakable missile-blocking
+object before their blocked travel is removed; clients observe only the
+resulting authoritative object and projectile state.
+
 Hork Spawn uses the same current-tile collision boundary as native
 `ProcessHorkSpawn`: before movement or expiry, the server checks a living
 player on the missile tile with the non-arrow `PlayerMHit` rules. A successful

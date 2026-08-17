@@ -559,6 +559,8 @@ the most specific migrated behavior, while older overlays may retain
 `Targeted` as a compatibility spelling until their projectile controllers are
 migrated. Mapped dispatch first resolves the active monster-type `native_ai`
 identity and then retains the runtime-label lookup as a legacy fallback.
+Compatibility generic projectiles retain native breakable-object destruction
+when a missile-blocking tile ends their travel.
 When a complete migrated AI-tuning tuple is absent, legacy controller defaults
 use the active monster-type identity before retaining the direct-target
 runtime-label fallback; complete alternate tuning retains precedence.

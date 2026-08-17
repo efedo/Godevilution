@@ -13,6 +13,9 @@ All notable changes to this fork are documented below.
 - Preserve native breakable-object destruction for persistent Acid puddles
   without prematurely ending their lifetime.
 
+- Preserve native breakable-object destruction for compatibility generic
+  projectiles when a missile-blocking tile ends their travel.
+
 - Preserve Nova Ball's native shrine collision exception through validated
   world-object metadata and the authoritative snapshot, protocol, save, and
   hash boundaries.
