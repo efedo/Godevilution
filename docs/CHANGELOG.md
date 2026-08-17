@@ -68,6 +68,10 @@ All notable changes to this fork are documented below.
   snapshot restoration, while preserving zero-valued legacy saves and
   catalog-less compatibility simulations.
 
+- Carry stable item IDs on protocol item references. Godot now sends them for
+  service and cast-source requests, and the server rejects stale slot bindings
+  while retaining zero-valued positional compatibility.
+
 - Move the legacy Rune of Fire miscellaneous-ID translation into spell-catalog
   activation so combat consumes the validated semantic `RuneFire` behavior.
 

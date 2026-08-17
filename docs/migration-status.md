@@ -50,6 +50,10 @@ Status date: 2026-08-17
   item catalog is present; legacy zero-valued IDs and catalog-less simulations
   remain compatible.
 
+- `PlayerItemReference` now carries an additive stable item ID. Godot populates
+  it from authoritative snapshots for item services and spell sources, while
+  the server treats zero as legacy positional addressing.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried

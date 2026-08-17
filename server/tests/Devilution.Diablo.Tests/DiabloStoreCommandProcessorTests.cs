@@ -970,6 +970,37 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void StableItemReferenceRejectsAReboundInventorySlot()
+    {
+        var state = AuthoritativeItemState.Empty with {
+            StableItemId = 7,
+            ItemType = 1,
+        };
+        var player = CreatePlayer();
+        player.Inventory.Add(new OwnedStoreItem(1, 0, 42, 10, 1, state));
+        player.InventoryGrid[0] = 0;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloMoveItemIntent(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    0,
+                    StableItemId: 8),
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    1)),
+            2);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.InvalidTarget, result.Failure);
+        Assert.Equal(42U, Assert.Single(player.Inventory).ItemSeed);
+        Assert.Equal(0, player.InventoryGrid[0]);
+        Assert.Equal(-1, player.InventoryGrid[1]);
+    }
+
+    [Fact]
     public void RejectedIntentDoesNotPartiallyMutateState()
     {
         var large = AuthoritativeItemState.Empty with {

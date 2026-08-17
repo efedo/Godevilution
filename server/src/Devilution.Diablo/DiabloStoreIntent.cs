@@ -10,7 +10,8 @@ public enum DiabloPlayerItemLocation
 
 public readonly record struct DiabloPlayerItemReference(
     DiabloPlayerItemLocation Location,
-    uint Slot);
+    uint Slot,
+    uint StableItemId = 0);
 
 /** Base intent for the Diablo store and owned-item transition boundary. */
 public abstract record DiabloStoreIntent;

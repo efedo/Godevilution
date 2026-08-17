@@ -58,6 +58,7 @@ public static class AuthoritativeSpellSourceSelector
                 new PlayerItemReference {
                     Location = PlayerItemLocation.Equipment,
                     Slot = staff.Slot,
+                    StableItemId = staff.State.StableItemId,
                 });
         }
 
@@ -74,6 +75,7 @@ public static class AuthoritativeSpellSourceSelector
                 new PlayerItemReference {
                     Location = PlayerItemLocation.Inventory,
                     Slot = (uint)index,
+                    StableItemId = item.State.StableItemId,
                 });
         }
 
@@ -89,6 +91,7 @@ public static class AuthoritativeSpellSourceSelector
                 new PlayerItemReference {
                     Location = PlayerItemLocation.Belt,
                     Slot = item.Slot,
+                    StableItemId = item.State.StableItemId,
                 });
         }
 

@@ -28,16 +28,23 @@ public partial class Main : Node2D
         AddChild(feedback);
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.PurchaseRequested += (storeId, storeSlot) => QueueIfConnected(new Command { PurchaseRequested = new PurchaseRequested { StoreId = storeId, StoreSlot = storeSlot } });
-        hud.SellItemRequested += inventoryIndex => QueueIfConnected(new Command { SellItemRequested = new SellItemRequested { InventoryIndex = inventoryIndex } });
+        hud.SellItemRequested += inventoryIndex => QueueIfConnected(new Command {
+            SellItemRequested = new SellItemRequested {
+                InventoryIndex = inventoryIndex,
+                Item = ResolveInventoryItemReference(inventoryIndex),
+            },
+        });
         hud.RepairItemRequested += inventoryIndex => QueueIfConnected(new Command {
             RepairItemRequested = new RepairItemRequested {
                 InventoryIndex = inventoryIndex,
+                Item = ResolveInventoryItemReference(inventoryIndex),
                 Source = ResolveItemServiceSource(PlayerAbilityKind.Repair),
             },
         });
         hud.RechargeItemRequested += inventoryIndex => QueueIfConnected(new Command {
             RechargeItemRequested = new RechargeItemRequested {
                 InventoryIndex = inventoryIndex,
+                Item = ResolveInventoryItemReference(inventoryIndex),
                 Source = ResolveItemServiceSource(PlayerAbilityKind.Recharge),
             },
         });
@@ -45,6 +52,7 @@ public partial class Main : Node2D
             var source = ResolveItemServiceSource(PlayerAbilityKind.Identify);
             var request = new IdentifyItemRequested {
                 InventoryIndex = inventoryIndex,
+                Item = ResolveInventoryItemReference(inventoryIndex),
                 Source = source,
             };
             if (source == ItemServiceSourceKind.ConsumableItem) {
@@ -57,6 +65,7 @@ public partial class Main : Node2D
         hud.ReadBookRequested += inventoryIndex => QueueIfConnected(new Command {
             ReadBookRequested = new ReadBookRequested {
                 InventoryIndex = inventoryIndex,
+                Item = ResolveInventoryItemReference(inventoryIndex),
             },
         });
         hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
@@ -264,16 +273,30 @@ public partial class Main : Node2D
                 return new PlayerItemReference {
                     Location = PlayerItemLocation.Inventory,
                     Slot = checked((uint)index),
+                    StableItemId = player.Inventory[index].State?.StableItemId ?? 0,
                 };
         }
         for (var index = 0; index < player.Belt.Count; index++) {
             if (player.Belt[index].State?.ItemActionKind == ItemActionKind.Identify)
                 return new PlayerItemReference {
                     Location = PlayerItemLocation.Belt,
-                    Slot = checked((uint)index),
+                    Slot = player.Belt[index].Slot,
+                    StableItemId = player.Belt[index].State?.StableItemId ?? 0,
                 };
         }
         return null;
+    }
+
+    private PlayerItemReference? ResolveInventoryItemReference(uint inventoryIndex)
+    {
+        var player = model.Snapshot?.Players.FirstOrDefault();
+        if (player is null || inventoryIndex >= player.Inventory.Count)
+            return null;
+        return new PlayerItemReference {
+            Location = PlayerItemLocation.Inventory,
+            Slot = inventoryIndex,
+            StableItemId = player.Inventory[(int)inventoryIndex].State?.StableItemId ?? 0,
+        };
     }
 
     private CastRequested? CreateCastRequest(Vector2I target)

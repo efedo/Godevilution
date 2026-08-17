@@ -789,7 +789,7 @@ public sealed class DiabloStoreCommandProcessor
                 owned.StoreSlot,
                 owned.Price,
                 owned.PurchasedAtTick);
-            return true;
+            return MatchesStableIdentity(owned.State, reference);
         case DiabloPlayerItemLocation.Belt:
             var belt = player.Belt.FirstOrDefault(candidate => candidate.Slot == reference.Slot);
             if (belt is not null) {
@@ -800,7 +800,7 @@ public sealed class DiabloStoreCommandProcessor
                     belt.Slot,
                     GetReferencePrice(belt.State),
                     0);
-                return true;
+                return MatchesStableIdentity(belt.State, reference);
             }
             break;
         case DiabloPlayerItemLocation.Equipment:
@@ -813,13 +813,21 @@ public sealed class DiabloStoreCommandProcessor
                     equipment.Slot,
                     GetReferencePrice(equipment.State),
                     0);
-                return true;
+                return MatchesStableIdentity(equipment.State, reference);
             }
             break;
         }
 
         item = default;
         return false;
+    }
+
+    private static bool MatchesStableIdentity(
+        AuthoritativeItemState state,
+        DiabloPlayerItemReference reference)
+    {
+        return reference.StableItemId == 0
+            || state.StableItemId == reference.StableItemId;
     }
 
     private static bool IsValidDestination(

@@ -657,7 +657,10 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             return false;
         }
 
-        destination = new DiabloPlayerItemReference(location.Value, source.Slot);
+        destination = new DiabloPlayerItemReference(
+            location.Value,
+            source.Slot,
+            source.StableItemId);
         return true;
     }
 

@@ -27,6 +27,7 @@ public sealed class ClientModelTests
                             State = new ItemStateSnapshot {
                                 SpellId = 30,
                                 Charges = 3,
+                                StableItemId = 700,
                                 MiscId = 23,
                                 SpellDisplayName = "Charged Bolt",
                                 SpellSourceKind = ItemSpellSourceKind.ChargedItem,
@@ -38,6 +39,7 @@ public sealed class ClientModelTests
                             ItemSeed = 100,
                             State = new ItemStateSnapshot {
                                 SpellId = 32,
+                                StableItemId = 701,
                                 MiscId = 22,
                                 SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
                             },
@@ -49,6 +51,7 @@ public sealed class ClientModelTests
                             ItemSeed = 101,
                             State = new ItemStateSnapshot {
                                 SpellId = 33,
+                                StableItemId = 702,
                                 MiscId = 22,
                                 SpellDisplayName = "Telekinesis",
                                 SpellSourceKind = ItemSpellSourceKind.ConsumableItem,
@@ -70,8 +73,11 @@ public sealed class ClientModelTests
         Assert.Equal("Charged Bolt (staff, 3 charges)", sources[2].DisplayName);
         Assert.Equal(PlayerItemLocation.Equipment, sources[2].SourceItem!.Location);
         Assert.Equal(4U, sources[2].SourceItem!.Slot);
+        Assert.Equal(700U, sources[2].SourceItem.StableItemId);
         Assert.Equal(CastSourceKind.ConsumableItem, sources[3].Kind);
         Assert.Equal(PlayerItemLocation.Inventory, sources[3].SourceItem!.Location);
+        Assert.Equal(701U, sources[3].SourceItem.StableItemId);
+        Assert.Equal(702U, sources[4].SourceItem!.StableItemId);
         Assert.Equal(CastSourceKind.Ability, sources[^1].Kind);
         Assert.Equal("Ability TrapDisarm", sources[^1].DisplayName);
 

@@ -890,6 +890,7 @@ internal static class DiabloProtocolMapper
                 result.Cast.SourceItem = new PlayerItemReference {
                     Location = (PlayerItemLocation)item.Location,
                     Slot = item.Slot,
+                    StableItemId = item.StableItemId,
                 };
             }
         }
@@ -907,7 +908,8 @@ internal static class DiabloProtocolMapper
                 ? (DiabloPlayerItemReference?)null
                 : new DiabloPlayerItemReference(
                     (DiabloPlayerItemLocation)source.Cast.SourceItem.Location,
-                    source.Cast.SourceItem.Slot);
+                    source.Cast.SourceItem.Slot,
+                    source.Cast.SourceItem.StableItemId);
             castIntent = new DiabloCastIntent(
                 source.Cast.SpellId,
                 source.Cast.TargetEntityId,

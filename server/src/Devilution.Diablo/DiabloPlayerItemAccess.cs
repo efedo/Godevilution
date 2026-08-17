@@ -15,12 +15,12 @@ internal static class DiabloPlayerItemAccess
         switch (reference.Location) {
         case DiabloPlayerItemLocation.Inventory when reference.Slot < player.Inventory.Count:
             item = player.Inventory[(int)reference.Slot];
-            return true;
+            return MatchesStableIdentity(item.State, reference);
         case DiabloPlayerItemLocation.Belt:
             var beltItem = player.Belt.FirstOrDefault(candidate => candidate.Slot == reference.Slot);
             if (beltItem is not null) {
                 item = ToOwnedItem(beltItem.Slot, beltItem.ItemSeed, beltItem.State);
-                return true;
+                return MatchesStableIdentity(item.State, reference);
             }
             break;
         case DiabloPlayerItemLocation.Equipment:
@@ -31,13 +31,21 @@ internal static class DiabloPlayerItemAccess
                     equippedItem.Slot,
                     equippedItem.ItemSeed,
                     equippedItem.State);
-                return true;
+                return MatchesStableIdentity(item.State, reference);
             }
             break;
         }
 
         item = null!;
         return false;
+    }
+
+    private static bool MatchesStableIdentity(
+        AuthoritativeItemState state,
+        DiabloPlayerItemReference reference)
+    {
+        return reference.StableItemId == 0
+            || state.StableItemId == reference.StableItemId;
     }
 
     public static void Replace(

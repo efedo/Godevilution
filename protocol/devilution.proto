@@ -257,6 +257,9 @@ message SetFriendlyModeRequested {
 message PlayerItemReference {
 	PlayerItemLocation location = 1;
 	uint32 slot = 2;
+	// Optional stable content identity for stale-slot protection; zero preserves
+	// compatibility with older clients and legacy snapshots.
+	uint32 stable_item_id = 3;
 }
 
 enum PlayerItemLocation {

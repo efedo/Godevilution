@@ -49,6 +49,10 @@ Windows toolchain command.
   server validates ownership and consumes mana, one charge, or the item only
   after full cast validation. Source zero is compatibility inference from
   authoritative owned state, never permission to cast an unowned spell.
+- `PlayerItemReference.stable_item_id` is an additive stable content identity
+  paired with the location and slot. The server uses it to reject a stale slot
+  that now contains a different item; zero preserves older clients and
+  positional legacy commands.
 - `IdentifyItemRequested.source` distinguishes the Bard's zero-cost class skill
   from the existing paid vendor service. Value zero retains vendor behavior for
   older peers; class-ability requests must match the server-owned loadout and
