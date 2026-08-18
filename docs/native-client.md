@@ -151,7 +151,9 @@ normal or unique reward spawning, and the dialogue event; the adapter projects
 that dialogue into the native quest-text UI. The Hellfire Farmer activation and
 post-Hive reward, base Cain's Staff of Lazarus activation and Lazarus
 Storyteller completion stage, Hellfire Grave Matters/Barmaid dialogue, base Poisoned
-Water/Pepin completion dialogue and Black Mushroom/Pepin staged Brain hand-in,
+Water/Pepin completion dialogue, Black Mushroom/Pepin staged Brain hand-in, and
+Black Mushroom/Adria's repeatable Fungal Tome, mushroom, brain-dialogue, and
+Spectral Elixir stages,
 base and Hellfire
 Magic Rock, Ogden's Sign, Anvil of Fury/Blacksmith, Skeleton King, Butcher/Dead Guy, Little Girl, and Jersey's
 Jersey/Complete Nut

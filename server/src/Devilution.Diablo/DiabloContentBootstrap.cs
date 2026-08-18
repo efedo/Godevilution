@@ -33,7 +33,8 @@ public sealed record DiabloContentActivation
         AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
         uint adriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId,
         AuthoritativeWorldRules? worldRules = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -53,6 +54,7 @@ public sealed record DiabloContentActivation
         AdriaStoreId = adriaStoreId;
         WorldRules = worldRules ?? AuthoritativeWorldRules.NativeDefaults;
         SpellBooks = spellBooks;
+        QuestTownerInteractions = questTownerInteractions;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -90,6 +92,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native dynamic spell-book metadata from the active content pack. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }
+
+    /** Validated repeatable quest/towner interactions from the active content pack. */
+    public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -510,6 +515,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     questStatesTable.SourcePath);
         }
 
+        var questTownerInteractions = content.TryGetTable(
+            "quest_towner_interactions.tsv",
+            out var questTownerInteractionsTable)
+            ? AuthoritativeQuestTownerInteractionCatalog.LoadTsv(
+                questTownerInteractionsTable.SourcePath,
+                questTownerInteractionsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+
         if (world is not null
             && quests is null
             && (world.WarpTargets.Any(target => target.RequiredQuestId != 0)
@@ -562,6 +576,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     itemCatalog,
                     uniqueItems);
             }
+            if (questTownerInteractions is not null) {
+                if (itemCatalog is null)
+                    throw new InvalidDataException(
+                        "Quest/towner interactions require an active item catalog.");
+                questTownerInteractions.ValidateItems(itemCatalog);
+                questTownerInteractions.ValidateQuests(quests);
+                if (world is not null)
+                    questTownerInteractions.ValidateWorld(world);
+            }
+        } else if (questTownerInteractions is not null) {
+            throw new InvalidDataException(
+                "Quest/towner interactions require an active quest catalog.");
         }
         if (gameMode == DiabloGameMode.SinglePlayer
             && quests is not null
@@ -628,6 +654,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             Objects = objects,
             Quests = quests,
             QuestTypes = questTypes,
+            QuestTownerInteractions = questTownerInteractions,
             Spells = spells,
             SpellBooks = spellBooks,
             CombatRules = combatRules,
@@ -666,7 +693,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             monsterMissiles,
             worldRules.AdriaStoreId,
             worldRules,
-            spellBooks);
+            spellBooks,
+            questTownerInteractions);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -18,6 +18,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
     private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
+    private readonly AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -33,7 +34,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeItemCatalog? items = null,
         AuthoritativeItemCombinationCatalog? itemCombinations = null,
         AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -48,6 +50,7 @@ public sealed class DiabloWorldCommandProcessor
         this.itemCombinations = itemCombinations;
         this.itemQuestEffects = itemQuestEffects;
         this.spellBooks = spellBooks;
+        this.questTownerInteractions = questTownerInteractions;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -1362,12 +1365,139 @@ public sealed class DiabloWorldCommandProcessor
         }
     }
 
+    /** Applies the first active content-owned repeatable quest/towner stage. */
+    private DiabloWorldIntentResult? TryQuestTownerInteraction(
+        AuthoritativePlayerState player,
+        uint questId,
+        uint townerId,
+        out bool hasActiveInteraction)
+    {
+        hasActiveInteraction = false;
+        if (questTownerInteractions is null
+            || items is null
+            || !world.Quests.TryGetValue(questId, out var quest)
+            || quest.Unavailable
+            || quest.Completed) {
+            return null;
+        }
+
+        foreach (var interaction in questTownerInteractions.Definitions
+                     .Where(definition => definition.QuestId == questId
+                         && definition.TownerId == townerId)
+                     .OrderBy(definition => definition.InteractionId)) {
+            if (!IsQuestTownerInteractionActive(quest, interaction))
+                continue;
+            hasActiveInteraction = true;
+            if (interaction.LevelId != player.LevelId
+                || Math.Max(
+                    Math.Abs(interaction.PositionX - player.PositionX),
+                    Math.Abs(interaction.PositionY - player.PositionY)) > 1
+                || !items.TryGet(interaction.ItemId, out var itemDefinition)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
+            if (!TryFindPlayerItem(
+                    player,
+                    itemDefinition,
+                    interaction.ConsumeItem,
+                    out _)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
+            quest.Logged = true;
+            if (interaction.Variable1 >= 0)
+                quest.Variable1 = Math.Max(quest.Variable1, interaction.Variable1);
+            if (interaction.Variable2 >= 0)
+                quest.Variable2 = Math.Max(quest.Variable2, interaction.Variable2);
+            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate)
+                quest.Active = true;
+            if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Complete) {
+                quest.Progress = quest.RequiredProgress;
+                quest.Completed = true;
+                quest.Active = false;
+                if (quest.CompletionActivateQuestId != 0
+                    && world.Quests.TryGetValue(
+                        quest.CompletionActivateQuestId,
+                        out var nextQuest)
+                    && !nextQuest.Unavailable
+                    && !nextQuest.Completed) {
+                    nextQuest.Active = true;
+                    nextQuest.Logged = true;
+                }
+            }
+
+            return DiabloWorldIntentResult.AcceptedWith(
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    townerId,
+                    0) {
+                    MessageId = interaction.MessageId,
+                    QuestId = quest.QuestId,
+                });
+        }
+        return null;
+    }
+
+    private static bool IsQuestTownerInteractionActive(
+        AuthoritativeQuestState quest,
+        AuthoritativeQuestTownerInteractionDefinition interaction)
+    {
+        if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate) {
+            if (quest.Active || quest.Completed || quest.Unavailable)
+                return false;
+        } else if (!quest.Active || quest.Completed || quest.Unavailable) {
+            return false;
+        }
+        return (interaction.RequiredVariable1 < 0
+                || quest.Variable1 == interaction.RequiredVariable1)
+            && (interaction.RequiredVariable2 < 0
+                || quest.Variable2 == interaction.RequiredVariable2);
+    }
+
+    private bool TryFindPlayerItem(
+        AuthoritativePlayerState player,
+        AuthoritativeItemDefinition itemDefinition,
+        bool consume,
+        out bool fromBelt)
+    {
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            if (!items!.IsStateForDefinition(player.Inventory[index].State, itemDefinition))
+                continue;
+            fromBelt = false;
+            if (consume) {
+                InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, index);
+                player.Inventory.RemoveAt(index);
+            }
+            return true;
+        }
+        for (var index = 0; index < player.Belt.Count; index++) {
+            if (!items!.IsStateForDefinition(player.Belt[index].State, itemDefinition))
+                continue;
+            fromBelt = true;
+            if (consume)
+                player.Belt.RemoveAt(index);
+            return true;
+        }
+        fromBelt = false;
+        return false;
+    }
+
     /** Applies a content-defined native towner turn-in, including item consumption and reward spawn. */
     private DiabloWorldIntentResult TurnInQuest(
         AuthoritativePlayerState player,
         uint questId,
         uint townerId)
     {
+        var authoredInteraction = TryQuestTownerInteraction(
+            player,
+            questId,
+            townerId,
+            out var hasActiveInteraction);
+        if (hasActiveInteraction)
+            return authoredInteraction
+                ?? DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
         var completionStage = world.Quests.TryGetValue(questId, out var candidateQuest)
             && candidateQuest.TurnInOnCompletion
             && candidateQuest.Completed

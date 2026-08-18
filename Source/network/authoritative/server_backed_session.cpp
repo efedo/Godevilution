@@ -237,6 +237,32 @@ bool ServerBackedSession::HasActiveQuest(uint32_t questId) const noexcept
 std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t townerId) const noexcept
 {
 	std::optional<uint32_t> result;
+	for (const auto &interaction : questTownerInteractions_) {
+		if (interaction.towner_id() < 0
+		    || static_cast<uint32_t>(interaction.towner_id()) != townerId) {
+			continue;
+		}
+		auto questIt = std::find_if(questStates_.begin(), questStates_.end(), [&interaction](const auto &quest) {
+			return quest.quest_id() == interaction.quest_id();
+		});
+		if (questIt == questStates_.end()
+		    || questIt->unavailable()
+		    || questIt->completed()) {
+			continue;
+		}
+		const bool active = interaction.kind() == 0
+		    ? questIt->initial()
+		    : !questIt->initial();
+		if (!active
+		    || (interaction.has_required_variable1()
+		        && questIt->variable_1() != interaction.required_variable1())
+		    || (interaction.has_required_variable2()
+		        && questIt->variable_2() != interaction.required_variable2())) {
+			continue;
+		}
+		if (!result.has_value() || questIt->quest_id() < *result)
+			result = questIt->quest_id();
+	}
 	for (const auto &quest : questStates_) {
 		if (!quest.has_turn_in_towner_id()
 		    || quest.turn_in_towner_id() < 0
@@ -407,6 +433,9 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		return tl::make_unexpected(projectiles.error());
 	projectileState_ = std::move(*projectiles);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
+	questTownerInteractions_.assign(
+		snapshot.quest_towner_interactions().begin(),
+		snapshot.quest_towner_interactions().end());
 
 	vendorState_.SetEnabled(true);
 	vendorState_.SetConnected(true);

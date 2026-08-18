@@ -138,6 +138,7 @@ private:
 	std::vector<ProjectedObjectSnapshot> objectState_;
 	std::vector<ProjectedProjectileSnapshot> projectileState_;
 	std::vector<protocol::QuestSnapshot> questStates_;
+	std::vector<protocol::QuestTownerInteractionSnapshot> questTownerInteractions_;
 	ServerBackedVendorState vendorState_;
 	std::map<uint64_t, PendingIntent> pendingIntents_;
 	CommandResolution lastCommandResolution_ = CommandResolution::None;

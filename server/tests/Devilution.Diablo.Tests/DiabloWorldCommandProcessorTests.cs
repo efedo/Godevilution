@@ -1070,6 +1070,99 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedQuestTownerStagesShareOneQuestAndConsumeBeltItems()
+    {
+        var items = new AuthoritativeItemCatalog([
+            CreateQuestItem(2139),
+            CreateQuestItem(2140),
+            CreateQuestItem(2141),
+            CreateQuestItem(2142),
+        ]);
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(300201, 3002, 6, 0, 80, 20, 2141,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                Variable1: 2,
+                MessageId: 129),
+            new(300202, 3002, 6, 0, 80, 20, 2139,
+                AuthoritativeQuestTownerInteractionKind.Advance,
+                RequiredVariable1: 2,
+                Variable1: 5,
+                MessageId: 131),
+            new(300203, 3002, 6, 0, 80, 20, 2140,
+                AuthoritativeQuestTownerInteractionKind.Dialogue,
+                RequiredVariable1: 5,
+                MessageId: 132,
+                ConsumeItem: false),
+            new(300204, 3002, 6, 0, 80, 20, 2142,
+                AuthoritativeQuestTownerInteractionKind.Complete,
+                RequiredVariable1: 7,
+                MessageId: 133),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            active: false);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 79, positionY: 20);
+
+        player.Inventory.Add(CreateQuestOwnedItem(items, 2141, 1));
+        Assert.False(quest.Active);
+        Assert.True(items.IsStateForDefinition(
+            player.Inventory[0].State,
+            items.GetRequired(2141)));
+        var activation = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 6),
+            1,
+            [player]);
+        Assert.True(activation.Succeeded, activation.Failure?.ToString());
+        Assert.Equal((true, 2, 129), (quest.Active, quest.Variable1, Assert.Single(activation.Events).MessageId));
+        Assert.Empty(player.Inventory);
+
+        player.Inventory.Add(CreateQuestOwnedItem(items, 2139, 2));
+        var advancement = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 6),
+            2,
+            [player]);
+        Assert.True(advancement.Succeeded);
+        Assert.Equal((true, 5, 131), (quest.Active, quest.Variable1, Assert.Single(advancement.Events).MessageId));
+
+        player.Inventory.Add(CreateQuestOwnedItem(items, 2140, 3));
+        var dialogue = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 6),
+            3,
+            [player]);
+        Assert.True(dialogue.Succeeded);
+        Assert.Equal((true, 5, 132), (quest.Active, quest.Variable1, Assert.Single(dialogue.Events).MessageId));
+        Assert.Single(player.Inventory);
+
+        quest.Variable1 = 7;
+        player.Inventory.Clear();
+        player.Belt.Add(new BeltStoreItem(
+            0,
+            4,
+            items.GetRequired(2142).Generate(4)));
+        var completion = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 6),
+            4,
+            [player]);
+        Assert.True(completion.Succeeded);
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal(1U, quest.Progress);
+        Assert.Equal(133, Assert.Single(completion.Events).MessageId);
+        Assert.Empty(player.Belt);
+    }
+
+    [Fact]
     public void QuestDialogueRejectsMismatchedUniqueIdentity()
     {
         var quest = new AuthoritativeQuestState(
@@ -2447,6 +2540,23 @@ public sealed class DiabloWorldCommandProcessorTests
             value,
             0,
             CreateGoldState(value, rules));
+    }
+
+    private static AuthoritativeItemDefinition CreateQuestItem(uint itemId)
+        => new(itemId, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true);
+
+    private static OwnedStoreItem CreateQuestOwnedItem(
+        AuthoritativeItemCatalog items,
+        uint itemId,
+        uint seed)
+    {
+        return new OwnedStoreItem(
+            0,
+            0,
+            seed,
+            0,
+            0,
+            items.GetRequired(itemId).Generate(seed));
     }
 
     private static AuthoritativeItemState CreateGoldState(

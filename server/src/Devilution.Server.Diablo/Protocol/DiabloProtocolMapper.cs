@@ -203,6 +203,30 @@ internal static class DiabloProtocolMapper
             projectedQuest.TurnInProgressOnly = quest.TurnInProgressOnly;
             snapshot.Quests.Add(projectedQuest);
         }
+        foreach (var interaction in source.QuestTownerInteractions) {
+            var projectedInteraction = new QuestTownerInteractionSnapshot {
+                InteractionId = interaction.InteractionId,
+                QuestId = interaction.QuestId,
+                TownerId = interaction.TownerId,
+                LevelId = interaction.LevelId,
+                PositionX = interaction.PositionX,
+                PositionY = interaction.PositionY,
+                ItemId = interaction.ItemId,
+                Kind = (int)interaction.Kind,
+                ConsumeItem = interaction.ConsumeItem,
+            };
+            if (interaction.RequiredVariable1 >= 0)
+                projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;
+            if (interaction.RequiredVariable2 >= 0)
+                projectedInteraction.RequiredVariable2 = interaction.RequiredVariable2;
+            if (interaction.Variable1 >= 0)
+                projectedInteraction.Variable1 = interaction.Variable1;
+            if (interaction.Variable2 >= 0)
+                projectedInteraction.Variable2 = interaction.Variable2;
+            if (interaction.MessageId != 0)
+                projectedInteraction.MessageId = interaction.MessageId;
+            snapshot.QuestTownerInteractions.Add(projectedInteraction);
+        }
         foreach (var projectile in source.Projectiles) {
             snapshot.Projectiles.Add(new ProjectileSnapshot {
                 EntityId = projectile.EntityId,

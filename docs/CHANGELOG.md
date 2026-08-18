@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.346 repeatable quest/towner interaction definitions. Base Black
+  Mushroom now externalizes Adria's Fungal Tome activation, mushroom hand-in,
+  brain dialogue, and Spectral Elixir completion stages through the same
+  authoritative server boundary, including belt-item consumption.
+
 - Add schema 1.345 authored unique-monster dialogue transitions. Warlord's
   follow-up conversation now advances native `_qvar1` from `QS_WARLORD_TALKING`
   to `QS_WARLORD_ATTACKING` through the shared `TalkToQuestRequested` boundary.

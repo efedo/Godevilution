@@ -361,6 +361,8 @@ message Snapshot {
 	bool victory_triggered = 14;
 	// Native difficulty selected for the authoritative session.
 	GameDifficulty difficulty = 15;
+	// Additive content-owned quest/towner interaction stages.
+	repeated QuestTownerInteractionSnapshot quest_towner_interactions = 16;
 }
 
 message LevelGeometrySnapshot {
@@ -750,6 +752,23 @@ message QuestSnapshot {
 	optional int32 turn_in_variable1 = 25;
 	// Whether the staged item hand-in leaves the quest active after applying it.
 	bool turn_in_progress_only = 26;
+}
+
+message QuestTownerInteractionSnapshot {
+	uint32 interaction_id = 1;
+	uint32 quest_id = 2;
+	int32 towner_id = 3;
+	uint32 level_id = 4;
+	int32 position_x = 5;
+	int32 position_y = 6;
+	uint32 item_id = 7;
+	int32 kind = 8;
+	optional int32 required_variable1 = 9;
+	optional int32 required_variable2 = 10;
+	optional int32 variable1 = 11;
+	optional int32 variable2 = 12;
+	optional int32 message_id = 13;
+	bool consume_item = 14;
 }
 
 message ProjectileSnapshot {

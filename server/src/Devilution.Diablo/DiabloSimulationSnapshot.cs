@@ -412,6 +412,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Native difficulty persisted with the authoritative session. */
     public DiabloDifficulty Difficulty { get; init; } = DiabloDifficulty.Normal;
+
+    /** Content-owned repeatable quest/towner interaction definitions. */
+    public IReadOnlyList<AuthoritativeQuestTownerInteractionDefinition> QuestTownerInteractions { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -703,6 +706,7 @@ public sealed partial class DiabloSimulation
                 .ToArray(),
             VictoryTriggered = WorldState.VictoryTriggered,
             Difficulty = this.Difficulty,
+            QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
         };
     }
 

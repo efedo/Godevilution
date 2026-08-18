@@ -56,6 +56,9 @@ public sealed class DiabloSimulationOptions
     /** Optional native quest routing metadata used to activate initial quests. */
     public AuthoritativeQuestTypeCatalog? QuestTypes { get; init; }
 
+    /** Validated repeatable quest/towner interactions supplied by content. */
+    public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; init; }
+
     public IReadOnlyList<AuthoritativeProjectile>? Projectiles { get; init; }
 
     /** Server-owned corpse tiles available to corpse-consuming monster AI. */
@@ -189,7 +192,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Items,
             options.ItemCombinations,
             options.ItemQuestEffects,
-            options.SpellBooks);
+            options.SpellBooks,
+            options.QuestTownerInteractions);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -236,7 +240,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Items,
             options.Difficulty,
             options.MonsterTypes,
-            options.SpellBooks);
+            options.SpellBooks,
+            options.QuestTownerInteractions);
     }
 }
 
@@ -278,7 +283,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeItemCatalog? items = null,
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -300,6 +306,7 @@ public sealed partial class DiabloSimulation
         Items = items;
         this.monsterTypes = monsterTypes;
         SpellBooks = spellBooks;
+        QuestTownerInteractions = questTownerInteractions;
         ReconcileProceduralSpawnState();
     }
 
@@ -314,6 +321,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native dynamic spell-book metadata used for presentation names. */
     public AuthoritativeSpellBookCatalog? SpellBooks { get; }
+
+    /** Validated repeatable quest/towner interactions projected to clients. */
+    public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; }
 
     /** Validated content rules governing this Diablo simulation instance. */
     public AuthoritativeCombatRules CombatRules { get; }

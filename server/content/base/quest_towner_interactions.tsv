@@ -1,0 +1,5 @@
+interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item
+300201	3002	black_mushroom	6	0	town	80	20	2141	fungal_tome	Activate	-1	-1	2	-1	129	true
+300202	3002	black_mushroom	6	0	town	80	20	2139	black_mushroom	Advance	2	-1	5	-1	131	true
+300203	3002	black_mushroom	6	0	town	80	20	2140	brain	Dialogue	5	-1	-1	-1	132	false
+300204	3002	black_mushroom	6	0	town	80	20	2142	spectral_elixir	Complete	7	-1	-1	-1	133	true
