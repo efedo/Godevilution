@@ -948,6 +948,49 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestSequenceObjectProjectsItsAuthoredQuestMessage()
+    {
+        var quest = new AuthoritativeQuestState(
+            3012,
+            13,
+            1,
+            messageId: 110,
+            active: false);
+        var @object = new AuthoritativeWorldObject(
+            2404,
+            6004,
+            13,
+            20,
+            20,
+            questId: 3012,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1);
+        var world = new DiabloWorldState(objects: [@object], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            levelId: 13,
+            positionX: 19,
+            positionY: 20);
+
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(2404),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(110, dialogue.MessageId);
+        Assert.Equal(3012U, dialogue.QuestId);
+        Assert.Equal(2404U, dialogue.TargetEntityId);
+        Assert.Equal(1, quest.Variable1);
+        Assert.True(quest.Active);
+        Assert.False(@object.Activated);
+    }
+
+    [Fact]
     public void QuestDialogueValidatesUniqueIdentityActivatesQuestAndEmitsMessage()
     {
         var quest = new AuthoritativeQuestState(

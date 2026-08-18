@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project authored quest messages from content-owned `QuestSequence` object
+  interactions through the authoritative dialogue event path; book/lever
+  placement and set-piece mutations remain separate migration seams.
+
 - Add schema 1.358 staged unique-monster dialogue rewards. Gharbad's second
   authored stage now generates a deterministic native-quality random drop on
   the authoritative server, with content-declared placement and item level.

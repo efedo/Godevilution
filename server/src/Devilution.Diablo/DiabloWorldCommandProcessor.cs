@@ -1129,7 +1129,17 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
         }
-        return DiabloWorldIntentResult.Accepted;
+        return quest.MessageId == 0
+            ? DiabloWorldIntentResult.Accepted
+            : DiabloWorldIntentResult.AcceptedWith(
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    @object.EntityId,
+                    0) {
+                    MessageId = quest.MessageId,
+                    QuestId = quest.QuestId,
+                });
     }
 
     private DiabloWorldIntentResult DisarmTrap(

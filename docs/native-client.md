@@ -205,9 +205,10 @@ their content actions are externalized.
 
 Content-declared quest objects now use the same `OperateObjectRequested`
 boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
-quest-state changes, item consumption, and activation in the server snapshot;
-the Hellfire Na-Krul tome sequence is the first shipped definition. Objects
-without an authored quest effect retain the legacy local behavior.
+quest-state changes, item consumption, activation, and linked authored quest
+dialogue events in the server snapshot; the Hellfire Na-Krul tome sequence is
+the first shipped definition. Objects without an authored quest effect retain
+the legacy local behavior.
 
 ## Remaining native-only interaction inventory
 

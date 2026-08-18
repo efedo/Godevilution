@@ -146,9 +146,10 @@ Status date: 2026-08-18
 - Content-declared quest-object effects are now generic. The native adapter
   routes active `QuestSequence` and `QuestItemCompletion` objects through
   `OperateObjectRequested`; the server owns effect ordering, quest state,
-  required-item consumption, and activation reconciliation. The Hellfire
-  Na-Krul tome sequence is the first shipped definition; unmodeled objects
-  retain their legacy fallback.
+  required-item consumption, activation reconciliation, and any linked
+  authored quest dialogue event. The Hellfire Na-Krul tome sequence is the
+  first shipped definition; unmodeled book/lever placement and set-piece
+  effects retain their legacy fallback.
 
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
