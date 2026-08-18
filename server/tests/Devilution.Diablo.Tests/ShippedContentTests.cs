@@ -17,9 +17,27 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.362.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.363.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
+    }
+
+    [Fact]
+    public void BaseContentPackDeclaresNativeSetLevelObjectPlacements()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var placements = AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            "set_level_objects.tsv",
+            pack.Tables.Single(table => table.SourcePath == "set_level_objects.tsv").ToCanonicalTsv());
+
+        Assert.Equal(11, placements.Definitions.Count);
+        Assert.Equal(6, placements.GetForSetLevel(1).Count);
+        Assert.Equal(2, placements.GetForSetLevel(2).Count);
+        Assert.Equal(3, placements.GetForSetLevel(5).Count);
+        Assert.Equal((64, 34), (
+            placements.Definitions.First(placement => placement.PlacementId == 1001).PositionX,
+            placements.Definitions.First(placement => placement.PlacementId == 1001).PositionY));
     }
 
     [Fact]
@@ -690,6 +708,9 @@ public sealed class ShippedContentTests
                 [basePack])));
         Assert.NotNull(activation.SpellBooks);
         Assert.Equal(23, activation.SpellBooks!.Definitions.Count);
+        Assert.NotNull(activation.SetLevelObjects);
+        Assert.Equal(11, activation.SetLevelObjects!.Definitions.Count);
+        Assert.Equal(11, activation.Simulation.SetLevelObjects!.Definitions.Count);
     }
 
     [Fact]
@@ -1708,7 +1729,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.362.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.363.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

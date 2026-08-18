@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Schema 1.363 adds the validated `set_level_objects.tsv` catalog. Native
+  fixed-object placements and template footprints for Skeleton King's Lair,
+  the Chamber of Bone, and Archbishop Lazarus' Lair now live in the active
+  server content contract; binary set-level map synthesis remains separate.
+
 - Schema 1.362 adds validated staged-dialogue follow-ups. An accepted
   unique-monster conversation stage may apply one content-backed world-cell
   mutation after all quest, item, and reward validation succeeds.

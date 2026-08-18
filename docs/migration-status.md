@@ -198,6 +198,12 @@ Status date: 2026-08-18
   mutation after the quest transition, item consumption, and authored reward
   validation; invalid mutation references reject before any state changes.
 
+- Schema 1.363 adds `set_level_objects.tsv`, which externalizes the native
+  fixed-object positions and template footprints for the three quest set-level
+  maps that currently use hardcoded `InitializeLoadedObject` calls. The
+  validated catalog is carried by Diablo activation and simulation metadata;
+  set-level binary map synthesis and transitions remain separate.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes

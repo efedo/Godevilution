@@ -65,6 +65,9 @@ public sealed class DiabloSimulationOptions
     /** Validated staged unique-monster dialogue supplied by content. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; init; }
 
+    /** Validated native fixed-object placements for future set-level materialization. */
+    public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
+
     /** Validated server-owned text for authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; init; }
 
@@ -255,7 +258,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.SpellBooks,
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
-            options.DialogueMessages);
+            options.DialogueMessages,
+            options.SetLevelObjects);
     }
 }
 
@@ -300,7 +304,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
-        AuthoritativeDialogueMessageCatalog? dialogueMessages = null)
+        AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
+        AuthoritativeSetLevelObjectCatalog? setLevelObjects = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -325,6 +330,7 @@ public sealed partial class DiabloSimulation
         QuestTownerInteractions = questTownerInteractions;
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
+        SetLevelObjects = setLevelObjects;
         ReconcileProceduralSpawnState();
     }
 
@@ -345,6 +351,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated staged unique-monster dialogue projected to world commands. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
+
+    /** Validated native fixed-object placements for future set-level materialization. */
+    public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
 
     /** Validated server-owned text projected with authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; }
