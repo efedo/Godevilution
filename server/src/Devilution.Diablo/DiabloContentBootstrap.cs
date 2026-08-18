@@ -37,7 +37,8 @@ public sealed record DiabloContentActivation
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
-        AuthoritativeSetLevelObjectCatalog? setLevelObjects = null)
+        AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -61,6 +62,7 @@ public sealed record DiabloContentActivation
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
+        SetLevelMaps = setLevelMaps;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -110,6 +112,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native fixed-object placements for future set-level materialization. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
+
+    /** Validated native set-level map assets and entry points for future materialization. */
+    public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -540,6 +545,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Set-level object placements require set_level_names.tsv.");
             setLevelObjects.ValidateSetLevels(setLevelNames);
         }
+        var setLevelMaps = content.TryGetTable(
+            "set_level_maps.tsv",
+            out var setLevelMapsTable)
+            ? AuthoritativeSetLevelMapCatalog.LoadTsv(
+                setLevelMapsTable.SourcePath,
+                setLevelMapsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (setLevelMaps is not null) {
+            if (setLevelNames is null)
+                throw new InvalidDataException(
+                    "Set-level map definitions require set_level_names.tsv.");
+            setLevelMaps.ValidateSetLevels(setLevelNames);
+        }
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,
@@ -759,6 +778,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             QuestDialogueStages = questDialogueStages,
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
+            SetLevelMaps = setLevelMaps,
             Spells = spells,
             SpellBooks = spellBooks,
             CombatRules = combatRules,
@@ -801,7 +821,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questTownerInteractions,
             questDialogueStages,
             dialogueMessages,
-            setLevelObjects);
+            setLevelObjects,
+            setLevelMaps);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

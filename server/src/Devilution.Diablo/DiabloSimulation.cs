@@ -68,6 +68,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native fixed-object placements for future set-level materialization. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
 
+    /** Validated native set-level map assets and entry points for future materialization. */
+    public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; init; }
+
     /** Validated server-owned text for authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; init; }
 
@@ -259,7 +262,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.QuestTownerInteractions,
             options.QuestDialogueStages,
             options.DialogueMessages,
-            options.SetLevelObjects);
+            options.SetLevelObjects,
+            options.SetLevelMaps);
     }
 }
 
@@ -305,7 +309,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
-        AuthoritativeSetLevelObjectCatalog? setLevelObjects = null)
+        AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -331,6 +336,7 @@ public sealed partial class DiabloSimulation
         QuestDialogueStages = questDialogueStages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
+        SetLevelMaps = setLevelMaps;
         ReconcileProceduralSpawnState();
     }
 
@@ -354,6 +360,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native fixed-object placements for future set-level materialization. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
+
+    /** Validated native set-level map assets and entry points for future materialization. */
+    public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
 
     /** Validated server-owned text projected with authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; }

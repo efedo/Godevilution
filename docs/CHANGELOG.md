@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Schema 1.364 externalizes native set-level map asset selection and entry
+  points. Skeleton King's Lair, the Chamber of Bone, and Archbishop Lazarus'
+  Lair now declare their pre-map/active-map assets and native spawn positions
+  in server content; binary map synthesis and transitions remain separate.
+
 - Schema 1.363 adds the validated `set_level_objects.tsv` catalog. Native
   fixed-object placements and template footprints for Skeleton King's Lair,
   the Chamber of Bone, and Archbishop Lazarus' Lair now live in the active

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.363.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.364.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -38,6 +38,24 @@ public sealed class ShippedContentTests
         Assert.Equal((64, 34), (
             placements.Definitions.First(placement => placement.PlacementId == 1001).PositionX,
             placements.Definitions.First(placement => placement.PlacementId == 1001).PositionY));
+    }
+
+    [Fact]
+    public void BaseContentPackDeclaresNativeSetLevelMapAssets()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var maps = AuthoritativeSetLevelMapCatalog.LoadTsv(
+            "set_level_maps.tsv",
+            pack.Tables.Single(table => table.SourcePath == "set_level_maps.tsv").ToCanonicalTsv());
+
+        Assert.Equal(3, maps.Definitions.Count);
+        var skeletonKing = Assert.Single(maps.Definitions, map => map.SetLevelId == 1);
+        Assert.Equal("levels/l1data/sklkng1.dun", skeletonKing.PreMapAssetPath);
+        Assert.Equal("levels/l1data/sklkng2.dun", skeletonKing.ActiveMapAssetPath);
+        Assert.Equal((83, 44), (skeletonKing.SpawnX, skeletonKing.SpawnY));
+        Assert.Equal("Catacombs", maps.Definitions.Single(map => map.SetLevelId == 2).DungeonType);
+        Assert.Equal("Cathedral", maps.Definitions.Single(map => map.SetLevelId == 5).DungeonType);
     }
 
     [Fact]
@@ -711,6 +729,9 @@ public sealed class ShippedContentTests
         Assert.NotNull(activation.SetLevelObjects);
         Assert.Equal(11, activation.SetLevelObjects!.Definitions.Count);
         Assert.Equal(11, activation.Simulation.SetLevelObjects!.Definitions.Count);
+        Assert.NotNull(activation.SetLevelMaps);
+        Assert.Equal(3, activation.SetLevelMaps!.Definitions.Count);
+        Assert.Equal(3, activation.Simulation.SetLevelMaps!.Definitions.Count);
     }
 
     [Fact]
@@ -1729,7 +1750,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.363.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.364.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

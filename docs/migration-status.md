@@ -204,6 +204,13 @@ Status date: 2026-08-18
   validated catalog is carried by Diablo activation and simulation metadata;
   set-level binary map synthesis and transitions remain separate.
 
+- Schema 1.364 adds `set_level_maps.tsv`, which externalizes the native
+  pre-map/active-map asset paths, dungeon type, and entry spawn positions for
+  Skeleton King's Lair, the Chamber of Bone, and Archbishop Lazarus' Lair.
+  Activation validates the stable set-level links and carries the catalog in
+  simulation metadata; loading the binary assets, synthesizing geometry, and
+  routing set-level transitions remain separate.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes
