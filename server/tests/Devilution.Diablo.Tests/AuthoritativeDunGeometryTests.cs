@@ -222,6 +222,63 @@ public sealed class AuthoritativeDunGeometryTests
         Assert.Equal("SL_SYNTHETIC", level.StableSymbol);
     }
 
+    [Fact]
+    public void SetLevelCatalogPublishesCompleteBundlesIntoReservedRuntimeLevels()
+    {
+        var dun = CreateDun(1, 1, [0]);
+        var til = new byte[sizeof(ushort) * 4];
+        WriteWord(til, 0, 20);
+        WriteWord(til, 2, 21);
+        WriteWord(til, 4, 22);
+        WriteWord(til, 6, 23);
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol[20] = (byte)AuthoritativeDunTileFlags.Solid;
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/pre.dun", dun),
+                new ContentAsset("levels/active.dun", dun),
+                new ContentAsset("levels/map.til", til),
+                new ContentAsset("levels/map.sol", sol),
+            ]),
+        ]));
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(2, "levels/pre.dun", "levels/active.dun", "Catacombs", 4, 5) {
+                SetLevelSymbol = "SL_BONECHAMB",
+                TileAssetPath = "levels/map.til",
+                SolAssetPath = "levels/map.sol",
+            },
+        ]);
+
+        var levels = catalog.LoadAvailableGeometry(content);
+
+        Assert.Equal(2, levels.Count);
+        Assert.Equal(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: false),
+            levels[0].LevelId);
+        Assert.Equal(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true),
+            levels[1].LevelId);
+        Assert.All(levels, level => Assert.Equal("SL_BONECHAMB", level.StableSymbol));
+    }
+
+    [Fact]
+    public void SetLevelCatalogRejectsPartiallySuppliedNativeBundles()
+    {
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(1, "pre.dun", "active.dun", "Cathedral", 1, 1) {
+                TileAssetPath = "map.til",
+                SolAssetPath = "map.sol",
+            },
+        ]);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("pre.dun", new byte[] { 1 }),
+            ]),
+        ]));
+
+        Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableGeometry(content));
+    }
+
     private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)
     {
         var megaCount = megaWidth * megaHeight;

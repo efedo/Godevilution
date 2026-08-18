@@ -125,6 +125,10 @@ authoritative results.
   active content pack. Godot uses that projection for rendering and retains its
   asset catalog only as a legacy fallback; static geometry is omitted from
   saves and canonical state hashes.
+- Complete native set-level `.dun`/`.til`/`.sol` bundles are materialized by
+  Diablo activation as both pre-map and active-map authoritative levels using a
+  reserved runtime-ID range; packs that have not shipped the binary companions
+  retain the validated metadata-only fallback.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.

@@ -10,6 +10,11 @@ All notable changes to this fork are documented below.
   assets reject composition, and the Diablo native geometry loader can consume
   the composed asset set directly.
 
+- Complete native set-level bundles now materialize both pre-map and active-map
+  variants during Diablo activation as server-owned levels in a reserved
+  runtime-ID range. Legacy packs without the binary companions remain
+  metadata-only, while partial bundles reject activation.
+
 - The Diablo module now has a validated `.dun` geometry materializer. It
   expands native mega-tile IDs through external `.til` d-piece definitions
   and external `.sol` properties into authoritative movement and missile

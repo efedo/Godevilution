@@ -1622,15 +1622,18 @@ native binary map synthesis and set-level transitions remain separate.
 Schema 1.364 adds `set_level_maps.tsv`. The table externalizes the native
 pre-map/active-map asset paths, dungeon type, and entry spawn positions for
 those three quest set-level maps. Diablo activation validates the stable
-set-level links and carries the catalog in server simulation metadata; binary
-asset loading, geometry synthesis, and set-level transitions remain separate.
+set-level links and carries the catalog in server simulation metadata. Complete
+native bundles are materialized into reserved authoritative levels during
+activation; set-level transitions remain separate.
 
 Schema 1.365 adds optional `til_asset` and `sol_asset` columns to
 `set_level_maps.tsv`. Current packs identify the native dungeon-type `.til`
 mega-tile records and `.sol` d-piece property table shared by each set-level's
 pre-map and active-map variants. Older packs remain compatible when these
-optional columns are absent; the composed native geometry loader requires the
-paths before materializing authoritative geometry.
+optional columns are absent. When all four referenced binaries are present,
+Diablo activation materializes both variants as authoritative world levels in
+the reserved `0x80000000` runtime range; otherwise the row remains
+metadata-only for compatibility.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on

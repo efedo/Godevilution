@@ -58,6 +58,9 @@ public sealed record AuthoritativeSetLevelMapDefinition(
 /** Validated native set-level map asset selection and entry points. */
 public sealed class AuthoritativeSetLevelMapCatalog
 {
+    /** Reserved level-ID range for materialized native set-level variants. */
+    public const uint RuntimeLevelIdBase = 0x8000_0000;
+
     private readonly IReadOnlyList<AuthoritativeSetLevelMapDefinition> definitions;
 
     public AuthoritativeSetLevelMapCatalog(
@@ -83,6 +86,55 @@ public sealed class AuthoritativeSetLevelMapCatalog
     {
         definition = definitions.SingleOrDefault(candidate => candidate.SetLevelId == setLevelId)!;
         return definition is not null;
+    }
+
+    /** Returns the deterministic runtime level identity for one map variant. */
+    public static uint GetRuntimeLevelId(int setLevelId, bool activeMap)
+    {
+        if (setLevelId is < 0 or > 8)
+            throw new ArgumentOutOfRangeException(nameof(setLevelId));
+        return checked(RuntimeLevelIdBase + (uint)(setLevelId * 2) + (activeMap ? 1U : 0U));
+    }
+
+    /**
+     * Materializes every complete native bundle supplied by the active pack.
+     * Legacy packs may declare paths before shipping the binary files; those
+     * rows remain metadata-only until all required assets are present.
+     */
+    public IReadOnlyList<AuthoritativeLevel> LoadAvailableGeometry(ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        var levels = new List<AuthoritativeLevel>();
+        foreach (var definition in definitions) {
+            if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+                || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+                continue;
+            }
+            var paths = new[] {
+                definition.PreMapAssetPath,
+                definition.ActiveMapAssetPath,
+                definition.TileAssetPath,
+                definition.SolAssetPath,
+            };
+            var present = paths.Count(path => content.TryGetAsset(path, out _));
+            if (present == 0)
+                continue;
+            if (present != paths.Length) {
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
+            }
+            levels.Add(AuthoritativeNativeDunGeometryLoader.Load(
+                content,
+                definition,
+                GetRuntimeLevelId(definition.SetLevelId, activeMap: false),
+                activeMap: false));
+            levels.Add(AuthoritativeNativeDunGeometryLoader.Load(
+                content,
+                definition,
+                GetRuntimeLevelId(definition.SetLevelId, activeMap: true),
+                activeMap: true));
+        }
+        return levels;
     }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)

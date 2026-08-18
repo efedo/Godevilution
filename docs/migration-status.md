@@ -208,8 +208,8 @@ Status date: 2026-08-18
   pre-map/active-map asset paths, dungeon type, and entry spawn positions for
   Skeleton King's Lair, the Chamber of Bone, and Archbishop Lazarus' Lair.
   Activation validates the stable set-level links and carries the catalog in
-  simulation metadata; loading the binary assets, synthesizing geometry, and
-  routing set-level transitions remain separate.
+  simulation metadata; complete native bundles are now materialized during
+  activation, while routing set-level transitions remains separate.
 
 - Schema 1.365 adds optional `til_asset` and `sol_asset` paths to
   `set_level_maps.tsv`. Current rows identify the native dungeon-type geometry
@@ -227,11 +227,13 @@ Status date: 2026-08-18
   little-endian `.til` mega-tile records and `.sol` d-piece property bytes can
   be loaded without presentation dependencies, then expanded into authoritative
   blocked and missile-blocked cells with missing mappings rejected. The shipped
-  packs do not yet include the native `.til`/`.sol` assets, so set-level
-  activation remains metadata-only until those assets are imported and
-  parity-checked. The engine now exposes a single validated bundle loader for
-  the `.dun`/`.til`/`.sol` composition, keeping asset acquisition separate from
-  authoritative geometry.
+  packs do not yet include the native `.til`/`.sol` assets, so the shipped
+  set-level rows remain metadata-only. A complete bundle now materializes both
+  pre-map and active-map variants during Diablo activation as authoritative
+  levels in the reserved `0x80000000` runtime range; partial bundles reject
+  activation. The engine exposes a single validated bundle loader for the
+  `.dun`/`.til`/`.sol` composition, keeping asset acquisition separate from
+  geometry interpretation.
 
 - Content packs now carry relative native `.dun`, `.til`, and `.sol` assets as
   immutable binary entries alongside TSV tables. Asset bytes participate in the

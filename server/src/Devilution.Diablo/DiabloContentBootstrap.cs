@@ -558,6 +558,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 throw new InvalidDataException(
                     "Set-level map definitions require set_level_names.tsv.");
             setLevelMaps.ValidateSetLevels(setLevelNames);
+            if (world is not null) {
+                foreach (var level in setLevelMaps.LoadAvailableGeometry(content))
+                    world.AddLevel(level);
+            }
         }
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(

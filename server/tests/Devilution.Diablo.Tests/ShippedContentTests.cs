@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Devilution.Data;
 using Devilution.Diablo;
 using Devilution.Engine;
@@ -375,6 +376,49 @@ public sealed class ShippedContentTests
         Assert.True(generated.BlockedCells.Count > 0);
         Assert.True(generated.MissileBlockedCells.Count >= generated.BlockedCells.Count);
         Assert.True(generated.IsWalkable(1, 1));
+    }
+
+    [Fact]
+    public void CompleteSetLevelBinaryBundleMaterializesDuringContentActivation()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var mapTable = TsvTable.Parse(
+            "set_level_maps.tsv",
+            "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
+                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t83\t44\n");
+        var overlayPack = new ContentPack(
+            "geometry-fixture",
+            "1.0.0",
+            [mapTable],
+            dependencies: [basePack.Id],
+            overlays: [new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"])],
+            assets: [
+                new ContentAsset("fixture/pre.dun", CreateSyntheticDun()),
+                new ContentAsset("fixture/active.dun", CreateSyntheticDun()),
+                new ContentAsset("fixture/map.til", CreateSyntheticTil()),
+                new ContentAsset("fixture/map.sol", CreateSyntheticSol()),
+            ]);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "geometry-fixture",
+                "1",
+                [basePack, overlayPack])));
+
+        var levels = activation.Simulation.WorldState.World!.Levels;
+        var pre = Assert.Single(
+            levels,
+            level => level.LevelId
+                == AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: false));
+        var active = Assert.Single(
+            levels,
+            level => level.LevelId
+                == AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true));
+        Assert.Equal("SL_SKELKING", pre.StableSymbol);
+        Assert.Equal("SL_SKELKING", active.StableSymbol);
+        Assert.Equal(2, pre.Width);
+        Assert.Equal(2, active.Height);
     }
 
     [Fact]
@@ -4567,5 +4611,35 @@ public sealed class ShippedContentTests
             }
         }
         throw new DirectoryNotFoundException("Could not locate the repository root.");
+    }
+
+    private static byte[] CreateSyntheticDun()
+    {
+        var words = new ushort[2 + 1 + 4 * 4];
+        words[0] = 1;
+        words[1] = 1;
+        var bytes = new byte[words.Length * sizeof(ushort)];
+        for (var index = 0; index < words.Length; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                words[index]);
+        return bytes;
+    }
+
+    private static byte[] CreateSyntheticTil()
+    {
+        var bytes = new byte[sizeof(ushort) * 4];
+        for (var index = 0; index < 4; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                (ushort)(20 + index));
+        return bytes;
+    }
+
+    private static byte[] CreateSyntheticSol()
+    {
+        var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        bytes[20] = (byte)AuthoritativeDunTileFlags.Solid;
+        return bytes;
     }
 }
