@@ -298,7 +298,8 @@ public sealed class DiabloWorldState
                     blocked,
                     missileBlocked,
                     baseLevel.IsDefaultStart,
-                    baseLevel.SuppressMultiplayerDeathDrops) {
+                    baseLevel.SuppressMultiplayerDeathDrops,
+                    baseLevel.NativeTransparency) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }

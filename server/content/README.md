@@ -1640,8 +1640,9 @@ metadata-only for compatibility.
 
 Schema 1.366 adds the optional `transparency_asset` column. A declared native
 transparency `.dun` layer is included in bundle completeness checks and must
-match the active map's d-piece dimensions before activation succeeds. Packs
-without the optional layer remain compatible.
+match the active map's d-piece dimensions before activation succeeds; its
+values remain attached to authoritative level geometry for later presentation
+projection. Packs without the optional layer remain compatible.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on

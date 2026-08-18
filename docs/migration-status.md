@@ -150,14 +150,15 @@ Status date: 2026-08-18
   authored quest dialogue event. The Hellfire Na-Krul tome sequence is the
   first shipped definition; authored sequence follow-ups can now apply
   validated map mutations or server-owned Phasing/Guardian projectiles after
-  a correct step. Set-level object placement retains its legacy fallback.
+  a correct step. Complete native set-level bundles now materialize their
+  active-map object anchors; unavailable bundles retain the legacy fallback.
 
 - Authored `WorldMutation` object effects now load a validated
   `world_mutations.tsv` catalog. The server applies each referenced cell
   overlay once, persists active mutation IDs in transport-independent saves,
   and sends effective movement/missile geometry through the existing
-  `LevelGeometrySnapshot`; native book/lever placement still needs authored
-  set-level rows.
+  `LevelGeometrySnapshot`; native book/lever placement is supplied by the
+  validated set-level catalog when its bundle is available.
 
 - Authored object rows now also support validated quest transitions. An object
   may activate or complete its linked quest, set `_qvar1` or `_qvar2`, and gate
@@ -167,13 +168,15 @@ Status date: 2026-08-18
 - Authored object rows may also generate one validated normal or unique item
   reward at a relative offset. The server owns catalog validation, deterministic
   generation, placement, persistence, and snapshot projection; set-level
-  placement remains an unmodeled native seam.
+  anchors are materialized from complete native bundles, while their later map
+  mutation effects remain a separate seam.
 
 - Authored object rows now support the validated `GrantSpellLevel` effect.
   `OperateObjectRequested` resolves the spell through the active catalog and
   increments the player’s memorized level with native level caps. An optional
   `effect_spell_symbol` cross-checks the stable spell namespace; set-level
-  placement remains an unmodeled native seam.
+  anchors are materialized from complete native bundles, while their later map
+  mutation effects remain a separate seam.
 
 - Schema 1.359 adds the validated `SpawnSpellProjectile` object effect.
   Authored rows can spawn a server-owned Phasing or Guardian controller at the
@@ -223,8 +226,9 @@ Status date: 2026-08-18
 
 - Schema 1.366 adds the optional native `transparency_asset` path to
   `set_level_maps.tsv`. When declared, activation composes and validates the
-  transparency `.dun` layer against the active-map dimensions; older packs
-  remain compatible without it.
+  transparency `.dun` layer against the active-map dimensions and retains its
+  d-piece values on the authoritative level geometry; older packs remain
+  compatible without it.
 
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and

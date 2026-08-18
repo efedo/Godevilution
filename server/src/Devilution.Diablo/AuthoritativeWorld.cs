@@ -168,7 +168,8 @@ public sealed class AuthoritativeLevel
         IEnumerable<int>? blockedCells = null,
         IEnumerable<int>? missileBlockedCells = null,
         bool isDefaultStart = false,
-        bool suppressMultiplayerDeathDrops = false)
+        bool suppressMultiplayerDeathDrops = false,
+        IEnumerable<ushort>? nativeTransparency = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -188,6 +189,12 @@ public sealed class AuthoritativeLevel
         blockedCellList = Array.AsReadOnly(this.blockedCells.OrderBy(cell => cell).ToArray());
         missileBlockedCellList = Array.AsReadOnly(
             this.missileBlockedCells.OrderBy(cell => cell).ToArray());
+        var transparency = (nativeTransparency ?? [])
+            .ToArray();
+        if (transparency.Length != 0 && transparency.Length != width * height)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native transparency layer with an invalid length.");
+        NativeTransparency = Array.AsReadOnly(transparency);
     }
 
     public uint LevelId { get; }
@@ -204,6 +211,9 @@ public sealed class AuthoritativeLevel
 
     /** Stable row-major missile geometry for protocol and presentation projections. */
     public IReadOnlyList<int> MissileBlockedCells => missileBlockedCellList;
+
+    /** Native d-piece transparency values retained separately from collision. */
+    public IReadOnlyList<ushort> NativeTransparency { get; }
 
     public bool IsDefaultStart { get; }
 

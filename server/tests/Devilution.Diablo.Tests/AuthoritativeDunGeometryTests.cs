@@ -337,7 +337,14 @@ public sealed class AuthoritativeDunGeometryTests
             },
         ]);
 
-        Assert.Equal(2, valid.LoadAvailableGeometry(content).Count);
+        var levels = valid.LoadAvailableGeometry(content);
+        Assert.Equal(2, levels.Count);
+        var active = Assert.Single(
+            levels,
+            level => level.LevelId
+                == AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true));
+        Assert.Equal(4, active.NativeTransparency.Count);
+        Assert.All(active.NativeTransparency, value => Assert.Equal((ushort)0, value));
 
         var invalid = new AuthoritativeSetLevelMapCatalog([
             new AuthoritativeSetLevelMapDefinition(1, "pre.dun", "active.dun", "Cathedral", 1, 1) {

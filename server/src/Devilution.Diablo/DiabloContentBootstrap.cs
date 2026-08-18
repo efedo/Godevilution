@@ -110,10 +110,10 @@ public sealed record DiabloContentActivation
     /** Validated server-owned text for authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; }
 
-    /** Validated native fixed-object placements for future set-level materialization. */
+    /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
 
-    /** Validated native set-level map assets and entry points for future materialization. */
+    /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
 }
 

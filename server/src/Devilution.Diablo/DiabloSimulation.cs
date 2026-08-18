@@ -65,10 +65,10 @@ public sealed class DiabloSimulationOptions
     /** Validated staged unique-monster dialogue supplied by content. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; init; }
 
-    /** Validated native fixed-object placements for future set-level materialization. */
+    /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
 
-    /** Validated native set-level map assets and entry points for future materialization. */
+    /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; init; }
 
     /** Validated server-owned text for authored dialogue events. */

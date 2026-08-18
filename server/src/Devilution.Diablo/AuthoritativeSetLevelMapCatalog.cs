@@ -153,6 +153,17 @@ public sealed class AuthoritativeSetLevelMapCatalog
                     throw new InvalidDataException(
                         $"Set-level map {definition.SetLevelId} transparency dimensions do not match the active map.");
                 }
+                activeMap = new AuthoritativeLevel(
+                    activeMap.LevelId,
+                    activeMap.Width,
+                    activeMap.Height,
+                    activeMap.BlockedCells,
+                    activeMap.MissileBlockedCells,
+                    activeMap.IsDefaultStart,
+                    activeMap.SuppressMultiplayerDeathDrops,
+                    transparency.TransparencyLayer) {
+                    StableSymbol = activeMap.StableSymbol,
+                };
             }
             levels.Add(preMap);
             levels.Add(activeMap);

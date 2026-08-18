@@ -167,6 +167,21 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void ProjectedGeometryRetainsNativeTransparencyLayer()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            nativeTransparency: [1, 2, 3, 4]));
+
+        var state = new DiabloWorldState(world);
+
+        Assert.Equal([1, 2, 3, 4], state.LevelGeometry.Single().NativeTransparency);
+    }
+
+    [Fact]
     public void RejectsDuplicateLevelsAndInvalidBlockedCells()
     {
         var world = new AuthoritativeWorld();
