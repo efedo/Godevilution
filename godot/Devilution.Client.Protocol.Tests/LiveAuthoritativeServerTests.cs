@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Devilution.Client.Protocol;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
@@ -8,6 +9,8 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class LiveAuthoritativeServerTests
 {
+    private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
+
     [Fact]
     public async Task GodotTransportCompletesLiveMoveAndCastSlice()
     {
@@ -262,7 +265,7 @@ public sealed class LiveAuthoritativeServerTests
             TestContext.Current.CancellationToken,
             randomSeed: 1);
         await using var attackerClient = new AuthoritativeClient(
-            CreateOptions(server, "godot-live-pvp-attacker", requestedClassId: 2));
+            CreateOptions(server, "godot-live-pvp-attacker", requestedClassId: 0));
         await attackerClient.ConnectAsync(TestContext.Current.CancellationToken);
         var attackerInitial = await WaitForMessageAsync(
             attackerClient,
@@ -304,7 +307,10 @@ public sealed class LiveAuthoritativeServerTests
             AttackRequested = new AttackRequested {
                 TargetEntityId = victim.EntityId,
             },
-        }, attackerClient.SuggestedCommandTick(model.CurrentTick));
+        }, FindGuaranteedHitTick(
+            attackerClient.SuggestedCommandTick(model.CurrentTick),
+            attackerEntityId,
+            victim.EntityId));
         await attackerClient.PollAsync(TestContext.Current.CancellationToken);
         var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
         Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
@@ -1364,6 +1370,8 @@ public sealed class LiveAuthoritativeServerTests
         var resolved = await WaitForMessageAsync(
             client,
             message => {
+                if (message.Snapshot is null)
+                    return false;
                 var candidate = message.Snapshot?.Monsters.FirstOrDefault(monster => monster.EntityId == target.EntityId);
                 return candidate is null
                     || !candidate.Alive
@@ -2260,15 +2268,47 @@ public sealed class LiveAuthoritativeServerTests
         Func<AuthoritativeClientMessage, bool> predicate)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        var backlog = messageBacklogs.GetOrCreateValue(client);
         for (var attempt = 0; attempt < 200; attempt++) {
-            foreach (var message in client.DrainMessages()) {
-                if (predicate(message))
-                    return message;
+            lock (backlog.Synchronization) {
+                foreach (var message in client.DrainMessages())
+                    backlog.Pending.Enqueue(message);
+
+                var pendingCount = backlog.Pending.Count;
+                for (var index = 0; index < pendingCount; index++) {
+                    var message = backlog.Pending.Dequeue();
+                    if (predicate(message))
+                        return message;
+                    backlog.Pending.Enqueue(message);
+                }
             }
             await client.PollAsync(cancellationToken);
             await Task.Delay(25, cancellationToken);
         }
         throw new TimeoutException("Timed out waiting for a live authoritative client message.");
+    }
+
+    /** Keeps this live melee assertion independent of wall-clock scheduling. */
+    private static ulong FindGuaranteedHitTick(
+        ulong suggestedTick,
+        uint attackerEntityId,
+        uint targetEntityId)
+    {
+        for (var offset = 0UL; offset < 100; offset++) {
+            var tick = checked(suggestedTick + offset);
+            var seed = unchecked((uint)tick ^ attackerEntityId ^ targetEntityId);
+            var roll = unchecked(seed * 1664525U + 1013904223U) % 100U;
+            if (roll < 50)
+                return tick;
+        }
+        throw new InvalidOperationException("Could not find a deterministic player-hit tick.");
+    }
+
+    private sealed class MessageBacklog
+    {
+        public object Synchronization { get; } = new();
+
+        public Queue<AuthoritativeClientMessage> Pending { get; } = [];
     }
 
     private static async Task<CommandResult> WaitForAcknowledgementAsync(AuthoritativeClient client, ulong sequence)

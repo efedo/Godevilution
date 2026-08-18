@@ -7,6 +7,9 @@ All notable changes to this fork are documented below.
 - Refresh deterministic replay fixture content identities after schema 1.366
   so base and Hellfire replay checks validate the current manifested packs.
 
+- Live protocol coverage now preserves unmatched co-delivered messages and
+  chooses deterministic hit ticks for the shared-session melee fixture.
+
 - Extend validated content packs to carry native `.dun`, `.til`, and `.sol`
   binaries alongside TSV tables. Asset bytes now participate in the manifest
   identity, identical inherited assets compose deterministically, conflicting
