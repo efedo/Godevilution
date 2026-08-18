@@ -99,6 +99,56 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsValidatedRewardMetadata()
+    {
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\treward_kind\treward_id\treward_item_level\treward_offset_x\treward_offset_y\n"
+                + "20\t4\t1\t1\t0\tNormalItem\t100\t3\t0\t1\n"));
+
+        Assert.Equal(AuthoritativeObjectRewardKind.NormalItem, @object.RewardKind);
+        Assert.Equal(100U, @object.RewardId);
+        Assert.Equal(3, @object.RewardItemLevel);
+        Assert.Equal(1, @object.RewardOffsetY);
+    }
+
+    [Fact]
+    public void ObjectActivationGeneratesDeterministicNormalItemReward()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            rewardKind: AuthoritativeObjectRewardKind.NormalItem,
+            rewardId: 100,
+            rewardItemLevel: 3,
+            rewardOffsetY: 1);
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(100, 3, 10, 10, 0, 0, 0, 1, 1, 1, 1, true),
+        ]);
+        var world = new DiabloWorldState(geometry, objects: [@object]);
+        var player = CreatePlayer();
+
+        var result = new DiabloWorldCommandProcessor(world, items: items).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(100U, reward.State.StableItemId);
+        Assert.Equal(1, reward.PositionX);
+        Assert.Equal(1, reward.PositionY);
+        Assert.True(@object.Activated);
+    }
+
+    [Fact]
     public void ObjectActivationAppliesQuestTransitionAndMutationAtomically()
     {
         var geometry = AuthoritativeWorld.LoadTsv(

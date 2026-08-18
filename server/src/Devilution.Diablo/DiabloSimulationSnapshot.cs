@@ -258,6 +258,16 @@ public sealed record DiabloObjectState(
     public int QuestTransitionRequiredVariable1 { get; init; } = -1;
 
     public int QuestTransitionRequiredVariable2 { get; init; } = -1;
+
+    public AuthoritativeObjectRewardKind RewardKind { get; init; }
+
+    public uint RewardId { get; init; }
+
+    public int RewardItemLevel { get; init; }
+
+    public int RewardOffsetX { get; init; }
+
+    public int RewardOffsetY { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -609,6 +619,11 @@ public sealed partial class DiabloSimulation
                     QuestTransitionAmount = @object.QuestTransitionAmount,
                     QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1,
                     QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2,
+                    RewardKind = @object.RewardKind,
+                    RewardId = @object.RewardId,
+                    RewardItemLevel = @object.RewardItemLevel,
+                    RewardOffsetX = @object.RewardOffsetX,
+                    RewardOffsetY = @object.RewardOffsetY,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -961,6 +976,12 @@ public sealed partial class DiabloSimulation
                     @object.QuestTransitionRequiredVariable1,
                     @object.QuestTransitionRequiredVariable2,
                     @object.QuestId)
+                || !AuthoritativeWorldObject.IsValidReward(
+                    @object.RewardKind,
+                    @object.RewardId,
+                    @object.RewardItemLevel,
+                    @object.RewardOffsetX,
+                    @object.RewardOffsetY)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2028,6 +2049,11 @@ public sealed partial class DiabloSimulation
                 target.QuestTransitionAmount = @object.QuestTransitionAmount;
                 target.QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1;
                 target.QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2;
+                target.RewardKind = @object.RewardKind;
+                target.RewardId = @object.RewardId;
+                target.RewardItemLevel = @object.RewardItemLevel;
+                target.RewardOffsetX = @object.RewardOffsetX;
+                target.RewardOffsetY = @object.RewardOffsetY;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2048,7 +2074,12 @@ public sealed partial class DiabloSimulation
                     @object.QuestTransitionKind,
                     @object.QuestTransitionAmount,
                     @object.QuestTransitionRequiredVariable1,
-                    @object.QuestTransitionRequiredVariable2));
+                    @object.QuestTransitionRequiredVariable2,
+                    @object.RewardKind,
+                    @object.RewardId,
+                    @object.RewardItemLevel,
+                    @object.RewardOffsetX,
+                    @object.RewardOffsetY));
             }
         }
     }

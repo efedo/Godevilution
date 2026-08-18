@@ -165,6 +165,11 @@ internal static class DiabloProtocolMapper
                 QuestTransitionAmount = @object.QuestTransitionAmount,
                 QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1,
                 QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2,
+                RewardKind = (int)@object.RewardKind,
+                RewardId = @object.RewardId,
+                RewardItemLevel = @object.RewardItemLevel,
+                RewardOffsetX = @object.RewardOffsetX,
+                RewardOffsetY = @object.RewardOffsetY,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -640,6 +645,11 @@ internal static class DiabloProtocolMapper
                     && @object.QuestTransitionRequiredVariable2 == 0
                     ? -1
                     : @object.QuestTransitionRequiredVariable2,
+                RewardKind = (AuthoritativeObjectRewardKind)@object.RewardKind,
+                RewardId = @object.RewardId,
+                RewardItemLevel = @object.RewardItemLevel,
+                RewardOffsetX = @object.RewardOffsetX,
+                RewardOffsetY = @object.RewardOffsetY,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

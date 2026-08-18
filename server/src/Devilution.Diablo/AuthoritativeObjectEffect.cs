@@ -27,3 +27,11 @@ public enum AuthoritativeObjectQuestTransitionKind
     CompleteAndSetVariable1,
     CompleteAndSetVariable2,
 }
+
+/** Authored item reward generated when an object is activated. */
+public enum AuthoritativeObjectRewardKind
+{
+    None,
+    NormalItem,
+    UniqueItem,
+}

@@ -24,7 +24,12 @@ public sealed class AuthoritativeWorldObject
         AuthoritativeObjectQuestTransitionKind questTransitionKind = AuthoritativeObjectQuestTransitionKind.None,
         int questTransitionAmount = 0,
         int questTransitionRequiredVariable1 = -1,
-        int questTransitionRequiredVariable2 = -1)
+        int questTransitionRequiredVariable2 = -1,
+        AuthoritativeObjectRewardKind rewardKind = AuthoritativeObjectRewardKind.None,
+        uint rewardId = 0,
+        int rewardItemLevel = 0,
+        int rewardOffsetX = 0,
+        int rewardOffsetY = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -66,6 +71,19 @@ public sealed class AuthoritativeWorldObject
         QuestTransitionAmount = questTransitionAmount;
         QuestTransitionRequiredVariable1 = questTransitionRequiredVariable1;
         QuestTransitionRequiredVariable2 = questTransitionRequiredVariable2;
+        if (!IsValidReward(
+                rewardKind,
+                rewardId,
+                rewardItemLevel,
+                rewardOffsetX,
+                rewardOffsetY)) {
+            throw new InvalidDataException("Object reward values are invalid.");
+        }
+        RewardKind = rewardKind;
+        RewardId = rewardId;
+        RewardItemLevel = rewardItemLevel;
+        RewardOffsetX = rewardOffsetX;
+        RewardOffsetY = rewardOffsetY;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -88,6 +106,11 @@ public sealed class AuthoritativeWorldObject
     public int QuestTransitionAmount { get; set; }
     public int QuestTransitionRequiredVariable1 { get; set; }
     public int QuestTransitionRequiredVariable2 { get; set; }
+    public AuthoritativeObjectRewardKind RewardKind { get; set; }
+    public uint RewardId { get; set; }
+    public int RewardItemLevel { get; set; }
+    public int RewardOffsetX { get; set; }
+    public int RewardOffsetY { get; set; }
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
@@ -122,6 +145,27 @@ public sealed class AuthoritativeWorldObject
         return kind != AuthoritativeObjectQuestTransitionKind.None
             ? setsVariable ? amount > 0 : amount == 0
             : amount == 0 && requiredVariable1 < 0 && requiredVariable2 < 0;
+    }
+
+    public static bool IsValidReward(
+        AuthoritativeObjectRewardKind kind,
+        uint rewardId,
+        int rewardItemLevel,
+        int rewardOffsetX,
+        int rewardOffsetY)
+    {
+        if (!Enum.IsDefined(kind)
+            || rewardItemLevel is < 0 or > byte.MaxValue
+            || rewardOffsetX is < -16 or > 16
+            || rewardOffsetY is < -16 or > 16) {
+            return false;
+        }
+        return kind == AuthoritativeObjectRewardKind.None
+            ? rewardId == 0
+                && rewardItemLevel == 0
+                && rewardOffsetX == 0
+                && rewardOffsetY == 0
+            : rewardId != 0;
     }
 }
 
@@ -180,7 +224,12 @@ public static class AuthoritativeWorldObjectCatalog
                 ParseQuestTransitionKind(row),
                 row.OptionalInt32("quest_transition_amount"),
                 OptionalQuestTransitionValue(row, "quest_transition_required_variable1"),
-                OptionalQuestTransitionValue(row, "quest_transition_required_variable2"));
+                OptionalQuestTransitionValue(row, "quest_transition_required_variable2"),
+                ParseRewardKind(row),
+                row.OptionalUInt32("reward_id"),
+                row.OptionalInt32("reward_item_level"),
+                row.OptionalInt32("reward_offset_x"),
+                row.OptionalInt32("reward_offset_y"));
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
@@ -214,6 +263,31 @@ public static class AuthoritativeWorldObjectCatalog
             if (!items.TryGet((uint)@object.EffectAmount, out _))
                 throw new InvalidDataException(
                     $"Quest-item object {@object.EntityId} references unknown item {@object.EffectAmount}.");
+        }
+    }
+
+    /** Validates authored object rewards against the active item/unique catalogs. */
+    public static void ValidateRewardRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeItemCatalog items)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(items);
+        foreach (var @object in objects.Where(@object =>
+                     @object.RewardKind != AuthoritativeObjectRewardKind.None)) {
+            if (@object.RewardKind == AuthoritativeObjectRewardKind.NormalItem
+                && !items.TryGet(@object.RewardId, out _)) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown reward item {@object.RewardId}.");
+            }
+            if (@object.RewardKind == AuthoritativeObjectRewardKind.UniqueItem) {
+                if (!items.TryGetUnique(@object.RewardId, out var unique))
+                    throw new InvalidDataException(
+                        $"Object {@object.EntityId} references unknown reward unique {@object.RewardId}.");
+                if (@object.RewardItemLevel < unique.MinimumLevel)
+                    throw new InvalidDataException(
+                        $"Object {@object.EntityId} reward unique {@object.RewardId} requires item level {unique.MinimumLevel}.");
+            }
         }
     }
 
@@ -271,6 +345,21 @@ public static class AuthoritativeWorldObjectCatalog
         }
         throw new InvalidDataException(
             $"Object row {row.LineNumber} contains an unknown quest transition kind '{value}'.");
+    }
+
+    private static AuthoritativeObjectRewardKind ParseRewardKind(TsvRow row)
+    {
+        if (!row.TryGet("reward_kind", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return AuthoritativeObjectRewardKind.None;
+        }
+        if (Enum.TryParse<AuthoritativeObjectRewardKind>(value, true, out var kind)
+            && Enum.IsDefined(kind)) {
+            return kind;
+        }
+        throw new InvalidDataException(
+            $"Object row {row.LineNumber} contains an unknown reward kind '{value}'.");
     }
 
     private static int OptionalQuestTransitionValue(TsvRow row, string column)

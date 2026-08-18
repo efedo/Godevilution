@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add validated authored object rewards. Object rows can now generate a
+  deterministic normal or unique item at a validated relative position when
+  activated; reward metadata persists and projects through snapshots, while
+  native set-level placement and spell effects remain later migration seams.
+
 - Extend authored object effects with validated quest transitions. Object rows
   can now activate or complete a linked quest, set native `_qvar1`/`_qvar2`,
   and enforce required variable gates atomically with world mutations through

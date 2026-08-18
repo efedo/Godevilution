@@ -328,6 +328,16 @@ public sealed class AuthoritativeItemCatalog
         uniqueItems = uniqueCatalog ?? throw new ArgumentNullException(nameof(uniqueCatalog));
     }
 
+    /** Resolves a unique reward through the catalog attached during content activation. */
+    public bool TryGetUnique(uint uniqueId, out AuthoritativeUniqueItemDefinition definition)
+    {
+        if (uniqueItems is null) {
+            definition = null!;
+            return false;
+        }
+        return uniqueItems.TryGet(uniqueId, out definition!);
+    }
+
     public AuthoritativeItemState Generate(uint itemId, uint itemSeed)
         => Generate(itemId, itemSeed, 0);
 

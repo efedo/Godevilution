@@ -163,6 +163,11 @@ Status date: 2026-08-18
   the transition on prior variable values; the transition is applied in the
   same accepted `OperateObjectRequested` command as any geometry overlay.
 
+- Authored object rows may also generate one validated normal or unique item
+  reward at a relative offset. The server owns catalog validation, deterministic
+  generation, placement, persistence, and snapshot projection; set-level
+  placement and spell effects remain unmodeled native seams.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes

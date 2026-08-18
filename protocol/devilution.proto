@@ -704,6 +704,12 @@ message ObjectSnapshot {
 	int32 quest_transition_amount = 18;
 	int32 quest_transition_required_variable1 = 19;
 	int32 quest_transition_required_variable2 = 20;
+	// Authored item reward generated on activation.
+	int32 reward_kind = 21;
+	uint32 reward_id = 22;
+	int32 reward_item_level = 23;
+	int32 reward_offset_x = 24;
+	int32 reward_offset_y = 25;
 }
 
 enum ObjectPresentationKind {

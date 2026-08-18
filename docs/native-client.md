@@ -214,7 +214,10 @@ the resulting movement/missile geometry, while the client only presents the
 updated level snapshot. Authored object rows can also apply validated quest
 activation/completion and native `_qvar1`/`_qvar2` transitions with required
 variable gates; the client remains responsible only for selecting and
-presenting the projected object.
+presenting the projected object. An authored object may also generate one
+validated normal or unique item at a relative offset; the server owns catalog
+validation, deterministic generation, placement, and persistence, while the
+client presents the resulting world item.
 
 ## Remaining native-only interaction inventory
 

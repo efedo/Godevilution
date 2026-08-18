@@ -103,6 +103,31 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectRewardMetadata()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                RewardKind = AuthoritativeObjectRewardKind.NormalItem,
+                RewardId = 100,
+                RewardItemLevel = 3,
+                RewardOffsetX = 1,
+                RewardOffsetY = -1,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.Equal(AuthoritativeObjectRewardKind.NormalItem, @object.RewardKind);
+        Assert.Equal(100U, @object.RewardId);
+        Assert.Equal(3, @object.RewardItemLevel);
+        Assert.Equal(1, @object.RewardOffsetX);
+        Assert.Equal(-1, @object.RewardOffsetY);
+    }
+
+    [Fact]
     public void RejectsMalformedIncompleteAndUnknownVersionEnvelopes()
     {
         var codec = new AuthoritativeSaveCodec();

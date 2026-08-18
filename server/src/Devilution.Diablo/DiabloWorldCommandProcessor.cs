@@ -992,6 +992,8 @@ public sealed class DiabloWorldCommandProcessor
                 || world.WorldMutations?.TryGet((uint)@object.EffectAmount, out _) != true)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (!CanApplyObjectReward(@object, player))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object);
@@ -1015,14 +1017,13 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         ApplyQuestTransition(@object);
-        if (@object.EffectAmount <= 0)
-            return DiabloWorldIntentResult.Accepted;
-
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
         }
 
-        if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation)
+        SpawnObjectReward(@object, player);
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
+            || @object.EffectAmount <= 0)
             return DiabloWorldIntentResult.Accepted;
 
         switch (@object.EffectKind) {
@@ -1104,6 +1105,68 @@ public sealed class DiabloWorldCommandProcessor
                 or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2) {
             quest.Variable2 = @object.QuestTransitionAmount;
         }
+    }
+
+    private bool CanApplyObjectReward(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        if (@object.RewardKind == AuthoritativeObjectRewardKind.None)
+            return true;
+        if (items is null
+            || !AuthoritativeWorldObject.IsValidReward(
+                @object.RewardKind,
+                @object.RewardId,
+                @object.RewardItemLevel,
+                @object.RewardOffsetX,
+                @object.RewardOffsetY)) {
+            return false;
+        }
+        if (@object.RewardKind == AuthoritativeObjectRewardKind.NormalItem
+            && !items.TryGet(@object.RewardId, out _)) {
+            return false;
+        }
+        if (@object.RewardKind == AuthoritativeObjectRewardKind.UniqueItem
+            && (!items.TryGetUnique(@object.RewardId, out var unique)
+                || @object.RewardItemLevel < unique.MinimumLevel)) {
+            return false;
+        }
+        var rewardX = checked(@object.PositionX + @object.RewardOffsetX);
+        var rewardY = checked(@object.PositionY + @object.RewardOffsetY);
+        return world.IsWalkable(@object.LevelId, rewardX, rewardY)
+            && !world.IsOccupied(
+                @object.LevelId,
+                rewardX,
+                rewardY,
+                [player],
+                excludedEntityId: @object.EntityId)
+            && !world.WorldItems.Values.Any(item =>
+                item.LevelId == @object.LevelId
+                && item.PositionX == rewardX
+                && item.PositionY == rewardY);
+    }
+
+    private void SpawnObjectReward(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        if (@object.RewardKind == AuthoritativeObjectRewardKind.None)
+            return;
+        var itemSeed = AllocateGoldStackSeed();
+        var rewardState = @object.RewardKind == AuthoritativeObjectRewardKind.UniqueItem
+            ? items!.GenerateUnique(@object.RewardId, itemSeed, @object.RewardItemLevel)
+            : items!.Generate(@object.RewardId, itemSeed, @object.RewardItemLevel);
+        var rewardX = checked(@object.PositionX + @object.RewardOffsetX);
+        var rewardY = checked(@object.PositionY + @object.RewardOffsetY);
+        var entityId = AllocateWorldItemEntityId([player]);
+        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            entityId,
+            @object.LevelId,
+            rewardX,
+            rewardY,
+            itemSeed,
+            checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+            rewardState);
     }
 
     /** Consumes a content-selected inventory item at a quest interaction boundary. */

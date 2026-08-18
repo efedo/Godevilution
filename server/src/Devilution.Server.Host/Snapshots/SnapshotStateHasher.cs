@@ -527,6 +527,18 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(@object.QuestTransitionRequiredVariable1);
                     hasher.AppendInt32(@object.QuestTransitionRequiredVariable2);
                 }
+                if (@object.RewardKind != 0
+                    || @object.RewardId != 0
+                    || @object.RewardItemLevel != 0
+                    || @object.RewardOffsetX != 0
+                    || @object.RewardOffsetY != 0) {
+                    hasher.AppendString("godevilution-object-reward-v1");
+                    hasher.AppendInt32((int)@object.RewardKind);
+                    hasher.AppendUInt32(@object.RewardId);
+                    hasher.AppendInt32(@object.RewardItemLevel);
+                    hasher.AppendInt32(@object.RewardOffsetX);
+                    hasher.AppendInt32(@object.RewardOffsetY);
+                }
             }
         }
 

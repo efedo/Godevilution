@@ -483,6 +483,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         if (objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objects, itemCatalog!);
+        if (objects is not null)
+            AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objects, itemCatalog!);
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world);
         if (objects?.Any(@object => @object.EffectKind

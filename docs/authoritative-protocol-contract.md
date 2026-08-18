@@ -629,6 +629,13 @@ clients must treat these fields as projection metadata and never mutate quest
 state locally. Absent transition fields retain the legacy no-transition
 meaning; required-variable values are interpreted only when a transition kind
 is present.
+`ObjectSnapshot` fields 21-25 carry an optional authored item reward kind,
+stable item or unique identity, item level, and relative placement offsets.
+The server validates the referenced catalog entry and walkable, unoccupied
+placement before activation, generates the item with the authoritative item
+catalog, and persists the resulting world item. Absent reward fields retain
+the legacy no-reward meaning; clients render the resulting `ItemStateSnapshot`
+and never generate rewards locally.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The
