@@ -69,8 +69,6 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
             case AuthoritativeQuestTownerInteractionKind.Activate:
                 if (definition.ConsumeItem && definition.ItemId == 0
                     || !definition.ConsumeItem && definition.ItemId != 0
-                    || definition.RequiredVariable1 >= 0
-                    || definition.RequiredVariable2 >= 0
                     || definition.Variable1 < 0
                     || definition.MessageId == 0
                     || definition.AllowCompleted) {

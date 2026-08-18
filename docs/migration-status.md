@@ -207,6 +207,11 @@ Status date: 2026-08-17
   Tavern Sign; the second consumes it and spawns Harlequin Crest at the native
   reward position.
 
+- Base Magic Rock and Anvil of Fury activation conversations now use authored
+  quest/towner rows. Their server-owned visited-level OR-gates reproduce the
+  native Blacksmith checks, while the existing validated item hand-ins and
+  Empyrean Band/Griswold's Edge rewards remain in the quest catalog.
+
 - Nova Ball now preserves the native shrine collision exception: regular
   missile-blocking objects terminate a ball, while a validated shrine on its
   target tile lets the ball continue. The optional object capability is carried
@@ -1948,6 +1953,11 @@ Status date: 2026-08-17
 - Schema 1.348 adds server-owned per-player `visited_level_ids` and optional
   OR-gated quest/towner stages. Base King Leoric activation now matches native
   `_pLvlVisited[2] || _pLvlVisited[4]` behavior through the shared protocol.
+
+- Schema 1.349 moves the base Magic Rock and Anvil activation conversations
+  into authored quest/towner rows, including their native visited-level OR-gates
+  and variable-2 markers; the existing item hand-ins and unique rewards remain
+  validated quest-catalog transitions.
 
 - The Godot protocol client now validates and selects the first adjacent
   content-owned quest/towner stage with matching quest variables and item

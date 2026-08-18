@@ -162,6 +162,52 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void SelectsVariableGatedActivationForAnAlreadyActiveQuest()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 61,
+                    PositionY = 63,
+                    VisitedLevelIds = { 0, 4 },
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3001,
+                    Variable2 = 0,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300207,
+                    QuestId = 3001,
+                    TownerId = 0,
+                    LevelId = 0,
+                    PositionX = 62,
+                    PositionY = 63,
+                    Kind = 0,
+                    RequiredVariable2 = 0,
+                    Variable2 = 1,
+                    MessageId = 115,
+                    RequiredVisitedLevel1 = 4,
+                    RequiredVisitedLevel2 = 5,
+                },
+            },
+        };
+
+        Assert.Equal(
+            300207U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+
+        snapshot.Players[0].VisitedLevelIds.Clear();
+        snapshot.Players[0].VisitedLevelIds.Add(0);
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
     public void EnumeratesAndCyclesAuthoritativeSpellSourcesWithoutChangingTheirOwnership()
     {
         var snapshot = new Snapshot {

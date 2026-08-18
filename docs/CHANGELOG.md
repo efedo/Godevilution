@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.349 authored Blacksmith visitation gates. Magic Rock and Anvil
+  activation now use external quest/towner stages with server-owned
+  `_pLvlVisited[4] || _pLvlVisited[5]` and `_pLvlVisited[9] ||
+  _pLvlVisited[10]` checks; their existing item hand-ins and rewards remain
+  validated content-owned turn-ins.
+
 - Add schema 1.348 authored level-visitation gates. Server-owned player
   snapshots now persist native-compatible visited dungeon levels, and the base
   King Leoric activation stage is selected from visited Catacombs or Caves.

@@ -1248,6 +1248,52 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedActivationCanAdvanceAnActiveQuestWhenItsVariableGateMatches()
+    {
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(300207, 3001, 0, 0, 62, 63, 0,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                RequiredVariable2: 0,
+                Variable1: 0,
+                Variable2: 1,
+                MessageId: 115,
+                ConsumeItem: false,
+                RequiredVisitedLevel1: 4,
+                RequiredVisitedLevel2: 5),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3001,
+            1,
+            3,
+            active: true,
+            variable2: 0);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 61, positionY: 63);
+
+        var beforeVisit = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            1,
+            [player]);
+        Assert.False(beforeVisit.Succeeded);
+        Assert.Equal(0, quest.Variable2);
+
+        player.MarkLevelVisited(4);
+        var afterVisit = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3001, 0),
+            2,
+            [player]);
+        Assert.True(afterVisit.Succeeded, afterVisit.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.Equal((0, 1), (quest.Variable1, quest.Variable2));
+        Assert.Equal(115, Assert.Single(afterVisit.Events).MessageId);
+    }
+
+    [Fact]
     public void QuestDialogueRejectsMismatchedUniqueIdentity()
     {
         var quest = new AuthoritativeQuestState(

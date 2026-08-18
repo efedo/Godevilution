@@ -5,3 +5,5 @@ interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	
 300204	3002	black_mushroom	6	0	town	80	20	2142	spectral_elixir	Complete	7	-1	-1	-1	133	true	false	0	0
 300205	3013	king_leoric	3	0	town	55	62	0	NONE	Dialogue	-1	1	2	2	3	false	true	0	0
 300206	3013	king_leoric	3	0	town	55	62	0	NONE	Activate	-1	-1	1	1	2	false	false	2	4
+300207	3001	magic_rock	0	0	town	62	63	0	NONE	Activate	-1	0	0	1	115	false	false	4	5
+300208	3011	anvil_of_fury	0	0	town	62	63	0	NONE	Activate	-1	0	0	1	88	false	false	9	10

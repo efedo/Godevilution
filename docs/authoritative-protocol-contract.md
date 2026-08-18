@@ -219,6 +219,11 @@ explicit post-completion availability bit. A client must match that bit against
 server rechecks the same gate during intent execution. Fields 16-17 carry an
 optional OR-gate over the player's server-owned `visited_level_ids`, preserving
 native `_pLvlVisited` checks without reintroducing client-side level history.
+Activation stages may also carry a required `_qvar1` or `_qvar2` value while
+the quest is already active; this represents native conversations whose
+availability is gated by a progress marker rather than by the initial quest
+state. The server and clients apply the same variable gate before presenting
+or executing that stage.
 
 `PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
 The server marks a level when the player enters it through a warp, portal, or

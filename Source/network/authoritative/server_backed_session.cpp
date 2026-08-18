@@ -269,6 +269,8 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		}
 		const bool active = interaction.kind() == 0
 		    ? questIt->initial()
+		        || interaction.has_required_variable1()
+		        || interaction.has_required_variable2()
 		    : !questIt->initial();
 		if (!active
 		    || (interaction.has_required_variable1()

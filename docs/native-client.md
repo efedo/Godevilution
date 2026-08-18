@@ -162,6 +162,8 @@ definitions; additional legacy towner paths remain local until authored.
 The adapter also consumes server-owned `visited_level_ids` and only presents
 the authored King activation after the Catacombs or Caves visitation gate is
 satisfied, preserving native `_pLvlVisited` behavior without local history.
+The authored Magic Rock and Anvil activation stages use the same server-owned
+visited-level boundary for the native Blacksmith gates.
 Legacy local towner behavior stays available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the

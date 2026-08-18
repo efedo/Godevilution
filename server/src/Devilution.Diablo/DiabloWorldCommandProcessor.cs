@@ -1452,7 +1452,10 @@ public sealed class DiabloWorldCommandProcessor
             if (!quest.Completed || quest.Unavailable)
                 return false;
         } else if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate) {
-            if (quest.Active || quest.Completed || quest.Unavailable)
+            if (quest.Completed || quest.Unavailable
+                || (quest.Active
+                    && interaction.RequiredVariable1 < 0
+                    && interaction.RequiredVariable2 < 0))
                 return false;
         } else if (!quest.Active || quest.Completed || quest.Unavailable) {
             return false;

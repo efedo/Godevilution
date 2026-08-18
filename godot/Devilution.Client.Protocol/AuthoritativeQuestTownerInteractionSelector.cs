@@ -50,7 +50,11 @@ public static class AuthoritativeQuestTownerInteractionSelector
             return false;
         }
 
-        var active = interaction.Kind == ActivateKind ? quest.Initial : !quest.Initial;
+        var active = interaction.Kind == ActivateKind
+            ? quest.Initial
+                || (interaction.HasRequiredVariable1
+                    || interaction.HasRequiredVariable2)
+            : !quest.Initial;
         if (!active
             || (interaction.HasRequiredVariable1
                 && quest.Variable1 != interaction.RequiredVariable1)
