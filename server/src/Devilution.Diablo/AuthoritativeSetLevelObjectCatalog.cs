@@ -20,6 +20,9 @@ public sealed record AuthoritativeSetLevelObjectPlacement(
 /** Validated external placements for native set-level object footprints. */
 public sealed class AuthoritativeSetLevelObjectCatalog
 {
+    /** Reserved entity-ID range for materialized native set-level objects. */
+    public const uint RuntimeObjectEntityIdBase = 0x6000_0000;
+
     private readonly IReadOnlyList<AuthoritativeSetLevelObjectPlacement> definitions;
 
     public AuthoritativeSetLevelObjectCatalog(
@@ -29,6 +32,7 @@ public sealed class AuthoritativeSetLevelObjectCatalog
         var values = definitions.ToArray();
         if (values.Any(placement =>
                 placement.PlacementId == 0
+                || placement.PlacementId > uint.MaxValue - RuntimeObjectEntityIdBase
                 || placement.SetLevelId is < 0 or > 8
                 || placement.ObjectId == 0
                 || placement.PositionX is < 0 or > 255
@@ -58,6 +62,45 @@ public sealed class AuthoritativeSetLevelObjectCatalog
 
     public IReadOnlyList<AuthoritativeSetLevelObjectPlacement> GetForSetLevel(int setLevelId)
         => definitions.Where(placement => placement.SetLevelId == setLevelId).ToArray();
+
+    /**
+     * Materializes placements whose active native set-level geometry is loaded.
+     * Legacy packs may carry the placement catalog before shipping map assets;
+     * those rows remain metadata-only until the corresponding active level is
+     * present in the authoritative world.
+     */
+    public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
+        AuthoritativeWorld world,
+        IEnumerable<AuthoritativeWorldObject>? existingObjects = null)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        var usedEntityIds = (existingObjects ?? [])
+            .Select(@object => @object.EntityId)
+            .ToHashSet();
+        var objects = new List<AuthoritativeWorldObject>();
+        foreach (var placement in definitions) {
+            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                placement.SetLevelId,
+                activeMap: true);
+            if (!world.ContainsLevel(levelId))
+                continue;
+            if (!world.ContainsPosition(levelId, placement.PositionX, placement.PositionY))
+                throw new InvalidDataException(
+                    $"Set-level object placement {placement.PlacementId} is outside runtime level {levelId}.");
+
+            var entityId = checked(RuntimeObjectEntityIdBase + placement.PlacementId);
+            if (!usedEntityIds.Add(entityId))
+                throw new InvalidDataException(
+                    $"Set-level object placement {placement.PlacementId} collides with entity {entityId}.");
+            objects.Add(new AuthoritativeWorldObject(
+                entityId,
+                placement.ObjectId,
+                levelId,
+                placement.PositionX,
+                placement.PositionY));
+        }
+        return objects;
+    }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)
     {

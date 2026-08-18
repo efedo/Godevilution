@@ -201,8 +201,11 @@ Status date: 2026-08-18
 - Schema 1.363 adds `set_level_objects.tsv`, which externalizes the native
   fixed-object positions and template footprints for the three quest set-level
   maps that currently use hardcoded `InitializeLoadedObject` calls. The
-  validated catalog is carried by Diablo activation and simulation metadata;
-  set-level binary map synthesis and transitions remain separate.
+  validated catalog is carried by Diablo activation and simulation metadata.
+  When the corresponding active native bundle is present, activation now
+  materializes those placements as server-owned interactive objects; older
+  packs retain the metadata-only catalog. Set-level transitions remain
+  separate.
 
 - Schema 1.364 adds `set_level_maps.tsv`, which externalizes the native
   pre-map/active-map asset paths, dungeon type, and entry spawn positions for
@@ -230,10 +233,11 @@ Status date: 2026-08-18
   packs do not yet include the native `.til`/`.sol` assets, so the shipped
   set-level rows remain metadata-only. A complete bundle now materializes both
   pre-map and active-map variants during Diablo activation as authoritative
-  levels in the reserved `0x80000000` runtime range; partial bundles reject
-  activation. The engine exposes a single validated bundle loader for the
-  `.dun`/`.til`/`.sol` composition, keeping asset acquisition separate from
-  geometry interpretation.
+  levels in the reserved `0x80000000` runtime range, and its active-map object
+  placements become server-owned interactive objects in a reserved entity
+  range; partial bundles reject activation. The engine exposes a single
+  validated bundle loader for the `.dun`/`.til`/`.sol` composition, keeping
+  asset acquisition separate from geometry interpretation.
 
 - Content packs now carry relative native `.dun`, `.til`, and `.sol` assets as
   immutable binary entries alongside TSV tables. Asset bytes participate in the

@@ -1616,8 +1616,10 @@ mutation.
 Schema 1.363 adds `set_level_objects.tsv`. The table externalizes the native
 fixed-object placements and template footprints used by Skeleton King's Lair,
 the Chamber of Bone, and Archbishop Lazarus' Lair. Diablo activation validates
-the set-level identities and carries the catalog in server simulation metadata;
-native binary map synthesis and set-level transitions remain separate.
+the set-level identities and carries the catalog in server simulation metadata.
+Complete native bundles materialize the active-map placements as server-owned
+interactive objects with deterministic reserved entity IDs; packs without the
+binary companions remain metadata-only.
 
 Schema 1.364 adds `set_level_maps.tsv`. The table externalizes the native
 pre-map/active-map asset paths, dungeon type, and entry spawn positions for

@@ -128,7 +128,9 @@ authoritative results.
 - Complete native set-level `.dun`/`.til`/`.sol` bundles are materialized by
   Diablo activation as both pre-map and active-map authoritative levels using a
   reserved runtime-ID range; packs that have not shipped the binary companions
-  retain the validated metadata-only fallback.
+  retain the validated metadata-only fallback. Their active-map fixed-object
+  placements are materialized in a separate reserved entity range when the
+  active geometry is available.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.

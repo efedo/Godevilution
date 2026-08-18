@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   runtime-ID range. Legacy packs without the binary companions remain
   metadata-only, while partial bundles reject activation.
 
+- Complete native set-level bundles now also materialize their validated active
+  map object placements as server-owned interactive objects with deterministic
+  entity identities. Legacy packs retain the metadata-only placement catalog.
+
 - The Diablo module now has a validated `.dun` geometry materializer. It
   expands native mega-tile IDs through external `.til` d-piece definitions
   and external `.sol` properties into authoritative movement and missile

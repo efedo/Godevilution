@@ -35,4 +35,78 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
         ]));
     }
 
+    [Fact]
+    public void MaterializesPlacementsForLoadedActiveSetLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
+            8,
+            8));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1) {
+                SetLevelSymbol = "SL_SKELKING",
+            },
+        ]);
+
+        var objects = catalog.LoadAvailableObjects(world);
+
+        var @object = Assert.Single(objects);
+        Assert.Equal(
+            AuthoritativeSetLevelObjectCatalog.RuntimeObjectEntityIdBase + 1001,
+            @object.EntityId);
+        Assert.Equal(2U, @object.ObjectId);
+        Assert.Equal(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
+            @object.LevelId);
+        Assert.Equal(4, @object.PositionX);
+        Assert.Equal(5, @object.PositionY);
+    }
+
+    [Fact]
+    public void LeavesPlacementsMetadataOnlyUntilActiveGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1),
+        ]);
+
+        Assert.Empty(catalog.LoadAvailableObjects(new AuthoritativeWorld()));
+    }
+
+    [Fact]
+    public void RejectsRuntimePlacementEntityCollision()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
+            8,
+            8));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1),
+        ]);
+        var existing = new AuthoritativeWorldObject(
+            AuthoritativeSetLevelObjectCatalog.RuntimeObjectEntityIdBase + 1001,
+            9,
+            1,
+            1,
+            1);
+
+        Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableObjects(world, [existing]));
+    }
+
+    [Fact]
+    public void RejectsPlacementOutsideLoadedActiveLevel()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
+            2,
+            2));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1),
+        ]);
+
+        Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableObjects(world));
+    }
+
 }

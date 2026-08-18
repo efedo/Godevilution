@@ -563,6 +563,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     world.AddLevel(level);
             }
         }
+        if (world is not null && setLevelObjects is not null) {
+            var generatedObjects = setLevelObjects.LoadAvailableObjects(world, objects);
+            if (generatedObjects.Count > 0) {
+                objects = (objects ?? []).Concat(generatedObjects).ToArray();
+                AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
+            }
+        }
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,

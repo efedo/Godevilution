@@ -386,7 +386,7 @@ public sealed class ShippedContentTests
         var mapTable = TsvTable.Parse(
             "set_level_maps.tsv",
             "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
-                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t83\t44\n");
+                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t4\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -417,8 +417,16 @@ public sealed class ShippedContentTests
                 == AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true));
         Assert.Equal("SL_SKELKING", pre.StableSymbol);
         Assert.Equal("SL_SKELKING", active.StableSymbol);
-        Assert.Equal(2, pre.Width);
-        Assert.Equal(2, active.Height);
+        Assert.Equal(80, pre.Width);
+        Assert.Equal(80, active.Height);
+        var gate = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId
+                == AuthoritativeSetLevelObjectCatalog.RuntimeObjectEntityIdBase + 1002);
+        Assert.Equal(2U, gate.ObjectId);
+        Assert.Equal(active.LevelId, gate.LevelId);
+        Assert.Equal(64, gate.PositionX);
+        Assert.Equal(59, gate.PositionY);
     }
 
     [Fact]
@@ -4615,9 +4623,13 @@ public sealed class ShippedContentTests
 
     private static byte[] CreateSyntheticDun()
     {
-        var words = new ushort[2 + 1 + 4 * 4];
-        words[0] = 1;
-        words[1] = 1;
+        const int megaWidth = 40;
+        const int megaHeight = 40;
+        var megaCount = megaWidth * megaHeight;
+        var dPieceCount = megaCount * 4;
+        var words = new ushort[2 + megaCount + 4 * dPieceCount];
+        words[0] = megaWidth;
+        words[1] = megaHeight;
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(
