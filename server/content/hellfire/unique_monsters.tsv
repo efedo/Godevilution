@@ -1,2 +1,2 @@
-entity_id	monster_id	monster_symbol	identity
-16	126	hell_bug_native_124	Defiler
+entity_id	monster_id	monster_symbol	identity	native_ai
+0	126	hell_bug_native_124	Defiler	SkeletonMelee

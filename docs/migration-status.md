@@ -209,6 +209,12 @@ Status date: 2026-08-17
   Tavern Sign; the second consumes it and spawns Harlequin Crest at the native
   reward position.
 
+- Schema 1.352 removes the remaining static-entity dependency from authored
+  unique-monster identities. `unique_monsters.tsv` can now select exactly one
+  unique encounter by validated monster ID and native AI, preserving the
+  identity across generated placement and the existing snapshot/protocol
+  boundary. The Hellfire Defiler definition now exercises this selector.
+
 - Base Magic Rock and Anvil of Fury activation conversations now use authored
   quest/towner rows. Their server-owned visited-level OR-gates reproduce the
   native Blacksmith checks, while the existing validated item hand-ins and

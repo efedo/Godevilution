@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.352 selector-based unique-monster identity bindings. Generated
+  unique encounters can now use validated monster/native-AI selectors instead
+  of requiring a static runtime entity ID; the Hellfire Defiler row exercises
+  the new form while retaining strict single-target validation.
+
 - Add schema 1.351 authored unlogged Pepin stages. Poisoned Water activation
   now preserves both native branches: the initial conversation requires a
   visited Caves/Poisoned Water level, while an active unlogged quest can still
