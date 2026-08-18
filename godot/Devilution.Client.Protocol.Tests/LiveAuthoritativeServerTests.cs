@@ -153,6 +153,45 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerConsumesBeltPotionThroughStableReference()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-stable-belt-consumable", requestedClassId: 0));
+        var model = new AuthoritativeClientModel();
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
+        model.Apply(initial);
+        var player = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(2, player.Belt.Count);
+        var source = player.Belt[0];
+        Assert.NotEqual(0U, source.State.StableItemId);
+        Assert.Equal(ItemActionKind.RestorePartialLife, source.State.ItemActionKind);
+
+        var sequence = client.Queue(new Command {
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Belt,
+                    Slot = source.Slot,
+                    StableItemId = source.State.StableItemId,
+                },
+            },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+
+        var consumed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.Players.Single().Belt.Count == 1);
+        var remaining = Assert.Single(consumed.Snapshot!.Players).Belt;
+        Assert.DoesNotContain(remaining, item => item.Slot == source.Slot);
+    }
+
+    [Fact]
     public async Task LiveServerRestoresAuthoritativeStateAfterProcessRestart()
     {
         var saveRoot = Path.Combine(

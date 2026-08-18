@@ -106,6 +106,10 @@ Status date: 2026-08-18
   consumables, and oil sources; each request carries the belt slot and stable
   item identity, while vendor service actions remain inventory-only.
 
+- Live single-player protocol coverage now consumes a starting belt potion by
+  its stable reference and verifies that only the addressed belt entry is
+  removed.
+
 - Connected native Cathedral Map use now submits the projected grave object
   through `OperateObjectRequested`; the server validates adjacency, quest state,
   and the stable map definition before consuming it.

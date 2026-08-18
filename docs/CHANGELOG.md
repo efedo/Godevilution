@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add live Godot protocol coverage for consuming a belt potion through its
+  stable location and item identity; the running server accepts the request
+  and removes exactly the referenced belt entry.
+
 - Extend the Godot HUD's authoritative item-source flow to belt items. Books,
   targetless consumables, and oil sources now submit stable belt references;
   inventory-only vendor services retain their existing restrictions.
