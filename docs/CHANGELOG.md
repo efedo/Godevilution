@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refresh deterministic replay fixture content identities after schema 1.366
+  so base and Hellfire replay checks validate the current manifested packs.
+
 - Extend validated content packs to carry native `.dun`, `.til`, and `.sol`
   binaries alongside TSV tables. Asset bytes now participate in the manifest
   identity, identical inherited assets compose deterministically, conflicting
