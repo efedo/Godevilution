@@ -1559,6 +1559,11 @@ public sealed class DiabloWorldCommandProcessor
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
+            if (stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation
+                && world.WorldMutations?.TryGet(stage.FollowUpAmount, out _) != true) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
             var stageInventoryIndex = -1;
             if (stage.RequiredItemId != 0) {
                 if (items is null
@@ -1596,6 +1601,7 @@ public sealed class DiabloWorldCommandProcessor
             }
             if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None)
                 SpawnDialogueStageReward(stage, target, player);
+            ApplyQuestDialogueFollowUp(stage);
             return DiabloWorldIntentResult.AcceptedWith(
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Dialogue,
@@ -1696,6 +1702,22 @@ public sealed class DiabloWorldCommandProcessor
                 MessageId = quest.MessageId,
                 QuestId = quest.QuestId,
         });
+    }
+
+    private void ApplyQuestDialogueFollowUp(AuthoritativeQuestDialogueStage stage)
+    {
+        switch (stage.FollowUpKind) {
+        case AuthoritativeQuestDialogueFollowUpKind.None:
+            return;
+        case AuthoritativeQuestDialogueFollowUpKind.WorldMutation:
+            if (!world.ApplyWorldMutation(stage.FollowUpAmount))
+                throw new InvalidDataException(
+                    $"Quest dialogue follow-up references unknown world mutation {stage.FollowUpAmount}.");
+            return;
+        default:
+            throw new InvalidDataException(
+                $"Quest dialogue follow-up kind '{stage.FollowUpKind}' is unsupported.");
+        }
     }
 
     /** Generates a content-declared staged conversation reward once per stage. */

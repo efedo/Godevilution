@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Schema 1.362 adds validated staged-dialogue follow-ups. An accepted
+  unique-monster conversation stage may apply one content-backed world-cell
+  mutation after all quest, item, and reward validation succeeds.
+
 - Schema 1.361 adds validated quest-sequence follow-up effects. A correctly
   ordered authored sequence step may apply one world-cell mutation or spawn a
   server-owned Phasing/Guardian controller with relative target offsets; the

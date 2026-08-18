@@ -653,6 +653,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                             "Item-gated quest dialogue stages require an active item catalog.");
                     questDialogueStages.ValidateItems(itemCatalog);
                 }
+                if (questDialogueStages.Definitions.Any(stage =>
+                        stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation)) {
+                    if (worldMutations is null)
+                        throw new InvalidDataException(
+                            "Quest dialogue follow-ups require a world_mutations.tsv content table.");
+                    questDialogueStages.ValidateWorldMutations(worldMutations);
+                }
                 questDialogueStages.ValidateQuests(quests);
             }
         } else if (questTownerInteractions is not null) {

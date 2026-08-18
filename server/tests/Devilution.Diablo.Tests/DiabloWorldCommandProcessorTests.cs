@@ -1218,6 +1218,63 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedQuestDialogueAppliesValidatedWorldMutationAfterAcceptedStep()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n0\t4\t4\tnone\n");
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            active: false,
+            completionUniqueIdentity: "Gharbad",
+            dialogueCompletionVariable1: 2);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            1,
+            0,
+            100,
+            levelId: 0,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3003,
+                0,
+                -1,
+                144,
+                1,
+                0,
+                FollowUpKind: AuthoritativeQuestDialogueFollowUpKind.WorldMutation,
+                FollowUpAmount: 7),
+        ]);
+        var world = new DiabloWorldState(
+            geometry,
+            combatTargets: [target],
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(7, 0, blockedCellsAdd: [5]),
+            ]));
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questDialogueStages: stages);
+        var player = CreatePlayer(entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3003, 20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(1, quest.Variable1);
+        Assert.Contains(7U, world.ActiveWorldMutationIds);
+        Assert.False(world.IsWalkable(0, 1, 1));
+        Assert.Equal(144, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
     public void StagedDialogueRewardCreatesOneDeterministicWorldItem()
     {
         var items = new AuthoritativeItemCatalog([

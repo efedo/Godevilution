@@ -10,6 +10,14 @@ public enum AuthoritativeQuestDialogueRewardKind
     RandomUniqueMonsterDrop,
 }
 
+/** Server-owned follow-up applied after an accepted staged conversation. */
+public enum AuthoritativeQuestDialogueFollowUpKind
+{
+    None,
+    /** Applies one validated level-cell overlay from world_mutations.tsv. */
+    WorldMutation,
+}
+
 /** One server-owned, user-visible stage in a unique-monster conversation. */
 public sealed record AuthoritativeQuestDialogueStage(
     uint QuestId,
@@ -24,7 +32,9 @@ public sealed record AuthoritativeQuestDialogueStage(
     AuthoritativeQuestDialogueRewardKind RewardKind = AuthoritativeQuestDialogueRewardKind.None,
     int RewardItemLevel = 0,
     int RewardOffsetX = 0,
-    int RewardOffsetY = 0);
+    int RewardOffsetY = 0,
+    AuthoritativeQuestDialogueFollowUpKind FollowUpKind = AuthoritativeQuestDialogueFollowUpKind.None,
+    uint FollowUpAmount = 0);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -54,6 +64,11 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.RewardItemLevel < 0
                 || stage.RewardOffsetX is < -16 or > 16
                 || stage.RewardOffsetY is < -16 or > 16
+                || !Enum.IsDefined(stage.FollowUpKind)
+                || stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.None
+                    && stage.FollowUpAmount != 0
+                || stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation
+                    && stage.FollowUpAmount == 0
                 || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None
                     && stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)) {
             throw new InvalidDataException(
@@ -155,6 +170,18 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
         }
     }
 
+    /** Validates world-mutation references used by staged dialogue follow-ups. */
+    public void ValidateWorldMutations(AuthoritativeWorldMutationCatalog mutations)
+    {
+        ArgumentNullException.ThrowIfNull(mutations);
+        foreach (var stage in definitions.Where(stage =>
+                     stage.FollowUpKind == AuthoritativeQuestDialogueFollowUpKind.WorldMutation)) {
+            if (!mutations.TryGet(stage.FollowUpAmount, out _))
+                throw new InvalidDataException(
+                    $"Quest dialogue stage for quest {stage.QuestId} references unknown world mutation {stage.FollowUpAmount}.");
+        }
+    }
+
     public static AuthoritativeQuestDialogueStageCatalog LoadTsv(
         string sourcePath,
         string contents,
@@ -179,7 +206,9 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 ParseRewardKind(row),
                 row.OptionalInt32("reward_item_level"),
                 row.OptionalInt32("reward_offset_x"),
-                row.OptionalInt32("reward_offset_y"))));
+                row.OptionalInt32("reward_offset_y"),
+                ParseFollowUpKind(row),
+                row.OptionalUInt32("follow_up_amount"))));
     }
 
     private static AuthoritativeQuestDialogueRewardKind ParseRewardKind(TsvRow row)
@@ -191,5 +220,18 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
             return kind;
         throw new InvalidDataException(
             $"Quest dialogue stage row {row.LineNumber} contains an unknown reward kind '{value}'.");
+    }
+
+    private static AuthoritativeQuestDialogueFollowUpKind ParseFollowUpKind(TsvRow row)
+    {
+        if (!row.TryGet("follow_up_kind", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+            return AuthoritativeQuestDialogueFollowUpKind.None;
+        if (Enum.TryParse<AuthoritativeQuestDialogueFollowUpKind>(value, true, out var kind)
+            && Enum.IsDefined(kind))
+            return kind;
+        throw new InvalidDataException(
+            $"Quest dialogue stage row {row.LineNumber} contains an unknown follow-up kind '{value}'.");
     }
 }

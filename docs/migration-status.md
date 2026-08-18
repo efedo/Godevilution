@@ -193,6 +193,11 @@ Status date: 2026-08-18
   offsets; wrong-order resets do not apply follow-ups, and the state is carried
   through saves, snapshots, protocol projection, and canonical hashes.
 
+- Schema 1.362 adds validated staged-dialogue follow-ups. An accepted
+  unique-monster conversation stage may apply one content-backed world-cell
+  mutation after the quest transition, item consumption, and authored reward
+  validation; invalid mutation references reject before any state changes.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes
