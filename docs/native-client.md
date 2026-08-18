@@ -191,6 +191,33 @@ quest-state changes, item consumption, and activation in the server snapshot;
 the Hellfire Na-Krul tome sequence is the first shipped definition. Objects
 without an authored quest effect retain the legacy local behavior.
 
+## Remaining native-only interaction inventory
+
+The following paths were audited against `Source/game` on 2026-08-17 and are
+still intentionally local when their authored content is absent. They are
+explicit migration seams, not server-authority claims:
+
+- `TalktoMonster` still owns the Snotspill banner conversation and Gharbad's
+  staged dialogue; their dynamic unique-monster identities and quest-specific
+  map changes need content-backed encounter definitions before they can move
+  to `TalkToQuestRequested`.
+- `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
+  Betrayer, Halls of the Blind, and Blood-goal book branches. These require
+  set-level object placement plus authored spell/quest effects; the existing
+  Na-Krul `QuestSequence` row is not a substitute for those semantics.
+- Quest-specific set-piece mutation and resynchronization remains native,
+  including the Banner set-piece transitions and the associated unique-monster
+  state. Procedural level/object parity must precede externalizing those map
+  mutations.
+- Towner methods without authored quest stages retain local dialogue/store
+  presentation. Store transactions remain server commands where a store
+  service is declared, but the surrounding legacy conversation is not yet a
+  generic content resource.
+
+New authored rows must be accompanied by native parity tests and a protocol
+projection before these fallback branches are removed. The legacy path remains
+available outside the authoritative runtime during this staged migration.
+
 When the server reports an in-progress player action, the adapter validates its
 native timing and action payload before projection. A deferred move reserves the
 authoritative destination in the native future-position field; attack and cast
