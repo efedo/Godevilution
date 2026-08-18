@@ -1932,6 +1932,11 @@ Status date: 2026-08-17
   hand-in, Spectral Elixir reward, and native `_qvar1 = 7` transition while
   leaving the quest active for Adria's later conversation.
 
+- Schema 1.344 adds normalized base Optic Amulet and Arkaine's Valor item and
+  unique definitions. Their pickups now complete the authored Halls of the
+  Blind (3009) and Valor (3010) quests through the shared item quest-effect
+  catalog; Hellfire's existing Warlord mapping remains an overlay.
+
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item
   consumption, and Empyrean Band unique reward.

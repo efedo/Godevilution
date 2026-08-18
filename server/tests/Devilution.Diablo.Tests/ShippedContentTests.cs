@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.343.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.344.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -71,7 +71,7 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             pack.Tables.Single(table => table.SourcePath == "item_quest_effects.tsv").ToCanonicalTsv(),
             stableIds);
-        Assert.Equal(3, effects.Definitions.Count);
+        Assert.Equal(5, effects.Definitions.Count);
         var pickupEffect = Assert.Single(effects.Definitions, effect => effect.ItemId == 2135);
         Assert.Equal((2135U, 3001U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
             pickupEffect.ItemId,
@@ -91,6 +91,22 @@ public sealed class ShippedContentTests
             mushroomPickupEffect.EffectKind,
             mushroomPickupEffect.EffectAmount));
         Assert.Equal(3, mushroomPickupEffect.RequiredVariable1);
+        var opticAmuletPickupEffect = Assert.Single(
+            effects.Definitions,
+            effect => effect.ItemId == 114);
+        Assert.Equal((114U, 3009U, AuthoritativeItemQuestEffectKind.CompleteQuest, 0), (
+            opticAmuletPickupEffect.ItemId,
+            opticAmuletPickupEffect.QuestId,
+            opticAmuletPickupEffect.EffectKind,
+            opticAmuletPickupEffect.EffectAmount));
+        var valorPickupEffect = Assert.Single(
+            effects.Definitions,
+            effect => effect.ItemId == 118);
+        Assert.Equal((118U, 3010U, AuthoritativeItemQuestEffectKind.CompleteQuest, 0), (
+            valorPickupEffect.ItemId,
+            valorPickupEffect.QuestId,
+            valorPickupEffect.EffectKind,
+            valorPickupEffect.EffectAmount));
 
         var anvilQuest = Assert.Single(quests, quest => quest.QuestId == 3011);
         Assert.Equal((88, 90, 0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
@@ -108,6 +124,20 @@ public sealed class ShippedContentTests
             anvilQuest.TurnInRewardPositionY));
         Assert.Equal("anvil_of_fury", items.GetRequired(2138).StableSymbol);
         Assert.Equal("griswold_s_edge", items.GetRequired(119).StableSymbol);
+        Assert.Equal("optic_amulet", items.GetRequired(114).StableSymbol);
+        Assert.Equal("arkaine_s_valor", items.GetRequired(118).StableSymbol);
+        Assert.True(uniques.TryGet(1005, out var opticAmulet));
+        Assert.NotNull(opticAmulet);
+        Assert.Equal((114U, 9750, 4), (
+            opticAmulet.BaseItemId,
+            opticAmulet.Value,
+            opticAmulet.Powers.Count));
+        Assert.True(uniques.TryGet(1009, out var arkaineValor));
+        Assert.NotNull(arkaineValor);
+        Assert.Equal((118U, 42000, 4), (
+            arkaineValor.BaseItemId,
+            arkaineValor.Value,
+            arkaineValor.Powers.Count));
         Assert.True(uniques.TryGet(1010, out var griswoldsEdge));
         Assert.NotNull(griswoldsEdge);
         Assert.Equal((119U, 42000, 6), (
@@ -1598,7 +1628,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.343.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.344.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1832,7 +1862,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(22, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(23, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

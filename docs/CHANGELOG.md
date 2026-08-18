@@ -16,6 +16,11 @@ All notable changes to this fork are documented below.
   routes Pepin's Brain hand-in through the authoritative server, advances native
   `_qvar1 = 7`, and generates the Spectral Elixir without completing the quest.
 
+- Add schema 1.344 base quest-reward pickup content. Optic Amulet and Arkaine's
+  Valor now have normalized base item/unique definitions and complete their
+  authored Halls of the Blind and Valor quests through server-owned pickup
+  transitions.
+
 - Add schema 1.340 completion-stage quest markers. Lazarus's authored
   Storyteller interaction now writes native `_qvar1 = 8` and logs the Diablo
   follow-on quest after the native completion gate.
