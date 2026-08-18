@@ -268,6 +268,10 @@ public sealed record DiabloObjectState(
     public int RewardOffsetX { get; init; }
 
     public int RewardOffsetY { get; init; }
+
+    public int ProjectileTargetOffsetX { get; init; }
+
+    public int ProjectileTargetOffsetY { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -624,6 +628,8 @@ public sealed partial class DiabloSimulation
                     RewardItemLevel = @object.RewardItemLevel,
                     RewardOffsetX = @object.RewardOffsetX,
                     RewardOffsetY = @object.RewardOffsetY,
+                    ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
+                    ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -982,6 +988,10 @@ public sealed partial class DiabloSimulation
                     @object.RewardItemLevel,
                     @object.RewardOffsetX,
                     @object.RewardOffsetY)
+                || !AuthoritativeWorldObject.IsValidProjectileTargetOffset(
+                    @object.EffectKind,
+                    @object.ProjectileTargetOffsetX,
+                    @object.ProjectileTargetOffsetY)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2054,6 +2064,8 @@ public sealed partial class DiabloSimulation
                 target.RewardItemLevel = @object.RewardItemLevel;
                 target.RewardOffsetX = @object.RewardOffsetX;
                 target.RewardOffsetY = @object.RewardOffsetY;
+                target.ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX;
+                target.ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2079,7 +2091,9 @@ public sealed partial class DiabloSimulation
                     @object.RewardId,
                     @object.RewardItemLevel,
                     @object.RewardOffsetX,
-                    @object.RewardOffsetY));
+                    @object.RewardOffsetY,
+                    @object.ProjectileTargetOffsetX,
+                    @object.ProjectileTargetOffsetY));
             }
         }
     }

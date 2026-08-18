@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored `SpawnSpellProjectile` objects with validated relative target
+  offsets. The offsets persist through saves, snapshots, protocol projection,
+  and canonical hashing, allowing native book coordinates to be expressed by
+  content while retaining server-owned projectile construction.
+
 - Add the validated `SpawnSpellProjectile` object effect. Authored object rows
   can now spawn a server-owned Phasing or Guardian controller from a stable
   spell identity at the object's position; unsupported projectile behaviors

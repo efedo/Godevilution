@@ -29,7 +29,9 @@ public sealed class AuthoritativeWorldObject
         uint rewardId = 0,
         int rewardItemLevel = 0,
         int rewardOffsetX = 0,
-        int rewardOffsetY = 0)
+        int rewardOffsetY = 0,
+        int projectileTargetOffsetX = 0,
+        int projectileTargetOffsetY = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -84,6 +86,14 @@ public sealed class AuthoritativeWorldObject
         RewardItemLevel = rewardItemLevel;
         RewardOffsetX = rewardOffsetX;
         RewardOffsetY = rewardOffsetY;
+        if (!IsValidProjectileTargetOffset(
+                effectKind,
+                projectileTargetOffsetX,
+                projectileTargetOffsetY)) {
+            throw new InvalidDataException("Object projectile target offsets are invalid.");
+        }
+        ProjectileTargetOffsetX = projectileTargetOffsetX;
+        ProjectileTargetOffsetY = projectileTargetOffsetY;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -111,6 +121,10 @@ public sealed class AuthoritativeWorldObject
     public int RewardItemLevel { get; set; }
     public int RewardOffsetX { get; set; }
     public int RewardOffsetY { get; set; }
+    /** Authored target displacement for server-owned spell projectiles. */
+    public int ProjectileTargetOffsetX { get; set; }
+
+    public int ProjectileTargetOffsetY { get; set; }
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
@@ -167,6 +181,17 @@ public sealed class AuthoritativeWorldObject
                 && rewardOffsetY == 0
             : rewardId != 0;
     }
+
+    public static bool IsValidProjectileTargetOffset(
+        AuthoritativeObjectEffectKind effectKind,
+        int offsetX,
+        int offsetY)
+    {
+        if (offsetX is < -32 or > 32 || offsetY is < -32 or > 32)
+            return false;
+        return effectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            || offsetX == 0 && offsetY == 0;
+    }
 }
 
 /** External object placement and identity definitions. */
@@ -186,6 +211,14 @@ public static class AuthoritativeWorldObjectCatalog
             if (!world.ContainsPosition(@object.LevelId, @object.PositionX, @object.PositionY))
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} contains a position outside its level.");
+            if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                && !world.ContainsPosition(
+                    @object.LevelId,
+                    checked(@object.PositionX + @object.ProjectileTargetOffsetX),
+                    checked(@object.PositionY + @object.ProjectileTargetOffsetY))) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} contains a projectile target outside its level.");
+            }
         }
     }
 
@@ -229,7 +262,9 @@ public static class AuthoritativeWorldObjectCatalog
                 row.OptionalUInt32("reward_id"),
                 row.OptionalInt32("reward_item_level"),
                 row.OptionalInt32("reward_offset_x"),
-                row.OptionalInt32("reward_offset_y"));
+                row.OptionalInt32("reward_offset_y"),
+                row.OptionalInt32("projectile_target_offset_x"),
+                row.OptionalInt32("projectile_target_offset_y"));
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");

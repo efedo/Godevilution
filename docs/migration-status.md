@@ -180,6 +180,12 @@ Status date: 2026-08-18
   active spell catalog rejects unsupported behaviors. Exact native target
   offsets, set-level placement, and map mutations remain later seams.
 
+- Schema 1.360 adds optional `projectile_target_offset_x` and
+  `projectile_target_offset_y` columns to authored objects. The server carries
+  these validated offsets through saves, protocol snapshots, and canonical
+  hashes before constructing the Phasing or Guardian controller, so native
+  book-relative targets no longer require client-side coordinates.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes

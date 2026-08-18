@@ -710,6 +710,9 @@ message ObjectSnapshot {
 	int32 reward_item_level = 23;
 	int32 reward_offset_x = 24;
 	int32 reward_offset_y = 25;
+	// Authored target displacement for server-owned spell projectiles.
+	int32 projectile_target_offset_x = 26;
+	int32 projectile_target_offset_y = 27;
 }
 
 enum ObjectPresentationKind {

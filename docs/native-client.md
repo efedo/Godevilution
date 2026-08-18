@@ -223,8 +223,9 @@ only presents the updated player snapshot and does not mutate spell state. The
 `SpawnSpellProjectile` effect extends that boundary for authored Phasing and
 Guardian controller rows: the server validates the spell behavior, creates
 the resumable projectile, and the client only presents its projected state.
-Target offsets and set-level placement remain content seams still being filled
-from native data.
+Optional target offsets are also server-owned metadata, so native book-relative
+coordinates can be authored without client-side gameplay. Set-level placement
+and map effects remain content seams still being filled from native data.
 
 ## Remaining native-only interaction inventory
 

@@ -128,6 +128,28 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectProjectileTargetOffsets()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                EffectKind = AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+                EffectAmount = 7,
+                ProjectileTargetOffsetX = 1,
+                ProjectileTargetOffsetY = -17,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.Equal(AuthoritativeObjectEffectKind.SpawnSpellProjectile, @object.EffectKind);
+        Assert.Equal(7, @object.EffectAmount);
+        Assert.Equal((1, -17), (@object.ProjectileTargetOffsetX, @object.ProjectileTargetOffsetY));
+    }
+
+    [Fact]
     public void RejectsMalformedIncompleteAndUnknownVersionEnvelopes()
     {
         var codec = new AuthoritativeSaveCodec();

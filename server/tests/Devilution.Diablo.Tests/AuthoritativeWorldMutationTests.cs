@@ -133,12 +133,13 @@ public sealed class AuthoritativeWorldMutationTests
         ]);
         var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
             "objects.tsv",
-            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\n"
-                + "20\t4\t1\t1\t0\tSpawnSpellProjectile\t7\tphasing\n",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\tprojectile_target_offset_x\tprojectile_target_offset_y\n"
+                + "20\t4\t1\t1\t0\tSpawnSpellProjectile\t7\tphasing\t1\t-2\n",
             stableIds));
 
         Assert.Equal(AuthoritativeObjectEffectKind.SpawnSpellProjectile, @object.EffectKind);
         Assert.Equal(7, @object.EffectAmount);
+        Assert.Equal((1, -2), (@object.ProjectileTargetOffsetX, @object.ProjectileTargetOffsetY));
     }
 
     [Fact]
@@ -201,7 +202,9 @@ public sealed class AuthoritativeWorldMutationTests
             1,
             0,
             effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
-            effectAmount: 7);
+            effectAmount: 7,
+            projectileTargetOffsetX: 1,
+            projectileTargetOffsetY: 0);
         var world = new DiabloWorldState(geometry, objects: [@object]);
         var player = CreatePlayer();
         var spells = new AuthoritativeSpellCatalog([
@@ -224,7 +227,7 @@ public sealed class AuthoritativeWorldMutationTests
         var projectile = Assert.Single(world.Projectiles.Values);
         Assert.Equal(AuthoritativeProjectileBehavior.Phasing, projectile.Behavior);
         Assert.Equal(7U, projectile.SpellId);
-        Assert.Equal(1, projectile.PositionX);
+        Assert.Equal(2, projectile.PositionX);
         Assert.Equal(0, projectile.PositionY);
         Assert.Equal(2U, projectile.RemainingTicks);
         Assert.True(@object.Activated);
@@ -276,6 +279,28 @@ public sealed class AuthoritativeWorldMutationTests
             AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells));
 
         Assert.Contains("unsupported authored projectile behavior", exception.Message);
+    }
+
+    [Fact]
+    public void ObjectCatalogRejectsProjectileTargetOutsideWorld()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            1,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7,
+            projectileTargetOffsetX: 1);
+        var world = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t2\t2\tnone\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.ValidateWorld([@object], world));
+
+        Assert.Contains("projectile target outside its level", exception.Message);
     }
 
     [Fact]

@@ -170,6 +170,8 @@ internal static class DiabloProtocolMapper
                 RewardItemLevel = @object.RewardItemLevel,
                 RewardOffsetX = @object.RewardOffsetX,
                 RewardOffsetY = @object.RewardOffsetY,
+                ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
+                ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -650,6 +652,8 @@ internal static class DiabloProtocolMapper
                 RewardItemLevel = @object.RewardItemLevel,
                 RewardOffsetX = @object.RewardOffsetX,
                 RewardOffsetY = @object.RewardOffsetY,
+                ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
+                ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

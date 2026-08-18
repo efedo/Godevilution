@@ -998,7 +998,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!CanApplyObjectSpellEffect(@object, player))
+        if (!CanApplyObjectSpellEffect(@object))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
@@ -1101,9 +1101,7 @@ public sealed class DiabloWorldCommandProcessor
             player.MemorizedSpells.Add(new MemorizedSpellState(spellId, nextLevel));
     }
 
-    private bool CanApplyObjectSpellEffect(
-        AuthoritativeWorldObject @object,
-        AuthoritativePlayerState player)
+    private bool CanApplyObjectSpellEffect(AuthoritativeWorldObject @object)
     {
         if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
             return @object.EffectAmount > 0
@@ -1114,10 +1112,12 @@ public sealed class DiabloWorldCommandProcessor
             || !AuthoritativeWorldObjectCatalog.IsSupportedSpellProjectile(spell)) {
             return @object.EffectKind != AuthoritativeObjectEffectKind.SpawnSpellProjectile;
         }
+        var targetX = checked(@object.PositionX + @object.ProjectileTargetOffsetX);
+        var targetY = checked(@object.PositionY + @object.ProjectileTargetOffsetY);
         return world.ContainsPosition(
             @object.LevelId,
-            @object.PositionX,
-            @object.PositionY);
+            targetX,
+            targetY);
     }
 
     private void SpawnObjectSpellProjectile(
@@ -1132,6 +1132,8 @@ public sealed class DiabloWorldCommandProcessor
 
         var projectileEntityId = AllocateAuthoredProjectileEntityId();
         var sourceEntityId = player.EntityId == 0 ? 1U : player.EntityId;
+        var targetX = checked(@object.PositionX + @object.ProjectileTargetOffsetX);
+        var targetY = checked(@object.PositionY + @object.ProjectileTargetOffsetY);
         var effectiveSpellLevel = player.MemorizedSpells
             .FirstOrDefault(memorized => memorized.SpellId == spell.SpellId)
             ?.Level
@@ -1145,10 +1147,10 @@ public sealed class DiabloWorldCommandProcessor
                     0,
                     spell.SpellId,
                     player.LevelId,
-                    @object.PositionX,
-                    @object.PositionY,
-                    @object.PositionX,
-                    @object.PositionY,
+                    targetX,
+                    targetY,
+                    targetX,
+                    targetY,
                     0,
                     spell.DamageType,
                     0,
@@ -1174,10 +1176,10 @@ public sealed class DiabloWorldCommandProcessor
                 0,
                 spell.SpellId,
                 player.LevelId,
-                @object.PositionX,
-                @object.PositionY,
-                @object.PositionX,
-                @object.PositionY,
+                targetX,
+                targetY,
+                targetX,
+                targetY,
                 0,
                 spell.DamageType,
                 0,
