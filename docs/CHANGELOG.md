@@ -23,6 +23,11 @@ All notable changes to this fork are documented below.
   Lair now declare their pre-map/active-map assets and native spawn positions
   in server content; binary map synthesis and transitions remain separate.
 
+- Schema 1.365 adds optional native `.til` and `.sol` asset paths to
+  `set_level_maps.tsv`. Current set-level rows now carry the dungeon-type
+  geometry inputs shared by their pre-map and active-map variants; older packs
+  remain compatible until those paths are supplied.
+
 - Schema 1.363 adds the validated `set_level_objects.tsv` catalog. Native
   fixed-object placements and template footprints for Skeleton King's Lair,
   the Chamber of Bone, and Archbishop Lazarus' Lair now live in the active

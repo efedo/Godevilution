@@ -14,6 +14,12 @@ public sealed record AuthoritativeSetLevelMapDefinition(
     /** Stable set-level symbol retained for composed-pack diagnostics. */
     public string SetLevelSymbol { get; init; } = string.Empty;
 
+    /** Optional native dungeon-piece mapping shared by both map variants. */
+    public string TileAssetPath { get; init; } = string.Empty;
+
+    /** Optional native d-piece property table shared by both map variants. */
+    public string SolAssetPath { get; init; } = string.Empty;
+
     public AuthoritativeSetLevelMapDefinition Validate()
     {
         if (SetLevelId is < 0 or > 8
@@ -24,6 +30,8 @@ public sealed record AuthoritativeSetLevelMapDefinition(
             || SpawnY is < 0 or > 255
             || !IsRelativeDunAssetPath(PreMapAssetPath)
             || !IsRelativeDunAssetPath(ActiveMapAssetPath)
+            || !IsOptionalAssetPath(TileAssetPath, ".til")
+            || !IsOptionalAssetPath(SolAssetPath, ".sol")
             || DungeonType is not ("Cathedral" or "Catacombs" or "Caves" or "Hell" or "Nest" or "Crypt")) {
             throw new InvalidDataException(
                 $"Set-level map definition {SetLevelId} contains invalid asset, dungeon, or spawn data.");
@@ -32,9 +40,15 @@ public sealed record AuthoritativeSetLevelMapDefinition(
     }
 
     private static bool IsRelativeDunAssetPath(string path)
+        => IsRelativeAssetPath(path, ".dun");
+
+    private static bool IsOptionalAssetPath(string path, string extension)
+        => string.IsNullOrWhiteSpace(path) || IsRelativeAssetPath(path, extension);
+
+    private static bool IsRelativeAssetPath(string path, string extension)
     {
         return !Path.IsPathRooted(path)
-            && path.EndsWith(".dun", StringComparison.OrdinalIgnoreCase)
+            && path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
             && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
                 .All(segment => segment is not "." and not "..")
             && !path.Contains(':', StringComparison.Ordinal);
@@ -101,6 +115,12 @@ public sealed class AuthoritativeSetLevelMapCatalog
                 row.RequiredInt32("spawn_y")) {
                 SetLevelSymbol = row.TryGet("set_level_symbol", out var symbol)
                     ? symbol
+                    : string.Empty,
+                TileAssetPath = row.TryGet("til_asset", out var tilAsset)
+                    ? tilAsset
+                    : string.Empty,
+                SolAssetPath = row.TryGet("sol_asset", out var solAsset)
+                    ? solAsset
                     : string.Empty,
             }));
     }

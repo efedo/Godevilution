@@ -211,6 +211,12 @@ Status date: 2026-08-18
   simulation metadata; loading the binary assets, synthesizing geometry, and
   routing set-level transitions remain separate.
 
+- Schema 1.365 adds optional `til_asset` and `sol_asset` paths to
+  `set_level_maps.tsv`. Current rows identify the native dungeon-type geometry
+  inputs shared by each pre-map and active-map pair; older packs remain
+  compatible when the optional paths are absent, while composed materialization
+  requires them.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not

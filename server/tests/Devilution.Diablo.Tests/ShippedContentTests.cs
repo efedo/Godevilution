@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.364.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.365.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -53,6 +53,8 @@ public sealed class ShippedContentTests
         var skeletonKing = Assert.Single(maps.Definitions, map => map.SetLevelId == 1);
         Assert.Equal("levels/l1data/sklkng1.dun", skeletonKing.PreMapAssetPath);
         Assert.Equal("levels/l1data/sklkng2.dun", skeletonKing.ActiveMapAssetPath);
+        Assert.Equal("levels/l1data/l1.til", skeletonKing.TileAssetPath);
+        Assert.Equal("levels/l1data/l1.sol", skeletonKing.SolAssetPath);
         Assert.Equal((83, 44), (skeletonKing.SpawnX, skeletonKing.SpawnY));
         Assert.Equal("Catacombs", maps.Definitions.Single(map => map.SetLevelId == 2).DungeonType);
         Assert.Equal("Cathedral", maps.Definitions.Single(map => map.SetLevelId == 5).DungeonType);
@@ -1750,7 +1752,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.364.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.365.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
