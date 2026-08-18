@@ -398,9 +398,19 @@ public static class AuthoritativeWorldObjectCatalog
         StableContentIdCatalog? stableIds)
     {
         var itemSymbol = AuthoritativeItemIdentity.ReadSymbol(row, "effect_item_symbol");
+        var spellSymbol = AuthoritativeSpellIdentity.ReadSymbol(row, "effect_spell_symbol");
         if (itemSymbol.Length > 0 && effectKind != AuthoritativeObjectEffectKind.QuestItemCompletion)
             throw new InvalidDataException(
                 $"Object row {row.LineNumber} supplies effect_item_symbol for effect kind '{effectKind}'.");
+        if (spellSymbol.Length > 0 && effectKind != AuthoritativeObjectEffectKind.GrantSpellLevel)
+            throw new InvalidDataException(
+                $"Object row {row.LineNumber} supplies effect_spell_symbol for effect kind '{effectKind}'.");
+        if (effectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
+            return checked((int)AuthoritativeSpellIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "effect_amount",
+                "effect_spell_symbol"));
         if (effectKind != AuthoritativeObjectEffectKind.QuestItemCompletion)
             return row.OptionalInt32("effect_amount");
         return checked((int)AuthoritativeItemIdentity.ResolveOptional(

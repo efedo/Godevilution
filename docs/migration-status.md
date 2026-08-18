@@ -170,7 +170,8 @@ Status date: 2026-08-18
 
 - Authored object rows now support the validated `GrantSpellLevel` effect.
   `OperateObjectRequested` resolves the spell through the active catalog and
-  increments the player’s memorized level with native level caps; set-level
+  increments the player’s memorized level with native level caps. An optional
+  `effect_spell_symbol` cross-checks the stable spell namespace; set-level
   placement and book-triggered projectile/map effects remain unmodeled seams.
 
 - Content-owned towner turn-ins now support normal item rewards as well as

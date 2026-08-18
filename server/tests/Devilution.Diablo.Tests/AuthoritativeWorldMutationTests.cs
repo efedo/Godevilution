@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -121,6 +122,21 @@ public sealed class AuthoritativeWorldMutationTests
                 + "20\t4\t1\t1\t0\tGrantSpellLevel\t7\n"));
 
         Assert.Equal(AuthoritativeObjectEffectKind.GrantSpellLevel, @object.EffectKind);
+        Assert.Equal(7, @object.EffectAmount);
+    }
+
+    [Fact]
+    public void ObjectTableResolvesStableSpellSymbolForSpellLevelGrant()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "guardian", 7),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\n"
+                + "20\t4\t1\t1\t0\tGrantSpellLevel\t0\tguardian\n",
+            stableIds));
+
         Assert.Equal(7, @object.EffectAmount);
     }
 
