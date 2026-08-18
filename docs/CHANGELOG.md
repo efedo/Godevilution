@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.345 authored unique-monster dialogue transitions. Warlord's
+  follow-up conversation now advances native `_qvar1` from `QS_WARLORD_TALKING`
+  to `QS_WARLORD_ATTACKING` through the shared `TalkToQuestRequested` boundary.
+
 - Add schema 1.341 non-consuming towner dialogue stages. Hellfire Grave Matters
   now routes Gillian's Cathedral Map conversation through the server, preserving
   the native message while leaving the map and quest completion state unchanged.

@@ -1021,6 +1021,55 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void QuestDialogueAdvancesAuthoredSubsequentNativeVariableOnRetry()
+    {
+        var quest = new AuthoritativeQuestState(
+            3012,
+            13,
+            1,
+            active: false,
+            messageId: 110,
+            completionUniqueIdentity: "Warlord",
+            dialogueVariable1: 2,
+            dialogueCompletionVariable1: 3,
+            completionVariable1: 3);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 13,
+            unique: true,
+            uniqueIdentity: "Warlord");
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 13,
+            entityId: 7);
+
+        Assert.True(processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3012, 20),
+            5,
+            [player]).Succeeded);
+        Assert.Equal(2, quest.Variable1);
+
+        var secondConversation = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3012, 20),
+            6,
+            [player]);
+
+        Assert.True(secondConversation.Succeeded);
+        Assert.Equal(3, quest.Variable1);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(110, Assert.Single(secondConversation.Events).MessageId);
+    }
+
+    [Fact]
     public void QuestDialogueRejectsMismatchedUniqueIdentity()
     {
         var quest = new AuthoritativeQuestState(

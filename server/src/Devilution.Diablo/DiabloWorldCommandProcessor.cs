@@ -1291,7 +1291,13 @@ public sealed class DiabloWorldCommandProcessor
 
         quest.Active = true;
         quest.Logged = true;
-        quest.Variable1 = Math.Max(quest.Variable1, quest.DialogueVariable1);
+        var dialogueVariable1 = quest.DialogueVariable1;
+        if (quest.DialogueCompletionVariable1 >= 0
+            && quest.DialogueVariable1 > 0
+            && quest.Variable1 >= quest.DialogueVariable1) {
+            dialogueVariable1 = quest.DialogueCompletionVariable1;
+        }
+        quest.Variable1 = Math.Max(quest.Variable1, dialogueVariable1);
         quest.Variable2 = Math.Max(quest.Variable2, quest.DialogueVariable2);
         if (rewardOnActivation)
             SpawnDialogueReward(quest, target, player);

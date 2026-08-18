@@ -168,9 +168,10 @@ the server consumes the item, completes the quest, and emits the authored
 completion dialogue. Definitions may instead generate a one-time reward during
 the first conversation while leaving the quest active; base Zhar is the first
 activation-reward definition and uses a generated level-14 spell book. Hellfire
-Defiler is the first conversation-only definition and Lachdanan is the first
-hand-in definition. Unauthored legacy monster conversations retain their local
-fallback until their content actions are externalized.
+Defiler is the first conversation-only definition, Lachdanan is the first
+hand-in definition, and base Warlord declares its subsequent `_qvar1` transition
+into the native attacking state. Unauthored legacy monster conversations retain
+their local fallback until their content actions are externalized.
 
 Content-declared quest objects now use the same `OperateObjectRequested`
 boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,

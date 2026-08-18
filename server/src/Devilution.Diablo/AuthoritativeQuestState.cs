@@ -141,7 +141,8 @@ public sealed class AuthoritativeQuestState
         bool turnInDialogueOnly = false,
         int turnInRequiredVariable1 = -1,
         int turnInVariable1 = -1,
-        bool turnInProgressOnly = false)
+        bool turnInProgressOnly = false,
+        int dialogueCompletionVariable1 = -1)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -191,6 +192,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInRequiredVariable1));
         if (turnInVariable1 is < -1 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInVariable1));
+        if (dialogueCompletionVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(dialogueCompletionVariable1));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -258,6 +261,7 @@ public sealed class AuthoritativeQuestState
         TurnInRequiredVariable1 = turnInRequiredVariable1;
         TurnInVariable1 = turnInVariable1;
         TurnInProgressOnly = turnInProgressOnly;
+        DialogueCompletionVariable1 = dialogueCompletionVariable1;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -288,6 +292,8 @@ public sealed class AuthoritativeQuestState
     public int DialogueVariable1 { get; }
     /** Content-owned minimum native _qvar2 after the first quest conversation. */
     public int DialogueVariable2 { get; }
+    /** Optional native _qvar1 marker written by a subsequent quest conversation. */
+    public int DialogueCompletionVariable1 { get; }
     /** Content-owned minimum native _qvar1 after quest completion. */
     public int CompletionVariable1 { get; }
     /** Content-owned minimum native _qvar2 after quest completion. */
@@ -512,7 +518,10 @@ public static class AuthoritativeQuestCatalog
                     "turn_in_required_variable1",
                     -1),
                 turnInVariable1: row.OptionalInt32("turn_in_variable1", -1),
-                turnInProgressOnly: row.OptionalBoolean("turn_in_progress_only")) {
+                turnInProgressOnly: row.OptionalBoolean("turn_in_progress_only"),
+                dialogueCompletionVariable1: row.OptionalInt32(
+                    "dialogue_completion_variable1",
+                    -1)) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -781,6 +790,14 @@ public static class AuthoritativeQuestCatalog
             if (!quest.ActivateOnRoute)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares a route activation variable without enabling route activation.");
+        }
+        foreach (var quest in values.Where(quest => quest.DialogueCompletionVariable1 >= 0)) {
+            if (string.IsNullOrWhiteSpace(quest.CompletionUniqueIdentity)
+                || quest.DialogueVariable1 == 0
+                || quest.DialogueCompletionVariable1 <= quest.DialogueVariable1) {
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} dialogue completion requires a unique identity and a strictly increasing dialogue variable-1 transition.");
+            }
         }
     }
 
