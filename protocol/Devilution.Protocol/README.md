@@ -18,6 +18,7 @@ Native Bat movement counters corresponding to `var2` and `var1` are carried by
 server-owned fields 56-57; clients render the state and never resolve Bat
 movement admissions.
 Live snapshots may also carry additive `level_geometry` projections. These
-dimensions and blocked-cell lists come from the active server content pack;
-save snapshots omit them because static geometry is ruleset content, not
-mutable session state.
+dimensions, blocked-cell lists, missile-cell lists, and optional native
+transparency values come from the active server content pack; save snapshots
+omit them because static geometry is ruleset content, not mutable session
+state.

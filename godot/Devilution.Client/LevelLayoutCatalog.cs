@@ -35,7 +35,8 @@ public sealed class LevelLayoutCatalog
                 $"Level {definition.LevelId}",
                 definition.Width,
                 definition.Height,
-                cells);
+                cells,
+                definition.NativeTransparency.ToArray());
         }
     }
 
@@ -60,7 +61,13 @@ public sealed class LevelLayoutCatalog
             var cells = definition.Blocked
                 .Where(cell => cell >= 0 && cell < definition.Width * definition.Height)
                 .ToHashSet();
-            layouts[definition.Id] = new LevelLayout(definition.Id, definition.Name ?? $"Level {definition.Id}", definition.Width, definition.Height, cells);
+            layouts[definition.Id] = new LevelLayout(
+                definition.Id,
+                definition.Name ?? $"Level {definition.Id}",
+                definition.Width,
+                definition.Height,
+                cells,
+                []);
         }
 
         layouts.TryAdd(0, LevelLayout.Empty);
@@ -81,9 +88,15 @@ public sealed class LevelLayoutCatalog
     }
 }
 
-public sealed record LevelLayout(uint Id, string Name, int Width, int Height, IReadOnlySet<int> Blocked)
+public sealed record LevelLayout(
+    uint Id,
+    string Name,
+    int Width,
+    int Height,
+    IReadOnlySet<int> Blocked,
+    IReadOnlyList<uint> NativeTransparency)
 {
-    public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>());
+    public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>(), []);
 
     public bool IsBlocked(int x, int y)
     {

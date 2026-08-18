@@ -340,6 +340,7 @@ internal static class DiabloProtocolMapper
             };
             geometry.BlockedCells.Add(level.BlockedCells);
             geometry.MissileBlockedCells.Add(level.MissileBlockedCells);
+            geometry.NativeTransparency.Add(level.NativeTransparency.Select(value => (uint)value));
             snapshot.LevelGeometry.Add(geometry);
         }
         if (source.ActiveStore is not null) {

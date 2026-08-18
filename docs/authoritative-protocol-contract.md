@@ -173,10 +173,11 @@ content rules, and save data. A client may interpolate presentation but must
 reconcile to every snapshot.
 
 The repeated `level_geometry` projection contains the effective level bounds,
-movement-blocked cells, and missile-blocked cells after all active
-content-backed world mutations. The additive `active_world_mutation_ids`
-field preserves those identities through protocol-compatible saves. Both are
-server-owned state: clients do not author map changes.
+movement-blocked cells, missile-blocked cells, and optional native d-piece
+transparency values after all active content-backed world mutations. The
+additive `active_world_mutation_ids` field preserves those identities through
+protocol-compatible saves. Both are server-owned state: clients do not author
+map changes.
 
 The repeated player projection contains every participant with an assigned
 entity ID. Its wire order is receiver-relative: the receiving participant is
