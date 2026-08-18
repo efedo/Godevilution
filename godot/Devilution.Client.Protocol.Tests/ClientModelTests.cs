@@ -334,6 +334,21 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void ClassifiesServerOwnedConsumableActionsForThePresentationBoundary()
+    {
+        Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
+            ItemActionKind.RestoreFullLifeAndMana));
+        Assert.True(AuthoritativeItemActionRules.IsTargetlessConsumable(
+            ItemActionKind.IncreaseAllAttributes));
+        Assert.False(AuthoritativeItemActionRules.IsTargetlessConsumable(
+            ItemActionKind.ApplySharpnessOil));
+        Assert.True(AuthoritativeItemActionRules.IsTargetedConsumable(
+            ItemActionKind.ApplySharpnessOil));
+        Assert.False(AuthoritativeItemActionRules.IsTargetedConsumable(
+            ItemActionKind.RestorePartialLife));
+    }
+
+    [Fact]
     public void AppliesAuthoritativeSnapshotAndEvents()
     {
         var model = new AuthoritativeClientModel();

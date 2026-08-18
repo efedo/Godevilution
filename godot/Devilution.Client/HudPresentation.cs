@@ -30,6 +30,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button rechargeSelected = new() { Text = "Recharge selected" };
     private readonly Button identifySelected = new() { Text = "Identify selected" };
     private readonly Button readBookSelected = new() { Text = "Read book selected" };
+    private readonly Button useConsumableSelected = new() { Text = "Use consumable selected" };
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
@@ -57,6 +58,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? RechargeItemRequested;
     public event Action<uint>? IdentifyItemRequested;
     public event Action<uint>? ReadBookRequested;
+    public event Action<uint>? UseConsumableRequested;
     public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
@@ -100,6 +102,7 @@ public partial class HudPresentation : CanvasLayer
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
+            useConsumableSelected,
             questTownerInteraction,
             refillMana, dropHeld, clearEvents,
         })
@@ -137,6 +140,7 @@ public partial class HudPresentation : CanvasLayer
         rechargeSelected.Pressed += () => InvokeInventoryAction(RechargeItemRequested);
         identifySelected.Pressed += () => InvokeInventoryAction(IdentifyItemRequested);
         readBookSelected.Pressed += () => InvokeInventoryAction(ReadBookRequested);
+        useConsumableSelected.Pressed += () => InvokeInventoryAction(UseConsumableRequested);
         disarmTrap.Pressed += () => {
             if (availableTrapEntityId is { } entityId)
                 DisarmTrapRequested?.Invoke(entityId);
@@ -249,6 +253,10 @@ public partial class HudPresentation : CanvasLayer
         var hasRepairAbility = player?.AbilityKind == PlayerAbilityKind.Repair;
         var hasRechargeAbility = player?.AbilityKind == PlayerAbilityKind.Recharge;
         var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
+        var hasTargetlessConsumable = hasSelectedInventory
+            && AuthoritativeItemActionRules.IsTargetlessConsumable(
+                player!.Inventory[selectedInventoryIndex].State?.ItemActionKind
+                    ?? ItemActionKind.Unspecified);
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
@@ -273,6 +281,7 @@ public partial class HudPresentation : CanvasLayer
         identifySelected.Disabled = !connected
             || !hasSelectedInventory
             || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
+        useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;

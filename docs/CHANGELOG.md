@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend the shared item-action protocol projection through the full
+  server-owned action set. The Godot HUD can now submit one-item potion,
+  rejuvenation, and elixir use through `UseConsumableRequested`; oil actions
+  remain explicitly target-driven for the follow-up cursor flow.
+
 - Refresh deterministic replay fixture content identities after schema 1.366
   so base and Hellfire replay checks validate the current manifested packs.
 

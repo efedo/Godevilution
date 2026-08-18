@@ -70,6 +70,9 @@ Windows toolchain command.
   native mana refund, and book consumption. Clients never mutate learned-spell
   state locally.
 - `UseConsumableRequested` consumes an exact owned inventory or belt reference.
+  `ItemActionKind` projects the complete validated action set, including
+  attribute-all and all four oil actions; oil requests carry an additional
+  target reference.
   An optional `target_item` carries the exact inventory or equipment item for
   cursor-based oils; the source and target are validated atomically.
   The server validates the content-owned potion, rejuvenation, or elixir
