@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
 - Complete native set-level bundles now validate their declared active-map spawn
   point against the materialized collision geometry before activation succeeds.
 
+- Schema 1.366 adds an optional native `transparency_asset` to set-level maps.
+  Declared transparency layers participate in complete-bundle validation and
+  must match the active map dimensions; older packs remain compatible.
+
 - The Diablo module now has a validated `.dun` geometry materializer. It
   expands native mega-tile IDs through external `.til` d-piece definitions
   and external `.sol` properties into authoritative movement and missile

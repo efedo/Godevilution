@@ -10,8 +10,8 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
     {
         var catalog = AuthoritativeSetLevelMapCatalog.LoadTsv(
             "set_level_maps.tsv",
-            "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
-                + "5\tSL_VILEBETRAYER\tlevels/l1data/vile1.dun\tlevels/l1data/vile2.dun\tlevels/l1data/l1.til\tlevels/l1data/l1.sol\tCathedral\t35\t36\n");
+            "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\ttransparency_asset\tdungeon_type\tspawn_x\tspawn_y\n"
+                + "5\tSL_VILEBETRAYER\tlevels/l1data/vile1.dun\tlevels/l1data/vile2.dun\tlevels/l1data/l1.til\tlevels/l1data/l1.sol\tlevels/l1data/vile1t.dun\tCathedral\t35\t36\n");
 
         var map = Assert.Single(catalog.Definitions);
         Assert.Equal(5, map.SetLevelId);
@@ -20,6 +20,7 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
         Assert.Equal("levels/l1data/vile2.dun", map.ActiveMapAssetPath);
         Assert.Equal("levels/l1data/l1.til", map.TileAssetPath);
         Assert.Equal("levels/l1data/l1.sol", map.SolAssetPath);
+        Assert.Equal("levels/l1data/vile1t.dun", map.TransparencyAssetPath);
         Assert.Equal((35, 36), (map.SpawnX, map.SpawnY));
     }
 
@@ -44,6 +45,12 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
         Assert.Throws<InvalidDataException>(() => new AuthoritativeSetLevelMapCatalog([
             new(1, "levels/l1data/sklkng1.dun", "levels/l1data/sklkng2.dun", "Cathedral", 1, 1) {
                 SolAssetPath = "levels/l1data/l1.bin",
+            },
+        ]));
+
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeSetLevelMapCatalog([
+            new(1, "levels/l1data/sklkng1.dun", "levels/l1data/sklkng2.dun", "Cathedral", 1, 1) {
+                TransparencyAssetPath = "levels/l1data/../bad.dun",
             },
         ]));
     }

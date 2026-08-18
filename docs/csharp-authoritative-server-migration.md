@@ -131,7 +131,8 @@ authoritative results.
   retain the validated metadata-only fallback. Their active-map fixed-object
   placements are materialized in a separate reserved entity range when the
   active geometry is available, and activation rejects a blocked or out-of-bounds
-  declared entry point.
+  declared entry point. Optional native transparency layers are also validated
+  against the active map dimensions when supplied.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.

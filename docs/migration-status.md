@@ -221,6 +221,11 @@ Status date: 2026-08-18
   compatible when the optional paths are absent, while composed materialization
   requires them.
 
+- Schema 1.366 adds the optional native `transparency_asset` path to
+  `set_level_maps.tsv`. When declared, activation composes and validates the
+  transparency `.dun` layer against the active-map dimensions; older packs
+  remain compatible without it.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not

@@ -20,6 +20,9 @@ public sealed record AuthoritativeSetLevelMapDefinition(
     /** Optional native d-piece property table shared by both map variants. */
     public string SolAssetPath { get; init; } = string.Empty;
 
+    /** Optional native transparency `.dun` layer loaded with the active map. */
+    public string TransparencyAssetPath { get; init; } = string.Empty;
+
     public AuthoritativeSetLevelMapDefinition Validate()
     {
         if (SetLevelId is < 0 or > 8
@@ -32,6 +35,7 @@ public sealed record AuthoritativeSetLevelMapDefinition(
             || !IsRelativeDunAssetPath(ActiveMapAssetPath)
             || !IsOptionalAssetPath(TileAssetPath, ".til")
             || !IsOptionalAssetPath(SolAssetPath, ".sol")
+            || !IsOptionalAssetPath(TransparencyAssetPath, ".dun")
             || DungeonType is not ("Cathedral" or "Catacombs" or "Caves" or "Hell" or "Nest" or "Crypt")) {
             throw new InvalidDataException(
                 $"Set-level map definition {SetLevelId} contains invalid asset, dungeon, or spawn data.");
@@ -116,6 +120,8 @@ public sealed class AuthoritativeSetLevelMapCatalog
                 definition.TileAssetPath,
                 definition.SolAssetPath,
             };
+            if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath))
+                paths = [.. paths, definition.TransparencyAssetPath];
             var present = paths.Count(path => content.TryGetAsset(path, out _));
             if (present == 0)
                 continue;
@@ -137,6 +143,16 @@ public sealed class AuthoritativeSetLevelMapCatalog
                 || !activeMap.IsWalkable(definition.SpawnX, definition.SpawnY)) {
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} contains an invalid active-map spawn point.");
+            }
+            if (!string.IsNullOrWhiteSpace(definition.TransparencyAssetPath)) {
+                var transparency = AuthoritativeDunMapAsset.Load(
+                    definition.TransparencyAssetPath,
+                    content.GetRequiredAsset(definition.TransparencyAssetPath).Contents);
+                if (transparency.TileWidth != activeMap.Width
+                    || transparency.TileHeight != activeMap.Height) {
+                    throw new InvalidDataException(
+                        $"Set-level map {definition.SetLevelId} transparency dimensions do not match the active map.");
+                }
             }
             levels.Add(preMap);
             levels.Add(activeMap);
@@ -180,6 +196,9 @@ public sealed class AuthoritativeSetLevelMapCatalog
                     : string.Empty,
                 SolAssetPath = row.TryGet("sol_asset", out var solAsset)
                     ? solAsset
+                    : string.Empty,
+                TransparencyAssetPath = row.TryGet("transparency_asset", out var transparencyAsset)
+                    ? transparencyAsset
                     : string.Empty,
             }));
     }
