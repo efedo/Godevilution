@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend validated content packs to carry native `.dun`, `.til`, and `.sol`
+  binaries alongside TSV tables. Asset bytes now participate in the manifest
+  identity, identical inherited assets compose deterministically, conflicting
+  assets reject composition, and the Diablo native geometry loader can consume
+  the composed asset set directly.
+
 - The Diablo module now has a validated `.dun` geometry materializer. It
   expands native mega-tile IDs through external `.til` d-piece definitions
   and external `.sol` properties into authoritative movement and missile

@@ -6,18 +6,27 @@ namespace Devilution.Data;
 public sealed class ComposedContent
 {
     private readonly IReadOnlyDictionary<string, TsvTable> tablesByPath;
+    private readonly IReadOnlyDictionary<string, ContentAsset> assetsByPath;
 
-    private ComposedContent(ContentManifest manifest, IReadOnlyList<TsvTable> tables)
+    private ComposedContent(
+        ContentManifest manifest,
+        IReadOnlyList<TsvTable> tables,
+        IReadOnlyList<ContentAsset> assets)
     {
         Manifest = manifest;
         Tables = tables;
+        Assets = assets;
         tablesByPath = new ReadOnlyDictionary<string, TsvTable>(
             tables.ToDictionary(table => table.SourcePath, StringComparer.Ordinal));
+        assetsByPath = new ReadOnlyDictionary<string, ContentAsset>(
+            assets.ToDictionary(asset => asset.SourcePath, StringComparer.Ordinal));
     }
 
     public ContentManifest Manifest { get; }
 
     public IReadOnlyList<TsvTable> Tables { get; }
+
+    public IReadOnlyList<ContentAsset> Assets { get; }
 
     public bool TryGetTable(string tablePath, out TsvTable table)
     {
@@ -33,11 +42,27 @@ public sealed class ComposedContent
                 $"Active content does not provide required table '{tablePath}'.");
     }
 
+    public bool TryGetAsset(string assetPath, out ContentAsset asset)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assetPath);
+        return assetsByPath.TryGetValue(assetPath.Replace('\\', '/'), out asset!);
+    }
+
+    public ContentAsset GetRequiredAsset(string assetPath)
+    {
+        return TryGetAsset(assetPath, out var asset)
+            ? asset
+            : throw new InvalidDataException(
+                $"Active content does not provide required asset '{assetPath}'.");
+    }
+
     public static ComposedContent Compose(ContentManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
         var tableOrder = new List<string>();
         var effectiveTables = new Dictionary<string, TsvTable>(StringComparer.Ordinal);
+        var assetOrder = new List<string>();
+        var effectiveAssets = new Dictionary<string, ContentAsset>(StringComparer.Ordinal);
 
         foreach (var pack in manifest.Packs) {
             var overlays = pack.Overlays.ToDictionary(
@@ -45,6 +70,12 @@ public sealed class ComposedContent
                 StringComparer.Ordinal);
             foreach (var table in pack.Tables) {
                 if (!effectiveTables.TryGetValue(table.SourcePath, out var existing)) {
+                    if (effectiveAssets.ContainsKey(table.SourcePath)) {
+                        throw CompositionError(
+                            pack.Id,
+                            table.SourcePath,
+                            "conflicts with an earlier binary asset");
+                    }
                     if (overlays.ContainsKey(table.SourcePath)) {
                         throw CompositionError(
                             pack.Id,
@@ -68,11 +99,31 @@ public sealed class ComposedContent
                     table,
                     overlay);
             }
+            foreach (var asset in pack.Assets) {
+                if (effectiveTables.ContainsKey(asset.SourcePath)) {
+                    throw CompositionError(
+                        pack.Id,
+                        asset.SourcePath,
+                        "conflicts with an earlier table");
+                }
+                if (!effectiveAssets.TryGetValue(asset.SourcePath, out var existingAsset)) {
+                    effectiveAssets.Add(asset.SourcePath, asset);
+                    assetOrder.Add(asset.SourcePath);
+                    continue;
+                }
+                if (!existingAsset.Contents.Span.SequenceEqual(asset.Contents.Span)) {
+                    throw CompositionError(
+                        pack.Id,
+                        asset.SourcePath,
+                        "conflicts with an earlier binary asset");
+                }
+            }
         }
 
         return new ComposedContent(
             manifest,
-            tableOrder.Select(path => effectiveTables[path]).ToArray());
+            tableOrder.Select(path => effectiveTables[path]).ToArray(),
+            assetOrder.Select(path => effectiveAssets[path]).ToArray());
     }
 
     private static TsvTable ApplyOverlay(

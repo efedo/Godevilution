@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -179,6 +180,46 @@ public sealed class AuthoritativeDunGeometryTests
                 new byte[sizeof(ushort) * 4],
                 "l1.sol",
                 new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount]));
+    }
+
+    [Fact]
+    public void NativeBundleLoaderReadsSetLevelAssetsFromComposedContent()
+    {
+        var dun = CreateDun(1, 1, [0]);
+        var til = new byte[sizeof(ushort) * 4];
+        WriteWord(til, 0, 20);
+        WriteWord(til, 2, 21);
+        WriteWord(til, 4, 22);
+        WriteWord(til, 6, 23);
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol[20] = (byte)AuthoritativeDunTileFlags.Solid;
+        sol[21] = (byte)AuthoritativeDunTileFlags.BlockMissile;
+        sol[22] = (byte)(AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/l1data/pre.dun", dun),
+                new ContentAsset("levels/l1data/active.dun", dun),
+                new ContentAsset("levels/l1data/l1.til", til),
+                new ContentAsset("levels/l1data/l1.sol", sol),
+            ]),
+        ]));
+        var definition = new AuthoritativeSetLevelMapDefinition(
+            1,
+            "levels/l1data/pre.dun",
+            "levels/l1data/active.dun",
+            "Cathedral",
+            8,
+            8) {
+            SetLevelSymbol = "SL_SYNTHETIC",
+            TileAssetPath = "levels/l1data/l1.til",
+            SolAssetPath = "levels/l1data/l1.sol",
+        };
+
+        var level = AuthoritativeNativeDunGeometryLoader.Load(content, definition, 202, activeMap: true);
+
+        Assert.Equal([0, 2], level.BlockedCells);
+        Assert.Equal([1, 2], level.MissileBlockedCells);
+        Assert.Equal("SL_SYNTHETIC", level.StableSymbol);
     }
 
     private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)

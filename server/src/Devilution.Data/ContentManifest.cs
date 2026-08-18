@@ -45,7 +45,7 @@ public sealed record ContentTableOverlay
 public sealed record ContentPack
 {
     public ContentPack(string id, string version, IReadOnlyList<TsvTable> tables)
-        : this(id, version, tables, [], [], null, [])
+        : this(id, version, tables, [], [], null, [], [])
     {
     }
 
@@ -53,10 +53,11 @@ public sealed record ContentPack
         string id,
         string version,
         IReadOnlyList<TsvTable> tables,
-        IReadOnlyList<string>? dependencies,
-        IReadOnlyList<ContentTableOverlay>? overlays,
+        IReadOnlyList<string>? dependencies = null,
+        IReadOnlyList<ContentTableOverlay>? overlays = null,
         ContentSchemaIdentity? schema = null,
-        IReadOnlyList<ContentPackDependencyConstraint>? dependencyConstraints = null)
+        IReadOnlyList<ContentPackDependencyConstraint>? dependencyConstraints = null,
+        IReadOnlyList<ContentAsset>? assets = null)
     {
         if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(version))
             throw new ArgumentException("Content pack IDs and versions are required.");
@@ -69,6 +70,16 @@ public sealed record ContentPack
             throw new ArgumentException(
                 "Content table paths must be unique within a pack.",
                 nameof(tables));
+        }
+        var assetList = assets?.ToArray() ?? [];
+        if (assetList.Any(asset => asset is null)
+            || assetList.Select(asset => asset.SourcePath).Distinct(StringComparer.Ordinal).Count()
+                != assetList.Length
+            || assetList.Any(asset => tableList.Any(table =>
+                string.Equals(table.SourcePath, asset.SourcePath, StringComparison.Ordinal)))) {
+            throw new ArgumentException(
+                "Content asset paths must be non-null, unique, and distinct from table paths.",
+                nameof(assets));
         }
         var dependencyIds = dependencies?.ToArray() ?? [];
         if (dependencyIds.Any(string.IsNullOrWhiteSpace)
@@ -114,6 +125,7 @@ public sealed record ContentPack
         Id = id;
         Version = version;
         Tables = tableList;
+        Assets = assetList;
         Dependencies = dependencyIds;
         Overlays = overlayList;
         Schema = schema;
@@ -125,6 +137,8 @@ public sealed record ContentPack
     public string Version { get; }
 
     public IReadOnlyList<TsvTable> Tables { get; }
+
+    public IReadOnlyList<ContentAsset> Assets { get; }
 
     public IReadOnlyList<string> Dependencies { get; }
 
@@ -254,6 +268,18 @@ public sealed class ContentManifest
                     hasher.AppendString(constraint.DependencyId);
                     hasher.AppendString(constraint.Minimum.ToString());
                     hasher.AppendString(constraint.Maximum.ToString());
+                }
+            }
+            if (pack.Assets.Count != 0) {
+                hasher.AppendString("godevilution-content-pack-assets-v1");
+                hasher.AppendUInt64((ulong)pack.Assets.Count);
+                foreach (var asset in pack.Assets.OrderBy(
+                    asset => asset.SourcePath,
+                    StringComparer.Ordinal)) {
+                    hasher.AppendString(asset.SourcePath);
+                    hasher.AppendUInt64((ulong)asset.Contents.Length);
+                    foreach (var value in asset.Contents.Span)
+                        hasher.AppendUInt8(value);
                 }
             }
         }

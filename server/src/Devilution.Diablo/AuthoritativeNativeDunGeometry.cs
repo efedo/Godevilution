@@ -1,3 +1,5 @@
+using Devilution.Data;
+
 namespace Devilution.Diablo;
 
 /**
@@ -7,6 +9,37 @@ namespace Devilution.Diablo;
  */
 public static class AuthoritativeNativeDunGeometryLoader
 {
+    /** Loads one set-level geometry variant directly from the active content assets. */
+    public static AuthoritativeLevel Load(
+        ComposedContent content,
+        AuthoritativeSetLevelMapDefinition definition,
+        uint levelId,
+        bool activeMap,
+        bool suppressMultiplayerDeathDrops = false)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentNullException.ThrowIfNull(definition);
+        definition.Validate();
+        if (string.IsNullOrWhiteSpace(definition.TileAssetPath)
+            || string.IsNullOrWhiteSpace(definition.SolAssetPath)) {
+            throw new InvalidDataException(
+                $"Set-level map {definition.SetLevelId} does not declare both native .til and .sol assets.");
+        }
+        var dunAssetPath = activeMap
+            ? definition.ActiveMapAssetPath
+            : definition.PreMapAssetPath;
+        return Load(
+            levelId,
+            dunAssetPath,
+            content.GetRequiredAsset(dunAssetPath).Contents,
+            definition.TileAssetPath,
+            content.GetRequiredAsset(definition.TileAssetPath).Contents,
+            definition.SolAssetPath,
+            content.GetRequiredAsset(definition.SolAssetPath).Contents,
+            definition.SetLevelSymbol,
+            suppressMultiplayerDeathDrops);
+    }
+
     public static AuthoritativeLevel Load(
         uint levelId,
         string dunSourcePath,

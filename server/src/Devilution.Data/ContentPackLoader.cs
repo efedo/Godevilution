@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Devilution.Data;
 
-/** Loads an ordered directory of UTF-8 TSV files into a content pack. */
+/** Loads an ordered directory of UTF-8 TSV and native binary assets into a content pack. */
 public static class ContentPackLoader
 {
     public const string ManifestFileName = "content-pack.json";
@@ -14,19 +14,25 @@ public static class ContentPackLoader
         if (!Directory.Exists(root))
             throw new DirectoryNotFoundException($"Content pack directory '{rootDirectory}' does not exist.");
 
-        var tables = Directory.EnumerateFiles(root, "*.tsv", SearchOption.AllDirectories)
+        var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
             .Select(path => new {
                 FullPath = path,
                 RelativePath = Path.GetRelativePath(root, path).Replace(Path.DirectorySeparatorChar, '/'),
             })
             .OrderBy(file => file.RelativePath, StringComparer.Ordinal)
-            .Select(file => TsvTable.Parse(
-                file.RelativePath,
-                File.ReadAllText(file.FullPath)))
             .ToArray();
-        if (tables.Length == 0)
-            throw new InvalidDataException($"Content pack directory '{rootDirectory}' contains no TSV tables.");
-        return new ContentPack(id, version, tables);
+        var tables = files
+            .Where(file => string.Equals(Path.GetExtension(file.RelativePath), ".tsv", StringComparison.OrdinalIgnoreCase))
+            .Select(file => TsvTable.Parse(file.RelativePath, File.ReadAllText(file.FullPath)))
+            .ToArray();
+        var assets = files
+            .Where(file => IsNativeBinaryAsset(file.RelativePath))
+            .Select(file => new ContentAsset(file.RelativePath, File.ReadAllBytes(file.FullPath)))
+            .ToArray();
+        if (tables.Length == 0 && assets.Length == 0)
+            throw new InvalidDataException(
+                $"Content pack directory '{rootDirectory}' contains no supported tables or native assets.");
+        return new ContentPack(id, version, tables, [], [], assets: assets);
     }
 
     /** Loads pack identity, compatibility, dependencies, and overlays from JSON. */
@@ -121,7 +127,8 @@ public static class ContentPackLoader
             document.Dependencies,
             overlays,
             schema,
-            constraints);
+            constraints,
+            loaded.Assets);
     }
 
     private sealed record ContentPackDocument(
@@ -132,6 +139,14 @@ public static class ContentPackLoader
         IReadOnlyList<ContentOverlayDocument?>? Overlays,
         ContentSchemaDocument? Schema,
         IReadOnlyList<ContentDependencyConstraintDocument?>? DependencyConstraints);
+
+    private static bool IsNativeBinaryAsset(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return string.Equals(extension, ".dun", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".til", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".sol", StringComparison.OrdinalIgnoreCase);
+    }
 
     private sealed record ContentOverlayDocument(
         string? Table,

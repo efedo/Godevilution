@@ -71,6 +71,9 @@ The Server host now
 loads only explicit, hash-verified, single-assembly module packages and passes
 their declared types to Engine. Content manifests can declare schema identities
 and dependency-version constraints without changing legacy identities.
+Content packs carry immutable relative native `.dun`, `.til`, and `.sol` assets
+alongside TSV tables; the Data runtime hashes and composes those bytes before
+the Diablo module interprets them as authoritative geometry.
 Diablo-specific catalog/bootstrap construction now occurs behind the module's
 content-bootstrap capability; Server startup supplies only generic composed
 content and player-start settings. Separating generic host lifecycle from the

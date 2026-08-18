@@ -96,6 +96,26 @@ public sealed class ContentRuntimeTests
     }
 
     [Fact]
+    public void ContentPackDirectoryLoaderCarriesNativeBinaryAssets()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "levels", "l1data"));
+        try {
+            File.WriteAllText(Path.Combine(root, "rules.tsv"), "id\nbase\n");
+            File.WriteAllBytes(
+                Path.Combine(root, "levels", "l1data", "sample.dun"),
+                [1, 2, 3, 4]);
+
+            var pack = ContentPackLoader.LoadDirectory("base", "1", root);
+
+            Assert.Equal("levels/l1data/sample.dun", Assert.Single(pack.Assets).SourcePath);
+            Assert.Equal([1, 2, 3, 4], Assert.Single(pack.Assets).Contents.ToArray());
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ContentPackDirectoryLoaderRejectsAnEmptyPack()
     {
         var root = Path.Combine(Path.GetTempPath(), $"godevilution-content-{Guid.NewGuid():N}");
@@ -135,6 +155,43 @@ public sealed class ContentRuntimeTests
         Assert.Equal(
             stores.ToCanonicalTsv(),
             TsvTable.Parse("stores.tsv", stores.ToCanonicalTsv()).ToCanonicalTsv());
+    }
+
+    [Fact]
+    public void CompositionExposesAssetsAndRejectsConflictingDuplicates()
+    {
+        var first = new ContentAsset("levels/l1data/l1.til", new byte[] { 1, 2 });
+        var same = new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [first]),
+            new ContentPack("variant", "1", [], ["base"], [], assets: [
+                new ContentAsset("levels/l1data/l1.til", new byte[] { 1, 2 })]),
+        ]);
+
+        var composed = ComposedContent.Compose(same);
+        Assert.Equal([1, 2], composed.GetRequiredAsset("levels\\l1data\\l1.til").Contents.ToArray());
+
+        var conflicting = new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [first]),
+            new ContentPack("variant", "1", [], ["base"], [], assets: [
+                new ContentAsset("levels/l1data/l1.til", new byte[] { 9, 9 })]),
+        ]);
+        var exception = Assert.Throws<InvalidDataException>(() => ComposedContent.Compose(conflicting));
+        Assert.Contains("l1.til", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NativeAssetBytesContributeToManifestIdentity()
+    {
+        var baseline = new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/sample.dun", new byte[] { 1, 2, 3 })]),
+        ]);
+        var changed = new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("levels/sample.dun", new byte[] { 1, 2, 4 })]),
+        ]);
+
+        Assert.NotEqual(baseline.Sha256, changed.Sha256);
     }
 
     [Fact]
