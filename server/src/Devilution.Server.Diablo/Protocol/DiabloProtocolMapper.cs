@@ -201,6 +201,8 @@ internal static class DiabloProtocolMapper
             if (quest.TurnInVariable1 >= 0)
                 projectedQuest.TurnInVariable1 = quest.TurnInVariable1;
             projectedQuest.TurnInProgressOnly = quest.TurnInProgressOnly;
+            if (quest.TurnInBlockedVisitedLevel != 0)
+                projectedQuest.TurnInBlockedVisitedLevel = quest.TurnInBlockedVisitedLevel;
             snapshot.Quests.Add(projectedQuest);
         }
         foreach (var interaction in source.QuestTownerInteractions) {
@@ -649,7 +651,8 @@ internal static class DiabloProtocolMapper
                 quest.HasTurnInCompletionVariable1 ? quest.TurnInCompletionVariable1 : -1,
                 quest.HasTurnInRequiredVariable1 ? quest.TurnInRequiredVariable1 : -1,
                 quest.HasTurnInVariable1 ? quest.TurnInVariable1 : -1,
-                quest.TurnInProgressOnly)).ToArray(),
+                quest.TurnInProgressOnly,
+                quest.TurnInBlockedVisitedLevel)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

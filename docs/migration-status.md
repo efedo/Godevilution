@@ -1954,6 +1954,10 @@ Status date: 2026-08-17
   OR-gated quest/towner stages. Base King Leoric activation now matches native
   `_pLvlVisited[2] || _pLvlVisited[4]` behavior through the shared protocol.
 
+- Schema 1.350 adds the Hellfire Grave Matters/Barmaid dialogue-only turn-in's
+  server-owned `_pLvlVisited[21]` suppression, projected to native and Godot
+  clients through `QuestSnapshot.turn_in_blocked_visited_level`.
+
 - Schema 1.349 moves the base Magic Rock and Anvil activation conversations
   into authored quest/towner rows, including their native visited-level OR-gates
   and variable-2 markers; the existing item hand-ins and unique rewards remain

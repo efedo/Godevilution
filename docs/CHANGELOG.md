@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.350 authored Grave Matters visitation suppression. Hellfire
+  Barmaid dialogue now honors the native `_pLvlVisited[21]` boundary through
+  server-owned quest state and the shared native/Godot protocol.
+
 - Add schema 1.349 authored Blacksmith visitation gates. Magic Rock and Anvil
   activation now use external quest/towner stages with server-owned
   `_pLvlVisited[4] || _pLvlVisited[5]` and `_pLvlVisited[9] ||

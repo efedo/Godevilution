@@ -279,7 +279,8 @@ public sealed record DiabloQuestState(
     int TurnInCompletionVariable1 = -1,
     int TurnInRequiredVariable1 = -1,
     int TurnInVariable1 = -1,
-    bool TurnInProgressOnly = false);
+    bool TurnInProgressOnly = false,
+    uint TurnInBlockedVisitedLevel = 0);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -623,7 +624,8 @@ public sealed partial class DiabloSimulation
                     quest.TurnInCompletionVariable1,
                     quest.TurnInRequiredVariable1,
                     quest.TurnInVariable1,
-                    quest.TurnInProgressOnly))
+                    quest.TurnInProgressOnly,
+                    quest.TurnInBlockedVisitedLevel))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -2063,7 +2065,8 @@ public sealed partial class DiabloSimulation
                     turnInCompletionVariable1: quest.TurnInCompletionVariable1,
                     turnInRequiredVariable1: quest.TurnInRequiredVariable1,
                     turnInVariable1: quest.TurnInVariable1,
-                    turnInProgressOnly: quest.TurnInProgressOnly));
+                    turnInProgressOnly: quest.TurnInProgressOnly,
+                    turnInBlockedVisitedLevel: quest.TurnInBlockedVisitedLevel));
             }
         }
     }

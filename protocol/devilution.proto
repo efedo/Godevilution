@@ -754,6 +754,8 @@ message QuestSnapshot {
 	optional int32 turn_in_variable1 = 25;
 	// Whether the staged item hand-in leaves the quest active after applying it.
 	bool turn_in_progress_only = 26;
+	// Optional native _pLvlVisited level that suppresses the towner turn-in.
+	optional uint32 turn_in_blocked_visited_level = 27;
 }
 
 message QuestTownerInteractionSnapshot {

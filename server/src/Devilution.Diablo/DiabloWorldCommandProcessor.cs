@@ -1542,6 +1542,8 @@ public sealed class DiabloWorldCommandProcessor
                 && (quest.TurnInRequiredVariable1 < 0
                     || quest.TurnInVariable1 < 0
                     || quest.Variable1 != quest.TurnInRequiredVariable1))
+            || (quest.TurnInBlockedVisitedLevel != 0
+                && player.HasVisitedLevel(quest.TurnInBlockedVisitedLevel))
             || quest.TurnInLevelId != player.LevelId
             || Math.Max(
                 Math.Abs(quest.TurnInPositionX - player.PositionX),

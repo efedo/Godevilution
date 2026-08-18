@@ -47,6 +47,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
 		initialPlayer->add_visited_level_ids(4);
+		initialPlayer->add_visited_level_ids(21);
 		auto *activeQuest = initial.mutable_snapshot()->add_quests();
 		activeQuest->set_quest_id(3011);
 		activeQuest->set_required_progress(1);
@@ -66,6 +67,13 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		dialogueQuest->set_turn_in_towner_id(7);
 		dialogueQuest->set_turn_in_message_id(274);
 		dialogueQuest->set_turn_in_dialogue_only(true);
+		auto *blockedDialogueQuest = initial.mutable_snapshot()->add_quests();
+		blockedDialogueQuest->set_quest_id(3018);
+		blockedDialogueQuest->set_required_progress(1);
+		blockedDialogueQuest->set_turn_in_towner_id(12);
+		blockedDialogueQuest->set_turn_in_message_id(274);
+		blockedDialogueQuest->set_turn_in_dialogue_only(true);
+		blockedDialogueQuest->set_turn_in_blocked_visited_level(21);
 		auto *variableOneQuest = initial.mutable_snapshot()->add_quests();
 		variableOneQuest->set_quest_id(3014);
 		variableOneQuest->set_required_progress(1);
@@ -141,6 +149,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(1), std::optional<uint32_t> { 3002 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
+	EXPECT_FALSE((*session)->ActiveQuestForTowner(12).has_value());
 	EXPECT_EQ((*session)->ActiveQuestForTowner(8), std::optional<uint32_t> { 3014 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(9), std::optional<uint32_t> { 3002 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(11), std::optional<uint32_t> { 3020 });

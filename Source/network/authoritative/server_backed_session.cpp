@@ -238,6 +238,15 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 {
 	std::optional<uint32_t> result;
 	const auto *currentPlayer = playerState_.Snapshot();
+	const auto hasVisitedLevel = [&](uint32_t levelId) {
+		return currentPlayer != nullptr
+		    && levelId != 0
+		    && std::find(
+			       currentPlayer->visitedLevelIds.begin(),
+			       currentPlayer->visitedLevelIds.end(),
+			       levelId)
+			        != currentPlayer->visitedLevelIds.end();
+	};
 	for (const auto &interaction : questTownerInteractions_) {
 		if (interaction.towner_id() < 0
 		    || static_cast<uint32_t>(interaction.towner_id()) != townerId) {
@@ -252,15 +261,6 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || (!questIt->completed() && interaction.allow_completed())) {
 			continue;
 		}
-		const auto hasVisitedLevel = [&](uint32_t levelId) {
-			return currentPlayer != nullptr
-			    && levelId != 0
-			    && std::find(
-				       currentPlayer->visitedLevelIds.begin(),
-				       currentPlayer->visitedLevelIds.end(),
-				       levelId)
-				        != currentPlayer->visitedLevelIds.end();
-		};
 		if ((interaction.required_visited_level1() != 0
 		        || interaction.required_visited_level2() != 0)
 		    && !hasVisitedLevel(interaction.required_visited_level1())
@@ -287,6 +287,10 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || quest.turn_in_towner_id() < 0
 		    || static_cast<uint32_t>(quest.turn_in_towner_id()) != townerId
 		    || quest.unavailable()) {
+			continue;
+		}
+		if (quest.has_turn_in_blocked_visited_level()
+		    && hasVisitedLevel(quest.turn_in_blocked_visited_level())) {
 			continue;
 		}
 		const bool dialogueTurnIn = quest.turn_in_dialogue_only()

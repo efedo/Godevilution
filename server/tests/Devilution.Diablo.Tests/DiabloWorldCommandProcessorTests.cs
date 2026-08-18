@@ -1294,6 +1294,50 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void DialogueOnlyTurnInIsSuppressedAfterBlockedLevelVisit()
+    {
+        var items = new AuthoritativeItemCatalog([CreateQuestItem(43)]);
+        var quest = new AuthoritativeQuestState(
+            3017,
+            17,
+            1,
+            active: true,
+            turnInTownerId: 7,
+            turnInLevelId: 0,
+            turnInPositionX: 43,
+            turnInPositionY: 66,
+            turnInItemId: 43,
+            turnInMessageId: 274,
+            turnInDialogueOnly: true,
+            turnInBlockedVisitedLevel: 21);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 43, positionY: 66);
+        player.Inventory.Add(CreateQuestOwnedItem(items, 43, 1));
+        player.MarkLevelVisited(21);
+
+        var blocked = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3017, 7),
+            1,
+            [player]);
+
+        AssertRejected(blocked, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(0, quest.MessageId);
+
+        player.VisitedLevelIds.Clear();
+        var available = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3017, 7),
+            2,
+            [player]);
+
+        Assert.True(available.Succeeded, available.Failure?.ToString());
+        Assert.Equal(274, quest.MessageId);
+        Assert.Single(player.Inventory);
+    }
+
+    [Fact]
     public void QuestDialogueRejectsMismatchedUniqueIdentity()
     {
         var quest = new AuthoritativeQuestState(

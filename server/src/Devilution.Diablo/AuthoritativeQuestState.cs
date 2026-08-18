@@ -142,7 +142,8 @@ public sealed class AuthoritativeQuestState
         int turnInRequiredVariable1 = -1,
         int turnInVariable1 = -1,
         bool turnInProgressOnly = false,
-        int dialogueCompletionVariable1 = -1)
+        int dialogueCompletionVariable1 = -1,
+        uint turnInBlockedVisitedLevel = 0)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -194,6 +195,8 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInVariable1));
         if (dialogueCompletionVariable1 is < -1 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(dialogueCompletionVariable1));
+        if (turnInBlockedVisitedLevel > ushort.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInBlockedVisitedLevel));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -262,6 +265,7 @@ public sealed class AuthoritativeQuestState
         TurnInVariable1 = turnInVariable1;
         TurnInProgressOnly = turnInProgressOnly;
         DialogueCompletionVariable1 = dialogueCompletionVariable1;
+        TurnInBlockedVisitedLevel = turnInBlockedVisitedLevel;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -362,6 +366,8 @@ public sealed class AuthoritativeQuestState
     public int TurnInVariable1 { get; }
     /** Whether the turn-in consumes its item and reward but leaves the quest active. */
     public bool TurnInProgressOnly { get; }
+    /** Optional native level visitation marker that suppresses this towner turn-in. */
+    public uint TurnInBlockedVisitedLevel { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -521,7 +527,9 @@ public static class AuthoritativeQuestCatalog
                 turnInProgressOnly: row.OptionalBoolean("turn_in_progress_only"),
                 dialogueCompletionVariable1: row.OptionalInt32(
                     "dialogue_completion_variable1",
-                    -1)) {
+                    -1),
+                turnInBlockedVisitedLevel: row.OptionalUInt32(
+                    "turn_in_blocked_visited_level")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -587,6 +595,9 @@ public static class AuthoritativeQuestCatalog
                     || quest.TurnInProgressOnly))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} dialogue-only turn-in cannot declare rewards, alternate items, or variable gates.");
+            if (quest.TurnInBlockedVisitedLevel != 0 && !quest.TurnInDialogueOnly)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares a blocked visited level without a dialogue-only turn-in.");
             if (quest.TurnInProgressOnly
                 && (quest.TurnInActivationOnly
                     || quest.TurnInOnCompletion
