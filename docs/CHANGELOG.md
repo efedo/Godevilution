@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- The Diablo module now validates and preserves native `.dun` set-piece assets,
+  including mega tiles, the reserved layer, monsters, objects, and transparency
+  values. Collision interpretation and authoritative geometry materialization
+  remain an explicit later boundary.
+
 - Schema 1.364 externalizes native set-level map asset selection and entry
   points. Skeleton King's Lair, the Chamber of Bone, and Archbishop Lazarus'
   Lair now declare their pre-map/active-map assets and native spawn positions

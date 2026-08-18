@@ -211,6 +211,12 @@ Status date: 2026-08-18
   simulation metadata; loading the binary assets, synthesizing geometry, and
   routing set-level transitions remain separate.
 
+- The Diablo module now has a strict native `.dun` parser that preserves the
+  mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
+  transparency) from checked-in native fixtures. It deliberately does not
+  infer walkability from tile IDs; collision interpretation and set-level
+  geometry materialization remain the next native-parity boundary.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes

@@ -225,7 +225,8 @@ Guardian controller rows: the server validates the spell behavior, creates
 the resumable projectile, and the client only presents its projected state.
 Optional target offsets are also server-owned metadata, so native book-relative
 coordinates can be authored without client-side gameplay. Set-level placement
-and map effects remain content seams still being filled from native data.
+and map effects remain content seams still being filled from native data; the
+Diablo module now parses native `.dun` layers without guessing collision rules.
 
 ## Remaining native-only interaction inventory
 
