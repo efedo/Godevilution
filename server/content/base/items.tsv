@@ -1,6 +1,10 @@
 item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor_class	durability	max_durability	inventory_width	inventory_height	identified	item_tags	equip_location	item_class	misc_id	spell_id	spell_symbol	flags	min_strength	min_magic	min_dexterity	native_item_index	charges	max_charges	spell_source_kind	name	identified_name	cursor_graphic	min_monster_level	drop_rate	usable	special_effects	hellfire_effects	min_armor_class	max_armor_class	item_action_kind	item_action_amount
 1	short_sword	1	75	75	4	8	0	20	20	1	1	1	Weapon,Sword	0	0	0	0		0	0	0	0	1	0	0	None	Short Sword	Short Sword	SHORT_SWORD	2	0	false			0	0	None	1
 2	buckler	1	25	25	0	0	5	20	20	1	1	1	Armor,Shield	0	0	0	0		0	0	0	0	2	0	0	None	Buckler	Buckler	BUCKLER	2	0	false			5	5	None	1
+2139	black_mushroom	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	17	0	0	None	Black Mushroom	Black Mushroom	BLACK_MUSHROOM	0	0	false			0	0	None	1
+2140	brain	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	18	0	0	None	Brain	Brain	BRAIN	0	0	false			0	0	None	1
+2141	fungal_tome	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	19	0	0	None	Fungal Tome	Fungal Tome	FUNGAL_TOME	0	0	false			0	0	None	1
+2142	spectral_elixir	0	0	0	0	0	0	0	0	1	1	1	Misc	7	3	45	0		0	0	0	0	20	0	0	None	Spectral Elixir	Spectral Elixir	SPECTRAL_ELIXIR	15	0	true			0	0	IncreaseAllAttributes	3
 116	harlequin_crest	7	4000	4000	0	0	0	15	15	1	1	1	Armor,Helmet	4	2	28	0		0	0	0	15	0	0	0	None	Harlequin Crest	Harlequin Crest	HARLEQUIN_CREST	1	1	true			0	0	None	1
 119	griswold_s_edge	1	750	750	4	12	0	50	50	1	1	1	Weapon,Sword,OneHanded	1	1	28	0		2	40	0	0	32	0	0	None	Griswold's Edge	Griswold's Edge	BROAD_SWORD	0	0	false			0	0	None	1
 2135	magic_rock	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	9	0	0	None	Magic Rock	Magic Rock	MAGIC_ROCK	0	0	false			0	0	None	1

@@ -1,3 +1,4 @@
 item_id	item_symbol	quest_id	quest_symbol	effect_kind	effect_amount	required_variable1
+2139	black_mushroom	3002	black_mushroom	SetVariable1	4	3
 2135	magic_rock	3001	magic_rock	ActivateQuest	1	NONE
 2138	anvil_of_fury	3011	anvil_of_fury	ActivateQuest	1	NONE

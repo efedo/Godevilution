@@ -744,6 +744,12 @@ message QuestSnapshot {
 	optional int32 turn_in_completion_required_variable1 = 22;
 	// Optional native _qvar1 marker written by a completion-stage interaction.
 	optional int32 turn_in_completion_variable1 = 23;
+	// Optional native _qvar1 gate for an active staged item hand-in.
+	optional int32 turn_in_required_variable1 = 24;
+	// Optional native _qvar1 marker written by an active staged item hand-in.
+	optional int32 turn_in_variable1 = 25;
+	// Whether the staged item hand-in leaves the quest active after applying it.
+	bool turn_in_progress_only = 26;
 }
 
 message ProjectileSnapshot {

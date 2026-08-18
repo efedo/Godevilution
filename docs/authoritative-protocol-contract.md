@@ -202,6 +202,9 @@ authored message; the server then records the message and leaves inventory and
 quest completion state unchanged. Optional fields 22-23 carry a native
 `_qvar1` completion-stage gate and marker for quests whose one-shot conversation
 does not use `_qvar2`.
+Optional fields 24-26 carry an active staged item hand-in's `_qvar1` gate,
+marker, and progress-only flag. The latter keeps the quest active after the
+server consumes the authored item and creates its reward.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are

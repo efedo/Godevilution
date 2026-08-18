@@ -138,7 +138,10 @@ public sealed class AuthoritativeQuestState
         int routeActivationVariable1 = -1,
         int turnInCompletionRequiredVariable1 = -1,
         int turnInCompletionVariable1 = -1,
-        bool turnInDialogueOnly = false)
+        bool turnInDialogueOnly = false,
+        int turnInRequiredVariable1 = -1,
+        int turnInVariable1 = -1,
+        bool turnInProgressOnly = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -184,6 +187,10 @@ public sealed class AuthoritativeQuestState
             throw new ArgumentOutOfRangeException(nameof(turnInCompletionRequiredVariable1));
         if (turnInCompletionVariable1 is < -1 or > byte.MaxValue)
             throw new ArgumentOutOfRangeException(nameof(turnInCompletionVariable1));
+        if (turnInRequiredVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInRequiredVariable1));
+        if (turnInVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(turnInVariable1));
         if (dialogueRewardItemLevel is < 0 or > 255)
             throw new ArgumentOutOfRangeException(nameof(dialogueRewardItemLevel));
         if (dialogueCompletionMessageId < 0 || dialogueCompletionMessageId > short.MaxValue)
@@ -248,6 +255,9 @@ public sealed class AuthoritativeQuestState
         TurnInCompletionRequiredVariable1 = turnInCompletionRequiredVariable1;
         TurnInCompletionVariable1 = turnInCompletionVariable1;
         TurnInDialogueOnly = turnInDialogueOnly;
+        TurnInRequiredVariable1 = turnInRequiredVariable1;
+        TurnInVariable1 = turnInVariable1;
+        TurnInProgressOnly = turnInProgressOnly;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -340,6 +350,12 @@ public sealed class AuthoritativeQuestState
     public int TurnInCompletionVariable1 { get; }
     /** Whether the towner emits one item-gated dialogue without consuming or changing quest state. */
     public bool TurnInDialogueOnly { get; }
+    /** Optional native _qvar1 gate for an active staged item hand-in. */
+    public int TurnInRequiredVariable1 { get; }
+    /** Optional native _qvar1 marker written by an active staged item hand-in. */
+    public int TurnInVariable1 { get; }
+    /** Whether the turn-in consumes its item and reward but leaves the quest active. */
+    public bool TurnInProgressOnly { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -491,7 +507,12 @@ public static class AuthoritativeQuestCatalog
                 turnInCompletionVariable1: row.OptionalInt32(
                     "turn_in_completion_variable1",
                     -1),
-                turnInDialogueOnly: row.OptionalBoolean("turn_in_dialogue_only")) {
+                turnInDialogueOnly: row.OptionalBoolean("turn_in_dialogue_only"),
+                turnInRequiredVariable1: row.OptionalInt32(
+                    "turn_in_required_variable1",
+                    -1),
+                turnInVariable1: row.OptionalInt32("turn_in_variable1", -1),
+                turnInProgressOnly: row.OptionalBoolean("turn_in_progress_only")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -551,9 +572,28 @@ public static class AuthoritativeQuestCatalog
                 && (quest.TurnInRewardUniqueId != 0
                     || quest.TurnInRewardItemId != 0
                     || quest.TurnInAlternateItemId != 0
-                    || quest.TurnInRequiredVariable2 >= 0))
+                    || quest.TurnInRequiredVariable2 >= 0
+                    || quest.TurnInRequiredVariable1 >= 0
+                    || quest.TurnInVariable1 >= 0
+                    || quest.TurnInProgressOnly))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} dialogue-only turn-in cannot declare rewards, alternate items, or variable gates.");
+            if (quest.TurnInProgressOnly
+                && (quest.TurnInActivationOnly
+                    || quest.TurnInOnCompletion
+                    || quest.TurnInDialogueOnly))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} staged turn-in cannot be activation-only, completion-stage, or dialogue-only.");
+            if (quest.TurnInProgressOnly
+                && (quest.TurnInRequiredVariable1 < 0
+                    || quest.TurnInVariable1 < 0
+                    || quest.TurnInItemId == 0))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} staged turn-in requires an item and variable-1 gate/marker.");
+            if (!quest.TurnInProgressOnly
+                && (quest.TurnInRequiredVariable1 >= 0 || quest.TurnInVariable1 >= 0))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} declares staged variable-1 fields without enabling a staged turn-in.");
             if (quest.TurnInAlternateItemId != 0
                 && !items.TryGet(quest.TurnInAlternateItemId, out _))
                 throw new InvalidDataException(

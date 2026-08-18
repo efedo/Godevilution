@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.342.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.343.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -71,7 +71,7 @@ public sealed class ShippedContentTests
             "item_quest_effects.tsv",
             pack.Tables.Single(table => table.SourcePath == "item_quest_effects.tsv").ToCanonicalTsv(),
             stableIds);
-        Assert.Equal(2, effects.Definitions.Count);
+        Assert.Equal(3, effects.Definitions.Count);
         var pickupEffect = Assert.Single(effects.Definitions, effect => effect.ItemId == 2135);
         Assert.Equal((2135U, 3001U, AuthoritativeItemQuestEffectKind.ActivateQuest, 1), (
             pickupEffect.ItemId,
@@ -84,6 +84,13 @@ public sealed class ShippedContentTests
             anvilPickupEffect.QuestId,
             anvilPickupEffect.EffectKind,
             anvilPickupEffect.EffectAmount));
+        var mushroomPickupEffect = Assert.Single(effects.Definitions, effect => effect.ItemId == 2139);
+        Assert.Equal((2139U, 3002U, AuthoritativeItemQuestEffectKind.SetVariable1, 4), (
+            mushroomPickupEffect.ItemId,
+            mushroomPickupEffect.QuestId,
+            mushroomPickupEffect.EffectKind,
+            mushroomPickupEffect.EffectAmount));
+        Assert.Equal(3, mushroomPickupEffect.RequiredVariable1);
 
         var anvilQuest = Assert.Single(quests, quest => quest.QuestId == 3011);
         Assert.Equal((88, 90, 0, 0U, 62, 63, 2138U, 1, 1010U, 1, 61, 64), (
@@ -1591,7 +1598,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.342.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.343.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1757,6 +1764,20 @@ public sealed class ShippedContentTests
         Assert.Equal(9100, generatedPoisonWaterReward.Value);
         Assert.Equal(10 << 6, generatedPoisonWaterReward.PlusHitPoints);
         Assert.Equal(10, generatedPoisonWaterReward.PlusMagicResistance);
+        var mushroomQuest = activation.Simulation.WorldState.Quests[3002];
+        Assert.Equal((1, 0U, 55, 79, 2140U, 124, 2142U, 55, 80, 5, 7, true), (
+            mushroomQuest.TurnInTownerId,
+            mushroomQuest.TurnInLevelId,
+            mushroomQuest.TurnInPositionX,
+            mushroomQuest.TurnInPositionY,
+            mushroomQuest.TurnInItemId,
+            mushroomQuest.TurnInMessageId,
+            mushroomQuest.TurnInRewardItemId,
+            mushroomQuest.TurnInRewardPositionX,
+            mushroomQuest.TurnInRewardPositionY,
+            mushroomQuest.TurnInRequiredVariable1,
+            mushroomQuest.TurnInVariable1,
+            mushroomQuest.TurnInProgressOnly));
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,

@@ -233,6 +233,10 @@ Windows toolchain command.
   lets a native client route an item-gated quest conversation without consuming
   the item or changing completion state; after the server records the message,
   the client returns to the normal local towner path.
+- `QuestSnapshot` fields 24-26 carry an active staged item hand-in's optional
+  `_qvar1` gate, marker, and progress-only flag. The server consumes the
+  authored item and reward while retaining the quest's active/completion state;
+  absent fields preserve the completing-turn-in behavior.
 - `ItemStateSnapshot.base_name`, `identified_name`, and optional
   `native_cursor_graphic` fields 59-61 carry runtime-authored presentation for
   dynamic items such as PvP ears. A dynamic identity is complete only when

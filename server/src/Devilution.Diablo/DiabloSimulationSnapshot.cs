@@ -276,7 +276,10 @@ public sealed record DiabloQuestState(
     int TurnInMessageId = 0,
     bool TurnInDialogueOnly = false,
     int TurnInCompletionRequiredVariable1 = -1,
-    int TurnInCompletionVariable1 = -1);
+    int TurnInCompletionVariable1 = -1,
+    int TurnInRequiredVariable1 = -1,
+    int TurnInVariable1 = -1,
+    bool TurnInProgressOnly = false);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -609,7 +612,10 @@ public sealed partial class DiabloSimulation
                     quest.TurnInMessageId,
                     quest.TurnInDialogueOnly,
                     quest.TurnInCompletionRequiredVariable1,
-                    quest.TurnInCompletionVariable1))
+                    quest.TurnInCompletionVariable1,
+                    quest.TurnInRequiredVariable1,
+                    quest.TurnInVariable1,
+                    quest.TurnInProgressOnly))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1470,7 +1476,9 @@ public sealed partial class DiabloSimulation
                 || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
                 || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
                 || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
-                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue) {
+                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInVariable1 is < -1 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -2038,7 +2046,10 @@ public sealed partial class DiabloSimulation
                     turnInMessageId: quest.TurnInMessageId,
                     turnInDialogueOnly: quest.TurnInDialogueOnly,
                     turnInCompletionRequiredVariable1: quest.TurnInCompletionRequiredVariable1,
-                    turnInCompletionVariable1: quest.TurnInCompletionVariable1));
+                    turnInCompletionVariable1: quest.TurnInCompletionVariable1,
+                    turnInRequiredVariable1: quest.TurnInRequiredVariable1,
+                    turnInVariable1: quest.TurnInVariable1,
+                    turnInProgressOnly: quest.TurnInProgressOnly));
             }
         }
     }

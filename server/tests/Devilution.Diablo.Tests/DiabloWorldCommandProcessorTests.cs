@@ -1630,6 +1630,67 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredStagedTurnInConsumesBrainKeepsQuestActiveAndSpawnsSpectralElixir()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2140, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            new AuthoritativeItemDefinition(2142, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var brain = items.Generate(2140, 42);
+        var player = CreatePlayer(
+            positionX: 55,
+            positionY: 79,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, brain.CreateInfo, 0, 0, brain)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3002,
+            9,
+            1,
+            variable1: 5,
+            turnInTownerId: 1,
+            turnInLevelId: 0,
+            turnInPositionX: 55,
+            turnInPositionY: 79,
+            turnInItemId: 2140,
+            turnInMessageId: 124,
+            turnInRewardItemId: 2142,
+            turnInRewardPositionX: 55,
+            turnInRewardPositionY: 80,
+            turnInRequiredVariable1: 5,
+            turnInVariable1: 7,
+            turnInProgressOnly: true);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 1),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(0U, quest.Progress);
+        Assert.Equal(7, quest.Variable1);
+        Assert.Empty(player.Inventory);
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal(2142U, reward.State.StableItemId);
+        Assert.Equal((55, 80), (reward.PositionX, reward.PositionY));
+        Assert.Equal(124, Assert.Single(result.Events).MessageId);
+
+        var retry = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3002, 1),
+            2,
+            [player]);
+
+        Assert.False(retry.Succeeded);
+        Assert.Single(world.WorldItems);
+    }
+
+    [Fact]
     public void AuthoredJerseyTurnInConsumesBrownSuitAndSpawnsBovinePlate()
     {
         var uniques = new AuthoritativeUniqueItemCatalog([

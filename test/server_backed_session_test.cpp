@@ -73,6 +73,14 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		variableOneQuest->set_turn_in_on_completion(true);
 		variableOneQuest->set_turn_in_completion_required_variable1(0);
 		variableOneQuest->set_turn_in_completion_variable1(2);
+		auto *stagedTurnInQuest = initial.mutable_snapshot()->add_quests();
+		stagedTurnInQuest->set_quest_id(3002);
+		stagedTurnInQuest->set_required_progress(1);
+		stagedTurnInQuest->set_variable_1(5);
+		stagedTurnInQuest->set_turn_in_towner_id(9);
+		stagedTurnInQuest->set_turn_in_progress_only(true);
+		stagedTurnInQuest->set_turn_in_required_variable1(5);
+		stagedTurnInQuest->set_turn_in_variable1(7);
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -114,8 +122,9 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	ASSERT_TRUE(session.has_value()) << session.error();
 	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(1), std::optional<uint32_t> { 3002 });
-	EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
-	EXPECT_EQ((*session)->ActiveQuestForTowner(8), std::optional<uint32_t> { 3014 });
+		EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
+		EXPECT_EQ((*session)->ActiveQuestForTowner(8), std::optional<uint32_t> { 3014 });
+		EXPECT_EQ((*session)->ActiveQuestForTowner(9), std::optional<uint32_t> { 3002 });
 	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Defiler"), std::optional<uint32_t> { 3011 });
 	EXPECT_FALSE((*session)->ActiveQuestForUniqueIdentity("Na-Krul").has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);

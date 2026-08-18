@@ -1927,6 +1927,11 @@ Status date: 2026-08-17
   Water uses the new fields for Pepin's native completion conversation and
   Ring of Truth reward.
 
+- Schema 1.343 adds active staged item turn-ins with `_qvar1` gates and
+  progress-only markers. Base Black Mushroom now externalizes Pepin's Brain
+  hand-in, Spectral Elixir reward, and native `_qvar1 = 7` transition while
+  leaving the quest active for Adria's later conversation.
+
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item
   consumption, and Empyrean Band unique reward.

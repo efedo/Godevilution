@@ -1384,6 +1384,11 @@ public sealed class DiabloWorldCommandProcessor
             || (completionStage
                 && quest.TurnInCompletionRequiredVariable1 >= 0
                 && quest.Variable1 != quest.TurnInCompletionRequiredVariable1)
+            || (!completionStage
+                && quest.TurnInProgressOnly
+                && (quest.TurnInRequiredVariable1 < 0
+                    || quest.TurnInVariable1 < 0
+                    || quest.Variable1 != quest.TurnInRequiredVariable1))
             || quest.TurnInLevelId != player.LevelId
             || Math.Max(
                 Math.Abs(quest.TurnInPositionX - player.PositionX),
@@ -1550,6 +1555,11 @@ public sealed class DiabloWorldCommandProcessor
                     });
         }
 
+        if (quest.TurnInProgressOnly
+            && quest.Variable1 != quest.TurnInRequiredVariable1) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
         if (quest.TurnInItemId == 0
             || !items.TryGet(quest.TurnInItemId, out var requiredItem)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -1595,18 +1605,22 @@ public sealed class DiabloWorldCommandProcessor
 
         InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, inventoryIndex);
         player.Inventory.RemoveAt(inventoryIndex);
-        quest.Progress = quest.RequiredProgress;
-        quest.Completed = true;
-        quest.Active = false;
         quest.Logged = true;
-        quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
-        quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
+        if (quest.TurnInProgressOnly) {
+            quest.Variable1 = Math.Max(quest.Variable1, quest.TurnInVariable1);
+        } else {
+            quest.Progress = quest.RequiredProgress;
+            quest.Completed = true;
+            quest.Active = false;
+            quest.Variable1 = Math.Max(quest.Variable1, quest.CompletionVariable1);
+            quest.Variable2 = Math.Max(quest.Variable2, quest.CompletionVariable2);
 
-        if (quest.CompletionActivateQuestId != 0
-            && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
-            && !nextQuest.Unavailable
-            && !nextQuest.Completed) {
-            nextQuest.Active = true;
+            if (quest.CompletionActivateQuestId != 0
+                && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var nextQuest)
+                && !nextQuest.Unavailable
+                && !nextQuest.Completed) {
+                nextQuest.Active = true;
+            }
         }
 
         if (quest.TurnInRewardUniqueId != 0) {
