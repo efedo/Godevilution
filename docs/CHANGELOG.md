@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Render typed authoritative dialogue events in the Godot interaction panel
+  using quest/message identities, without embedding native text tables in the
+  protocol client.
+
 - Add schema 1.356 staged Warlord dialogue content. The two deterministic
   `_qvar1` transitions for Warlord's authored message now use
   `quest_dialogue_stages.tsv` through `TalkToQuestRequested`, preserving the

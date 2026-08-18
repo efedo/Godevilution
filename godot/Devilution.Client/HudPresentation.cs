@@ -406,6 +406,7 @@ public partial class HudPresentation : CanvasLayer
             GameEvent.EventOneofCase.Damage => $"Damage {@event.Damage.Amount} to entity {@event.Damage.TargetEntityId}",
             GameEvent.EventOneofCase.Experience => $"Experience +{@event.Experience.Amount}",
             GameEvent.EventOneofCase.Healing => $"Healing +{FormatQ6(@event.Healing.AmountQ6 != 0 ? @event.Healing.AmountQ6 : @event.Healing.Amount)}",
+            GameEvent.EventOneofCase.Dialogue => AuthoritativeDialoguePresentation.Format(@event.Dialogue),
             _ => "Authoritative event",
         }));
         return lines.Count == 0 ? "No interaction selected." : string.Join("\n", lines);

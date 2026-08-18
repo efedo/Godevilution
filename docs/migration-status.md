@@ -33,6 +33,10 @@ Status date: 2026-08-18
   and reveal-gated trap presentation families, while older or unknown metadata
   retains the generic Godot object path.
 
+- Godot's interaction panel now renders typed server-owned dialogue events as
+  quest/message identities without importing native text tables; localized text
+  remains a later presentation/content concern.
+
 - Dynamic spell-book selection now derives single-player exclusions from the
   validated `Resurrection` and `HealOther` spell behaviors, while retaining the
   native-ID fallback needed by older content packs and multiplayer availability.
