@@ -204,7 +204,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.ItemQuestEffects,
             options.SpellBooks,
             options.QuestTownerInteractions,
-            options.QuestDialogueStages);
+            options.QuestDialogueStages,
+            spells);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,

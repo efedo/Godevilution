@@ -485,6 +485,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objects, itemCatalog!);
         if (objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objects, itemCatalog!);
+        if (objects is not null && spells is not null)
+            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objects, spells);
+        if (objects?.Any(@object => @object.EffectKind
+                == AuthoritativeObjectEffectKind.GrantSpellLevel) == true
+            && spells is null) {
+            throw new InvalidDataException(
+                "Spell-level grant objects require an active spell catalog.");
+        }
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world);
         if (objects?.Any(@object => @object.EffectKind

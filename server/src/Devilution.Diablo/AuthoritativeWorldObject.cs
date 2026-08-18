@@ -241,6 +241,11 @@ public static class AuthoritativeWorldObjectCatalog
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
+        if (objects.Any(@object => @object.EffectKind
+                == AuthoritativeObjectEffectKind.GrantSpellLevel
+                && @object.EffectAmount <= 0))
+            throw new InvalidDataException(
+                $"Object table '{sourcePath}' contains an invalid spell-level grant object.");
         if (objects.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
                 && @object.QuestId == 0))
             throw new InvalidDataException(
@@ -305,6 +310,21 @@ public static class AuthoritativeWorldObjectCatalog
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown world mutation {@object.EffectAmount}.");
             }
+        }
+    }
+
+    /** Validates spell identities encoded by authored spell-level objects. */
+    public static void ValidateSpellRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(spells);
+        foreach (var @object in objects.Where(@object =>
+                     @object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)) {
+            if (!spells.TryGet(checked((uint)@object.EffectAmount), out _))
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown spell {@object.EffectAmount}.");
         }
     }
 

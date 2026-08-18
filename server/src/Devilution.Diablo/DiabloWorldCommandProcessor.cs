@@ -15,6 +15,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeQuestTypeCatalog? questTypes;
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeSpellCatalog? spells;
     private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
     private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
@@ -37,7 +38,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
-        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
+        AuthoritativeSpellCatalog? spells = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -49,6 +51,7 @@ public sealed class DiabloWorldCommandProcessor
         this.questTypes = questTypes;
         this.gameMode = gameMode;
         this.items = items;
+        this.spells = spells;
         this.itemCombinations = itemCombinations;
         this.itemQuestEffects = itemQuestEffects;
         this.spellBooks = spellBooks;
@@ -994,6 +997,8 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (!CanApplyObjectSpellEffect(@object))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object);
@@ -1022,6 +1027,8 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         SpawnObjectReward(@object, player);
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
+            ApplyGrantedSpellLevel(player, checked((uint)@object.EffectAmount));
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
             || @object.EffectAmount <= 0)
             return DiabloWorldIntentResult.Accepted;
@@ -1072,6 +1079,29 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
         }
     }
+
+    private void ApplyGrantedSpellLevel(
+        AuthoritativePlayerState player,
+        uint spellId)
+    {
+        if (spells is null || !spells.TryGet(spellId, out _))
+            throw new InvalidDataException(
+                $"Object spell-level grant references unknown spell {spellId}.");
+        var index = player.MemorizedSpells.FindIndex(spell => spell.SpellId == spellId);
+        var currentLevel = index >= 0 ? player.MemorizedSpells[index].Level : 0;
+        var nextLevel = Math.Min(
+            (uint)AuthoritativePlayerLoadoutCatalog.MaximumNativeSpellLevel,
+            checked(currentLevel + 1));
+        if (index >= 0)
+            player.MemorizedSpells[index] = new MemorizedSpellState(spellId, nextLevel);
+        else
+            player.MemorizedSpells.Add(new MemorizedSpellState(spellId, nextLevel));
+    }
+
+    private bool CanApplyObjectSpellEffect(AuthoritativeWorldObject @object)
+        => @object.EffectKind != AuthoritativeObjectEffectKind.GrantSpellLevel
+            || @object.EffectAmount > 0
+                && spells?.TryGet(checked((uint)@object.EffectAmount), out _) == true;
 
     private void ApplyQuestTransition(AuthoritativeWorldObject @object)
     {

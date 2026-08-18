@@ -12,6 +12,8 @@ public enum AuthoritativeObjectEffectKind
     QuestItemCompletion,
     /** Applies one validated level-cell overlay when the object is activated. */
     WorldMutation,
+    /** Grants one level of the spell identified by effect_amount. */
+    GrantSpellLevel,
 }
 
 /** Native quest-state transition applied when an authored object is activated. */

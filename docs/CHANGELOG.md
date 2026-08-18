@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the validated `GrantSpellLevel` object effect. An authored book/lever
+  row can now grant one level of an active catalog spell through
+  `OperateObjectRequested`; the server validates the spell, persists the
+  memorized-spell state, and projects it through the existing player snapshot.
+  Set-level placement and native projectile/map effects remain separate seams.
+
 - Add validated authored object rewards. Object rows can now generate a
   deterministic normal or unique item at a validated relative position when
   activated; reward metadata persists and projects through snapshots, while
