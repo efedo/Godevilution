@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.354 staged unique-monster dialogue content. Base Gharbad's four
+  user-visible messages and monotonic quest-variable transitions now run through
+  `quest_dialogue_stages.tsv` and the server-owned `TalkToQuestRequested` path;
+  its random item reward and map mutations remain native compatibility fallbacks.
+
 - Apply validated unique-monster selectors during procedural encounter
   materialization. Static rows remain strict, while generated selector rows
   bind exactly one matching unique target when its level is spawned.

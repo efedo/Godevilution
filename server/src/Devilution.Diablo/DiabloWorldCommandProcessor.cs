@@ -19,6 +19,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
     private readonly AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions;
+    private readonly AuthoritativeQuestDialogueStageCatalog? questDialogueStages;
     private uint nextWorldItemEntityId = 0x40000000;
 
     public DiabloWorldCommandProcessor(
@@ -35,7 +36,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeItemCombinationCatalog? itemCombinations = null,
         AuthoritativeItemQuestEffectCatalog? itemQuestEffects = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null)
+        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -51,6 +53,7 @@ public sealed class DiabloWorldCommandProcessor
         this.itemQuestEffects = itemQuestEffects;
         this.spellBooks = spellBooks;
         this.questTownerInteractions = questTownerInteractions;
+        this.questDialogueStages = questDialogueStages;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -1225,6 +1228,30 @@ public sealed class DiabloWorldCommandProcessor
                 Math.Abs(target.PositionX - player.PositionX),
                 Math.Abs(target.PositionY - player.PositionY)) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
+        if (questDialogueStages?.ContainsQuest(questId) == true) {
+            if (!questDialogueStages.TryGet(
+                    questId,
+                    quest.Variable1,
+                    quest.Variable2,
+                    out var stage)) {
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
+            quest.Active = true;
+            quest.Logged = true;
+            quest.Variable1 = Math.Max(quest.Variable1, stage.NextVariable1);
+            quest.Variable2 = Math.Max(quest.Variable2, stage.NextVariable2);
+            return DiabloWorldIntentResult.AcceptedWith(
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Dialogue,
+                    player.EntityId,
+                    target.EntityId,
+                    0) {
+                    MessageId = stage.MessageId,
+                    QuestId = quest.QuestId,
+                });
         }
 
         var dialogueInventoryIndex = -1;

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.353.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.354.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -40,6 +40,24 @@ public sealed class ShippedContentTests
             Assert.Equal(0U, definition.MonsterId);
             Assert.NotEmpty(definition.NativeAi);
         });
+    }
+
+    [Fact]
+    public void BaseContentPackDeclaresGharbadDialogueStages()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var table = pack.Tables.Single(table => table.SourcePath == "quest_dialogue_stages.tsv");
+        var catalog = AuthoritativeQuestDialogueStageCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv());
+
+        Assert.Equal(
+            [(0, 144, 1), (1, 145, 3), (3, 146, 4), (4, 147, 5)],
+            catalog.Definitions.Select(stage => (
+                stage.RequiredVariable1,
+                stage.MessageId,
+                stage.NextVariable1)));
     }
 
     [Fact]
@@ -1648,7 +1666,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.353.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.354.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

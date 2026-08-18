@@ -59,6 +59,9 @@ public sealed class DiabloSimulationOptions
     /** Validated repeatable quest/towner interactions supplied by content. */
     public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; init; }
 
+    /** Validated staged unique-monster dialogue supplied by content. */
+    public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; init; }
+
     public IReadOnlyList<AuthoritativeProjectile>? Projectiles { get; init; }
 
     /** Server-owned corpse tiles available to corpse-consuming monster AI. */
@@ -193,7 +196,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.ItemCombinations,
             options.ItemQuestEffects,
             options.SpellBooks,
-            options.QuestTownerInteractions);
+            options.QuestTownerInteractions,
+            options.QuestDialogueStages);
         return new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -241,7 +245,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Difficulty,
             options.MonsterTypes,
             options.SpellBooks,
-            options.QuestTownerInteractions);
+            options.QuestTownerInteractions,
+            options.QuestDialogueStages);
     }
 }
 
@@ -284,7 +289,8 @@ public sealed partial class DiabloSimulation
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
-        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null)
+        AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -307,6 +313,7 @@ public sealed partial class DiabloSimulation
         this.monsterTypes = monsterTypes;
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
+        QuestDialogueStages = questDialogueStages;
         ReconcileProceduralSpawnState();
     }
 
@@ -324,6 +331,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated repeatable quest/towner interactions projected to clients. */
     public AuthoritativeQuestTownerInteractionCatalog? QuestTownerInteractions { get; }
+
+    /** Validated staged unique-monster dialogue projected to world commands. */
+    public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
 
     /** Validated content rules governing this Diablo simulation instance. */
     public AuthoritativeCombatRules CombatRules { get; }

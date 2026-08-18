@@ -1071,6 +1071,56 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedQuestDialogueAppliesAuthoredMessagesAndVariableTransitions()
+    {
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            active: false,
+            completionUniqueIdentity: "Gharbad",
+            dialogueCompletionVariable1: 5);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            1,
+            0,
+            100,
+            levelId: 0,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(3003, 0, -1, 144, 1, 0),
+            new(3003, 1, -1, 145, 3, 0),
+            new(3003, 3, -1, 146, 4, 0),
+            new(3003, 4, -1, 147, 5, 0),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questDialogueStages: stages);
+        var player = CreatePlayer(entityId: 7);
+
+        foreach (var expected in new[] {
+            (MessageId: 144, Variable1: 1),
+            (MessageId: 145, Variable1: 3),
+            (MessageId: 146, Variable1: 4),
+            (MessageId: 147, Variable1: 5),
+        }) {
+            var result = processor.Execute(
+                player,
+                new DiabloTalkToQuestIntent(3003, 20),
+                (ulong)expected.Variable1,
+                [player]);
+
+            Assert.True(result.Succeeded, result.Failure?.ToString());
+            Assert.Equal(expected.Variable1, quest.Variable1);
+            Assert.Equal(expected.MessageId, Assert.Single(result.Events).MessageId);
+            Assert.True(quest.Active);
+            Assert.False(quest.Completed);
+        }
+    }
+
+    [Fact]
     public void ContentOwnedQuestTownerStagesShareOneQuestAndConsumeBeltItems()
     {
         var items = new AuthoritativeItemCatalog([

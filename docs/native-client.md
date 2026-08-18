@@ -186,9 +186,13 @@ Defiler is the first conversation-only definition, Lachdanan is the first
 hand-in definition, and base Warlord declares its subsequent `_qvar1` transition
 into the native attacking state. Base Gharbad, Zhar, Warlord, and Lazarus
 identities are now declared independently of static placement and are applied
-when their validated procedural unique encounters materialize. Unauthored
-legacy monster conversations retain their local fallback until their content
-actions are externalized.
+when their validated procedural unique encounters materialize. Gharbad's four
+user-visible dialogue stages now use the server-owned
+`quest_dialogue_stages.tsv` contract for authored messages and monotonic
+quest-variable transitions. Its random item reward and quest-specific map
+mutations remain local fallbacks until those effects are externalized.
+Unauthored legacy monster conversations retain their local fallback until
+their content actions are externalized.
 
 Content-declared quest objects now use the same `OperateObjectRequested`
 boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
@@ -202,10 +206,11 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns the Snotspill banner conversation and Gharbad's
-  staged dialogue; their dynamic unique-monster identities and quest-specific
-  map changes need content-backed encounter definitions before they can move
-  to `TalkToQuestRequested`.
+- `TalktoMonster` still owns the Snotspill banner conversation, Gharbad's
+  random item reward, and Gharbad/Snotspill quest-specific map changes.
+  Gharbad's authored dialogue messages and quest-variable transitions now move
+  through `TalkToQuestRequested`; the remaining dynamic effects need their own
+  content-backed encounter and map-mutation definitions.
 - Warlord's staged unique-monster conversation now uses the authored
   `dialogue_completion_variable1` combat gate through `TalkToQuestRequested`;
   its remaining presentation speech and legacy fallback are still retained.

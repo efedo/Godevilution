@@ -217,6 +217,13 @@ Status date: 2026-08-18
   selector declarations; static activation defers unmatched selectors, and
   the planner binds them only when the matching unique encounter materializes.
 
+- Schema 1.354 adds `quest_dialogue_stages.tsv`, a reusable server-owned
+  contract for user-visible unique-monster dialogue messages and monotonic
+  `_qvar1`/`_qvar2` transitions. Base Gharbad now routes all four authored
+  dialogue stages through `TalkToQuestRequested`; its random item reward and
+  quest-specific map mutations remain explicit native fallbacks until those
+  effects have their own content contracts.
+
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one
   unique encounter by validated monster ID and native AI, preserving the
