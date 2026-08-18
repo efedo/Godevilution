@@ -1239,10 +1239,41 @@ public sealed class DiabloWorldCommandProcessor
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            quest.Active = true;
+            var stageInventoryIndex = -1;
+            if (stage.RequiredItemId != 0) {
+                if (items is null
+                    || !items.TryGet(stage.RequiredItemId, out var requiredItem)) {
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                }
+                for (var index = 0; index < player.Inventory.Count; index++) {
+                    if (items.IsStateForDefinition(
+                            player.Inventory[index].State,
+                            requiredItem)) {
+                        stageInventoryIndex = index;
+                        break;
+                    }
+                }
+                if (stageInventoryIndex < 0)
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
+            if (stageInventoryIndex >= 0 && stage.ConsumeItem) {
+                InventoryGridLayout.RemoveAndCompact(
+                    player.InventoryGrid,
+                    stageInventoryIndex);
+                player.Inventory.RemoveAt(stageInventoryIndex);
+            }
+
             quest.Logged = true;
             quest.Variable1 = Math.Max(quest.Variable1, stage.NextVariable1);
             quest.Variable2 = Math.Max(quest.Variable2, stage.NextVariable2);
+            if (stage.CompleteQuest) {
+                quest.Progress = quest.RequiredProgress;
+                quest.Completed = true;
+                quest.Active = false;
+            } else {
+                quest.Active = true;
+            }
             return DiabloWorldIntentResult.AcceptedWith(
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Dialogue,

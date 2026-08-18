@@ -1,5 +1,7 @@
-quest_id	quest_symbol	required_variable1	required_variable2	message_id	next_variable1	next_variable2
-3003	gharbads_weak	0	-1	144	1	0
-3003	gharbads_weak	1	-1	145	3	0
-3003	gharbads_weak	3	-1	146	4	0
-3003	gharbads_weak	4	-1	147	5	0
+quest_id	quest_symbol	required_variable1	required_variable2	message_id	next_variable1	next_variable2	required_item_id	required_item_symbol	consume_item	complete_quest
+3003	gharbads_weak	0	-1	144	1	0	0		false	false
+3003	gharbads_weak	1	-1	145	3	0	0		false	false
+3003	gharbads_weak	3	-1	146	4	0	0		false	false
+3003	gharbads_weak	4	-1	147	5	0	0		false	false
+3008	ogdens_sign	1	-1	21	2	0	0		false	false
+3008	ogdens_sign	2	-1	23	3	0	2136	tavern_sign	true	true

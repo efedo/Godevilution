@@ -598,8 +598,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 if (world is not null)
                     questTownerInteractions.ValidateWorld(world);
             }
-            if (questDialogueStages is not null)
+            if (questDialogueStages is not null) {
+                if (questDialogueStages.Definitions.Any(stage => stage.RequiredItemId != 0)) {
+                    if (itemCatalog is null)
+                        throw new InvalidDataException(
+                            "Item-gated quest dialogue stages require an active item catalog.");
+                    questDialogueStages.ValidateItems(itemCatalog);
+                }
                 questDialogueStages.ValidateQuests(quests);
+            }
         } else if (questTownerInteractions is not null) {
             throw new InvalidDataException(
                 "Quest/towner interactions require an active quest catalog.");

@@ -224,6 +224,12 @@ Status date: 2026-08-18
   quest-specific map mutations remain explicit native fallbacks until those
   effects have their own content contracts.
 
+- Schema 1.355 extends `quest_dialogue_stages.tsv` with validated item gates
+  and optional quest completion. The shared Ogden's Sign/Snotspill quest now
+  routes Snotspill's banner dialogue and Tavern Sign hand-in through
+  `TalkToQuestRequested`; the Banner set-piece map mutation remains native
+  until authored map-state operations are available.
+
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one
   unique encounter by validated monster ID and native AI, preserving the

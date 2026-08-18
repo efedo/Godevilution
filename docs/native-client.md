@@ -191,6 +191,9 @@ user-visible dialogue stages now use the server-owned
 `quest_dialogue_stages.tsv` contract for authored messages and monotonic
 quest-variable transitions. Its random item reward and quest-specific map
 mutations remain local fallbacks until those effects are externalized.
+The shared Ogden's Sign/Snotspill quest now uses the same contract for
+Snotspill's banner dialogue and Tavern Sign hand-in, including server-owned
+item consumption and quest completion.
 Unauthored legacy monster conversations retain their local fallback until
 their content actions are externalized.
 
@@ -206,11 +209,12 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns the Snotspill banner conversation, Gharbad's
-  random item reward, and Gharbad/Snotspill quest-specific map changes.
-  Gharbad's authored dialogue messages and quest-variable transitions now move
-  through `TalkToQuestRequested`; the remaining dynamic effects need their own
-  content-backed encounter and map-mutation definitions.
+- `TalktoMonster` still owns Gharbad's random item reward and the
+  Gharbad/Snotspill quest-specific map changes. Gharbad's authored dialogue
+  messages and quest-variable transitions, plus Snotspill's banner dialogue
+  and Tavern Sign hand-in, now move through `TalkToQuestRequested`; the
+  remaining dynamic effects need their own content-backed map-mutation
+  definitions.
 - Warlord's staged unique-monster conversation now uses the authored
   `dialogue_completion_variable1` combat gate through `TalkToQuestRequested`;
   its remaining presentation speech and legacy fallback are still retained.

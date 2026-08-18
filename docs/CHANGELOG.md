@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.355 item-gated staged dialogue. Snotspill's banner conversation
+  and Tavern Sign hand-in now use the shared Ogden's Sign quest through the
+  server-owned `TalkToQuestRequested` path, including item consumption and
+  quest completion; the Banner set-piece map mutation remains a native fallback.
+
 - Add schema 1.354 staged unique-monster dialogue content. Base Gharbad's four
   user-visible messages and monotonic quest-variable transitions now run through
   `quest_dialogue_stages.tsv` and the server-owned `TalkToQuestRequested` path;

@@ -9,7 +9,10 @@ public sealed record AuthoritativeQuestDialogueStage(
     int RequiredVariable2,
     int MessageId,
     int NextVariable1,
-    int NextVariable2);
+    int NextVariable2,
+    uint RequiredItemId = 0,
+    bool ConsumeItem = false,
+    bool CompleteQuest = false);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -31,6 +34,9 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.NextVariable2 is < 0 or > byte.MaxValue
                 || stage.RequiredVariable2 >= 0
                     && stage.NextVariable2 < stage.RequiredVariable2
+                || stage.CompleteQuest
+                    && (stage.RequiredItemId == 0 || !stage.ConsumeItem)
+                || stage.RequiredItemId == 0 && stage.ConsumeItem
                 || stage.NextVariable1 <= stage.RequiredVariable1)) {
             throw new InvalidDataException(
                 "Quest dialogue stages contain invalid values or a non-increasing variable-1 transition.");
@@ -120,6 +126,17 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
         }
     }
 
+    /** Validates item identities used by item-gated dialogue stages. */
+    public void ValidateItems(AuthoritativeItemCatalog items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        foreach (var stage in definitions.Where(stage => stage.RequiredItemId != 0)) {
+            if (!items.TryGet(stage.RequiredItemId, out _))
+                throw new InvalidDataException(
+                    $"Quest dialogue stage for quest {stage.QuestId} references unknown item {stage.RequiredItemId}.");
+        }
+    }
+
     public static AuthoritativeQuestDialogueStageCatalog LoadTsv(
         string sourcePath,
         string contents,
@@ -133,6 +150,13 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 row.OptionalInt32("required_variable2", -1),
                 row.RequiredInt32("message_id"),
                 row.RequiredInt32("next_variable1"),
-                row.OptionalInt32("next_variable2"))));
+                row.OptionalInt32("next_variable2"),
+                AuthoritativeItemIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "required_item_id",
+                    "required_item_symbol"),
+                row.OptionalBoolean("consume_item"),
+                row.OptionalBoolean("complete_quest"))));
     }
 }
