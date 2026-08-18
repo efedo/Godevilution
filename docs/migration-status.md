@@ -239,6 +239,11 @@ Status date: 2026-08-18
   values `2` and `3` are server-owned; the native Warlord AI/presentation
   fallback remains until encounter-state projection is externalized.
 
+- Schema 1.357 moves the text for authored Gharbad, Snotspill, and Warlord
+  messages into validated `dialogue_messages.tsv` content. The server projects
+  that text on `DialogueEvent.text`; clients retain the numeric identity
+  fallback when a legacy pack has no message catalog.
+
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one
   unique encounter by validated monster ID and native AI, preserving the

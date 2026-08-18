@@ -5,8 +5,13 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - Render typed authoritative dialogue events in the Godot interaction panel
-  using quest/message identities, without embedding native text tables in the
-  protocol client.
+  using server-owned text with quest/message identity fallback; the protocol
+  client no longer embeds native text tables.
+
+- Add schema 1.357 dialogue message content. Authored Gharbad, Snotspill, and
+  Warlord messages now load from `dialogue_messages.tsv` and flow through the
+  authoritative event protocol, with ID-only compatibility when a pack omits
+  the optional catalog.
 
 - Add schema 1.356 staged Warlord dialogue content. The two deterministic
   `_qvar1` transitions for Warlord's authored message now use

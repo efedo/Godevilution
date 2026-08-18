@@ -440,7 +440,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         return DiabloProtocolMapper.ToProtocolEventBatch(
             runtime.DrainEvents(sessionId),
             entityId,
-            tick);
+            tick,
+            simulation.DialogueMessages);
     }
 
     private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteStoreIntent(

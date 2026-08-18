@@ -191,6 +191,9 @@ user-visible dialogue stages now use the server-owned
 `quest_dialogue_stages.tsv` contract for authored messages and monotonic
 quest-variable transitions. Its random item reward and quest-specific map
 mutations remain local fallbacks until those effects are externalized.
+When the active pack includes `dialogue_messages.tsv`, the server also sends
+the authored text on `DialogueEvent.text`; older packs continue to use the
+message identity fallback.
 The shared Ogden's Sign/Snotspill quest now uses the same contract for
 Snotspill's banner dialogue and Tavern Sign hand-in, including server-owned
 item consumption and quest completion.

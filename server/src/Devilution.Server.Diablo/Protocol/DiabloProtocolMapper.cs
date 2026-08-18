@@ -793,7 +793,8 @@ internal static class DiabloProtocolMapper
     public static EventBatch? ToProtocolEventBatch(
         IReadOnlyList<DiabloGameplayEvent> events,
         uint entityId,
-        ulong tick)
+        ulong tick,
+        AuthoritativeDialogueMessageCatalog? dialogueMessages = null)
     {
         ArgumentNullException.ThrowIfNull(events);
         if (events.Count == 0)
@@ -830,12 +831,17 @@ internal static class DiabloProtocolMapper
                 });
                 break;
             case DiabloGameplayEventKind.Dialogue:
+                var dialogueText = dialogueMessages is not null
+                    && dialogueMessages.TryGet(gameplayEvent.MessageId, out var dialogueMessage)
+                    ? dialogueMessage.Text
+                    : string.Empty;
                 batch.Events.Add(new GameEvent {
                     Dialogue = new DialogueEvent {
                         SourceEntityId = gameplayEvent.SourceEntityId,
                         TargetEntityId = gameplayEvent.TargetEntityId,
                         QuestId = gameplayEvent.QuestId,
                         MessageId = gameplayEvent.MessageId,
+                        Text = dialogueText,
                     },
                 });
                 break;

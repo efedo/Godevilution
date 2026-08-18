@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.356.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.357.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -77,6 +77,24 @@ public sealed class ShippedContentTests
                     stage.RequiredVariable1,
                     stage.MessageId,
                     stage.NextVariable1)));
+    }
+
+    [Fact]
+    public void BaseContentPackDeclaresTextForAuthoredDialogueStages()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var table = pack.Tables.Single(table => table.SourcePath == "dialogue_messages.tsv");
+        var catalog = AuthoritativeDialogueMessageCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv());
+
+        Assert.Equal([21, 23, 110, 144, 145, 146, 147],
+            catalog.Definitions.Select(message => message.MessageId));
+        Assert.Equal(
+            "Something for you I am making. Again, not kill Gharbad. Live and give good. \n \nYou take this as proof I keep word...",
+            catalog.TryGet(145, out var gharbad) ? gharbad.Text : null);
+        catalog.ValidateMessageIds([144, 145, 146, 147, 21, 23, 110]);
     }
 
     [Fact]
@@ -1685,7 +1703,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.356.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.357.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

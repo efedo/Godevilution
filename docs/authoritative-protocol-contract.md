@@ -183,10 +183,11 @@ singular active-store view may legitimately produce a different overall hash.
 
 `EventBatch` contains presentation-friendly deltas such as damage, healing,
 experience, and validated quest dialogue. `DialogueEvent` carries the source
-player, unique encounter entity, quest identity, and content-owned message ID;
-it does not carry localized text or mutable quest state. Events are not a second
-source of truth. A reconnect or dropped event cannot invalidate the next
-snapshot.
+player, unique encounter entity, quest identity, and content-owned message ID.
+Optional field 5 carries server-owned text for the active content locale; an
+empty value preserves ID-only compatibility for older packs and peers. It does
+not carry mutable quest state. Events are not a second source of truth. A
+reconnect or dropped event cannot invalidate the next snapshot.
 
 `QuestSnapshot` fields 9-13 preserve native quest variables and completion
 identities. Optional proto3 field 14, `turn_in_towner_id`, carries the validated

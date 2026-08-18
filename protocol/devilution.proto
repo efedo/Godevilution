@@ -1048,6 +1048,8 @@ message DialogueEvent {
 	uint32 target_entity_id = 2;
 	uint32 quest_id = 3;
 	int32 message_id = 4;
+	// Optional server-owned localized text; empty preserves ID-only compatibility.
+	string text = 5;
 }
 
 // Server-owned native Diablo defeat boundary. The rank is zero for

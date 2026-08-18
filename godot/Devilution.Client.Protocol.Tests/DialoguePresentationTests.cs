@@ -25,4 +25,15 @@ public sealed class DialoguePresentationTests
             "Dialogue message 21",
             AuthoritativeDialoguePresentation.Format(new DialogueEvent { MessageId = 21 }));
     }
+
+    [Fact]
+    public void PrefersServerOwnedTextWhenPresent()
+    {
+        Assert.Equal(
+            "My blade sings.",
+            AuthoritativeDialoguePresentation.Format(new DialogueEvent {
+                MessageId = 110,
+                Text = "My blade sings.",
+            }));
+    }
 }

@@ -35,7 +35,8 @@ public sealed record DiabloContentActivation
         AuthoritativeWorldRules? worldRules = null,
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
-        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null)
+        AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
+        AuthoritativeDialogueMessageCatalog? dialogueMessages = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -57,6 +58,7 @@ public sealed record DiabloContentActivation
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
         QuestDialogueStages = questDialogueStages;
+        DialogueMessages = dialogueMessages;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -100,6 +102,9 @@ public sealed record DiabloContentActivation
 
     /** Validated staged unique-monster dialogue from the active content pack. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
+
+    /** Validated server-owned text for authored dialogue events. */
+    public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; }
 }
 
 /** Engine capability that validates content and creates one Diablo game state. */
@@ -536,6 +541,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questDialogueStagesTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var dialogueMessages = content.TryGetTable(
+            "dialogue_messages.tsv",
+            out var dialogueMessagesTable)
+            ? AuthoritativeDialogueMessageCatalog.LoadTsv(
+                dialogueMessagesTable.SourcePath,
+                dialogueMessagesTable.ToCanonicalTsv())
+            : null;
+        dialogueMessages?.ValidateMessageIds(
+            (questDialogueStages?.Definitions ?? [])
+                .Select(stage => stage.MessageId));
 
         if (world is not null
             && quests is null
@@ -682,6 +697,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             QuestTypes = questTypes,
             QuestTownerInteractions = questTownerInteractions,
             QuestDialogueStages = questDialogueStages,
+            DialogueMessages = dialogueMessages,
             Spells = spells,
             SpellBooks = spellBooks,
             CombatRules = combatRules,
@@ -722,7 +738,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             worldRules,
             spellBooks,
             questTownerInteractions,
-            questDialogueStages);
+            questDialogueStages,
+            dialogueMessages);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(
