@@ -33,6 +33,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
+    private readonly Button questTownerInteraction = new() { Text = "Use quest/towner" };
     private readonly Button refillMana = new() { Text = "Refill mana" };
     private readonly Button dropHeld = new() { Text = "Drop held (X)" };
     private readonly Button clearEvents = new() { Text = "Clear events" };
@@ -45,6 +46,7 @@ public partial class HudPresentation : CanvasLayer
     private uint? availableObjectEntityId;
     private uint? availableTrapEntityId;
     private uint? availableQuestId;
+    private QuestTownerInteractionSnapshot? availableQuestTownerInteraction;
     private int selectedInventoryIndex = -1;
     private string selectedSpellText = "none";
 
@@ -59,6 +61,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
     public event Action<uint>? AdvanceQuestRequested;
+    public event Action<uint, uint>? QuestTownerInteractionRequested;
     public event Action? RefillManaRequested;
     public event Action? DropHeldItemRequested;
     public event Action? ClearEventsRequested;
@@ -97,6 +100,7 @@ public partial class HudPresentation : CanvasLayer
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
+            questTownerInteraction,
             refillMana, dropHeld, clearEvents,
         })
             controls.AddChild(button);
@@ -144,6 +148,10 @@ public partial class HudPresentation : CanvasLayer
         advanceQuest.Pressed += () => {
             if (availableQuestId is { } questId)
                 AdvanceQuestRequested?.Invoke(questId);
+        };
+        questTownerInteraction.Pressed += () => {
+            if (availableQuestTownerInteraction is { } interaction)
+                QuestTownerInteractionRequested?.Invoke(interaction.QuestId, checked((uint)interaction.TownerId));
         };
         refillMana.Pressed += () => RefillManaRequested?.Invoke();
         dropHeld.Pressed += () => DropHeldItemRequested?.Invoke();
@@ -229,6 +237,7 @@ public partial class HudPresentation : CanvasLayer
             .FirstOrDefault(@object => player is not null && @object.LevelId == player.LevelId)
             ?.EntityId;
         availableQuestId = model.Snapshot?.Quests.FirstOrDefault(quest => !quest.Completed)?.QuestId;
+        availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;
         var activeStore = model.Snapshot?.ActiveStore;
@@ -267,6 +276,10 @@ public partial class HudPresentation : CanvasLayer
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;
+        questTownerInteraction.Disabled = !connected || availableQuestTownerInteraction is null;
+        questTownerInteraction.Text = availableQuestTownerInteraction is null
+            ? "Use quest/towner"
+            : $"Use quest/towner ({availableQuestTownerInteraction.TownerId})";
         refillMana.Disabled = !connected;
         dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;

@@ -8,6 +8,72 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void SelectsAvailableContentOwnedQuestTownerStageByStateAndAdjacency()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 79,
+                    PositionY = 20,
+                    Inventory = {
+                        new ItemSnapshot {
+                            ItemSeed = 41,
+                            State = new ItemStateSnapshot { StableItemId = 2141 },
+                        },
+                    },
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3002,
+                    Initial = true,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300201,
+                    QuestId = 3002,
+                    TownerId = 6,
+                    LevelId = 0,
+                    PositionX = 80,
+                    PositionY = 20,
+                    ItemId = 2141,
+                    Kind = 0,
+                    MessageId = 129,
+                    ConsumeItem = true,
+                },
+            },
+        };
+
+        Assert.Equal(
+            300201U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+
+        snapshot.Players[0].PositionX = 50;
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
+    public void RejectsMalformedQuestTownerInteractionSnapshots()
+    {
+        var model = new AuthoritativeClientModel();
+        Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(
+            Snapshot: new Snapshot {
+                Players = { new PlayerSnapshot { EntityId = 7 } },
+                QuestTownerInteractions = {
+                    new QuestTownerInteractionSnapshot {
+                        InteractionId = 0,
+                        QuestId = 3002,
+                        TownerId = 6,
+                        MessageId = 129,
+                    },
+                },
+            })));
+    }
+
+    [Fact]
     public void EnumeratesAndCyclesAuthoritativeSpellSourcesWithoutChangingTheirOwnership()
     {
         var snapshot = new Snapshot {
@@ -73,10 +139,10 @@ public sealed class ClientModelTests
         Assert.Equal("Charged Bolt (staff, 3 charges)", sources[2].DisplayName);
         Assert.Equal(PlayerItemLocation.Equipment, sources[2].SourceItem!.Location);
         Assert.Equal(4U, sources[2].SourceItem!.Slot);
-        Assert.Equal(700U, sources[2].SourceItem.StableItemId);
+        Assert.Equal(700U, sources[2].SourceItem!.StableItemId);
         Assert.Equal(CastSourceKind.ConsumableItem, sources[3].Kind);
         Assert.Equal(PlayerItemLocation.Inventory, sources[3].SourceItem!.Location);
-        Assert.Equal(701U, sources[3].SourceItem.StableItemId);
+        Assert.Equal(701U, sources[3].SourceItem!.StableItemId);
         Assert.Equal(702U, sources[4].SourceItem!.StableItemId);
         Assert.Equal(CastSourceKind.Ability, sources[^1].Kind);
         Assert.Equal("Ability TrapDisarm", sources[^1].DisplayName);

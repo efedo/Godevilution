@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Expose content-owned quest/towner interaction stages to the Godot client.
+  The protocol client validates and selects an adjacent server-declared stage,
+  and the HUD submits the corresponding `TurnInQuestRequested` intent.
+
 - Add schema 1.346 repeatable quest/towner interaction definitions. Base Black
   Mushroom now externalizes Adria's Fungal Tome activation, mushroom hand-in,
   brain dialogue, and Spectral Elixir completion stages through the same

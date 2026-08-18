@@ -80,6 +80,12 @@ public partial class Main : Node2D
         });
         hud.OperateObjectRequested += entityId => QueueIfConnected(new Command { OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = entityId } });
         hud.AdvanceQuestRequested += questId => QueueIfConnected(new Command { AdvanceQuestRequested = new AdvanceQuestRequested { QuestId = questId } });
+        hud.QuestTownerInteractionRequested += (questId, townerId) => QueueIfConnected(new Command {
+            TurnInQuestRequested = new TurnInQuestRequested {
+                QuestId = questId,
+                TownerId = townerId,
+            },
+        });
         hud.RefillManaRequested += () => QueueIfConnected(new Command { RefillManaRequested = new RefillManaRequested() });
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
         hud.ClearEventsRequested += model.ClearRecentEvents;

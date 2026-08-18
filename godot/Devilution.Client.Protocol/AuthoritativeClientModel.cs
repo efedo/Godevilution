@@ -90,6 +90,7 @@ public sealed class AuthoritativeClientModel
                 ValidateEntityId(entityIds, projectile.EntityId);
             foreach (var corpse in message.Snapshot.Corpses)
                 ValidateEntityId(entityIds, corpse.EntityId);
+            ValidateQuestTownerInteractions(message.Snapshot);
             var portalIds = new HashSet<uint>();
             foreach (var portal in message.Snapshot.Portals) {
                 if (portal.PortalId == 0
@@ -291,6 +292,38 @@ public sealed class AuthoritativeClientModel
             || monster.MaxHitPointsQ6 > 0 && monster.HitPointsQ6 > monster.MaxHitPointsQ6) {
             throw new InvalidDataException(
                 "The authoritative snapshot contains invalid monster vitality.");
+        }
+    }
+
+    private static void ValidateQuestTownerInteractions(Snapshot snapshot)
+    {
+        if (snapshot.QuestTownerInteractions.Count > 1024) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains too many quest/towner interactions.");
+        }
+        var interactionIds = new HashSet<uint>();
+        foreach (var interaction in snapshot.QuestTownerInteractions) {
+            if (interaction.InteractionId == 0
+                || !interactionIds.Add(interaction.InteractionId)
+                || interaction.QuestId == 0
+                || interaction.TownerId is < 0 or > byte.MaxValue
+                || interaction.LevelId > ushort.MaxValue
+                || interaction.PositionX < 0
+                || interaction.PositionY < 0
+                || interaction.Kind is < 0 or > 3
+                || !interaction.HasMessageId
+                || interaction.MessageId is <= 0 or > short.MaxValue
+                || (interaction.HasRequiredVariable1
+                    && interaction.RequiredVariable1 is < 0 or > byte.MaxValue)
+                || (interaction.HasRequiredVariable2
+                    && interaction.RequiredVariable2 is < 0 or > byte.MaxValue)
+                || (interaction.HasVariable1
+                    && interaction.Variable1 is < 0 or > byte.MaxValue)
+                || (interaction.HasVariable2
+                    && interaction.Variable2 is < 0 or > byte.MaxValue)) {
+                throw new InvalidDataException(
+                    "The authoritative snapshot contains an invalid quest/towner interaction.");
+            }
         }
     }
 
