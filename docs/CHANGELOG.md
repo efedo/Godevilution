@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend the Godot HUD's authoritative item-source flow to belt items. Books,
+  targetless consumables, and oil sources now submit stable belt references;
+  inventory-only vendor services retain their existing restrictions.
+
 - Enforce native Arena Potion availability on active arena set-level runtime IDs;
   non-arena use is rejected server-side while legacy full-rejuvenation behavior
   remains unchanged.

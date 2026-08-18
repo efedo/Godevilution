@@ -18,10 +18,12 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label diagnostics = new();
     private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
+    private readonly ItemList beltItems = new();
     private readonly ItemList oilTargets = new();
     private readonly GridContainer inventoryGrid = new() { Columns = InventoryColumns };
     private readonly List<Button> inventoryCells = [];
     private readonly List<uint> storeSlots = [];
+    private readonly List<uint> beltSlots = [];
     private readonly List<string> spellSourceKeys = [];
     private readonly List<PlayerItemReference> oilTargetReferences = [];
     private readonly Button openSmith = new() { Text = "Open Smith" };
@@ -52,6 +54,8 @@ public partial class HudPresentation : CanvasLayer
     private uint? availableQuestId;
     private QuestTownerInteractionSnapshot? availableQuestTownerInteraction;
     private int selectedInventoryIndex = -1;
+    private uint? selectedBeltSlot;
+    private PlayerItemReference? selectedItemReference;
     private PlayerItemReference? selectedOilTarget;
     private string selectedSpellText = "none";
 
@@ -61,9 +65,9 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? RepairItemRequested;
     public event Action<uint>? RechargeItemRequested;
     public event Action<uint>? IdentifyItemRequested;
-    public event Action<uint>? ReadBookRequested;
-    public event Action<uint>? UseConsumableRequested;
-    public event Action<uint, PlayerItemReference>? ApplyOilRequested;
+    public event Action<PlayerItemReference>? ReadBookRequested;
+    public event Action<PlayerItemReference>? UseConsumableRequested;
+    public event Action<PlayerItemReference, PlayerItemReference>? ApplyOilRequested;
     public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
@@ -96,6 +100,9 @@ public partial class HudPresentation : CanvasLayer
         sideBox.AddChild(spellSources);
         sideBox.AddChild(inventory);
         sideBox.AddChild(inventoryGrid);
+        sideBox.AddChild(new Label { Text = "Belt (select a source for books or consumables)" });
+        beltItems.CustomMinimumSize = new Vector2(340, 80);
+        sideBox.AddChild(beltItems);
         sideBox.AddChild(new Label { Text = "Oil targets (select equipment or inventory)" });
         oilTargets.CustomMinimumSize = new Vector2(340, 100);
         sideBox.AddChild(oilTargets);
@@ -146,6 +153,14 @@ public partial class HudPresentation : CanvasLayer
                 ? oilTargetReferences[targetIndex]
                 : null;
         };
+        beltItems.ItemSelected += index => {
+            var beltIndex = checked((int)index);
+            selectedBeltSlot = beltIndex >= 0 && beltIndex < beltSlots.Count
+                ? beltSlots[beltIndex]
+                : null;
+            if (selectedBeltSlot is not null)
+                selectedInventoryIndex = -1;
+        };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
         buySelected.Pressed += BuySelected;
@@ -153,8 +168,8 @@ public partial class HudPresentation : CanvasLayer
         repairSelected.Pressed += () => InvokeInventoryAction(RepairItemRequested);
         rechargeSelected.Pressed += () => InvokeInventoryAction(RechargeItemRequested);
         identifySelected.Pressed += () => InvokeInventoryAction(IdentifyItemRequested);
-        readBookSelected.Pressed += () => InvokeInventoryAction(ReadBookRequested);
-        useConsumableSelected.Pressed += () => InvokeInventoryAction(UseConsumableRequested);
+        readBookSelected.Pressed += () => InvokeSelectedItemAction(ReadBookRequested);
+        useConsumableSelected.Pressed += () => InvokeSelectedItemAction(UseConsumableRequested);
         applyOilSelected.Pressed += ApplyOil;
         disarmTrap.Pressed += () => {
             if (availableTrapEntityId is { } entityId)
@@ -241,6 +256,9 @@ public partial class HudPresentation : CanvasLayer
         var player = model.Snapshot?.Players.FirstOrDefault();
         if (player is null || selectedInventoryIndex >= player.Inventory.Count)
             selectedInventoryIndex = -1;
+        if (player is null || selectedBeltSlot is not { } beltSlot || !player.Belt.Any(item => item.Slot == beltSlot))
+            selectedBeltSlot = null;
+        selectedItemReference = ResolveSelectedItemReference(player);
         state.Text = player is null
             ? "Waiting for authoritative snapshot"
             : $"Tick {model.CurrentTick}   Level {player.LevelId}   Life {player.Life}/{player.LifeMaximum}   Mana {player.Mana}/{player.ManaMaximum}{(player.ManaShieldActive ? "   Mana Shield" : string.Empty)}{(player.ReflectCharges > 0 ? $"   Reflect {player.ReflectCharges}" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Infravision) ? "   Infravision" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Search) ? "   Search" : string.Empty)}{(player.StatusEffects.Any(effect => effect.Behavior == StatusEffectBehavior.Etherealize) ? "   Etherealize" : string.Empty)}   Spell {selectedSpellText}   Gold {player.Gold}   XP {player.Experience}";
@@ -249,6 +267,7 @@ public partial class HudPresentation : CanvasLayer
         diagnostics.Text = FormatDiagnostics(model, client);
         inventory.Text = FormatInventory(player);
         ApplyInventoryGrid(player);
+        ApplyBeltItems(player);
         ApplyOilTargets(player);
         ApplyStore(model.Snapshot?.ActiveStore);
         dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
@@ -263,20 +282,24 @@ public partial class HudPresentation : CanvasLayer
         var activeStore = model.Snapshot?.ActiveStore;
         var hasInventory = player is not null && player.Inventory.Count > 0;
         var hasSelectedInventory = hasInventory && selectedInventoryIndex >= 0 && selectedInventoryIndex < player!.Inventory.Count;
+        var hasSelectedBelt = player is not null && selectedBeltSlot is { } selectedBelt
+            && player.Belt.Any(item => item.Slot == selectedBelt);
+        var hasSelectedItem = hasSelectedInventory || hasSelectedBelt;
         var hasIdentifyAbility = player?.AbilityKind == PlayerAbilityKind.Identify;
         var hasIdentifyScroll = player?.Inventory.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true
             || player?.Belt.Any(item => item.State?.ItemActionKind == ItemActionKind.Identify) == true;
         var hasRepairAbility = player?.AbilityKind == PlayerAbilityKind.Repair;
         var hasRechargeAbility = player?.AbilityKind == PlayerAbilityKind.Recharge;
         var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
-        var hasTargetlessConsumable = hasSelectedInventory
-            && AuthoritativeItemActionRules.IsTargetlessConsumable(
-                player!.Inventory[selectedInventoryIndex].State?.ItemActionKind
-                    ?? ItemActionKind.Unspecified);
-        var hasTargetedConsumable = hasSelectedInventory
-            && AuthoritativeItemActionRules.IsTargetedConsumable(
-                player!.Inventory[selectedInventoryIndex].State?.ItemActionKind
-                    ?? ItemActionKind.Unspecified);
+        var selectedItemAction = hasSelectedInventory
+            ? player!.Inventory[selectedInventoryIndex].State?.ItemActionKind ?? ItemActionKind.Unspecified
+            : hasSelectedBelt
+                ? player!.Belt.First(item => item.Slot == selectedBeltSlot).State?.ItemActionKind ?? ItemActionKind.Unspecified
+                : ItemActionKind.Unspecified;
+        var hasTargetlessConsumable = hasSelectedItem
+            && AuthoritativeItemActionRules.IsTargetlessConsumable(selectedItemAction);
+        var hasTargetedConsumable = hasSelectedItem
+            && AuthoritativeItemActionRules.IsTargetedConsumable(selectedItemAction);
         openSmith.Disabled = !connected;
         openAdria.Disabled = !connected;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
@@ -301,6 +324,7 @@ public partial class HudPresentation : CanvasLayer
         identifySelected.Disabled = !connected
             || !hasSelectedInventory
             || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
+        readBookSelected.Disabled = !connected || selectedItemAction != ItemActionKind.ReadBook;
         useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
         applyOilSelected.Disabled = !connected || !hasTargetedConsumable || selectedOilTarget is null;
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
@@ -313,6 +337,9 @@ public partial class HudPresentation : CanvasLayer
         refillMana.Disabled = !connected;
         dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;
+        beltItems.MouseFilter = !connected || player?.Belt.Count is not > 0
+            ? Control.MouseFilterEnum.Ignore
+            : Control.MouseFilterEnum.Stop;
         spellSources.MouseFilter = !connected || spellSourceKeys.Count == 0
             ? Control.MouseFilterEnum.Ignore
             : Control.MouseFilterEnum.Stop;
@@ -364,6 +391,31 @@ public partial class HudPresentation : CanvasLayer
         }
     }
 
+    private void ApplyBeltItems(PlayerSnapshot? player)
+    {
+        beltItems.Clear();
+        beltSlots.Clear();
+        if (player is null)
+        {
+            selectedBeltSlot = null;
+            return;
+        }
+
+        foreach (var item in player.Belt.OrderBy(item => item.Slot))
+        {
+            beltSlots.Add(item.Slot);
+            beltItems.AddItem($"slot {item.Slot}: {DescribeItem(item.State)}");
+        }
+        if (selectedBeltSlot is { } beltSlot)
+        {
+            var selectedIndex = beltSlots.IndexOf(beltSlot);
+            if (selectedIndex < 0)
+                selectedBeltSlot = null;
+            else
+                beltItems.Select(selectedIndex, false);
+        }
+    }
+
     private void ApplyOilTargets(PlayerSnapshot? player)
     {
         var previousTarget = selectedOilTarget;
@@ -409,6 +461,7 @@ public partial class HudPresentation : CanvasLayer
         var occupant = inventoryLayout.Occupants[cellIndex];
         if (occupant >= 0) {
             selectedInventoryIndex = occupant;
+            selectedBeltSlot = null;
             return;
         }
         if (selectedInventoryIndex >= 0)
@@ -423,10 +476,11 @@ public partial class HudPresentation : CanvasLayer
 
     private void ApplyOil()
     {
-        if (selectedInventoryIndex < 0 || selectedOilTarget is null)
+        var source = ResolveSelectedItemReference();
+        if (source is null || selectedOilTarget is null)
             return;
         ApplyOilRequested?.Invoke(
-            checked((uint)selectedInventoryIndex),
+            source,
             selectedOilTarget);
     }
 
@@ -434,6 +488,37 @@ public partial class HudPresentation : CanvasLayer
     {
         if (selectedInventoryIndex >= 0)
             action?.Invoke(checked((uint)selectedInventoryIndex));
+    }
+
+    private void InvokeSelectedItemAction(Action<PlayerItemReference>? action)
+    {
+        if (ResolveSelectedItemReference() is { } reference)
+            action?.Invoke(reference);
+    }
+
+    private PlayerItemReference? ResolveSelectedItemReference()
+    {
+        return selectedItemReference;
+    }
+
+    private PlayerItemReference? ResolveSelectedItemReference(PlayerSnapshot? player)
+    {
+        if (player is null)
+            return null;
+        if (selectedInventoryIndex >= 0 && selectedInventoryIndex < player.Inventory.Count)
+            return new PlayerItemReference {
+                Location = PlayerItemLocation.Inventory,
+                Slot = checked((uint)selectedInventoryIndex),
+                StableItemId = player.Inventory[selectedInventoryIndex].State?.StableItemId ?? 0,
+            };
+        if (selectedBeltSlot is { } beltSlot
+            && player.Belt.FirstOrDefault(item => item.Slot == beltSlot) is { } beltItem)
+            return new PlayerItemReference {
+                Location = PlayerItemLocation.Belt,
+                Slot = beltSlot,
+                StableItemId = beltItem.State?.StableItemId ?? 0,
+            };
+        return null;
     }
 
     private void AdvanceFirstQuest()
@@ -448,12 +533,12 @@ public partial class HudPresentation : CanvasLayer
             return "Inventory\nWaiting for authoritative snapshot";
         if (player.Inventory.Count == 0)
             return player.HeldItem is null
-                ? "Inventory\n(empty)\nClick an occupied cell after an item arrives."
-                : $"Inventory\n(empty)\nHeld: {DescribeItem(player.HeldItem.State)}";
+                ? $"Inventory\n(empty)\nBelt ({player.Belt.Count})\nClick an occupied cell after an item arrives."
+                : $"Inventory\n(empty)\nBelt ({player.Belt.Count})\nHeld: {DescribeItem(player.HeldItem.State)}";
         var held = player.HeldItem is null
             ? string.Empty
             : $"\nHeld: {DescribeItem(player.HeldItem.State)}";
-        return $"Inventory ({player.Inventory.Count})\nClick an item to select it; click an empty cell to request a move.{held}";
+        return $"Inventory ({player.Inventory.Count})\nBelt ({player.Belt.Count})\nClick an item to select it; click an empty cell to request a move.{held}";
     }
 
     private static string FormatStoreItem(StoreItemSnapshot item)

@@ -62,20 +62,19 @@ public partial class Main : Node2D
             }
             QueueIfConnected(new Command { IdentifyItemRequested = request });
         };
-        hud.ReadBookRequested += inventoryIndex => QueueIfConnected(new Command {
+        hud.ReadBookRequested += item => QueueIfConnected(new Command {
             ReadBookRequested = new ReadBookRequested {
-                InventoryIndex = inventoryIndex,
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                Item = item,
             },
         });
-        hud.UseConsumableRequested += inventoryIndex => QueueIfConnected(new Command {
+        hud.UseConsumableRequested += item => QueueIfConnected(new Command {
             UseConsumableRequested = new UseConsumableRequested {
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                Item = item,
             },
         });
-        hud.ApplyOilRequested += (inventoryIndex, target) => QueueIfConnected(new Command {
+        hud.ApplyOilRequested += (item, target) => QueueIfConnected(new Command {
             UseConsumableRequested = new UseConsumableRequested {
-                Item = ResolveInventoryItemReference(inventoryIndex),
+                Item = item,
                 TargetItem = target,
             },
         });

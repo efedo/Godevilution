@@ -688,6 +688,36 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void FullRejuvenationConsumesBeltItemThroughItsStableReference()
+    {
+        var potion = new BeltStoreItem(
+            2,
+            43,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+                StableItemId = 42,
+                StatFlag = true,
+            });
+        var player = CreatePlayer(
+            mana: 64,
+            manaMaximum: 640,
+            belt: [potion]);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Belt, 2, 42)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Belt);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
     public void ArenaPotionIsRejectedOutsideAnActiveArena()
     {
         var potion = new OwnedStoreItem(
