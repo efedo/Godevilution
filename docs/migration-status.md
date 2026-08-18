@@ -230,6 +230,11 @@ Status date: 2026-08-18
   `TalkToQuestRequested`; the Banner set-piece map mutation remains native
   until authored map-state operations are available.
 
+- Schema 1.356 moves Warlord's two authored dialogue transitions into the
+  staged dialogue catalog. Messages and monotonic `_qvar1` transitions through
+  values `2` and `3` are server-owned; the native Warlord AI/presentation
+  fallback remains until encounter-state projection is externalized.
+
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one
   unique encounter by validated monster ID and native AI, preserving the

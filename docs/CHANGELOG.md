@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.356 staged Warlord dialogue content. The two deterministic
+  `_qvar1` transitions for Warlord's authored message now use
+  `quest_dialogue_stages.tsv` through `TalkToQuestRequested`, preserving the
+  native combat gate at variable `3`.
+
 - Add schema 1.355 item-gated staged dialogue. Snotspill's banner conversation
   and Tavern Sign hand-in now use the shared Ogden's Sign quest through the
   server-owned `TalkToQuestRequested` path, including item consumption and

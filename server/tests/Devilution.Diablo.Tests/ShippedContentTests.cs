@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.355.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.356.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -69,6 +69,14 @@ public sealed class ShippedContentTests
             snotspill.CompleteQuest,
             snotspill.MessageId,
             snotspill.NextVariable1));
+        Assert.Equal(
+            [(0, 110, 2), (2, 110, 3)],
+            catalog.Definitions
+                .Where(stage => stage.QuestId == 3012)
+                .Select(stage => (
+                    stage.RequiredVariable1,
+                    stage.MessageId,
+                    stage.NextVariable1)));
     }
 
     [Fact]
@@ -1677,7 +1685,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.355.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.356.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

@@ -1071,6 +1071,60 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedWarlordDialogueUsesAuthoredTransitionsAndKeepsCombatGateOpen()
+    {
+        var quest = new AuthoritativeQuestState(
+            3012,
+            13,
+            1,
+            active: false,
+            completionUniqueIdentity: "Warlord",
+            dialogueCompletionVariable1: 3);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 13,
+            unique: true,
+            uniqueIdentity: "Warlord");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(3012, 0, -1, 110, 2, 0),
+            new(3012, 2, -1, 110, 3, 0),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questDialogueStages: stages);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            levelId: 13,
+            entityId: 7);
+
+        var first = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3012, 20),
+            5,
+            [player]);
+        var firstVariable1 = quest.Variable1;
+        var second = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3012, 20),
+            6,
+            [player]);
+
+        Assert.True(first.Succeeded);
+        Assert.True(second.Succeeded);
+        Assert.Equal(2, firstVariable1);
+        Assert.Equal(110, Assert.Single(first.Events).MessageId);
+        Assert.Equal(3, quest.Variable1);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.Equal(110, Assert.Single(second.Events).MessageId);
+    }
+
+    [Fact]
     public void StagedQuestDialogueAppliesAuthoredMessagesAndVariableTransitions()
     {
         var quest = new AuthoritativeQuestState(
