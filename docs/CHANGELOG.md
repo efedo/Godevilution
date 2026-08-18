@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add the validated `SpawnSpellProjectile` object effect. Authored object rows
+  can now spawn a server-owned Phasing or Guardian controller from a stable
+  spell identity at the object's position; unsupported projectile behaviors
+  are rejected during content validation, and the existing projectile snapshot
+  path carries the resulting state without client-side spell decisions.
+
 - Add the validated `GrantSpellLevel` object effect. An authored book/lever
   row can now grant one level of an active catalog spell through
   `OperateObjectRequested`; optional `effect_spell_symbol` links resolve

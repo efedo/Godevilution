@@ -219,7 +219,12 @@ validated normal or unique item at a relative offset; the server owns catalog
 validation, deterministic generation, placement, and persistence, while the
 client presents the resulting world item. The generic `GrantSpellLevel` effect
 also lets an authored book/lever grant one validated spell level; the client
-only presents the updated player snapshot and does not mutate spell state.
+only presents the updated player snapshot and does not mutate spell state. The
+`SpawnSpellProjectile` effect extends that boundary for authored Phasing and
+Guardian controller rows: the server validates the spell behavior, creates
+the resumable projectile, and the client only presents its projected state.
+Target offsets and set-level placement remain content seams still being filled
+from native data.
 
 ## Remaining native-only interaction inventory
 
@@ -238,9 +243,11 @@ explicit migration seams, not server-authority claims:
 - `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
   Betrayer, Halls of the Blind, and Blood-goal book branches. These require
   set-level object placement plus authored projectile/map effects; the generic
-  `GrantSpellLevel` effect covers only the reusable spell-level transition,
-  and the existing Na-Krul `QuestSequence` row is not a substitute for those
-  remaining semantics.
+  `GrantSpellLevel` and `SpawnSpellProjectile` effects now cover reusable
+  spell-level and Phasing/Guardian-controller transitions, but exact native
+  target offsets, set-level placement, and map effects remain. The existing
+  Na-Krul `QuestSequence` row is not a substitute for those remaining
+  semantics.
 - Quest-specific set-piece mutation and resynchronization remains native,
   including the Banner set-piece transitions and the associated unique-monster
   state. Procedural level/object parity must precede externalizing those map

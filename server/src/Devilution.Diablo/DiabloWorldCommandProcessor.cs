@@ -22,6 +22,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions;
     private readonly AuthoritativeQuestDialogueStageCatalog? questDialogueStages;
     private uint nextWorldItemEntityId = 0x40000000;
+    private uint nextAuthoredProjectileEntityId = 0xC0000000;
 
     public DiabloWorldCommandProcessor(
         DiabloWorldState world,
@@ -997,7 +998,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        if (!CanApplyObjectSpellEffect(@object))
+        if (!CanApplyObjectSpellEffect(@object, player))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
@@ -1029,6 +1030,8 @@ public sealed class DiabloWorldCommandProcessor
         SpawnObjectReward(@object, player);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
             ApplyGrantedSpellLevel(player, checked((uint)@object.EffectAmount));
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+            SpawnObjectSpellProjectile(@object, player);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
             || @object.EffectAmount <= 0)
             return DiabloWorldIntentResult.Accepted;
@@ -1098,10 +1101,104 @@ public sealed class DiabloWorldCommandProcessor
             player.MemorizedSpells.Add(new MemorizedSpellState(spellId, nextLevel));
     }
 
-    private bool CanApplyObjectSpellEffect(AuthoritativeWorldObject @object)
-        => @object.EffectKind != AuthoritativeObjectEffectKind.GrantSpellLevel
-            || @object.EffectAmount > 0
+    private bool CanApplyObjectSpellEffect(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
+            return @object.EffectAmount > 0
                 && spells?.TryGet(checked((uint)@object.EffectAmount), out _) == true;
+        if (@object.EffectKind != AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            || @object.EffectAmount <= 0
+            || spells?.TryGet(checked((uint)@object.EffectAmount), out var spell) != true
+            || !AuthoritativeWorldObjectCatalog.IsSupportedSpellProjectile(spell)) {
+            return @object.EffectKind != AuthoritativeObjectEffectKind.SpawnSpellProjectile;
+        }
+        return world.ContainsPosition(
+            @object.LevelId,
+            @object.PositionX,
+            @object.PositionY);
+    }
+
+    private void SpawnObjectSpellProjectile(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        if (spells is null
+            || !spells.TryGet(checked((uint)@object.EffectAmount), out var spell)) {
+            throw new InvalidDataException(
+                $"Object spell projectile references unknown spell {@object.EffectAmount}.");
+        }
+
+        var projectileEntityId = AllocateAuthoredProjectileEntityId();
+        var sourceEntityId = player.EntityId == 0 ? 1U : player.EntityId;
+        var effectiveSpellLevel = player.MemorizedSpells
+            .FirstOrDefault(memorized => memorized.SpellId == spell.SpellId)
+            ?.Level
+            ?? 0;
+        if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Phasing) {
+            world.Projectiles.Add(
+                projectileEntityId,
+                new AuthoritativeProjectile(
+                    projectileEntityId,
+                    sourceEntityId,
+                    0,
+                    spell.SpellId,
+                    player.LevelId,
+                    @object.PositionX,
+                    @object.PositionY,
+                    @object.PositionX,
+                    @object.PositionY,
+                    0,
+                    spell.DamageType,
+                    0,
+                    checked((uint)spell.ProjectileLifetime)) {
+                    Behavior = AuthoritativeProjectileBehavior.Phasing,
+                });
+            return;
+        }
+
+        var durationUnits = Math.Min(
+            spell.GuardianMaximumDuration,
+            checked((int)effectiveSpellLevel)
+                + checked((int)player.CharacterLevel
+                    / Math.Max(1, spell.GuardianCharacterLevelDurationDivisor)));
+        var duration = Math.Max(
+            spell.GuardianMinimumDuration,
+            checked(durationUnits * spell.GuardianDurationTickScale));
+        world.Projectiles.Add(
+            projectileEntityId,
+            new AuthoritativeProjectile(
+                projectileEntityId,
+                sourceEntityId,
+                0,
+                spell.SpellId,
+                player.LevelId,
+                @object.PositionX,
+                @object.PositionY,
+                @object.PositionX,
+                @object.PositionY,
+                0,
+                spell.DamageType,
+                0,
+                checked((uint)duration)) {
+                Behavior = AuthoritativeProjectileBehavior.GuardianController,
+                OriginalDirection = (int)player.FacingDirection,
+                EffectiveSpellLevel = checked((int)effectiveSpellLevel),
+            });
+    }
+
+    private uint AllocateAuthoredProjectileEntityId()
+    {
+        while (nextAuthoredProjectileEntityId == 0
+            || world.Projectiles.ContainsKey(nextAuthoredProjectileEntityId)
+            || world.WorldItems.ContainsKey(nextAuthoredProjectileEntityId)
+            || world.Objects.ContainsKey(nextAuthoredProjectileEntityId)
+            || world.CombatTargets.ContainsKey(nextAuthoredProjectileEntityId)) {
+            nextAuthoredProjectileEntityId = checked(nextAuthoredProjectileEntityId + 1);
+        }
+        return nextAuthoredProjectileEntityId++;
+    }
 
     private void ApplyQuestTransition(AuthoritativeWorldObject @object)
     {

@@ -174,6 +174,12 @@ Status date: 2026-08-18
   `effect_spell_symbol` cross-checks the stable spell namespace; set-level
   placement and book-triggered projectile/map effects remain unmodeled seams.
 
+- Schema 1.359 adds the validated `SpawnSpellProjectile` object effect.
+  Authored rows can spawn a server-owned Phasing or Guardian controller at the
+  object position through the existing projectile snapshot/tick path; the
+  active spell catalog rejects unsupported behaviors. Exact native target
+  offsets, set-level placement, and map mutations remain later seams.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes

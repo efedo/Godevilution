@@ -14,6 +14,8 @@ public enum AuthoritativeObjectEffectKind
     WorldMutation,
     /** Grants one level of the spell identified by effect_amount. */
     GrantSpellLevel,
+    /** Spawns one validated server-owned spell projectile at the object position. */
+    SpawnSpellProjectile,
 }
 
 /** Native quest-state transition applied when an authored object is activated. */

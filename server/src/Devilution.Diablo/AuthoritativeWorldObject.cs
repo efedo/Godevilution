@@ -241,11 +241,12 @@ public static class AuthoritativeWorldObjectCatalog
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
-        if (objects.Any(@object => @object.EffectKind
-                == AuthoritativeObjectEffectKind.GrantSpellLevel
+        if (objects.Any(@object => @object.EffectKind is
+                (AuthoritativeObjectEffectKind.GrantSpellLevel
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile)
                 && @object.EffectAmount <= 0))
             throw new InvalidDataException(
-                $"Object table '{sourcePath}' contains an invalid spell-level grant object.");
+                $"Object table '{sourcePath}' contains an invalid spell effect object.");
         if (objects.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
                 && @object.QuestId == 0))
             throw new InvalidDataException(
@@ -320,13 +321,26 @@ public static class AuthoritativeWorldObjectCatalog
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(spells);
-        foreach (var @object in objects.Where(@object =>
-                     @object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)) {
-            if (!spells.TryGet(checked((uint)@object.EffectAmount), out _))
+        foreach (var @object in objects.Where(@object => @object.EffectKind is
+                     AuthoritativeObjectEffectKind.GrantSpellLevel
+                     or AuthoritativeObjectEffectKind.SpawnSpellProjectile)) {
+            if (!spells.TryGet(checked((uint)@object.EffectAmount), out var spell))
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unknown spell {@object.EffectAmount}.");
+            if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                && !IsSupportedSpellProjectile(spell)) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unsupported authored projectile behavior '{spell.ProjectileBehavior}'.");
+            }
         }
     }
+
+    /** Spell behaviors whose controller construction is fully authored and server-owned. */
+    public static bool IsSupportedSpellProjectile(
+        AuthoritativeSpellDefinition spell)
+        => spell.ProjectileBehavior is
+            AuthoritativeProjectileBehavior.Phasing
+            or AuthoritativeProjectileBehavior.GuardianController;
 
     /** Validates quest identities referenced by content-owned world objects. */
     public static void ValidateQuestRequirements(
@@ -402,10 +416,13 @@ public static class AuthoritativeWorldObjectCatalog
         if (itemSymbol.Length > 0 && effectKind != AuthoritativeObjectEffectKind.QuestItemCompletion)
             throw new InvalidDataException(
                 $"Object row {row.LineNumber} supplies effect_item_symbol for effect kind '{effectKind}'.");
-        if (spellSymbol.Length > 0 && effectKind != AuthoritativeObjectEffectKind.GrantSpellLevel)
+        if (spellSymbol.Length > 0 && effectKind is not (
+                AuthoritativeObjectEffectKind.GrantSpellLevel
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile))
             throw new InvalidDataException(
                 $"Object row {row.LineNumber} supplies effect_spell_symbol for effect kind '{effectKind}'.");
-        if (effectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
+        if (effectKind is AuthoritativeObjectEffectKind.GrantSpellLevel
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile)
             return checked((int)AuthoritativeSpellIdentity.ResolveOptional(
                 row,
                 stableIds,

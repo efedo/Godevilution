@@ -126,6 +126,22 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsSpellProjectileEffect()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "phasing", 7),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\teffect_spell_symbol\n"
+                + "20\t4\t1\t1\t0\tSpawnSpellProjectile\t7\tphasing\n",
+            stableIds));
+
+        Assert.Equal(AuthoritativeObjectEffectKind.SpawnSpellProjectile, @object.EffectKind);
+        Assert.Equal(7, @object.EffectAmount);
+    }
+
+    [Fact]
     public void ObjectTableResolvesStableSpellSymbolForSpellLevelGrant()
     {
         var stableIds = new StableContentIdCatalog([
@@ -170,6 +186,96 @@ public sealed class AuthoritativeWorldMutationTests
         var learned = Assert.Single(player.MemorizedSpells);
         Assert.Equal(new MemorizedSpellState(7, 1), learned);
         Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void ObjectActivationSpawnsValidatedPhasingProjectile()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7);
+        var world = new DiabloWorldState(geometry, objects: [@object]);
+        var player = CreatePlayer();
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 1,
+            },
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectileBehavior.Phasing, projectile.Behavior);
+        Assert.Equal(7U, projectile.SpellId);
+        Assert.Equal(1, projectile.PositionX);
+        Assert.Equal(0, projectile.PositionY);
+        Assert.Equal(2U, projectile.RemainingTicks);
+        Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void ObjectActivationRejectsUnsupportedSpellProjectileBehavior()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7);
+        var world = new DiabloWorldState(objects: [@object]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0),
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            CreatePlayer(),
+            new DiabloOperateObjectIntent(20),
+            1,
+            []);
+
+        Assert.False(result.Succeeded);
+        Assert.False(@object.Activated);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void ObjectCatalogRejectsUnsupportedSpellProjectileBehavior()
+    {
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            effectKind: AuthoritativeObjectEffectKind.SpawnSpellProjectile,
+            effectAmount: 7);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements([@object], spells));
+
+        Assert.Contains("unsupported authored projectile behavior", exception.Message);
     }
 
     [Fact]
