@@ -358,10 +358,10 @@ public sealed partial class DiabloSimulation
     /** Validated staged unique-monster dialogue projected to world commands. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
 
-    /** Validated native fixed-object placements for future set-level materialization. */
+    /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
 
-    /** Validated native set-level map assets and entry points for future materialization. */
+    /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
 
     /** Validated server-owned text projected with authored dialogue events. */

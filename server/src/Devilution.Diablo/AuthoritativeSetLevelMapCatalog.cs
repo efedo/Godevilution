@@ -123,16 +123,23 @@ public sealed class AuthoritativeSetLevelMapCatalog
                 throw new InvalidDataException(
                     $"Set-level map {definition.SetLevelId} supplies an incomplete native asset bundle.");
             }
-            levels.Add(AuthoritativeNativeDunGeometryLoader.Load(
+            var preMap = AuthoritativeNativeDunGeometryLoader.Load(
                 content,
                 definition,
                 GetRuntimeLevelId(definition.SetLevelId, activeMap: false),
-                activeMap: false));
-            levels.Add(AuthoritativeNativeDunGeometryLoader.Load(
+                activeMap: false);
+            var activeMap = AuthoritativeNativeDunGeometryLoader.Load(
                 content,
                 definition,
                 GetRuntimeLevelId(definition.SetLevelId, activeMap: true),
-                activeMap: true));
+                activeMap: true);
+            if (!activeMap.ContainsPosition(definition.SpawnX, definition.SpawnY)
+                || !activeMap.IsWalkable(definition.SpawnX, definition.SpawnY)) {
+                throw new InvalidDataException(
+                    $"Set-level map {definition.SetLevelId} contains an invalid active-map spawn point.");
+            }
+            levels.Add(preMap);
+            levels.Add(activeMap);
         }
         return levels;
     }

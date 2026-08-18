@@ -386,7 +386,7 @@ public sealed class ShippedContentTests
         var mapTable = TsvTable.Parse(
             "set_level_maps.tsv",
             "set_level_id\tset_level_symbol\tpre_map_asset\tactive_map_asset\ttil_asset\tsol_asset\tdungeon_type\tspawn_x\tspawn_y\n"
-                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t4\n");
+                + "1\tSL_SKELKING\tfixture/pre.dun\tfixture/active.dun\tfixture/map.til\tfixture/map.sol\tCathedral\t4\t5\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",

@@ -19,6 +19,9 @@ All notable changes to this fork are documented below.
   map object placements as server-owned interactive objects with deterministic
   entity identities. Legacy packs retain the metadata-only placement catalog.
 
+- Complete native set-level bundles now validate their declared active-map spawn
+  point against the materialized collision geometry before activation succeeds.
+
 - The Diablo module now has a validated `.dun` geometry materializer. It
   expands native mega-tile IDs through external `.til` d-piece definitions
   and external `.sol` properties into authoritative movement and missile

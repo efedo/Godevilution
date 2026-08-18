@@ -242,7 +242,7 @@ public sealed class AuthoritativeDunGeometryTests
             ]),
         ]));
         var catalog = new AuthoritativeSetLevelMapCatalog([
-            new AuthoritativeSetLevelMapDefinition(2, "levels/pre.dun", "levels/active.dun", "Catacombs", 4, 5) {
+            new AuthoritativeSetLevelMapDefinition(2, "levels/pre.dun", "levels/active.dun", "Catacombs", 1, 1) {
                 SetLevelSymbol = "SL_BONECHAMB",
                 TileAssetPath = "levels/map.til",
                 SolAssetPath = "levels/map.sol",
@@ -277,6 +277,36 @@ public sealed class AuthoritativeDunGeometryTests
         ]));
 
         Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableGeometry(content));
+    }
+
+    [Fact]
+    public void SetLevelCatalogRejectsBlockedActiveMapSpawnPoint()
+    {
+        var dun = CreateDun(1, 1, [0]);
+        var til = new byte[sizeof(ushort) * 4];
+        WriteWord(til, 0, 20);
+        WriteWord(til, 2, 21);
+        WriteWord(til, 4, 22);
+        WriteWord(til, 6, 23);
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol[20] = (byte)AuthoritativeDunTileFlags.Solid;
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("pre.dun", dun),
+                new ContentAsset("active.dun", dun),
+                new ContentAsset("map.til", til),
+                new ContentAsset("map.sol", sol),
+            ]),
+        ]));
+        var catalog = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(1, "pre.dun", "active.dun", "Cathedral", 0, 0) {
+                TileAssetPath = "map.til",
+                SolAssetPath = "map.sol",
+            },
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableGeometry(content));
+        Assert.Contains("spawn point", exception.Message, StringComparison.Ordinal);
     }
 
     private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)

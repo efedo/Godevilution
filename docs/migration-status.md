@@ -212,7 +212,8 @@ Status date: 2026-08-18
   Skeleton King's Lair, the Chamber of Bone, and Archbishop Lazarus' Lair.
   Activation validates the stable set-level links and carries the catalog in
   simulation metadata; complete native bundles are now materialized during
-  activation, while routing set-level transitions remains separate.
+  activation and reject an out-of-bounds or blocked active-map spawn point,
+  while routing set-level transitions remains separate.
 
 - Schema 1.365 adds optional `til_asset` and `sol_asset` paths to
   `set_level_maps.tsv`. Current rows identify the native dungeon-type geometry

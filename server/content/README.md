@@ -1626,7 +1626,8 @@ pre-map/active-map asset paths, dungeon type, and entry spawn positions for
 those three quest set-level maps. Diablo activation validates the stable
 set-level links and carries the catalog in server simulation metadata. Complete
 native bundles are materialized into reserved authoritative levels during
-activation; set-level transitions remain separate.
+activation, and the declared active-map spawn point must be walkable; set-level
+transitions remain separate.
 
 Schema 1.365 adds optional `til_asset` and `sol_asset` columns to
 `set_level_maps.tsv`. Current packs identify the native dungeon-type `.til`

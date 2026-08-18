@@ -130,7 +130,8 @@ authoritative results.
   reserved runtime-ID range; packs that have not shipped the binary companions
   retain the validated metadata-only fallback. Their active-map fixed-object
   placements are materialized in a separate reserved entity range when the
-  active geometry is available.
+  active geometry is available, and activation rejects a blocked or out-of-bounds
+  declared entry point.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.
