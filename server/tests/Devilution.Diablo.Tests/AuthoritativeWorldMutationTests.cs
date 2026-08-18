@@ -83,6 +83,63 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.False(world.IsWalkable(1, 2, 1));
     }
 
+    [Fact]
+    public void ObjectTableLoadsQuestTransitionRequirements()
+    {
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tquest_id\teffect_kind\teffect_amount\tquest_transition_kind\tquest_transition_amount\tquest_transition_required_variable1\n"
+                + "20\t4\t1\t1\t0\t30\tWorldMutation\t7\tActivateAndSetVariable1\t1\t0\n"));
+
+        Assert.Equal(
+            AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+            @object.QuestTransitionKind);
+        Assert.Equal(1, @object.QuestTransitionAmount);
+        Assert.Equal(0, @object.QuestTransitionRequiredVariable1);
+    }
+
+    [Fact]
+    public void ObjectActivationAppliesQuestTransitionAndMutationAtomically()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\t5\n");
+        var quest = new AuthoritativeQuestState(30, 1, 5, active: false);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            questId: 30,
+            effectKind: AuthoritativeObjectEffectKind.WorldMutation,
+            effectAmount: 7,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+            questTransitionAmount: 1,
+            questTransitionRequiredVariable1: 0);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [@object],
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(7, 1, [6], [5]),
+            ]));
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            CreatePlayer(),
+            new DiabloOperateObjectIntent(20),
+            1,
+            []);
+
+        Assert.True(result.Succeeded);
+        Assert.True(@object.Activated);
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(1, quest.Variable1);
+        Assert.True(world.IsWalkable(1, 1, 1));
+        Assert.False(world.IsWalkable(1, 2, 1));
+    }
+
     private static AuthoritativePlayerState CreatePlayer()
         => new(
             0,

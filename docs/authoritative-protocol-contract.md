@@ -621,6 +621,14 @@ and clients do not infer these identities from native numeric fields.
 the shrine, quest, breakable, and revealed-trap visual families. Trap metadata
 is emitted only when the existing trap-reveal boundary permits it; zero or
 unknown values retain generic object rendering.
+
+`ObjectSnapshot` fields 17-20 carry the optional authored quest transition
+kind, amount, and required `_qvar1`/`_qvar2` values. The server validates the
+linked quest and applies the transition atomically with object activation;
+clients must treat these fields as projection metadata and never mutate quest
+state locally. Absent transition fields retain the legacy no-transition
+meaning; required-variable values are interpreted only when a transition kind
+is present.
 Optional `ProjectileSnapshot` fields 54-55 carry a dynamic MonsterArrow
 physical damage range. When present, the server rolls that range at collision
 time; zero fields retain the fixed `projectile_damage` payload behavior. The

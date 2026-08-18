@@ -517,6 +517,16 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-object-shrine-v1");
                     hasher.AppendBool(true);
                 }
+                if (@object.QuestTransitionKind != 0
+                    || @object.QuestTransitionAmount != 0
+                    || @object.QuestTransitionRequiredVariable1 >= 0
+                    || @object.QuestTransitionRequiredVariable2 >= 0) {
+                    hasher.AppendString("godevilution-object-quest-transition-v1");
+                    hasher.AppendInt32((int)@object.QuestTransitionKind);
+                    hasher.AppendInt32(@object.QuestTransitionAmount);
+                    hasher.AppendInt32(@object.QuestTransitionRequiredVariable1);
+                    hasher.AppendInt32(@object.QuestTransitionRequiredVariable2);
+                }
             }
         }
 

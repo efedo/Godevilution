@@ -211,7 +211,10 @@ the first shipped definition. Objects without an authored quest effect retain
 the legacy local behavior. The same boundary can now apply a validated
 `WorldMutation` effect: the server persists the active cell overlay and projects
 the resulting movement/missile geometry, while the client only presents the
-updated level snapshot.
+updated level snapshot. Authored object rows can also apply validated quest
+activation/completion and native `_qvar1`/`_qvar2` transitions with required
+variable gates; the client remains responsible only for selecting and
+presenting the projected object.
 
 ## Remaining native-only interaction inventory
 

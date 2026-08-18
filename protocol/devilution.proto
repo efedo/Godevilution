@@ -699,6 +699,11 @@ message ObjectSnapshot {
 	bool is_shrine = 15;
 	// Additive server-owned world-object presentation family.
 	ObjectPresentationKind presentation_kind = 16;
+	// Authored quest-state transition applied on activation.
+	int32 quest_transition_kind = 17;
+	int32 quest_transition_amount = 18;
+	int32 quest_transition_required_variable1 = 19;
+	int32 quest_transition_required_variable2 = 20;
 }
 
 enum ObjectPresentationKind {

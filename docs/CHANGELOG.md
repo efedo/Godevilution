@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored object effects with validated quest transitions. Object rows
+  can now activate or complete a linked quest, set native `_qvar1`/`_qvar2`,
+  and enforce required variable gates atomically with world mutations through
+  `OperateObjectRequested`; set-level placement and spell effects remain later
+  migration seams.
+
 - Add validated content-backed world-cell mutations. Authored `WorldMutation`
   object effects now apply deterministic movement and missile-occlusion overlays
   on the server; active mutation IDs persist in snapshots, and the existing

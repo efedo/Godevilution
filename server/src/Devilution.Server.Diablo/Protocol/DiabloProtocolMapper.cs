@@ -161,6 +161,10 @@ internal static class DiabloProtocolMapper
                 Destroyed = @object.Destroyed,
                 TrapArmed = revealTraps && @object.TrapArmed,
                 IsShrine = @object.IsShrine,
+                QuestTransitionKind = (int)@object.QuestTransitionKind,
+                QuestTransitionAmount = @object.QuestTransitionAmount,
+                QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1,
+                QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -626,6 +630,16 @@ internal static class DiabloProtocolMapper
                 Destroyed = @object.Destroyed,
                 TrapArmed = @object.TrapArmed,
                 IsShrine = @object.IsShrine,
+                QuestTransitionKind = (AuthoritativeObjectQuestTransitionKind)@object.QuestTransitionKind,
+                QuestTransitionAmount = @object.QuestTransitionAmount,
+                QuestTransitionRequiredVariable1 = @object.QuestTransitionKind == 0
+                    && @object.QuestTransitionRequiredVariable1 == 0
+                    ? -1
+                    : @object.QuestTransitionRequiredVariable1,
+                QuestTransitionRequiredVariable2 = @object.QuestTransitionKind == 0
+                    && @object.QuestTransitionRequiredVariable2 == 0
+                    ? -1
+                    : @object.QuestTransitionRequiredVariable2,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

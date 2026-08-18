@@ -13,3 +13,17 @@ public enum AuthoritativeObjectEffectKind
     /** Applies one validated level-cell overlay when the object is activated. */
     WorldMutation,
 }
+
+/** Native quest-state transition applied when an authored object is activated. */
+public enum AuthoritativeObjectQuestTransitionKind
+{
+    None,
+    ActivateQuest,
+    CompleteQuest,
+    SetVariable1,
+    SetVariable2,
+    ActivateAndSetVariable1,
+    ActivateAndSetVariable2,
+    CompleteAndSetVariable1,
+    CompleteAndSetVariable2,
+}

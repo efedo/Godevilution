@@ -250,6 +250,14 @@ public sealed record DiabloObjectState(
     public bool TrapArmed { get; init; }
 
     public bool IsShrine { get; init; }
+
+    public AuthoritativeObjectQuestTransitionKind QuestTransitionKind { get; init; }
+
+    public int QuestTransitionAmount { get; init; }
+
+    public int QuestTransitionRequiredVariable1 { get; init; } = -1;
+
+    public int QuestTransitionRequiredVariable2 { get; init; } = -1;
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -597,6 +605,10 @@ public sealed partial class DiabloSimulation
                     Destroyed = @object.Destroyed,
                     TrapArmed = @object.TrapArmed,
                     IsShrine = @object.IsShrine,
+                    QuestTransitionKind = @object.QuestTransitionKind,
+                    QuestTransitionAmount = @object.QuestTransitionAmount,
+                    QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1,
+                    QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -939,6 +951,16 @@ public sealed partial class DiabloSimulation
                 || @object.ObjectId == 0
                 || @object.EffectAmount < 0
                 || !Enum.IsDefined(@object.EffectKind)
+                || !Enum.IsDefined(@object.QuestTransitionKind)
+                || @object.QuestTransitionAmount is < 0 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable1 is < -1 or > byte.MaxValue
+                || @object.QuestTransitionRequiredVariable2 is < -1 or > byte.MaxValue
+                || !AuthoritativeWorldObject.IsValidQuestTransition(
+                    @object.QuestTransitionKind,
+                    @object.QuestTransitionAmount,
+                    @object.QuestTransitionRequiredVariable1,
+                    @object.QuestTransitionRequiredVariable2,
+                    @object.QuestId)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2002,6 +2024,10 @@ public sealed partial class DiabloSimulation
                 target.Destroyed = @object.Destroyed;
                 target.TrapArmed = @object.TrapArmed;
                 target.IsShrine = @object.IsShrine;
+                target.QuestTransitionKind = @object.QuestTransitionKind;
+                target.QuestTransitionAmount = @object.QuestTransitionAmount;
+                target.QuestTransitionRequiredVariable1 = @object.QuestTransitionRequiredVariable1;
+                target.QuestTransitionRequiredVariable2 = @object.QuestTransitionRequiredVariable2;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2018,7 +2044,11 @@ public sealed partial class DiabloSimulation
                     @object.Breakable,
                     @object.Destroyed,
                     @object.TrapArmed,
-                    @object.IsShrine));
+                    @object.IsShrine,
+                    @object.QuestTransitionKind,
+                    @object.QuestTransitionAmount,
+                    @object.QuestTransitionRequiredVariable1,
+                    @object.QuestTransitionRequiredVariable2));
             }
         }
     }

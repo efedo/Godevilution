@@ -79,6 +79,30 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectQuestTransitionMetadata()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                QuestId = 30,
+                QuestTransitionKind = AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+                QuestTransitionAmount = 1,
+                QuestTransitionRequiredVariable1 = 0,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.Equal(
+            AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1,
+            @object.QuestTransitionKind);
+        Assert.Equal(1, @object.QuestTransitionAmount);
+        Assert.Equal(0, @object.QuestTransitionRequiredVariable1);
+    }
+
+    [Fact]
     public void RejectsMalformedIncompleteAndUnknownVersionEnvelopes()
     {
         var codec = new AuthoritativeSaveCodec();

@@ -974,6 +974,16 @@ public sealed class DiabloWorldCommandProcessor
             && linkedQuest.Unavailable) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+            && (!world.Quests.TryGetValue(@object.QuestId, out var transitionQuest)
+                || transitionQuest.Unavailable
+                || transitionQuest.LevelId != player.LevelId
+                || (@object.QuestTransitionRequiredVariable1 >= 0
+                    && transitionQuest.Variable1 != @object.QuestTransitionRequiredVariable1)
+                || (@object.QuestTransitionRequiredVariable2 >= 0
+                    && transitionQuest.Variable2 != @object.QuestTransitionRequiredVariable2))) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
@@ -990,6 +1000,7 @@ public sealed class DiabloWorldCommandProcessor
 
         @object.Activated = true;
         if (@object.QuestId != 0 && world.Quests.TryGetValue(@object.QuestId, out var quest)
+            && @object.QuestTransitionKind == AuthoritativeObjectQuestTransitionKind.None
             && !quest.Unavailable
             && !quest.Completed && quest.LevelId == player.LevelId) {
             quest.Active = true;
@@ -1003,13 +1014,16 @@ public sealed class DiabloWorldCommandProcessor
             }
         }
 
+        ApplyQuestTransition(@object);
         if (@object.EffectAmount <= 0)
             return DiabloWorldIntentResult.Accepted;
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
             world.ApplyWorldMutation((uint)@object.EffectAmount);
-            return DiabloWorldIntentResult.Accepted;
         }
+
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation)
+            return DiabloWorldIntentResult.Accepted;
 
         switch (@object.EffectKind) {
         case AuthoritativeObjectEffectKind.Heal:
@@ -1055,6 +1069,40 @@ public sealed class DiabloWorldCommandProcessor
                 @object.EffectAmount));
         default:
             return DiabloWorldIntentResult.Accepted;
+        }
+    }
+
+    private void ApplyQuestTransition(AuthoritativeWorldObject @object)
+    {
+        if (@object.QuestTransitionKind == AuthoritativeObjectQuestTransitionKind.None
+            || !world.Quests.TryGetValue(@object.QuestId, out var quest)) {
+            return;
+        }
+
+        var kind = @object.QuestTransitionKind;
+        if (kind is AuthoritativeObjectQuestTransitionKind.ActivateQuest
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable2) {
+            quest.Active = true;
+            quest.Logged = true;
+        }
+        if (kind is AuthoritativeObjectQuestTransitionKind.CompleteQuest
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable1
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2) {
+            quest.Completed = true;
+            quest.Active = false;
+            quest.Progress = quest.RequiredProgress;
+            quest.Logged = true;
+        }
+        if (kind is AuthoritativeObjectQuestTransitionKind.SetVariable1
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable1) {
+            quest.Variable1 = @object.QuestTransitionAmount;
+        }
+        if (kind is AuthoritativeObjectQuestTransitionKind.SetVariable2
+                or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable2
+                or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2) {
+            quest.Variable2 = @object.QuestTransitionAmount;
         }
     }
 

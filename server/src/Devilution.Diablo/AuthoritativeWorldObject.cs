@@ -20,7 +20,11 @@ public sealed class AuthoritativeWorldObject
         bool breakable = false,
         bool destroyed = false,
         bool trapArmed = false,
-        bool isShrine = false)
+        bool isShrine = false,
+        AuthoritativeObjectQuestTransitionKind questTransitionKind = AuthoritativeObjectQuestTransitionKind.None,
+        int questTransitionAmount = 0,
+        int questTransitionRequiredVariable1 = -1,
+        int questTransitionRequiredVariable2 = -1)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -42,6 +46,26 @@ public sealed class AuthoritativeWorldObject
             throw new ArgumentException("Only a breakable object may begin destroyed.");
         EffectKind = effectKind;
         EffectAmount = effectAmount;
+        if (!Enum.IsDefined(questTransitionKind))
+            throw new ArgumentOutOfRangeException(nameof(questTransitionKind));
+        if (questTransitionAmount is < 0 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(questTransitionAmount));
+        if (questTransitionRequiredVariable1 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(questTransitionRequiredVariable1));
+        if (questTransitionRequiredVariable2 is < -1 or > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(questTransitionRequiredVariable2));
+        if (!IsValidQuestTransition(
+                questTransitionKind,
+                questTransitionAmount,
+                questTransitionRequiredVariable1,
+                questTransitionRequiredVariable2,
+                questId)) {
+            throw new InvalidDataException("Object quest transition values are invalid.");
+        }
+        QuestTransitionKind = questTransitionKind;
+        QuestTransitionAmount = questTransitionAmount;
+        QuestTransitionRequiredVariable1 = questTransitionRequiredVariable1;
+        QuestTransitionRequiredVariable2 = questTransitionRequiredVariable2;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -60,6 +84,10 @@ public sealed class AuthoritativeWorldObject
     public uint QuestProgressAmount { get; set; }
     public AuthoritativeObjectEffectKind EffectKind { get; set; }
     public int EffectAmount { get; set; }
+    public AuthoritativeObjectQuestTransitionKind QuestTransitionKind { get; set; }
+    public int QuestTransitionAmount { get; set; }
+    public int QuestTransitionRequiredVariable1 { get; set; }
+    public int QuestTransitionRequiredVariable2 { get; set; }
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
@@ -69,6 +97,32 @@ public sealed class AuthoritativeWorldObject
 
     /** Native shrine capability used by Nova Ball's target-tile collision rule. */
     public bool IsShrine { get; set; }
+
+    public static bool IsValidQuestTransition(
+        AuthoritativeObjectQuestTransitionKind kind,
+        int amount,
+        int requiredVariable1,
+        int requiredVariable2,
+        uint questId)
+    {
+        if (!Enum.IsDefined(kind)
+            || amount is < 0 or > byte.MaxValue
+            || requiredVariable1 is < -1 or > byte.MaxValue
+            || requiredVariable2 is < -1 or > byte.MaxValue) {
+            return false;
+        }
+        if (kind != AuthoritativeObjectQuestTransitionKind.None && questId == 0)
+            return false;
+        var setsVariable = kind is AuthoritativeObjectQuestTransitionKind.SetVariable1
+            or AuthoritativeObjectQuestTransitionKind.SetVariable2
+            or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable1
+            or AuthoritativeObjectQuestTransitionKind.ActivateAndSetVariable2
+            or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable1
+            or AuthoritativeObjectQuestTransitionKind.CompleteAndSetVariable2;
+        return kind != AuthoritativeObjectQuestTransitionKind.None
+            ? setsVariable ? amount > 0 : amount == 0
+            : amount == 0 && requiredVariable1 < 0 && requiredVariable2 < 0;
+    }
 }
 
 /** External object placement and identity definitions. */
@@ -122,7 +176,11 @@ public static class AuthoritativeWorldObjectCatalog
                 row.OptionalBoolean("breakable"),
                 row.OptionalBoolean("destroyed"),
                 row.OptionalBoolean("trap_armed"),
-                row.OptionalBoolean("is_shrine"));
+                row.OptionalBoolean("is_shrine"),
+                ParseQuestTransitionKind(row),
+                row.OptionalInt32("quest_transition_amount"),
+                OptionalQuestTransitionValue(row, "quest_transition_required_variable1"),
+                OptionalQuestTransitionValue(row, "quest_transition_required_variable2"));
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
@@ -134,6 +192,10 @@ public static class AuthoritativeWorldObjectCatalog
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
+        if (objects.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+                && @object.QuestId == 0))
+            throw new InvalidDataException(
+                $"Object table '{sourcePath}' contains a quest transition without a quest.");
         if (objects.Select(@object => @object.EntityId).Distinct().Count() != objects.Length)
             throw new InvalidDataException($"Object table '{sourcePath}' contains duplicate entity IDs.");
         return objects;
@@ -194,6 +256,31 @@ public static class AuthoritativeWorldObjectCatalog
         if (Enum.TryParse<AuthoritativeObjectEffectKind>(value, true, out var effectKind))
             return effectKind;
         throw new InvalidDataException($"Object row {row.LineNumber} contains an unknown effect kind '{value}'.");
+    }
+
+    private static AuthoritativeObjectQuestTransitionKind ParseQuestTransitionKind(TsvRow row)
+    {
+        if (!row.TryGet("quest_transition_kind", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return AuthoritativeObjectQuestTransitionKind.None;
+        }
+        if (Enum.TryParse<AuthoritativeObjectQuestTransitionKind>(value, true, out var kind)
+            && Enum.IsDefined(kind)) {
+            return kind;
+        }
+        throw new InvalidDataException(
+            $"Object row {row.LineNumber} contains an unknown quest transition kind '{value}'.");
+    }
+
+    private static int OptionalQuestTransitionValue(TsvRow row, string column)
+    {
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return -1;
+        }
+        return row.OptionalInt32(column, -1);
     }
 
     private static int ParseEffectAmount(
