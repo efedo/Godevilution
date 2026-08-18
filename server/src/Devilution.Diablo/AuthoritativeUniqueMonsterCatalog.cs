@@ -68,6 +68,11 @@ public sealed class AuthoritativeUniqueMonsterCatalog
                                 definition.NativeAi,
                                 StringComparison.Ordinal)))
                     .ToArray();
+            // Selector rows may target a procedurally materialized encounter
+            // that is not part of the static pack. Static entity rows remain
+            // strict; generated selectors are applied by ApplyToGenerated.
+            if (definition.EntityId == 0 && matches.Length == 0)
+                continue;
             if (matches.Length != 1)
                 throw new InvalidDataException(
                     $"Unique monster {definition.Identity} must match exactly one unique encounter; found {matches.Length}.");

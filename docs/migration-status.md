@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-17
+Status date: 2026-08-18
 
 ## Current state
 
@@ -211,6 +211,11 @@ Status date: 2026-08-17
   interaction advances `_qvar2` and emits the native prompt without consuming
   Tavern Sign; the second consumes it and spawns Harlequin Crest at the native
   reward position.
+
+- Schema 1.353 extends the generated unique-encounter boundary to the base
+  pack. Gharbad, Zhar, Warlord, and Lazarus now have validated native-AI
+  selector declarations; static activation defers unmatched selectors, and
+  the planner binds them only when the matching unique encounter materializes.
 
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one

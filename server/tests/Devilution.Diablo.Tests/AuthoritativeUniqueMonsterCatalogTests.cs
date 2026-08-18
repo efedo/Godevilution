@@ -92,6 +92,30 @@ public sealed class AuthoritativeUniqueMonsterCatalogTests
     }
 
     [Fact]
+    public void DefersUnmatchedSelectorUntilGeneratedEncounterMaterializes()
+    {
+        var target = new AuthoritativeCombatTarget(
+            16,
+            1,
+            1,
+            20,
+            monsterId: 126,
+            unique: false,
+            nativeAi: "SkeletonMelee");
+        var catalog = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(
+                0,
+                126,
+                "Defiler",
+                "SkeletonMelee"),
+        ]);
+
+        catalog.ApplyTo([target]);
+
+        Assert.Empty(target.UniqueIdentity);
+    }
+
+    [Fact]
     public void RejectsIdentityWhenEncounterTypeOrUniqueFlagDoesNotMatch()
     {
         var target = new AuthoritativeCombatTarget(

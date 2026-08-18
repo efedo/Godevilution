@@ -8,6 +8,11 @@ All notable changes to this fork are documented below.
   materialization. Static rows remain strict, while generated selector rows
   bind exactly one matching unique target when its level is spawned.
 
+- Add schema 1.353 base unique-monster selector declarations for Gharbad, Zhar,
+  Warlord, and Lazarus. Static activation now defers unmatched selector rows,
+  allowing those identities to be declared before their procedural encounters
+  exist while retaining strict ambiguity checks.
+
 - Enforce authored staged unique-monster dialogue combat gates. Targets remain
   non-combatant while their quest's `dialogue_completion_variable1` marker is
   pending; the Warlord path now rejects direct attacks and pauses autonomous

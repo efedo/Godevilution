@@ -17,9 +17,29 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.352.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.353.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
+    }
+
+    [Fact]
+    public void BaseContentPackDeclaresProceduralUniqueSelectors()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var uniqueTable = pack.Tables.Single(table => table.SourcePath == "unique_monsters.tsv");
+        var catalog = AuthoritativeUniqueMonsterCatalog.LoadTsv(
+            uniqueTable.SourcePath,
+            uniqueTable.ToCanonicalTsv());
+
+        Assert.Equal(
+            ["Gharbad", "Lazarus", "Warlord", "Zhar"],
+            catalog.Definitions.Select(definition => definition.Identity).ToArray());
+        Assert.All(catalog.Definitions, definition => {
+            Assert.Equal(0U, definition.EntityId);
+            Assert.Equal(0U, definition.MonsterId);
+            Assert.NotEmpty(definition.NativeAi);
+        });
     }
 
     [Fact]
@@ -1628,7 +1648,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.352.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.353.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

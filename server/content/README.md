@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.352.0` schema in
+It declares its identity and `devilution.diablo@1.353.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1533,10 +1533,15 @@ visitation OR-gate and one active-but-unlogged stage without that gate.
 Schema 1.352 allows `unique_monsters.tsv` rows to bind an identity by a
 validated monster ID and native-AI selector when a generated encounter has no
 stable entity ID. A selector must resolve to exactly one unique encounter;
-the shipped Hellfire Defiler row now uses this form. Static content activation
-continues to require every authored row to resolve immediately; procedural
-spawn sets apply selector rows when their matching unique encounter is
-materialized and defer unrelated selectors until that encounter exists.
+the shipped Hellfire Defiler row now uses this form. Static entity rows remain
+strict, while selector rows may defer during activation until a matching
+procedural encounter is materialized.
+
+Schema 1.353 adds the base pack's selector declarations for the native Gharbad,
+Zhar, Warlord, and Lazarus identities. These rows are intentionally independent
+of static encounter placement: the spawn planner binds them only when the
+corresponding validated unique native-AI encounter appears, and leaves the
+selector unresolved on unrelated levels.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
@@ -2331,7 +2336,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.352.0"
+    "version": "1.353.0"
   },
   "dependencyConstraints": [
     {
@@ -2363,7 +2368,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.352.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.353.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

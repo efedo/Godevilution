@@ -184,8 +184,11 @@ the first conversation while leaving the quest active; base Zhar is the first
 activation-reward definition and uses a generated level-14 spell book. Hellfire
 Defiler is the first conversation-only definition, Lachdanan is the first
 hand-in definition, and base Warlord declares its subsequent `_qvar1` transition
-into the native attacking state. Unauthored legacy monster conversations retain
-their local fallback until their content actions are externalized.
+into the native attacking state. Base Gharbad, Zhar, Warlord, and Lazarus
+identities are now declared independently of static placement and are applied
+when their validated procedural unique encounters materialize. Unauthored
+legacy monster conversations retain their local fallback until their content
+actions are externalized.
 
 Content-declared quest objects now use the same `OperateObjectRequested`
 boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
@@ -195,7 +198,7 @@ without an authored quest effect retain the legacy local behavior.
 
 ## Remaining native-only interaction inventory
 
-The following paths were audited against `Source/game` on 2026-08-17 and are
+The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
