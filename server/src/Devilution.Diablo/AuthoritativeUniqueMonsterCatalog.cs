@@ -94,6 +94,39 @@ public sealed class AuthoritativeUniqueMonsterCatalog
         }
     }
 
+    /** Applies selector rows to one generated encounter set when present. */
+    public void ApplyToGenerated(IReadOnlyList<AuthoritativeCombatTarget> targets)
+    {
+        ArgumentNullException.ThrowIfNull(targets);
+        foreach (var definition in Definitions.Where(definition => definition.EntityId == 0)) {
+            var matches = targets
+                .Where(target => target.IsUnique
+                    && (definition.MonsterId == 0
+                        || target.MonsterId == definition.MonsterId)
+                    && (definition.NativeAi.Length == 0
+                        || string.Equals(
+                            target.NativeAi,
+                            definition.NativeAi,
+                            StringComparison.Ordinal)))
+                .ToArray();
+            if (matches.Length > 1)
+                throw new InvalidDataException(
+                    $"Generated unique monster {definition.Identity} must match at most one encounter; found {matches.Length}.");
+            if (matches.Length == 0)
+                continue;
+
+            var matchedTarget = matches[0];
+            if (matchedTarget.UniqueIdentity.Length != 0
+                && !string.Equals(
+                    matchedTarget.UniqueIdentity,
+                    definition.Identity,
+                    StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    $"Unique monster encounter {matchedTarget.EntityId} already has a conflicting identity.");
+            matchedTarget.UniqueIdentity = definition.Identity;
+        }
+    }
+
     public static AuthoritativeUniqueMonsterCatalog LoadTsv(
         string sourcePath,
         string contents,

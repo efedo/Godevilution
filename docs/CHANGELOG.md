@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Apply validated unique-monster selectors during procedural encounter
+  materialization. Static rows remain strict, while generated selector rows
+  bind exactly one matching unique target when its level is spawned.
+
 - Enforce authored staged unique-monster dialogue combat gates. Targets remain
   non-combatant while their quest's `dialogue_completion_variable1` marker is
   pending; the Warlord path now rejects direct attacks and pauses autonomous

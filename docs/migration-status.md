@@ -216,7 +216,9 @@ Status date: 2026-08-17
   unique-monster identities. `unique_monsters.tsv` can now select exactly one
   unique encounter by validated monster ID and native AI, preserving the
   identity across generated placement and the existing snapshot/protocol
-  boundary. The Hellfire Defiler definition now exercises this selector.
+  boundary. The spawn planner now applies selector rows as generated unique
+  encounters materialize, while unrelated levels defer their selectors. The
+  Hellfire Defiler definition exercises this path.
 
 - Base Magic Rock and Anvil of Fury activation conversations now use authored
   quest/towner rows. Their server-owned visited-level OR-gates reproduce the

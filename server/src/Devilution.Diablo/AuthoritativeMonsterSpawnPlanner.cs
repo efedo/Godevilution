@@ -28,6 +28,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
     private readonly AuthoritativeItemCatalog? itemCatalog;
     private readonly AuthoritativeMonsterCatalog? monsterCatalog;
     private readonly AuthoritativeSpellBookCatalog? spellBooks;
+    private readonly AuthoritativeUniqueMonsterCatalog? uniqueMonsters;
 
     public AuthoritativeMonsterSpawnPlanner(
         AuthoritativeWorld world,
@@ -35,7 +36,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         AuthoritativeLevelGenerationCatalog levelGeneration,
         AuthoritativeItemCatalog? itemCatalog = null,
         AuthoritativeMonsterCatalog? monsterCatalog = null,
-        AuthoritativeSpellBookCatalog? spellBooks = null)
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        AuthoritativeUniqueMonsterCatalog? uniqueMonsters = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.monsterTypes = monsterTypes
@@ -45,6 +47,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
         this.itemCatalog = itemCatalog;
         this.monsterCatalog = monsterCatalog;
         this.spellBooks = spellBooks;
+        this.uniqueMonsters = uniqueMonsters;
     }
 
     /** Plans bounded deterministic placements while avoiding reserved cells. */
@@ -123,7 +126,7 @@ public sealed class AuthoritativeMonsterSpawnPlanner
             multiplayer,
             maximumMonsters,
             reservedPositions);
-        return spawns
+        var targets = spawns
             .Select((spawn, index) => CreateCombatTarget(
                 spawn,
                 index,
@@ -131,6 +134,8 @@ public sealed class AuthoritativeMonsterSpawnPlanner
                 firstEntityId,
                 multiplayer))
             .ToArray();
+        uniqueMonsters?.ApplyToGenerated(targets);
+        return targets;
     }
 
     /** Creates one level-valid summon selected by its validated native table identity. */

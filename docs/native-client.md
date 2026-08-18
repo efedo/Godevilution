@@ -174,7 +174,9 @@ Legacy local towner behavior stays available outside the authoritative runtime.
 Content-declared unique-monster conversations use the same boundary. When the
 projected live unique identity matches an active quest, the native client sends
 `TalkToQuestRequested`; the server validates the quest, target identity, level,
-and adjacency before returning the dialogue event. Dialogue definitions may
+and adjacency before returning the dialogue event. Procedural unique targets
+receive their authored identity when the spawn planner materializes the
+matching encounter. Dialogue definitions may
 also declare an inventory hand-in and relative unique or normal-item reward;
 the server consumes the item, completes the quest, and emits the authored
 completion dialogue. Definitions may instead generate a one-time reward during

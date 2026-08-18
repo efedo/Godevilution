@@ -149,6 +149,67 @@ public sealed class AuthoritativeMonsterSpawnPlannerTests
     }
 
     [Fact]
+    public void AppliesUniqueIdentitySelectorToGeneratedUniqueEncounter()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 3) with { NativeAi = "SkeletonMelee" },
+        ]);
+        var monsters = new AuthoritativeMonsterCatalog(
+            [],
+            [new AuthoritativeMonsterDropDefinition(2, 0, 0, 0, false, true, false)]);
+        var uniqueMonsters = new AuthoritativeUniqueMonsterCatalog([
+            new AuthoritativeUniqueMonsterDefinition(
+                0,
+                2,
+                "Generated Defiler",
+                "SkeletonMelee"),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            generation,
+            monsterCatalog: monsters,
+            uniqueMonsters: uniqueMonsters);
+
+        var target = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+
+        Assert.True(target.IsUnique);
+        Assert.Equal("Generated Defiler", target.UniqueIdentity);
+    }
+
+    [Fact]
+    public void LeavesGeneratedUniqueSelectorUnmatchedUntilItsEncounterAppears()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(2, 1, 1, 4, 4, 2, 3),
+        ]);
+        var generation = new AuthoritativeLevelGenerationCatalog([
+            new AuthoritativeLevelGenerationRule(1, 1, 1, 100, 0),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            generation,
+            uniqueMonsters: new AuthoritativeUniqueMonsterCatalog([
+                new AuthoritativeUniqueMonsterDefinition(0, 99, "Absent", "SkeletonMelee"),
+            ]));
+
+        var target = Assert.Single(
+            planner.PlanCombatTargets(1, seed: 4, multiplayer: false, maximumMonsters: 1));
+
+        Assert.Equal(2U, target.MonsterId);
+        Assert.Empty(target.UniqueIdentity);
+    }
+
+    [Fact]
     public void CreatesOnlyLevelValidSkeletonMeleeSummons()
     {
         var world = new AuthoritativeWorld();

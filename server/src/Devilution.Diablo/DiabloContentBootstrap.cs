@@ -626,7 +626,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelGeneration,
                 itemCatalog,
                 monsters,
-                spellBooks)
+                spellBooks,
+                uniqueMonsters)
             : null;
         IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = monsters?.Targets;
         if (monsterSpawns is not null) {

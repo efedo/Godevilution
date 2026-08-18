@@ -1533,7 +1533,10 @@ visitation OR-gate and one active-but-unlogged stage without that gate.
 Schema 1.352 allows `unique_monsters.tsv` rows to bind an identity by a
 validated monster ID and native-AI selector when a generated encounter has no
 stable entity ID. A selector must resolve to exactly one unique encounter;
-the shipped Hellfire Defiler row now uses this form.
+the shipped Hellfire Defiler row now uses this form. Static content activation
+continues to require every authored row to resolve immediately; procedural
+spawn sets apply selector rows when their matching unique encounter is
+materialized and defer unrelated selectors until that encounter exists.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
