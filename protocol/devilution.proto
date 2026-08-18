@@ -740,6 +740,10 @@ message QuestSnapshot {
 	optional int32 turn_in_message_id = 20;
 	// Whether this towner interaction emits dialogue without changing quest state.
 	bool turn_in_dialogue_only = 21;
+	// Optional native _qvar1 gate for a completion-stage interaction when no _qvar2 marker is used.
+	optional int32 turn_in_completion_required_variable1 = 22;
+	// Optional native _qvar1 marker written by a completion-stage interaction.
+	optional int32 turn_in_completion_variable1 = 23;
 }
 
 message ProjectileSnapshot {

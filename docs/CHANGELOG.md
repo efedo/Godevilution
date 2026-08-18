@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   now routes Gillian's Cathedral Map conversation through the server, preserving
   the native message while leaving the map and quest completion state unchanged.
 
+- Add schema 1.342 variable-1-only completion-stage quest metadata. Base
+  Poisoned Water now routes Pepin's completion dialogue and Ring of Truth reward
+  through the authoritative server without mutating native `_qvar2`.
+
 - Add schema 1.340 completion-stage quest markers. Lazarus's authored
   Storyteller interaction now writes native `_qvar1 = 8` and logs the Diablo
   follow-on quest after the native completion gate.

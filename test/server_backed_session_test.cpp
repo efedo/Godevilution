@@ -64,6 +64,15 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		dialogueQuest->set_turn_in_towner_id(7);
 		dialogueQuest->set_turn_in_message_id(274);
 		dialogueQuest->set_turn_in_dialogue_only(true);
+		auto *variableOneQuest = initial.mutable_snapshot()->add_quests();
+		variableOneQuest->set_quest_id(3014);
+		variableOneQuest->set_required_progress(1);
+		variableOneQuest->set_completed(true);
+		variableOneQuest->set_variable_1(0);
+		variableOneQuest->set_turn_in_towner_id(8);
+		variableOneQuest->set_turn_in_on_completion(true);
+		variableOneQuest->set_turn_in_completion_required_variable1(0);
+		variableOneQuest->set_turn_in_completion_variable1(2);
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -106,6 +115,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(1), std::optional<uint32_t> { 3002 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
+	EXPECT_EQ((*session)->ActiveQuestForTowner(8), std::optional<uint32_t> { 3014 });
 	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Defiler"), std::optional<uint32_t> { 3011 });
 	EXPECT_FALSE((*session)->ActiveQuestForUniqueIdentity("Na-Krul").has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);

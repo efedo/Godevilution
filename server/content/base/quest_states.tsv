@@ -7,3 +7,4 @@ quest_id	quest_symbol	level_id	level_symbol	required_progress	progress	completed
 3006	diablo	15		1	0	0	0	1	0	0	0	0	0		NONE	0	0	0	0	0		0	1	0		0	-1	0		0	0	0		-1	0		0	0	0	0	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1	-1	-1	-1	false
 3012	warlord_of_blood	13		1	0	0	0	1	0	0	0	110	0		Warlord	2	0	3	0	0		1	0	0		0	-1	0		0	0	0		-1	0		0	0	0	0	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	false	false	-1	0	0		0	0	0	0	NONE	0		0	-1	-1	-1	-1	false
 3016	lazarus	15		1	0	0	0	1	0	0	0	35	0		Lazarus	6	0	7	0	3006	diablo	false	0	0		0	4	0		62	71	34	lazarus_staff	-1	0		0	0	0	35	0	NONE	0	NONE	0		0	0	0	0	0	NONE	false	true	true	1	25	0		0	0	0	0	NONE	0		0	2	-1	7	8	false
+3014	poisoned_water	4		1	0	false	false	true	false	0	0	39	0		NONE	0	0	0	0	0		true	false	0		0	1	0	town	55	79	0		-1	0		0	0	0	0	0		0		0		0	0	0	0	0		false	false	true	-1	41	1006	ring_of_truth	2	54	80	0		0		0	-1	-1	0	2	false

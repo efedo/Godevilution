@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.341.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.342.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1591,7 +1591,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.341.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.342.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1734,6 +1734,29 @@ public sealed class ShippedContentTests
             graveQuest.TurnInItemId,
             graveQuest.TurnInMessageId,
             graveQuest.TurnInDialogueOnly));
+        var poisonedWaterQuest = activation.Simulation.WorldState.Quests[3014];
+        Assert.Equal((1, 0U, 55, 79, true, -1, 0, 2, 41, 1006U, 2, 54, 80), (
+            poisonedWaterQuest.TurnInTownerId,
+            poisonedWaterQuest.TurnInLevelId,
+            poisonedWaterQuest.TurnInPositionX,
+            poisonedWaterQuest.TurnInPositionY,
+            poisonedWaterQuest.TurnInOnCompletion,
+            poisonedWaterQuest.TurnInCompletionVariable2,
+            poisonedWaterQuest.TurnInCompletionRequiredVariable1,
+            poisonedWaterQuest.TurnInCompletionVariable1,
+            poisonedWaterQuest.TurnInCompletionMessageId,
+            poisonedWaterQuest.TurnInCompletionRewardUniqueId,
+            poisonedWaterQuest.TurnInCompletionRewardItemLevel,
+            poisonedWaterQuest.TurnInCompletionRewardPositionX,
+            poisonedWaterQuest.TurnInCompletionRewardPositionY));
+        var generatedPoisonWaterReward = activation.Simulation.Items!.GenerateUnique(
+            1006,
+            0x12345678,
+            poisonedWaterQuest.TurnInCompletionRewardItemLevel);
+        Assert.Equal(1006, generatedPoisonWaterReward.UniqueId);
+        Assert.Equal(9100, generatedPoisonWaterReward.Value);
+        Assert.Equal(10 << 6, generatedPoisonWaterReward.PlusHitPoints);
+        Assert.Equal(10, generatedPoisonWaterReward.PlusMagicResistance);
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,
@@ -1788,7 +1811,7 @@ public sealed class ShippedContentTests
             });
         Assert.Equal(24, activation.QuestTypes!.Definitions.Count);
         Assert.Equal(13, activation.QuestPools!.Definitions.Count);
-        Assert.Equal(21, activation.Simulation.WorldState.Quests.Count);
+        Assert.Equal(22, activation.Simulation.WorldState.Quests.Count);
         var nakrulTomes = activation.Simulation.WorldState.Objects.Values
             .Where(@object => @object.QuestId == 3022)
             .OrderBy(@object => @object.EffectAmount)

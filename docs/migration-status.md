@@ -197,6 +197,11 @@ Status date: 2026-08-17
   stage. The server requires the Cathedral Map, records native `_qmsg = 274`,
   emits Gillian's dialogue, and preserves the map and quest completion state.
 
+- Base Poisoned Water now uses an authored Pepin completion-stage interaction.
+  Its native `_qvar1`-only marker is carried through the protocol, the server
+  writes `_qvar1 = 2` without changing `_qvar2`, emits `TEXT_POISON5`, and
+  generates the authored Ring of Truth reward at the native position.
+
 - Base Ogden's Sign now uses authored quest state 3008. The first Tavern
   interaction advances `_qvar2` and emits the native prompt without consuming
   Tavern Sign; the second consumes it and spawns Harlequin Crest at the native
@@ -1917,6 +1922,10 @@ Status date: 2026-08-17
 - Schema 1.341 adds non-consuming, item-gated `turn_in_dialogue_only` stages.
   Hellfire Grave Matters uses the new stage for Gillian's Cathedral Map
   conversation.
+
+- Schema 1.342 adds variable-1-only completion-stage markers. Base Poisoned
+  Water uses the new fields for Pepin's native completion conversation and
+  Ring of Truth reward.
 
 - Hellfire Magic Rock now uses the authored Griswold turn-in definition. The
   server owns its native first-conversation variable gate, required-item

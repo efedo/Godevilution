@@ -2,6 +2,7 @@ kind	symbol	numeric_id
 unique	the_ember_blade	1001
 unique	the_ward_shield	1002
 unique	empyrean_band	1004
+unique	ring_of_truth	1006
 unique	harlequin_crest	1007
 unique	griswold_s_edge	1010
 item	short_sword	1

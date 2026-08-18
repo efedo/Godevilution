@@ -574,7 +574,10 @@ public static class AuthoritativeQuestCatalog
                 && !items.TryGet(quest.TurnInItemId, out _))
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
-            if (!quest.TurnInActivationOnly && quest.TurnInItemId == 0)
+            if (!quest.TurnInActivationOnly
+                && !quest.TurnInOnCompletion
+                && !quest.TurnInDialogueOnly
+                && quest.TurnInItemId == 0)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} references unknown turn-in item {quest.TurnInItemId}.");
             if (quest.TurnInRewardUniqueId != 0
@@ -589,9 +592,11 @@ public static class AuthoritativeQuestCatalog
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} declares both a turn-in unique reward and item reward.");
             if (quest.TurnInOnCompletion) {
-                if (quest.TurnInCompletionVariable2 < 0)
+                if (quest.TurnInCompletionVariable2 < 0
+                    && (quest.TurnInCompletionRequiredVariable1 < 0
+                        || quest.TurnInCompletionVariable1 < 0))
                     throw new InvalidDataException(
-                        $"Quest {quest.QuestId} completion-stage turn-in requires a variable-2 marker.");
+                        $"Quest {quest.QuestId} completion-stage turn-in requires a variable-2 marker or a variable-1 marker.");
                 if (quest.TurnInCompletionRequiredVariable1 >= 0
                     && quest.TurnInCompletionVariable1 < 0)
                     throw new InvalidDataException(

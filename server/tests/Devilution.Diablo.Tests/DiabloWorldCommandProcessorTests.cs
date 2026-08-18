@@ -1976,6 +1976,51 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredVariableOneOnlyCompletionStagePreservesVariableTwo()
+    {
+        var quest = new AuthoritativeQuestState(
+            3014,
+            0,
+            1,
+            completed: true,
+            active: false,
+            variable1: 0,
+            variable2: 0,
+            turnInTownerId: 1,
+            turnInLevelId: 0,
+            turnInPositionX: 55,
+            turnInPositionY: 79,
+            turnInOnCompletion: true,
+            turnInCompletionRequiredVariable1: 0,
+            turnInCompletionVariable1: 2,
+            turnInCompletionMessageId: 41);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: new AuthoritativeItemCatalog([
+                new AuthoritativeItemDefinition(43, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+            ]));
+        var player = CreatePlayer(positionX: 54, positionY: 79, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3014, 1),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((2, 0), (quest.Variable1, quest.Variable2));
+        Assert.Equal(41, Assert.Single(result.Events).MessageId);
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3014, 1),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void AuthoredTownerDialogueRequiresItemWithoutConsumingOrCompletingQuest()
     {
         var items = new AuthoritativeItemCatalog([

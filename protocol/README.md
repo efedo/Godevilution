@@ -226,9 +226,10 @@ Windows toolchain command.
   for turn-in routing. The towner field is proto3-optional, so older snapshots
   omit it and retain legacy behavior; when present it is a validated native
   towner ordinal and participates in the canonical state hash.
-- `QuestSnapshot` fields 15-21 carry additive authored towner routing metadata:
-  completion-stage markers, alternate-item dialogue, activation-only state, and
-  an optional turn-in message plus non-consuming dialogue-only flag. The latter
+- `QuestSnapshot` fields 15-23 carry additive authored towner routing metadata:
+  completion-stage markers, alternate-item dialogue, activation-only state,
+  an optional turn-in message plus non-consuming dialogue-only flag, and an
+  optional native `_qvar1`-only completion-stage gate and marker. The latter
   lets a native client route an item-gated quest conversation without consuming
   the item or changing completion state; after the server records the message,
   the client returns to the normal local towner path.

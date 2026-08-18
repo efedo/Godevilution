@@ -274,7 +274,9 @@ public sealed record DiabloQuestState(
     int TurnInAlternateMessageId = 0,
     bool TurnInActivationOnly = false,
     int TurnInMessageId = 0,
-    bool TurnInDialogueOnly = false);
+    bool TurnInDialogueOnly = false,
+    int TurnInCompletionRequiredVariable1 = -1,
+    int TurnInCompletionVariable1 = -1);
 
 /** Immutable protocol-neutral projectile projection. */
 public sealed record DiabloProjectileState(
@@ -605,7 +607,9 @@ public sealed partial class DiabloSimulation
                     quest.TurnInAlternateMessageId,
                     quest.TurnInActivationOnly,
                     quest.TurnInMessageId,
-                    quest.TurnInDialogueOnly))
+                    quest.TurnInDialogueOnly,
+                    quest.TurnInCompletionRequiredVariable1,
+                    quest.TurnInCompletionVariable1))
                 .ToArray(),
             WorldState.Projectiles.Values
                 .OrderBy(projectile => projectile.EntityId)
@@ -1464,7 +1468,9 @@ public sealed partial class DiabloSimulation
                 || quest.MessageId is < 0 or > short.MaxValue
                 || quest.TurnInTownerId is < -1 or > byte.MaxValue
                 || quest.TurnInAlternateMessageId is < 0 or > short.MaxValue
-                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue) {
+                || quest.TurnInCompletionVariable2 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionRequiredVariable1 is < -1 or > byte.MaxValue
+                || quest.TurnInCompletionVariable1 is < -1 or > byte.MaxValue) {
                 throw new InvalidDataException(
                     "The authoritative save contains an invalid quest state.");
             }
@@ -2030,7 +2036,9 @@ public sealed partial class DiabloSimulation
                     turnInAlternateMessageId: quest.TurnInAlternateMessageId,
                     turnInActivationOnly: quest.TurnInActivationOnly,
                     turnInMessageId: quest.TurnInMessageId,
-                    turnInDialogueOnly: quest.TurnInDialogueOnly));
+                    turnInDialogueOnly: quest.TurnInDialogueOnly,
+                    turnInCompletionRequiredVariable1: quest.TurnInCompletionRequiredVariable1,
+                    turnInCompletionVariable1: quest.TurnInCompletionVariable1));
             }
         }
     }

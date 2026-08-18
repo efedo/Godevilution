@@ -199,7 +199,9 @@ Optional field 20 carries the authored turn-in message identity, and field 21
 marks a non-consuming, item-gated dialogue-only row. The native client routes
 that row while the quest is active and the current `_qmsg` differs from the
 authored message; the server then records the message and leaves inventory and
-quest completion state unchanged.
+quest completion state unchanged. Optional fields 22-23 carry a native
+`_qvar1` completion-stage gate and marker for quests whose one-shot conversation
+does not use `_qvar2`.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are

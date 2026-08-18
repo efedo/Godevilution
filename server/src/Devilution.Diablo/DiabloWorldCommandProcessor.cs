@@ -1365,8 +1365,12 @@ public sealed class DiabloWorldCommandProcessor
         var completionStage = world.Quests.TryGetValue(questId, out var candidateQuest)
             && candidateQuest.TurnInOnCompletion
             && candidateQuest.Completed
-            && candidateQuest.TurnInCompletionVariable2 >= 0
-            && candidateQuest.Variable2 < candidateQuest.TurnInCompletionVariable2;
+            && ((candidateQuest.TurnInCompletionVariable2 >= 0
+                    && candidateQuest.Variable2 < candidateQuest.TurnInCompletionVariable2)
+                || (candidateQuest.TurnInCompletionVariable2 < 0
+                    && candidateQuest.TurnInCompletionRequiredVariable1 >= 0
+                    && candidateQuest.TurnInCompletionVariable1 >= 0
+                    && candidateQuest.Variable1 == candidateQuest.TurnInCompletionRequiredVariable1));
         if (items is null
             || !world.Quests.TryGetValue(questId, out var quest)
             || quest.TurnInTownerId < 0
@@ -1388,9 +1392,10 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         if (completionStage) {
-            quest.Variable2 = Math.Max(
-                quest.Variable2,
-                quest.TurnInCompletionVariable2);
+            if (quest.TurnInCompletionVariable2 >= 0)
+                quest.Variable2 = Math.Max(
+                    quest.Variable2,
+                    quest.TurnInCompletionVariable2);
             if (quest.TurnInCompletionVariable1 >= 0)
                 quest.Variable1 = Math.Max(
                     quest.Variable1,

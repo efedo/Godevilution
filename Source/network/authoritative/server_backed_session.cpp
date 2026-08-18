@@ -254,8 +254,12 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		        : !quest.initial() && !quest.completed();
 		const bool completionTurnIn = quest.completed()
 		    && quest.turn_in_on_completion()
-		    && quest.has_turn_in_completion_variable2()
-		    && quest.variable_2() < quest.turn_in_completion_variable2();
+		    && ((quest.has_turn_in_completion_variable2()
+		            && quest.variable_2() < quest.turn_in_completion_variable2())
+		        || (!quest.has_turn_in_completion_variable2()
+		            && quest.has_turn_in_completion_required_variable1()
+		            && quest.has_turn_in_completion_variable1()
+		            && quest.variable_1() == quest.turn_in_completion_required_variable1()));
 		if (!activeTurnIn && !completionTurnIn)
 			continue;
 		if (!result.has_value() || quest.quest_id() < *result)
