@@ -208,7 +208,10 @@ boundary. `QuestSequence` and `QuestItemCompletion` effects keep ordering,
 quest-state changes, item consumption, activation, and linked authored quest
 dialogue events in the server snapshot; the Hellfire Na-Krul tome sequence is
 the first shipped definition. Objects without an authored quest effect retain
-the legacy local behavior.
+the legacy local behavior. The same boundary can now apply a validated
+`WorldMutation` effect: the server persists the active cell overlay and projects
+the resulting movement/missile geometry, while the client only presents the
+updated level snapshot.
 
 ## Remaining native-only interaction inventory
 

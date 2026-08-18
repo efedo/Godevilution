@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add validated content-backed world-cell mutations. Authored `WorldMutation`
+  object effects now apply deterministic movement and missile-occlusion overlays
+  on the server; active mutation IDs persist in snapshots, and the existing
+  level-geometry projection exposes the effective result to connected clients.
+  Native book/lever set-piece placement and spell effects remain a separate
+  compatibility seam until their authored definitions are available.
+
 - Project authored quest messages from content-owned `QuestSequence` object
   interactions through the authoritative dialogue event path; book/lever
   placement and set-piece mutations remain separate migration seams.

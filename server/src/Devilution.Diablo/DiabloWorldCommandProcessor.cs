@@ -977,6 +977,12 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
+            && (@object.EffectAmount <= 0
+                || world.WorldMutations?.TryGet((uint)@object.EffectAmount, out _) != true)) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object);
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion)
@@ -999,6 +1005,11 @@ public sealed class DiabloWorldCommandProcessor
 
         if (@object.EffectAmount <= 0)
             return DiabloWorldIntentResult.Accepted;
+
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation) {
+            world.ApplyWorldMutation((uint)@object.EffectAmount);
+            return DiabloWorldIntentResult.Accepted;
+        }
 
         switch (@object.EffectKind) {
         case AuthoritativeObjectEffectKind.Heal:

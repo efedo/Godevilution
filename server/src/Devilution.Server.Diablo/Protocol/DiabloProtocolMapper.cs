@@ -39,6 +39,7 @@ internal static class DiabloProtocolMapper
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = ToProtocolDifficulty(source.Difficulty),
         };
+        snapshot.ActiveWorldMutationIds.Add(source.ActiveWorldMutationIds);
         foreach (var participant in projectedParticipants)
             snapshot.Players.Add(ToProtocolPlayer(participant, spells, spellBooks));
 
@@ -735,6 +736,7 @@ internal static class DiabloProtocolMapper
                 corpse.PositionY)).ToArray(),
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = FromProtocolDifficulty(source.Difficulty),
+            ActiveWorldMutationIds = source.ActiveWorldMutationIds.ToArray(),
         };
     }
 

@@ -378,7 +378,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true,
                 simulation.Spells,
                 simulation.SpellBooks,
-                simulation.WorldState.World?.Levels,
+                simulation.WorldState.LevelGeometry,
                 allowZeroPlayerEntityId: entityId == 0);
         });
     }

@@ -7,6 +7,8 @@ public sealed class DiabloWorldState
     private readonly int fallbackHeight;
     private readonly HashSet<int> fallbackBlockedCells;
     private readonly HashSet<int> fallbackMissileBlockedCells;
+    private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
+    private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
 
     public DiabloWorldState(
@@ -21,9 +23,20 @@ public sealed class DiabloWorldState
         IReadOnlyList<AuthoritativeQuestState>? quests = null,
         IReadOnlyList<AuthoritativeProjectile>? projectiles = null,
         IEnumerable<int>? fallbackMissileBlockedCells = null,
-        IReadOnlyList<AuthoritativeCorpse>? corpses = null)
+        IReadOnlyList<AuthoritativeCorpse>? corpses = null,
+        AuthoritativeWorldMutationCatalog? worldMutations = null,
+        IEnumerable<uint>? activeWorldMutationIds = null)
     {
         World = world;
+        WorldMutations = worldMutations;
+        if (World is not null)
+            WorldMutations?.ValidateWorld(World);
+        foreach (var mutationId in activeWorldMutationIds ?? []) {
+            if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
+                throw new InvalidDataException(
+                    $"Active world mutation {mutationId} is not supplied by the content catalog.");
+            this.activeWorldMutationIds.Add(mutationId);
+        }
         this.fallbackWidth = fallbackWidth > 0
             ? fallbackWidth
             : throw new ArgumentOutOfRangeException(nameof(fallbackWidth));
@@ -64,9 +77,49 @@ public sealed class DiabloWorldState
             Projectiles.Add(projectile.EntityId, projectile);
         foreach (var corpse in corpses ?? [])
             Corpses.Add(corpse.EntityId, corpse);
+        RebuildProjectedGeometry();
     }
 
     public AuthoritativeWorld? World { get; }
+
+    /** Validated content-backed level-cell overlays available to object effects. */
+    public AuthoritativeWorldMutationCatalog? WorldMutations { get; }
+
+    /** Active mutation identities persisted with the authoritative session. */
+    public IReadOnlySet<uint> ActiveWorldMutationIds => activeWorldMutationIds;
+
+    /** Effective level geometry after all active content mutations. */
+    public IReadOnlyList<AuthoritativeLevel> LevelGeometry
+        => World is null
+            ? []
+            : projectedLevels.Values.OrderBy(level => level.LevelId).ToArray();
+
+    public bool ApplyWorldMutation(uint mutationId)
+    {
+        if (WorldMutations is null
+            || !WorldMutations.TryGet(mutationId, out _)
+            || !activeWorldMutationIds.Add(mutationId)) {
+            return WorldMutations?.TryGet(mutationId, out _) == true
+                && activeWorldMutationIds.Contains(mutationId);
+        }
+        RebuildProjectedGeometry();
+        return true;
+    }
+
+    public void RestoreWorldMutations(IEnumerable<uint> mutationIds)
+    {
+        ArgumentNullException.ThrowIfNull(mutationIds);
+        activeWorldMutationIds.Clear();
+        foreach (var mutationId in mutationIds) {
+            if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
+                throw new InvalidDataException(
+                    $"Active world mutation {mutationId} is not supplied by the content catalog.");
+            if (!activeWorldMutationIds.Add(mutationId))
+                throw new InvalidDataException(
+                    $"Active world mutation {mutationId} is listed more than once.");
+        }
+        RebuildProjectedGeometry();
+    }
 
     public Dictionary<uint, AuthoritativeCombatTarget> CombatTargets { get; } = [];
 
@@ -118,7 +171,8 @@ public sealed class DiabloWorldState
     public bool IsWalkable(uint levelId, int positionX, int positionY)
     {
         if (World is not null)
-            return World.IsWalkable(levelId, positionX, positionY);
+            return projectedLevels.TryGetValue(levelId, out var level)
+                && level.IsWalkable(positionX, positionY);
         return positionX >= 0 && positionX < fallbackWidth
             && positionY >= 0 && positionY < fallbackHeight
             && !fallbackBlockedCells.Contains(positionY * fallbackWidth + positionX);
@@ -153,7 +207,8 @@ public sealed class DiabloWorldState
         if (!ContainsPosition(levelId, positionX, positionY))
             return true;
         if (World is not null)
-            return World.IsMissileBlocked(levelId, positionX, positionY);
+            return projectedLevels.TryGetValue(levelId, out var level)
+                && level.IsMissileBlocked(positionX, positionY);
         return fallbackMissileBlockedCells.Contains(
             positionY * fallbackWidth + positionX);
     }
@@ -184,7 +239,9 @@ public sealed class DiabloWorldState
         int endY)
     {
         if (World is not null) {
-            var level = World.Levels.SingleOrDefault(candidate => candidate.LevelId == levelId);
+            var level = projectedLevels.TryGetValue(levelId, out var projected)
+                ? projected
+                : null;
             return level?.HasLineOfSight(startX, startY, endX, endY) ?? false;
         }
 
@@ -210,6 +267,40 @@ public sealed class DiabloWorldState
                 error += deltaX;
                 y += stepY;
             }
+        }
+    }
+
+    private void RebuildProjectedGeometry()
+    {
+        projectedLevels.Clear();
+        if (World is null)
+            return;
+
+        foreach (var baseLevel in World.Levels) {
+            var blocked = baseLevel.BlockedCells.ToHashSet();
+            var missileBlocked = baseLevel.MissileBlockedCells.ToHashSet();
+            foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
+                if (WorldMutations?.TryGet(mutationId, out var mutation) != true
+                    || mutation.LevelId != baseLevel.LevelId) {
+                    continue;
+                }
+                blocked.UnionWith(mutation.BlockedCellsAdd);
+                blocked.ExceptWith(mutation.BlockedCellsRemove);
+                missileBlocked.UnionWith(mutation.MissileBlockedCellsAdd);
+                missileBlocked.ExceptWith(mutation.MissileBlockedCellsRemove);
+            }
+            projectedLevels.Add(
+                baseLevel.LevelId,
+                new AuthoritativeLevel(
+                    baseLevel.LevelId,
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    blocked,
+                    missileBlocked,
+                    baseLevel.IsDefaultStart,
+                    baseLevel.SuppressMultiplayerDeathDrops) {
+                    StableSymbol = baseLevel.StableSymbol,
+                });
         }
     }
 

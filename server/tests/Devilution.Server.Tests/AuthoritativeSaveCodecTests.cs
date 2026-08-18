@@ -66,6 +66,19 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsActiveWorldMutationIdentities()
+    {
+        var source = CreateSnapshot() with {
+            ActiveWorldMutationIds = [3, 7],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+
+        Assert.Equal([3U, 7U], restored.ActiveWorldMutationIds);
+    }
+
+    [Fact]
     public void RejectsMalformedIncompleteAndUnknownVersionEnvelopes()
     {
         var codec = new AuthoritativeSaveCodec();

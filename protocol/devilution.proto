@@ -355,7 +355,7 @@ message Snapshot {
 	repeated PortalSnapshot portals = 11;
 	// Defeated non-minion monster tiles used by corpse-consuming AI.
 	repeated CorpseSnapshot corpses = 12;
-	// Static authoritative geometry for presentation clients; omitted by saves.
+	// Effective authoritative geometry for presentation clients.
 	repeated LevelGeometrySnapshot level_geometry = 13;
 	// Native-compatible terminal Diablo defeat state.
 	bool victory_triggered = 14;
@@ -363,6 +363,8 @@ message Snapshot {
 	GameDifficulty difficulty = 15;
 	// Additive content-owned quest/towner interaction stages.
 	repeated QuestTownerInteractionSnapshot quest_towner_interactions = 16;
+	// Active content-backed geometry mutations persisted by the server.
+	repeated uint32 active_world_mutation_ids = 17;
 }
 
 message LevelGeometrySnapshot {

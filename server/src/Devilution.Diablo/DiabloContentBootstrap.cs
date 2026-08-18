@@ -467,6 +467,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var worldMutations = content.TryGetTable(
+            "world_mutations.tsv",
+            out var worldMutationsTable)
+            ? AuthoritativeWorldMutationCatalog.LoadTsv(
+                worldMutationsTable.SourcePath,
+                worldMutationsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
         if (stableIds is not null && objects is not null)
             stableIds.ValidateReferences(
                 "object",
@@ -475,6 +483,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         if (objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objects, itemCatalog!);
+        if (world is not null && worldMutations is not null)
+            worldMutations.ValidateWorld(world);
+        if (objects?.Any(@object => @object.EffectKind
+                == AuthoritativeObjectEffectKind.WorldMutation) == true
+            && worldMutations is null) {
+            throw new InvalidDataException(
+                "World-mutation objects require a world_mutations.tsv content table.");
+        }
+        if (objects is not null && worldMutations is not null)
+            AuthoritativeWorldObjectCatalog.ValidateMutationRequirements(objects, worldMutations);
         var setLevelNames = content.TryGetTable(
             "set_level_names.tsv",
             out var setLevelNamesTable)
@@ -689,6 +707,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var rules = new DiabloStoreRules(pricing, itemCatalog);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
+            WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,
             Portals = portals,

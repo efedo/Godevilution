@@ -416,6 +416,9 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Content-owned repeatable quest/towner interaction definitions. */
     public IReadOnlyList<AuthoritativeQuestTownerInteractionDefinition> QuestTownerInteractions { get; init; } = [];
+
+    /** Active content world-cell mutations persisted with the session. */
+    public IReadOnlyList<uint> ActiveWorldMutationIds { get; init; } = [];
 }
 
 public sealed partial class DiabloSimulation
@@ -714,6 +717,9 @@ public sealed partial class DiabloSimulation
             VictoryTriggered = WorldState.VictoryTriggered,
             Difficulty = this.Difficulty,
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
+            ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
+                .OrderBy(mutationId => mutationId)
+                .ToArray(),
         };
     }
 
@@ -737,10 +743,12 @@ public sealed partial class DiabloSimulation
             || snapshot.Quests is null
             || snapshot.Projectiles is null
             || snapshot.Portals is null
-            || snapshot.Corpses is null) {
+            || snapshot.Corpses is null
+            || snapshot.ActiveWorldMutationIds is null) {
             throw new InvalidDataException(
                 "The authoritative save contains incomplete world state.");
         }
+        WorldState.RestoreWorldMutations(snapshot.ActiveWorldMutationIds);
         ValidateSavedPlayer(source, destination);
 
         var monsterEntityIds = snapshot.Monsters.Select(monster => monster.EntityId).ToArray();

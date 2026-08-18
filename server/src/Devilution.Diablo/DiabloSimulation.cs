@@ -32,6 +32,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeWorld? World { get; init; }
 
+    /** Validated content-backed level-cell overlays activated by world objects. */
+    public AuthoritativeWorldMutationCatalog? WorldMutations { get; init; }
+
     /** Optional active world-owned identities and Town Portal geometry. */
     public AuthoritativeWorldRules? WorldRules { get; init; }
 
@@ -162,7 +165,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Quests,
             options.Projectiles,
             options.FallbackMissileBlockedCells,
-            options.Corpses);
+            options.Corpses,
+            options.WorldMutations);
         var spells = options.Spells ?? new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
             new AuthoritativeSpellDefinition(2, 3, 0, 1, 10, 1),

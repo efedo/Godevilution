@@ -155,6 +155,23 @@ public static class AuthoritativeWorldObjectCatalog
         }
     }
 
+    /** Validates world-mutation references encoded by authored objects. */
+    public static void ValidateMutationRequirements(
+        IEnumerable<AuthoritativeWorldObject> objects,
+        AuthoritativeWorldMutationCatalog mutations)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(mutations);
+        foreach (var @object in objects.Where(@object =>
+                     @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation)) {
+            if (@object.EffectAmount <= 0
+                || !mutations.TryGet((uint)@object.EffectAmount, out _)) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} references unknown world mutation {@object.EffectAmount}.");
+            }
+        }
+    }
+
     /** Validates quest identities referenced by content-owned world objects. */
     public static void ValidateQuestRequirements(
         IEnumerable<AuthoritativeWorldObject> objects,

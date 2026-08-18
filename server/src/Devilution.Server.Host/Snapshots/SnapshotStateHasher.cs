@@ -23,6 +23,15 @@ public static class SnapshotStateHasher
             hasher.AppendString("godevilution-game-difficulty-v1");
             hasher.AppendInt32((int)snapshot.Difficulty);
         }
+        var activeWorldMutationIds = snapshot.ActiveWorldMutationIds
+            .OrderBy(mutationId => mutationId)
+            .ToArray();
+        if (activeWorldMutationIds.Length > 0) {
+            hasher.AppendString("godevilution-world-mutations-v1");
+            hasher.AppendUInt64((ulong)activeWorldMutationIds.Length);
+            foreach (var mutationId in activeWorldMutationIds)
+                hasher.AppendUInt32(mutationId);
+        }
         var players = snapshot.Players.OrderBy(player => player.EntityId).ToArray();
         hasher.AppendUInt64((ulong)players.Length);
         foreach (var player in players) {

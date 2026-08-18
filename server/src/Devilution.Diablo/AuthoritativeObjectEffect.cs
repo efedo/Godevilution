@@ -10,4 +10,6 @@ public enum AuthoritativeObjectEffectKind
     QuestSequence,
     /** Consumes a required normalized item and completes the linked quest. */
     QuestItemCompletion,
+    /** Applies one validated level-cell overlay when the object is activated. */
+    WorldMutation,
 }
