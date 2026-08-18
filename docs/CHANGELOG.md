@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce authored staged unique-monster dialogue combat gates. Targets remain
+  non-combatant while their quest's `dialogue_completion_variable1` marker is
+  pending; the Warlord path now rejects direct attacks and pauses autonomous
+  AI until native marker `3`, then resumes its validated Skeleton-AI branch.
+
 - Add schema 1.352 selector-based unique-monster identity bindings. Generated
   unique encounters can now use validated monster/native-AI selectors instead
   of requiring a static runtime entity ID; the Hellfire Defiler row exercises

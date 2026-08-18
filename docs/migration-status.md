@@ -127,7 +127,10 @@ Status date: 2026-08-17
   and returning its dialogue event. Dialogue definitions may additionally
   declare an inventory hand-in and relative reward; Hellfire Defiler remains
   the first conversation-only definition and Lachdanan is the first hand-in
-  definition. Legacy hardcoded monster conversations remain fallback behavior
+  definition. Authored `dialogue_completion_variable1` now also gates unique
+  monster combat: the Warlord remains non-combatant while its staged dialogue
+  is pending, and direct attacks are rejected until the native terminal marker
+  is reached. Legacy hardcoded monster conversations remain fallback behavior
   until their content actions are externalized.
 
 - Content-declared quest-object effects are now generic. The native adapter

@@ -1495,6 +1495,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!world.CombatTargets.TryGetValue(targetEntityId, out target!)
             || target.HitPoints <= 0
             || target.SneakHidden
+            || IsQuestDialogueTarget(target)
             || (target.LevelId != 0 && target.LevelId != player.LevelId)) {
             return false;
         }
@@ -1509,6 +1510,27 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionX,
                 target.PositionY)
             : distance <= 1;
+    }
+
+    /**
+     * Keeps content-owned unique monsters non-combatant until their authored
+     * staged dialogue reaches its terminal native variable marker.
+     */
+    private bool IsQuestDialogueTarget(AuthoritativeCombatTarget target)
+    {
+        return target.IsUnique
+            && target.UniqueIdentity.Length > 0
+            && world.Quests.Values.Any(quest =>
+                quest.Active
+                && !quest.Unavailable
+                && !quest.Completed
+                && quest.DialogueCompletionVariable1 >= 0
+                && quest.Variable1 < quest.DialogueCompletionVariable1
+                && (quest.LevelId == 0 || quest.LevelId == target.LevelId)
+                && string.Equals(
+                    quest.CompletionUniqueIdentity,
+                    target.UniqueIdentity,
+                    StringComparison.Ordinal));
     }
 
     private bool TryGetPlayerAttackTarget(
@@ -1774,6 +1796,7 @@ public sealed class DiabloCombatCommandProcessor
                 || (target is not null
                     && (target.HitPoints <= 0
                         || target.SneakHidden
+                        || IsQuestDialogueTarget(target)
                         || (target.LevelId != 0 && target.LevelId != player.LevelId)))
                 || Math.Max(
                     Math.Abs(centerX - player.PositionX),
@@ -4668,6 +4691,8 @@ public sealed class DiabloCombatCommandProcessor
             }
             ApplyNativeMonsterRegeneration(target, rules.MonsterRegenerationLevelDivisor);
             if (target.IsPetrified)
+                continue;
+            if (IsQuestDialogueTarget(target))
                 continue;
             if (TryAdvanceScavengerAi(target, tick, players))
                 continue;

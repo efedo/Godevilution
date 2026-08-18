@@ -13012,6 +13012,54 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void StagedUniqueDialogueSuppressesCombatUntilAuthoredTerminalMarker()
+    {
+        var quest = new AuthoritativeQuestState(
+            3012,
+            0,
+            1,
+            active: true,
+            completionUniqueIdentity: "Warlord",
+            dialogueVariable1: 2,
+            dialogueCompletionVariable1: 3);
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            attackDamage: 5,
+            aggroRange: 5,
+            toHit: 100,
+            nativeAi: "Warlord",
+            intelligence: 3,
+            unique: true,
+            uniqueIdentity: "Warlord");
+        var world = new DiabloWorldState(
+            combatTargets: [monster],
+            quests: [quest]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        Assert.False(processor.Execute(
+            player,
+            new DiabloAttackIntent(monster.EntityId),
+            1).Succeeded);
+        Assert.Empty(processor.AdvanceTick(1, [player]));
+        Assert.Equal(100, player.Life);
+
+        quest.Variable1 = 3;
+        var deliveries = processor.AdvanceTick(2, [player]);
+
+        Assert.Single(deliveries);
+        Assert.Equal(95, player.Life);
+    }
+
+    [Fact]
     public void SnotSpilUsesItsNativeFallenCombatBranch()
     {
         var monster = new AuthoritativeCombatTarget(

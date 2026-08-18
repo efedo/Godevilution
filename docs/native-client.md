@@ -201,6 +201,9 @@ explicit migration seams, not server-authority claims:
   staged dialogue; their dynamic unique-monster identities and quest-specific
   map changes need content-backed encounter definitions before they can move
   to `TalkToQuestRequested`.
+- Warlord's staged unique-monster conversation now uses the authored
+  `dialogue_completion_variable1` combat gate through `TalkToQuestRequested`;
+  its remaining presentation speech and legacy fallback are still retained.
 - `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
   Betrayer, Halls of the Blind, and Blood-goal book branches. These require
   set-level object placement plus authored spell/quest effects; the existing
