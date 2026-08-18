@@ -54,4 +54,24 @@ public sealed class AuthoritativeSetLevelMapCatalogTests
             },
         ]));
     }
+
+    [Theory]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    public void ActiveArenaRuntimeLevelsAreRecognized(int setLevelId)
+    {
+        Assert.True(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(setLevelId, activeMap: true)));
+        Assert.False(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(setLevelId, activeMap: false)));
+    }
+
+    [Fact]
+    public void NonArenaRuntimeLevelsAreNotRecognized()
+    {
+        Assert.False(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(0));
+        Assert.False(AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(5, activeMap: true)));
+    }
 }

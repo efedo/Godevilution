@@ -688,6 +688,70 @@ public sealed class DiabloStoreCommandProcessorTests
     }
 
     [Fact]
+    public void ArenaPotionIsRejectedOutsideAnActiveArena()
+    {
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            2200,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+                StableItemId = 2200,
+                MiscId = 55,
+                StatFlag = true,
+            });
+        var player = CreatePlayer(mana: 64, manaMaximum: 640, inventory: [potion]);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 2200)),
+            1);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Same(potion, Assert.Single(player.Inventory));
+        Assert.Equal(64, player.Life);
+        Assert.Equal(64, player.Mana);
+    }
+
+    [Fact]
+    public void ArenaPotionRestoresAndConsumesOnAnActiveArena()
+    {
+        var potion = new OwnedStoreItem(
+            0,
+            0,
+            2200,
+            100,
+            0,
+            AuthoritativeItemState.Empty with {
+                ItemActionKind = DiabloItemActionKind.RestoreFullLifeAndMana,
+                StableItemId = 2200,
+                MiscId = 55,
+                StatFlag = true,
+            });
+        var player = CreatePlayer(mana: 64, manaMaximum: 640, inventory: [potion]);
+        player.LevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(6, activeMap: true);
+        player.Life = 64;
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+
+        var result = processor.Execute(
+            player,
+            new DiabloUseConsumableIntent(
+                new DiabloPlayerItemReference(DiabloPlayerItemLocation.Inventory, 0, 2200)),
+            1);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.Equal(640, player.Life);
+        Assert.Equal(640, player.Mana);
+    }
+
+    [Fact]
     public void WarriorPartialHealingUsesNativeQ6RandomAndClassMultiplier()
     {
         var potion = new OwnedStoreItem(

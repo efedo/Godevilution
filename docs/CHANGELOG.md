@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Enforce native Arena Potion availability on active arena set-level runtime IDs;
+  non-arena use is rejected server-side while legacy full-rejuvenation behavior
+  remains unchanged.
+
 - Add a Godot oil-target surface that lists authoritative equipment and
   inventory references. The HUD now submits the selected oil and target as one
   `UseConsumableRequested` command; the server remains authoritative for

@@ -457,6 +457,11 @@ public sealed class DiabloStoreCommandProcessor
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
+        if (IsArenaOnlyItem(item.State)
+            && !AuthoritativeSetLevelMapCatalog.IsArenaRuntimeLevel(player.LevelId)) {
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
         if (IsOilAction(action))
             return ApplyOil(player, intent, action);
 
@@ -593,6 +598,15 @@ public sealed class DiabloStoreCommandProcessor
             or DiabloItemActionKind.ApplyAccuracyOil
             or DiabloItemActionKind.ApplySharpnessOil
             or DiabloItemActionKind.ApplyFortitudeOil;
+    }
+
+    private bool IsArenaOnlyItem(AuthoritativeItemState state)
+    {
+        if (state.MiscId == 55)
+            return true;
+        return items is not null
+            && items.TryGetByState(state, out var definition)
+            && string.Equals(definition.StableSymbol, "arena_potion", StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsOilTargetClass(AuthoritativeItemState state)

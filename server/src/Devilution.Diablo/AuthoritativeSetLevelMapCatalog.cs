@@ -100,6 +100,16 @@ public sealed class AuthoritativeSetLevelMapCatalog
         return checked(RuntimeLevelIdBase + (uint)(setLevelId * 2) + (activeMap ? 1U : 0U));
     }
 
+    /** Returns whether a runtime level is one of DevilutionX's active arenas. */
+    public static bool IsArenaRuntimeLevel(uint levelId)
+    {
+        for (var setLevelId = 6; setLevelId <= 8; setLevelId++) {
+            if (levelId == GetRuntimeLevelId(setLevelId, activeMap: true))
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Materializes every complete native bundle supplied by the active pack.
      * Legacy packs may declare paths before shipping the binary files; those
