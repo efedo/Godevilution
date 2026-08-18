@@ -18,10 +18,12 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label diagnostics = new();
     private readonly ItemList spellSources = new();
     private readonly ItemList storeItems = new();
+    private readonly ItemList oilTargets = new();
     private readonly GridContainer inventoryGrid = new() { Columns = InventoryColumns };
     private readonly List<Button> inventoryCells = [];
     private readonly List<uint> storeSlots = [];
     private readonly List<string> spellSourceKeys = [];
+    private readonly List<PlayerItemReference> oilTargetReferences = [];
     private readonly Button openSmith = new() { Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
     private readonly Button buySelected = new() { Text = "Buy selected" };
@@ -31,6 +33,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button identifySelected = new() { Text = "Identify selected" };
     private readonly Button readBookSelected = new() { Text = "Read book selected" };
     private readonly Button useConsumableSelected = new() { Text = "Use consumable selected" };
+    private readonly Button applyOilSelected = new() { Text = "Apply oil to target" };
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
@@ -49,6 +52,7 @@ public partial class HudPresentation : CanvasLayer
     private uint? availableQuestId;
     private QuestTownerInteractionSnapshot? availableQuestTownerInteraction;
     private int selectedInventoryIndex = -1;
+    private PlayerItemReference? selectedOilTarget;
     private string selectedSpellText = "none";
 
     public event Action<uint>? OpenStoreRequested;
@@ -59,6 +63,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? IdentifyItemRequested;
     public event Action<uint>? ReadBookRequested;
     public event Action<uint>? UseConsumableRequested;
+    public event Action<uint, PlayerItemReference>? ApplyOilRequested;
     public event Action<uint>? DisarmTrapRequested;
     public event Action<uint, uint>? MoveInventoryItemRequested;
     public event Action<uint>? OperateObjectRequested;
@@ -91,6 +96,9 @@ public partial class HudPresentation : CanvasLayer
         sideBox.AddChild(spellSources);
         sideBox.AddChild(inventory);
         sideBox.AddChild(inventoryGrid);
+        sideBox.AddChild(new Label { Text = "Oil targets (select equipment or inventory)" });
+        oilTargets.CustomMinimumSize = new Vector2(340, 100);
+        sideBox.AddChild(oilTargets);
         sideBox.AddChild(new Label { Text = "Store stock" });
         storeItems.CustomMinimumSize = new Vector2(340, 110);
         sideBox.AddChild(storeItems);
@@ -102,7 +110,7 @@ public partial class HudPresentation : CanvasLayer
         foreach (var button in new Control[] {
             openSmith, openAdria, buySelected, sellSelected, repairSelected,
             rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
-            useConsumableSelected,
+            useConsumableSelected, applyOilSelected,
             questTownerInteraction,
             refillMana, dropHeld, clearEvents,
         })
@@ -132,6 +140,12 @@ public partial class HudPresentation : CanvasLayer
             if (sourceIndex >= 0 && sourceIndex < spellSourceKeys.Count)
                 SpellSourceSelected?.Invoke(spellSourceKeys[sourceIndex]);
         };
+        oilTargets.ItemSelected += index => {
+            var targetIndex = checked((int)index);
+            selectedOilTarget = targetIndex >= 0 && targetIndex < oilTargetReferences.Count
+                ? oilTargetReferences[targetIndex]
+                : null;
+        };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
         buySelected.Pressed += BuySelected;
@@ -141,6 +155,7 @@ public partial class HudPresentation : CanvasLayer
         identifySelected.Pressed += () => InvokeInventoryAction(IdentifyItemRequested);
         readBookSelected.Pressed += () => InvokeInventoryAction(ReadBookRequested);
         useConsumableSelected.Pressed += () => InvokeInventoryAction(UseConsumableRequested);
+        applyOilSelected.Pressed += ApplyOil;
         disarmTrap.Pressed += () => {
             if (availableTrapEntityId is { } entityId)
                 DisarmTrapRequested?.Invoke(entityId);
@@ -234,6 +249,7 @@ public partial class HudPresentation : CanvasLayer
         diagnostics.Text = FormatDiagnostics(model, client);
         inventory.Text = FormatInventory(player);
         ApplyInventoryGrid(player);
+        ApplyOilTargets(player);
         ApplyStore(model.Snapshot?.ActiveStore);
         dialog.Text = FormatDialog(model.Snapshot, model.RecentEvents);
         availableObjectEntityId = model.Snapshot?.Objects.FirstOrDefault(@object => !@object.Activated)?.EntityId;
@@ -255,6 +271,10 @@ public partial class HudPresentation : CanvasLayer
         var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
         var hasTargetlessConsumable = hasSelectedInventory
             && AuthoritativeItemActionRules.IsTargetlessConsumable(
+                player!.Inventory[selectedInventoryIndex].State?.ItemActionKind
+                    ?? ItemActionKind.Unspecified);
+        var hasTargetedConsumable = hasSelectedInventory
+            && AuthoritativeItemActionRules.IsTargetedConsumable(
                 player!.Inventory[selectedInventoryIndex].State?.ItemActionKind
                     ?? ItemActionKind.Unspecified);
         openSmith.Disabled = !connected;
@@ -282,6 +302,7 @@ public partial class HudPresentation : CanvasLayer
             || !hasSelectedInventory
             || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
         useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
+        applyOilSelected.Disabled = !connected || !hasTargetedConsumable || selectedOilTarget is null;
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
         advanceQuest.Disabled = !connected || availableQuestId is null;
@@ -343,6 +364,46 @@ public partial class HudPresentation : CanvasLayer
         }
     }
 
+    private void ApplyOilTargets(PlayerSnapshot? player)
+    {
+        var previousTarget = selectedOilTarget;
+        oilTargetReferences.Clear();
+        oilTargets.Clear();
+        if (player is null) {
+            selectedOilTarget = null;
+            return;
+        }
+
+        foreach (var item in player.Equipment.OrderBy(item => item.Slot)) {
+            oilTargetReferences.Add(new PlayerItemReference {
+                Location = PlayerItemLocation.Equipment,
+                Slot = item.Slot,
+                StableItemId = item.State?.StableItemId ?? 0,
+            });
+            oilTargets.AddItem($"equipment {item.Slot}: {DescribeItem(item.State)}");
+        }
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            var item = player.Inventory[index];
+            oilTargetReferences.Add(new PlayerItemReference {
+                Location = PlayerItemLocation.Inventory,
+                Slot = checked((uint)index),
+                StableItemId = item.State?.StableItemId ?? 0,
+            });
+            oilTargets.AddItem($"inventory {index + 1}: {DescribeItem(item.State)}");
+        }
+
+        var selectedIndex = previousTarget is null
+            ? -1
+            : oilTargetReferences.FindIndex(reference =>
+                AuthoritativeItemActionRules.AreSameReference(reference, previousTarget));
+        if (selectedIndex < 0) {
+            selectedOilTarget = null;
+            return;
+        }
+        selectedOilTarget = oilTargetReferences[selectedIndex];
+        oilTargets.Select(selectedIndex, false);
+    }
+
     private void SelectOrMoveInventoryItem(int cellIndex)
     {
         var occupant = inventoryLayout.Occupants[cellIndex];
@@ -358,6 +419,15 @@ public partial class HudPresentation : CanvasLayer
     {
         if (activeStoreId != 0 && selectedStoreSlot is { } slot)
             PurchaseRequested?.Invoke(activeStoreId, slot);
+    }
+
+    private void ApplyOil()
+    {
+        if (selectedInventoryIndex < 0 || selectedOilTarget is null)
+            return;
+        ApplyOilRequested?.Invoke(
+            checked((uint)selectedInventoryIndex),
+            selectedOilTarget);
     }
 
     private void InvokeInventoryAction(Action<uint>? action)

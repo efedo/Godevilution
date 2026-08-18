@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add a Godot oil-target surface that lists authoritative equipment and
+  inventory references. The HUD now submits the selected oil and target as one
+  `UseConsumableRequested` command; the server remains authoritative for
+  admissibility, mutations, and atomic source consumption.
+
 - Extend the shared item-action protocol projection through the full
   server-owned action set. The Godot HUD can now submit one-item potion,
   rejuvenation, and elixir use through `UseConsumableRequested`; oil actions

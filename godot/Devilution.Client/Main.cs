@@ -73,6 +73,12 @@ public partial class Main : Node2D
                 Item = ResolveInventoryItemReference(inventoryIndex),
             },
         });
+        hud.ApplyOilRequested += (inventoryIndex, target) => QueueIfConnected(new Command {
+            UseConsumableRequested = new UseConsumableRequested {
+                Item = ResolveInventoryItemReference(inventoryIndex),
+                TargetItem = target,
+            },
+        });
         hud.DisarmTrapRequested += entityId => QueueIfConnected(new Command {
             DisarmTrapRequested = new DisarmTrapRequested { ObjectEntityId = entityId },
         });

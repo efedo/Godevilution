@@ -33,4 +33,14 @@ public static class AuthoritativeItemActionRules
             or ItemActionKind.ApplySharpnessOil
             or ItemActionKind.ApplyFortitudeOil;
     }
+
+    /** Compares the complete stable reference used by an oil target request. */
+    public static bool AreSameReference(
+        PlayerItemReference left,
+        PlayerItemReference right)
+    {
+        return left.Location == right.Location
+            && left.Slot == right.Slot
+            && left.StableItemId == right.StableItemId;
+    }
 }

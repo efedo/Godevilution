@@ -346,6 +346,25 @@ public sealed class ClientModelTests
             ItemActionKind.ApplySharpnessOil));
         Assert.False(AuthoritativeItemActionRules.IsTargetedConsumable(
             ItemActionKind.RestorePartialLife));
+        var target = new PlayerItemReference {
+            Location = PlayerItemLocation.Equipment,
+            Slot = 4,
+            StableItemId = 700,
+        };
+        Assert.True(AuthoritativeItemActionRules.AreSameReference(
+            target,
+            new PlayerItemReference {
+                Location = PlayerItemLocation.Equipment,
+                Slot = 4,
+                StableItemId = 700,
+            }));
+        Assert.False(AuthoritativeItemActionRules.AreSameReference(
+            target,
+            new PlayerItemReference {
+                Location = PlayerItemLocation.Inventory,
+                Slot = 4,
+                StableItemId = 700,
+            }));
     }
 
     [Fact]
