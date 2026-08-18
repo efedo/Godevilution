@@ -54,6 +54,7 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid player ability kind.");
                 }
                 ValidatePlayerResources(player);
+                ValidateVisitedLevels(player);
                 if (!Enum.IsDefined(player.CombatMode)
                     || (player.CombatMode == PlayerCombatMode.Stand
                         && player.CombatModeEndTick != 0)
@@ -308,6 +309,8 @@ public sealed class AuthoritativeClientModel
                 || interaction.QuestId == 0
                 || interaction.TownerId is < 0 or > byte.MaxValue
                 || interaction.LevelId > ushort.MaxValue
+                || interaction.RequiredVisitedLevel1 > ushort.MaxValue
+                || interaction.RequiredVisitedLevel2 > ushort.MaxValue
                 || interaction.PositionX < 0
                 || interaction.PositionY < 0
                 || interaction.Kind is < 0 or > 3
@@ -324,6 +327,15 @@ public sealed class AuthoritativeClientModel
                 throw new InvalidDataException(
                     "The authoritative snapshot contains an invalid quest/towner interaction.");
             }
+        }
+    }
+
+    private static void ValidateVisitedLevels(PlayerSnapshot player)
+    {
+        if (player.VisitedLevelIds.Count > 256
+            || player.VisitedLevelIds.Distinct().Count() != player.VisitedLevelIds.Count) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains invalid visited-level state.");
         }
     }
 

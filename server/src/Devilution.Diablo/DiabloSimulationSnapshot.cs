@@ -447,6 +447,11 @@ public sealed partial class DiabloSimulation
             ManaShieldActive = player.ManaShieldActive,
             ReflectCharges = player.ReflectCharges,
             DiabloKillLevel = player.DiabloKillLevel,
+            VisitedLevelIds = player.VisitedLevelIds
+                .Append(player.LevelId)
+                .Distinct()
+                .OrderBy(levelId => levelId)
+                .ToArray(),
             AbilitySpellId = player.AbilitySpellId,
             AbilityKind = player.AbilityKind,
             MemorizedSpells = player.MemorizedSpells.ToArray(),
@@ -1613,6 +1618,11 @@ public sealed partial class DiabloSimulation
         destination.ManaShieldActive = source.ManaShieldActive;
         destination.ReflectCharges = source.ReflectCharges;
         destination.DiabloKillLevel = source.DiabloKillLevel;
+        destination.VisitedLevelIds.Clear();
+        destination.VisitedLevelIds.UnionWith(
+            source.VisitedLevelIds is { Count: > 0 }
+                ? source.VisitedLevelIds
+                : [source.LevelId]);
         destination.FriendlyMode = source.FriendlyMode;
         destination.FacingDirection = source.FacingDirection;
         destination.CombatMode = source.CombatMode;
@@ -2089,6 +2099,11 @@ public sealed partial class DiabloSimulation
             || source.InventoryGrid is null
             || source.MemorizedSpells is null
             || source.StatusEffects is null
+            || source.VisitedLevelIds is null
+            || source.VisitedLevelIds.Count > 256
+            || (source.VisitedLevelIds.Count > 0
+                && !source.VisitedLevelIds.Contains(source.LevelId))
+            || source.VisitedLevelIds.Distinct().Count() != source.VisitedLevelIds.Count
             || source.Life > expectedResources.LifeQ6
             || source.Mana < 0
             || source.Mana > expectedResources.ManaQ6

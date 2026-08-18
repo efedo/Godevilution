@@ -188,6 +188,8 @@ public sealed record StorePlayerSnapshot(
     public uint ReflectCharges { get; init; }
     /** Native persistent hero rank set after a single-player Diablo defeat. */
     public uint DiabloKillLevel { get; init; }
+    /** Native per-player dungeon visitation flags used by authored quest gates. */
+    public IReadOnlyList<uint> VisitedLevelIds { get; init; } = [];
     public uint AbilitySpellId { get; init; }
     /** Content-owned semantic role for the active class skill. */
     public DiabloPlayerAbilityKind AbilityKind { get; init; }
@@ -261,7 +263,8 @@ public sealed class AuthoritativePlayerState(
     DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
     AuthoritativeItemCatalog? items = null,
     int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute,
-    uint diabloKillLevel = 0)
+    uint diabloKillLevel = 0,
+    IReadOnlyList<uint>? visitedLevelIds = null)
 {
     public uint Gold { get; set; } = gold;
 
@@ -342,6 +345,14 @@ public sealed class AuthoritativePlayerState(
 
     /** Native persistent hero rank set after a single-player Diablo defeat. */
     public uint DiabloKillLevel { get; set; } = diabloKillLevel;
+
+    /** Server-owned native _pLvlVisited flags, keyed by authored level ID. */
+    public HashSet<uint> VisitedLevelIds { get; } =
+        (visitedLevelIds ?? [levelId]).ToHashSet();
+
+    public bool HasVisitedLevel(uint levelId) => VisitedLevelIds.Contains(levelId);
+
+    public void MarkLevelVisited(uint levelId) => VisitedLevelIds.Add(levelId);
 
     /** True while the player has not opted into hostile player targeting. */
     public bool FriendlyMode { get; set; } = friendlyMode;

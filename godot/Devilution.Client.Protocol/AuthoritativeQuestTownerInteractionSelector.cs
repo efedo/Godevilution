@@ -39,6 +39,17 @@ public static class AuthoritativeQuestTownerInteractionSelector
         if (interaction.AllowCompleted ? !quest.Completed : quest.Completed)
             return false;
 
+        var hasRequiredVisitedLevel =
+            (interaction.RequiredVisitedLevel1 != 0
+                && player.VisitedLevelIds.Contains(interaction.RequiredVisitedLevel1))
+            || (interaction.RequiredVisitedLevel2 != 0
+                && player.VisitedLevelIds.Contains(interaction.RequiredVisitedLevel2));
+        if ((interaction.RequiredVisitedLevel1 != 0
+                || interaction.RequiredVisitedLevel2 != 0)
+            && !hasRequiredVisitedLevel) {
+            return false;
+        }
+
         var active = interaction.Kind == ActivateKind ? quest.Initial : !quest.Initial;
         if (!active
             || (interaction.HasRequiredVariable1

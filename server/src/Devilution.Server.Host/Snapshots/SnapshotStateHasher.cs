@@ -43,6 +43,16 @@ public static class SnapshotStateHasher
             }
             hasher.AppendUInt32(player.CharacterLevel);
             hasher.AppendUInt32(player.LevelId);
+            var historicalVisitedLevelIds = player.VisitedLevelIds
+                .Where(levelId => levelId != player.LevelId)
+                .OrderBy(levelId => levelId)
+                .ToArray();
+            if (historicalVisitedLevelIds.Length > 0) {
+                hasher.AppendString("godevilution-player-visited-levels-v1");
+                hasher.AppendUInt64((ulong)historicalVisitedLevelIds.Length);
+                foreach (var levelId in historicalVisitedLevelIds)
+                    hasher.AppendUInt32(levelId);
+            }
             if (player.CharacterClassId != 0) {
                 hasher.AppendString("godevilution-player-class-v1");
                 hasher.AppendUInt32(player.CharacterClassId);

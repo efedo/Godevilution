@@ -216,7 +216,15 @@ projection. Its `item_id` may be zero for an itemless native conversation;
 `consume_item` remains false in that case. Field 15, `allow_completed`, is an
 explicit post-completion availability bit. A client must match that bit against
 `QuestSnapshot.completed` before presenting or submitting the stage, and the
-server rechecks the same gate during intent execution.
+server rechecks the same gate during intent execution. Fields 16-17 carry an
+optional OR-gate over the player's server-owned `visited_level_ids`, preserving
+native `_pLvlVisited` checks without reintroducing client-side level history.
+
+`PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
+The server marks a level when the player enters it through a warp, portal, or
+restart-town transition, persists the set through the save snapshot, and
+projects it to both native and Godot clients. IDs are unique and sorted in
+canonical projections; an omitted legacy field means the current level only.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are
@@ -981,6 +989,12 @@ and current resources while preserving native resource debt. When base and
 effective maxima differ, canonical hashing adds the tagged
 `godevilution-player-resource-base-v1` section; equal values preserve earlier
 hashes.
+
+`PlayerSnapshot.visited_level_ids` field 35 carries the server-owned native
+`_pLvlVisited` set. The server marks entries on authoritative level entry and
+persists the set through the version-1 save codec. The current level is always
+implicit for legacy snapshots; previously visited IDs are unique, sorted, and
+included in the canonical hash when they add history beyond the current level.
 
 After the unconditional held-item drop, an ordinary monster-or-trap death
 applies Gold loss and then removes equipped items in native slot order from

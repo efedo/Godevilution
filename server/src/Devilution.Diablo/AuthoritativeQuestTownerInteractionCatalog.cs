@@ -27,7 +27,9 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     int Variable2 = -1,
     int MessageId = 0,
     bool ConsumeItem = true,
-    bool AllowCompleted = false);
+    bool AllowCompleted = false,
+    uint RequiredVisitedLevel1 = 0,
+    uint RequiredVisitedLevel2 = 0);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -46,6 +48,8 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 || definition.LevelId > ushort.MaxValue
                 || definition.PositionX < 0
                 || definition.PositionY < 0
+                || definition.RequiredVisitedLevel1 > ushort.MaxValue
+                || definition.RequiredVisitedLevel2 > ushort.MaxValue
                 || !Enum.IsDefined(definition.Kind)
                 || definition.RequiredVariable1 is < -1 or > byte.MaxValue
                 || definition.RequiredVariable2 is < -1 or > byte.MaxValue
@@ -187,7 +191,9 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 row.OptionalInt32("variable2", -1),
                 row.OptionalInt32("message_id"),
                 row.OptionalBoolean("consume_item", true),
-                row.OptionalBoolean("allow_completed", false))));
+                row.OptionalBoolean("allow_completed", false),
+                row.OptionalUInt32("required_visited_level1"),
+                row.OptionalUInt32("required_visited_level2"))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

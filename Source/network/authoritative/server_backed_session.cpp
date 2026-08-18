@@ -237,6 +237,7 @@ bool ServerBackedSession::HasActiveQuest(uint32_t questId) const noexcept
 std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t townerId) const noexcept
 {
 	std::optional<uint32_t> result;
+	const auto *currentPlayer = playerState_.Snapshot();
 	for (const auto &interaction : questTownerInteractions_) {
 		if (interaction.towner_id() < 0
 		    || static_cast<uint32_t>(interaction.towner_id()) != townerId) {
@@ -249,6 +250,21 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || questIt->unavailable()
 		    || (questIt->completed() && !interaction.allow_completed())
 		    || (!questIt->completed() && interaction.allow_completed())) {
+			continue;
+		}
+		const auto hasVisitedLevel = [&](uint32_t levelId) {
+			return currentPlayer != nullptr
+			    && levelId != 0
+			    && std::find(
+				       currentPlayer->visitedLevelIds.begin(),
+				       currentPlayer->visitedLevelIds.end(),
+				       levelId)
+				        != currentPlayer->visitedLevelIds.end();
+		};
+		if ((interaction.required_visited_level1() != 0
+		        || interaction.required_visited_level2() != 0)
+		    && !hasVisitedLevel(interaction.required_visited_level1())
+		    && !hasVisitedLevel(interaction.required_visited_level2())) {
 			continue;
 		}
 		const bool active = interaction.kind() == 0

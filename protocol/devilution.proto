@@ -458,6 +458,8 @@ message PlayerSnapshot {
 	PlayerAbilityKind ability_kind = 33;
 	// Native persistent hero rank set after a single-player Diablo defeat.
 	uint32 diablo_kill_level = 34;
+	// Server-owned native _pLvlVisited flags, keyed by authored level ID.
+	repeated uint32 visited_level_ids = 35;
 }
 
 enum PlayerDirection {
@@ -771,6 +773,9 @@ message QuestTownerInteractionSnapshot {
 	bool consume_item = 14;
 	// Whether this authored stage is available after the quest reaches native DONE.
 	bool allow_completed = 15;
+	// Optional OR-gates matching native _pLvlVisited checks.
+	uint32 required_visited_level1 = 16;
+	uint32 required_visited_level2 = 17;
 }
 
 message ProjectileSnapshot {

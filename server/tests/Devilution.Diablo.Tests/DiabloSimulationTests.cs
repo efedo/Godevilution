@@ -11,7 +11,7 @@ public sealed class DiabloSimulationTests
     public void CurrentContentSchemaIncludesTrapDisarmCapability()
     {
         Assert.Equal(
-                new ContentSchemaIdentity("devilution.diablo", "1.347.0"),
+                new ContentSchemaIdentity("devilution.diablo", "1.348.0"),
             DiabloContentSchema.Current);
     }
 
@@ -373,7 +373,7 @@ public sealed class DiabloSimulationTests
                 ComposedContent.Compose(manifest)));
 
         Assert.Contains("other.game@1.0.0", exception.Message, StringComparison.Ordinal);
-        Assert.Contains("devilution.diablo@1.347.0", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo@1.348.0", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -2099,6 +2099,8 @@ public sealed class DiabloSimulationTests
         destinationPlayer.LevelId = 1;
         restored.RestoreSnapshot(destinationPlayer, snapshot);
 
+        Assert.Contains(0U, destinationPlayer.VisitedLevelIds);
+        Assert.Contains(1U, destinationPlayer.VisitedLevelIds);
         var restoredPortal = Assert.Single(restored.WorldState.Portals.Values);
         Assert.Equal(portal.PortalId, restoredPortal.PortalId);
         Assert.Equal(portal.RemainingTicks, restoredPortal.RemainingTicks);

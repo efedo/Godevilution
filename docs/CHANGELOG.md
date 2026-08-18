@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.348 authored level-visitation gates. Server-owned player
+  snapshots now persist native-compatible visited dungeon levels, and the base
+  King Leoric activation stage is selected from visited Catacombs or Caves.
+
 - Add schema 1.347 itemless and post-completion authored quest/towner stages.
   Ogden's King Leoric follow-up dialogue now advances the completed quest's
   native `_qvar1`/`_qvar2` markers through `TurnInQuestRequested`, and the

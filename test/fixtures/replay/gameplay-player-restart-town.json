@@ -5,7 +5,7 @@
   "content_manifest": {
     "id": "devilution.base",
     "version": "0.1.0",
-    "sha256": "b1c42b07c8fa909687aa2847395e5d38b9a9f4316221c57a72bcaf6e260774f9"
+    "sha256": "8c7f3e81d699b8faf10ffa2ca4559c8e9088f657401c6e174aecfed7bff10679"
   },
   "tick_rate_hz": 20,
   "rng_seed": 1,
@@ -61,7 +61,7 @@
     { "tick": 2, "state_sha256": "e6251d476d6d7925268b4e82ccae0ab40018fc7cac413d80eb9a7cbadd73d2c9" },
     { "tick": 40, "state_sha256": "e6251d476d6d7925268b4e82ccae0ab40018fc7cac413d80eb9a7cbadd73d2c9" },
     { "tick": 41, "state_sha256": "fd47264998b0acc5375e1c2a868b0f5483d493d996b9bdf2afc24c5c031f5b1b" },
-    { "tick": 42, "state_sha256": "530ab584d073d30b3ab6ac566b7200a91ef452ee5420f5f02402b2128bd5c337" },
-    { "tick": 43, "state_sha256": "19cefda8959200947f68e26b97efbc1172a3ac5f7a618aa52591c5140c060fd7" }
+    { "tick": 42, "state_sha256": "4381b919ce223b20b4d9efc81bc18818fd7fb085d8ccde217bb050f0a9c2e5f7" },
+    { "tick": 43, "state_sha256": "1400071f283be7b4e6b7a2f156ed9c3b8ff217766a2a2f7797f1ec877eef522c" }
   ]
 }

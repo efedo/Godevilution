@@ -96,6 +96,7 @@ public sealed class DiabloWorldCommandProcessorTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(2U, player.LevelId);
+        Assert.Contains(2U, player.VisitedLevelIds);
         Assert.Equal(3, player.PositionX);
         Assert.Equal(4, player.PositionY);
         var retainedStatus = Assert.Single(player.StatusEffects);
@@ -1200,6 +1201,50 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.False(quest.Active);
         Assert.Equal((2, 2), (quest.Variable1, quest.Variable2));
         Assert.Equal(3, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
+    public void ContentOwnedQuestTownerActivationUsesServerOwnedVisitedLevelGate()
+    {
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(300206, 3013, 3, 0, 55, 62, 0,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                Variable1: 1,
+                Variable2: 1,
+                MessageId: 2,
+                ConsumeItem: false,
+                RequiredVisitedLevel1: 2,
+                RequiredVisitedLevel2: 4),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3013,
+            3,
+            1,
+            active: false);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 55, positionY: 62);
+
+        var beforeVisit = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3013, 3),
+            1,
+            [player]);
+        Assert.False(beforeVisit.Succeeded);
+        Assert.False(quest.Active);
+
+        player.MarkLevelVisited(4);
+        var afterVisit = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3013, 3),
+            2,
+            [player]);
+        Assert.True(afterVisit.Succeeded, afterVisit.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.Equal((1, 1), (quest.Variable1, quest.Variable2));
+        Assert.Equal(2, Assert.Single(afterVisit.Events).MessageId);
     }
 
     [Fact]

@@ -116,6 +116,52 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void SelectsAuthoredQuestTownerActivationFromVisitedLevelOrGate()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 62,
+                    VisitedLevelIds = { 0, 4 },
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3013,
+                    Initial = true,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300206,
+                    QuestId = 3013,
+                    TownerId = 3,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 62,
+                    Kind = 0,
+                    Variable1 = 1,
+                    Variable2 = 1,
+                    MessageId = 2,
+                    RequiredVisitedLevel1 = 2,
+                    RequiredVisitedLevel2 = 4,
+                },
+            },
+        };
+
+        Assert.Equal(
+            300206U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+
+        snapshot.Players[0].VisitedLevelIds.Clear();
+        snapshot.Players[0].VisitedLevelIds.Add(0);
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
     public void EnumeratesAndCyclesAuthoritativeSpellSourcesWithoutChangingTheirOwnership()
     {
         var snapshot = new Snapshot {

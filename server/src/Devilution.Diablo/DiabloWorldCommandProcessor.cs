@@ -374,6 +374,7 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
 
         player.LevelId = warp.TargetLevelId;
+        player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;
         player.PositionY = destination.Value.Y;
         ActivateInitialQuestsForLevel(player.LevelId);
@@ -439,6 +440,7 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         player.LevelId = combatRules.RestartLevelId;
+        player.MarkLevelVisited(player.LevelId);
         player.PositionX = combatRules.RestartPositionX;
         player.PositionY = combatRules.RestartPositionY;
         ActivateInitialQuestsForLevel(player.LevelId);
@@ -575,6 +577,7 @@ public sealed class DiabloWorldCommandProcessor
         }
 
         player.LevelId = destinationLevelId;
+        player.MarkLevelVisited(player.LevelId);
         player.PositionX = destinationPositionX;
         player.PositionY = destinationPositionY;
         ActivateInitialQuestsForLevel(player.LevelId);
@@ -1383,7 +1386,7 @@ public sealed class DiabloWorldCommandProcessor
                      .Where(definition => definition.QuestId == questId
                          && definition.TownerId == townerId)
                      .OrderBy(definition => definition.InteractionId)) {
-            if (!IsQuestTownerInteractionActive(quest, interaction))
+            if (!IsQuestTownerInteractionActive(player, quest, interaction))
                 continue;
             hasActiveInteraction = true;
             if (interaction.LevelId != player.LevelId
@@ -1441,6 +1444,7 @@ public sealed class DiabloWorldCommandProcessor
     }
 
     private static bool IsQuestTownerInteractionActive(
+        AuthoritativePlayerState player,
         AuthoritativeQuestState quest,
         AuthoritativeQuestTownerInteractionDefinition interaction)
     {
@@ -1453,7 +1457,13 @@ public sealed class DiabloWorldCommandProcessor
         } else if (!quest.Active || quest.Completed || quest.Unavailable) {
             return false;
         }
-        return (interaction.RequiredVariable1 < 0
+        return ((interaction.RequiredVisitedLevel1 == 0
+                    && interaction.RequiredVisitedLevel2 == 0)
+                || (interaction.RequiredVisitedLevel1 != 0
+                    && player.HasVisitedLevel(interaction.RequiredVisitedLevel1))
+                || (interaction.RequiredVisitedLevel2 != 0
+                    && player.HasVisitedLevel(interaction.RequiredVisitedLevel2)))
+            && (interaction.RequiredVariable1 < 0
                 || quest.Variable1 == interaction.RequiredVariable1)
             && (interaction.RequiredVariable2 < 0
                 || quest.Variable2 == interaction.RequiredVariable2);

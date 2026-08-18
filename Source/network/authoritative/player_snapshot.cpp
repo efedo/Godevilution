@@ -45,6 +45,14 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	}
 	if (player == nullptr)
 		return tl::make_unexpected("Server-backed snapshot does not contain the requested player entity.");
+	if (player->visited_level_ids_size() > 256) {
+		return tl::make_unexpected("Server-backed snapshot contains too many visited levels.");
+	}
+	std::unordered_set<uint32_t> visitedLevelIds;
+	for (const auto levelId : player->visited_level_ids()) {
+		if (!visitedLevelIds.insert(levelId).second)
+			return tl::make_unexpected("Server-backed snapshot contains duplicate visited levels.");
+	}
 
 	ProjectedPlayerSnapshot projected {
 		.entityId = player->entity_id(),
@@ -64,6 +72,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.manaShieldActive = player->mana_shield_active(),
 		.abilitySpellId = player->ability_spell_id(),
 		.levelId = player->level_id(),
+		.visitedLevelIds = { player->visited_level_ids().begin(), player->visited_level_ids().end() },
 		.friendlyMode = !player->hostile_mode(),
 		.facingDirection = static_cast<uint32_t>(player->facing_direction()),
 		.combatMode = static_cast<uint32_t>(player->combat_mode()),

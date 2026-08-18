@@ -200,6 +200,8 @@ struct ProjectedPlayerSnapshot {
 	bool manaShieldActive = false;
 	uint32_t abilitySpellId = 0;
 	uint32_t levelId = 0;
+	/** Server-owned native _pLvlVisited flags keyed by authored level ID. */
+	std::vector<uint32_t> visitedLevelIds;
 	bool friendlyMode = true;
 	uint32_t facingDirection = 0;
 	uint32_t combatMode = 0;

@@ -1,6 +1,7 @@
-interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item	allow_completed
-300201	3002	black_mushroom	6	0	town	80	20	2141	fungal_tome	Activate	-1	-1	2	-1	129	true	false
-300202	3002	black_mushroom	6	0	town	80	20	2139	black_mushroom	Advance	2	-1	5	-1	131	true	false
-300203	3002	black_mushroom	6	0	town	80	20	2140	brain	Dialogue	5	-1	-1	-1	132	false	false
-300204	3002	black_mushroom	6	0	town	80	20	2142	spectral_elixir	Complete	7	-1	-1	-1	133	true	false
-300205	3013	king_leoric	3	0	town	55	62	0	NONE	Dialogue	-1	1	2	2	3	false	true
+interaction_id	quest_id	quest_symbol	towner_id	level_id	level_symbol	position_x	position_y	item_id	item_symbol	kind	required_variable1	required_variable2	variable1	variable2	message_id	consume_item	allow_completed	required_visited_level1	required_visited_level2
+300201	3002	black_mushroom	6	0	town	80	20	2141	fungal_tome	Activate	-1	-1	2	-1	129	true	false	0	0
+300202	3002	black_mushroom	6	0	town	80	20	2139	black_mushroom	Advance	2	-1	5	-1	131	true	false	0	0
+300203	3002	black_mushroom	6	0	town	80	20	2140	brain	Dialogue	5	-1	-1	-1	132	false	false	0	0
+300204	3002	black_mushroom	6	0	town	80	20	2142	spectral_elixir	Complete	7	-1	-1	-1	133	true	false	0	0
+300205	3013	king_leoric	3	0	town	55	62	0	NONE	Dialogue	-1	1	2	2	3	false	true	0	0
+300206	3013	king_leoric	3	0	town	55	62	0	NONE	Activate	-1	-1	1	1	2	false	false	2	4

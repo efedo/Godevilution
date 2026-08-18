@@ -215,6 +215,8 @@ internal static class DiabloProtocolMapper
                 Kind = (int)interaction.Kind,
                 ConsumeItem = interaction.ConsumeItem,
                 AllowCompleted = interaction.AllowCompleted,
+                RequiredVisitedLevel1 = interaction.RequiredVisitedLevel1,
+                RequiredVisitedLevel2 = interaction.RequiredVisitedLevel2,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;
@@ -370,6 +372,7 @@ internal static class DiabloProtocolMapper
             LevelId = state.LevelId,
             Experience = state.Experience,
             DiabloKillLevel = state.DiabloKillLevel,
+            VisitedLevelIds = { state.VisitedLevelIds.OrderBy(levelId => levelId) },
             Attributes = new PlayerAttributesSnapshot {
                 Strength = ToProtocolAttribute(state.Attributes.Strength),
                 Magic = ToProtocolAttribute(state.Attributes.Magic),
@@ -895,6 +898,7 @@ internal static class DiabloProtocolMapper
             ManaShieldActive = source.ManaShieldActive,
             ReflectCharges = source.ReflectCharges,
             DiabloKillLevel = source.DiabloKillLevel,
+            VisitedLevelIds = source.VisitedLevelIds.ToArray(),
             AbilitySpellId = source.AbilitySpellId,
             AbilityKind = (DiabloPlayerAbilityKind)source.AbilityKind,
             MemorizedSpells = source.MemorizedSpells.Select(spell =>
