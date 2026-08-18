@@ -244,9 +244,14 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || quest.unavailable()) {
 			continue;
 		}
-		const bool activeTurnIn = quest.turn_in_activation_only()
-		    ? quest.initial() && !quest.completed()
-		    : !quest.initial() && !quest.completed();
+		const bool dialogueTurnIn = quest.turn_in_dialogue_only()
+		    && (!quest.has_turn_in_message_id()
+		        || quest.message_id() != quest.turn_in_message_id());
+		const bool activeTurnIn = quest.turn_in_dialogue_only()
+		    ? dialogueTurnIn && !quest.initial() && !quest.completed()
+		    : quest.turn_in_activation_only()
+		        ? quest.initial() && !quest.completed()
+		        : !quest.initial() && !quest.completed();
 		const bool completionTurnIn = quest.completed()
 		    && quest.turn_in_on_completion()
 		    && quest.has_turn_in_completion_variable2()

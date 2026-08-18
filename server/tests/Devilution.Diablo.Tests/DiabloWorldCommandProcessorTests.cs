@@ -1976,6 +1976,56 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredTownerDialogueRequiresItemWithoutConsumingOrCompletingQuest()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(43, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var map = items.Generate(43, 42);
+        var player = CreatePlayer(
+            positionX: 42,
+            positionY: 66,
+            inventoryGrid: [0, ..Enumerable.Repeat(-1, 39)],
+            inventory: [new OwnedStoreItem(0, 0, map.CreateInfo, 0, 0, map)],
+            entityId: 7);
+        var quest = new AuthoritativeQuestState(
+            3017,
+            17,
+            1,
+            active: true,
+            turnInTownerId: 7,
+            turnInLevelId: 0,
+            turnInPositionX: 43,
+            turnInPositionY: 66,
+            turnInItemId: 43,
+            turnInMessageId: 274,
+            turnInDialogueOnly: true);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3017, 7),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.True(quest.Active);
+        Assert.False(quest.Completed);
+        Assert.True(quest.Logged);
+        Assert.Equal(274, quest.MessageId);
+        Assert.Single(player.Inventory);
+        Assert.Equal(274, Assert.Single(result.Events).MessageId);
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3017, 7),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(

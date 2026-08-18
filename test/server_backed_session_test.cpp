@@ -58,6 +58,12 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		completedQuest->set_turn_in_towner_id(1);
 		completedQuest->set_turn_in_on_completion(true);
 		completedQuest->set_turn_in_completion_variable2(1);
+		auto *dialogueQuest = initial.mutable_snapshot()->add_quests();
+		dialogueQuest->set_quest_id(3017);
+		dialogueQuest->set_required_progress(1);
+		dialogueQuest->set_turn_in_towner_id(7);
+		dialogueQuest->set_turn_in_message_id(274);
+		dialogueQuest->set_turn_in_dialogue_only(true);
 		WriteEnvelope(socket, initial);
 
 		auto commandPayload = EnvelopeCodec::Read(socket);
@@ -99,6 +105,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 	ASSERT_TRUE(session.has_value()) << session.error();
 	EXPECT_EQ((*session)->ActiveQuestForTowner(0), std::optional<uint32_t> { 3011 });
 	EXPECT_EQ((*session)->ActiveQuestForTowner(1), std::optional<uint32_t> { 3002 });
+	EXPECT_EQ((*session)->ActiveQuestForTowner(7), std::optional<uint32_t> { 3017 });
 	EXPECT_EQ((*session)->ActiveQuestForUniqueIdentity("Defiler"), std::optional<uint32_t> { 3011 });
 	EXPECT_FALSE((*session)->ActiveQuestForUniqueIdentity("Na-Krul").has_value());
 	auto open = (*session)->OpenVendor(1, 10, 0);

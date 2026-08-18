@@ -137,7 +137,8 @@ public sealed class AuthoritativeQuestState
         int turnInActivationVariable1 = -1,
         int routeActivationVariable1 = -1,
         int turnInCompletionRequiredVariable1 = -1,
-        int turnInCompletionVariable1 = -1)
+        int turnInCompletionVariable1 = -1,
+        bool turnInDialogueOnly = false)
     {
         if (questId == 0 || requiredProgress == 0 || progress > requiredProgress)
             throw new ArgumentOutOfRangeException(nameof(questId));
@@ -246,6 +247,7 @@ public sealed class AuthoritativeQuestState
         TurnInActivationVariable1 = turnInActivationVariable1;
         TurnInCompletionRequiredVariable1 = turnInCompletionRequiredVariable1;
         TurnInCompletionVariable1 = turnInCompletionVariable1;
+        TurnInDialogueOnly = turnInDialogueOnly;
     }
 
     /** Optional stable symbol resolved from content_ids.tsv. */
@@ -336,6 +338,8 @@ public sealed class AuthoritativeQuestState
     public int TurnInCompletionRequiredVariable1 { get; }
     /** Optional native _qvar1 marker written by a completion-stage towner interaction. */
     public int TurnInCompletionVariable1 { get; }
+    /** Whether the towner emits one item-gated dialogue without consuming or changing quest state. */
+    public bool TurnInDialogueOnly { get; }
     /** Optional item consumed by a unique-monster quest conversation. */
     public uint DialogueItemId { get; }
     /** Optional unique item generated relative to the unique-monster target. */
@@ -486,7 +490,8 @@ public static class AuthoritativeQuestCatalog
                     -1),
                 turnInCompletionVariable1: row.OptionalInt32(
                     "turn_in_completion_variable1",
-                    -1)) {
+                    -1),
+                turnInDialogueOnly: row.OptionalBoolean("turn_in_dialogue_only")) {
                 StableSymbol = AuthoritativeQuestIdentity.ReadSymbol(row),
             };
         }).ToArray();
@@ -534,6 +539,21 @@ public static class AuthoritativeQuestCatalog
                 && quest.TurnInActivationOnly)
                 throw new InvalidDataException(
                     $"Quest {quest.QuestId} activation-only turn-in cannot declare an alternate item.");
+            if (quest.TurnInDialogueOnly
+                && (quest.TurnInActivationOnly || quest.TurnInOnCompletion))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} dialogue-only turn-in cannot be activation-only or completion-stage.");
+            if (quest.TurnInDialogueOnly
+                && quest.TurnInMessageId == 0)
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} dialogue-only turn-in requires a dialogue message.");
+            if (quest.TurnInDialogueOnly
+                && (quest.TurnInRewardUniqueId != 0
+                    || quest.TurnInRewardItemId != 0
+                    || quest.TurnInAlternateItemId != 0
+                    || quest.TurnInRequiredVariable2 >= 0))
+                throw new InvalidDataException(
+                    $"Quest {quest.QuestId} dialogue-only turn-in cannot declare rewards, alternate items, or variable gates.");
             if (quest.TurnInAlternateItemId != 0
                 && !items.TryGet(quest.TurnInAlternateItemId, out _))
                 throw new InvalidDataException(

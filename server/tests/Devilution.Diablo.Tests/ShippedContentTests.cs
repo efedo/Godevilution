@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.340.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.341.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1591,7 +1591,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.340.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.341.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1725,6 +1725,15 @@ public sealed class ShippedContentTests
             farmerQuest.TurnInCompletionRewardItemLevel,
             farmerQuest.TurnInCompletionRewardPositionX,
             farmerQuest.TurnInCompletionRewardPositionY));
+        var graveQuest = activation.Simulation.WorldState.Quests[3017];
+        Assert.Equal((7, 0U, 43, 66, 43U, 274, true), (
+            graveQuest.TurnInTownerId,
+            graveQuest.TurnInLevelId,
+            graveQuest.TurnInPositionX,
+            graveQuest.TurnInPositionY,
+            graveQuest.TurnInItemId,
+            graveQuest.TurnInMessageId,
+            graveQuest.TurnInDialogueOnly));
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,

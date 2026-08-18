@@ -189,6 +189,9 @@ internal static class DiabloProtocolMapper
             if (quest.TurnInAlternateMessageId != 0)
                 projectedQuest.TurnInAlternateMessageId = quest.TurnInAlternateMessageId;
             projectedQuest.TurnInActivationOnly = quest.TurnInActivationOnly;
+            if (quest.TurnInMessageId != 0)
+                projectedQuest.TurnInMessageId = quest.TurnInMessageId;
+            projectedQuest.TurnInDialogueOnly = quest.TurnInDialogueOnly;
             snapshot.Quests.Add(projectedQuest);
         }
         foreach (var projectile in source.Projectiles) {
@@ -602,7 +605,9 @@ internal static class DiabloProtocolMapper
                 quest.HasTurnInCompletionVariable2 ? quest.TurnInCompletionVariable2 : -1,
                 quest.HasTurnInAlternateItemId ? quest.TurnInAlternateItemId : 0,
                 quest.HasTurnInAlternateMessageId ? quest.TurnInAlternateMessageId : 0,
-                quest.TurnInActivationOnly)).ToArray(),
+                quest.TurnInActivationOnly,
+                quest.HasTurnInMessageId ? quest.TurnInMessageId : 0,
+                quest.TurnInDialogueOnly)).ToArray(),
             source.Projectiles.Select(projectile => new DiabloProjectileState(
                 projectile.EntityId,
                 projectile.SourceEntityId,

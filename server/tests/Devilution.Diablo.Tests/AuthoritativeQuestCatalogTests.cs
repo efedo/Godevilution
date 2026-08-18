@@ -223,6 +223,25 @@ public sealed class AuthoritativeQuestCatalogTests
     }
 
     [Fact]
+    public void QuestStateCanLoadNonConsumingTownerDialogueMetadata()
+    {
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            "quest_id\tlevel_id\trequired_progress\tturn_in_towner_id\tturn_in_level_id\tturn_in_position_x\tturn_in_position_y\tturn_in_item_id\tturn_in_message_id\tturn_in_dialogue_only\n"
+                + "3017\t17\t1\t7\t0\t43\t66\t43\t274\ttrue\n");
+
+        var quest = Assert.Single(quests);
+        Assert.Equal((7, 0U, 43, 66, 43U, 274), (
+            quest.TurnInTownerId,
+            quest.TurnInLevelId,
+            quest.TurnInPositionX,
+            quest.TurnInPositionY,
+            quest.TurnInItemId,
+            quest.TurnInMessageId));
+        Assert.True(quest.TurnInDialogueOnly);
+    }
+
+    [Fact]
     public void QuestStateCanLoadAlternateTownerItemMetadata()
     {
         var quest = Assert.Single(AuthoritativeQuestCatalog.LoadTsv(

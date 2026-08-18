@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.341 non-consuming towner dialogue stages. Hellfire Grave Matters
+  now routes Gillian's Cathedral Map conversation through the server, preserving
+  the native message while leaving the map and quest completion state unchanged.
+
 - Add schema 1.340 completion-stage quest markers. Lazarus's authored
   Storyteller interaction now writes native `_qvar1 = 8` and logs the Diablo
   follow-on quest after the native completion gate.

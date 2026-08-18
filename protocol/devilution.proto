@@ -736,6 +736,10 @@ message QuestSnapshot {
 	optional int32 turn_in_alternate_message_id = 18;
 	// Whether this towner interaction activates an initial quest and consumes its activation item.
 	bool turn_in_activation_only = 19;
+	// Optional dialogue identity used to gate a non-consuming item interaction.
+	optional int32 turn_in_message_id = 20;
+	// Whether this towner interaction emits dialogue without changing quest state.
+	bool turn_in_dialogue_only = 21;
 }
 
 message ProjectileSnapshot {

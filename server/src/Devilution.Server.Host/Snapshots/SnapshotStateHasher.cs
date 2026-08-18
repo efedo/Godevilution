@@ -553,6 +553,12 @@ public static class SnapshotStateHasher
                     if (quest.HasTurnInCompletionVariable2)
                         hasher.AppendInt32(quest.TurnInCompletionVariable2);
                 }
+                if (quest.TurnInDialogueOnly) {
+                    hasher.AppendString("godevilution-quest-turn-in-dialogue-v1");
+                    hasher.AppendBool(true);
+                    if (quest.TurnInMessageId != 0)
+                        hasher.AppendInt32(quest.TurnInMessageId);
+                }
             }
         }
 

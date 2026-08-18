@@ -195,6 +195,11 @@ canonical state hash and let the client route the quest without a hardcoded
 quest/towner pairing. Field 19 marks an activation-only towner row. The native
 client routes that row only while the quest is in its initial state, preventing a
 repeat activation command after the server has consumed its optional item.
+Optional field 20 carries the authored turn-in message identity, and field 21
+marks a non-consuming, item-gated dialogue-only row. The native client routes
+that row while the quest is active and the current `_qmsg` differs from the
+authored message; the server then records the message and leaves inventory and
+quest completion state unchanged.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are
