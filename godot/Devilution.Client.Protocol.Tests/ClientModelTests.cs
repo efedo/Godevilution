@@ -74,6 +74,48 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void SelectsItemlessAuthoredDialogueAfterQuestCompletion()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 62,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3013,
+                    Completed = true,
+                    Variable2 = 1,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300205,
+                    QuestId = 3013,
+                    TownerId = 3,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 62,
+                    Kind = 3,
+                    RequiredVariable2 = 1,
+                    Variable1 = 2,
+                    Variable2 = 2,
+                    MessageId = 3,
+                    AllowCompleted = true,
+                },
+            },
+        };
+
+        Assert.Equal(
+            300205U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+    }
+
+    [Fact]
     public void EnumeratesAndCyclesAuthoritativeSpellSourcesWithoutChangingTheirOwnership()
     {
         var snapshot = new Snapshot {

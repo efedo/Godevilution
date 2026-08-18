@@ -156,7 +156,7 @@ Black Mushroom/Adria's repeatable Fungal Tome, mushroom, brain-dialogue, and
 Spectral Elixir stages,
 base and Hellfire
 Magic Rock, Ogden's Sign, Anvil of Fury/Blacksmith, Skeleton King, Butcher/Dead Guy, Little Girl, and Jersey's
-Jersey/Complete Nut
+Jersey/Complete Nut, and Ogden's itemless post-completion King Leoric dialogue
 (including its Grey Suit tease) are shipped
 definitions; additional legacy towner paths remain local until authored.
 Legacy local towner behavior stays available outside the authoritative runtime.

@@ -32,10 +32,12 @@ public static class AuthoritativeQuestTownerInteractionSelector
                 Math.Abs(interaction.PositionX - player.PositionX),
                 Math.Abs(interaction.PositionY - player.PositionY)) > 1
             || !quests.TryGetValue(interaction.QuestId, out var quest)
-            || quest.Completed
             || quest.Unavailable) {
             return false;
         }
+
+        if (interaction.AllowCompleted ? !quest.Completed : quest.Completed)
+            return false;
 
         var active = interaction.Kind == ActivateKind ? quest.Initial : !quest.Initial;
         if (!active

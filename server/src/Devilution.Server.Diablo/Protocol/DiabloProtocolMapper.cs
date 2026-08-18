@@ -214,6 +214,7 @@ internal static class DiabloProtocolMapper
                 ItemId = interaction.ItemId,
                 Kind = (int)interaction.Kind,
                 ConsumeItem = interaction.ConsumeItem,
+                AllowCompleted = interaction.AllowCompleted,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;

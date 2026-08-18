@@ -158,6 +158,11 @@ consumes the required item, completes the quest, and spawns an optional reward.
 An explicit activation-only definition instead activates an inactive quest and
 may create its authored initial item without completing it. Shipped uses include
 the Hellfire Farmer, Blacksmith Anvil, Little Girl, and Jersey's Jersey paths.
+Repeatable authored stages may be itemless when the native conversation has no
+inventory requirement. A stage may also set `allow_completed` to expose a
+server-owned post-completion dialogue; clients must select it only when the
+projected quest is complete, while the server remains authoritative for the
+state transition and emitted message.
 
 ## State, Events, and Persistence
 
@@ -205,6 +210,13 @@ does not use `_qvar2`.
 Optional fields 24-26 carry an active staged item hand-in's `_qvar1` gate,
 marker, and progress-only flag. The latter keeps the quest active after the
 server consumes the authored item and creates its reward.
+
+`Snapshot.quest_towner_interactions` is the repeatable authored-stage
+projection. Its `item_id` may be zero for an itemless native conversation;
+`consume_item` remains false in that case. Field 15, `allow_completed`, is an
+explicit post-completion availability bit. A client must match that bit against
+`QuestSnapshot.completed` before presenting or submitting the stage, and the
+server rechecks the same gate during intent execution.
 
 `Snapshot.state_sha256` hashes authoritative fields in an explicit canonical
 order. Stable-identity lists, including the complete participant set, are

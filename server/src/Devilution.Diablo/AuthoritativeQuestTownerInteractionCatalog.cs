@@ -26,7 +26,8 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     int Variable1 = -1,
     int Variable2 = -1,
     int MessageId = 0,
-    bool ConsumeItem = true);
+    bool ConsumeItem = true,
+    bool AllowCompleted = false);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -45,7 +46,6 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 || definition.LevelId > ushort.MaxValue
                 || definition.PositionX < 0
                 || definition.PositionY < 0
-                || definition.ItemId == 0
                 || !Enum.IsDefined(definition.Kind)
                 || definition.RequiredVariable1 is < -1 or > byte.MaxValue
                 || definition.RequiredVariable2 is < -1 or > byte.MaxValue
@@ -63,34 +63,41 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
         foreach (var definition in values) {
             switch (definition.Kind) {
             case AuthoritativeQuestTownerInteractionKind.Activate:
-                if (!definition.ConsumeItem
+                if (definition.ConsumeItem && definition.ItemId == 0
+                    || !definition.ConsumeItem && definition.ItemId != 0
                     || definition.RequiredVariable1 >= 0
                     || definition.RequiredVariable2 >= 0
                     || definition.Variable1 < 0
-                    || definition.MessageId == 0) {
+                    || definition.MessageId == 0
+                    || definition.AllowCompleted) {
                     throw new InvalidDataException(
                         $"Quest/towner activation {definition.InteractionId} is incomplete.");
                 }
                 break;
             case AuthoritativeQuestTownerInteractionKind.Advance:
                 if (!definition.ConsumeItem
+                    || definition.ItemId == 0
                     || (definition.RequiredVariable1 < 0 && definition.RequiredVariable2 < 0)
                     || (definition.Variable1 < 0 && definition.Variable2 < 0)
-                    || definition.MessageId == 0) {
+                    || definition.MessageId == 0
+                    || definition.AllowCompleted) {
                     throw new InvalidDataException(
                         $"Quest/towner advancement {definition.InteractionId} is incomplete.");
                 }
                 break;
             case AuthoritativeQuestTownerInteractionKind.Complete:
                 if (!definition.ConsumeItem
+                    || definition.ItemId == 0
                     || (definition.RequiredVariable1 < 0 && definition.RequiredVariable2 < 0)
-                    || definition.MessageId == 0) {
+                    || definition.MessageId == 0
+                    || definition.AllowCompleted) {
                     throw new InvalidDataException(
                         $"Quest/towner completion {definition.InteractionId} is incomplete.");
                 }
                 break;
             case AuthoritativeQuestTownerInteractionKind.Dialogue:
-                if (definition.MessageId == 0) {
+                if (definition.ConsumeItem && definition.ItemId == 0
+                    || definition.MessageId == 0) {
                     throw new InvalidDataException(
                         $"Quest/towner dialogue {definition.InteractionId} requires a message.");
                 }
@@ -112,6 +119,8 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
     {
         ArgumentNullException.ThrowIfNull(items);
         foreach (var definition in definitions) {
+            if (definition.ItemId == 0)
+                continue;
             if (!items.TryGet(definition.ItemId, out _))
                 throw new InvalidDataException(
                     $"Quest/towner interaction {definition.InteractionId} references unknown item {definition.ItemId}.");
@@ -177,7 +186,8 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 row.OptionalInt32("variable1", -1),
                 row.OptionalInt32("variable2", -1),
                 row.OptionalInt32("message_id"),
-                row.OptionalBoolean("consume_item", true))));
+                row.OptionalBoolean("consume_item", true),
+                row.OptionalBoolean("allow_completed", false))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

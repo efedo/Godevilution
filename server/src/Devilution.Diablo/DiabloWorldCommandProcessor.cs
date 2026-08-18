@@ -1374,10 +1374,8 @@ public sealed class DiabloWorldCommandProcessor
     {
         hasActiveInteraction = false;
         if (questTownerInteractions is null
-            || items is null
             || !world.Quests.TryGetValue(questId, out var quest)
-            || quest.Unavailable
-            || quest.Completed) {
+            || quest.Unavailable) {
             return null;
         }
 
@@ -1391,17 +1389,20 @@ public sealed class DiabloWorldCommandProcessor
             if (interaction.LevelId != player.LevelId
                 || Math.Max(
                     Math.Abs(interaction.PositionX - player.PositionX),
-                    Math.Abs(interaction.PositionY - player.PositionY)) > 1
-                || !items.TryGet(interaction.ItemId, out var itemDefinition)) {
+                    Math.Abs(interaction.PositionY - player.PositionY)) > 1) {
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
-            if (!TryFindPlayerItem(
-                    player,
-                    itemDefinition,
-                    interaction.ConsumeItem,
-                    out _)) {
-                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            if (interaction.ItemId != 0) {
+                if (items is null
+                    || !items.TryGet(interaction.ItemId, out var itemDefinition)
+                    || !TryFindPlayerItem(
+                        player,
+                        itemDefinition,
+                        interaction.ConsumeItem,
+                        out _)) {
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                }
             }
 
             quest.Logged = true;
@@ -1443,7 +1444,10 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeQuestState quest,
         AuthoritativeQuestTownerInteractionDefinition interaction)
     {
-        if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate) {
+        if (interaction.AllowCompleted) {
+            if (!quest.Completed || quest.Unavailable)
+                return false;
+        } else if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate) {
             if (quest.Active || quest.Completed || quest.Unavailable)
                 return false;
         } else if (!quest.Active || quest.Completed || quest.Unavailable) {

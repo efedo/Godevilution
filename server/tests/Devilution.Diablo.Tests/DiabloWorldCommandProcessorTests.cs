@@ -1163,6 +1163,46 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedQuestTownerDialogueCanApplyAfterCompletionWithoutAnItem()
+    {
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(300205, 3013, 3, 0, 55, 62, 0,
+                AuthoritativeQuestTownerInteractionKind.Dialogue,
+                RequiredVariable2: 1,
+                Variable1: 2,
+                Variable2: 2,
+                MessageId: 3,
+                ConsumeItem: false,
+                AllowCompleted: true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3013,
+            3,
+            1,
+            progress: 1,
+            completed: true,
+            active: false,
+            variable2: 1);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 55, positionY: 62);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3013, 3),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(quest.Completed);
+        Assert.False(quest.Active);
+        Assert.Equal((2, 2), (quest.Variable1, quest.Variable2));
+        Assert.Equal(3, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
     public void QuestDialogueRejectsMismatchedUniqueIdentity()
     {
         var quest = new AuthoritativeQuestState(

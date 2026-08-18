@@ -769,6 +769,8 @@ message QuestTownerInteractionSnapshot {
 	optional int32 variable2 = 12;
 	optional int32 message_id = 13;
 	bool consume_item = 14;
+	// Whether this authored stage is available after the quest reaches native DONE.
+	bool allow_completed = 15;
 }
 
 message ProjectileSnapshot {

@@ -247,7 +247,8 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		});
 		if (questIt == questStates_.end()
 		    || questIt->unavailable()
-		    || questIt->completed()) {
+		    || (questIt->completed() && !interaction.allow_completed())
+		    || (!questIt->completed() && interaction.allow_completed())) {
 			continue;
 		}
 		const bool active = interaction.kind() == 0

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.346.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.347.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1628,7 +1628,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.346.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.347.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1809,12 +1809,13 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(4, mushroomInteractions.Count);
+        Assert.Equal(5, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
              (300203U, 6, 2140U, AuthoritativeQuestTownerInteractionKind.Dialogue, 5, -1, 132),
-             (300204U, 6, 2142U, AuthoritativeQuestTownerInteractionKind.Complete, 7, -1, 133)],
+             (300204U, 6, 2142U, AuthoritativeQuestTownerInteractionKind.Complete, 7, -1, 133),
+             (300205U, 3, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, 2, 3)],
             mushroomInteractions.Select(interaction => (
                 interaction.InteractionId,
                 interaction.TownerId,
@@ -1823,6 +1824,10 @@ public sealed class ShippedContentTests
                 interaction.RequiredVariable1,
                 interaction.Variable1,
                 interaction.MessageId)));
+        var kingCompletionDialogue = mushroomInteractions.Single(interaction => interaction.InteractionId == 300205);
+        Assert.True(kingCompletionDialogue.AllowCompleted);
+        Assert.Equal(1, kingCompletionDialogue.RequiredVariable2);
+        Assert.Equal(2, kingCompletionDialogue.Variable2);
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,

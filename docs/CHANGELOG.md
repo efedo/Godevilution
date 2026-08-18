@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.347 itemless and post-completion authored quest/towner stages.
+  Ogden's King Leoric follow-up dialogue now advances the completed quest's
+  native `_qvar1`/`_qvar2` markers through `TurnInQuestRequested`, and the
+  protocol exposes the explicit `allow_completed` availability boundary.
+
 - Expose content-owned quest/towner interaction stages to the Godot client.
   The protocol client validates and selects an adjacent server-declared stage,
   and the HUD submits the corresponding `TurnInQuestRequested` intent.
