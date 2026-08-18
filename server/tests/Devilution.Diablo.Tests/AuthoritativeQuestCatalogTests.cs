@@ -205,13 +205,15 @@ public sealed class AuthoritativeQuestCatalogTests
     {
         var quests = AuthoritativeQuestCatalog.LoadTsv(
             "quests.tsv",
-            "quest_id\tlevel_id\trequired_progress\tturn_in_towner_id\tturn_in_on_completion\tturn_in_completion_variable2\tturn_in_completion_message_id\tturn_in_completion_reward_item_id\tturn_in_completion_reward_item_level\tturn_in_completion_reward_position_x\tturn_in_completion_reward_position_y\n"
-                + "3018\t0\t1\t10\t1\t1\t280\t2103\t0\t63\t16\n");
+            "quest_id\tlevel_id\trequired_progress\tturn_in_towner_id\tturn_in_on_completion\tturn_in_completion_variable2\tturn_in_completion_required_variable1\tturn_in_completion_variable1\tturn_in_completion_message_id\tturn_in_completion_reward_item_id\tturn_in_completion_reward_item_level\tturn_in_completion_reward_position_x\tturn_in_completion_reward_position_y\n"
+                + "3018\t0\t1\t10\t1\t1\t2\t3\t280\t2103\t0\t63\t16\n");
 
         var quest = Assert.Single(quests);
-        Assert.Equal((10, 1, true, 280, 2103U, 0, 63, 16), (
+        Assert.Equal((10, 1, 2, 3, true, 280, 2103U, 0, 63, 16), (
             quest.TurnInTownerId,
             quest.TurnInCompletionVariable2,
+            quest.TurnInCompletionRequiredVariable1,
+            quest.TurnInCompletionVariable1,
             quest.TurnInOnCompletion,
             quest.TurnInCompletionMessageId,
             quest.TurnInCompletionRewardItemId,

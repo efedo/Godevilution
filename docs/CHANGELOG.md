@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.340 completion-stage quest markers. Lazarus's authored
+  Storyteller interaction now writes native `_qvar1 = 8` and logs the Diablo
+  follow-on quest after the native completion gate.
+
 - Add schema 1.339 route activation markers. The base Skeleton King route now
   preserves the native `_qvar1 = 1` write when the authored quest activates.
 

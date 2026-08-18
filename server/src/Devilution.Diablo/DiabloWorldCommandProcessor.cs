@@ -1377,6 +1377,9 @@ public sealed class DiabloWorldCommandProcessor
                     || (!quest.TurnInActivationOnly && !quest.Active)
                     || (quest.TurnInActivationOnly && quest.Active)))
             || (completionStage && !quest.Completed)
+            || (completionStage
+                && quest.TurnInCompletionRequiredVariable1 >= 0
+                && quest.Variable1 != quest.TurnInCompletionRequiredVariable1)
             || quest.TurnInLevelId != player.LevelId
             || Math.Max(
                 Math.Abs(quest.TurnInPositionX - player.PositionX),
@@ -1388,6 +1391,17 @@ public sealed class DiabloWorldCommandProcessor
             quest.Variable2 = Math.Max(
                 quest.Variable2,
                 quest.TurnInCompletionVariable2);
+            if (quest.TurnInCompletionVariable1 >= 0)
+                quest.Variable1 = Math.Max(
+                    quest.Variable1,
+                    quest.TurnInCompletionVariable1);
+            if (quest.CompletionActivateQuestId != 0
+                && world.Quests.TryGetValue(quest.CompletionActivateQuestId, out var followOnQuest)
+                && !followOnQuest.Unavailable
+                && !followOnQuest.Completed) {
+                followOnQuest.Active = true;
+                followOnQuest.Logged = true;
+            }
             if (quest.TurnInCompletionRewardUniqueId != 0) {
                 var itemSeed = AllocateGoldStackSeed();
                 var rewardState = items.GenerateUnique(

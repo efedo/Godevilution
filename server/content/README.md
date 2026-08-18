@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.339.0` schema in
+It declares its identity and `devilution.diablo@1.340.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1481,9 +1481,11 @@ definition, and authored Dead Guy quest interaction content.
 
 Schema 1.338 adds the base Skeleton King route quest state and normalized
 native Skeleton King monster definition. Schema 1.339 adds the authored
-route-level `_qvar1` activation marker. Entering its authored route level
-activates the quest and writes `_qvar1 = 1`; defeating native monster identity
-50 completes it.
+route-level `_qvar1` activation marker. Schema 1.340 adds completion-stage
+`_qvar1` gates and markers plus follow-on quest logging; Lazarus's Storyteller
+conversation now preserves the native post-completion transition. Entering its
+authored route level activates the quest and writes `_qvar1 = 1`; defeating
+native monster identity 50 completes it.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
@@ -2240,8 +2242,8 @@ the complete target header even when they upsert only one row.
 | `monster_types.tsv` | `monster_id` | Native-compatible monster type identity and validated baseline level, health, damage, accuracy, intelligence, Normal resistance, optional Hell-specific resistance, capability, Diablo-boss identity, aggro, death-animation, experience, native AI-dispatch/admission metadata, and optional monster AI tuning, including Bat movement bands, Counselor ranged-admission and movement chances, Mega delegated delay-admission chance, Mega intermediate movement chance, SkeletonRanged fresh-mode movement bonus, SkeletonKing and HorkDemon RoundWalk admission modulo, shared AiAvoidance and Fat/Overlord fresh-mode movement bonuses, shared AiAvoidance Move-goal gating, Rhino ordinary movement bands and movement-goal gating. |
 | `monster_missiles.tsv` | `native_ai`, `monster_id` | Validated native AI-to-missile identity, projectile behavior, ranged-AI branch, avoidance probability, optional monster-specific controller, optional `monster_id` selector (validated against active monster types), mapped `spell_id` with optional stable `spell_symbol` cross-check, optional `spawn_monster_id` (validated against active monster types), explicit `damage_type`, projectile speed/lifetime/impact-lifetime, intelligence-scaled lifetime terms, optional Acid puddle-duration/damage/impact-lifetime terms, optional mapped-charge admission, damage-type, and spell-identity tuning, optional ranged-avoidance distance/chance/movement-goal tuning, optional ranged-avoidance ordinary movement-band and divisor tuning, optional post-melee missile identity, optional ranged-retreat distance/chance tuning, optional Snake adjacent-attack and distance-delay admission tuning, optional monster-Inferno admission tuning, and optional native random-damage bounds; checked-in `Arrow` rows select `MonsterArrow`, while legacy `Targeted` rows remain compatible. |
 | `objects.tsv` | `entity_id` | World-object placement (validated against active level bounds), optional stable `object_symbol` and `quest_symbol` links, effects (including ordered `QuestSequence` and `QuestItemCompletion` interactions), linked-quest progress amounts, missile collision, breakage, optional `trap_armed` state, and optional `is_shrine` capability for Nova Ball target-tile collision. `QuestItemCompletion` stores the required normalized item ID in `effect_amount` with optional `effect_item_symbol` cross-checking; other effects retain numeric amounts. |
-| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, one-shot `turn_in_on_completion` stages, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
-| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, `completion_reward_item_symbol`, and completion-stage towner reward symbols resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, route-entry `_qvar1` marker, completion-trigger, optional completion-reward item, item-consuming activation-only or completing towner turn-in, activation markers, one-shot completion-stage and alternate-item towner interactions, and unique-monster dialogue/reward fields. |
+| `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional dialogue/completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, one-shot `turn_in_on_completion` stages with optional required/marker `_qvar1` fields, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
+| `quest_states.tsv` | `quest_id` | Additive variant-specific quest state rows merged with the base quest catalog; optional `quest_symbol`, `completion_activate_quest_symbol`, `completion_reward_item_symbol`, and completion-stage towner reward symbols resolve through `content_ids.tsv`, and the table uses the same native lifecycle, progress, variable, message, dialogue/completion-transition, follow-on activation, route-entry `_qvar1` marker, completion-trigger, optional completion-reward item, item-consuming activation-only or completing towner turn-in, completion-stage `_qvar1` required/marker fields, activation markers, one-shot completion-stage and alternate-item towner interactions, and unique-monster dialogue/reward fields. |
 | `quest_types.tsv` | `quest_id` | Native-compatible quest identity with optional stable `quest_symbol`, routing levels, set-level source, and single-player availability. |
 | `quest_pools.tsv` | `pool_id`, `quest_id` | Native single-player quest-randomization pools with optional stable `quest_symbol` cross-checks. |
 | `set_level_names.tsv` | `set_level_id` | Native set-level identities and presentation names, including arena names. |
@@ -2277,7 +2279,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.339.0"
+    "version": "1.340.0"
   },
   "dependencyConstraints": [
     {
@@ -2309,7 +2311,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.339.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.340.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

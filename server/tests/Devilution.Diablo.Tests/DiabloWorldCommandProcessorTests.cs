@@ -1927,6 +1927,55 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void AuthoredLazarusCompletionStageWritesNativeMarkerAndLogsDiablo()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(34, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3016,
+            15,
+            1,
+            completed: true,
+            active: false,
+            variable1: 7,
+            variable2: 0,
+            completionActivateQuestId: 3006,
+            turnInTownerId: 4,
+            turnInLevelId: 0,
+            turnInPositionX: 62,
+            turnInPositionY: 71,
+            turnInOnCompletion: true,
+            turnInCompletionVariable2: 1,
+            turnInCompletionRequiredVariable1: 7,
+            turnInCompletionVariable1: 8,
+            turnInCompletionMessageId: 25);
+        var diabloQuest = new AuthoritativeQuestState(3006, 15, 1, active: false);
+        var world = new DiabloWorldState(quests: [quest, diabloQuest]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(positionX: 61, positionY: 71, entityId: 7);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3016, 4),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((8, 1), (quest.Variable1, quest.Variable2));
+        Assert.True(diabloQuest.Active);
+        Assert.True(diabloQuest.Logged);
+        Assert.Equal(25, Assert.Single(result.Events).MessageId);
+        AssertRejected(
+            processor.Execute(
+                player,
+                new DiabloTurnInQuestIntent(3016, 4),
+                2,
+                [player]),
+            DiabloRuleFailure.InvalidTarget);
+    }
+
+    [Fact]
     public void TrapDisarmRequiresRogueAbilityAndClearsArmedState()
     {
         var @object = new AuthoritativeWorldObject(
