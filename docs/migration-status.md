@@ -137,6 +137,12 @@ Status date: 2026-08-18
   is reached. Legacy hardcoded monster conversations remain fallback behavior
   until their content actions are externalized.
 
+- Staged unique-monster dialogue may now declare a deterministic
+  `RandomUniqueMonsterDrop` reward. The server selects the native unique-drop
+  family from validated item metadata, generates the item with the active
+  quality rules, and projects it in the world snapshot; base Gharbad's second
+  stage is the first shipped use.
+
 - Content-declared quest-object effects are now generic. The native adapter
   routes active `QuestSequence` and `QuestItemCompletion` objects through
   `OperateObjectRequested`; the server owns effect ordering, quest state,
@@ -243,6 +249,12 @@ Status date: 2026-08-18
   messages into validated `dialogue_messages.tsv` content. The server projects
   that text on `DialogueEvent.text`; clients retain the numeric identity
   fallback when a legacy pack has no message catalog.
+
+- Schema 1.358 adds a validated staged-dialogue reward contract. Base Gharbad's
+  second authored stage now generates one deterministic native-quality random
+  unique-monster drop from the active item catalog and places it at the
+  authored relative position; his set-piece map mutations remain a separate
+  native fallback.
 
 - Schema 1.352 removes the remaining static-entity dependency from authored
   unique-monster identities. `unique_monsters.tsv` can now select exactly one

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.357.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.358.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -60,6 +60,11 @@ public sealed class ShippedContentTests
                 stage.RequiredVariable1,
                 stage.MessageId,
                 stage.NextVariable1)));
+        var gharbadReward = Assert.Single(
+            catalog.Definitions,
+            stage => stage.QuestId == 3003 && stage.RequiredVariable1 == 1);
+        Assert.Equal(AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop, gharbadReward.RewardKind);
+        Assert.Equal((1, 1), (gharbadReward.RewardOffsetX, gharbadReward.RewardOffsetY));
         var snotspill = Assert.Single(
             catalog.Definitions,
             stage => stage.QuestId == 3008 && stage.RequiredVariable1 == 2);
@@ -1703,7 +1708,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.357.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.358.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(

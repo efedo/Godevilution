@@ -486,6 +486,36 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void RandomUniqueMonsterDropHonorsNativeCandidateRules()
+    {
+        var catalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 0, 0, 0, 1, 1, 1, 1, true) {
+                MinimumMonsterLevel = 10,
+                DropRate = 1,
+            },
+            new AuthoritativeItemDefinition(25, 11, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) {
+                DropRate = 1,
+            },
+            new AuthoritativeItemDefinition(90, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 3,
+                DropRate = 1,
+            },
+            new AuthoritativeItemDefinition(114, 0, 75, 75, 0, 0, 0, 0, 0, 1, 1, true) {
+                MiscId = 25,
+                DropRate = 1,
+            },
+        ]);
+
+        var lowLevel = catalog.GenerateRandomUniqueMonsterDrop(42, 1);
+        var first = catalog.GenerateRandomUniqueMonsterDrop(42, 10);
+        var second = catalog.GenerateRandomUniqueMonsterDrop(42, 10);
+
+        Assert.Equal(114U, lowLevel.StableItemId);
+        Assert.Equal(first, second);
+        Assert.Contains(first.StableItemId, new uint[] { 7, 114 });
+    }
+
+    [Fact]
     public void GeneratesDynamicSpellBookWhenAWorldDropReferencesABookTemplate()
     {
         var items = new AuthoritativeItemCatalog([

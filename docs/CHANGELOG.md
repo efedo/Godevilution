@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.358 staged unique-monster dialogue rewards. Gharbad's second
+  authored stage now generates a deterministic native-quality random drop on
+  the authoritative server, with content-declared placement and item level.
+
 - Render typed authoritative dialogue events in the Godot interaction panel
   using server-owned text with quest/message identity fallback; the protocol
   client no longer embeds native text tables.

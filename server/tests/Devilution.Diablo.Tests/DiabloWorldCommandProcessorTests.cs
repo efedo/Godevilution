@@ -1175,6 +1175,72 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void StagedDialogueRewardCreatesOneDeterministicWorldItem()
+    {
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(7, 1, 75, 75, 0, 0, 0, 1, 1, 1, 1, true) {
+                DropRate = 1,
+            },
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3003,
+            0,
+            1,
+            active: false,
+            completionUniqueIdentity: "Gharbad",
+            dialogueCompletionVariable1: 5);
+        var target = new AuthoritativeCombatTarget(
+            20,
+            20,
+            20,
+            100,
+            levelId: 0,
+            monsterId: 1,
+            monsterLevel: 1,
+            unique: true,
+            uniqueIdentity: "Gharbad");
+        var stages = new AuthoritativeQuestDialogueStageCatalog([
+            new(
+                3003,
+                1,
+                -1,
+                145,
+                3,
+                0,
+                0,
+                false,
+                false,
+                AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop,
+                0,
+                1,
+                1),
+        ]);
+        var world = new DiabloWorldState(combatTargets: [target], quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: items,
+            questDialogueStages: stages);
+        var player = CreatePlayer(
+            positionX: 19,
+            positionY: 20,
+            entityId: 7);
+        quest.Variable1 = 1;
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToQuestIntent(3003, 20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var reward = Assert.Single(world.WorldItems.Values);
+        Assert.Equal((21, 21), (reward.PositionX, reward.PositionY));
+        Assert.Equal(7U, reward.State.StableItemId);
+        Assert.Equal(3, quest.Variable1);
+        Assert.Equal(145, Assert.Single(result.Events).MessageId);
+    }
+
+    [Fact]
     public void ItemGatedQuestDialogueConsumesTheItemAndCompletesTheQuest()
     {
         var items = new AuthoritativeItemCatalog([

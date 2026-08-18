@@ -1239,6 +1239,16 @@ public sealed class DiabloWorldCommandProcessor
                 return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
             }
 
+            if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None) {
+                if (items is null
+                    || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                var rewardX = checked(target.PositionX + stage.RewardOffsetX);
+                var rewardY = checked(target.PositionY + stage.RewardOffsetY);
+                if (!world.IsWalkable(target.LevelId, rewardX, rewardY))
+                    return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+            }
+
             var stageInventoryIndex = -1;
             if (stage.RequiredItemId != 0) {
                 if (items is null
@@ -1274,6 +1284,8 @@ public sealed class DiabloWorldCommandProcessor
             } else {
                 quest.Active = true;
             }
+            if (stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None)
+                SpawnDialogueStageReward(stage, target, player);
             return DiabloWorldIntentResult.AcceptedWith(
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Dialogue,
@@ -1373,7 +1385,49 @@ public sealed class DiabloWorldCommandProcessor
                 0) {
                 MessageId = quest.MessageId,
                 QuestId = quest.QuestId,
-            });
+        });
+    }
+
+    /** Generates a content-declared staged conversation reward once per stage. */
+    private void SpawnDialogueStageReward(
+        AuthoritativeQuestDialogueStage stage,
+        AuthoritativeCombatTarget target,
+        AuthoritativePlayerState player)
+    {
+        if (items is null || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)
+            throw new InvalidDataException("The dialogue stage reward requires an active item catalog.");
+
+        var rewardSeed = CreateDialogueRewardSeed(target.EntityId, target.MonsterId, stage.QuestId);
+        var rewardLevel = stage.RewardItemLevel > 0
+            ? stage.RewardItemLevel
+            : target.MonsterLevel;
+        var rewardState = items.GenerateRandomUniqueMonsterDrop(
+            rewardSeed,
+            rewardLevel,
+            spellBooks,
+            gameMode);
+        var rewardX = checked(target.PositionX + stage.RewardOffsetX);
+        var rewardY = checked(target.PositionY + stage.RewardOffsetY);
+        var entityId = AllocateWorldItemEntityId([player]);
+        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            entityId,
+            target.LevelId,
+            rewardX,
+            rewardY,
+            rewardSeed,
+            checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
+            rewardState);
+    }
+
+    private static uint CreateDialogueRewardSeed(
+        uint targetEntityId,
+        uint monsterId,
+        uint questId)
+    {
+        var seed = targetEntityId
+            ^ unchecked(monsterId * 0x9E3779B9U)
+            ^ unchecked(questId * 0x85EBCA6BU);
+        return seed == 0 ? 1U : seed;
     }
 
     /** Generates the authored one-time reward at the unique-monster dialogue position. */

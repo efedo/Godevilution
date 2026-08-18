@@ -215,12 +215,11 @@ The following paths were audited against `Source/game` on 2026-08-18 and are
 still intentionally local when their authored content is absent. They are
 explicit migration seams, not server-authority claims:
 
-- `TalktoMonster` still owns Gharbad's random item reward and the
-  Gharbad/Snotspill quest-specific map changes. Gharbad's authored dialogue
-  messages and quest-variable transitions, plus Snotspill's banner dialogue
-  and Tavern Sign hand-in, now move through `TalkToQuestRequested`; the
-  remaining dynamic effects need their own content-backed map-mutation
-  definitions.
+- `TalktoMonster` still owns Gharbad/Snotspill quest-specific map changes.
+  Gharbad's authored dialogue messages, quest-variable transitions, and
+  second-stage random unique-monster reward now move through
+  `TalkToQuestRequested`; the remaining dynamic effects need their own
+  content-backed map-mutation definitions.
 - Warlord's staged unique-monster conversation now uses authored messages and
   `_qvar1` transitions through `TalkToQuestRequested`, while its native AI-driven
   speech completion and encounter-state presentation remain local fallbacks.

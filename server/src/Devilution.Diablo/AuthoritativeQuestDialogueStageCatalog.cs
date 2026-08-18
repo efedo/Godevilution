@@ -2,6 +2,14 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Server-owned reward behavior applied when a staged monster conversation advances. */
+public enum AuthoritativeQuestDialogueRewardKind
+{
+    None,
+    /** Selects and generates one native-quality unique-monster item drop. */
+    RandomUniqueMonsterDrop,
+}
+
 /** One server-owned, user-visible stage in a unique-monster conversation. */
 public sealed record AuthoritativeQuestDialogueStage(
     uint QuestId,
@@ -12,7 +20,11 @@ public sealed record AuthoritativeQuestDialogueStage(
     int NextVariable2,
     uint RequiredItemId = 0,
     bool ConsumeItem = false,
-    bool CompleteQuest = false);
+    bool CompleteQuest = false,
+    AuthoritativeQuestDialogueRewardKind RewardKind = AuthoritativeQuestDialogueRewardKind.None,
+    int RewardItemLevel = 0,
+    int RewardOffsetX = 0,
+    int RewardOffsetY = 0);
 
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
@@ -37,7 +49,13 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                 || stage.CompleteQuest
                     && (stage.RequiredItemId == 0 || !stage.ConsumeItem)
                 || stage.RequiredItemId == 0 && stage.ConsumeItem
-                || stage.NextVariable1 <= stage.RequiredVariable1)) {
+                || stage.NextVariable1 <= stage.RequiredVariable1
+                || !Enum.IsDefined(stage.RewardKind)
+                || stage.RewardItemLevel < 0
+                || stage.RewardOffsetX is < -16 or > 16
+                || stage.RewardOffsetY is < -16 or > 16
+                || stage.RewardKind != AuthoritativeQuestDialogueRewardKind.None
+                    && stage.RewardKind != AuthoritativeQuestDialogueRewardKind.RandomUniqueMonsterDrop)) {
             throw new InvalidDataException(
                 "Quest dialogue stages contain invalid values or a non-increasing variable-1 transition.");
         }
@@ -157,6 +175,21 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
                     "required_item_id",
                     "required_item_symbol"),
                 row.OptionalBoolean("consume_item"),
-                row.OptionalBoolean("complete_quest"))));
+                row.OptionalBoolean("complete_quest"),
+                ParseRewardKind(row),
+                row.OptionalInt32("reward_item_level"),
+                row.OptionalInt32("reward_offset_x"),
+                row.OptionalInt32("reward_offset_y"))));
+    }
+
+    private static AuthoritativeQuestDialogueRewardKind ParseRewardKind(TsvRow row)
+    {
+        if (!row.TryGet("reward_kind", out var value) || string.IsNullOrWhiteSpace(value))
+            return AuthoritativeQuestDialogueRewardKind.None;
+        if (Enum.TryParse<AuthoritativeQuestDialogueRewardKind>(value, true, out var kind)
+            && Enum.IsDefined(kind))
+            return kind;
+        throw new InvalidDataException(
+            $"Quest dialogue stage row {row.LineNumber} contains an unknown reward kind '{value}'.");
     }
 }

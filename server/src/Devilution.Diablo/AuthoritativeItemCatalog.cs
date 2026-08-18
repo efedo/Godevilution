@@ -405,6 +405,47 @@ public sealed class AuthoritativeItemCatalog
         return result;
     }
 
+    /**
+     * Generates the native unique-monster random-drop family from one stable
+     * seed. Books are eligible at every level; other non-gold items honor
+     * their minimum monster level and zero-drop-rate rows are excluded.
+     */
+    public AuthoritativeItemState GenerateRandomUniqueMonsterDrop(
+        uint itemSeed,
+        int monsterLevel,
+        AuthoritativeSpellBookCatalog? spellBooks = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
+    {
+        if (itemSeed == 0)
+            throw new ArgumentOutOfRangeException(nameof(itemSeed));
+        if (monsterLevel < 0)
+            throw new ArgumentOutOfRangeException(nameof(monsterLevel));
+
+        const int goldItemType = 11;
+        const int bookMiscId = 25;
+        var candidates = Definitions
+            .Where(definition => definition.DropRate > 0
+                && definition.ItemType != goldItemType
+                && (definition.ItemType == 0 && definition.MiscId == bookMiscId
+                    || definition.ItemType != 0
+                        && definition.MinimumMonsterLevel <= monsterLevel))
+            .ToArray();
+        if (candidates.Length == 0)
+            throw new InvalidDataException(
+                "The item catalog contains no eligible unique-monster random-drop rows.");
+
+        var random = new AuthoritativeLegacyRandom(itemSeed);
+        var selected = candidates[random.Next(candidates.Length)];
+        return GenerateDrop(
+            selected.ItemId,
+            itemSeed,
+            monsterLevel,
+            onlyGood: true,
+            uniqueChancePercent: affixes?.GenerationRules.UniqueChanceUnique,
+            spellBooks,
+            gameMode);
+    }
+
     public AuthoritativeItemState GenerateUnique(uint uniqueId, uint itemSeed, int itemLevel)
     {
         if (uniqueItems is null)
