@@ -226,9 +226,10 @@ the resumable projectile, and the client only presents its projected state.
 Optional target offsets are also server-owned metadata, so native book-relative
 coordinates can be authored without client-side gameplay. Set-level placement
 and map effects remain content seams still being filled from native data; the
-Diablo module now parses native `.dun` layers and exposes an exact materializer
-when native MIN/SOL collision inputs are supplied, without guessing from tile
-presentation IDs.
+Diablo module now parses native `.dun` layers, native little-endian `.til`
+mega-tile records, and `.sol` tile-property bytes, then exposes an exact
+materializer when those collision inputs are supplied, without guessing from
+tile presentation IDs.
 
 ## Remaining native-only interaction inventory
 

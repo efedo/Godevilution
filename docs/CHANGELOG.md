@@ -5,9 +5,11 @@ All notable changes to this fork are documented below.
 ## Unreleased
 
 - The Diablo module now has a validated `.dun` geometry materializer. It
-  expands native mega-tile IDs through external MIN-style d-piece definitions
-  and external `.sol`-style Solid/BlockMissile properties into authoritative
-  movement and missile geometry; missing native inputs reject activation.
+  expands native mega-tile IDs through external `.til` d-piece definitions
+  and external `.sol` properties into authoritative movement and missile
+  geometry; missing native inputs reject activation. Binary `.til` and `.sol`
+  loaders preserve the native little-endian records and supported tile flags,
+  with strict length and unknown-bit validation.
 
 - The Diablo module now validates and preserves native `.dun` set-piece assets,
   including mega tiles, the reserved layer, monsters, objects, and transparency

@@ -7,10 +7,15 @@ public enum AuthoritativeDunTileFlags : byte
 {
     None = 0,
     Solid = 1,
-    BlockMissile = 2,
+    BlockLight = 2,
+    BlockMissile = 4,
+    Transparent = 8,
+    TransparentLeft = 16,
+    TransparentRight = 32,
+    Trap = 128,
 }
 
-/** Native MIN expansion from one .dun mega-tile ID to four d-piece IDs. */
+/** Native .til expansion from one .dun mega-tile ID to four d-piece IDs. */
 public sealed record AuthoritativeDunPieceDefinition(
     uint MegaTileId,
     uint NorthWestPieceId,
@@ -32,7 +37,7 @@ public sealed record AuthoritativeDunPieceDefinition(
     }
 }
 
-/** Validated native MIN expansion definitions. */
+/** Validated native .til expansion definitions. */
 public sealed class AuthoritativeDunPieceCatalog
 {
     private readonly IReadOnlyDictionary<uint, AuthoritativeDunPieceDefinition> definitions;
@@ -64,17 +69,54 @@ public sealed class AuthoritativeDunPieceCatalog
                 row.RequiredUInt32("piece_south_west"),
                 row.RequiredUInt32("piece_south_east"))));
     }
+
+    /** Loads the native little-endian .til records used by DevilutionX. */
+    public static AuthoritativeDunPieceCatalog LoadTil(
+        string sourcePath,
+        ReadOnlyMemory<byte> contents)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        var bytes = contents.Span;
+        const int bytesPerMegaTile = sizeof(ushort) * 4;
+        if (bytes.Length == 0 || bytes.Length % bytesPerMegaTile != 0)
+            throw new InvalidDataException(
+                $"Native .til asset '{sourcePath}' has an invalid length.");
+
+        var definitions = new AuthoritativeDunPieceDefinition[bytes.Length / bytesPerMegaTile];
+        for (var megaTileId = 0; megaTileId < definitions.Length; megaTileId++) {
+            var offset = checked(megaTileId * bytesPerMegaTile);
+            definitions[megaTileId] = new AuthoritativeDunPieceDefinition(
+                (uint)megaTileId,
+                ReadWord(bytes, offset),
+                ReadWord(bytes, offset + sizeof(ushort)),
+                ReadWord(bytes, offset + sizeof(ushort) * 2),
+                ReadWord(bytes, offset + sizeof(ushort) * 3));
+        }
+        return new AuthoritativeDunPieceCatalog(definitions);
+    }
+
+    private static ushort ReadWord(ReadOnlySpan<byte> bytes, int offset)
+        => System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(
+            bytes.Slice(offset, sizeof(ushort)));
 }
 
-/** Validated .sol collision properties indexed by native d-piece ID. */
+/** Validated .sol properties indexed by native d-piece ID. */
 public sealed record AuthoritativeDunTileProperty(
     uint PieceId,
     AuthoritativeDunTileFlags Flags)
 {
     public AuthoritativeDunTileProperty Validate()
     {
-        if (PieceId > ushort.MaxValue || (Flags & ~(AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile)) != 0)
-            throw new InvalidDataException($"Native d-piece {PieceId} has invalid collision properties.");
+        const AuthoritativeDunTileFlags supportedFlags =
+            AuthoritativeDunTileFlags.Solid
+            | AuthoritativeDunTileFlags.BlockLight
+            | AuthoritativeDunTileFlags.BlockMissile
+            | AuthoritativeDunTileFlags.Transparent
+            | AuthoritativeDunTileFlags.TransparentLeft
+            | AuthoritativeDunTileFlags.TransparentRight
+            | AuthoritativeDunTileFlags.Trap;
+        if (PieceId > ushort.MaxValue || (Flags & ~supportedFlags) != 0)
+            throw new InvalidDataException($"Native d-piece {PieceId} has invalid tile properties.");
         return this;
     }
 }
@@ -82,6 +124,8 @@ public sealed record AuthoritativeDunTileProperty(
 /** Validated native collision properties for d-piece IDs. */
 public sealed class AuthoritativeDunTilePropertyCatalog
 {
+    public const int NativeTileCount = 1379;
+
     private readonly IReadOnlyDictionary<uint, AuthoritativeDunTileFlags> properties;
 
     public AuthoritativeDunTilePropertyCatalog(
@@ -115,9 +159,41 @@ public sealed class AuthoritativeDunTilePropertyCatalog
                     ? AuthoritativeDunTileFlags.BlockMissile
                     : AuthoritativeDunTileFlags.None))));
     }
+
+    /** Loads the native one-byte .sol property table (MAXTILES = 1379). */
+    public static AuthoritativeDunTilePropertyCatalog LoadSol(
+        string sourcePath,
+        ReadOnlyMemory<byte> contents)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        var bytes = contents.Span;
+        if (bytes.Length != NativeTileCount)
+            throw new InvalidDataException(
+                $"Native .sol asset '{sourcePath}' has {bytes.Length} bytes; expected {NativeTileCount}.");
+
+        const byte supportedMask = (byte)(
+            AuthoritativeDunTileFlags.Solid
+            | AuthoritativeDunTileFlags.BlockLight
+            | AuthoritativeDunTileFlags.BlockMissile
+            | AuthoritativeDunTileFlags.Transparent
+            | AuthoritativeDunTileFlags.TransparentLeft
+            | AuthoritativeDunTileFlags.TransparentRight
+            | AuthoritativeDunTileFlags.Trap);
+        var definitions = new AuthoritativeDunTileProperty[NativeTileCount];
+        for (var pieceId = 0; pieceId < bytes.Length; pieceId++) {
+            var rawFlags = bytes[pieceId];
+            if ((rawFlags & ~supportedMask) != 0)
+                throw new InvalidDataException(
+                    $"Native .sol asset '{sourcePath}' contains unsupported flags 0x{rawFlags:X2} at d-piece {pieceId}.");
+            definitions[pieceId] = new AuthoritativeDunTileProperty(
+                (uint)pieceId,
+                (AuthoritativeDunTileFlags)rawFlags);
+        }
+        return new AuthoritativeDunTilePropertyCatalog(definitions);
+    }
 }
 
-/** Expands native .dun/MIN/.sol data into authoritative movement geometry. */
+/** Expands native .dun/.til/.sol data into authoritative movement geometry. */
 public static class AuthoritativeDunGeometryMaterializer
 {
     public static AuthoritativeLevel Materialize(

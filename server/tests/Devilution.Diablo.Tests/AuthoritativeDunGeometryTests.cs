@@ -65,6 +65,79 @@ public sealed class AuthoritativeDunGeometryTests
             "piece_id\tsolid\tblock_missile\n10\tmaybe\tfalse\n"));
     }
 
+    [Fact]
+    public void TilLoaderReadsNativeLittleEndianMegaTileRecords()
+    {
+        var bytes = new byte[16];
+        WriteWord(bytes, 0, 10);
+        WriteWord(bytes, 2, 11);
+        WriteWord(bytes, 4, 12);
+        WriteWord(bytes, 6, 13);
+        WriteWord(bytes, 8, 40);
+        WriteWord(bytes, 10, 41);
+        WriteWord(bytes, 12, 42);
+        WriteWord(bytes, 14, 43);
+
+        var catalog = AuthoritativeDunPieceCatalog.LoadTil("levels/l1data/l1.til", bytes);
+
+        Assert.Equal(
+            new AuthoritativeDunPieceDefinition(0, 10, 11, 12, 13),
+            catalog.Definitions[0]);
+        Assert.Equal(
+            new AuthoritativeDunPieceDefinition(1, 40, 41, 42, 43),
+            catalog.Definitions[1]);
+    }
+
+    [Fact]
+    public void TilLoaderRejectsEmptyAndMisalignedAssets()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeDunPieceCatalog.LoadTil("empty.til", Array.Empty<byte>()));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeDunPieceCatalog.LoadTil("truncated.til", new byte[7]));
+    }
+
+    [Fact]
+    public void SolLoaderPreservesNativeFlagsForEveryDunPiece()
+    {
+        var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        bytes[10] = (byte)(AuthoritativeDunTileFlags.Solid
+            | AuthoritativeDunTileFlags.BlockLight
+            | AuthoritativeDunTileFlags.BlockMissile);
+        bytes[11] = (byte)(AuthoritativeDunTileFlags.TransparentLeft
+            | AuthoritativeDunTileFlags.TransparentRight
+            | AuthoritativeDunTileFlags.Trap);
+
+        var catalog = AuthoritativeDunTilePropertyCatalog.LoadSol("levels/l1data/l1.sol", bytes);
+
+        Assert.Equal(AuthoritativeDunTilePropertyCatalog.NativeTileCount, catalog.Definitions.Count);
+        Assert.Equal(
+            AuthoritativeDunTileFlags.Solid
+                | AuthoritativeDunTileFlags.BlockLight
+                | AuthoritativeDunTileFlags.BlockMissile,
+            catalog.Definitions[10].Flags);
+        Assert.Equal(
+            AuthoritativeDunTileFlags.TransparentLeft
+                | AuthoritativeDunTileFlags.TransparentRight
+                | AuthoritativeDunTileFlags.Trap,
+            catalog.Definitions[11].Flags);
+        Assert.Equal(AuthoritativeDunTileFlags.None, catalog.Definitions[^1].Flags);
+    }
+
+    [Fact]
+    public void SolLoaderRejectsWrongLengthAndUnsupportedFlags()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeDunTilePropertyCatalog.LoadSol(
+                "short.sol",
+                new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount - 1]));
+
+        var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        bytes[12] = 0x40;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeDunTilePropertyCatalog.LoadSol("unsupported.sol", bytes));
+    }
+
     private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)
     {
         var megaCount = megaWidth * megaHeight;
@@ -80,4 +153,7 @@ public sealed class AuthoritativeDunGeometryTests
                 words[index]);
         return bytes;
     }
+
+    private static void WriteWord(byte[] bytes, int offset, ushort value)
+        => BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(offset, sizeof(ushort)), value);
 }
