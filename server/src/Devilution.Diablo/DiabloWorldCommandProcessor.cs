@@ -1106,34 +1106,61 @@ public sealed class DiabloWorldCommandProcessor
         if (@object.EffectKind == AuthoritativeObjectEffectKind.GrantSpellLevel)
             return @object.EffectAmount > 0
                 && spells?.TryGet(checked((uint)@object.EffectAmount), out _) == true;
-        if (@object.EffectKind != AuthoritativeObjectEffectKind.SpawnSpellProjectile
-            || @object.EffectAmount <= 0
-            || spells?.TryGet(checked((uint)@object.EffectAmount), out var spell) != true
-            || !AuthoritativeWorldObjectCatalog.IsSupportedSpellProjectile(spell)) {
-            return @object.EffectKind != AuthoritativeObjectEffectKind.SpawnSpellProjectile;
+        if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile)
+            return CanSpawnObjectSpellProjectile(
+                @object,
+                checked((uint)@object.EffectAmount),
+                @object.ProjectileTargetOffsetX,
+                @object.ProjectileTargetOffsetY);
+        if (@object.QuestSequenceFollowUpKind
+            != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
+            return true;
         }
-        var targetX = checked(@object.PositionX + @object.ProjectileTargetOffsetX);
-        var targetY = checked(@object.PositionY + @object.ProjectileTargetOffsetY);
-        return world.ContainsPosition(
-            @object.LevelId,
-            targetX,
-            targetY);
+        return CanSpawnObjectSpellProjectile(
+            @object,
+            @object.QuestSequenceFollowUpAmount,
+            @object.QuestSequenceFollowUpOffsetX,
+            @object.QuestSequenceFollowUpOffsetY);
+    }
+
+    private bool CanSpawnObjectSpellProjectile(
+        AuthoritativeWorldObject @object,
+        uint spellId,
+        int offsetX,
+        int offsetY)
+    {
+        if (spellId == 0
+            || spells?.TryGet(spellId, out var spell) != true
+            || !AuthoritativeWorldObjectCatalog.IsSupportedSpellProjectile(spell)) {
+            return false;
+        }
+        var targetX = checked(@object.PositionX + offsetX);
+        var targetY = checked(@object.PositionY + offsetY);
+        return world.ContainsPosition(@object.LevelId, targetX, targetY);
     }
 
     private void SpawnObjectSpellProjectile(
         AuthoritativeWorldObject @object,
         AuthoritativePlayerState player)
     {
-        if (spells is null
-            || !spells.TryGet(checked((uint)@object.EffectAmount), out var spell)) {
+        var spellId = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            ? checked((uint)@object.EffectAmount)
+            : @object.QuestSequenceFollowUpAmount;
+        if (spells is null || !spells.TryGet(spellId, out var spell)) {
             throw new InvalidDataException(
-                $"Object spell projectile references unknown spell {@object.EffectAmount}.");
+                $"Object spell projectile references unknown spell {spellId}.");
         }
 
         var projectileEntityId = AllocateAuthoredProjectileEntityId();
         var sourceEntityId = player.EntityId == 0 ? 1U : player.EntityId;
-        var targetX = checked(@object.PositionX + @object.ProjectileTargetOffsetX);
-        var targetY = checked(@object.PositionY + @object.ProjectileTargetOffsetY);
+        var offsetX = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            ? @object.ProjectileTargetOffsetX
+            : @object.QuestSequenceFollowUpOffsetX;
+        var offsetY = @object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+            ? @object.ProjectileTargetOffsetY
+            : @object.QuestSequenceFollowUpOffsetY;
+        var targetX = checked(@object.PositionX + offsetX);
+        var targetY = checked(@object.PositionY + offsetY);
         var effectiveSpellLevel = player.MemorizedSpells
             .FirstOrDefault(memorized => memorized.SpellId == spell.SpellId)
             ?.Level
@@ -1380,6 +1407,7 @@ public sealed class DiabloWorldCommandProcessor
                 nextQuest.Active = true;
             }
         }
+        ApplyQuestSequenceFollowUp(@object, player);
         return quest.MessageId == 0
             ? DiabloWorldIntentResult.Accepted
             : DiabloWorldIntentResult.AcceptedWith(
@@ -1391,6 +1419,27 @@ public sealed class DiabloWorldCommandProcessor
                     MessageId = quest.MessageId,
                     QuestId = quest.QuestId,
                 });
+    }
+
+    private void ApplyQuestSequenceFollowUp(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player)
+    {
+        switch (@object.QuestSequenceFollowUpKind) {
+        case AuthoritativeQuestSequenceFollowUpKind.None:
+            return;
+        case AuthoritativeQuestSequenceFollowUpKind.WorldMutation:
+            if (!world.ApplyWorldMutation(@object.QuestSequenceFollowUpAmount))
+                throw new InvalidDataException(
+                    $"Object quest-sequence follow-up references unknown world mutation {@object.QuestSequenceFollowUpAmount}.");
+            return;
+        case AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile:
+            SpawnObjectSpellProjectile(@object, player);
+            return;
+        default:
+            throw new InvalidDataException(
+                $"Object quest-sequence follow-up kind '{@object.QuestSequenceFollowUpKind}' is unsupported.");
+        }
     }
 
     private DiabloWorldIntentResult DisarmTrap(

@@ -713,6 +713,11 @@ message ObjectSnapshot {
 	// Authored target displacement for server-owned spell projectiles.
 	int32 projectile_target_offset_x = 26;
 	int32 projectile_target_offset_y = 27;
+	// Optional effect applied after a valid ordered quest-sequence step.
+	int32 quest_sequence_follow_up_kind = 28;
+	uint32 quest_sequence_follow_up_amount = 29;
+	int32 quest_sequence_follow_up_offset_x = 30;
+	int32 quest_sequence_follow_up_offset_y = 31;
 }
 
 enum ObjectPresentationKind {

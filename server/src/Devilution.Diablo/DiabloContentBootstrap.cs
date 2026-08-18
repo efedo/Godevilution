@@ -489,7 +489,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objects, spells);
         if (objects?.Any(@object => @object.EffectKind is
                 AuthoritativeObjectEffectKind.GrantSpellLevel
-                or AuthoritativeObjectEffectKind.SpawnSpellProjectile) == true
+                or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                || @object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) == true
             && spells is null) {
             throw new InvalidDataException(
                 "Spell-effect objects require an active spell catalog.");
@@ -497,7 +499,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world);
         if (objects?.Any(@object => @object.EffectKind
-                == AuthoritativeObjectEffectKind.WorldMutation) == true
+                == AuthoritativeObjectEffectKind.WorldMutation
+                || @object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.WorldMutation) == true
             && worldMutations is null) {
             throw new InvalidDataException(
                 "World-mutation objects require a world_mutations.tsv content table.");

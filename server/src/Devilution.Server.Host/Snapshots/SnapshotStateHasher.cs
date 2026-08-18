@@ -545,6 +545,16 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(@object.ProjectileTargetOffsetX);
                     hasher.AppendInt32(@object.ProjectileTargetOffsetY);
                 }
+                if (@object.QuestSequenceFollowUpKind != 0
+                    || @object.QuestSequenceFollowUpAmount != 0
+                    || @object.QuestSequenceFollowUpOffsetX != 0
+                    || @object.QuestSequenceFollowUpOffsetY != 0) {
+                    hasher.AppendString("godevilution-object-quest-sequence-follow-up-v1");
+                    hasher.AppendInt32(@object.QuestSequenceFollowUpKind);
+                    hasher.AppendUInt32(@object.QuestSequenceFollowUpAmount);
+                    hasher.AppendInt32(@object.QuestSequenceFollowUpOffsetX);
+                    hasher.AppendInt32(@object.QuestSequenceFollowUpOffsetY);
+                }
             }
         }
 

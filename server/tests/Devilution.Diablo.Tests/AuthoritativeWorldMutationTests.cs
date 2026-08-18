@@ -143,6 +143,23 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectTableLoadsQuestSequenceFollowUp()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("spell", "phasing", 7),
+        ]);
+        var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(
+            "objects.tsv",
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\tquest_id\teffect_kind\teffect_amount\tquest_sequence_follow_up_kind\tquest_sequence_follow_up_amount\tquest_sequence_follow_up_spell_symbol\tquest_sequence_follow_up_offset_x\tquest_sequence_follow_up_offset_y\n"
+                + "20\t4\t1\t1\t0\t30\tQuestSequence\t1\tSpawnSpellProjectile\t0\tphasing\t1\t-2\n",
+            stableIds));
+
+        Assert.Equal(AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile, @object.QuestSequenceFollowUpKind);
+        Assert.Equal(7U, @object.QuestSequenceFollowUpAmount);
+        Assert.Equal((1, -2), (@object.QuestSequenceFollowUpOffsetX, @object.QuestSequenceFollowUpOffsetY));
+    }
+
+    [Fact]
     public void ObjectTableResolvesStableSpellSymbolForSpellLevelGrant()
     {
         var stableIds = new StableContentIdCatalog([
@@ -231,6 +248,108 @@ public sealed class AuthoritativeWorldMutationTests
         Assert.Equal(0, projectile.PositionY);
         Assert.Equal(2U, projectile.RemainingTicks);
         Assert.True(@object.Activated);
+    }
+
+    [Fact]
+    public void QuestSequenceAppliesFollowUpMutationOnlyOnExpectedStep()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\t5\n");
+        var quest = new AuthoritativeQuestState(30, 1, 5, active: false);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            questId: 30,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+            questSequenceFollowUpAmount: 7);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [@object],
+            quests: [quest],
+            worldMutations: new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(7, 1, [6], [5]),
+            ]));
+        var player = CreatePlayer();
+
+        var result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, quest.Variable1);
+        Assert.Contains(7U, world.ActiveWorldMutationIds);
+        Assert.False(@object.Activated);
+
+        quest.Variable1 = 1;
+        world.RestoreWorldMutations([]);
+        result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            2,
+            [player]);
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, quest.Variable1);
+        Assert.Empty(world.ActiveWorldMutationIds);
+
+        result = new DiabloWorldCommandProcessor(world).Execute(
+            player,
+            new DiabloOperateObjectIntent(20),
+            3,
+            [player]);
+        Assert.True(result.Succeeded);
+        Assert.Contains(7U, world.ActiveWorldMutationIds);
+    }
+
+    [Fact]
+    public void QuestSequenceSpawnsFollowUpProjectileAtAuthoredOffset()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var quest = new AuthoritativeQuestState(30, 1, 5, active: false);
+        var @object = new AuthoritativeWorldObject(
+            20,
+            4,
+            1,
+            1,
+            0,
+            questId: 30,
+            effectKind: AuthoritativeObjectEffectKind.QuestSequence,
+            effectAmount: 1,
+            questSequenceFollowUpKind: AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile,
+            questSequenceFollowUpAmount: 7,
+            questSequenceFollowUpOffsetX: 1,
+            questSequenceFollowUpOffsetY: 0);
+        var world = new DiabloWorldState(geometry, objects: [@object], quests: [quest]);
+        var spells = new AuthoritativeSpellCatalog([
+            new AuthoritativeSpellDefinition(7, 1, 0, 0, 0, 0) {
+                DamageType = AuthoritativeDamageType.Magic,
+                ProjectileBehavior = AuthoritativeProjectileBehavior.Phasing,
+                ProjectileLifetime = 2,
+                PhasingMinimumAxisOffset = 1,
+                PhasingMaximumAxisOffset = 1,
+            },
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(world, spells: spells).Execute(
+            CreatePlayer(),
+            new DiabloOperateObjectIntent(20),
+            1,
+            []);
+
+        Assert.True(result.Succeeded);
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(7U, projectile.SpellId);
+        Assert.Equal((2, 0), (projectile.PositionX, projectile.PositionY));
+        Assert.False(@object.Activated);
     }
 
     [Fact]

@@ -172,6 +172,10 @@ internal static class DiabloProtocolMapper
                 RewardOffsetY = @object.RewardOffsetY,
                 ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                 ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
+                QuestSequenceFollowUpKind = (int)@object.QuestSequenceFollowUpKind,
+                QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
+                QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
+                QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -654,6 +658,10 @@ internal static class DiabloProtocolMapper
                 RewardOffsetY = @object.RewardOffsetY,
                 ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                 ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
+                QuestSequenceFollowUpKind = (AuthoritativeQuestSequenceFollowUpKind)@object.QuestSequenceFollowUpKind,
+                QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
+                QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
+                QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

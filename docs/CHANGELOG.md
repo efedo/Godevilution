@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Schema 1.361 adds validated quest-sequence follow-up effects. A correctly
+  ordered authored sequence step may apply one world-cell mutation or spawn a
+  server-owned Phasing/Guardian controller with relative target offsets; the
+  metadata persists through saves, snapshots, protocol projection, and hashes.
+
 - Extend authored `SpawnSpellProjectile` objects with validated relative target
   offsets. The offsets persist through saves, snapshots, protocol projection,
   and canonical hashing, allowing native book coordinates to be expressed by

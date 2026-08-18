@@ -18,6 +18,14 @@ public enum AuthoritativeObjectEffectKind
     SpawnSpellProjectile,
 }
 
+/** Optional server-owned effect applied after a valid quest-sequence step. */
+public enum AuthoritativeQuestSequenceFollowUpKind
+{
+    None,
+    WorldMutation,
+    SpawnSpellProjectile,
+}
+
 /** Native quest-state transition applied when an authored object is activated. */
 public enum AuthoritativeObjectQuestTransitionKind
 {

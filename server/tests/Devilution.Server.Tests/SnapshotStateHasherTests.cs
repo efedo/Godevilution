@@ -1689,6 +1689,23 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectQuestSequenceFollowUpChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = {
+                new ObjectSnapshot { EntityId = 20, ObjectId = 4 },
+            },
+        };
+        var changed = baseline.Clone();
+        changed.Objects[0].QuestSequenceFollowUpKind = 1;
+        changed.Objects[0].QuestSequenceFollowUpAmount = 7;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changed));
+    }
+
+    [Fact]
     public void ObjectShrineCapabilityChangesTheHash()
     {
         var baseline = new Snapshot {

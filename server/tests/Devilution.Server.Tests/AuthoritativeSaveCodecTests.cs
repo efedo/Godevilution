@@ -150,6 +150,27 @@ public sealed class AuthoritativeSaveCodecTests
     }
 
     [Fact]
+    public void VersionOneRoundTripsObjectQuestSequenceFollowUp()
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Objects = [baseline.Objects[0] with {
+                EffectKind = AuthoritativeObjectEffectKind.QuestSequence,
+                EffectAmount = 1,
+                QuestSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.WorldMutation,
+                QuestSequenceFollowUpAmount = 7,
+            }],
+        };
+
+        var restored = new AuthoritativeSaveCodec().Deserialize(
+            new AuthoritativeSaveCodec().Serialize(source));
+        var @object = Assert.Single(restored.Objects);
+
+        Assert.Equal(AuthoritativeQuestSequenceFollowUpKind.WorldMutation, @object.QuestSequenceFollowUpKind);
+        Assert.Equal(7U, @object.QuestSequenceFollowUpAmount);
+    }
+
+    [Fact]
     public void RejectsMalformedIncompleteAndUnknownVersionEnvelopes()
     {
         var codec = new AuthoritativeSaveCodec();

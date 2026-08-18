@@ -272,6 +272,14 @@ public sealed record DiabloObjectState(
     public int ProjectileTargetOffsetX { get; init; }
 
     public int ProjectileTargetOffsetY { get; init; }
+
+    public AuthoritativeQuestSequenceFollowUpKind QuestSequenceFollowUpKind { get; init; }
+
+    public uint QuestSequenceFollowUpAmount { get; init; }
+
+    public int QuestSequenceFollowUpOffsetX { get; init; }
+
+    public int QuestSequenceFollowUpOffsetY { get; init; }
 }
 
 /** Immutable protocol-neutral quest projection. */
@@ -630,6 +638,10 @@ public sealed partial class DiabloSimulation
                     RewardOffsetY = @object.RewardOffsetY,
                     ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX,
                     ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY,
+                    QuestSequenceFollowUpKind = @object.QuestSequenceFollowUpKind,
+                    QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount,
+                    QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX,
+                    QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 })
                 .ToArray(),
             WorldState.Quests.Values
@@ -992,6 +1004,12 @@ public sealed partial class DiabloSimulation
                     @object.EffectKind,
                     @object.ProjectileTargetOffsetX,
                     @object.ProjectileTargetOffsetY)
+                || !AuthoritativeWorldObject.IsValidQuestSequenceFollowUp(
+                    @object.EffectKind,
+                    @object.QuestSequenceFollowUpKind,
+                    @object.QuestSequenceFollowUpAmount,
+                    @object.QuestSequenceFollowUpOffsetX,
+                    @object.QuestSequenceFollowUpOffsetY)
                 || (@object.Breakable && @object.MissilePassable)
                 || (@object.Destroyed && !@object.Breakable)) {
                 throw new InvalidDataException(
@@ -2066,6 +2084,10 @@ public sealed partial class DiabloSimulation
                 target.RewardOffsetY = @object.RewardOffsetY;
                 target.ProjectileTargetOffsetX = @object.ProjectileTargetOffsetX;
                 target.ProjectileTargetOffsetY = @object.ProjectileTargetOffsetY;
+                target.QuestSequenceFollowUpKind = @object.QuestSequenceFollowUpKind;
+                target.QuestSequenceFollowUpAmount = @object.QuestSequenceFollowUpAmount;
+                target.QuestSequenceFollowUpOffsetX = @object.QuestSequenceFollowUpOffsetX;
+                target.QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY;
             } else {
                 WorldState.Objects.Add(@object.EntityId, new AuthoritativeWorldObject(
                     @object.EntityId,
@@ -2093,7 +2115,11 @@ public sealed partial class DiabloSimulation
                     @object.RewardOffsetX,
                     @object.RewardOffsetY,
                     @object.ProjectileTargetOffsetX,
-                    @object.ProjectileTargetOffsetY));
+                    @object.ProjectileTargetOffsetY,
+                    @object.QuestSequenceFollowUpKind,
+                    @object.QuestSequenceFollowUpAmount,
+                    @object.QuestSequenceFollowUpOffsetX,
+                    @object.QuestSequenceFollowUpOffsetY));
             }
         }
     }

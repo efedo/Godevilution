@@ -148,15 +148,16 @@ Status date: 2026-08-18
   `OperateObjectRequested`; the server owns effect ordering, quest state,
   required-item consumption, activation reconciliation, and any linked
   authored quest dialogue event. The Hellfire Na-Krul tome sequence is the
-  first shipped definition; unmodeled book/lever placement and set-piece
-  effects retain their legacy fallback.
+  first shipped definition; authored sequence follow-ups can now apply
+  validated map mutations or server-owned Phasing/Guardian projectiles after
+  a correct step. Set-level object placement retains its legacy fallback.
 
 - Authored `WorldMutation` object effects now load a validated
   `world_mutations.tsv` catalog. The server applies each referenced cell
   overlay once, persists active mutation IDs in transport-independent saves,
   and sends effective movement/missile geometry through the existing
   `LevelGeometrySnapshot`; native book/lever placement still needs authored
-  set-level rows and spell/quest effect definitions.
+  set-level rows.
 
 - Authored object rows now also support validated quest transitions. An object
   may activate or complete its linked quest, set `_qvar1` or `_qvar2`, and gate
@@ -166,13 +167,13 @@ Status date: 2026-08-18
 - Authored object rows may also generate one validated normal or unique item
   reward at a relative offset. The server owns catalog validation, deterministic
   generation, placement, persistence, and snapshot projection; set-level
-  placement and spell effects remain unmodeled native seams.
+  placement remains an unmodeled native seam.
 
 - Authored object rows now support the validated `GrantSpellLevel` effect.
   `OperateObjectRequested` resolves the spell through the active catalog and
   increments the player’s memorized level with native level caps. An optional
   `effect_spell_symbol` cross-checks the stable spell namespace; set-level
-  placement and book-triggered projectile/map effects remain unmodeled seams.
+  placement remains an unmodeled native seam.
 
 - Schema 1.359 adds the validated `SpawnSpellProjectile` object effect.
   Authored rows can spawn a server-owned Phasing or Guardian controller at the
@@ -185,6 +186,12 @@ Status date: 2026-08-18
   these validated offsets through saves, protocol snapshots, and canonical
   hashes before constructing the Phasing or Guardian controller, so native
   book-relative targets no longer require client-side coordinates.
+
+- Schema 1.361 adds validated quest-sequence follow-up metadata. Correctly
+  ordered `QuestSequence` steps may apply one content-backed world mutation or
+  spawn a server-owned Phasing/Guardian controller at authored relative
+  offsets; wrong-order resets do not apply follow-ups, and the state is carried
+  through saves, snapshots, protocol projection, and canonical hashes.
 
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item

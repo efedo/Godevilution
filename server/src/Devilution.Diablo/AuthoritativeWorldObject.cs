@@ -31,7 +31,11 @@ public sealed class AuthoritativeWorldObject
         int rewardOffsetX = 0,
         int rewardOffsetY = 0,
         int projectileTargetOffsetX = 0,
-        int projectileTargetOffsetY = 0)
+        int projectileTargetOffsetY = 0,
+        AuthoritativeQuestSequenceFollowUpKind questSequenceFollowUpKind = AuthoritativeQuestSequenceFollowUpKind.None,
+        uint questSequenceFollowUpAmount = 0,
+        int questSequenceFollowUpOffsetX = 0,
+        int questSequenceFollowUpOffsetY = 0)
     {
         if (entityId == 0 || objectId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -94,6 +98,18 @@ public sealed class AuthoritativeWorldObject
         }
         ProjectileTargetOffsetX = projectileTargetOffsetX;
         ProjectileTargetOffsetY = projectileTargetOffsetY;
+        if (!IsValidQuestSequenceFollowUp(
+                effectKind,
+                questSequenceFollowUpKind,
+                questSequenceFollowUpAmount,
+                questSequenceFollowUpOffsetX,
+                questSequenceFollowUpOffsetY)) {
+            throw new InvalidDataException("Object quest-sequence follow-up values are invalid.");
+        }
+        QuestSequenceFollowUpKind = questSequenceFollowUpKind;
+        QuestSequenceFollowUpAmount = questSequenceFollowUpAmount;
+        QuestSequenceFollowUpOffsetX = questSequenceFollowUpOffsetX;
+        QuestSequenceFollowUpOffsetY = questSequenceFollowUpOffsetY;
         MissilePassable = missilePassable;
         Breakable = breakable;
         Destroyed = destroyed;
@@ -125,6 +141,14 @@ public sealed class AuthoritativeWorldObject
     public int ProjectileTargetOffsetX { get; set; }
 
     public int ProjectileTargetOffsetY { get; set; }
+    /** Optional effect applied only after a valid ordered quest-sequence step. */
+    public AuthoritativeQuestSequenceFollowUpKind QuestSequenceFollowUpKind { get; set; }
+
+    public uint QuestSequenceFollowUpAmount { get; set; }
+
+    public int QuestSequenceFollowUpOffsetX { get; set; }
+
+    public int QuestSequenceFollowUpOffsetY { get; set; }
     public bool MissilePassable { get; set; }
     public bool Breakable { get; set; }
     public bool Destroyed { get; set; }
@@ -192,6 +216,31 @@ public sealed class AuthoritativeWorldObject
         return effectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
             || offsetX == 0 && offsetY == 0;
     }
+
+    public static bool IsValidQuestSequenceFollowUp(
+        AuthoritativeObjectEffectKind effectKind,
+        AuthoritativeQuestSequenceFollowUpKind followUpKind,
+        uint amount,
+        int offsetX,
+        int offsetY)
+    {
+        if (!Enum.IsDefined(followUpKind)
+            || effectKind != AuthoritativeObjectEffectKind.QuestSequence
+            && followUpKind != AuthoritativeQuestSequenceFollowUpKind.None
+            || offsetX is < -32 or > 32
+            || offsetY is < -32 or > 32) {
+            return false;
+        }
+        return followUpKind switch {
+            AuthoritativeQuestSequenceFollowUpKind.None
+                => amount == 0 && offsetX == 0 && offsetY == 0,
+            AuthoritativeQuestSequenceFollowUpKind.WorldMutation
+                => amount != 0 && offsetX == 0 && offsetY == 0,
+            AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
+                => amount != 0,
+            _ => false,
+        };
+    }
 }
 
 /** External object placement and identity definitions. */
@@ -219,6 +268,15 @@ public static class AuthoritativeWorldObjectCatalog
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} contains a projectile target outside its level.");
             }
+            if (@object.QuestSequenceFollowUpKind
+                    == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
+                && !world.ContainsPosition(
+                    @object.LevelId,
+                    checked(@object.PositionX + @object.QuestSequenceFollowUpOffsetX),
+                    checked(@object.PositionY + @object.QuestSequenceFollowUpOffsetY))) {
+                throw new InvalidDataException(
+                    $"Object {@object.EntityId} contains a quest-sequence projectile target outside its level.");
+            }
         }
     }
 
@@ -230,6 +288,7 @@ public static class AuthoritativeWorldObjectCatalog
         var table = TsvTable.Parse(sourcePath, contents);
         var objects = table.Rows.Select(row => {
             var effectKind = ParseEffectKind(row);
+            var followUpKind = ParseQuestSequenceFollowUpKind(row);
             return new AuthoritativeWorldObject(
                 row.RequiredUInt32("entity_id"),
                 AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
@@ -264,7 +323,11 @@ public static class AuthoritativeWorldObjectCatalog
                 row.OptionalInt32("reward_offset_x"),
                 row.OptionalInt32("reward_offset_y"),
                 row.OptionalInt32("projectile_target_offset_x"),
-                row.OptionalInt32("projectile_target_offset_y"));
+                row.OptionalInt32("projectile_target_offset_y"),
+                followUpKind,
+                ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
+                row.OptionalInt32("quest_sequence_follow_up_offset_x"),
+                row.OptionalInt32("quest_sequence_follow_up_offset_y"));
         }).ToArray();
         if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
@@ -282,6 +345,11 @@ public static class AuthoritativeWorldObjectCatalog
                 && @object.EffectAmount <= 0))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid spell effect object.");
+        if (objects.Any(@object => @object.QuestSequenceFollowUpKind
+                == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
+                && @object.QuestSequenceFollowUpAmount == 0))
+            throw new InvalidDataException(
+                $"Object table '{sourcePath}' contains an invalid quest-sequence projectile effect.");
         if (objects.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
                 && @object.QuestId == 0))
             throw new InvalidDataException(
@@ -340,11 +408,15 @@ public static class AuthoritativeWorldObjectCatalog
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(mutations);
         foreach (var @object in objects.Where(@object =>
-                     @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation)) {
-            if (@object.EffectAmount <= 0
-                || !mutations.TryGet((uint)@object.EffectAmount, out _)) {
+                     @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
+                     || @object.QuestSequenceFollowUpKind
+                         == AuthoritativeQuestSequenceFollowUpKind.WorldMutation)) {
+            var mutationId = @object.EffectKind == AuthoritativeObjectEffectKind.WorldMutation
+                ? @object.EffectAmount > 0 ? (uint)@object.EffectAmount : 0
+                : @object.QuestSequenceFollowUpAmount;
+            if (mutationId == 0 || !mutations.TryGet(mutationId, out _)) {
                 throw new InvalidDataException(
-                    $"Object {@object.EntityId} references unknown world mutation {@object.EffectAmount}.");
+                    $"Object {@object.EntityId} references unknown world mutation {mutationId}.");
             }
         }
     }
@@ -358,11 +430,20 @@ public static class AuthoritativeWorldObjectCatalog
         ArgumentNullException.ThrowIfNull(spells);
         foreach (var @object in objects.Where(@object => @object.EffectKind is
                      AuthoritativeObjectEffectKind.GrantSpellLevel
-                     or AuthoritativeObjectEffectKind.SpawnSpellProjectile)) {
-            if (!spells.TryGet(checked((uint)@object.EffectAmount), out var spell))
+                     or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                     || @object.QuestSequenceFollowUpKind
+                         == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile)) {
+            var spellId = @object.EffectKind is
+                    AuthoritativeObjectEffectKind.GrantSpellLevel
+                    or AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                ? checked((uint)@object.EffectAmount)
+                : @object.QuestSequenceFollowUpAmount;
+            if (!spells.TryGet(spellId, out var spell))
                 throw new InvalidDataException(
-                    $"Object {@object.EntityId} references unknown spell {@object.EffectAmount}.");
-            if (@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    $"Object {@object.EntityId} references unknown spell {spellId}.");
+            if ((@object.EffectKind == AuthoritativeObjectEffectKind.SpawnSpellProjectile
+                    || @object.QuestSequenceFollowUpKind
+                        == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile)
                 && !IsSupportedSpellProjectile(spell)) {
                 throw new InvalidDataException(
                     $"Object {@object.EntityId} references unsupported authored projectile behavior '{spell.ProjectileBehavior}'.");
@@ -399,6 +480,21 @@ public static class AuthoritativeWorldObjectCatalog
         if (Enum.TryParse<AuthoritativeObjectEffectKind>(value, true, out var effectKind))
             return effectKind;
         throw new InvalidDataException($"Object row {row.LineNumber} contains an unknown effect kind '{value}'.");
+    }
+
+    private static AuthoritativeQuestSequenceFollowUpKind ParseQuestSequenceFollowUpKind(TsvRow row)
+    {
+        if (!row.TryGet("quest_sequence_follow_up_kind", out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return AuthoritativeQuestSequenceFollowUpKind.None;
+        }
+        if (Enum.TryParse<AuthoritativeQuestSequenceFollowUpKind>(value, true, out var kind)
+            && Enum.IsDefined(kind)) {
+            return kind;
+        }
+        throw new InvalidDataException(
+            $"Object row {row.LineNumber} contains an unknown quest-sequence follow-up kind '{value}'.");
     }
 
     private static AuthoritativeObjectQuestTransitionKind ParseQuestTransitionKind(TsvRow row)
@@ -470,5 +566,28 @@ public static class AuthoritativeWorldObjectCatalog
             stableIds,
             "effect_amount",
             "effect_item_symbol"));
+    }
+
+    private static uint ParseQuestSequenceFollowUpAmount(
+        TsvRow row,
+        AuthoritativeQuestSequenceFollowUpKind followUpKind,
+        StableContentIdCatalog? stableIds)
+    {
+        var spellSymbol = AuthoritativeSpellIdentity.ReadSymbol(
+            row,
+            "quest_sequence_follow_up_spell_symbol");
+        if (spellSymbol.Length > 0
+            && followUpKind != AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
+            throw new InvalidDataException(
+                $"Object row {row.LineNumber} supplies quest_sequence_follow_up_spell_symbol for follow-up kind '{followUpKind}'.");
+        }
+        if (followUpKind == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile) {
+            return AuthoritativeSpellIdentity.ResolveOptional(
+                row,
+                stableIds,
+                "quest_sequence_follow_up_amount",
+                "quest_sequence_follow_up_spell_symbol");
+        }
+        return row.OptionalUInt32("quest_sequence_follow_up_amount");
     }
 }
