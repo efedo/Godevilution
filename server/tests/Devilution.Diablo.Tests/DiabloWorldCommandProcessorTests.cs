@@ -1294,6 +1294,75 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void ContentOwnedUnloggedTownerStagesMatchNativePoisonedWaterBranches()
+    {
+        var interactions = new AuthoritativeQuestTownerInteractionCatalog([
+            new(300209, 3014, 1, 0, 55, 79, 0,
+                AuthoritativeQuestTownerInteractionKind.Activate,
+                Variable1: 0,
+                MessageId: 39,
+                ConsumeItem: false,
+                RequiredVisitedLevel1: 1,
+                RequiredVisitedLevel2: 5,
+                RequireUnlogged: true),
+            new(300210, 3014, 1, 0, 55, 79, 0,
+                AuthoritativeQuestTownerInteractionKind.Dialogue,
+                MessageId: 39,
+                ConsumeItem: false,
+                RequireUnlogged: true),
+        ]);
+        var quest = new AuthoritativeQuestState(
+            3014,
+            4,
+            1,
+            active: false,
+            logged: false);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTownerInteractions: interactions);
+        var player = CreatePlayer(positionX: 55, positionY: 79);
+
+        var blocked = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3014, 1),
+            1,
+            [player]);
+        AssertRejected(blocked, DiabloRuleFailure.InvalidTarget);
+
+        player.MarkLevelVisited(5);
+        var activation = processor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3014, 1),
+            2,
+            [player]);
+        Assert.True(activation.Succeeded, activation.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(39, quest.MessageId);
+
+        var unloggedActiveQuest = new AuthoritativeQuestState(
+            3014,
+            4,
+            1,
+            active: true,
+            logged: false);
+        var unloggedWorld = new DiabloWorldState(quests: [unloggedActiveQuest]);
+        var unloggedProcessor = new DiabloWorldCommandProcessor(
+            unloggedWorld,
+            questTownerInteractions: interactions);
+        var fallback = unloggedProcessor.Execute(
+            player,
+            new DiabloTurnInQuestIntent(3014, 1),
+            3,
+            [player]);
+
+        Assert.True(fallback.Succeeded, fallback.Failure?.ToString());
+        Assert.True(unloggedActiveQuest.Logged);
+        Assert.Equal(39, unloggedActiveQuest.MessageId);
+    }
+
+    [Fact]
     public void DialogueOnlyTurnInIsSuppressedAfterBlockedLevelVisit()
     {
         var items = new AuthoritativeItemCatalog([CreateQuestItem(43)]);

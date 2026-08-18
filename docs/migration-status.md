@@ -200,7 +200,9 @@ Status date: 2026-08-17
 - Base Poisoned Water now uses an authored Pepin completion-stage interaction.
   Its native `_qvar1`-only marker is carried through the protocol, the server
   writes `_qvar1 = 2` without changing `_qvar2`, emits `TEXT_POISON5`, and
-  generates the authored Ring of Truth reward at the native position.
+  generates the authored Ring of Truth reward at the native position. Schema
+  1.351 also externalizes Pepin's initial Caves/Poisoned Water visitation gate
+  and active-but-unlogged fallback through `require_unlogged` stages.
 
 - Base Ogden's Sign now uses authored quest state 3008. The first Tavern
   interaction advances `_qvar2` and emits the native prompt without consuming
@@ -1957,6 +1959,11 @@ Status date: 2026-08-17
 - Schema 1.350 adds the Hellfire Grave Matters/Barmaid dialogue-only turn-in's
   server-owned `_pLvlVisited[21]` suppression, projected to native and Godot
   clients through `QuestSnapshot.turn_in_blocked_visited_level`.
+
+- Schema 1.351 adds `require_unlogged` to authored quest/towner stages. Base
+  Poisoned Water now externalizes Pepin's initial Caves/Poisoned Water
+  visitation gate and the native active-but-unlogged fallback through the same
+  server-owned state and protocol projection.
 
 - Schema 1.349 moves the base Magic Rock and Anvil activation conversations
   into authored quest/towner rows, including their native visited-level OR-gates

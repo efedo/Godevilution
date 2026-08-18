@@ -227,7 +227,9 @@ Activation stages may also carry a required `_qvar1` or `_qvar2` value while
 the quest is already active; this represents native conversations whose
 availability is gated by a progress marker rather than by the initial quest
 state. The server and clients apply the same variable gate before presenting
-or executing that stage.
+or executing that stage. Field 18, `require_unlogged`, preserves native
+branches that are available only while the quest-log bit is clear; the server
+and clients reject the stage after the quest is logged.
 
 `PlayerSnapshot.visited_level_ids` is the canonical per-player visitation set.
 The server marks a level when the player enters it through a warp, portal, or

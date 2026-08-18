@@ -261,6 +261,8 @@ std::optional<uint32_t> ServerBackedSession::ActiveQuestForTowner(uint32_t towne
 		    || (!questIt->completed() && interaction.allow_completed())) {
 			continue;
 		}
+		if (interaction.require_unlogged() && questIt->logged())
+			continue;
 		if ((interaction.required_visited_level1() != 0
 		        || interaction.required_visited_level2() != 0)
 		    && !hasVisitedLevel(interaction.required_visited_level1())

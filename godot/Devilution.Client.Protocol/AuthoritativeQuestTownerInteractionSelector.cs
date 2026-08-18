@@ -38,6 +38,8 @@ public static class AuthoritativeQuestTownerInteractionSelector
 
         if (interaction.AllowCompleted ? !quest.Completed : quest.Completed)
             return false;
+        if (interaction.RequireUnlogged && quest.Logged)
+            return false;
 
         var hasRequiredVisitedLevel =
             (interaction.RequiredVisitedLevel1 != 0

@@ -29,7 +29,8 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
     bool ConsumeItem = true,
     bool AllowCompleted = false,
     uint RequiredVisitedLevel1 = 0,
-    uint RequiredVisitedLevel2 = 0);
+    uint RequiredVisitedLevel2 = 0,
+    bool RequireUnlogged = false);
 
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
@@ -191,7 +192,8 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 row.OptionalBoolean("consume_item", true),
                 row.OptionalBoolean("allow_completed", false),
                 row.OptionalUInt32("required_visited_level1"),
-                row.OptionalUInt32("required_visited_level2"))));
+                row.OptionalUInt32("required_visited_level2"),
+                row.OptionalBoolean("require_unlogged", false))));
     }
 
     private static AuthoritativeQuestTownerInteractionKind ParseKind(

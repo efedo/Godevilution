@@ -219,6 +219,7 @@ internal static class DiabloProtocolMapper
                 AllowCompleted = interaction.AllowCompleted,
                 RequiredVisitedLevel1 = interaction.RequiredVisitedLevel1,
                 RequiredVisitedLevel2 = interaction.RequiredVisitedLevel2,
+                RequireUnlogged = interaction.RequireUnlogged,
             };
             if (interaction.RequiredVariable1 >= 0)
                 projectedInteraction.RequiredVariable1 = interaction.RequiredVariable1;

@@ -17,7 +17,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.350.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.351.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
     }
@@ -1628,7 +1628,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.350.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.351.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         var items = AuthoritativeItemCatalog.LoadTsv(
@@ -1809,7 +1809,7 @@ public sealed class ShippedContentTests
             mushroomQuest.TurnInVariable1,
             mushroomQuest.TurnInProgressOnly));
         var mushroomInteractions = activation.QuestTownerInteractions!.Definitions;
-        Assert.Equal(8, mushroomInteractions.Count);
+        Assert.Equal(10, mushroomInteractions.Count);
         Assert.Equal(
             [(300201U, 6, 2141U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 2, 129),
              (300202U, 6, 2139U, AuthoritativeQuestTownerInteractionKind.Advance, 2, 5, 131),
@@ -1818,7 +1818,9 @@ public sealed class ShippedContentTests
              (300205U, 3, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, 2, 3),
              (300206U, 3, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 1, 2),
              (300207U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 115),
-             (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88)],
+             (300208U, 0, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 88),
+             (300209U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Activate, -1, 0, 39),
+             (300210U, 1, 0U, AuthoritativeQuestTownerInteractionKind.Dialogue, -1, -1, 39)],
             mushroomInteractions.Select(interaction => (
                 interaction.InteractionId,
                 interaction.TownerId,
@@ -1849,6 +1851,15 @@ public sealed class ShippedContentTests
             anvilActivation.Variable2,
             anvilActivation.RequiredVisitedLevel1,
             anvilActivation.RequiredVisitedLevel2));
+        var poisonedWaterActivation = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300209);
+        Assert.True(poisonedWaterActivation.RequireUnlogged);
+        Assert.Equal((1U, 5U), (
+            poisonedWaterActivation.RequiredVisitedLevel1,
+            poisonedWaterActivation.RequiredVisitedLevel2));
+        var poisonedWaterFallback = mushroomInteractions.Single(
+            interaction => interaction.InteractionId == 300210);
+        Assert.True(poisonedWaterFallback.RequireUnlogged);
         var jerseyQuest = activation.Simulation.WorldState.Quests[3024];
         Assert.Equal((300, 304, 12, 0U, 61, 22, 2104U, 1, 1011U, 1, 62, 23), (
             jerseyQuest.MessageId,

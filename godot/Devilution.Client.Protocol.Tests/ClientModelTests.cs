@@ -162,6 +162,48 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void SelectsUnloggedQuestTownerStageOnlyBeforeQuestIsLogged()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 79,
+                },
+            },
+            Quests = {
+                new QuestSnapshot {
+                    QuestId = 3014,
+                    Initial = false,
+                    Logged = false,
+                },
+            },
+            QuestTownerInteractions = {
+                new QuestTownerInteractionSnapshot {
+                    InteractionId = 300210,
+                    QuestId = 3014,
+                    TownerId = 1,
+                    LevelId = 0,
+                    PositionX = 55,
+                    PositionY = 79,
+                    Kind = 3,
+                    MessageId = 39,
+                    RequireUnlogged = true,
+                },
+            },
+        };
+
+        Assert.Equal(
+            300210U,
+            AuthoritativeQuestTownerInteractionSelector.Select(snapshot)!.InteractionId);
+
+        snapshot.Quests[0].Logged = true;
+        Assert.Null(AuthoritativeQuestTownerInteractionSelector.Select(snapshot));
+    }
+
+    [Fact]
     public void SelectsVariableGatedActivationForAnAlreadyActiveQuest()
     {
         var snapshot = new Snapshot {

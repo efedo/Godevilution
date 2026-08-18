@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add schema 1.351 authored unlogged Pepin stages. Poisoned Water activation
+  now preserves both native branches: the initial conversation requires a
+  visited Caves/Poisoned Water level, while an active unlogged quest can still
+  surface the same dialogue without local history.
+
 - Add schema 1.350 authored Grave Matters visitation suppression. Hellfire
   Barmaid dialogue now honors the native `_pLvlVisited[21]` boundary through
   server-owned quest state and the shared native/Godot protocol.

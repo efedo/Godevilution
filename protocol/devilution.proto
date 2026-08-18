@@ -778,6 +778,8 @@ message QuestTownerInteractionSnapshot {
 	// Optional OR-gates matching native _pLvlVisited checks.
 	uint32 required_visited_level1 = 16;
 	uint32 required_visited_level2 = 17;
+	// Whether the stage requires the native quest-log bit to remain clear.
+	bool require_unlogged = 18;
 }
 
 message ProjectileSnapshot {

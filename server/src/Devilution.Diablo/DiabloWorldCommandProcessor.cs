@@ -1413,6 +1413,8 @@ public sealed class DiabloWorldCommandProcessor
                 quest.Variable1 = Math.Max(quest.Variable1, interaction.Variable1);
             if (interaction.Variable2 >= 0)
                 quest.Variable2 = Math.Max(quest.Variable2, interaction.Variable2);
+            if (interaction.MessageId != 0)
+                quest.MessageId = interaction.MessageId;
             if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Activate)
                 quest.Active = true;
             if (interaction.Kind == AuthoritativeQuestTownerInteractionKind.Complete) {
@@ -1460,6 +1462,8 @@ public sealed class DiabloWorldCommandProcessor
         } else if (!quest.Active || quest.Completed || quest.Unavailable) {
             return false;
         }
+        if (interaction.RequireUnlogged && quest.Logged)
+            return false;
         return ((interaction.RequiredVisitedLevel1 == 0
                     && interaction.RequiredVisitedLevel2 == 0)
                 || (interaction.RequiredVisitedLevel1 != 0

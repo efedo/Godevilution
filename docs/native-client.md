@@ -167,6 +167,8 @@ visited-level boundary for the native Blacksmith gates.
 Hellfire Grave Matters/Barmaid uses the same boundary for its native
 `_pLvlVisited[21]` dialogue suppression; the adapter never infers that history
 locally.
+Base Poisoned Water/Pepin now also keeps the native initial visited-level gate
+and active-but-unlogged fallback in the authored interaction projection.
 Legacy local towner behavior stays available outside the authoritative runtime.
 
 Content-declared unique-monster conversations use the same boundary. When the
