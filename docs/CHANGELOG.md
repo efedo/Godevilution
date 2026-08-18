@@ -9,7 +9,9 @@ All notable changes to this fork are documented below.
   and external `.sol` properties into authoritative movement and missile
   geometry; missing native inputs reject activation. Binary `.til` and `.sol`
   loaders preserve the native little-endian records and supported tile flags,
-  with strict length and unknown-bit validation.
+  with strict length and unknown-bit validation. A composed native geometry
+  loader now validates and materializes the `.dun`/`.til`/`.sol` bundle as one
+  server-side boundary.
 
 - The Diablo module now validates and preserves native `.dun` set-piece assets,
   including mega tiles, the reserved layer, monsters, objects, and transparency

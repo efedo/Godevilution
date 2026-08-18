@@ -223,7 +223,9 @@ Status date: 2026-08-18
   blocked and missile-blocked cells with missing mappings rejected. The shipped
   packs do not yet include the native `.til`/`.sol` assets, so set-level
   activation remains metadata-only until those assets are imported and
-  parity-checked.
+  parity-checked. The engine now exposes a single validated bundle loader for
+  the `.dun`/`.til`/`.sol` composition, keeping asset acquisition separate from
+  authoritative geometry.
 
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item

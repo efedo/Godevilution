@@ -138,6 +138,49 @@ public sealed class AuthoritativeDunGeometryTests
             AuthoritativeDunTilePropertyCatalog.LoadSol("unsupported.sol", bytes));
     }
 
+    [Fact]
+    public void NativeBundleLoaderComposesDunTilAndSolIntoAuthoritativeGeometry()
+    {
+        var dun = CreateDun(1, 1, [0]);
+        var til = new byte[sizeof(ushort) * 4];
+        WriteWord(til, 0, 20);
+        WriteWord(til, 2, 21);
+        WriteWord(til, 4, 22);
+        WriteWord(til, 6, 23);
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        sol[20] = (byte)AuthoritativeDunTileFlags.Solid;
+        sol[21] = (byte)AuthoritativeDunTileFlags.BlockMissile;
+        sol[22] = (byte)(AuthoritativeDunTileFlags.Solid | AuthoritativeDunTileFlags.BlockMissile);
+
+        var level = AuthoritativeNativeDunGeometryLoader.Load(
+            202,
+            "levels/l1data/synthetic.dun",
+            dun,
+            "levels/l1data/l1.til",
+            til,
+            "levels/l1data/l1.sol",
+            sol,
+            "SL_SYNTHETIC");
+
+        Assert.Equal([0, 2], level.BlockedCells);
+        Assert.Equal([1, 2], level.MissileBlockedCells);
+        Assert.Equal("SL_SYNTHETIC", level.StableSymbol);
+    }
+
+    [Fact]
+    public void NativeBundleLoaderRejectsMissingMegaTileRecords()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunGeometryLoader.Load(
+                202,
+                "synthetic.dun",
+                CreateDun(1, 1, [1]),
+                "l1.til",
+                new byte[sizeof(ushort) * 4],
+                "l1.sol",
+                new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount]));
+    }
+
     private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)
     {
         var megaCount = megaWidth * megaHeight;
