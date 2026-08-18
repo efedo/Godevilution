@@ -217,6 +217,13 @@ Status date: 2026-08-18
   infer walkability from tile IDs; collision interpretation and set-level
   geometry materialization remain the next native-parity boundary.
 
+- The geometry boundary now has a validated materializer contract: external
+  MIN-style mega-tile expansions and `.sol`-style d-piece collision flags are
+  expanded into authoritative blocked and missile-blocked cells, with missing
+  mappings rejected. The shipped packs do not yet include the native MIN/SOL
+  assets, so set-level activation remains metadata-only until those assets are
+  imported and parity-checked.
+
 - Content-owned towner turn-ins now support normal item rewards as well as
   unique rewards. The server validates and generates the authored reward item
   at the native reward level and position; Hellfire Little Girl consumes
