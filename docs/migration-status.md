@@ -650,6 +650,11 @@ future run.
   `PlayerSnapshot` resources; the client clamps presentation values but never
   predicts or mutates those resources.
 
+- Godot's engine-independent protocol projection now resolves an in-progress
+  authoritative one-tile walk to its reserved destination for remote-player
+  interpolation. Local prediction and remote presentation share that resolver;
+  neither path advances server-owned gameplay state.
+
 - Player, monster, world-item, object, projectile, and corpse IDs now share a
   validated server-owned namespace at the mapper and Godot boundaries. Entity
   allocators skip occupied portal/corpse/player IDs, while identity-neutral

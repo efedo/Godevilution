@@ -33,10 +33,14 @@ public partial class WorldPresentation : Node2D
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
 
         foreach (var player in snapshot.Players) {
-            var projected = player.EntityId == localPlayer?.EntityId ? predicted : null;
+            var projected = player.EntityId == localPlayer?.EntityId
+                ? predicted
+                : AuthoritativePlayerPositionProjection.Resolve(player);
             UpdatePosition(
                 player.EntityId,
-                ToScreen(projected?.X ?? player.PositionX, projected?.Y ?? player.PositionY),
+                ToScreen(
+                    projected?.X ?? player.PositionX,
+                    projected?.Y ?? player.PositionY),
                 delta);
         }
         foreach (var monster in snapshot.Monsters)

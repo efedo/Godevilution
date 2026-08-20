@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
   class/name identity is supplied, the client now collects the identity and
   sends it through the existing authoritative handshake.
 
+- Share authoritative one-tile player-walk destination projection between
+  Godot local prediction and remote presentation, keeping remote movement
+  presentation-only while it interpolates toward the server-reserved tile.
+
 - Add an additive `NovaBall` native projectile visual identity so the native
   compatibility renderer can present server-owned Nova projectiles without
   inferring the visual from gameplay behavior numbers; cover the mapping in

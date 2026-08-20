@@ -103,7 +103,10 @@ object visual.
 Snapshots contain every assigned participant. The server puts this client's
 player first and orders the remaining players by entity ID. The client validates
 all identities and action state, applies prediction only to that first player,
-and renders same-level remote players from their authoritative coordinates.
+and renders same-level remote players from their authoritative coordinates,
+including the reserved destination of an in-progress one-tile walk. Remote
+players remain presentation-only; the client never advances their gameplay
+state.
 When a player-targeted Resurrection or Heal Other source is selected, clicking a
 same-level remote player sends that player's stable entity ID. The server uses
 the active external spell behavior to admit the cast, validate life state,

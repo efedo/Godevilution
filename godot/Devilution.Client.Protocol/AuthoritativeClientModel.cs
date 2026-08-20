@@ -146,14 +146,9 @@ public sealed class AuthoritativeClientModel
             return;
         }
 
-        var x = player.PositionX;
-        var y = player.PositionY;
-        if (player.CurrentAction is {
-                Kind: PlayerActionKind.Move,
-            } currentMove) {
-            x += currentMove.DirectionX;
-            y += currentMove.DirectionY;
-        }
+        var authoritativePosition = AuthoritativePlayerPositionProjection.Resolve(player);
+        var x = authoritativePosition.X;
+        var y = authoritativePosition.Y;
         foreach (var move in predictedMoves.Values)
             (x, y) = (x + move.DirectionX, y + move.DirectionY);
 
