@@ -159,6 +159,46 @@ public sealed class AuthoritativeWorldObject
     /** Native shrine capability used by Nova Ball's target-tile collision rule. */
     public bool IsShrine { get; set; }
 
+    /** Copies authored object behavior to a server-assigned set-level placement. */
+    public AuthoritativeWorldObject WithPlacement(
+        uint entityId,
+        uint levelId,
+        int positionX,
+        int positionY)
+    {
+        return new AuthoritativeWorldObject(
+            entityId,
+            ObjectId,
+            levelId,
+            positionX,
+            positionY,
+            Activated,
+            QuestId,
+            EffectKind,
+            EffectAmount,
+            QuestProgressAmount,
+            MissilePassable,
+            Breakable,
+            Destroyed,
+            TrapArmed,
+            IsShrine,
+            QuestTransitionKind,
+            QuestTransitionAmount,
+            QuestTransitionRequiredVariable1,
+            QuestTransitionRequiredVariable2,
+            RewardKind,
+            RewardId,
+            RewardItemLevel,
+            RewardOffsetX,
+            RewardOffsetY,
+            ProjectileTargetOffsetX,
+            ProjectileTargetOffsetY,
+            QuestSequenceFollowUpKind,
+            QuestSequenceFollowUpAmount,
+            QuestSequenceFollowUpOffsetX,
+            QuestSequenceFollowUpOffsetY);
+    }
+
     public static bool IsValidQuestTransition(
         AuthoritativeObjectQuestTransitionKind kind,
         int amount,

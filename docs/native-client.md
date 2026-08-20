@@ -280,12 +280,12 @@ explicit migration seams, not server-authority claims:
   speech completion and encounter-state presentation remain local fallbacks.
 - `OperateBook` and `OperateBookLever` still own the Chamber of Bone, Vile
   Betrayer, Halls of the Blind, and Blood-goal book branches. These require
-  set-level object placement plus authored projectile/map effects; the generic
-  `GrantSpellLevel` and `SpawnSpellProjectile` effects now cover reusable
-  spell-level and Phasing/Guardian-controller transitions, but exact native
-  target offsets, set-level placement, and map effects remain. The existing
-  Na-Krul `QuestSequence` row is not a substitute for those remaining
-  semantics.
+  authored set-level placement plus projectile/map effects. Set-level rows can
+  now clone a validated `objects.tsv` behavior template, and the generic
+  `GrantSpellLevel` and `SpawnSpellProjectile` effects cover reusable
+  spell-level and Phasing/Guardian-controller transitions; exact native
+  placement, target offsets, and map effects remain. The existing Na-Krul
+  `QuestSequence` row is not a substitute for those remaining semantics.
 - Quest-specific set-piece mutation and resynchronization remains native,
   including the Banner set-piece transitions and the associated unique-monster
   state. Procedural level/object parity must precede externalizing those map

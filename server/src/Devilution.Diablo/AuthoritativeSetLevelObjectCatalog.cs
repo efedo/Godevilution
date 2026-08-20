@@ -15,6 +15,9 @@ public sealed record AuthoritativeSetLevelObjectPlacement(
     int TemplateHeight)
 {
     public string SetLevelSymbol { get; init; } = string.Empty;
+
+    /** Optional objects.tsv entity whose authored behavior is copied to this placement. */
+    public uint TemplateEntityId { get; init; }
 }
 
 /** Validated external placements for native set-level object footprints. */
@@ -67,16 +70,20 @@ public sealed class AuthoritativeSetLevelObjectCatalog
      * Materializes placements whose active native set-level geometry is loaded.
      * Legacy packs may carry the placement catalog before shipping map assets;
      * those rows remain metadata-only until the corresponding active level is
-     * present in the authoritative world.
+     * present in the authoritative world. A placement with a template entity
+     * copies the authored behavior from the matching objects.tsv row.
      */
     public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
         AuthoritativeWorld world,
-        IEnumerable<AuthoritativeWorldObject>? existingObjects = null)
+        IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
+        IEnumerable<AuthoritativeWorldObject>? templates = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         var usedEntityIds = (existingObjects ?? [])
             .Select(@object => @object.EntityId)
             .ToHashSet();
+        var templateByEntityId = (templates ?? [])
+            .ToDictionary(@object => @object.EntityId);
         var objects = new List<AuthoritativeWorldObject>();
         foreach (var placement in definitions) {
             var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
@@ -92,12 +99,26 @@ public sealed class AuthoritativeSetLevelObjectCatalog
             if (!usedEntityIds.Add(entityId))
                 throw new InvalidDataException(
                     $"Set-level object placement {placement.PlacementId} collides with entity {entityId}.");
-            objects.Add(new AuthoritativeWorldObject(
-                entityId,
-                placement.ObjectId,
-                levelId,
-                placement.PositionX,
-                placement.PositionY));
+            if (placement.TemplateEntityId != 0) {
+                if (!templateByEntityId.TryGetValue(placement.TemplateEntityId, out var template))
+                    throw new InvalidDataException(
+                        $"Set-level object placement {placement.PlacementId} references unknown template entity {placement.TemplateEntityId}.");
+                if (template.ObjectId != placement.ObjectId)
+                    throw new InvalidDataException(
+                        $"Set-level object placement {placement.PlacementId} template {placement.TemplateEntityId} uses object {template.ObjectId}, expected {placement.ObjectId}.");
+                objects.Add(template.WithPlacement(
+                    entityId,
+                    levelId,
+                    placement.PositionX,
+                    placement.PositionY));
+            } else {
+                objects.Add(new AuthoritativeWorldObject(
+                    entityId,
+                    placement.ObjectId,
+                    levelId,
+                    placement.PositionX,
+                    placement.PositionY));
+            }
         }
         return objects;
     }
@@ -136,6 +157,7 @@ public sealed class AuthoritativeSetLevelObjectCatalog
                 SetLevelSymbol = row.TryGet("set_level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,
+                TemplateEntityId = row.OptionalUInt32("template_entity_id"),
             }));
     }
 }

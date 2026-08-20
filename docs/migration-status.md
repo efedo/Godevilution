@@ -353,6 +353,15 @@ future run.
   d-piece values on the authoritative level geometry; older packs remain
   compatible without it.
 
+- Schema 1.367 adds the optional `template_entity_id` link to
+  `set_level_objects.tsv`. A validated set-level placement can now clone the
+  complete behavior of an `objects.tsv` entity with the matching native object
+  ID, including quest transitions, spell effects, world mutations, rewards,
+  and presentation flags, while retaining deterministic reserved placement
+  identities. Existing bare placements remain backward compatible. This
+  removes the server-side structural blocker for externalizing book/lever
+  behaviors; exact native placement and map-effect rows remain content work.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not

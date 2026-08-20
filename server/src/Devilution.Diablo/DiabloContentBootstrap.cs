@@ -564,7 +564,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         if (world is not null && setLevelObjects is not null) {
-            var generatedObjects = setLevelObjects.LoadAvailableObjects(world, objects);
+            var generatedObjects = setLevelObjects.LoadAvailableObjects(world, objects, objects);
             if (generatedObjects.Count > 0) {
                 objects = (objects ?? []).Concat(generatedObjects).ToArray();
                 AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);

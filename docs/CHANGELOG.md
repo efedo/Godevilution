@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add optional validated set-level object behavior templates. A
+  `set_level_objects.tsv` placement can now clone a matching `objects.tsv`
+  entity, carrying server-owned quest, spell, mutation, reward, and
+  presentation behavior without hard-coded set-piece logic; legacy bare
+  placements remain compatible. Bump the Diablo content schema to 1.367.
+
 - Add presentation-only native remote-player sprites from authoritative
   snapshots without inserting remote players into the native simulation pool;
   consume authoritative walk/attack/block/hit/spell/death modes for native

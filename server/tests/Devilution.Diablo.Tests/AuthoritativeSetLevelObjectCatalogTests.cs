@@ -10,13 +10,14 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
     {
         var catalog = AuthoritativeSetLevelObjectCatalog.LoadTsv(
             "set_level_objects.tsv",
-            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\n"
-                + "1002\t1\tSL_SKELKING\t2\t64\t59\t20\t14\t1\t2\n"
-                + "1001\t1\tSL_SKELKING\t1\t64\t34\t20\t7\t3\t3\n");
+            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
+                + "1002\t1\tSL_SKELKING\t2\t64\t59\t20\t14\t1\t2\t2002\n"
+                + "1001\t1\tSL_SKELKING\t1\t64\t34\t20\t7\t3\t3\t0\n");
 
         Assert.Equal([1001U, 1002U], catalog.Definitions.Select(placement => placement.PlacementId));
         var gate = Assert.Single(catalog.GetForSetLevel(1), placement => placement.ObjectId == 2);
         Assert.Equal("SL_SKELKING", gate.SetLevelSymbol);
+        Assert.Equal(2002U, gate.TemplateEntityId);
         Assert.Equal((64, 59, 20, 14, 1, 2), (
             gate.PositionX,
             gate.PositionY,
@@ -61,6 +62,58 @@ public sealed class AuthoritativeSetLevelObjectCatalogTests
             @object.LevelId);
         Assert.Equal(4, @object.PositionX);
         Assert.Equal(5, @object.PositionY);
+    }
+
+    [Fact]
+    public void MaterializesAuthoredTemplateBehaviorAtPlacement()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true),
+            8,
+            8));
+        var catalog = AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            "set_level_objects.tsv",
+            "placement_id\tset_level_id\tset_level_symbol\tobject_id\tposition_x\tposition_y\ttemplate_x\ttemplate_y\ttemplate_width\ttemplate_height\ttemplate_entity_id\n"
+                + "2001\t2\tSL_BONECHAMB\t4\t4\t5\t0\t0\t1\t1\t3001\n");
+        var template = new AuthoritativeWorldObject(
+            3001,
+            4,
+            1,
+            1,
+            1,
+            questId: 3015,
+            effectKind: AuthoritativeObjectEffectKind.GrantSpellLevel,
+            effectAmount: 7,
+            questTransitionKind: AuthoritativeObjectQuestTransitionKind.CompleteQuest,
+            rewardKind: AuthoritativeObjectRewardKind.None);
+
+        var @object = Assert.Single(catalog.LoadAvailableObjects(world, templates: [template]));
+
+        Assert.Equal(4U, @object.ObjectId);
+        Assert.Equal(3015U, @object.QuestId);
+        Assert.Equal(AuthoritativeObjectEffectKind.GrantSpellLevel, @object.EffectKind);
+        Assert.Equal(7, @object.EffectAmount);
+        Assert.Equal(AuthoritativeObjectQuestTransitionKind.CompleteQuest, @object.QuestTransitionKind);
+        Assert.Equal((4, 5), (@object.PositionX, @object.PositionY));
+    }
+
+    [Fact]
+    public void RejectsTemplateWithDifferentNativeObjectIdentity()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true),
+            8,
+            8));
+        var catalog = new AuthoritativeSetLevelObjectCatalog([
+            new AuthoritativeSetLevelObjectPlacement(1001, 1, 2, 4, 5, 0, 0, 1, 1) {
+                TemplateEntityId = 3001,
+            },
+        ]);
+        var template = new AuthoritativeWorldObject(3001, 9, 1, 1, 1);
+
+        Assert.Throws<InvalidDataException>(() => catalog.LoadAvailableObjects(world, templates: [template]));
     }
 
     [Fact]
