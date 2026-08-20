@@ -1,6 +1,7 @@
 #include "network/authoritative/server_backed_world_presentation.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <limits>
 #include <unordered_set>
@@ -152,9 +153,16 @@ player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &sna
 
 void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {
+	player.plractive = true;
+	player.friendlyMode = snapshot.friendlyMode;
+	player.pManaShield = snapshot.manaShieldActive;
+	std::snprintf(player._pName, sizeof(player._pName), "%s", snapshot.characterName.c_str());
 	player.life.current = snapshot.life;
 	player.life.maximum = snapshot.lifeMaximum;
 	player.life.maximumBase = snapshot.lifeMaximumBase;
+	player.mana.current = snapshot.mana;
+	player.mana.maximum = snapshot.manaMaximum;
+	player.mana.maximumBase = snapshot.manaMaximumBase;
 	player.position.tile = {
 		static_cast<WorldTileCoord>(snapshot.positionX),
 		static_cast<WorldTileCoord>(snapshot.positionY),

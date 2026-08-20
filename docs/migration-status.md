@@ -36,8 +36,9 @@ future run.
   hit, spell, and death sprite families from the authoritative combat mode
   without inserting those players into native simulation pools, and projects
   authoritative spell families plus weapon/shield/armor slots into native
-  sprite variants. Exact action timing, party-panel, and automap parity remain
-  follow-up presentation seams.
+  sprite variants. Same-level friendly remote projections also draw on the
+  native automap; exact action timing and party-panel details remain follow-up
+  presentation seams.
 
 - Connected native Town Portal collision now resolves the projected portal ID
   for the local authoritative level and submits `UsePortal`; disconnected
@@ -3338,8 +3339,9 @@ initial-offset and crawl placement, actor/object/static occupancy, and portal
 avoidance during the fallback crawl. Complete participant and beam state cross
 snapshots, compatible saves, existing protocol fields, Godot presentation,
 native target mapping, and a shared five-checkpoint C++/C# replay. The native
-adapter retains all remote participant projections for targeting but does not
-yet construct full legacy remote-player presentation objects from them.
+adapter retains remote participant projections for targeting and constructs
+presentation-only current-level sprites and automap arrows; full party-panel
+and legacy interaction parity remain separate migrations.
 Mana Shield now uses a content-selected immediate self effect. Schema 0.19
 externalizes its native damage-reduction base divisor, per-learned-level step,
 and level cap. The first cast consumes its source; an active recast fizzles

@@ -80,9 +80,9 @@ simulation pool, so they cannot run local AI, movement, collision, or damage
 logic. Their authoritative walk, attack, ranged, block, hit, spell, and death
 modes now select the matching native presentation family, authoritative spell
 actions select Fire, Lightning, or Magic families, and authoritative
-weapon/shield/armor slots select native sprite variants. Exact action timing,
-party-panel details, and automap parity remain separate presentation
-migrations.
+weapon/shield/armor slots select native sprite variants. Exact action timing
+and party-panel details remain separate presentation migrations; same-level friendly
+remote projections now also draw on the native automap.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

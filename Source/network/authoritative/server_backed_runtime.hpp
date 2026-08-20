@@ -40,6 +40,12 @@ public:
 	{
 		worldPresentation_.DrawRemotePlayers(out, tilePosition, targetBufferPosition, lightTableIndex);
 	}
+	/** Visits projected remote players without exposing native simulation-pool ownership. */
+	template <typename Callback>
+	void ForEachRemotePlayer(Callback callback) const
+	{
+		worldPresentation_.ForEachRemotePlayer(callback);
+	}
 
 	/** Opens the experimental Smith store and applies its authoritative stock to the legacy UI buffers. */
 	tl::expected<void, std::string> OpenVendor(uint32_t storeId, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);

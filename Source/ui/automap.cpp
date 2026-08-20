@@ -27,6 +27,10 @@
 #include "utils/ui_fwd.h"
 #include "utils/string/utf8.hpp"
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
+
 #ifdef _DEBUG
 #include "application/debug.h"
 #include "engine/lighting.h"
@@ -1343,9 +1347,9 @@ uint8_t GetPlayerMapColor(int id)
 /**
  * @brief Renders an arrow on the automap, centered on and facing the direction of the player.
  */
-void DrawAutomapPlr(const Surface &out, const Displacement &myPlayerOffset, const Player &player)
+void DrawAutomapPlr(const Surface &out, const Displacement &myPlayerOffset, const Player &player, int playerId)
 {
-	const uint8_t playerColor = GetPlayerMapColor(player.getId());
+	const uint8_t playerColor = GetPlayerMapColor(playerId);
 
 	const Point tile = player.position.tile;
 
@@ -1425,6 +1429,11 @@ void DrawAutomapPlr(const Surface &out, const Displacement &myPlayerOffset, cons
 	case Direction::NoDirection:
 		break;
 	}
+}
+
+void DrawAutomapPlr(const Surface &out, const Displacement &myPlayerOffset, const Player &player)
+{
+	DrawAutomapPlr(out, myPlayerOffset, player, player.getId());
 }
 
 /**
@@ -1862,6 +1871,15 @@ void AutomapManager::DrawAutomap(const Surface &out)
 			DrawAutomapPlr(out, myPlayerOffset, player);
 		}
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		authoritative::GetServerBackedRuntime().ForEachRemotePlayer([&](uint32_t entityId, const Player &player) {
+			if (player.plractive && player.friendlyMode && player.plrlevel == MyPlayer->plrlevel && !player._pLvlChanging)
+				DrawAutomapPlr(out, myPlayerOffset, player, static_cast<int>(entityId % 4));
+		});
+	}
+#endif
 
 	if (autoMapShowItems_)
 		SearchAutomapItem(out, myPlayerOffset, 8, [](Point position) { return tileAt(position).item() != 0; });

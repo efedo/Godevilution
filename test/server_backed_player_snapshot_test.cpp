@@ -610,6 +610,14 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	ServerBackedWorldPresentation presentation;
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
 	EXPECT_EQ(presentation.RemotePlayerCount(), 1U);
+	uint32_t visitedEntityId = 0;
+	presentation.ForEachRemotePlayer([&](uint32_t entityId, const Player &player) {
+		visitedEntityId = entityId;
+		EXPECT_TRUE(player.plractive);
+		EXPECT_EQ(player.position.tile.x, remote.positionX);
+		EXPECT_EQ(player.position.tile.y, remote.positionY);
+	});
+	EXPECT_EQ(visitedEntityId, remote.entityId);
 
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, 1).has_value());
 	EXPECT_EQ(presentation.RemotePlayerCount(), 0U);

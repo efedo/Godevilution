@@ -44,6 +44,14 @@ public:
 		Point targetBufferPosition,
 		int lightTableIndex) const;
 
+	/** Visits projected remote players for presentation consumers only. */
+	template <typename Callback>
+	void ForEachRemotePlayer(Callback callback) const
+	{
+		for (const auto &[entityId, remote] : remotePlayers_)
+			callback(entityId, remote.player);
+	}
+
 	[[nodiscard]] std::size_t RemotePlayerCount() const noexcept { return remotePlayers_.size(); }
 
 	void Clear() noexcept;
