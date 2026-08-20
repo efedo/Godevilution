@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route connected native controller monster, remote-player, and object
+  interactions through authoritative entity IDs, including fail-closed handling
+  when a projected entity is unavailable; legacy controller commands remain the
+  disconnected compatibility path.
+
 - Route connected native targeted scroll and rune cursor casts through the
   authoritative cast protocol with their stable consumable source reference;
   legacy spell commands remain available outside server-backed sessions.

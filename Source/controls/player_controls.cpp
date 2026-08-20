@@ -538,6 +538,10 @@ void Interact()
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		if (pcursmonst != -1 && Monsters[pcursmonst].canTalk()) {
+			TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
+			return;
+		}
 		const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
 		if (entityId.has_value()) {
 			if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value())
@@ -585,6 +589,18 @@ void Interact()
 	}
 
 	if (pcursmonst != -1) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed controller monster target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed controller monster attack failed: {}", result.error());
+			}
+			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
+			return;
+		}
+	#endif
 		if (!myPlayer.UsesRangedWeapon() || Monsters[pcursmonst].canTalk()) {
 			NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 		} else {
@@ -595,6 +611,18 @@ void Interact()
 	}
 
 	if (levelType() != DTYPE_TOWN && PlayerUnderCursor != nullptr && !PlayerUnderCursor->hasNoLife() && !myPlayer.friendlyMode) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed controller player target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed controller player attack failed: {}", result.error());
+			}
+			LastPlayerAction = PlayerActionType::AttackPlayerTarget;
+			return;
+		}
+	#endif
 		NetSendCmdParam1(true, myPlayer.UsesRangedWeapon() ? CMD_RATTACKPID : CMD_ATTACKPID, PlayerUnderCursor->getId());
 		LastPlayerAction = PlayerActionType::AttackPlayerTarget;
 		return;
@@ -604,16 +632,16 @@ void Interact()
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (authoritative::GetServerBackedRuntime().IsConnected()) {
 			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
-			if (entityId.has_value()) {
-				if (pcurs == CURSOR_DISARM) {
-					if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
-						LogError("Server-backed trap disarm failed: {}", result.error());
-				} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
-					LogError("Server-backed object interaction failed: {}", result.error());
-				}
-				LastPlayerAction = PlayerActionType::OperateObject;
-				return;
+			if (!entityId.has_value()) {
+				LogError("Server-backed controller object target is not an authoritative entity.");
+			} else if (pcurs == CURSOR_DISARM) {
+				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*entityId, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed trap disarm failed: {}", result.error());
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed object interaction failed: {}", result.error());
 			}
+			LastPlayerAction = PlayerActionType::OperateObject;
+			return;
 		}
 #endif
 		NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJXY, cursPosition);
