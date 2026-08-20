@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route connected native stash-close drops through the authoritative held-item
+  drop intent when an adjacent world cell is available; legacy `CMD_PUTITEM`
+  remains the disconnected compatibility path.
+
 - Route connected native dungeon talker interactions from mouse and controller
   inputs through authoritative quest dialogue, and fail closed when controller
   item/object projections are missing instead of falling through to legacy
