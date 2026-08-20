@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route connected native Telekinesis through the authoritative cast protocol for
+  projected world items, objects, and monsters while retaining the legacy
+  fallback outside server-backed sessions.
+
 - Move native mod-option archive and table-data reload orchestration into
   `ModManager`; authoritative startup now reloads selected content without Lua,
   while legacy mode retains the existing Lua compatibility callback.

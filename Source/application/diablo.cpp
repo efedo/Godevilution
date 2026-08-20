@@ -3008,6 +3008,33 @@ bool TryIconCurs()
 	}
 
 	if (pcurs == CURSOR_TELEKINESIS) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			uint32_t targetEntityId = 0;
+			if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->IsDisabled()) {
+				if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+					targetEntityId = *entityId;
+			} else if (pcursitem != -1) {
+				if (const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+					targetEntityId = *entityId;
+			} else if (pcursmonst != -1) {
+				const Monster &monster = Monsters[pcursmonst];
+				if (!monster.isTalker() && monster.talkMsg == TEXT_NONE) {
+					if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+						targetEntityId = *entityId;
+				}
+			}
+			if (targetEntityId == 0) {
+				LogError("Server-backed Telekinesis target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
+			               static_cast<uint32_t>(SpellID::Telekinesis), targetEntityId,
+			               cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed Telekinesis cast failed: {}", result.error());
+			}
+			NewCursor(CURSOR_HAND);
+			return true;
+		}
+	#endif
 		DoTelekinesis();
 		return true;
 	}

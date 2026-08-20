@@ -82,6 +82,10 @@ Status date: 2026-08-20
   Legacy mode still replaces that callback with the Lua compatibility hook so
   existing scripted mod ordering remains unchanged.
 
+- Connected native Telekinesis now submits the projected world-item, object, or
+  monster entity through the authoritative cast path; the legacy cursor helper
+  remains active for disconnected and legacy sessions.
+
 - Native authoritative inventory use now submits spell-book consumption through
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
