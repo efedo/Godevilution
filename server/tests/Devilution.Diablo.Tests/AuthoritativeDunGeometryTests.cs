@@ -169,6 +169,25 @@ public sealed class AuthoritativeDunGeometryTests
     }
 
     [Fact]
+    public void NativeBundleLoaderPreservesObjectLayerForExplicitMappings()
+    {
+        var dun = CreateDun(1, 1, [0], objectLayer: [17, 0, 0, 19]);
+        var til = new byte[sizeof(ushort) * 4];
+        var sol = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+
+        var level = AuthoritativeNativeDunGeometryLoader.Load(
+            202,
+            "synthetic.dun",
+            dun,
+            "l1.til",
+            til,
+            "l1.sol",
+            sol);
+
+        Assert.Equal([17, 0, 0, 19], level.NativeObjectLayer);
+    }
+
+    [Fact]
     public void NativeBundleLoaderRejectsMissingMegaTileRecords()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -358,7 +377,11 @@ public sealed class AuthoritativeDunGeometryTests
         Assert.Contains("transparency dimensions", exception.Message, StringComparison.Ordinal);
     }
 
-    private static byte[] CreateDun(int megaWidth, int megaHeight, ushort[] tiles)
+    private static byte[] CreateDun(
+        int megaWidth,
+        int megaHeight,
+        ushort[] tiles,
+        ushort[]? objectLayer = null)
     {
         var megaCount = megaWidth * megaHeight;
         var dPieceCount = megaCount * 4;
@@ -366,6 +389,8 @@ public sealed class AuthoritativeDunGeometryTests
         words[0] = (ushort)megaWidth;
         words[1] = (ushort)megaHeight;
         Array.Copy(tiles, 0, words, 2, tiles.Length);
+        if (objectLayer is not null)
+            Array.Copy(objectLayer, 0, words, 2 + megaCount + dPieceCount * 2, objectLayer.Length);
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(

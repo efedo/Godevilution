@@ -169,7 +169,8 @@ public sealed class AuthoritativeLevel
         IEnumerable<int>? missileBlockedCells = null,
         bool isDefaultStart = false,
         bool suppressMultiplayerDeathDrops = false,
-        IEnumerable<ushort>? nativeTransparency = null)
+        IEnumerable<ushort>? nativeTransparency = null,
+        IEnumerable<ushort>? nativeObjectLayer = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -195,6 +196,12 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native transparency layer with an invalid length.");
         NativeTransparency = Array.AsReadOnly(transparency);
+        var objects = (nativeObjectLayer ?? [])
+            .ToArray();
+        if (objects.Length != 0 && objects.Length != width * height)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native object layer with an invalid length.");
+        NativeObjectLayer = Array.AsReadOnly(objects);
     }
 
     public uint LevelId { get; }
@@ -214,6 +221,9 @@ public sealed class AuthoritativeLevel
 
     /** Native d-piece transparency values retained separately from collision. */
     public IReadOnlyList<ushort> NativeTransparency { get; }
+
+    /** Native DUN object-layer values retained for explicit content mapping. */
+    public IReadOnlyList<ushort> NativeObjectLayer { get; }
 
     public bool IsDefaultStart { get; }
 

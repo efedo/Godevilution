@@ -171,7 +171,8 @@ public sealed class AuthoritativeSetLevelMapCatalog
                     activeMap.MissileBlockedCells,
                     activeMap.IsDefaultStart,
                     activeMap.SuppressMultiplayerDeathDrops,
-                    transparency.TransparencyLayer) {
+                    transparency.TransparencyLayer,
+                    activeMap.NativeObjectLayer) {
                     StableSymbol = activeMap.StableSymbol,
                 };
             }

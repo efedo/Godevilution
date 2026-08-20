@@ -133,7 +133,10 @@ authoritative results.
   active geometry is available, and activation rejects a blocked or out-of-bounds
   declared entry point. Optional native transparency layers are also validated
   against the active map dimensions and retained on the authoritative level
-  geometry when supplied.
+  geometry when supplied. Native DUN object-layer values remain inert unless an
+  explicit `native_dun_objects.tsv` mapping assigns an object identity and
+  optional behavior template; mapped cells receive deterministic reserved
+  authoritative entity IDs.
 - Single-player launches or connects to the same server used by multiplayer.
 - An authoritative client never falls back to local simulation after a server
   failure.

@@ -68,6 +68,9 @@ public sealed class DiabloSimulationOptions
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; init; }
 
+    /** Validated mappings for native DUN object-layer materialization. */
+    public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
+
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; init; }
 
@@ -263,7 +266,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.QuestDialogueStages,
             options.DialogueMessages,
             options.SetLevelObjects,
-            options.SetLevelMaps);
+            options.SetLevelMaps,
+            options.NativeDunObjects);
     }
 }
 
@@ -310,7 +314,8 @@ public sealed partial class DiabloSimulation
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
-        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
+        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -337,6 +342,7 @@ public sealed partial class DiabloSimulation
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
         SetLevelMaps = setLevelMaps;
+        NativeDunObjects = nativeDunObjects;
         ReconcileProceduralSpawnState();
     }
 
@@ -360,6 +366,9 @@ public sealed partial class DiabloSimulation
 
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
+
+    /** Validated mappings for native DUN object-layer materialization. */
+    public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }

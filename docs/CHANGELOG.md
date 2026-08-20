@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Preserve native DUN object layers through authoritative geometry and add the
+  optional `native_dun_objects.tsv` mapping table. Explicit mappings now
+  materialize deterministic server-owned objects, optionally cloning validated
+  `objects.tsv` behavior templates, while unmapped native values remain inert.
+  Bump the Diablo content schema to 1.368.
+
 - Add optional validated set-level object behavior templates. A
   `set_level_objects.tsv` placement can now clone a matching `objects.tsv`
   entity, carrying server-owned quest, spell, mutation, reward, and

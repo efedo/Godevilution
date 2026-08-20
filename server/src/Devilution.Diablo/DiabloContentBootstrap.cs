@@ -38,7 +38,8 @@ public sealed record DiabloContentActivation
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
-        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
+        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -63,6 +64,7 @@ public sealed record DiabloContentActivation
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
         SetLevelMaps = setLevelMaps;
+        NativeDunObjects = nativeDunObjects;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -112,6 +114,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native fixed-object placements materialized when geometry is available. */
     public AuthoritativeSetLevelObjectCatalog? SetLevelObjects { get; }
+
+    /** Validated mappings for native DUN object-layer materialization. */
+    public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; }
 
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; }
@@ -539,11 +544,25 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 setLevelObjectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var nativeDunObjects = content.TryGetTable(
+            "native_dun_objects.tsv",
+            out var nativeDunObjectsTable)
+            ? AuthoritativeNativeDunObjectCatalog.LoadTsv(
+                nativeDunObjectsTable.SourcePath,
+                nativeDunObjectsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
         if (setLevelObjects is not null) {
             if (setLevelNames is null)
                 throw new InvalidDataException(
                     "Set-level object placements require set_level_names.tsv.");
             setLevelObjects.ValidateSetLevels(setLevelNames);
+        }
+        if (nativeDunObjects is not null) {
+            if (setLevelNames is null)
+                throw new InvalidDataException(
+                    "Native DUN object mappings require set_level_names.tsv.");
+            nativeDunObjects.ValidateSetLevels(setLevelNames);
         }
         var setLevelMaps = content.TryGetTable(
             "set_level_maps.tsv",
@@ -563,8 +582,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     world.AddLevel(level);
             }
         }
-        if (world is not null && setLevelObjects is not null) {
-            var generatedObjects = setLevelObjects.LoadAvailableObjects(world, objects, objects);
+        if (world is not null && (setLevelObjects is not null || nativeDunObjects is not null)) {
+            var generatedObjects = new List<AuthoritativeWorldObject>();
+            if (setLevelObjects is not null) {
+                generatedObjects.AddRange(
+                    setLevelObjects.LoadAvailableObjects(world, objects, objects));
+            }
+            if (nativeDunObjects is not null) {
+                generatedObjects.AddRange(
+                    nativeDunObjects.LoadAvailableObjects(
+                        world,
+                        (objects ?? []).Concat(generatedObjects),
+                        objects));
+            }
             if (generatedObjects.Count > 0) {
                 objects = (objects ?? []).Concat(generatedObjects).ToArray();
                 AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
@@ -790,6 +820,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
             SetLevelMaps = setLevelMaps,
+            NativeDunObjects = nativeDunObjects,
             Spells = spells,
             SpellBooks = spellBooks,
             CombatRules = combatRules,
@@ -833,7 +864,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             questDialogueStages,
             dialogueMessages,
             setLevelObjects,
-            setLevelMaps);
+            setLevelMaps,
+            nativeDunObjects);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(
