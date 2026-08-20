@@ -12,6 +12,16 @@
 #include "engine/math/point.hpp"
 #include "game/players/players.hpp"
 #include "game/stores/stores.hpp"
+#include "utils/log.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#ifdef USE_SDL3
+#include <SDL3/SDL_timer.h>
+#else
+#include <SDL.h>
+#endif
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -86,10 +96,36 @@ void RepeatPlayerAction()
 			NetSendCmdLoc(MyPlayerId, true, rangedAttack ? CMD_RATTACKXY : CMD_SATTACKXY, cursPosition);
 		break;
 	case PlayerActionType::AttackMonsterTarget:
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (pcursmonst == -1)
+				return;
+			const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed repeated monster target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed repeated monster attack failed: {}", result.error());
+			}
+			return;
+		}
+	#endif
 		if (pcursmonst != -1)
 			NetSendCmdParam1(true, rangedAttack ? CMD_RATTACKID : CMD_ATTACKID, pcursmonst);
 		break;
 	case PlayerActionType::AttackPlayerTarget:
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (PlayerUnderCursor == nullptr || myPlayer.friendlyMode)
+				return;
+			const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed repeated player target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Attack(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed repeated player attack failed: {}", result.error());
+			}
+			return;
+		}
+	#endif
 		if (PlayerUnderCursor != nullptr && !myPlayer.friendlyMode)
 			NetSendCmdParam1(true, rangedAttack ? CMD_RATTACKPID : CMD_ATTACKPID, PlayerUnderCursor->getId());
 		break;
@@ -108,6 +144,19 @@ void RepeatPlayerAction()
 			CheckPlrSpell(false);
 		break;
 	case PlayerActionType::OperateObject:
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (ObjectUnderCursor == nullptr || ObjectUnderCursor->isDoor())
+				return;
+			const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+			if (!entityId.has_value()) {
+				LogError("Server-backed repeated object target is not an authoritative entity.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed repeated object interaction failed: {}", result.error());
+			}
+			return;
+		}
+	#endif
 		if (ObjectUnderCursor != nullptr && !ObjectUnderCursor->isDoor()) {
 			NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJXY, cursPosition);
 		}

@@ -86,6 +86,12 @@ Status date: 2026-08-20
   monster entity through the authoritative cast path; the legacy cursor helper
   remains active for disconnected and legacy sessions.
 
+- Connected native mouse entity-targeted monster/player attacks and ordinary
+  object operations now submit projected authoritative entity IDs, and repeated
+  cursor actions use the same server-owned intents. Location-only attacks and
+  Trap Disarm remain explicit compatibility seams until the native client has
+  matching authoritative intents for those behaviors.
+
 - Native authoritative inventory use now submits spell-book consumption through
   `ReadBookRequested`; the legacy client keeps its local book path only outside
   the connected server-backed mode.
