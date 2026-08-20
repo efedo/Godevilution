@@ -587,6 +587,50 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	Missiles.clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)
+{
+	struct Family {
+		int behavior;
+		MissileID missileId;
+	};
+	const Family families[] = {
+		{ 51, MissileID::Acid },
+		{ 52, MissileID::AcidSplat },
+		{ 53, MissileID::AcidPuddle },
+		{ 56, MissileID::ChargedBolt },
+		{ 57, MissileID::HorkSpawn },
+		{ 59, MissileID::Arrow },
+	};
+
+	LoadMissileData();
+	for (const auto &family : families) {
+		Missiles.clear();
+		ProjectedProjectileSnapshot projectile;
+		projectile.entityId = static_cast<uint32_t>(200 + family.behavior);
+		projectile.sourceEntityId = 1;
+		projectile.spellId = 4;
+		projectile.levelId = 1;
+		projectile.positionX = 6;
+		projectile.positionY = 7;
+		projectile.remainingTicks = 4;
+		projectile.behavior = family.behavior;
+
+		ServerBackedWorldProjection projection;
+		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ServerBackedWorldPresentation presentation;
+		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
+		ASSERT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(Missiles.front()._mitype, family.missileId);
+		EXPECT_EQ(Missiles.front()._miAuthoritativeEntityId, projectile.entityId);
+		presentation.Clear();
+	}
+	Missiles.clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups)
 {
 	ServerBackedWorldProjection projection;

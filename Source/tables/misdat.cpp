@@ -464,6 +464,12 @@ const MissileData &GetMissileData(MissileID missileId)
 	return MissilesData[static_cast<std::underlying_type_t<MissileID>>(missileId)];
 }
 
+bool IsMissileDataAvailable(MissileID missileId) noexcept
+{
+	const int index = static_cast<int>(missileId);
+	return index >= 0 && static_cast<size_t>(index) < MissilesData.size();
+}
+
 tl::expected<void, std::string> InitMissileGFX()
 {
 	if (HeadlessMode)

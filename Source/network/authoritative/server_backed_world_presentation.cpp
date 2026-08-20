@@ -60,6 +60,18 @@ std::optional<MissileID> NativePresentationMissileId(int behavior)
 		return MissileID::Guardian;
 	case 49: // Etherealize
 		return MissileID::Etherealize;
+	case 51: // Acid
+		return MissileID::Acid;
+	case 52: // AcidSplat
+		return MissileID::AcidSplat;
+	case 53: // AcidPuddle
+		return MissileID::AcidPuddle;
+	case 56: // MonsterChargedBolt
+		return MissileID::ChargedBolt;
+	case 57: // HorkSpawn
+		return MissileID::HorkSpawn;
+	case 59: // MonsterArrow
+		return MissileID::Arrow;
 	default:
 		return std::nullopt;
 	}
@@ -78,6 +90,8 @@ Missile *CreateAuthoritativePresentationMissile(
 	MissileID missileId,
 	const ProjectedProjectileSnapshot &snapshot)
 {
+	if (!IsMissileDataAvailable(missileId))
+		return nullptr;
 	if (Missiles.size() >= Missiles.max_size())
 		return nullptr;
 

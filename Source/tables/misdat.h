@@ -221,6 +221,8 @@ struct MissileFileData {
 };
 
 const MissileData &GetMissileData(MissileID missileId);
+/** Returns false when the active content pack does not define this missile. */
+[[nodiscard]] bool IsMissileDataAvailable(MissileID missileId) noexcept;
 MissileFileData &GetMissileSpriteData(MissileGraphicID graphicId);
 
 void LoadMissileData();

@@ -7,7 +7,9 @@ All notable changes to this fork are documented below.
 - Materialize the first supported authoritative projectile families in the
   native compatibility renderer. Their position and lifetime come from the
   server, and presentation-only missile objects skip local process, collision,
-  and damage logic; unsupported families remain projection-only.
+  and damage logic. The bridge now also covers Acid, Hork Spawn, monster
+  Charged Bolt, and monster Arrow families, while unsupported or
+  content-missing missile rows remain projection-only.
 
 - Handle connected Town Portal entry directly from projected portal state when
   no legacy native portal missile exists; disconnected sessions retain local
