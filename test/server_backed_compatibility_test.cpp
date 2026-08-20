@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "devilution.pb.h"
+#include "controls/player_controls.h"
 #include "network/authoritative/authoritative_client.hpp"
 #include "network/authoritative/runtime_configuration.hpp"
 #include "network/authoritative/store_snapshot.hpp"
@@ -34,6 +35,26 @@ TEST(ServerBackedCompatibility, PreservesRenamedSourceAliases)
 	const auto projected = ProjectStoreSnapshot(snapshot);
 	ASSERT_TRUE(projected.has_value()) << projected.error();
 	EXPECT_EQ(projected->storeId, 1U);
+}
+
+TEST(ServerBackedCompatibility, StaleObjectHighlightsFailClosed)
+{
+	using Route = ServerBackedObjectInteractionRoute;
+	EXPECT_EQ(
+	    ResolveServerBackedObjectInteractionRoute(false, true, false),
+	    Route::None);
+	EXPECT_EQ(
+	    ResolveServerBackedObjectInteractionRoute(true, false, true),
+	    Route::Submit);
+	EXPECT_EQ(
+	    ResolveServerBackedObjectInteractionRoute(true, true, true),
+	    Route::Submit);
+	EXPECT_EQ(
+	    ResolveServerBackedObjectInteractionRoute(true, true, false),
+	    Route::FailClosed);
+	EXPECT_EQ(
+	    ResolveServerBackedObjectInteractionRoute(true, false, false),
+	    Route::None);
 }
 
 } // namespace

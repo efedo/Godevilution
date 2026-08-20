@@ -549,7 +549,12 @@ void Interact()
 			LastPlayerAction = PlayerActionType::AttackMonsterTarget;
 			return;
 		}
-		if (const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); objectEntityId.has_value()) {
+		const auto objectEntityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y);
+		switch (ResolveServerBackedObjectInteractionRoute(
+		    true,
+		    ObjectUnderCursor != nullptr,
+		    objectEntityId.has_value())) {
+		case ServerBackedObjectInteractionRoute::Submit:
 			if (pcurs == CURSOR_DISARM) {
 				if (auto result = authoritative::GetServerBackedRuntime().DisarmTrap(*objectEntityId, 0, SDL_GetTicks()); !result.has_value())
 					LogError("Server-backed trap disarm failed: {}", result.error());
@@ -558,6 +563,15 @@ void Interact()
 			}
 			LastPlayerAction = PlayerActionType::OperateObject;
 			return;
+		case ServerBackedObjectInteractionRoute::FailClosed:
+			// A native object can remain highlighted while the latest authoritative
+			// snapshot no longer contains it. Do not fall through to a legacy object
+			// command: that would mutate local gameplay state in authoritative mode.
+			LogError("Server-backed controller object target is not an authoritative entity.");
+			LastPlayerAction = PlayerActionType::OperateObject;
+			return;
+		case ServerBackedObjectInteractionRoute::None:
+			break;
 		}
 	}
 #endif

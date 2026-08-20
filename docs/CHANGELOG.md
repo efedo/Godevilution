@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Make connected native controller interaction fail closed when a stale local
+  object highlight has no matching authoritative entity; add routing coverage
+  so the path cannot fall through to a legacy object command.
+
 - Correct the server-owned attribute-allocation regression fixtures to submit
   valid client sequences and requested ticks; the full server suite now passes
   all 381 tests.

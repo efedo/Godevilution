@@ -28,6 +28,34 @@ enum class BeltItemType : uint8_t {
 	Mana,
 };
 
+/**
+ * Describes how a highlighted native object may be handled while the
+ * server-backed client is connected.
+ */
+enum class ServerBackedObjectInteractionRoute : uint8_t {
+	None,
+	Submit,
+	FailClosed,
+};
+
+/**
+ * Keeps a stale native object highlight from falling through to a legacy
+ * object command when the authoritative projection has no matching entity.
+ */
+constexpr ServerBackedObjectInteractionRoute ResolveServerBackedObjectInteractionRoute(
+	bool serverConnected,
+	bool objectHighlighted,
+	bool projectedEntityAvailable) noexcept
+{
+	if (!serverConnected)
+		return ServerBackedObjectInteractionRoute::None;
+	if (projectedEntityAvailable)
+		return ServerBackedObjectInteractionRoute::Submit;
+	return objectHighlighted
+	    ? ServerBackedObjectInteractionRoute::FailClosed
+	    : ServerBackedObjectInteractionRoute::None;
+}
+
 extern GameActionType ControllerActionHeld;
 extern bool StandToggle;
 
