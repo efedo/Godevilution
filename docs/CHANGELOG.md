@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   explicit authoritative player-targeted cast sources; legacy target commands
   remain available when the server-backed runtime is disconnected.
 
+- Route connected native town-mouse and controller towner interactions through
+  the authoritative towner boundary before retaining local store/dialogue
+  presentation fallback.
+
 - Add an additive target-cell movement intent backed by the shared deterministic
   grid-navigation primitive. Connected native cursor walking and repeated
   dungeon walking now submit server-owned target cells; the legacy directional

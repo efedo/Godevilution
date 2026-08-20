@@ -110,6 +110,11 @@ Status date: 2026-08-20
   consumable source identity, while the legacy target commands remain the
   disconnected compatibility path.
 
+- Connected native mouse and controller town-towner interactions now enter
+  `TalkToTowner`, allowing authored quest turn-ins to submit server-owned
+  intents while preserving local presentation for non-authored store/dialogue
+  behavior.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native

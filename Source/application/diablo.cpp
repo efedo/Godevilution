@@ -284,8 +284,15 @@ void LeftMouseCmd(bool bShift)
 		#endif
 			NetSendCmdLocParam1(true, invflag ? CMD_GOTOGETITEM : CMD_GOTOAGETITEM, cursPosition, pcursitem);
 		}
-		if (pcursmonst != -1)
+		if (pcursmonst != -1) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				TalkToTowner(*MyPlayer, pcursmonst);
+				return;
+			}
+	#endif
 			NetSendCmdLocParam1(true, CMD_TALKXY, cursPosition, pcursmonst);
+		}
 		if (pcursitem == -1 && pcursmonst == -1 && PlayerUnderCursor == nullptr) {
 			LastPlayerAction = PlayerActionType::Walk;
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT

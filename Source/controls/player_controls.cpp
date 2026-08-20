@@ -524,6 +524,12 @@ bool IsStandingGround()
 void Interact()
 {
 	if (levelType() == DTYPE_TOWN && pcursmonst != -1) {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			TalkToTowner(*MyPlayer, pcursmonst);
+			return;
+		}
+	#endif
 		NetSendCmdLocParam1(true, CMD_TALKXY, Towners[pcursmonst].position, pcursmonst);
 		return;
 	}
