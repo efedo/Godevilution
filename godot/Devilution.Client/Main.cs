@@ -12,6 +12,8 @@ public partial class Main : Node2D
     private WorldPresentation? world;
     private HudPresentation? hud;
     private PresentationFeedback? feedback;
+    private CharacterSetupPresentation? characterSetup;
+    private ClientConnectionOptions? connectionOptions;
     private Task? connectionTask;
     private Task? pollTask;
     private Task? reconnectTask;
@@ -26,6 +28,15 @@ public partial class Main : Node2D
         AddChild(hud);
         feedback = new PresentationFeedback();
         AddChild(feedback);
+        characterSetup = new CharacterSetupPresentation();
+        AddChild(characterSetup);
+        characterSetup.Submitted += (classId, name) => {
+            if (connectionOptions is not null)
+                StartConnection(connectionOptions with {
+                    RequestedCharacterClassId = classId,
+                    RequestedCharacterName = name,
+                });
+        };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.PurchaseRequested += (storeId, storeSlot) => QueueIfConnected(new Command { PurchaseRequested = new PurchaseRequested { StoreId = storeId, StoreSlot = storeSlot } });
         hud.SellItemRequested += inventoryIndex => QueueIfConnected(new Command {
@@ -100,9 +111,25 @@ public partial class Main : Node2D
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
         hud.ClearEventsRequested += model.ClearRecentEvents;
         hud.SpellSourceSelected += SelectSpellSource;
-        client = new AuthoritativeClient(ClientConnectionOptions.FromEnvironment());
+        connectionOptions = ClientConnectionOptions.FromEnvironment();
+        if (connectionOptions.ResumeToken.Length > 0
+            || (connectionOptions.RequestedCharacterClassId.HasValue
+                && !string.IsNullOrWhiteSpace(connectionOptions.RequestedCharacterName))) {
+            StartConnection(connectionOptions);
+        } else {
+            characterSetup.ShowSetup(connectionOptions);
+            hud.SetStatus("Choose a character to connect to the authoritative server.");
+        }
+    }
+
+    private void StartConnection(ClientConnectionOptions options)
+    {
+        if (client is not null)
+            return;
+        characterSetup?.HideSetup();
+        client = new AuthoritativeClient(options);
         connectionTask = ConnectAsync(lifetime.Token);
-        hud.SetStatus("Connecting to authoritative server...");
+        hud?.SetStatus("Connecting to authoritative server...");
     }
 
     public override void _Process(double delta)

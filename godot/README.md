@@ -188,7 +188,10 @@ to its printed **ruleset identity**, then open
 `godot/Devilution.Client/project.godot`. Protocol `0.1.0` remains an explicit
 compatibility mode that uses the ruleset identity for both hash fields.
 
-The current prototype supports movement, casting, store and inventory actions,
+When no resume token or character identity is supplied through the environment,
+the client opens an in-game character setup form and sends the selected class
+and name through the same authoritative handshake. The current prototype
+supports movement, casting, store and inventory actions,
 world and quest interactions, event feedback, diagnostics, and accessibility
 HUD toggles. World layout under `Devilution.Client/assets/levels` is
 presentation data and must stay consistent with server content.

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add an in-client Godot character setup form. When no resume token or complete
+  class/name identity is supplied, the client now collects the identity and
+  sends it through the existing authoritative handshake.
+
 - Add an additive `NovaBall` native projectile visual identity so the native
   compatibility renderer can present server-owned Nova projectiles without
   inferring the visual from gameplay behavior numbers; cover the mapping in
