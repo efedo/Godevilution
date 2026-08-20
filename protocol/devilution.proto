@@ -143,6 +143,12 @@ message RestartTownRequested {}
 
 message AttackRequested {
 	uint32 target_entity_id = 1;
+	// Additive cell-targeted attack. A true cell target preserves the native
+	// CMD_SATTACKXY/CMD_RATTACKXY destination semantics; zero-valued entity
+	// attacks remain the original entity-targeted command.
+	int32 target_x = 2;
+	int32 target_y = 3;
+	bool target_cell = 4;
 }
 
 message CastRequested {
@@ -518,6 +524,10 @@ message PlayerActionSnapshot {
 	int32 direction_y = 8;
 	uint32 target_entity_id = 9;
 	CastRequested cast = 10;
+	// Destination retained for an in-progress native cell-targeted attack.
+	int32 target_x = 11;
+	int32 target_y = 12;
+	bool target_cell = 13;
 }
 
 message PlayerSpellLevelSnapshot {

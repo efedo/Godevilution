@@ -6,9 +6,11 @@ All notable changes to this fork are documented below.
 
 - Route connected native mouse entity-targeted monster/player attacks and
   ordinary object operations through authoritative entity references, including
-  repeated actions. Trap Disarm now submits the existing authoritative
-  `DisarmTrapRequested` intent; location-only attacks remain an explicit
-  compatibility seam until a matching server intent is exposed.
+  repeated actions. Add an additive cell-targeted attack intent that preserves
+  native `CMD_SATTACKXY`/`CMD_RATTACKXY` direction and path semantics; connected
+  native location-only and repeated attacks now use it, while legacy mode keeps
+  the original commands. Trap Disarm continues to submit the existing
+  authoritative `DisarmTrapRequested` intent.
 
 - Route connected native Telekinesis through the authoritative cast protocol for
   projected world items, objects, and monsters while retaining the legacy

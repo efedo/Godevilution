@@ -473,6 +473,17 @@ tl::expected<void, std::string> ServerBackedRuntime::Attack(uint32_t targetEntit
 	return ApplyCurrentPlayerSnapshot();
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::AttackAt(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	if (!session_)
+		return tl::make_unexpected("The server-backed runtime is not connected.");
+	if (auto result = session_->AttackAt(targetX, targetY, requestedTick, nowMs); !result.has_value())
+		return result;
+	if (auto result = EnsureCommandAccepted(); !result.has_value())
+		return result;
+	return ApplyCurrentPlayerSnapshot();
+}
+
 tl::expected<void, std::string> ServerBackedRuntime::Cast(uint32_t spellId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return Cast(spellId, targetEntityId, 0, 0, requestedTick, nowMs);

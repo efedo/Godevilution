@@ -2395,6 +2395,54 @@ public sealed class StoreSimulationExecutorTests
     }
 
     [Fact]
+    public void CellTargetedAttackResolvesAgainstTheAdjacentDirectionalOccupant()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, hitPoints: 11, armorClass: 2);
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingPositionX: 0,
+            startingPositionY: 0,
+            startingCombatTargets: [target]);
+
+        var result = executor.Execute("player-a", new Command {
+            AttackRequested = new AttackRequested {
+                TargetCell = true,
+                TargetX = 1,
+                TargetY = 0,
+            },
+        }, 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3, target.HitPoints);
+        Assert.Equal(8, Assert.Single(executor.DrainEvents("player-a", 7, 1)!.Events).Damage.Amount);
+    }
+
+    [Fact]
+    public void EmptyCellTargetedAttackIsAcceptedWithoutACombatEvent()
+    {
+        var target = new AuthoritativeCombatTarget(9, 2, 0, hitPoints: 11, armorClass: 2);
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 100,
+            startingPositionX: 0,
+            startingPositionY: 0,
+            startingCombatTargets: [target]);
+
+        var result = executor.Execute("player-a", new Command {
+            AttackRequested = new AttackRequested {
+                TargetCell = true,
+                TargetX = 1,
+                TargetY = 0,
+            },
+        }, 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(11, target.HitPoints);
+        Assert.Null(executor.DrainEvents("player-a", 7, 1));
+    }
+
+    [Fact]
     public void DiabloDefeatPublishesVictoryEventAndSnapshotState()
     {
         var executor = new StoreSimulationExecutor(

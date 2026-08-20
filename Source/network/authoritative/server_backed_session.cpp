@@ -174,6 +174,11 @@ tl::expected<void, std::string> ServerBackedSession::Attack(uint32_t targetEntit
 	return SubmitGameplayCommand(MakeAttackCommand(targetEntityId, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::AttackAt(int32_t targetX, int32_t targetY, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeAttackAtCommand(targetX, targetY, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::Cast(uint32_t spellId, uint32_t targetEntityId, uint64_t requestedTick, uint64_t nowMs)
 {
 	return Cast(spellId, targetEntityId, 0, 0, requestedTick, nowMs);

@@ -30,6 +30,15 @@ public sealed record AuthoritativePlayerActionState(
 
     public uint TargetEntityId { get; init; }
 
+    /** Destination retained for a native cell-targeted attack. */
+    public int TargetX { get; init; }
+
+    /** Destination retained for a native cell-targeted attack. */
+    public int TargetY { get; init; }
+
+    /** Distinguishes a deferred cell attack from an entity-targeted attack. */
+    public bool TargetCell { get; init; }
+
     public DiabloCastIntent? CastIntent { get; init; }
 }
 

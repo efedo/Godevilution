@@ -52,6 +52,18 @@ TEST(ServerBackedVendorCommand, BuildsInventoryIntents)
 	EXPECT_EQ(move->move_inventory_item_requested().target_cell(), 4U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsCellTargetedAttackIntent)
+{
+	const auto command = MakeAttackAtCommand(-7, 12, 44);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_attack_requested());
+	EXPECT_TRUE(command->attack_requested().target_cell());
+	EXPECT_EQ(command->attack_requested().target_x(), -7);
+	EXPECT_EQ(command->attack_requested().target_y(), 12);
+	EXPECT_EQ(command->requested_tick(), 44U);
+	EXPECT_EQ(command->attack_requested().target_entity_id(), 0U);
+}
+
 TEST(ServerBackedVendorCommand, RejectsSentinelInventoryValues)
 {
 	EXPECT_FALSE(MakeSellItemCommand(UINT32_MAX, 1).has_value());

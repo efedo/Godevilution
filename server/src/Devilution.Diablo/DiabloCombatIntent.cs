@@ -5,6 +5,9 @@ public abstract record DiabloCombatIntent;
 
 public sealed record DiabloAttackIntent(uint TargetEntityId) : DiabloCombatIntent;
 
+/** Native-compatible attack directed at a world cell rather than a stable entity. */
+public sealed record DiabloAttackAtIntent(int TargetX, int TargetY) : DiabloCombatIntent;
+
 /** Authoritative origin of a requested spell cast. */
 public enum DiabloCastSourceKind
 {

@@ -309,6 +309,12 @@ public sealed class DiabloCombatCommandProcessor
                 attack.TargetEntityId,
                 appliedTick,
                 players),
+            DiabloAttackAtIntent attackAt => AttackAt(
+                player,
+                attackAt.TargetX,
+                attackAt.TargetY,
+                appliedTick,
+                players),
             DiabloCastIntent cast => Cast(player, cast, appliedTick, players),
             _ => DiabloCombatIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
@@ -431,13 +437,22 @@ public sealed class DiabloCombatCommandProcessor
             case DiabloPlayerActionKind.Attack:
                 AddDirectedEvents(
                     player,
-                    ResolveAttack(
-                        player,
-                        action.TargetEntityId,
-                        action.StartedAtTick,
-                        player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
-                        players,
-                        effectTick: tick),
+                    action.TargetCell
+                        ? ResolveAttackAt(
+                            player,
+                            action.TargetX,
+                            action.TargetY,
+                            action.StartedAtTick,
+                            player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
+                            players,
+                            effectTick: tick)
+                        : ResolveAttack(
+                            player,
+                            action.TargetEntityId,
+                            action.StartedAtTick,
+                            player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
+                            players,
+                            effectTick: tick),
                     events);
                 break;
             case DiabloPlayerActionKind.Cast:
@@ -543,6 +558,61 @@ public sealed class DiabloCombatCommandProcessor
         return DiabloCombatIntentResult.Accepted;
     }
 
+    /** Admits a native CMD_*ATTACKXY-compatible destination-cell action. */
+    private DiabloCombatIntentResult AttackAt(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        if (!world.ContainsPosition(player.LevelId, targetX, targetY))
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (!useNativePlayerActionTiming)
+            return ResolveAttackAt(
+                player,
+                targetX,
+                targetY,
+                appliedTick,
+                GetAttackAnimationProfile(player) == DiabloPlayerAttackAnimationProfile.Bow,
+                players);
+        if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        var animation = playerAnimations!.GetRequired(player.CharacterClassId);
+        var profile = GetAttackAnimationProfile(player);
+        var timing = animation.GetAttack(profile);
+        var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
+        UpdateFacingToward(player, targetX, targetY);
+        var includesFirstFrame = player.CurrentAction is not null
+            && player.CurrentAction.EffectApplied
+            && player.CombatMode is DiabloPlayerCombatMode.Attack
+                or DiabloPlayerCombatMode.RangedAttack;
+        var skippedFrames = GetAttackSkippedFrames(player, ranged, includesFirstFrame);
+        var effectTick = checked(
+            appliedTick + (ulong)(timing.ActionFrame - 1 - skippedFrames));
+        var endTick = checked(appliedTick + (ulong)(timing.Frames - 1 - skippedFrames));
+        var readyTick = Math.Min(
+            endTick,
+            checked(appliedTick + (ulong)(timing.ActionFrame - skippedFrames)));
+        DiabloPlayerActionLifecycle.Begin(
+            player,
+            new AuthoritativePlayerActionState(
+                DiabloPlayerActionKind.Attack,
+                appliedTick,
+                effectTick,
+                readyTick,
+                endTick) {
+                TargetCell = true,
+                TargetX = targetX,
+                TargetY = targetY,
+            },
+            ranged
+                ? DiabloPlayerCombatMode.RangedAttack
+                : DiabloPlayerCombatMode.Attack);
+        return DiabloCombatIntentResult.Accepted;
+    }
+
     private DiabloCombatIntentResult ResolveAttack(
         AuthoritativePlayerState player,
         uint targetEntityId,
@@ -632,6 +702,85 @@ public sealed class DiabloCombatCommandProcessor
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Resolves a cell action against the first authoritative occupant on its native attack path. */
+    private DiabloCombatIntentResult ResolveAttackAt(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        ulong appliedTick,
+        bool ranged,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong? effectTick = null)
+    {
+        var targetEntityId = FindCellAttackTarget(
+            player,
+            targetX,
+            targetY,
+            ranged,
+            players);
+        // Native cell attacks still perform their animation when the lane is
+        // empty; accepting the intent without an event preserves that behavior.
+        if (targetEntityId == 0)
+            return DiabloCombatIntentResult.Accepted;
+        return ResolveAttack(
+            player,
+            targetEntityId,
+            appliedTick,
+            ranged,
+            players,
+            effectTick);
+    }
+
+    private uint FindCellAttackTarget(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        bool ranged,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var direction = DiabloPlayerDirections.Toward(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var displacement = DiabloPlayerDirections.GetDisplacement(direction);
+        var steps = ranged
+            ? Math.Max(
+                Math.Abs(targetX - player.PositionX),
+                Math.Abs(targetY - player.PositionY))
+            : 1;
+        for (var step = 1; step <= steps; step++) {
+            var positionX = checked(player.PositionX + displacement.X * step);
+            var positionY = checked(player.PositionY + displacement.Y * step);
+            var monster = world.CombatTargets.Values
+                .Where(candidate =>
+                    candidate.PositionX == positionX
+                    && candidate.PositionY == positionY)
+                .OrderBy(candidate => candidate.EntityId)
+                .FirstOrDefault(candidate =>
+                    TryGetAttackTarget(player, candidate.EntityId, ranged, out _));
+            if (monster is not null)
+                return monster.EntityId;
+
+            var playerTarget = players
+                .Where(candidate =>
+                    candidate.EntityId != player.EntityId
+                    && candidate.PositionX == positionX
+                    && candidate.PositionY == positionY)
+                .OrderBy(candidate => candidate.EntityId)
+                .FirstOrDefault(candidate =>
+                    TryGetPlayerAttackTarget(
+                        player,
+                        candidate.EntityId,
+                        ranged,
+                        players,
+                        out _));
+            if (playerTarget is not null)
+                return playerTarget.EntityId;
+        }
+        return 0;
     }
 
     /** Emits server-owned weapon arrows targeting another player. */

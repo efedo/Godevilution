@@ -92,6 +92,13 @@ void RepeatPlayerAction()
 	const bool rangedAttack = myPlayer.UsesRangedWeapon();
 	switch (LastPlayerAction) {
 	case PlayerActionType::Attack:
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Server-backed repeated cell attack failed: {}", result.error());
+			break;
+		}
+	#endif
 		if (InDungeonBounds(cursPosition))
 			NetSendCmdLoc(MyPlayerId, true, rangedAttack ? CMD_RATTACKXY : CMD_SATTACKXY, cursPosition);
 		break;

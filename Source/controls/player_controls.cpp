@@ -565,6 +565,14 @@ void Interact()
 			position = Monsters[pcursmonst].position.tile;
 		}
 
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			if (auto result = authoritative::GetServerBackedRuntime().AttackAt(position.x, position.y, 0, SDL_GetTicks()); !result.has_value())
+				LogError("Server-backed controller cell attack failed: {}", result.error());
+			LastPlayerAction = PlayerActionType::Attack;
+			return;
+		}
+	#endif
 		NetSendCmdLoc(MyPlayerId, true, myPlayer.UsesRangedWeapon() ? CMD_RATTACKXY : CMD_SATTACKXY, position);
 		LastPlayerAction = PlayerActionType::Attack;
 		return;

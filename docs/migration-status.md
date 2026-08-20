@@ -89,9 +89,10 @@ Status date: 2026-08-20
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Connected native Trap
-  Disarm now submits the existing `DisarmTrapRequested` command; location-only
-  attacks remain an explicit compatibility seam until the native client has a
-  matching authoritative intent.
+  Disarm now submits the existing `DisarmTrapRequested` command. Connected
+  native location-only and repeated attacks submit the additive cell-targeted
+  attack intent, which preserves native directional melee and ranged path
+  semantics; legacy mode retains the original commands.
 
 - Native authoritative inventory use now submits spell-book consumption through
   `ReadBookRequested`; the legacy client keeps its local book path only outside

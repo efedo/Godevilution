@@ -286,7 +286,11 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 Command.IntentOneofCase.AttackRequested => ExecuteCombatIntent(
                     player,
                     participants,
-                    new DiabloAttackIntent(command.AttackRequested.TargetEntityId),
+                    command.AttackRequested.TargetCell
+                        ? new DiabloAttackAtIntent(
+                            command.AttackRequested.TargetX,
+                            command.AttackRequested.TargetY)
+                        : new DiabloAttackIntent(command.AttackRequested.TargetEntityId),
                     appliedTick),
                 Command.IntentOneofCase.UsePortalRequested => ExecuteWorldIntent(
                     player,

@@ -991,6 +991,9 @@ internal static class DiabloProtocolMapper
             DirectionX = source.DirectionX,
             DirectionY = source.DirectionY,
             TargetEntityId = source.TargetEntityId,
+            TargetX = source.TargetX,
+            TargetY = source.TargetY,
+            TargetCell = source.TargetCell,
         };
         if (source.CastIntent is not null) {
             result.Cast = new CastRequested {
@@ -1042,6 +1045,9 @@ internal static class DiabloProtocolMapper
             DirectionX = source.DirectionX,
             DirectionY = source.DirectionY,
             TargetEntityId = source.TargetEntityId,
+            TargetX = source.TargetX,
+            TargetY = source.TargetY,
+            TargetCell = source.TargetCell,
             CastIntent = castIntent,
         };
     }

@@ -304,6 +304,14 @@ void LeftMouseCmd(bool bShift)
 		NetSendCmdLoc(MyPlayerId, true, pcurs == CURSOR_DISARM ? CMD_DISARMXY : CMD_OPOBJXY, cursPosition);
 	} else if (myPlayer.UsesRangedWeapon()) {
 		if (bShift) {
+		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed ranged cell attack failed: {}", result.error());
+				LastPlayerAction = PlayerActionType::Attack;
+				return;
+			}
+		#endif
 			LastPlayerAction = PlayerActionType::Attack;
 			NetSendCmdLoc(MyPlayerId, true, CMD_RATTACKXY, cursPosition);
 		} else if (pcursmonst != -1) {
@@ -348,10 +356,24 @@ void LeftMouseCmd(bool bShift)
 					NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 				} else {
 					LastPlayerAction = PlayerActionType::Attack;
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (authoritative::GetServerBackedRuntime().IsConnected()) {
+						if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+							LogError("Server-backed melee cell attack failed: {}", result.error());
+						return;
+					}
+				#endif
 					NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, cursPosition);
 				}
 			} else {
 				LastPlayerAction = PlayerActionType::Attack;
+			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				if (authoritative::GetServerBackedRuntime().IsConnected()) {
+					if (auto result = authoritative::GetServerBackedRuntime().AttackAt(cursPosition.x, cursPosition.y, 0, SDL_GetTicks()); !result.has_value())
+						LogError("Server-backed melee cell attack failed: {}", result.error());
+					return;
+				}
+			#endif
 				NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, cursPosition);
 			}
 		} else if (pcursmonst != -1) {

@@ -288,6 +288,17 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeAttackCommand
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeAttackAtCommand(int32_t targetX, int32_t targetY, uint64_t requestedTick)
+{
+	protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_attack_requested();
+	request->set_target_x(targetX);
+	request->set_target_y(targetY);
+	request->set_target_cell(true);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeCastCommand(uint32_t spellId, uint32_t targetEntityId, uint64_t requestedTick)
 {
 	return MakeCastCommand(spellId, targetEntityId, 0, 0, requestedTick);
