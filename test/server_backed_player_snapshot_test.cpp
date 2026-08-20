@@ -642,6 +642,33 @@ TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerCombatModesToNativeGraphics)
 	EXPECT_EQ(GetRemotePlayerGraphic(snapshot), player_graphic::Death);
 }
 
+TEST(ServerBackedPlayerSnapshot, MapsRemotePlayerEquipmentToNativeGraphicBits)
+{
+	ProjectedPlayerSnapshot snapshot;
+	EXPECT_EQ(GetRemotePlayerEquipmentGraphicBits(snapshot), static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed));
+
+	ProjectedEquippedItem sword;
+	sword.slot = INVLOC_HAND_LEFT;
+	sword.item._itype = ItemType::Sword;
+	sword.item._iClass = ICLASS_WEAPON;
+	ProjectedEquippedItem shield;
+	shield.slot = INVLOC_HAND_RIGHT;
+	shield.item._itype = ItemType::Shield;
+	shield.item._iClass = ICLASS_ARMOR;
+	ProjectedEquippedItem mediumArmor;
+	mediumArmor.slot = INVLOC_CHEST;
+	mediumArmor.item._itype = ItemType::MediumArmor;
+	mediumArmor.item._iClass = ICLASS_ARMOR;
+	snapshot.equipment = { sword, shield, mediumArmor };
+	EXPECT_EQ(GetRemotePlayerEquipmentGraphicBits(snapshot), static_cast<uint8_t>(PlayerWeaponGraphic::SwordShield) | (1 << 4));
+
+	sword.item._itype = ItemType::Bow;
+	shield.item.clear();
+	mediumArmor.item._itype = ItemType::HeavyArmor;
+	snapshot.equipment = { sword, shield, mediumArmor };
+	EXPECT_EQ(GetRemotePlayerEquipmentGraphicBits(snapshot), static_cast<uint8_t>(PlayerWeaponGraphic::Bow) | (1 << 5));
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
 {
 	LoadMissileData();

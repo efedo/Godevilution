@@ -40,11 +40,72 @@ bool IsValidPlayerClass(uint32_t characterClassId)
 	return characterClassId <= static_cast<uint32_t>(HeroClass::LAST);
 }
 
-void InitializeRemotePlayer(Player &player, uint32_t characterClassId)
+uint8_t GetRemotePlayerEquipmentGraphicBitsInternal(const ProjectedPlayerSnapshot &snapshot)
+{
+	ItemType weaponType = ItemType::None;
+	bool holdsShield = false;
+	uint8_t armorGraphic = 0;
+	for (const auto &equipped : snapshot.equipment) {
+		const Item &item = equipped.item;
+		if (item.isEmpty())
+			continue;
+		switch (equipped.slot) {
+		case INVLOC_HAND_LEFT:
+		case INVLOC_HAND_RIGHT:
+			if (item._itype == ItemType::Shield)
+				holdsShield = true;
+			else if (item._iClass == ICLASS_WEAPON)
+				weaponType = item._itype;
+			break;
+		case INVLOC_CHEST:
+			switch (item._itype) {
+			case ItemType::MediumArmor:
+				armorGraphic = 1 << 4;
+				break;
+			case ItemType::HeavyArmor:
+				armorGraphic = 1 << 5;
+				break;
+			default:
+				armorGraphic = 0;
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	uint8_t weaponGraphic;
+	switch (weaponType) {
+	case ItemType::Sword:
+		weaponGraphic = static_cast<uint8_t>(holdsShield ? PlayerWeaponGraphic::SwordShield : PlayerWeaponGraphic::Sword);
+		break;
+	case ItemType::Axe:
+		weaponGraphic = static_cast<uint8_t>(PlayerWeaponGraphic::Axe);
+		break;
+	case ItemType::Bow:
+		weaponGraphic = static_cast<uint8_t>(PlayerWeaponGraphic::Bow);
+		break;
+	case ItemType::Mace:
+		weaponGraphic = static_cast<uint8_t>(holdsShield ? PlayerWeaponGraphic::MaceShield : PlayerWeaponGraphic::Mace);
+		break;
+	case ItemType::Staff:
+		weaponGraphic = static_cast<uint8_t>(PlayerWeaponGraphic::Staff);
+		break;
+	default:
+		weaponGraphic = static_cast<uint8_t>(holdsShield ? PlayerWeaponGraphic::UnarmedShield : PlayerWeaponGraphic::Unarmed);
+		break;
+	}
+	return weaponGraphic | armorGraphic;
+}
+
+void InitializeRemotePlayer(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {
 	player = {};
-	player._pClass = static_cast<HeroClass>(characterClassId);
-	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player._pClass = static_cast<HeroClass>(snapshot.characterClassId);
+	player._pgfxnum = GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+	player.life.current = snapshot.life;
+	player.life.maximum = snapshot.lifeMaximum;
 	player.setAnimations();
 	player.initGraphics();
 }
@@ -78,6 +139,9 @@ player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &sna
 
 void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {
+	player.life.current = snapshot.life;
+	player.life.maximum = snapshot.lifeMaximum;
+	player.life.maximumBase = snapshot.lifeMaximumBase;
 	player.position.tile = {
 		static_cast<WorldTileCoord>(snapshot.positionX),
 		static_cast<WorldTileCoord>(snapshot.positionY),
@@ -95,6 +159,16 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	    ? PM_DEATH
 	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
 	player.setAnimation(GetRemotePlayerGraphicInternal(snapshot), player.direction);
+}
+
+void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &snapshot)
+{
+	player.life.current = snapshot.life;
+	player.life.maximum = snapshot.lifeMaximum;
+	player._pgfxnum = GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+	player.resetGraphics();
+	player.setAnimations();
+	player.initGraphics();
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
@@ -434,6 +508,11 @@ player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
 	return GetRemotePlayerGraphicInternal(snapshot);
 }
 
+uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot)
+{
+	return GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+}
+
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const ServerBackedWorldProjection &projection,
     uint32_t levelId,
@@ -577,7 +656,9 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		retainedRemotePlayers.insert(snapshot.entityId);
 		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);
 		if (inserted || it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId))
-			InitializeRemotePlayer(it->second.player, snapshot.characterClassId);
+			InitializeRemotePlayer(it->second.player, snapshot);
+		else if (it->second.player._pgfxnum != GetRemotePlayerEquipmentGraphicBitsInternal(snapshot))
+			ApplyRemotePlayerEquipment(it->second.player, snapshot);
 		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
 		it->second.levelId = snapshot.levelId;
 		it->second.tilePosition = it->second.player.position.tile;

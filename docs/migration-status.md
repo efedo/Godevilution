@@ -34,9 +34,10 @@ future run.
 
 - Native remote-player presentation now selects walk, attack, ranged, block,
   hit, spell, and death sprite families from the authoritative combat mode
-  without inserting those players into native simulation pools. Exact
-  spell-specific frames and equipment, party-panel, and automap parity remain
-  follow-up presentation seams.
+  without inserting those players into native simulation pools, and projects
+  authoritative weapon/shield/armor slots into native sprite variants. Exact
+  spell-specific frames, party-panel, and automap parity remain follow-up
+  presentation seams.
 
 - Connected native Town Portal collision now resolves the projected portal ID
   for the local authoritative level and submits `UsePortal`; disconnected

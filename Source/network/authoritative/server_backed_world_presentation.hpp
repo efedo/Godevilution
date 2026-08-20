@@ -25,6 +25,9 @@ namespace devilution::authoritative {
 /** Maps an authoritative player combat mode to a native presentation graphic. */
 [[nodiscard]] player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot);
 
+/** Maps authoritative equipment to the native weapon/armor sprite bitmask. */
+[[nodiscard]] uint8_t GetRemotePlayerEquipmentGraphicBits(const ProjectedPlayerSnapshot &snapshot);
+
 /** Keeps legacy rendering and tile lookup state synchronized with the server. */
 class ServerBackedWorldPresentation {
 public:
