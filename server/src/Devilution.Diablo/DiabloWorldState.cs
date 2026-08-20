@@ -279,6 +279,7 @@ public sealed class DiabloWorldState
         foreach (var baseLevel in World.Levels) {
             var blocked = baseLevel.BlockedCells.ToHashSet();
             var missileBlocked = baseLevel.MissileBlockedCells.ToHashSet();
+            var transparency = baseLevel.NativeTransparency.ToArray();
             foreach (var mutationId in activeWorldMutationIds.OrderBy(id => id)) {
                 if (WorldMutations?.TryGet(mutationId, out var mutation) != true
                     || mutation.LevelId != baseLevel.LevelId) {
@@ -289,6 +290,14 @@ public sealed class DiabloWorldState
                 missileBlocked.UnionWith(mutation.GetMissileBlockedCells(baseLevel.Width, baseLevel.Height));
                 missileBlocked.ExceptWith(
                     mutation.GetMissileBlockedCellsToRemove(baseLevel.Width, baseLevel.Height));
+                foreach (var (cell, value) in mutation.GetTransparencyCells(
+                             baseLevel.Width,
+                             baseLevel.Height)) {
+                    if (transparency.Length == 0)
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} requires a native transparency layer.");
+                    transparency[cell] = value;
+                }
             }
             projectedLevels.Add(
                 baseLevel.LevelId,
@@ -300,7 +309,7 @@ public sealed class DiabloWorldState
                     missileBlocked,
                     baseLevel.IsDefaultStart,
                     baseLevel.SuppressMultiplayerDeathDrops,
-                    baseLevel.NativeTransparency,
+                    transparency,
                     baseLevel.NativeObjectLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });

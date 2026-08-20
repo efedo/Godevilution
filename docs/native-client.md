@@ -263,7 +263,9 @@ Optional target offsets are also server-owned metadata, so native book-relative
 coordinates can be authored without client-side gameplay. Authored Phasing rows
 may additionally select the activating player's tile as their projectile origin;
 the compatibility default retains the prior target-origin behavior. Set-level placement
-and map effects remain content seams still being filled from native data; the
+and map effects remain content seams still being filled from native data; authored
+world mutations can now also assign validated native transparency rectangles for
+set-piece effects such as Halls of the Blind. The
 Diablo module now parses native `.dun` layers, native little-endian `.til`
 mega-tile records, and `.sol` tile-property bytes, then exposes an exact
 materializer when those collision inputs are supplied, without guessing from

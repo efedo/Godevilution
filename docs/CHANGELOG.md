@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend authored world mutations with validated `transparency_rects`
+  assignments. Native transparency values now persist through active mutation
+  state and project through level geometry, enabling effects such as the native
+  Halls of the Blind transparency change. Bump the Diablo content schema to
+  1.376.
+
 - Add deterministic rectangle authoring to `world_mutations.tsv`. Optional
   `geometry_rect_add` and `geometry_rect_remove` values expand into validated
   movement and missile-blocking overlays while retaining the existing explicit

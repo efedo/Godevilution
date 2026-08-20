@@ -4,7 +4,7 @@ using Devilution.Data;
 namespace Devilution.Diablo;
 
 /** One rectangle of geometry cells authored for a world interaction. */
-public sealed class AuthoritativeWorldMutationRectangle
+public class AuthoritativeWorldMutationRectangle
 {
     public AuthoritativeWorldMutationRectangle(int x, int y, int width, int height)
     {
@@ -40,6 +40,24 @@ public sealed class AuthoritativeWorldMutationRectangle
     }
 }
 
+/** A native transparency value applied to every cell in an authored rectangle. */
+public sealed class AuthoritativeWorldMutationTransparencyRectangle
+    : AuthoritativeWorldMutationRectangle
+{
+    public AuthoritativeWorldMutationTransparencyRectangle(
+        int x,
+        int y,
+        int width,
+        int height,
+        ushort value)
+        : base(x, y, width, height)
+    {
+        Value = value;
+    }
+
+    public ushort Value { get; }
+}
+
 /** One deterministic cell overlay applied by an authored world interaction. */
 public sealed class AuthoritativeWorldMutation
 {
@@ -51,7 +69,8 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<int>? missileBlockedCellsAdd = null,
         IEnumerable<int>? missileBlockedCellsRemove = null,
         IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesAdd = null,
-        IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesRemove = null)
+        IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesRemove = null,
+        IEnumerable<AuthoritativeWorldMutationTransparencyRectangle>? transparencyRectangles = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -59,6 +78,7 @@ public sealed class AuthoritativeWorldMutation
         LevelId = levelId;
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
+        TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
         BlockedCellsAdd = Normalize(blockedCellsAdd);
         BlockedCellsRemove = Normalize(blockedCellsRemove);
         MissileBlockedCellsAdd = Normalize(missileBlockedCellsAdd);
@@ -94,6 +114,9 @@ public sealed class AuthoritativeWorldMutation
     /** Rectangles that remove both walkable and missile-blocking geometry. */
     public IReadOnlyList<AuthoritativeWorldMutationRectangle> GeometryRectanglesRemove { get; }
 
+    /** Native transparency assignments applied after geometry rectangles. */
+    public IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle> TransparencyRectangles { get; }
+
     public IReadOnlyList<int> GetBlockedCells(int levelWidth, int levelHeight)
         => MergeCells(BlockedCellsAdd, GeometryRectanglesAdd, levelWidth, levelHeight);
 
@@ -105,6 +128,15 @@ public sealed class AuthoritativeWorldMutation
 
     public IReadOnlyList<int> GetMissileBlockedCellsToRemove(int levelWidth, int levelHeight)
         => MergeCells(MissileBlockedCellsRemove, GeometryRectanglesRemove, levelWidth, levelHeight);
+
+    public IReadOnlyList<(int Cell, ushort Value)> GetTransparencyCells(
+        int levelWidth,
+        int levelHeight)
+        => TransparencyRectangles
+            .SelectMany(rectangle => rectangle
+                .EnumerateCells(levelWidth, levelHeight)
+                .Select(cell => (cell, rectangle.Value)))
+            .ToArray();
 
     private static IReadOnlyList<int> Normalize(IEnumerable<int>? cells)
         => (cells ?? [])
@@ -120,6 +152,18 @@ public sealed class AuthoritativeWorldMutation
             .ThenBy(rectangle => rectangle.Y)
             .ThenBy(rectangle => rectangle.Width)
             .ThenBy(rectangle => rectangle.Height)
+            .ToArray();
+
+    private static IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle>
+        NormalizeTransparencyRectangles(
+            IEnumerable<AuthoritativeWorldMutationTransparencyRectangle>? rectangles)
+        => (rectangles ?? [])
+            .Where(rectangle => rectangle is not null)
+            .OrderBy(rectangle => rectangle.X)
+            .ThenBy(rectangle => rectangle.Y)
+            .ThenBy(rectangle => rectangle.Width)
+            .ThenBy(rectangle => rectangle.Height)
+            .ThenBy(rectangle => rectangle.Value)
             .ToArray();
 
     private static IReadOnlyList<int> MergeCells(
@@ -166,11 +210,13 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<int> blockedRemove;
             IReadOnlyList<int> missileBlockedAdd;
             IReadOnlyList<int> missileBlockedRemove;
+            IReadOnlyList<(int Cell, ushort Value)> transparencyCells;
             try {
                 blockedAdd = mutation.GetBlockedCells(level.Width, level.Height);
                 blockedRemove = mutation.GetBlockedCellsToRemove(level.Width, level.Height);
                 missileBlockedAdd = mutation.GetMissileBlockedCells(level.Width, level.Height);
                 missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(level.Width, level.Height);
+                transparencyCells = mutation.GetTransparencyCells(level.Width, level.Height);
             } catch (Exception exception)
                 when (exception is InvalidDataException or OverflowException) {
                 throw new InvalidDataException(
@@ -182,6 +228,12 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} adds and removes the same geometry cell.");
             }
+            if (transparencyCells.Count > 0 && level.NativeTransparency.Count == 0)
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} requires a native transparency layer.");
+            if (transparencyCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} assigns transparency more than once to a cell.");
             foreach (var cell in blockedAdd
                          .Concat(blockedRemove)
                          .Concat(missileBlockedAdd)
@@ -208,7 +260,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseCells(row, "missile_blocked_cells_add"),
                 ParseCells(row, "missile_blocked_cells_remove"),
                 ParseRectangles(row, "geometry_rect_add"),
-                ParseRectangles(row, "geometry_rect_remove"))));
+                ParseRectangles(row, "geometry_rect_remove"),
+                ParseTransparencyRectangles(row))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -328,6 +381,47 @@ public sealed class AuthoritativeWorldMutationCatalog
                 }
                 try {
                     return new AuthoritativeWorldMutationRectangle(x, y, width, height);
+                } catch (ArgumentOutOfRangeException exception) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
+                        exception);
+                }
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationTransparencyRectangle>
+        ParseTransparencyRectangles(TsvRow row)
+    {
+        const string column = "transparency_rects";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(rectangle => {
+                var fields = rectangle.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 5
+                    || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                    || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
+                    || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var width)
+                    || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var height)
+                    || !ushort.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var transparency)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.");
+                }
+                try {
+                    return new AuthoritativeWorldMutationTransparencyRectangle(
+                        x,
+                        y,
+                        width,
+                        height,
+                        transparency);
                 } catch (ArgumentOutOfRangeException exception) {
                     throw new InvalidDataException(
                         $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",

@@ -83,6 +83,70 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void LoadsAndProjectsTransparencyRectangles()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\ttransparency_rects\n"
+                + "7\t1\t1,1,2,1,9\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        var rectangle = Assert.Single(mutation.TransparencyRectangles);
+        Assert.Equal((1, 1, 2, 1, (ushort)9), (
+            rectangle.X,
+            rectangle.Y,
+            rectangle.Width,
+            rectangle.Height,
+            rectangle.Value));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            nativeTransparency: Enumerable.Repeat<ushort>(0, 16)));
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)9, level.NativeTransparency[5]);
+        Assert.Equal((ushort)9, level.NativeTransparency[6]);
+        Assert.Equal((ushort)0, level.NativeTransparency[4]);
+    }
+
+    [Fact]
+    public void RejectsTransparencyWithoutLayerOrWithOverlappingAssignments()
+    {
+        var noLayer = new AuthoritativeWorld();
+        noLayer.AddLevel(new AuthoritativeLevel(1, 2, 2));
+        var mutation = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                transparencyRectangles: [
+                    new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 1, 1, 9),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => mutation.ValidateWorld(noLayer));
+
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            nativeTransparency: Enumerable.Repeat<ushort>(0, 4)));
+        var overlapping = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                8,
+                1,
+                transparencyRectangles: [
+                    new AuthoritativeWorldMutationTransparencyRectangle(0, 0, 2, 1, 9),
+                    new AuthoritativeWorldMutationTransparencyRectangle(1, 0, 1, 1, 8),
+                ]),
+        ]);
+        Assert.Throws<InvalidDataException>(() => overlapping.ValidateWorld(geometry));
+    }
+
+    [Fact]
     public void ResolvesSetLevelMutationTargetsToRuntimeLevels()
     {
         var stableIds = new StableContentIdCatalog([
