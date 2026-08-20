@@ -368,6 +368,32 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 	return projected;
 }
 
+tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSnapshots(const protocol::Snapshot &snapshot)
+{
+	std::vector<ProjectedPortalSnapshot> projected;
+	projected.reserve(snapshot.portals_size());
+	for (const auto &source : snapshot.portals()) {
+		if (source.portal_id() == 0)
+			return tl::make_unexpected("Server-backed snapshot contains a portal with an invalid portal ID.");
+		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.portalId == source.portal_id(); }))
+			return tl::make_unexpected("Server-backed snapshot contains duplicate portal IDs.");
+		projected.push_back({
+		    .portalId = source.portal_id(),
+		    .sourceLevelId = source.source_level_id(),
+		    .sourcePositionX = source.source_position_x(),
+		    .sourcePositionY = source.source_position_y(),
+		    .destinationLevelId = source.destination_level_id(),
+		    .destinationPositionX = source.destination_position_x(),
+		    .destinationPositionY = source.destination_position_y(),
+		    .remainingTicks = source.remaining_ticks(),
+		    .ownerEntityId = source.owner_entity_id(),
+		    .bidirectional = source.bidirectional(),
+		});
+	}
+	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.portalId < right.portalId; });
+	return projected;
+}
+
 void ApplyServerBackedEventBatch(Player &player, const protocol::EventBatch &eventBatch, uint32_t entityId)
 {
 	for (const auto &event : eventBatch.events()) {

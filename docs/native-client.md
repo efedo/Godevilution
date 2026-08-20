@@ -11,6 +11,11 @@ cmake -S . -B build-authoritative -DDEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON -
 cmake --build build-authoritative
 ```
 
+Connected Town Portal entry is server-authoritative: the client matches the
+collision cell against the latest projected portal route and submits
+`UsePortal`. The legacy `CMD_WARP` command remains available only outside a
+connected server-backed session.
+
 On Windows, initialize the matching Visual Studio developer environment first.
 See [ai/msvc-build.md](ai/msvc-build.md) for the verified workspace commands.
 

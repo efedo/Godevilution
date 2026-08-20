@@ -67,7 +67,11 @@
 #include "engine/lighting.h"
 #include "game/monsters/monsters.hpp"
 #include "utils/is_of.hpp"
+#include "utils/log.hpp"
 #include "utils/string/str_cat.hpp"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -3381,8 +3385,21 @@ void ProcessTownPortal(Missile &missile)
 		if (player.plractive && player.isOnActiveLevel() && !player._pLvlChanging && player._pmode == PM_STAND && player.position.tile == missile.position.tile) {
 			player.clearPath();
 			if (&player == MyPlayer) {
-				NetSendCmdParam1(true, CMD_WARP, missile._misource);
-				player._pmode = PM_NEWLVL;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				auto &runtime = authoritative::GetServerBackedRuntime();
+				if (runtime.IsConnected()) {
+					if (const auto portalId = runtime.PortalEntityIdAt(missile.position.tile.x, missile.position.tile.y); portalId.has_value()) {
+						if (auto result = runtime.UsePortal(*portalId, 0, SDL_GetTicks()); !result.has_value())
+							LogError("Server-backed portal use failed: {}", result.error());
+						else
+							player._pmode = PM_NEWLVL;
+					}
+				} else
+#endif
+				{
+					NetSendCmdParam1(true, CMD_WARP, missile._misource);
+					player._pmode = PM_NEWLVL;
+				}
 			}
 		}
 	}

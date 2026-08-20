@@ -739,6 +739,27 @@ std::optional<uint32_t> ServerBackedRuntime::QuestObjectEntityIdAt(int32_t posit
 	return worldProjection_.QuestObjectAt(positionX, positionY);
 }
 
+std::optional<uint32_t> ServerBackedRuntime::PortalEntityIdAt(int32_t positionX, int32_t positionY) const noexcept
+{
+	if (!session_)
+		return std::nullopt;
+	const auto *local = session_->PlayerState().Snapshot();
+	if (local == nullptr)
+		return std::nullopt;
+	for (const auto &portal : session_->PortalState()) {
+		const bool atSource = portal.sourceLevelId == local->levelId
+		    && portal.sourcePositionX == positionX
+		    && portal.sourcePositionY == positionY;
+		const bool atDestination = portal.bidirectional
+		    && portal.destinationLevelId == local->levelId
+		    && portal.destinationPositionX == positionX
+		    && portal.destinationPositionY == positionY;
+		if (atSource || atDestination)
+			return portal.portalId;
+	}
+	return std::nullopt;
+}
+
 std::optional<ServerBackedItemReference> ServerBackedRuntime::PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept
 {
 	if (!session_)

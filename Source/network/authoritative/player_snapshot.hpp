@@ -160,6 +160,19 @@ struct ProjectedProjectileSnapshot {
 	int32_t effectiveSpellLevel = 0;
 };
 
+struct ProjectedPortalSnapshot {
+	uint32_t portalId = 0;
+	uint32_t sourceLevelId = 0;
+	int32_t sourcePositionX = 0;
+	int32_t sourcePositionY = 0;
+	uint32_t destinationLevelId = 0;
+	int32_t destinationPositionX = 0;
+	int32_t destinationPositionY = 0;
+	uint32_t remainingTicks = 0;
+	uint32_t ownerEntityId = 0;
+	bool bidirectional = false;
+};
+
 struct ProjectedPlayerActionSnapshot {
 	uint32_t kind = 0;
 	uint64_t startedAtTick = 0;
@@ -241,6 +254,9 @@ struct ProjectedPlayerSnapshot {
 [[nodiscard]] tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 [[nodiscard]] tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProjectileSnapshots(
+    const ::devilution::protocol::v1::Snapshot &snapshot);
+/** Projects authoritative portal routes in stable portal-ID order. */
+[[nodiscard]] tl::expected<std::vector<ProjectedPortalSnapshot>, std::string> ProjectPortalSnapshots(
     const ::devilution::protocol::v1::Snapshot &snapshot);
 
 /** Applies server-authored combat and experience events to the native projection before its snapshot arrives. */

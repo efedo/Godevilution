@@ -477,6 +477,10 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 	if (!projectiles.has_value())
 		return tl::make_unexpected(projectiles.error());
 	projectileState_ = std::move(*projectiles);
+	auto portals = ProjectPortalSnapshots(snapshot);
+	if (!portals.has_value())
+		return tl::make_unexpected(portals.error());
+	portalState_ = std::move(*portals);
 	questStates_.assign(snapshot.quests().begin(), snapshot.quests().end());
 	questTownerInteractions_.assign(
 		snapshot.quest_towner_interactions().begin(),

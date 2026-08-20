@@ -451,6 +451,43 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeProjectiles)
 	EXPECT_EQ((*projected)[1].entityId, 12u);
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsPortalsInStableOrderAndRejectsDuplicates)
+{
+	protocol::Snapshot snapshot;
+	auto *second = snapshot.add_portals();
+	second->set_portal_id(9);
+	second->set_source_level_id(1);
+	second->set_source_position_x(10);
+	second->set_source_position_y(11);
+	second->set_destination_level_id(0);
+	second->set_destination_position_x(57);
+	second->set_destination_position_y(40);
+	second->set_remaining_ticks(100);
+	second->set_owner_entity_id(4);
+	second->set_bidirectional(true);
+	auto *first = snapshot.add_portals();
+	first->set_portal_id(3);
+	first->set_source_level_id(2);
+	first->set_source_position_x(4);
+	first->set_source_position_y(5);
+	first->set_destination_level_id(0);
+	first->set_destination_position_x(57);
+	first->set_destination_position_y(40);
+
+	auto projected = ProjectPortalSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 2U);
+	EXPECT_EQ((*projected)[0].portalId, 3U);
+	EXPECT_EQ((*projected)[0].sourceLevelId, 2U);
+	EXPECT_EQ((*projected)[1].portalId, 9U);
+	EXPECT_EQ((*projected)[1].remainingTicks, 100U);
+	EXPECT_EQ((*projected)[1].ownerEntityId, 4U);
+	EXPECT_TRUE((*projected)[1].bidirectional);
+
+	snapshot.add_portals()->set_portal_id(3);
+	EXPECT_FALSE(ProjectPortalSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
 {
 	ServerBackedWorldProjection projection;

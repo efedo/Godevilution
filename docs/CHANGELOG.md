@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Project authoritative portal snapshots into the native compatibility session
+  and route connected Town Portal entry through `UsePortal`; disconnected
+  sessions retain legacy `CMD_WARP` behavior.
+
 - Prevent connected native trigger polling from emitting legacy level-change
   commands after the server has already applied a projected warp transition.
 

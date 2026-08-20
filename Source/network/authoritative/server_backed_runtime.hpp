@@ -106,6 +106,8 @@ public:
 	[[nodiscard]] std::optional<uint32_t> ObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the active content-owned quest object at a projected cell. */
 	[[nodiscard]] std::optional<uint32_t> QuestObjectEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
+	/** Finds the lowest-ID authoritative portal endpoint at a projected cell. */
+	[[nodiscard]] std::optional<uint32_t> PortalEntityIdAt(int32_t positionX, int32_t positionY) const noexcept;
 	/** Finds the authoritative location of an item, including while it is held by the legacy cursor. */
 	[[nodiscard]] std::optional<ServerBackedItemReference> PlayerItemReferenceForSeed(uint32_t itemSeed) const noexcept;
 	/** Retains a native inventory drag selection while authoritative snapshots refresh. */
