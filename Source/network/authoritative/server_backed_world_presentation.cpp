@@ -214,6 +214,13 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.plractive = true;
 	player.friendlyMode = snapshot.friendlyMode;
 	player.pManaShield = snapshot.manaShieldActive;
+	player._pGold = snapshot.gold > static_cast<uint32_t>(std::numeric_limits<int>::max())
+	    ? std::numeric_limits<int>::max()
+	    : static_cast<int>(snapshot.gold);
+	player._pExperience = snapshot.experience;
+	player._pStatPts = snapshot.statPoints > static_cast<uint32_t>(std::numeric_limits<int>::max())
+	    ? std::numeric_limits<int>::max()
+	    : static_cast<int>(snapshot.statPoints);
 	std::snprintf(player._pName, sizeof(player._pName), "%s", snapshot.characterName.c_str());
 	player.life.current = snapshot.life;
 	player.life.maximum = snapshot.lifeMaximum;
@@ -221,6 +228,74 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.mana.current = snapshot.mana;
 	player.mana.maximum = snapshot.manaMaximum;
 	player.mana.maximumBase = snapshot.manaMaximumBase;
+	player.attributes.strength = { snapshot.strength.base, snapshot.strength.current };
+	player.attributes.magic = { snapshot.magic.base, snapshot.magic.current };
+	player.attributes.dexterity = { snapshot.dexterity.base, snapshot.dexterity.current };
+	player.attributes.vitality = { snapshot.vitality.base, snapshot.vitality.current };
+	player._pAblSpells = snapshot.abilitySpellId != 0
+	        && snapshot.abilitySpellId <= static_cast<uint32_t>(SpellID::LAST)
+	    ? GetSpellBitmask(static_cast<SpellID>(snapshot.abilitySpellId))
+	    : 0;
+	player._pMemSpells = 0;
+	std::fill(std::begin(player._pSplLvl), std::end(player._pSplLvl), 0);
+	for (const auto &spell : snapshot.memorizedSpells) {
+		if (spell.spellId == 0 || spell.spellId > static_cast<uint32_t>(SpellID::LAST))
+			continue;
+		player._pMemSpells |= GetSpellBitmask(static_cast<SpellID>(spell.spellId));
+		player._pSplLvl[spell.spellId] = static_cast<uint8_t>(std::min<uint32_t>(spell.level, MaxSpellLevel));
+	}
+	const auto firstValidMemorizedSpell = std::find_if(snapshot.memorizedSpells.begin(), snapshot.memorizedSpells.end(), [](const ProjectedMemorizedSpell &spell) {
+		return spell.spellId != 0 && spell.spellId <= static_cast<uint32_t>(SpellID::LAST);
+	});
+	if (firstValidMemorizedSpell != snapshot.memorizedSpells.end()) {
+		player._pRSpell = static_cast<SpellID>(firstValidMemorizedSpell->spellId);
+		player._pRSplType = SpellType::Spell;
+	} else if (snapshot.abilitySpellId != 0
+	    && snapshot.abilitySpellId <= static_cast<uint32_t>(SpellID::LAST)) {
+		player._pRSpell = static_cast<SpellID>(snapshot.abilitySpellId);
+		player._pRSplType = SpellType::Skill;
+	} else {
+		player._pRSpell = SpellID::Invalid;
+		player._pRSplType = SpellType::Invalid;
+	}
+	player._pInfraFlag = std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
+		return effect.behavior == 1;
+	});
+	std::fill(std::begin(player._pLvlVisited), std::end(player._pLvlVisited), false);
+	for (const uint32_t visitedLevelId : snapshot.visitedLevelIds) {
+		if (visitedLevelId < NUMLEVELS)
+			player._pLvlVisited[visitedLevelId] = true;
+	}
+	if (snapshot.inventoryGrid.size() == InventoryGridCells) {
+		for (auto &item : player.InvBody)
+			item.clear();
+		for (auto &item : player.InvList)
+			item.clear();
+		for (auto &item : player.SpdList)
+			item.clear();
+		for (const auto &equipment : snapshot.equipment) {
+			if (equipment.slot < NUM_INVLOC)
+				player.InvBody[equipment.slot] = equipment.item;
+		}
+		for (const auto &beltItem : snapshot.belt) {
+			if (beltItem.slot < MaxBeltItems)
+				player.SpdList[beltItem.slot] = beltItem.item;
+		}
+		for (std::size_t index = 0; index < snapshot.inventory.size() && index < InventoryGridCells; ++index)
+			player.InvList[index] = snapshot.inventory[index].item;
+		player._pNumInv = static_cast<int>(std::min<std::size_t>(snapshot.inventory.size(), InventoryGridCells));
+		for (std::size_t index = 0; index < InventoryGridCells; ++index) {
+			const int32_t cell = snapshot.inventoryGrid[index];
+			const int32_t clampedCell = std::clamp<int32_t>(cell, -1, std::numeric_limits<int8_t>::max() - 1);
+			player.InvGrid[index] = clampedCell < 0 ? 0 : static_cast<int8_t>(clampedCell + 1);
+		}
+		if (snapshot.heldItem.has_value())
+			player.HoldItem = snapshot.heldItem->item;
+		else
+			player.HoldItem.clear();
+	}
+	if (const uint8_t maximumLevel = player.getMaxCharacterLevel(); maximumLevel > 0)
+		player.setCharacterLevel(static_cast<uint8_t>(std::min<uint32_t>(snapshot.characterLevel, maximumLevel)));
 	player.position.tile = {
 		static_cast<WorldTileCoord>(snapshot.positionX),
 		static_cast<WorldTileCoord>(snapshot.positionY),

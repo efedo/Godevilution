@@ -83,8 +83,10 @@ actions select Fire, Lightning, or Magic families, and authoritative
 weapon/shield/armor slots select native sprite variants, and action animations
 are positioned from authoritative snapshot and action ticks. Same-level friendly
 remote projections also draw on the native automap and party panel. Party-panel
-hover and right-click inspection now resolve through authoritative entity IDs;
-interpolation and remaining legacy interaction parity remain separate migrations.
+hover and right-click inspection now resolve through authoritative entity IDs,
+and the inspected presentation player receives authoritative stats, spells, and
+item layout. Interpolation and remaining legacy interaction parity remain
+separate migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

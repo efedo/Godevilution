@@ -607,6 +607,13 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	remote.levelId = 2;
 	remote.positionX = 4;
 	remote.positionY = 5;
+	remote.gold = 1234;
+	remote.experience = 5678;
+	remote.characterLevel = 7;
+	remote.statPoints = 9;
+	remote.characterName = "Remote";
+	remote.strength = { 12, 14 };
+	remote.inventoryGrid.assign(InventoryGridCells, -1);
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
@@ -620,6 +627,13 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_TRUE(player.isOnLevel(2));
 		EXPECT_EQ(player.position.tile.x, remote.positionX);
 		EXPECT_EQ(player.position.tile.y, remote.positionY);
+		EXPECT_EQ(player._pGold, 1234);
+		EXPECT_EQ(player._pExperience, 5678U);
+		EXPECT_EQ(player.getCharacterLevel(), 7);
+		EXPECT_EQ(player._pStatPts, 9);
+		EXPECT_EQ(player.attributes.strength.base, 12);
+		EXPECT_EQ(player.attributes.strength.current, 14);
+		EXPECT_STREQ(player._pName, "Remote");
 	});
 	EXPECT_EQ(visitedEntityId, remote.entityId);
 	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
