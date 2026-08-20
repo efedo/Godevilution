@@ -35,6 +35,11 @@ public:
 	[[nodiscard]] ServerBackedSession *Session() noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedSession *Session() const noexcept { return session_.get(); }
 	[[nodiscard]] const ServerBackedWorldProjection &WorldProjection() const noexcept { return worldProjection_; }
+	/** Draws authoritative remote players through the presentation-only bridge. */
+	void DrawRemotePlayers(const Surface &out, Point tilePosition, Point targetBufferPosition, int lightTableIndex) const
+	{
+		worldPresentation_.DrawRemotePlayers(out, tilePosition, targetBufferPosition, lightTableIndex);
+	}
 
 	/** Opens the experimental Smith store and applies its authoritative stock to the legacy UI buffers. */
 	tl::expected<void, std::string> OpenVendor(uint32_t storeId, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);

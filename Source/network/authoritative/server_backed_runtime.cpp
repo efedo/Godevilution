@@ -858,7 +858,12 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	}
 	if (auto result = worldProjection_.Apply(session_->MonsterState(), session_->WorldItemState(), session_->ObjectState(), session_->ProjectileState(), snapshot->levelId); !result.has_value())
 		return result;
-	if (auto result = worldPresentation_.Apply(worldProjection_, snapshot->levelId); !result.has_value())
+	if (auto result = worldPresentation_.Apply(
+			worldProjection_,
+			snapshot->levelId,
+			session_->PlayerStates(),
+			session_->EntityId());
+		!result.has_value())
 		return result;
 	for (const auto &eventBatch : session_->TakePendingEventBatches())
 		ApplyServerBackedEventBatch(*player_, eventBatch, session_->EntityId());

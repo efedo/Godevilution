@@ -88,6 +88,10 @@
 #include "utils/string/format_int.hpp"
 #endif
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
+
 namespace devilution {
 
 enum OutlineColors : uint8_t {
@@ -504,7 +508,7 @@ uint8_t GetPlayerOutlineColor(int id)
  * @param tilePosition dPiece coordinates
  * @param targetBufferPosition Output buffer coordinates
  */
-void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex)
+void DrawPlayerSprite(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex)
 {
 	if (!IsTileLit(tilePosition) && !MyPlayer->_pInfraFlag && !MyPlayer->isOnArenaLevel() && levelType() != DTYPE_TOWN) {
 		return;
@@ -547,7 +551,7 @@ void DrawDeadPlayer(const Surface &out, Point tilePosition, Point targetBufferPo
 		if (player.plractive && player.hasNoLife() && player.isOnActiveLevel() && player.position.tile == tilePosition) {
 			tileAt(tilePosition).addFlags(DungeonFlag::DeadPlayer);
 			const Point playerRenderPosition { targetBufferPosition };
-			DrawPlayer(out, player, tilePosition, playerRenderPosition, lightTableIndex);
+			DrawPlayerSprite(out, player, tilePosition, playerRenderPosition, lightTableIndex);
 		}
 	}
 }
@@ -919,9 +923,19 @@ void DrawDungeon(const Surface &out, const Lightmap &lightmap, Point tilePositio
 				tempTargetBufferPosition += { -TILE_WIDTH, 0 };
 				tempTilePosition += Opposite(player->direction);
 			}
-			DrawPlayer(out, *player, tempTilePosition, tempTargetBufferPosition, lightTableIndex);
+			DrawPlayerSprite(out, *player, tempTilePosition, tempTargetBufferPosition, lightTableIndex);
 		}
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		authoritative::GetServerBackedRuntime().DrawRemotePlayers(
+			out,
+			tilePosition,
+			targetBufferPosition,
+			lightTableIndex);
+	}
+#endif
 
 	Monster *monster = FindMonsterAtPosition(tilePosition);
 	if (monster != nullptr) {
@@ -1662,6 +1676,11 @@ void OptionShowFPSChanged()
 const auto OptionChangeHandlerShowFPS = (GetOptions().Graphics.showFPS.SetValueChangedCallback(OptionShowFPSChanged), true);
 
 } // namespace
+
+void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex)
+{
+	DrawPlayerSprite(out, player, tilePosition, targetBufferPosition, lightTableIndex);
+}
 
 Displacement GetOffsetForWalking(const AnimationInfo &animationInfo, const Direction dir, bool cameraMode /*= false*/)
 {

@@ -8,6 +8,7 @@
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/authoritative/server_backed_world_presentation.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
+#include "tables/playerdat.hpp"
 #include "ui/automap.h"
 
 namespace devilution::authoritative {
@@ -590,6 +591,30 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 
 	presentation.Clear();
 	Missiles.clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
+{
+	LoadPlayerDataFiles();
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	local.characterClassId = 0;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.positionX = 4;
+	remote.positionY = 5;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	EXPECT_EQ(presentation.RemotePlayerCount(), 1U);
+
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, 1).has_value());
+	EXPECT_EQ(presentation.RemotePlayerCount(), 0U);
+
+	presentation.Clear();
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)

@@ -73,10 +73,12 @@ The adapter also retains the sorted remote-player projections. For
 Resurrection, a legacy player selected under the cursor is resolved by its
 authoritative same-level coordinates and sent as a stable server entity ID;
 the client never decides whether revival is valid or where the player appears.
-The compatibility layer does not yet create complete legacy remote-player
-presentation objects from participant snapshots, so broader native multiplayer
-rendering remains migration work even though targeting and authoritative state
-are retained.
+The compatibility layer now retains presentation-only remote-player objects
+from participant snapshots and draws current-level sprites directly from the
+authoritative positions. These objects never enter the native `Players`
+simulation pool, so they cannot run local AI, movement, collision, or damage
+logic. Equipment-driven sprites, action animation parity, party-panel details,
+and automap parity remain separate presentation migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,

@@ -14,6 +14,7 @@
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
+#include "engine/render/world_renderer.h"
 #include "devilution.pb.h"
 #include "tables/objdat.h"
 
@@ -32,6 +33,41 @@ bool IsValidWorldPosition(int32_t x, int32_t y)
 	    && x <= std::numeric_limits<WorldTileCoord>::max()
 	    && y <= std::numeric_limits<WorldTileCoord>::max()
 	    && InDungeonBounds({ x, y });
+}
+
+bool IsValidPlayerClass(uint32_t characterClassId)
+{
+	return characterClassId <= static_cast<uint32_t>(HeroClass::LAST);
+}
+
+void InitializeRemotePlayer(Player &player, uint32_t characterClassId)
+{
+	player = {};
+	player._pClass = static_cast<HeroClass>(characterClassId);
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.setAnimations();
+	player.initGraphics();
+}
+
+void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
+{
+	player.position.tile = {
+		static_cast<WorldTileCoord>(snapshot.positionX),
+		static_cast<WorldTileCoord>(snapshot.positionY),
+	};
+	player.position.future = player.position.tile;
+	player.position.last = player.position.tile;
+	player.position.old = player.position.tile;
+	player.position.temp = player.position.tile;
+	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
+	player.direction = snapshot.facingDirection <= static_cast<uint32_t>(Direction::SouthEast)
+	    ? static_cast<Direction>(snapshot.facingDirection)
+	    : Direction::South;
+	player._pBlockFlag = snapshot.combatMode == 6;
+	player._pmode = snapshot.life <= 0 || snapshot.combatMode == 8
+	    ? PM_DEATH
+	    : PM_STAND;
+	player.setAnimation(player._pmode == PM_DEATH ? player_graphic::Death : player_graphic::Stand, player.direction);
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
@@ -368,7 +404,9 @@ void RemoveMappedObject(int objectSlot)
 
 tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
     const ServerBackedWorldProjection &projection,
-    uint32_t levelId)
+    uint32_t levelId,
+    const std::vector<ProjectedPlayerSnapshot> &players,
+    uint32_t localEntityId)
 {
 	std::unordered_set<uint32_t> currentMonsterEntities;
 	std::unordered_set<uint32_t> currentItemEntities;
@@ -498,6 +536,27 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		projectileEntities_.insert(snapshot.entityId);
 	}
 
+	std::unordered_set<uint32_t> retainedRemotePlayers;
+	for (const auto &snapshot : players) {
+		if (snapshot.entityId == 0 || snapshot.entityId == localEntityId || snapshot.levelId != levelId
+		    || !IsValidPlayerClass(snapshot.characterClassId)) {
+			continue;
+		}
+		retainedRemotePlayers.insert(snapshot.entityId);
+		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);
+		if (inserted || it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId))
+			InitializeRemotePlayer(it->second.player, snapshot.characterClassId);
+		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
+		it->second.levelId = snapshot.levelId;
+		it->second.tilePosition = it->second.player.position.tile;
+	}
+	for (auto it = remotePlayers_.begin(); it != remotePlayers_.end();) {
+		if (!retainedRemotePlayers.contains(it->first))
+			it = remotePlayers_.erase(it);
+		else
+			++it;
+	}
+
 	for (auto it = itemSlots_.begin(); it != itemSlots_.end();) {
 		if (currentItemEntities.contains(it->first)) {
 			++it;
@@ -540,6 +599,20 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	return { };
 }
 
+void ServerBackedWorldPresentation::DrawRemotePlayers(
+	const Surface &out,
+	Point tilePosition,
+	Point targetBufferPosition,
+	int lightTableIndex) const
+{
+	for (const auto &[entityId, remote] : remotePlayers_) {
+		(void)entityId;
+		if (remote.tilePosition != tilePosition || !remote.player.animInfo.sprites)
+			continue;
+		DrawPlayer(out, remote.player, tilePosition, targetBufferPosition, lightTableIndex);
+	}
+}
+
 void ServerBackedWorldPresentation::Clear() noexcept
 {
 	for (const auto &[entityId, itemSlot] : itemSlots_)
@@ -554,6 +627,7 @@ void ServerBackedWorldPresentation::Clear() noexcept
 	itemSlots_.clear();
 	objectSlots_.clear();
 	projectileEntities_.clear();
+	remotePlayers_.clear();
 }
 
 } // namespace devilution::authoritative

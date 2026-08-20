@@ -13,6 +13,8 @@
 
 namespace devilution {
 
+struct Player;
+
 extern bool frameflag;
 
 /**
@@ -88,5 +90,8 @@ void scrollrt_draw_game_screen();
  * @brief Render the game
  */
 void DrawAndBlit();
+
+/** Renders one player sprite using authoritative or legacy presentation state. */
+void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex);
 
 } // namespace devilution
