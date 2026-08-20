@@ -25,14 +25,19 @@ public partial class WorldPresentation : Node2D
     {
         snapshot = next;
         predictedPlayerPosition = predicted;
-        if (snapshot is null)
+        if (snapshot is null) {
+            displayedPositions.Clear();
+            QueueRedraw();
             return;
+        }
 
+        var activeEntityIds = new HashSet<uint>();
         var localPlayer = snapshot.Players.FirstOrDefault();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
 
         foreach (var player in snapshot.Players) {
+            activeEntityIds.Add(player.EntityId);
             var projected = player.EntityId == localPlayer?.EntityId
                 ? predicted
                 : AuthoritativePlayerPositionProjection.Resolve(player);
@@ -43,20 +48,33 @@ public partial class WorldPresentation : Node2D
                     projected?.Y ?? player.PositionY),
                 delta);
         }
-        foreach (var monster in snapshot.Monsters)
+        foreach (var monster in snapshot.Monsters) {
+            activeEntityIds.Add(monster.EntityId);
             UpdatePosition(monster.EntityId, ToScreen(monster.PositionX, monster.PositionY), delta);
-        foreach (var item in snapshot.WorldItems)
-            UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta);
-        foreach (var @object in snapshot.Objects)
-            UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta);
-        foreach (var portal in snapshot.Portals) {
-            if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId)
-                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta);
-            else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId)
-                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta);
         }
-        foreach (var projectile in snapshot.Projectiles)
+        foreach (var item in snapshot.WorldItems) {
+            activeEntityIds.Add(item.EntityId);
+            UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta);
+        }
+        foreach (var @object in snapshot.Objects) {
+            activeEntityIds.Add(@object.EntityId);
+            UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta);
+        }
+        foreach (var portal in snapshot.Portals) {
+            if (localPlayer is not null && portal.SourceLevelId == localPlayer.LevelId) {
+                activeEntityIds.Add(portal.PortalId);
+                UpdatePosition(portal.PortalId, ToScreen(portal.SourcePositionX, portal.SourcePositionY), delta);
+            } else if (localPlayer is not null && portal.Bidirectional && portal.DestinationLevelId == localPlayer.LevelId) {
+                activeEntityIds.Add(portal.PortalId);
+                UpdatePosition(portal.PortalId, ToScreen(portal.DestinationPositionX, portal.DestinationPositionY), delta);
+            }
+        }
+        foreach (var projectile in snapshot.Projectiles) {
+            activeEntityIds.Add(projectile.EntityId);
             UpdatePosition(projectile.EntityId, ToScreen(projectile.PositionX, projectile.PositionY), delta);
+        }
+        foreach (var entityId in displayedPositions.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            displayedPositions.Remove(entityId);
         QueueRedraw();
     }
 

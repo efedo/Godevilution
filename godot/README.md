@@ -106,7 +106,8 @@ all identities and action state, applies prediction only to that first player,
 and renders same-level remote players from their authoritative coordinates,
 including the reserved destination of an in-progress one-tile walk. Remote
 players remain presentation-only; the client never advances their gameplay
-state.
+state. Replacing a snapshot removes positions for entities no longer present,
+and disconnecting clears all displayed entity state.
 When a player-targeted Resurrection or Heal Other source is selected, clicking a
 same-level remote player sends that player's stable entity ID. The server uses
 the active external spell behavior to admit the cast, validate life state,

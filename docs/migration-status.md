@@ -655,6 +655,10 @@ future run.
   interpolation. Local prediction and remote presentation share that resolver;
   neither path advances server-owned gameplay state.
 
+- Godot world presentation now prunes screen positions for entities absent from
+  the latest authoritative snapshot and clears them on disconnect, preventing
+  stale entity visuals or feedback anchors from surviving reconciliation.
+
 - Player, monster, world-item, object, projectile, and corpse IDs now share a
   validated server-owned namespace at the mapper and Godot boundaries. Entity
   allocators skip occupied portal/corpse/player IDs, while identity-neutral
