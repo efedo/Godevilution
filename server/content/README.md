@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.378.0` schema in
+It declares its identity and `devilution.diablo@1.379.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1725,6 +1725,12 @@ world mutations change a projected object layer. Objects whose mapped cell and
 authored behavior remain unchanged preserve their authoritative state; stale
 entities are removed and newly mapped cells are materialized deterministically.
 
+Schema 1.379 extends `native_dun_objects.tsv` to ordinary runtime levels used by
+quest and composite-map paths. Ordinary-level rows use `level_id` or
+`level_symbol` and a separate reserved entity range; legacy set-level rows retain
+`set_level_id`/`set_level_symbol` plus `active_map`. Each row must target exactly
+one level kind, and unmapped native values remain inert.
+
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
 the native `_qvar2` conversation transition, consumes Brown Suit (2104), and
@@ -2483,7 +2489,7 @@ the complete target header even when they upsert only one row.
 | `objects.tsv` | `entity_id` | Optional `template_only` rows are validated and available for set-level/native-DUN behavior cloning but are excluded from ordinary world placement; rows omitted from the column or marked `0` retain the full world-object behavior contract. |
 | `world_mutations.tsv` | `mutation_id` | Validated blocked/missile-blocked cell overlays targeting exactly one ordinary level or native set-level variant; set-level targets use `set_level_id`/`set_level_symbol` and optional `active_map` to resolve the generated runtime level. Optional `geometry_rect_add` and `geometry_rect_remove` values author semicolon-separated `x,y,width,height` rectangles that expand into both movement and missile-blocking geometry; optional `transparency_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native transparency layer; optional `object_layer_rects` values author semicolon-separated `x,y,width,height,value` assignments against a native object layer. |
 | `set_level_objects.tsv` | `placement_id`, `set_level_id`, `object_id` | Validated native fixed-object placements and template footprints for set-level maps, with optional `template_entity_id` linking an authored `objects.tsv` behavior template. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; positions and template rectangles are bounded, duplicate placements are rejected, and template object IDs must match. |
-| `native_dun_objects.tsv` | `set_level_id`, `active_map`, `native_object_id` | Optional explicit mapping from native DUN object-layer values to authoritative object identities, with optional `template_entity_id` behavior cloning. Duplicate mappings, unknown set levels, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
+| `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Duplicate mappings, ambiguous targets, unknown identities, missing native layers, and mismatched templates reject activation; unmapped values remain inert. |
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. |
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
 | `quests.tsv` | `quest_id` | Level-scoped progress requirements, optional stable `quest_symbol`, native initial/completed state, quest-log state, optional `_qvar1`/`_qvar2`/`_qmsg` values, optional first/subsequent dialogue and completion transition variables, optional follow-on quest activation with `completion_activate_quest_symbol` (validated against the composed quest catalog), optional route-entry `_qvar1` marker in `route_activation_variable1`, optional `completion_reward_item_symbol` (validated against the active item catalog), optional `completion_monster_id` (validated against active monster types), optional native Diablo-boss completion, optional single-player pool exclusion state, content-owned towner turn-ins with optional item-consuming `turn_in_activation_only` rows and `turn_in_activation_variable1` markers, active staged item turn-ins gated by `turn_in_required_variable1` and advancing `turn_in_variable1` with `turn_in_progress_only`, one-shot `turn_in_on_completion` stages with optional required/marker `_qvar1` fields, non-consuming item-gated `turn_in_dialogue_only` stages optionally suppressed after `turn_in_blocked_visited_level`, and alternate-item interactions, and unique-monster dialogue definitions with optional item hand-ins, relative unique/normal rewards, and one-time `dialogue_reward_on_activation` rewards. |
@@ -2526,7 +2532,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.378.0"
+    "version": "1.379.0"
   },
   "dependencyConstraints": [
     {
@@ -2558,7 +2564,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.378.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.379.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

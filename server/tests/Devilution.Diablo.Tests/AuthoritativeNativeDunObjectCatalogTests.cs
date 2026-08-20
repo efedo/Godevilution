@@ -23,6 +23,21 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     }
 
     [Fact]
+    public void TsvLoaderParsesOrdinaryLevelTarget()
+    {
+        var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(
+            "native_dun_objects.tsv",
+            "level_id\tlevel_symbol\tnative_object_id\tobject_id\ttemplate_entity_id\n"
+                + "8\tcatacombs\t71\t4001\t0\n");
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal(AuthoritativeNativeDunObjectTargetKind.Level, definition.TargetKind);
+        Assert.Equal(8U, definition.LevelId);
+        Assert.Equal("catacombs", definition.LevelSymbol);
+        Assert.Equal(8U, definition.GetRuntimeLevelId());
+    }
+
+    [Fact]
     public void MaterializesMappedCellsWithDeterministicEntitiesAndTemplateBehavior()
     {
         var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true);
@@ -81,6 +96,41 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
         var @object = Assert.Single(objects);
         Assert.Equal(4U, @object.ObjectId);
         Assert.Equal((0, 0), (@object.PositionX, @object.PositionY));
+    }
+
+    [Fact]
+    public void MaterializesOrdinaryLevelCellsWithSeparateReservedEntityIds()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            8,
+            2,
+            2,
+            nativeObjectLayer: [0, 71, 0, 0]));
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(0, false, 71, 4001, 0) {
+                TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
+                LevelId = 8,
+            },
+        ]);
+
+        var @object = Assert.Single(catalog.LoadAvailableObjects(world));
+
+        Assert.Equal(
+            AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(8, 1),
+            @object.EntityId);
+        Assert.Equal((1, 0), (@object.PositionX, @object.PositionY));
+        Assert.Equal(4001U, @object.ObjectId);
+    }
+
+    [Fact]
+    public void RejectsRowsThatTargetBothOrdinaryAndSetLevels()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeDunObjectCatalog.LoadTsv(
+                "native_dun_objects.tsv",
+                "set_level_id\tlevel_id\tactive_map\tnative_object_id\tobject_id\n"
+                    + "2\t8\t1\t71\t4001\n"));
     }
 
     [Fact]

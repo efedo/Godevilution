@@ -340,18 +340,22 @@ public sealed class DiabloWorldState
             return;
 
         foreach (var definition in nativeDunObjects.Definitions) {
-            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
-                definition.SetLevelId,
-                definition.ActiveMap);
+            var levelId = definition.GetRuntimeLevelId();
             if (!projectedLevels.TryGetValue(levelId, out var level))
                 continue;
             for (var cell = 0; cell < level.NativeObjectLayer.Count; cell++) {
                 if (level.NativeObjectLayer[cell] == definition.NativeObjectId)
                     continue;
-                Objects.Remove(AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(
-                    definition.SetLevelId,
-                    definition.ActiveMap,
-                    cell));
+                var entityId = definition.TargetKind
+                    == AuthoritativeNativeDunObjectTargetKind.SetLevel
+                    ? AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(
+                        definition.SetLevelId,
+                        definition.ActiveMap,
+                        cell)
+                    : AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(
+                        definition.LevelId,
+                        cell);
+                Objects.Remove(entityId);
             }
         }
 

@@ -567,10 +567,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelObjects.ValidateSetLevels(setLevelNames);
         }
         if (nativeDunObjects is not null) {
-            if (setLevelNames is null)
+            if (nativeDunObjects.Definitions.Any(definition =>
+                    definition.TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel)
+                && setLevelNames is null)
                 throw new InvalidDataException(
                     "Native DUN object mappings require set_level_names.tsv.");
-            nativeDunObjects.ValidateSetLevels(setLevelNames);
+            if (setLevelNames is not null)
+                nativeDunObjects.ValidateSetLevels(setLevelNames);
         }
         var setLevelMaps = content.TryGetTable(
             "set_level_maps.tsv",

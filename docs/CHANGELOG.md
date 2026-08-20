@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Extend `native_dun_objects.tsv` mappings to ordinary runtime levels as well
+  as set-level variants, with separate validated identity ranges. Bump the
+  Diablo content schema to 1.379.
+
 - Reconcile mapped native DUN object entities when active world mutations change
   projected object-layer cells. Unchanged mapped objects preserve authoritative
   state, stale entities are removed, and newly mapped cells are materialized

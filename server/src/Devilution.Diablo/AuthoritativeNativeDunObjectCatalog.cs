@@ -2,6 +2,13 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Runtime level target kind for one native DUN object mapping. */
+public enum AuthoritativeNativeDunObjectTargetKind
+{
+    SetLevel,
+    Level,
+}
+
 /** Explicit mapping from a native DUN object-layer value to an authored object. */
 public sealed record AuthoritativeNativeDunObjectDefinition(
     int SetLevelId,
@@ -10,17 +17,41 @@ public sealed record AuthoritativeNativeDunObjectDefinition(
     uint ObjectId,
     uint TemplateEntityId)
 {
+    private const uint OrdinaryEntityIdBase = 0x6900_0000;
+
     public string SetLevelSymbol { get; init; } = string.Empty;
+
+    /** Selects the legacy set-level target or an ordinary runtime level target. */
+    public AuthoritativeNativeDunObjectTargetKind TargetKind { get; init; }
+        = AuthoritativeNativeDunObjectTargetKind.SetLevel;
+
+    /** Ordinary runtime level identity when TargetKind is Level. */
+    public uint LevelId { get; init; }
+
+    /** Stable ordinary-level symbol retained for diagnostics. */
+    public string LevelSymbol { get; init; } = string.Empty;
 
     public AuthoritativeNativeDunObjectDefinition Validate()
     {
-        if (SetLevelId is < 0 or > 8
+        if (!Enum.IsDefined(TargetKind)
             || NativeObjectId == 0
-            || ObjectId == 0) {
+            || ObjectId == 0
+            || (TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel
+                && SetLevelId is < 0 or > 8)
+            || (TargetKind == AuthoritativeNativeDunObjectTargetKind.Level
+                && LevelId > (uint.MaxValue - OrdinaryEntityIdBase)
+                    / (80U * 80U))) {
             throw new InvalidDataException(
-                "Native DUN object definitions contain an invalid set-level or object identity.");
+                "Native DUN object definitions contain an invalid level or object identity.");
         }
         return this;
+    }
+
+    public uint GetRuntimeLevelId()
+    {
+        return TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel
+            ? AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(SetLevelId, ActiveMap)
+            : LevelId;
     }
 }
 
@@ -29,6 +60,9 @@ public sealed class AuthoritativeNativeDunObjectCatalog
 {
     /** Reserved entity-ID range for objects discovered in native DUN layers. */
     public const uint RuntimeObjectEntityIdBase = 0x6800_0000;
+
+    /** Reserved entity-ID range for objects discovered in ordinary level DUN layers. */
+    public const uint RuntimeLevelObjectEntityIdBase = 0x6900_0000;
 
     private const int RuntimeLevelCellStride = 80 * 80;
 
@@ -42,16 +76,20 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             .Select(definition => definition.Validate())
             .ToArray();
         if (values.GroupBy(definition => (
+                definition.TargetKind,
                 definition.SetLevelId,
                 definition.ActiveMap,
+                definition.LevelId,
                 definition.NativeObjectId))
             .Any(group => group.Count() != 1)) {
             throw new InvalidDataException(
                 "Native DUN object definitions contain duplicate layer mappings.");
         }
         this.definitions = values
-            .OrderBy(definition => definition.SetLevelId)
+            .OrderBy(definition => definition.TargetKind)
+            .ThenBy(definition => definition.SetLevelId)
             .ThenBy(definition => definition.ActiveMap)
+            .ThenBy(definition => definition.LevelId)
             .ThenBy(definition => definition.NativeObjectId)
             .ToArray();
     }
@@ -61,7 +99,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
 
     /**
      * Materializes every explicitly mapped nonzero native DUN object cell in a
-     * loaded set-level variant. Unmapped native IDs remain inert and are not
+     * loaded runtime level. Unmapped native IDs remain inert and are not
      * guessed as gameplay objects.
      */
     public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
@@ -94,14 +132,12 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         var levelsById = levels.ToDictionary(level => level.LevelId);
         var objects = new List<AuthoritativeWorldObject>();
         foreach (var definition in definitions) {
-            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
-                definition.SetLevelId,
-                definition.ActiveMap);
+            var levelId = definition.GetRuntimeLevelId();
             if (!levelsById.TryGetValue(levelId, out var level))
                 continue;
             if (level.NativeObjectLayer.Count == 0)
                 throw new InvalidDataException(
-                    $"Native DUN object mapping for set level {definition.SetLevelId} requires a native object layer.");
+                    $"Native DUN object mapping for level {levelId} requires a native object layer.");
             if (level.NativeObjectLayer.Count != level.Width * level.Height)
                 throw new InvalidDataException(
                     $"Native DUN object layer for level {levelId} has an invalid length.");
@@ -111,10 +147,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                     continue;
                 var positionX = cell % level.Width;
                 var positionY = cell / level.Width;
-                var entityId = GetRuntimeEntityId(
-                    definition.SetLevelId,
-                    definition.ActiveMap,
-                    cell);
+                var entityId = GetRuntimeEntityId(definition, cell);
                 if (!usedEntityIds.Add(entityId)) {
                     if (preserveExisting
                         && existingByEntityId.TryGetValue(entityId, out var existing)
@@ -132,11 +165,11 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                             definition.TemplateEntityId,
                             out var template)) {
                         throw new InvalidDataException(
-                            $"Native DUN object mapping for set level {definition.SetLevelId} references unknown template entity {definition.TemplateEntityId}.");
+                            $"Native DUN object mapping for level {levelId} references unknown template entity {definition.TemplateEntityId}.");
                     }
                     if (template.ObjectId != definition.ObjectId)
                         throw new InvalidDataException(
-                            $"Native DUN object mapping for set level {definition.SetLevelId} template {definition.TemplateEntityId} uses object {template.ObjectId}, expected {definition.ObjectId}.");
+                            $"Native DUN object mapping for level {levelId} template {definition.TemplateEntityId} uses object {template.ObjectId}, expected {definition.ObjectId}.");
                     objects.Add(template.WithPlacement(
                         entityId,
                         levelId,
@@ -159,6 +192,8 @@ public sealed class AuthoritativeNativeDunObjectCatalog
     {
         ArgumentNullException.ThrowIfNull(setLevels);
         foreach (var definition in definitions) {
+            if (definition.TargetKind != AuthoritativeNativeDunObjectTargetKind.SetLevel)
+                continue;
             if (!setLevels.TryGet(definition.SetLevelId, out _))
                 throw new InvalidDataException(
                     $"Native DUN object definition {definition.NativeObjectId} references an unknown set level.");
@@ -179,6 +214,24 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             + (uint)cell);
     }
 
+    public static uint GetRuntimeEntityId(uint levelId, int cell)
+    {
+        if (cell is < 0 or >= RuntimeLevelCellStride)
+            throw new ArgumentOutOfRangeException(nameof(cell));
+        return checked(RuntimeLevelObjectEntityIdBase
+            + (levelId * (uint)RuntimeLevelCellStride)
+            + (uint)cell);
+    }
+
+    private static uint GetRuntimeEntityId(
+        AuthoritativeNativeDunObjectDefinition definition,
+        int cell)
+    {
+        return definition.TargetKind == AuthoritativeNativeDunObjectTargetKind.SetLevel
+            ? GetRuntimeEntityId(definition.SetLevelId, definition.ActiveMap, cell)
+            : GetRuntimeEntityId(definition.LevelId, cell);
+    }
+
     public static AuthoritativeNativeDunObjectCatalog LoadTsv(
         string sourcePath,
         string contents,
@@ -197,6 +250,39 @@ public sealed class AuthoritativeNativeDunObjectCatalog
         if (nativeObjectId is 0 or > ushort.MaxValue)
             throw new InvalidDataException(
                 $"Native DUN object row {row.LineNumber} contains an invalid native object ID.");
+        var hasSetLevel = (row.TryGet("set_level_id", out var setLevelId)
+                && !string.IsNullOrWhiteSpace(setLevelId))
+            || (row.TryGet("set_level_symbol", out var setLevelSymbol)
+                && !string.IsNullOrWhiteSpace(setLevelSymbol));
+        var hasLevel = (row.TryGet("level_id", out var levelId)
+                && !string.IsNullOrWhiteSpace(levelId))
+            || (row.TryGet("level_symbol", out var levelSymbol)
+                && !string.IsNullOrWhiteSpace(levelSymbol));
+        if (hasSetLevel == hasLevel)
+            throw new InvalidDataException(
+                $"Native DUN object row {row.LineNumber} must target exactly one set-level or ordinary level.");
+
+        if (hasLevel) {
+            if (row.TryGet("active_map", out var activeMap)
+                && !string.IsNullOrWhiteSpace(activeMap))
+                throw new InvalidDataException(
+                    $"Native DUN object row {row.LineNumber} cannot use active_map with an ordinary level target.");
+            return new AuthoritativeNativeDunObjectDefinition(
+                0,
+                row.OptionalBoolean("active_map"),
+                (ushort)nativeObjectId,
+                row.RequiredUInt32("object_id"),
+                row.OptionalUInt32("template_entity_id")) {
+                TargetKind = AuthoritativeNativeDunObjectTargetKind.Level,
+                LevelId = AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "level_id",
+                    "level_symbol"),
+                LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
+            };
+        }
+
         return new AuthoritativeNativeDunObjectDefinition(
             AuthoritativeSetLevelIdentity.ResolveOptional(
                 row,

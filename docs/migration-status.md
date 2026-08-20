@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,418, Server 414, and Godot protocol 145. These counts are a dated
+1,421, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -298,6 +298,11 @@ future run.
   object-layer mutations. Unchanged mapped entities preserve authoritative
   state, stale cells are removed, and newly mapped cells are materialized with
   deterministic reserved IDs.
+
+- Schema 1.379 extends explicit native-DUN object mappings to ordinary runtime
+  levels used by quest and composite-map paths. Set-level mappings retain their
+  existing identity contract, while ordinary-level mappings use a separate
+  reserved entity range and require an explicit level identity.
 
 - Schema 1.377 extends authored mutations with validated `object_layer_rects`
   assignments. Effective native object-layer values now survive map mutation
