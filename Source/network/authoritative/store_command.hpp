@@ -42,6 +42,13 @@ enum class ServerBackedCastSourceKind {
 	ConsumableItem,
 };
 
+enum class ServerBackedPlayerAttribute {
+	Strength,
+	Magic,
+	Dexterity,
+	Vitality,
+};
+
 struct ServerBackedCastSource {
 	ServerBackedCastSourceKind kind = ServerBackedCastSourceKind::Unspecified;
 	std::optional<ServerBackedItemReference> item;
@@ -85,6 +92,7 @@ struct ServerBackedCastSource {
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeTalkToQuestCommand(uint32_t questId, uint32_t targetEntityId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeTurnInQuestCommand(uint32_t questId, uint32_t townerId, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyModeCommand(bool friendlyMode, uint64_t requestedTick);
+[[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeAllocateAttributeCommand(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick);
 [[nodiscard]] tl::expected<::devilution::protocol::v1::Command, std::string> MakeRestartTownCommand(uint64_t requestedTick);
 
 } // namespace devilution::authoritative

@@ -109,7 +109,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         DiabloDifficulty difficulty = DiabloDifficulty.Normal,
         AuthoritativeMonsterMissileCatalog? startingMonsterMissiles = null,
         AuthoritativePlayerClassDefinition? startingPlayerClass = null,
-        AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null)
+        AuthoritativeItemQuestEffectCatalog? startingItemQuestEffects = null,
+        uint startingStatPoints = 0)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -172,7 +173,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             manaShieldActive: startingManaShieldActive,
             reflectCharges: startingReflectCharges,
             items: startingItems,
-            playerClass: startingPlayerClass);
+            playerClass: startingPlayerClass,
+            statPoints: startingStatPoints);
         playerTemplateFactory = (_, _) => compatibilityTemplate;
         runtime = simulation.CreateRuntime(compatibilityTemplate);
         this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec();
@@ -351,6 +353,11 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     new DiabloSetFriendlyModeIntent(
                         command.SetFriendlyModeRequested.FriendlyMode),
                     appliedTick),
+                Command.IntentOneofCase.AllocateAttributeRequested => ExecuteWorldIntent(
+                    player,
+                    participants,
+                    CreateAllocateAttributeIntent(command.AllocateAttributeRequested),
+                    appliedTick),
                 Command.IntentOneofCase.RestartTownRequested => ExecuteWorldIntent(
                     player,
                     participants,
@@ -359,6 +366,19 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 _ => new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
                     CommandExecutionResult.Rejected(CommandRejectReason.Malformed)),
             });
+    }
+
+    private static DiabloAllocateAttributeIntent CreateAllocateAttributeIntent(
+        AllocateAttributeRequested request)
+    {
+        var attribute = request.Attribute switch {
+            PlayerAttribute.Strength => DiabloPlayerAttribute.Strength,
+            PlayerAttribute.Magic => DiabloPlayerAttribute.Magic,
+            PlayerAttribute.Dexterity => DiabloPlayerAttribute.Dexterity,
+            PlayerAttribute.Vitality => DiabloPlayerAttribute.Vitality,
+            _ => (DiabloPlayerAttribute)0,
+        };
+        return new DiabloAllocateAttributeIntent(attribute, request.Amount);
     }
 
     public StorePlayerSnapshot GetPlayerState(string sessionId)

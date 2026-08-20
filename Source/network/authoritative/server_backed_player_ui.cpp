@@ -22,7 +22,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player level is outside the native range.");
 	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
-	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX))
+	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX))
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
 	if (snapshot.characterClassId > static_cast<uint32_t>(HeroClass::LAST))
 		return tl::make_unexpected("Server-backed player class is outside the native range.");
@@ -168,6 +168,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
 	player._pGold = static_cast<int>(snapshot.gold);
 	player._pExperience = snapshot.experience;
+	player._pStatPts = static_cast<int>(snapshot.statPoints);
 	player.pManaShield = snapshot.manaShieldActive;
 	player._pInfraFlag = std::any_of(snapshot.statusEffects.begin(), snapshot.statusEffects.end(), [](const ProjectedStatusEffect &effect) {
 		return effect.behavior == 1;

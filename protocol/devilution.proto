@@ -128,9 +128,10 @@ message Command {
 		DisarmTrapRequested disarm_trap_requested = 29;
 		TalkToQuestRequested talk_to_quest_requested = 30;
 		ReadBookRequested read_book_requested = 31;
-		AutoEquipItemRequested auto_equip_item_requested = 32;
-		UseConsumableRequested use_consumable_requested = 33;
+	AutoEquipItemRequested auto_equip_item_requested = 32;
+	UseConsumableRequested use_consumable_requested = 33;
 	TurnInQuestRequested turn_in_quest_requested = 34;
+	AllocateAttributeRequested allocate_attribute_requested = 35;
 	}
 }
 
@@ -309,6 +310,20 @@ message SetFriendlyModeRequested {
 	bool friendly_mode = 1;
 }
 
+/** Spends server-owned level-up points on one native primary attribute. */
+message AllocateAttributeRequested {
+	PlayerAttribute attribute = 1;
+	uint32 amount = 2;
+}
+
+enum PlayerAttribute {
+	PLAYER_ATTRIBUTE_UNSPECIFIED = 0;
+	PLAYER_ATTRIBUTE_STRENGTH = 1;
+	PLAYER_ATTRIBUTE_MAGIC = 2;
+	PLAYER_ATTRIBUTE_DEXTERITY = 3;
+	PLAYER_ATTRIBUTE_VITALITY = 4;
+}
+
 message PlayerItemReference {
 	PlayerItemLocation location = 1;
 	uint32 slot = 2;
@@ -480,6 +495,8 @@ message PlayerSnapshot {
 	uint32 diablo_kill_level = 34;
 	// Server-owned native _pLvlVisited flags, keyed by authored level ID.
 	repeated uint32 visited_level_ids = 35;
+	// Server-owned native level-up points available for primary attributes.
+	uint32 stat_points = 36;
 }
 
 enum PlayerDirection {

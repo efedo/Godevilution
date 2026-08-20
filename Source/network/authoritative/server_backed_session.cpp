@@ -362,6 +362,11 @@ tl::expected<void, std::string> ServerBackedSession::SetFriendlyMode(bool friend
 	return SubmitGameplayCommand(MakeSetFriendlyModeCommand(friendlyMode, requestedTick), nowMs);
 }
 
+tl::expected<void, std::string> ServerBackedSession::AllocateAttribute(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick, uint64_t nowMs)
+{
+	return SubmitGameplayCommand(MakeAllocateAttributeCommand(attribute, amount, requestedTick), nowMs);
+}
+
 tl::expected<void, std::string> ServerBackedSession::RestartTown(uint64_t requestedTick, uint64_t nowMs)
 {
 	return SubmitGameplayCommand(MakeRestartTownCommand(requestedTick), nowMs);

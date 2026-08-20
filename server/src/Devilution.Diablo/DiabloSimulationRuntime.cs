@@ -75,7 +75,8 @@ public sealed class DiabloPlayerTemplate
         int baseManaMaximum = -1,
         AuthoritativePlayerClassDefinition? playerClass = null,
         DiabloPlayerAbilityKind abilityKind = DiabloPlayerAbilityKind.None,
-        AuthoritativeItemCatalog? items = null)
+        AuthoritativeItemCatalog? items = null,
+        uint statPoints = 0)
     {
         Gold = gold;
         Experience = experience;
@@ -121,6 +122,7 @@ public sealed class DiabloPlayerTemplate
             : DiabloPlayerName.RequireValid(characterName, nameof(characterName));
         ManaShieldActive = manaShieldActive;
         ReflectCharges = reflectCharges;
+        StatPoints = statPoints;
     }
 
     public uint Gold { get; }
@@ -155,6 +157,7 @@ public sealed class DiabloPlayerTemplate
     public string CharacterName { get; }
     public bool ManaShieldActive { get; }
     public uint ReflectCharges { get; }
+    public uint StatPoints { get; }
 
     /** Returns a fresh-template identity without mutating the content-owned loadout. */
     public DiabloPlayerTemplate WithCharacterName(string characterName)
@@ -191,7 +194,8 @@ public sealed class DiabloPlayerTemplate
             BaseManaMaximum,
             PlayerClass,
             AbilityKind,
-            Items);
+            Items,
+            statPoints: StatPoints);
     }
 
     /** Creates fresh mutable module state from this immutable template. */
@@ -229,7 +233,8 @@ public sealed class DiabloPlayerTemplate
             BaseManaMaximum,
             PlayerClass,
             AbilityKind,
-            Items);
+            Items,
+            statPoints: StatPoints);
         player.RecalculateEquipmentAttributes();
         player.RecalculateEquipmentArmor();
         return player;

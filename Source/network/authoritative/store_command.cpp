@@ -459,6 +459,37 @@ tl::expected<::devilution::protocol::v1::Command, std::string> MakeSetFriendlyMo
 	return command;
 }
 
+tl::expected<::devilution::protocol::v1::Command, std::string> MakeAllocateAttributeCommand(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick)
+{
+	if (amount == 0)
+		return tl::make_unexpected("Attribute allocation amount must be positive.");
+
+	::devilution::protocol::v1::PlayerAttribute protocolAttribute;
+	switch (attribute) {
+	case ServerBackedPlayerAttribute::Strength:
+		protocolAttribute = ::devilution::protocol::v1::PLAYER_ATTRIBUTE_STRENGTH;
+		break;
+	case ServerBackedPlayerAttribute::Magic:
+		protocolAttribute = ::devilution::protocol::v1::PLAYER_ATTRIBUTE_MAGIC;
+		break;
+	case ServerBackedPlayerAttribute::Dexterity:
+		protocolAttribute = ::devilution::protocol::v1::PLAYER_ATTRIBUTE_DEXTERITY;
+		break;
+	case ServerBackedPlayerAttribute::Vitality:
+		protocolAttribute = ::devilution::protocol::v1::PLAYER_ATTRIBUTE_VITALITY;
+		break;
+	default:
+		return tl::make_unexpected("Unknown player attribute.");
+	}
+
+	::devilution::protocol::v1::Command command;
+	command.set_requested_tick(requestedTick);
+	auto *request = command.mutable_allocate_attribute_requested();
+	request->set_attribute(protocolAttribute);
+	request->set_amount(amount);
+	return command;
+}
+
 tl::expected<::devilution::protocol::v1::Command, std::string> MakeRestartTownCommand(uint64_t requestedTick)
 {
 	protocol::v1::Command command;

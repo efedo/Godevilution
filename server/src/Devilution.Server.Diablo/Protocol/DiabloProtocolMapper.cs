@@ -392,6 +392,7 @@ internal static class DiabloProtocolMapper
             LevelId = state.LevelId,
             Experience = state.Experience,
             DiabloKillLevel = state.DiabloKillLevel,
+            StatPoints = state.StatPoints,
             VisitedLevelIds = { state.VisitedLevelIds.OrderBy(levelId => levelId) },
             Attributes = new PlayerAttributesSnapshot {
                 Strength = ToProtocolAttribute(state.Attributes.Strength),
@@ -947,6 +948,7 @@ internal static class DiabloProtocolMapper
             ManaShieldActive = source.ManaShieldActive,
             ReflectCharges = source.ReflectCharges,
             DiabloKillLevel = source.DiabloKillLevel,
+            StatPoints = source.StatPoints,
             VisitedLevelIds = source.VisitedLevelIds.ToArray(),
             AbilitySpellId = source.AbilitySpellId,
             AbilityKind = (DiabloPlayerAbilityKind)source.AbilityKind,

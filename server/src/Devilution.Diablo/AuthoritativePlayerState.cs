@@ -123,6 +123,15 @@ public sealed record OwnedStoreItem(
 
 public sealed record PlayerAttributeState(int Base, int Current);
 
+/** Native primary attributes that can receive server-owned level-up points. */
+public enum DiabloPlayerAttribute
+{
+    Strength = 1,
+    Magic = 2,
+    Dexterity = 3,
+    Vitality = 4,
+}
+
 public sealed record PlayerAttributesState(
     PlayerAttributeState Strength,
     PlayerAttributeState Magic,
@@ -188,6 +197,9 @@ public sealed record StorePlayerSnapshot(
     public uint ReflectCharges { get; init; }
     /** Native persistent hero rank set after a single-player Diablo defeat. */
     public uint DiabloKillLevel { get; init; }
+
+    /** Server-owned level-up points available for primary attributes. */
+    public uint StatPoints { get; init; }
     /** Native per-player dungeon visitation flags used by authored quest gates. */
     public IReadOnlyList<uint> VisitedLevelIds { get; init; } = [];
     public uint AbilitySpellId { get; init; }
@@ -264,7 +276,8 @@ public sealed class AuthoritativePlayerState(
     AuthoritativeItemCatalog? items = null,
     int maximumAttribute = AuthoritativeEquipmentAttributeRules.NativeMaximumAttribute,
     uint diabloKillLevel = 0,
-    IReadOnlyList<uint>? visitedLevelIds = null)
+    IReadOnlyList<uint>? visitedLevelIds = null,
+    uint statPoints = 0)
 {
     public uint Gold { get; set; } = gold;
 
@@ -392,6 +405,9 @@ public sealed class AuthoritativePlayerState(
 
     public uint EntityId { get; set; }
 
+    /** Server-owned level-up points available for primary attributes. */
+    public uint StatPoints { get; set; } = statPoints;
+
     public int Mana { get; set; } = mana;
 
     /** Native base mana maximum, before equipment conversions. */
@@ -506,6 +522,62 @@ public sealed class AuthoritativePlayerState(
             Mana = ManaMaximum;
         if (restoreHellfireResource && action == DiabloItemActionKind.IncreaseVitality)
             Life = LifeMaximum;
+        return true;
+    }
+
+    /** Spends level-up points on one native primary attribute atomically. */
+    public bool AllocateAttribute(DiabloPlayerAttribute attribute, uint amount)
+    {
+        if (!Enum.IsDefined(attribute) || amount == 0 || amount > StatPoints)
+            return false;
+
+        var attributes = Attributes;
+        var current = attribute switch {
+            DiabloPlayerAttribute.Strength => attributes.Strength,
+            DiabloPlayerAttribute.Magic => attributes.Magic,
+            DiabloPlayerAttribute.Dexterity => attributes.Dexterity,
+            DiabloPlayerAttribute.Vitality => attributes.Vitality,
+            _ => throw new ArgumentOutOfRangeException(nameof(attribute)),
+        };
+        var maximum = attribute switch {
+            DiabloPlayerAttribute.Strength => PlayerClass?.MaximumStrength,
+            DiabloPlayerAttribute.Magic => PlayerClass?.MaximumMagic,
+            DiabloPlayerAttribute.Dexterity => PlayerClass?.MaximumDexterity,
+            DiabloPlayerAttribute.Vitality => PlayerClass?.MaximumVitality,
+            _ => null,
+        } ?? MaximumAttribute;
+        var available = Math.Max(maximum - current.Base, 0);
+        if (amount > (uint)available)
+            return false;
+
+        var delta = checked((int)amount);
+        var updated = current with {
+            Base = checked(current.Base + delta),
+            Current = Math.Clamp(checked(current.Current + delta), 0, MaximumAttribute),
+        };
+        Attributes = attribute switch {
+            DiabloPlayerAttribute.Strength => attributes with { Strength = updated },
+            DiabloPlayerAttribute.Magic => attributes with { Magic = updated },
+            DiabloPlayerAttribute.Dexterity => attributes with { Dexterity = updated },
+            DiabloPlayerAttribute.Vitality => attributes with { Vitality = updated },
+            _ => attributes,
+        };
+        StatPoints -= amount;
+
+        if (attribute == DiabloPlayerAttribute.Magic) {
+            var resource = checked(delta * (PlayerClass?.ManaPerMagicQ6 ?? 0));
+            BaseManaMaximum = checked(BaseManaMaximum + resource);
+            ManaMaximum = checked(ManaMaximum + resource);
+            if (!AuthoritativeEquipmentManaRules.HasNoManaItem(Equipment))
+                Mana = checked(Mana + resource);
+        } else if (attribute == DiabloPlayerAttribute.Vitality) {
+            var resource = checked(delta * (PlayerClass?.LifePerVitalityQ6 ?? 0));
+            BaseLifeMaximum = checked(BaseLifeMaximum + resource);
+            LifeMaximum = checked(LifeMaximum + resource);
+            Life = checked(Life + resource);
+        }
+
+        RecalculateEquipmentResources();
         return true;
     }
 

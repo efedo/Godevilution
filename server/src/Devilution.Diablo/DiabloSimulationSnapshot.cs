@@ -481,6 +481,7 @@ public sealed partial class DiabloSimulation
             ManaShieldActive = player.ManaShieldActive,
             ReflectCharges = player.ReflectCharges,
             DiabloKillLevel = player.DiabloKillLevel,
+            StatPoints = player.StatPoints,
             VisitedLevelIds = player.VisitedLevelIds
                 .Append(player.LevelId)
                 .Distinct()
@@ -1699,6 +1700,7 @@ public sealed partial class DiabloSimulation
         destination.ManaShieldActive = source.ManaShieldActive;
         destination.ReflectCharges = source.ReflectCharges;
         destination.DiabloKillLevel = source.DiabloKillLevel;
+        destination.StatPoints = source.StatPoints;
         destination.VisitedLevelIds.Clear();
         destination.VisitedLevelIds.UnionWith(
             source.VisitedLevelIds is { Count: > 0 }

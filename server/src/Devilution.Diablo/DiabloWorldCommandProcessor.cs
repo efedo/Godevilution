@@ -118,6 +118,7 @@ public sealed class DiabloWorldCommandProcessor
                 turnIn.QuestId,
                 turnIn.TownerId),
             DiabloSetFriendlyModeIntent mode => SetFriendlyMode(player, mode.FriendlyMode),
+            DiabloAllocateAttributeIntent allocation => AllocateAttribute(player, allocation),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
     }
@@ -2330,6 +2331,19 @@ public sealed class DiabloWorldCommandProcessor
     {
         player.FriendlyMode = friendlyMode;
         return DiabloWorldIntentResult.Accepted;
+    }
+
+    private static DiabloWorldIntentResult AllocateAttribute(
+        AuthoritativePlayerState player,
+        DiabloAllocateAttributeIntent allocation)
+    {
+        if (!Enum.IsDefined(allocation.Attribute) || allocation.Amount == 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        if (allocation.Amount > player.StatPoints)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+        return player.AllocateAttribute(allocation.Attribute, allocation.Amount)
+            ? DiabloWorldIntentResult.Accepted
+            : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
     }
 
 }

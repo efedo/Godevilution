@@ -28,6 +28,11 @@ public sealed record DiabloTurnInQuestIntent(uint QuestId, uint TownerId) : Diab
 
 public sealed record DiabloSetFriendlyModeIntent(bool FriendlyMode) : DiabloWorldIntent;
 
+/** Spends server-owned level-up points on one native primary attribute. */
+public sealed record DiabloAllocateAttributeIntent(
+    DiabloPlayerAttribute Attribute,
+    uint Amount) : DiabloWorldIntent;
+
 public sealed record DiabloRestartTownIntent : DiabloWorldIntent;
 
 /** Result and transient events from one module-owned world transition. */

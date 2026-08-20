@@ -88,6 +88,7 @@ public:
 	/** Returns the lowest-ID active quest authored for a projected unique monster. */
 	[[nodiscard]] std::optional<uint32_t> ActiveQuestForMonster(uint32_t monsterEntityId) const noexcept;
 	tl::expected<void, std::string> SetFriendlyMode(bool friendlyMode, uint64_t requestedTick, uint64_t nowMs);
+	tl::expected<void, std::string> AllocateAttribute(ServerBackedPlayerAttribute attribute, uint32_t amount, uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> RestartTown(uint64_t requestedTick, uint64_t nowMs);
 	tl::expected<void, std::string> Poll(uint64_t nowMs);
 

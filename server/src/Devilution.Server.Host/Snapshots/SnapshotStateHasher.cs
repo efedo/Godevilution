@@ -156,6 +156,10 @@ public static class SnapshotStateHasher
             }
             hasher.AppendUInt32(player.Gold);
             hasher.AppendUInt32(player.Experience);
+            if (player.StatPoints != 0) {
+                hasher.AppendString("godevilution-stat-points-v1");
+                hasher.AppendUInt32(player.StatPoints);
+            }
             hasher.AppendUInt32(player.ActiveStoreId);
 
             var attributes = player.Attributes ?? new PlayerAttributesSnapshot();

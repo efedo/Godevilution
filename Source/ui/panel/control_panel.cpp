@@ -748,6 +748,28 @@ void ReleaseChrBtns(bool addAllStatPoints)
 			int statPointsToAdd = 1;
 			if (addAllStatPoints)
 				statPointsToAdd = CapStatPointsToAdd(myPlayer._pStatPts, myPlayer, attribute);
+		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				const auto serverAttribute = [&]() {
+					switch (attribute) {
+					case CharacterAttribute::Strength:
+						return authoritative::ServerBackedPlayerAttribute::Strength;
+					case CharacterAttribute::Magic:
+						return authoritative::ServerBackedPlayerAttribute::Magic;
+					case CharacterAttribute::Dexterity:
+						return authoritative::ServerBackedPlayerAttribute::Dexterity;
+					case CharacterAttribute::Vitality:
+						return authoritative::ServerBackedPlayerAttribute::Vitality;
+					}
+					return authoritative::ServerBackedPlayerAttribute::Strength;
+				}();
+				if (statPointsToAdd > 0) {
+					if (auto result = authoritative::GetServerBackedRuntime().AllocateAttribute(serverAttribute, static_cast<uint32_t>(statPointsToAdd), 0, SDL_GetTicks()); !result.has_value())
+						LogError("Server-backed attribute allocation failed: {}", result.error());
+				}
+				continue;
+			}
+		#endif
 			switch (attribute) {
 			case CharacterAttribute::Strength:
 				NetSendCmdParam1(true, CMD_ADDSTR, statPointsToAdd);

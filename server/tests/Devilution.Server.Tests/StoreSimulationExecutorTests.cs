@@ -11,6 +11,54 @@ namespace Devilution.Server.Tests;
 public sealed class StoreSimulationExecutorTests
 {
     [Fact]
+    public void AllocateAttributeSpendsServerOwnedPointsAndProjectsResources()
+    {
+        var attributes = new PlayerAttributesState(
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(10, 10),
+            new PlayerAttributeState(10, 10));
+        var executor = new StoreSimulationExecutor(
+            CreateCatalog(),
+            startingGold: 0,
+            startingAttributes: attributes,
+            startingStatPoints: 3);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            AllocateAttributeRequested = new AllocateAttributeRequested {
+                Attribute = PlayerAttribute.Vitality,
+                Amount = 2,
+            },
+        }, currentTick: 1);
+        var state = executor.GetPlayerState("player-a");
+
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Equal(1U, state.StatPoints);
+        Assert.Equal(12, state.Attributes.Vitality.Base);
+        Assert.Equal(12, state.Attributes.Vitality.Current);
+    }
+
+    [Fact]
+    public void AllocateAttributeRejectsOverspendingWithoutMutation()
+    {
+        var executor = new StoreSimulationExecutor(CreateCatalog(), startingGold: 0, startingStatPoints: 1);
+        var server = new AuthoritativeCommandServer(executor);
+
+        var result = server.Process("player-a", new Command {
+            AllocateAttributeRequested = new AllocateAttributeRequested {
+                Attribute = PlayerAttribute.Strength,
+                Amount = 2,
+            },
+        }, currentTick: 1);
+        var state = executor.GetPlayerState("player-a");
+
+        Assert.Equal(CommandStatus.Rejected, result.Status);
+        Assert.Equal(CommandRejectReason.InsufficientResources, result.RejectReason);
+        Assert.Equal(1U, state.StatPoints);
+    }
+
+    [Fact]
     public void PurchaseDeductsGoldAndConsumesStockOnceAcrossRetries()
     {
         var catalog = CreateCatalog(new StoreItem(0, 42, 75));

@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add server-owned character attribute allocation through the shared protocol.
+  Connected native character-panel allocation now spends projected stat points
+  through an authoritative intent; disconnected sessions retain legacy
+  `CMD_ADD*` behavior.
+
 - Route connected native stash-close drops through the authoritative held-item
   drop intent when an adjacent world cell is available; legacy `CMD_PUTITEM`
   remains the disconnected compatibility path.

@@ -64,6 +64,17 @@ TEST(ServerBackedVendorCommand, BuildsCellTargetedAttackIntent)
 	EXPECT_EQ(command->attack_requested().target_entity_id(), 0U);
 }
 
+TEST(ServerBackedVendorCommand, BuildsAttributeAllocationIntent)
+{
+	const auto command = MakeAllocateAttributeCommand(ServerBackedPlayerAttribute::Vitality, 5, 23);
+	ASSERT_TRUE(command.has_value()) << command.error();
+	ASSERT_TRUE(command->has_allocate_attribute_requested());
+	EXPECT_EQ(command->requested_tick(), 23U);
+	EXPECT_EQ(command->allocate_attribute_requested().attribute(), protocol::PLAYER_ATTRIBUTE_VITALITY);
+	EXPECT_EQ(command->allocate_attribute_requested().amount(), 5U);
+	EXPECT_FALSE(MakeAllocateAttributeCommand(ServerBackedPlayerAttribute::Strength, 0, 23).has_value());
+}
+
 TEST(ServerBackedVendorCommand, RejectsSentinelInventoryValues)
 {
 	EXPECT_FALSE(MakeSellItemCommand(UINT32_MAX, 1).has_value());
