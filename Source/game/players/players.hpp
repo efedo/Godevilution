@@ -234,8 +234,8 @@ struct Player : CombatActor {
 
 	// Contains Data (Sprites) for the different Animations
 	std::array<PlayerAnimationData, enum_size<player_graphic>::value> AnimationData;
-	std::array<OptionalOwnedClxSpriteSheet, 2> PartyInfoSprites;
-	std::array<std::string, 2> PartyInfoSpriteLocations;
+	mutable std::array<OptionalOwnedClxSpriteSheet, 2> PartyInfoSprites;
+	mutable std::array<std::string, 2> PartyInfoSpriteLocations;
 	int8_t _pNFrames;
 	int8_t _pWFrames;
 	int8_t _pAFrames;
@@ -454,7 +454,7 @@ public:
 	// wParam1: First Parameter
 	// wParam2: Second Parameter
 	void UpdatePreviewCelSprite(_cmd_id cmdId, Point point, uint16_t wParam1, uint16_t wParam2);
-	ClxSprite getPortraitSprite(); // Get the current portrait sprite used for the party panel
+	ClxSprite getPortraitSprite() const; // Get the current portrait sprite used for the party panel
 	bool isUnarmed() const;
 
 	[[nodiscard]] uint8_t getCharacterLevel() const { return _pLevel; }

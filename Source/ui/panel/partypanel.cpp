@@ -7,6 +7,7 @@
 
 #include "ui/panel/partypanel.hpp"
 
+#include <algorithm>
 #include <expected.hpp>
 #include <optional>
 
@@ -30,6 +31,10 @@
 #include "tables/playerdat.hpp"
 #include "utils/status_macros.hpp"
 #include "utils/image/surface_to_clx.hpp"
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 
 namespace devilution {
 
@@ -136,6 +141,103 @@ PartySpriteOffset GetClassSpriteOffset(HeroClass hClass)
 	return ClassSpriteOffsets[static_cast<size_t>(hClass)];
 }
 
+void DrawPartyMember(
+	const Surface &out,
+	const Player &player,
+	int displayId,
+	bool interactive,
+	Point &pos,
+	int &currentLongestNameWidth,
+	bool &portraitUnderCursor)
+{
+	const Rectangle currentPortraitRect = { pos, PortraitFrameSize };
+	const Surface gameScreen = out.subregionY(0, gnViewportHeight);
+
+	RenderClxSprite(gameScreen, (*PartyMemberFrame)[0], pos);
+
+	const int lifeTicks = player.life.maximum > 0
+	    ? ((player.life.current * PortraitFrameSize.width) + (player.life.maximum / 2)) / player.life.maximum
+	    : 0;
+	const uint8_t hpBarColor = (player.pManaShield) ? PAL8_YELLOW + 5 : PAL8_RED + 4;
+	DrawBar(gameScreen, { pos, { lifeTicks, HealthBarHeight } }, hpBarColor);
+
+	pos.y += HealthBarHeight;
+
+	const ClxSprite playerPortraitSprite = player.getPortraitSprite();
+	const PartySpriteOffset offsets = GetClassSpriteOffset(player._pClass);
+	Point offset = (player.isOnLevel(0)) ? offsets.inTownOffset : offsets.inDungeonOffset;
+	if (player.life.current <= 0 && player.isUnarmed())
+		offset = offsets.isDeadOffset;
+
+	const Point portraitPos = { ((-(playerPortraitSprite.width() / 2)) + (PortraitFrameSize.width / 2)) + offset.x, offset.y };
+	const Surface frameSubregion = gameScreen.subregion(
+	    pos.x + FrameBorderSize,
+	    pos.y + FrameBorderSize,
+	    PortraitFrameSize.width - (FrameBorderSize * 2),
+	    PortraitFrameSize.height - (FrameBorderSize * 2));
+
+	if (interactive && displayId >= 0 && displayId < MAX_PLRS) {
+		PortraitFrameRects[displayId] = {
+		    { frameSubregion.region.x, frameSubregion.region.y },
+		    { frameSubregion.region.w, frameSubregion.region.h }
+		};
+	}
+
+	RenderClxSprite(frameSubregion, playerPortraitSprite, portraitPos);
+
+	if (displayId >= 0 && static_cast<size_t>(displayId + 1) < (*PlayerTags).numSprites()) {
+		const int tagWidth = (*PlayerTags)[displayId + 1].width();
+		RenderClxSprite(
+		    frameSubregion,
+		    (*PlayerTags)[displayId + 1],
+		    { PortraitFrameSize.width - (tagWidth + (tagWidth / 2)), 0 });
+	}
+
+	if (player.life.current <= 0) {
+		DrawHalfTransparentRectTo(
+		    frameSubregion,
+		    0, 0,
+		    PortraitFrameSize.width,
+		    PortraitFrameSize.height,
+		    PAL8_RED + 4);
+	}
+
+	pos.y += PortraitFrameSize.height;
+
+	const int manaTicks = player.mana.maximum > 0
+	    ? ((player.mana.current * PortraitFrameSize.width) + (player.mana.maximum / 2)) / player.mana.maximum
+	    : 0;
+	DrawBar(gameScreen, { pos, { manaTicks, ManaBarHeight } }, PAL8_BLUE + 3);
+
+	pos.y += ManaBarHeight;
+
+	DrawString(
+	    gameScreen,
+	    player._pName,
+	    pos,
+	    { .flags = UiFlags::ColorGold | UiFlags::Outlined | UiFlags::FontSize12 });
+
+	pos.y += FrameGap + 5;
+
+	if (interactive && currentPortraitRect.contains(MousePosition)) {
+		PortraitIdUnderCursor = displayId;
+		portraitUnderCursor = true;
+	}
+
+	const int width = GetLineWidth(player._pName);
+	if (width >= currentLongestNameWidth)
+		currentLongestNameWidth = width;
+
+	if (pos.y >= GetMainPanel().position.y - PortraitFrameSize.height - 10) {
+		pos.y = PartyPanelPos.y;
+		if (CurrentAutomapManager.GetAutomapActive())
+			pos.y += (FrameGap * 4);
+		if (*GetOptions().Graphics.showFPS)
+			pos.y += FrameGap;
+		pos.x += currentLongestNameWidth + (FrameGap / 2);
+	}
+}
+
 } // namespace
 
 bool PartySidePanelOpen = true;
@@ -177,6 +279,7 @@ void DrawPartyMemberInfoPanel(const Surface &out)
 	}
 
 	Point pos = PartyPanelPos;
+	std::fill_n(PortraitFrameRects, MAX_PLRS, Rectangle {});
 	if (CurrentAutomapManager.GetAutomapActive())
 		pos.y += (FrameGap * 4);
 	if (*GetOptions().Graphics.showFPS)
@@ -306,6 +409,17 @@ void DrawPartyMemberInfoPanel(const Surface &out)
 			pos.x += currentLongestNameWidth + (FrameGap / 2);
 		}
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		authoritative::GetServerBackedRuntime().ForEachRemotePlayer([&](uint32_t entityId, const Player &player) {
+			if (!player.plractive || !player.friendlyMode)
+				return;
+			const int displayId = static_cast<int>(entityId % 3);
+			DrawPartyMember(out, player, displayId, false, pos, currentLongestNameWidth, portraitUnderCursor);
+		});
+	}
+#endif
 
 	if (RightClickedPortraitIndex != -1)
 		HandleRightClickPortait();

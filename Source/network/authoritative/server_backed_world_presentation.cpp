@@ -725,7 +725,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 
 	std::unordered_set<uint32_t> retainedRemotePlayers;
 	for (const auto &snapshot : players) {
-		if (snapshot.entityId == 0 || snapshot.entityId == localEntityId || snapshot.levelId != levelId
+		if (snapshot.entityId == 0 || snapshot.entityId == localEntityId
 		    || !IsValidPlayerClass(snapshot.characterClassId)) {
 			continue;
 		}

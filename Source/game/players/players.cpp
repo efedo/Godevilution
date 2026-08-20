@@ -2238,9 +2238,9 @@ Player *PlayerAtPosition(Point position, bool ignoreMovingPlayers /*= false*/)
 	return &Players[std::abs(playerIndex) - 1];
 }
 
-ClxSprite Player::getPortraitSprite()
+ClxSprite Player::getPortraitSprite() const
 {
-	Player &player = *this;
+	const Player &player = *this;
 	const bool inDungeon = (player.plrlevel != 0);
 
 	const HeroClass cls = GetPlayerSpriteClass(player._pClass);

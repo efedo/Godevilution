@@ -604,6 +604,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	local.characterClassId = 0;
 	ProjectedPlayerSnapshot remote = local;
 	remote.entityId = 2;
+	remote.levelId = 2;
 	remote.positionX = 4;
 	remote.positionY = 5;
 
@@ -616,6 +617,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 	presentation.ForEachRemotePlayer([&](uint32_t entityId, const Player &player) {
 		visitedEntityId = entityId;
 		EXPECT_TRUE(player.plractive);
+		EXPECT_TRUE(player.isOnLevel(2));
 		EXPECT_EQ(player.position.tile.x, remote.positionX);
 		EXPECT_EQ(player.position.tile.y, remote.positionY);
 	});

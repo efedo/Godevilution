@@ -81,9 +81,10 @@ logic. Their authoritative walk, attack, ranged, block, hit, spell, and death
 modes now select the matching native presentation family, authoritative spell
 actions select Fire, Lightning, or Magic families, and authoritative
 weapon/shield/armor slots select native sprite variants, and action animations
-are positioned from authoritative snapshot and action ticks. Interpolation and
-party-panel details remain separate presentation migrations; same-level friendly
-remote projections also draw on the native automap.
+are positioned from authoritative snapshot and action ticks. Same-level friendly
+remote projections also draw on the native automap and party panel. Interpolation,
+party-panel click-to-inspect, and entity routing remain separate presentation
+migrations.
 
 The server now projects the selected class's content-defined wallet, starting
 equipment, belt, inventory, class skill, learned spells, item native indexes,
