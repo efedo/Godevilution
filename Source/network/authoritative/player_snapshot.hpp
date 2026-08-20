@@ -222,6 +222,8 @@ struct ProjectedPlayerSnapshot {
 	uint32_t facingDirection = 0;
 	uint32_t combatMode = 0;
 	uint64_t combatModeEndTick = 0;
+	/** Authoritative server tick used to place presentation animations deterministically. */
+	uint64_t serverTick = 0;
 	std::optional<ProjectedPlayerActionSnapshot> currentAction;
 	ProjectedPlayerAttribute strength;
 	ProjectedPlayerAttribute magic;

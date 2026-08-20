@@ -9,9 +9,10 @@ All notable changes to this fork are documented below.
   consume authoritative walk/attack/block/hit/spell/death modes for native
   graphic selection, select spell families from authoritative action IDs,
   project weapon/shield/armor sprite variants from the authoritative equipment
-  list, draw same-level friendly remote projections on the native automap, and
-  add coverage for retaining, removing, and mapping the projected presentation
-  state.
+  list, position action animations from authoritative snapshot ticks, draw
+  same-level friendly remote projections on the native automap, and add
+  coverage for retaining, removing, timing, and mapping the projected
+  presentation state.
 
 - Add an in-client Godot character setup form. When no resume token or complete
   class/name identity is supplied, the client now collects the identity and

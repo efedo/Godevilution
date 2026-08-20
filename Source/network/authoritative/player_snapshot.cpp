@@ -78,6 +78,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.facingDirection = static_cast<uint32_t>(player->facing_direction()),
 		.combatMode = static_cast<uint32_t>(player->combat_mode()),
 		.combatModeEndTick = player->combat_mode_end_tick(),
+		.serverTick = snapshot.tick(),
 		.strength = { player->attributes().strength().base(), player->attributes().strength().current() },
 		.magic = { player->attributes().magic().base(), player->attributes().magic().current() },
 		.dexterity = { player->attributes().dexterity().base(), player->attributes().dexterity().current() },

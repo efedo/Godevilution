@@ -112,6 +112,13 @@ void InitializeRemotePlayer(Player &player, const ProjectedPlayerSnapshot &snaps
 	player.initGraphics();
 }
 
+Direction GetRemotePlayerDirection(const ProjectedPlayerSnapshot &snapshot)
+{
+	return snapshot.facingDirection <= static_cast<uint32_t>(Direction::SouthEast)
+	    ? static_cast<Direction>(snapshot.facingDirection)
+	    : Direction::South;
+}
+
 player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &snapshot)
 {
 	if (snapshot.life <= 0 || snapshot.combatMode == PM_DEATH)
@@ -151,6 +158,57 @@ player_graphic GetRemotePlayerGraphicInternal(const ProjectedPlayerSnapshot &sna
 	}
 }
 
+void SetRemotePlayerAnimationFrame(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop)
+{
+	int8_t numberOfFrames;
+	int8_t ticksPerFrame;
+	player.getAnimationFramesAndTicksPerFrame(graphic, numberOfFrames, ticksPerFrame);
+	if (numberOfFrames <= 0 || ticksPerFrame <= 0)
+		return;
+
+	const uint64_t frame = elapsedTicks / static_cast<uint64_t>(ticksPerFrame);
+	player.animInfo.currentFrame = static_cast<int8_t>(loop
+	        ? frame % static_cast<uint64_t>(numberOfFrames)
+	        : std::min<uint64_t>(frame, static_cast<uint64_t>(numberOfFrames - 1)));
+	player.animInfo.tickCounterOfCurrentFrame = static_cast<int8_t>(elapsedTicks % static_cast<uint64_t>(ticksPerFrame));
+}
+
+void AdvanceRemotePlayerAnimation(Player &player, player_graphic graphic, uint64_t elapsedTicks, bool loop)
+{
+	int8_t numberOfFrames;
+	int8_t ticksPerFrame;
+	player.getAnimationFramesAndTicksPerFrame(graphic, numberOfFrames, ticksPerFrame);
+	if (numberOfFrames <= 0 || ticksPerFrame <= 0)
+		return;
+
+	const uint64_t currentTicks = static_cast<uint64_t>(std::max<int8_t>(player.animInfo.currentFrame, 0)) * static_cast<uint64_t>(ticksPerFrame)
+	    + static_cast<uint64_t>(std::max<int8_t>(player.animInfo.tickCounterOfCurrentFrame, 0));
+	SetRemotePlayerAnimationFrame(player, graphic, currentTicks + elapsedTicks, loop);
+}
+
+void ApplyRemotePlayerAnimation(
+	Player &player,
+	const ProjectedPlayerSnapshot &snapshot,
+	player_graphic graphic,
+	bool reset,
+	bool hasPreviousTick,
+	uint64_t previousTick)
+{
+	if (reset)
+		player.setAnimation(graphic, player.direction);
+
+	const bool loop = graphic == player_graphic::Stand || graphic == player_graphic::Walk;
+	if (snapshot.currentAction.has_value()) {
+		const uint64_t actionStart = snapshot.currentAction->startedAtTick;
+		const uint64_t elapsed = snapshot.serverTick >= actionStart ? snapshot.serverTick - actionStart : 0;
+		SetRemotePlayerAnimationFrame(player, graphic, elapsed, loop);
+	} else if (reset) {
+		SetRemotePlayerAnimationFrame(player, graphic, 0, loop);
+	} else if (hasPreviousTick && snapshot.serverTick >= previousTick) {
+		AdvanceRemotePlayerAnimation(player, graphic, snapshot.serverTick - previousTick, loop);
+	}
+}
+
 void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &snapshot)
 {
 	player.plractive = true;
@@ -172,14 +230,11 @@ void ApplyRemotePlayerSnapshot(Player &player, const ProjectedPlayerSnapshot &sn
 	player.position.old = player.position.tile;
 	player.position.temp = player.position.tile;
 	player.setLevel(static_cast<uint8_t>(snapshot.levelId));
-	player.direction = snapshot.facingDirection <= static_cast<uint32_t>(Direction::SouthEast)
-	    ? static_cast<Direction>(snapshot.facingDirection)
-	    : Direction::South;
+	player.direction = GetRemotePlayerDirection(snapshot);
 	player._pBlockFlag = snapshot.combatMode == 6;
 	player._pmode = snapshot.life <= 0 || snapshot.combatMode == PM_DEATH
 	    ? PM_DEATH
 	    : snapshot.combatMode <= PM_QUIT ? static_cast<PLR_MODE>(snapshot.combatMode) : PM_STAND;
-	player.setAnimation(GetRemotePlayerGraphicInternal(snapshot), player.direction);
 }
 
 void ApplyRemotePlayerEquipment(Player &player, const ProjectedPlayerSnapshot &snapshot)
@@ -676,13 +731,39 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		}
 		retainedRemotePlayers.insert(snapshot.entityId);
 		auto [it, inserted] = remotePlayers_.try_emplace(snapshot.entityId);
-		if (inserted || it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId))
+		const bool classChanged = !inserted && it->second.player._pClass != static_cast<HeroClass>(snapshot.characterClassId);
+		const bool equipmentChanged = !inserted && !classChanged
+		    && it->second.player._pgfxnum != GetRemotePlayerEquipmentGraphicBitsInternal(snapshot);
+		if (inserted || classChanged)
 			InitializeRemotePlayer(it->second.player, snapshot);
-		else if (it->second.player._pgfxnum != GetRemotePlayerEquipmentGraphicBitsInternal(snapshot))
+		else if (equipmentChanged)
 			ApplyRemotePlayerEquipment(it->second.player, snapshot);
+		const player_graphic graphic = GetRemotePlayerGraphicInternal(snapshot);
+		const Direction direction = GetRemotePlayerDirection(snapshot);
+		const std::optional<uint32_t> actionKind = snapshot.currentAction.has_value()
+		    ? std::optional<uint32_t>(snapshot.currentAction->kind)
+		    : std::nullopt;
+		const std::optional<uint64_t> actionStartedAtTick = snapshot.currentAction.has_value()
+		    ? std::optional<uint64_t>(snapshot.currentAction->startedAtTick)
+		    : std::nullopt;
+		const bool animationChanged = inserted || classChanged || equipmentChanged
+		    || it->second.graphic != graphic
+		    || it->second.player.direction != direction
+		    || it->second.actionKind != actionKind
+		    || it->second.actionStartedAtTick != actionStartedAtTick;
+		const bool hasPreviousTick = it->second.hasServerTick;
+		const uint64_t previousTick = it->second.serverTick;
 		ApplyRemotePlayerSnapshot(it->second.player, snapshot);
+		ApplyRemotePlayerAnimation(it->second.player, snapshot, graphic, animationChanged, hasPreviousTick, previousTick);
 		it->second.levelId = snapshot.levelId;
 		it->second.tilePosition = it->second.player.position.tile;
+		it->second.graphic = graphic;
+		it->second.actionKind = actionKind;
+		it->second.actionStartedAtTick = actionStartedAtTick;
+		if (!hasPreviousTick || snapshot.serverTick >= previousTick) {
+			it->second.serverTick = snapshot.serverTick;
+			it->second.hasServerTick = true;
+		}
 	}
 	for (auto it = remotePlayers_.begin(); it != remotePlayers_.end();) {
 		if (!retainedRemotePlayers.contains(it->first))

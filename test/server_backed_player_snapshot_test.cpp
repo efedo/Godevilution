@@ -156,6 +156,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeEventBatchToNativeResources
 TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 {
 	protocol::Snapshot snapshot;
+	snapshot.set_tick(12);
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
 	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
@@ -180,6 +181,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
 
 	ASSERT_TRUE(projected.has_value()) << projected.error();
+	EXPECT_EQ(projected->serverTick, 12U);
 	ASSERT_TRUE(projected->currentAction.has_value());
 	EXPECT_EQ(projected->currentAction->kind, 3U);
 	EXPECT_EQ(projected->currentAction->effectTick, 10U);
@@ -621,6 +623,48 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, 1).has_value());
 	EXPECT_EQ(presentation.RemotePlayerCount(), 0U);
+
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, PlacesRemoteAnimationAtAuthoritativeActionTick)
+{
+	LoadPlayerDataFiles();
+	LoadSpellData();
+	ProjectedPlayerSnapshot local;
+	local.entityId = 1;
+	local.levelId = 1;
+	local.characterClassId = 0;
+	ProjectedPlayerSnapshot remote = local;
+	remote.entityId = 2;
+	remote.life = 640;
+	remote.lifeMaximum = 640;
+	remote.combatMode = PM_SPELL;
+	remote.serverTick = 3;
+	remote.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 3,
+		.startedAtTick = 1,
+		.hasCast = true,
+		.spellId = static_cast<uint32_t>(SpellID::Firebolt),
+	};
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	int firstFrame = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		firstFrame = player.animInfo.currentFrame;
+	});
+	EXPECT_EQ(firstFrame, 2);
+
+	remote.serverTick = 4;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote }, 1).has_value());
+	int secondFrame = -1;
+	presentation.ForEachRemotePlayer([&](uint32_t, const Player &player) {
+		secondFrame = player.animInfo.currentFrame;
+	});
+	EXPECT_EQ(secondFrame, 3);
 
 	presentation.Clear();
 }

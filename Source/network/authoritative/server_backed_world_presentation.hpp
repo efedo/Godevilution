@@ -66,6 +66,11 @@ private:
 		Player player;
 		uint32_t levelId = 0;
 		Point tilePosition;
+		player_graphic graphic = player_graphic::Stand;
+		std::optional<uint32_t> actionKind;
+		std::optional<uint64_t> actionStartedAtTick;
+		uint64_t serverTick = 0;
+		bool hasServerTick = false;
 	};
 	std::unordered_map<uint32_t, RemotePlayerPresentation> remotePlayers_;
 };
