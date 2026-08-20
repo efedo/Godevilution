@@ -482,6 +482,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var objectTemplates = content.TryGetTable("objects.tsv", out objectsTable)
+            ? AuthoritativeWorldObjectCatalog.LoadTemplates(
+                objectsTable.SourcePath,
+                objectsTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        var objectDefinitions = (objects ?? [])
+            .Concat(objectTemplates ?? [])
+            .ToArray();
         var worldMutations = content.TryGetTable(
             "world_mutations.tsv",
             out var worldMutationsTable)
@@ -490,19 +499,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 worldMutationsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
-        if (stableIds is not null && objects is not null)
+        if (stableIds is not null && objectDefinitions.Length > 0)
             stableIds.ValidateReferences(
                 "object",
-                objectId => objects.Any(@object => @object.ObjectId == objectId));
+                objectId => objectDefinitions.Any(@object => @object.ObjectId == objectId));
         if (world is not null && objects is not null)
             AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
-        if (objects is not null)
-            AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objects, itemCatalog!);
-        if (objects is not null)
-            AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objects, itemCatalog!);
-        if (objects is not null && spells is not null)
-            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objects, spells);
-        if (objects?.Any(@object => @object.EffectKind is
+        if (objectDefinitions.Length > 0)
+            AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog!);
+        if (objectDefinitions.Length > 0)
+            AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objectDefinitions, itemCatalog!);
+        if (objectDefinitions.Length > 0 && spells is not null)
+            AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objectDefinitions, spells);
+        if (objectDefinitions.Any(@object => @object.EffectKind is
                 AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.SpawnSpellProjectile
                 || @object.QuestSequenceFollowUpKind
@@ -513,7 +522,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world);
-        if (objects?.Any(@object => @object.EffectKind
+        if (objectDefinitions.Any(@object => @object.EffectKind
                 == AuthoritativeObjectEffectKind.WorldMutation
                 || @object.QuestSequenceFollowUpKind
                     == AuthoritativeQuestSequenceFollowUpKind.WorldMutation) == true
@@ -521,8 +530,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "World-mutation objects require a world_mutations.tsv content table.");
         }
-        if (objects is not null && worldMutations is not null)
-            AuthoritativeWorldObjectCatalog.ValidateMutationRequirements(objects, worldMutations);
+        if (objectDefinitions.Length > 0 && worldMutations is not null)
+            AuthoritativeWorldObjectCatalog.ValidateMutationRequirements(objectDefinitions, worldMutations);
         var setLevelNames = content.TryGetTable(
             "set_level_names.tsv",
             out var setLevelNamesTable)
@@ -586,14 +595,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             var generatedObjects = new List<AuthoritativeWorldObject>();
             if (setLevelObjects is not null) {
                 generatedObjects.AddRange(
-                    setLevelObjects.LoadAvailableObjects(world, objects, objects));
+                    setLevelObjects.LoadAvailableObjects(world, objects, objectDefinitions));
             }
             if (nativeDunObjects is not null) {
                 generatedObjects.AddRange(
                     nativeDunObjects.LoadAvailableObjects(
                         world,
                         (objects ?? []).Concat(generatedObjects),
-                        objects));
+                        objectDefinitions));
             }
             if (generatedObjects.Count > 0) {
                 objects = (objects ?? []).Concat(generatedObjects).ToArray();
@@ -667,7 +676,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null
             && quests is null
             && (world.WarpTargets.Any(target => target.RequiredQuestId != 0)
-                || objects?.Any(@object => @object.QuestId != 0) == true)) {
+                || objectDefinitions.Any(@object => @object.QuestId != 0))) {
             throw new InvalidDataException(
                 "Quest-gated warps and objects require an active quest catalog.");
         }
@@ -681,9 +690,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 AuthoritativeWarpCatalog.ValidateQuestRequirements(
                     world.WarpTargets,
                     quests);
-            if (objects is not null)
+            if (objectDefinitions.Length > 0)
                 AuthoritativeWorldObjectCatalog.ValidateQuestRequirements(
-                    objects,
+                    objectDefinitions,
                     quests);
             var rewardQuests = quests
                 .Where(quest => quest.CompletionRewardItemId != 0)

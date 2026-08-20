@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add validated `template_only` object rows. Behavior-only entries in
+  `objects.tsv` can now serve as set-level/native-DUN templates without being
+  materialized into ordinary world levels. Bump the Diablo content schema to
+  1.369.
+
 - Preserve native DUN object layers through authoritative geometry and add the
   optional `native_dun_objects.tsv` mapping table. Explicit mappings now
   materialize deterministic server-owned objects, optionally cloning validated

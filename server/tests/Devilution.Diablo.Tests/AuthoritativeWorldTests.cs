@@ -105,6 +105,25 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void TemplateOnlyObjectRowsAreExcludedFromWorldAndAvailableForMappings()
+    {
+        const string objects =
+            "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\ttemplate_only\n"
+            + "20\t4\t1\t1\t1\tNone\t0\t0\n"
+            + "21\t40\t0\t0\t0\tGrantSpellLevel\t7\t1\n";
+
+        var placed = AuthoritativeWorldObjectCatalog.LoadTsv("objects.tsv", objects);
+        var templates = AuthoritativeWorldObjectCatalog.LoadTemplates("objects.tsv", objects);
+
+        Assert.Equal(20U, Assert.Single(placed).EntityId);
+        var template = Assert.Single(templates);
+        Assert.Equal(21U, template.EntityId);
+        Assert.Equal(40U, template.ObjectId);
+        Assert.Equal(AuthoritativeObjectEffectKind.GrantSpellLevel, template.EffectKind);
+        Assert.Equal(7, template.EffectAmount);
+    }
+
+    [Fact]
     public void ResolvesStableWorldObjectSymbolsAndRejectsMismatches()
     {
         var stableIds = new StableContentIdCatalog([

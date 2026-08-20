@@ -1,9 +1,9 @@
-entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	effect_item_symbol	missile_passable	breakable	destroyed	trap_armed
-2401	6001	na_krul_sequence_1	24	hellfire_level_24	20	20	0	3022	na_krul	QuestSequence	1		0	0	0	0
-2402	6002	na_krul_sequence_2	24	hellfire_level_24	22	20	0	3022	na_krul	QuestSequence	2		0	0	0	0
-2403	6003	na_krul_sequence_3	24	hellfire_level_24	24	20	0	3022	na_krul	QuestSequence	3		0	0	0	0
-2404	6004	grave_matters_cathedral_map	0	town	36	22	0	3017	grave_matters	QuestItemCompletion	43	cathedral_map	0	0	0	0
-2405	6005	hive_entrance	0	town	79	61	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0
-2406	6005	hive_entrance	0	town	82	61	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0
-2407	6005	hive_entrance	0	town	79	64	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0
-2408	6005	hive_entrance	0	town	82	64	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0
+entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	effect_item_symbol	missile_passable	breakable	destroyed	trap_armed	template_only
+2401	6001	na_krul_sequence_1	24	hellfire_level_24	20	20	0	3022	na_krul	QuestSequence	1		0	0	0	0	0
+2402	6002	na_krul_sequence_2	24	hellfire_level_24	22	20	0	3022	na_krul	QuestSequence	2		0	0	0	0	0
+2403	6003	na_krul_sequence_3	24	hellfire_level_24	24	20	0	3022	na_krul	QuestSequence	3		0	0	0	0	0
+2404	6004	grave_matters_cathedral_map	0	town	36	22	0	3017	grave_matters	QuestItemCompletion	43	cathedral_map	0	0	0	0	0
+2405	6005	hive_entrance	0	town	79	61	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0	0
+2406	6005	hive_entrance	0	town	82	61	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0	0
+2407	6005	hive_entrance	0	town	79	64	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0	0
+2408	6005	hive_entrance	0	town	82	64	0	3018	farmers_orchard	QuestItemCompletion	2101	rune_bomb	0	0	0	0	0

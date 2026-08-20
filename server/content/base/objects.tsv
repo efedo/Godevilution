@@ -1,2 +1,2 @@
-entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	effect_item_symbol	missile_passable	breakable	destroyed	trap_armed
-2001	1	l1_left_door	1	cathedral	4	4	0	0		None	0		0	0	0	0
+entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	activated	quest_id	quest_symbol	effect_kind	effect_amount	effect_item_symbol	missile_passable	breakable	destroyed	trap_armed	template_only
+2001	1	l1_left_door	1	cathedral	4	4	0	0		None	0		0	0	0	0	0

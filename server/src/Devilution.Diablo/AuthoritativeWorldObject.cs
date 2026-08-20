@@ -325,78 +325,102 @@ public static class AuthoritativeWorldObjectCatalog
         string contents,
         StableContentIdCatalog? stableIds = null)
     {
+        return LoadTsvCore(sourcePath, contents, stableIds, includeTemplateOnly: false);
+    }
+
+    /** Loads behavior-only rows that are available to set-level/DUN mappings. */
+    public static IReadOnlyList<AuthoritativeWorldObject> LoadTemplates(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds = null)
+    {
+        return LoadTsvCore(sourcePath, contents, stableIds, includeTemplateOnly: true);
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldObject> LoadTsvCore(
+        string sourcePath,
+        string contents,
+        StableContentIdCatalog? stableIds,
+        bool includeTemplateOnly)
+    {
         var table = TsvTable.Parse(sourcePath, contents);
-        var objects = table.Rows.Select(row => {
+        var parsed = table.Rows.Select(row => {
             var effectKind = ParseEffectKind(row);
             var followUpKind = ParseQuestSequenceFollowUpKind(row);
-            return new AuthoritativeWorldObject(
-                row.RequiredUInt32("entity_id"),
-                AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
-                AuthoritativeLevelIdentity.ResolveOptional(
-                    row,
-                    stableIds,
-                    "level_id",
-                    "level_symbol"),
-                row.RequiredInt32("position_x"),
-                row.RequiredInt32("position_y"),
-                row.OptionalBoolean("activated"),
-                AuthoritativeQuestIdentity.ResolveOptional(
-                    row,
-                    stableIds,
-                    "quest_id",
-                    "quest_symbol"),
-                effectKind,
-                ParseEffectAmount(row, effectKind, stableIds),
-                row.OptionalUInt32("quest_progress", 1),
-                row.OptionalBoolean("missile_passable"),
-                row.OptionalBoolean("breakable"),
-                row.OptionalBoolean("destroyed"),
-                row.OptionalBoolean("trap_armed"),
-                row.OptionalBoolean("is_shrine"),
-                ParseQuestTransitionKind(row),
-                row.OptionalInt32("quest_transition_amount"),
-                OptionalQuestTransitionValue(row, "quest_transition_required_variable1"),
-                OptionalQuestTransitionValue(row, "quest_transition_required_variable2"),
-                ParseRewardKind(row),
-                row.OptionalUInt32("reward_id"),
-                row.OptionalInt32("reward_item_level"),
-                row.OptionalInt32("reward_offset_x"),
-                row.OptionalInt32("reward_offset_y"),
-                row.OptionalInt32("projectile_target_offset_x"),
-                row.OptionalInt32("projectile_target_offset_y"),
-                followUpKind,
-                ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
-                row.OptionalInt32("quest_sequence_follow_up_offset_x"),
-                row.OptionalInt32("quest_sequence_follow_up_offset_y"));
+            return (
+                Object: new AuthoritativeWorldObject(
+                    row.RequiredUInt32("entity_id"),
+                    AuthoritativeWorldObjectIdentity.Resolve(row, stableIds),
+                    AuthoritativeLevelIdentity.ResolveOptional(
+                        row,
+                        stableIds,
+                        "level_id",
+                        "level_symbol"),
+                    row.RequiredInt32("position_x"),
+                    row.RequiredInt32("position_y"),
+                    row.OptionalBoolean("activated"),
+                    AuthoritativeQuestIdentity.ResolveOptional(
+                        row,
+                        stableIds,
+                        "quest_id",
+                        "quest_symbol"),
+                    effectKind,
+                    ParseEffectAmount(row, effectKind, stableIds),
+                    row.OptionalUInt32("quest_progress", 1),
+                    row.OptionalBoolean("missile_passable"),
+                    row.OptionalBoolean("breakable"),
+                    row.OptionalBoolean("destroyed"),
+                    row.OptionalBoolean("trap_armed"),
+                    row.OptionalBoolean("is_shrine"),
+                    ParseQuestTransitionKind(row),
+                    row.OptionalInt32("quest_transition_amount"),
+                    OptionalQuestTransitionValue(row, "quest_transition_required_variable1"),
+                    OptionalQuestTransitionValue(row, "quest_transition_required_variable2"),
+                    ParseRewardKind(row),
+                    row.OptionalUInt32("reward_id"),
+                    row.OptionalInt32("reward_item_level"),
+                    row.OptionalInt32("reward_offset_x"),
+                    row.OptionalInt32("reward_offset_y"),
+                    row.OptionalInt32("projectile_target_offset_x"),
+                    row.OptionalInt32("projectile_target_offset_y"),
+                    followUpKind,
+                    ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
+                    row.OptionalInt32("quest_sequence_follow_up_offset_x"),
+                    row.OptionalInt32("quest_sequence_follow_up_offset_y")),
+                TemplateOnly: row.OptionalBoolean("template_only"));
         }).ToArray();
-        if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
+        var definitions = parsed.Select(item => item.Object).ToArray();
+        if (definitions.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
             throw new InvalidDataException($"Object table '{sourcePath}' assigns an amount to an object without an effect.");
-        if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence
+        if (definitions.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest sequence object.");
-        if (objects.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion
+        if (definitions.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.QuestItemCompletion
                 && (@object.QuestId == 0 || @object.EffectAmount <= 0)))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest-item completion object.");
-        if (objects.Any(@object => @object.EffectKind is
+        if (definitions.Any(@object => @object.EffectKind is
                 (AuthoritativeObjectEffectKind.GrantSpellLevel
                 or AuthoritativeObjectEffectKind.SpawnSpellProjectile)
                 && @object.EffectAmount <= 0))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid spell effect object.");
-        if (objects.Any(@object => @object.QuestSequenceFollowUpKind
+        if (definitions.Any(@object => @object.QuestSequenceFollowUpKind
                 == AuthoritativeQuestSequenceFollowUpKind.SpawnSpellProjectile
                 && @object.QuestSequenceFollowUpAmount == 0))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains an invalid quest-sequence projectile effect.");
-        if (objects.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+        if (definitions.Any(@object => @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
                 && @object.QuestId == 0))
             throw new InvalidDataException(
                 $"Object table '{sourcePath}' contains a quest transition without a quest.");
-        if (objects.Select(@object => @object.EntityId).Distinct().Count() != objects.Length)
+        if (definitions.Select(@object => @object.EntityId).Distinct().Count() != definitions.Length)
             throw new InvalidDataException($"Object table '{sourcePath}' contains duplicate entity IDs.");
-        return objects;
+        return parsed
+            .Where(item => item.TemplateOnly == includeTemplateOnly)
+            .Select(item => item.Object)
+            .ToArray();
     }
 
     /** Validates normalized item identities encoded by quest-item objects. */

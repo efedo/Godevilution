@@ -369,6 +369,11 @@ future run.
   materializes every mapped cell with deterministic reserved entity IDs;
   unmapped values remain inert instead of being guessed as gameplay objects.
 
+- Schema 1.369 adds the optional `template_only` column to `objects.tsv`.
+  Behavior-only rows are validated and available to set-level/native-DUN
+  mappings without entering ordinary world state, removing the phantom-object
+  blocker for authoring the remaining book/lever behaviors.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not
