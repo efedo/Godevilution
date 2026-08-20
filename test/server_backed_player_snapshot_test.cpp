@@ -675,6 +675,48 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeAreaProjectileFamilies)
 	Missiles.clear();
 }
 
+TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeLayeredAndArrowProjectileFamilies)
+{
+	struct Family {
+		int behavior;
+		MissileID missileId;
+	};
+	const Family families[] = {
+		{ 6, MissileID::FlashBottom },
+		{ 7, MissileID::FlashTop },
+		{ 11, MissileID::ResurrectBeam },
+		{ 58, MissileID::Arrow },
+	};
+
+	LoadMissileData();
+	for (const auto &family : families) {
+		Missiles.clear();
+		ProjectedProjectileSnapshot projectile;
+		projectile.entityId = static_cast<uint32_t>(400 + family.behavior);
+		projectile.sourceEntityId = 1;
+		projectile.spellId = 4;
+		projectile.levelId = 1;
+		projectile.positionX = 8;
+		projectile.positionY = 9;
+		projectile.remainingTicks = 6;
+		projectile.behavior = family.behavior;
+
+		ServerBackedWorldProjection projection;
+		ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+		ServerBackedWorldPresentation presentation;
+		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		if (!IsMissileDataAvailable(family.missileId)) {
+			EXPECT_TRUE(Missiles.empty());
+			continue;
+		}
+		ASSERT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(Missiles.front()._mitype, family.missileId);
+		EXPECT_EQ(Missiles.front()._miAuthoritativeEntityId, projectile.entityId);
+		presentation.Clear();
+	}
+	Missiles.clear();
+}
+
 TEST(ServerBackedPlayerSnapshot, WorldProjectionProvidesStableInteractionLookups)
 {
 	ServerBackedWorldProjection projection;

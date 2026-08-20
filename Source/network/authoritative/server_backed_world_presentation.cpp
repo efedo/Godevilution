@@ -44,6 +44,12 @@ std::optional<MissileID> NativePresentationMissileId(int behavior)
 		return MissileID::Lightning;
 	case 4: // LightningSegment
 		return MissileID::ThinLightning;
+	case 6: // FlashBottom
+		return MissileID::FlashBottom;
+	case 7: // FlashTop
+		return MissileID::FlashTop;
+	case 11: // ResurrectionBeam
+		return MissileID::ResurrectBeam;
 	case 15: // Phasing
 		return MissileID::Phasing;
 	case 16: // Fireball
@@ -82,6 +88,8 @@ std::optional<MissileID> NativePresentationMissileId(int behavior)
 		return MissileID::ChargedBolt;
 	case 57: // HorkSpawn
 		return MissileID::HorkSpawn;
+	case 58: // WeaponArrow
+		return MissileID::Arrow;
 	case 59: // MonsterArrow
 		return MissileID::Arrow;
 	default:

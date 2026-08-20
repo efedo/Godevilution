@@ -32,10 +32,11 @@ Status date: 2026-08-20
 - The native authoritative world projection now carries sorted, validated
   server projectile snapshots through the same boundary as monsters, items,
   and objects. The native presentation bridge materializes the first supported
-  spell, monster, area, and impact families (including Lightning segments,
-  Flame Wave, Inferno, Apocalypse impact, and Elemental) as presentation-only
-  missile sprites when the
-  active native content pack defines them, applying authoritative position and
+  spell, monster, area, impact, layered-effect, and player-arrow families
+  (including Lightning segments, Flash layers, Resurrection beam, Flame Wave,
+  Inferno, Apocalypse impact, and Elemental) as presentation-only missile
+  sprites when the active native content pack defines them, applying
+  authoritative position and
   lifetime while skipping local process, collision, and damage logic. The
   bridge fails closed for unsupported families or content-missing missile rows;
   those projectiles remain projection-only until their native presentation
