@@ -49,9 +49,34 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Theory]
+    [InlineData(AuthoritativeProjectileBehavior.ChargedBolt, NativeProjectileVisual.ChargedBolt)]
+    [InlineData(AuthoritativeProjectileBehavior.MonsterChargedBolt, NativeProjectileVisual.ChargedBolt)]
     [InlineData(AuthoritativeProjectileBehavior.Firebolt, NativeProjectileVisual.Firebolt)]
+    [InlineData(AuthoritativeProjectileBehavior.Lightning, NativeProjectileVisual.Lightning)]
     [InlineData(AuthoritativeProjectileBehavior.LightningSegment, NativeProjectileVisual.ThinLightning)]
+    [InlineData(AuthoritativeProjectileBehavior.FlashBottom, NativeProjectileVisual.FlashBottom)]
+    [InlineData(AuthoritativeProjectileBehavior.FlashTop, NativeProjectileVisual.FlashTop)]
+    [InlineData(AuthoritativeProjectileBehavior.ResurrectionBeam, NativeProjectileVisual.ResurrectBeam)]
+    [InlineData(AuthoritativeProjectileBehavior.Phasing, NativeProjectileVisual.Phasing)]
+    [InlineData(AuthoritativeProjectileBehavior.Fireball, NativeProjectileVisual.Fireball)]
+    [InlineData(AuthoritativeProjectileBehavior.HolyBolt, NativeProjectileVisual.HolyBolt)]
+    [InlineData(AuthoritativeProjectileBehavior.BloodStar, NativeProjectileVisual.BloodStar)]
+    [InlineData(AuthoritativeProjectileBehavior.BoneSpirit, NativeProjectileVisual.BoneSpirit)]
+    [InlineData(AuthoritativeProjectileBehavior.FireWallSegment, NativeProjectileVisual.FireWall)]
+    [InlineData(AuthoritativeProjectileBehavior.FlameWaveController, NativeProjectileVisual.FlameWaveControl)]
+    [InlineData(AuthoritativeProjectileBehavior.FlameWaveSegment, NativeProjectileVisual.FlameWave)]
+    [InlineData(AuthoritativeProjectileBehavior.InfernoSegment, NativeProjectileVisual.Inferno)]
+    [InlineData(AuthoritativeProjectileBehavior.ChainLightningBolt, NativeProjectileVisual.ChainLightning)]
+    [InlineData(AuthoritativeProjectileBehavior.ApocalypseBoom, NativeProjectileVisual.ApocalypseBoom)]
+    [InlineData(AuthoritativeProjectileBehavior.Elemental, NativeProjectileVisual.Elemental)]
+    [InlineData(AuthoritativeProjectileBehavior.GuardianController, NativeProjectileVisual.Guardian)]
+    [InlineData(AuthoritativeProjectileBehavior.Etherealize, NativeProjectileVisual.Etherealize)]
+    [InlineData(AuthoritativeProjectileBehavior.Acid, NativeProjectileVisual.Acid)]
+    [InlineData(AuthoritativeProjectileBehavior.AcidSplat, NativeProjectileVisual.AcidSplat)]
+    [InlineData(AuthoritativeProjectileBehavior.AcidPuddle, NativeProjectileVisual.AcidPuddle)]
+    [InlineData(AuthoritativeProjectileBehavior.HorkSpawn, NativeProjectileVisual.HorkSpawn)]
     [InlineData(AuthoritativeProjectileBehavior.WeaponArrow, NativeProjectileVisual.Arrow)]
+    [InlineData(AuthoritativeProjectileBehavior.MonsterArrow, NativeProjectileVisual.Arrow)]
     public void ProjectsServerOwnedNativeProjectileVisual(
         AuthoritativeProjectileBehavior behavior,
         NativeProjectileVisual expectedVisual)
@@ -99,5 +124,59 @@ public sealed class DialogueProtocolProjectionTests
         var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
 
         Assert.Equal(expectedVisual, Assert.Single(snapshot.Projectiles).NativeVisual);
+    }
+
+    [Theory]
+    [InlineData(AuthoritativeProjectileBehavior.Targeted)]
+    [InlineData(AuthoritativeProjectileBehavior.Flash)]
+    [InlineData(AuthoritativeProjectileBehavior.Healing)]
+    [InlineData(AuthoritativeProjectileBehavior.Teleport)]
+    [InlineData(AuthoritativeProjectileBehavior.MonsterMagic)]
+    public void LeavesNonSpriteProjectileBehaviorsUnspecified(
+        AuthoritativeProjectileBehavior behavior)
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [new DiabloProjectileState(
+                2,
+                1,
+                0,
+                2,
+                1,
+                4,
+                4,
+                4,
+                4,
+                0,
+                AuthoritativeDamageType.Fire,
+                0,
+                3) {
+                Behavior = behavior,
+            }],
+            null);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.Equal(NativeProjectileVisual.Unspecified, Assert.Single(snapshot.Projectiles).NativeVisual);
     }
 }

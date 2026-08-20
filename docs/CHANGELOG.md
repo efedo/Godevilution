@@ -12,7 +12,11 @@ All notable changes to this fork are documented below.
   passes all 1,388 tests after rebuilding its current content/schema assembly.
 
 - Record the complete managed Release verification baseline: Domain 11, Data
-  26, Engine 43, Diablo 1,388, Server 381, and Godot protocol 140 tests pass.
+  26, Engine 43, Diablo 1,388, Server 411, and Godot protocol 140 tests pass.
+
+- Expand server-side native projectile visual parity coverage to every
+  supported visual family and explicitly verify non-sprite behaviors remain
+  unspecified.
 
 - Materialize the first supported authoritative projectile families in the
   native compatibility renderer. Their position and lifetime come from the
