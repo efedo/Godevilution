@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-08-18
+Status date: 2026-08-20
 
 ## Current state
 
@@ -76,6 +76,11 @@ Status date: 2026-08-18
   projected inventory, equipment, belt, and cast-source state. Native service,
   store, and spell-source commands resolve references from the authoritative
   snapshot instead of relying on positional slots alone.
+
+- Native authoritative startup now registers a `ModManager` archive/data reload
+  callback and activates the selected mod archives without initializing Lua.
+  Legacy mode still replaces that callback with the Lua compatibility hook so
+  existing scripted mod ordering remains unchanged.
 
 - Native authoritative inventory use now submits spell-book consumption through
   `ReadBookRequested`; the legacy client keeps its local book path only outside

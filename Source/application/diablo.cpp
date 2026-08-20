@@ -63,6 +63,7 @@
 #include "ui/help.h"
 #include "engine/hwcursor.hpp"
 #include "application/init.hpp"
+#include "data/mod_manager.hpp"
 #include "game/players/inventory.hpp"
 #include "game/levels/level_l1.h"
 #include "game/levels/level_l2.h"
@@ -2918,6 +2919,10 @@ int DiabloMain(int argc, char **argv)
 	// server-authoritative presentation path Lua-free.
 	if (authoritative::GetServerBackedRuntimeConfiguration().mode != authoritative::ServerBackedRuntimeConfiguration::GameMode::Authoritative)
 		LuaInitialize();
+	else {
+		CurrentModManager.RegisterNativeOptionChangeHandler();
+		CurrentModManager.ReloadActiveModsAndData();
+	}
 #else
 	LuaInitialize();
 #endif

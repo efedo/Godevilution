@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Move native mod-option archive and table-data reload orchestration into
+  `ModManager`; authoritative startup now reloads selected content without Lua,
+  while legacy mode retains the existing Lua compatibility callback.
+
 - Add live Godot protocol coverage for consuming a belt potion through its
   stable location and item identity; the running server accepts the request
   and removes exactly the referenced belt entry.

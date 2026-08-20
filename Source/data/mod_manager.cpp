@@ -11,14 +11,39 @@
 #include "data/game_data_manager.hpp"
 #include "engine/audio/effects.h"
 #include "engine/assets.hpp"
+#include "game/stores/stores.hpp"
 #include "persistence/options.h"
 
 namespace devilution {
 
 ModManager CurrentModManager;
 
+namespace {
+
+void ReloadActiveModsAndDataFromOptionChange()
+{
+	CurrentModManager.ReloadActiveModsAndData();
+}
+
+} // namespace
+
+void ModManager::RegisterOptionChangeHandler(tl::function_ref<void()> callback)
+{
+	for (OptionEntryBase *mod : GetOptions().Mods.GetEntries()) {
+		mod->SetValueChangedCallback(callback);
+	}
+}
+
+void ModManager::RegisterNativeOptionChangeHandler()
+{
+	RegisterOptionChangeHandler(ReloadActiveModsAndDataFromOptionChange);
+}
+
 std::vector<std::string_view> ModManager::ReloadActiveMods()
 {
+	// Towner dialog registrations are owned by the active content set and must
+	// be discarded before legacy scripts or native data consumers rebuild it.
+	CurrentStoreManager.ClearTownerDialogOptions();
 	UnloadModArchives();
 	gbIsHellfire = false;
 	std::vector<std::string_view> activeMods = GetOptions().Mods.GetActiveModList();
@@ -50,6 +75,12 @@ void ModManager::ReloadActiveModData()
 		ui_sound_init();
 
 	CurrentGameDataManager.Reload();
+}
+
+void ModManager::ReloadActiveModsAndData()
+{
+	ReloadActiveMods();
+	ReloadActiveModData();
 }
 
 } // namespace devilution

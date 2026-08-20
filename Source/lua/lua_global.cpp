@@ -43,7 +43,6 @@
 #include "lua/modules/render.hpp"
 #include "lua/modules/system.hpp"
 #include "lua/modules/towners.hpp"
-#include "persistence/options.h"
 #include "ui/player_messages.h"
 #include "game/stores/stores.hpp"
 #include "utils/console.h"
@@ -249,8 +248,6 @@ void LuaReloadActiveMods()
 	CurrentLuaState->events = RunScript(/*env=*/std::nullopt, "devilutionx.events", /*optional=*/false);
 	CurrentLuaState->commonPackages["devilutionx.events"] = CurrentLuaState->events;
 
-	CurrentStoreManager.ClearTownerDialogOptions();
-
 	std::vector<std::string_view> modnames = CurrentModManager.ReloadActiveMods();
 
 	for (const std::string_view modname : modnames) {
@@ -313,9 +310,7 @@ void LuaInitialize()
 	// Used by the custom require implementation.
 	lua["setEnvironment"] = [](const sol::environment &env, const sol::function &fn) { sol::set_environment(env, fn); };
 
-	for (OptionEntryBase *mod : GetOptions().Mods.GetEntries()) {
-		mod->SetValueChangedCallback(LuaReloadActiveMods);
-	}
+	CurrentModManager.RegisterOptionChangeHandler(LuaReloadActiveMods);
 
 	LuaReloadActiveMods();
 }
