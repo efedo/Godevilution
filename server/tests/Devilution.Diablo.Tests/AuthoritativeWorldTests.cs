@@ -110,7 +110,7 @@ public sealed class AuthoritativeWorldTests
         const string objects =
             "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\ttemplate_only\n"
             + "20\t4\t1\t1\t1\tNone\t0\t0\n"
-            + "21\t40\t0\t0\t0\tGrantSpellLevel\t7\t1\n";
+            + "21\t40\t\t\t\tGrantSpellLevel\t7\t1\n";
 
         var placed = AuthoritativeWorldObjectCatalog.LoadTsv("objects.tsv", objects);
         var templates = AuthoritativeWorldObjectCatalog.LoadTemplates("objects.tsv", objects);
@@ -119,8 +119,20 @@ public sealed class AuthoritativeWorldTests
         var template = Assert.Single(templates);
         Assert.Equal(21U, template.EntityId);
         Assert.Equal(40U, template.ObjectId);
+        Assert.Equal(0U, template.LevelId);
+        Assert.Equal((0, 0), (template.PositionX, template.PositionY));
         Assert.Equal(AuthoritativeObjectEffectKind.GrantSpellLevel, template.EffectKind);
         Assert.Equal(7, template.EffectAmount);
+    }
+
+    [Fact]
+    public void OrdinaryObjectRowsStillRequirePlacementCoordinates()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldObjectCatalog.LoadTsv(
+                "objects.tsv",
+                "entity_id\tobject_id\tlevel_id\tposition_x\tposition_y\teffect_kind\teffect_amount\n"
+                    + "20\t4\t1\t\t1\tNone\t0\n"));
     }
 
     [Fact]

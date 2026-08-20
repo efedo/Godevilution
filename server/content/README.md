@@ -3,7 +3,7 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.369.0` schema in
+It declares its identity and `devilution.diablo@1.370.0` schema in
 `base/content-pack.json`; the standalone host falls back to legacy command-line
 identity only for external roots that do not yet provide a manifest.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
@@ -1663,8 +1663,14 @@ Schema 1.369 adds the optional `template_only` Boolean column to `objects.tsv`.
 Rows marked `1` are validated with the active object catalog and are available
 as behavior templates, but are not placed into ordinary world state. This lets
 set-level and native-DUN mappings author book/lever behavior without creating a
-phantom object at the template row's compatibility position. Rows omitted from
-the column or marked `0` retain the existing world-object behavior.
+phantom object. Rows omitted from the column or marked `0` retain the existing
+world-object behavior.
+
+Schema 1.370 allows `template_only=1` rows to omit `level_id`, `level_symbol`,
+`position_x`, and `position_y`; omitted placement fields resolve to zero and are
+never validated as world coordinates. Ordinary rows continue to require their
+level and position fields. This keeps behavior templates independent of a
+placeholder world placement while preserving strict validation for real objects.
 
 The Hellfire Jersey's Jersey state now uses the existing authored towner-turn-in
 columns. Quest 3024 routes to Complete Nut (towner 12 at town 61,22), gates on
@@ -2466,7 +2472,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.369.0"
+    "version": "1.370.0"
   },
   "dependencyConstraints": [
     {
@@ -2498,7 +2504,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.369.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.370.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Allow `template_only=1` object rows to omit fake level and placement fields;
+  ordinary world-object rows remain strict. Bump the Diablo content schema to
+  1.370.
+
 - Add validated `template_only` object rows. Behavior-only entries in
   `objects.tsv` can now serve as set-level/native-DUN templates without being
   materialized into ordinary world levels. Bump the Diablo content schema to

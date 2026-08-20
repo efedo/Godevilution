@@ -374,6 +374,10 @@ future run.
   mappings without entering ordinary world state, removing the phantom-object
   blocker for authoring the remaining book/lever behaviors.
 
+- Schema 1.370 lets `template_only=1` object rows omit level and placement
+  fields. Template definitions now carry behavior without a fake world
+  coordinate, while ordinary object rows retain strict placement validation.
+
 - The Diablo module now has a strict native `.dun` parser that preserves the
   mega-tile layer and all four d-piece layers (reserved, monsters, objects, and
   transparency) from checked-in native fixtures. It deliberately does not

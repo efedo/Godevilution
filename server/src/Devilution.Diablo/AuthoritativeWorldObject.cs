@@ -345,6 +345,7 @@ public static class AuthoritativeWorldObjectCatalog
     {
         var table = TsvTable.Parse(sourcePath, contents);
         var parsed = table.Rows.Select(row => {
+            var templateOnly = row.OptionalBoolean("template_only");
             var effectKind = ParseEffectKind(row);
             var followUpKind = ParseQuestSequenceFollowUpKind(row);
             return (
@@ -356,8 +357,8 @@ public static class AuthoritativeWorldObjectCatalog
                         stableIds,
                         "level_id",
                         "level_symbol"),
-                    row.RequiredInt32("position_x"),
-                    row.RequiredInt32("position_y"),
+                    templateOnly ? row.OptionalInt32("position_x") : row.RequiredInt32("position_x"),
+                    templateOnly ? row.OptionalInt32("position_y") : row.RequiredInt32("position_y"),
                     row.OptionalBoolean("activated"),
                     AuthoritativeQuestIdentity.ResolveOptional(
                         row,
@@ -387,7 +388,7 @@ public static class AuthoritativeWorldObjectCatalog
                     ParseQuestSequenceFollowUpAmount(row, followUpKind, stableIds),
                     row.OptionalInt32("quest_sequence_follow_up_offset_x"),
                     row.OptionalInt32("quest_sequence_follow_up_offset_y")),
-                TemplateOnly: row.OptionalBoolean("template_only"));
+                TemplateOnly: templateOnly);
         }).ToArray();
         var definitions = parsed.Select(item => item.Object).ToArray();
         if (definitions.Any(@object => @object.EffectKind == AuthoritativeObjectEffectKind.None && @object.EffectAmount != 0))
