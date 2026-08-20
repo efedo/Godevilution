@@ -318,6 +318,13 @@ TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
 	        ServerBackedItemReference { ServerBackedItemLocation::Belt, 3, 2116 },
 	    },
 	    24);
+	const auto healOther = MakeCastCommand(
+	    34,
+	    12,
+	    8,
+	    9,
+	    { ServerBackedCastSourceKind::MemorizedSpell, std::nullopt },
+	    25);
 
 	ASSERT_TRUE(memorized.has_value()) << memorized.error();
 	EXPECT_EQ(memorized->cast_requested().source(), protocol::CAST_SOURCE_KIND_MEMORIZED_SPELL);
@@ -331,6 +338,11 @@ TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
 	EXPECT_EQ(consumable->cast_requested().source_item().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
 	EXPECT_EQ(consumable->cast_requested().source_item().slot(), 3U);
 	EXPECT_EQ(consumable->cast_requested().source_item().stable_item_id(), 2116U);
+	ASSERT_TRUE(healOther.has_value()) << healOther.error();
+	EXPECT_EQ(healOther->cast_requested().spell_id(), 34U);
+	EXPECT_EQ(healOther->cast_requested().target_entity_id(), 12U);
+	EXPECT_EQ(healOther->cast_requested().source(), protocol::CAST_SOURCE_KIND_MEMORIZED_SPELL);
+	EXPECT_FALSE(healOther->cast_requested().has_source_item());
 }
 
 TEST(ServerBackedVendorCommand, RejectsInvalidSourceItemCombinations)

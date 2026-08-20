@@ -3120,12 +3120,52 @@ std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceFor
 
 	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
 }
+
+std::optional<authoritative::ServerBackedCastSource> ServerBackedSourceForSpellCursor(Player &player, SpellID &spellId)
+{
+	switch (player._pRSplType) {
+	case SpellType::Spell:
+		return authoritative::ServerBackedCastSource {
+		    authoritative::ServerBackedCastSourceKind::MemorizedSpell,
+		    std::nullopt,
+		};
+	case SpellType::Scroll: {
+		const auto reference = ServerBackedReferenceForSpellCursor(player, spellId);
+		if (!reference.has_value())
+			return std::nullopt;
+		return authoritative::ServerBackedCastSource {
+		    authoritative::ServerBackedCastSourceKind::ConsumableItem,
+		    *reference,
+		};
+	}
+	default:
+		return std::nullopt;
+	}
+}
 #endif
 
 bool TryIconCurs()
 {
 	if (pcurs == CURSOR_RESURRECT) {
 		if (PlayerUnderCursor != nullptr) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				SpellID spellId = SpellID::Resurrect;
+				const auto targetEntityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
+				const auto source = ServerBackedSourceForSpellCursor(*MyPlayer, spellId);
+				if (!targetEntityId.has_value()) {
+					LogError("Server-backed Resurrection target is not an authoritative player.");
+				} else if (!source.has_value()) {
+					LogError("Server-backed Resurrection cursor has no authoritative spell source.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
+				               static_cast<uint32_t>(spellId), *targetEntityId,
+				               cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value()) {
+					LogError("Server-backed Resurrection cast failed: {}", result.error());
+				}
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			NetSendCmdParam1(true, CMD_RESURRECT, PlayerUnderCursor->getId());
 			NewCursor(CURSOR_HAND);
 			return true;
@@ -3136,6 +3176,24 @@ bool TryIconCurs()
 
 	if (pcurs == CURSOR_HEALOTHER) {
 		if (PlayerUnderCursor != nullptr) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				SpellID spellId = SpellID::HealOther;
+				const auto targetEntityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y);
+				const auto source = ServerBackedSourceForSpellCursor(*MyPlayer, spellId);
+				if (!targetEntityId.has_value()) {
+					LogError("Server-backed Heal Other target is not an authoritative player.");
+				} else if (!source.has_value()) {
+					LogError("Server-backed Heal Other cursor has no authoritative spell source.");
+				} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
+				               static_cast<uint32_t>(spellId), *targetEntityId,
+				               cursPosition.x, cursPosition.y, *source, 0, SDL_GetTicks()); !result.has_value()) {
+					LogError("Server-backed Heal Other cast failed: {}", result.error());
+				}
+				NewCursor(CURSOR_HAND);
+				return true;
+			}
+#endif
 			NetSendCmdParam1(true, CMD_HEALOTHER, PlayerUnderCursor->getId());
 			NewCursor(CURSOR_HAND);
 			return true;

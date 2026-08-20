@@ -12,6 +12,10 @@ All notable changes to this fork are documented below.
   authoritative cast path, including non-keyboard controls and exact source
   references; legacy item spell commands remain available in compatibility mode.
 
+- Route connected native Resurrection and Heal Other cursor actions through
+  explicit authoritative player-targeted cast sources; legacy target commands
+  remain available when the server-backed runtime is disconnected.
+
 - Add an additive target-cell movement intent backed by the shared deterministic
   grid-navigation primitive. Connected native cursor walking and repeated
   dungeon walking now submit server-owned target cells; the legacy directional

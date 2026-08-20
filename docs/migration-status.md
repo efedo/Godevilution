@@ -105,6 +105,11 @@ Status date: 2026-08-20
   the exact stable source reference and the legacy fallback outside connected
   server-backed mode.
 
+- Connected native Resurrection and Heal Other cursor actions now submit
+  explicit authoritative player-targeted casts with memorized-spell or
+  consumable source identity, while the legacy target commands remain the
+  disconnected compatibility path.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native
