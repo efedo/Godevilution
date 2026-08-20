@@ -22,6 +22,14 @@ Status date: 2026-08-20
 | Host adapters | Independent .NET 8 generic Host and Diablo adapter assemblies with exact dependency tests; composition-only .NET 10 executable | Add configurable adapter selection if additional authoritative game adapters are introduced |
 | Lua removal | Hellfire archive activation and the native post-bootstrap reload pipeline no longer require Lua; compatibility inventory established; authoritative data extensions use validated overlays; player/display diagnostics, item and monster spawning/diagnostics, towner interaction, level export, TRN selection, level reset/quest-warp/custom-map warp and seed inspection, automap reveal/hide and search, player rejuvenation, player health/mana adjustment, attribute max/min, level-up, player gold adjustment, spell-level adjustment, and quest diagnostics now use a deterministic native command registry; a server/Godot boundary test rejects Lua/sol2 references from the authoritative C# source and project path | Replace remaining native debug/admin and compatibility script hooks, then remove the Lua REPL and presentation capabilities |
 
+## Release verification baseline
+
+On 2026-08-20, the current Release artifacts passed the managed boundary and
+client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
+1,388, Server 381, and Godot protocol 140. These counts are a dated
+verification baseline, not a substitute for rebuilding the projects before a
+future run.
+
 ## Implemented authoritative systems
 
 - Connected native Town Portal collision now resolves the projected portal ID

@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
 - Refresh the migration verification baseline: the Release Diablo suite now
   passes all 1,388 tests after rebuilding its current content/schema assembly.
 
+- Record the complete managed Release verification baseline: Domain 11, Data
+  26, Engine 43, Diablo 1,388, Server 381, and Godot protocol 140 tests pass.
+
 - Materialize the first supported authoritative projectile families in the
   native compatibility renderer. Their position and lifetime come from the
   server, and presentation-only missile objects skip local process, collision,
