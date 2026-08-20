@@ -2673,9 +2673,18 @@ void PerformSecondaryAction()
 				LogError("Server-backed world-item pickup failed: {}", result.error());
 			return;
 		}
+		if (pcursitem != -1) {
+			LogError("Server-backed controller world-item target is not an authoritative entity.");
+			return;
+		}
 		if (const auto entityId = authoritative::GetServerBackedRuntime().ObjectEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value()) {
 			if (auto result = authoritative::GetServerBackedRuntime().OperateObject(*entityId, 0, SDL_GetTicks()); !result.has_value())
 				LogError("Server-backed object interaction failed: {}", result.error());
+			LastPlayerAction = PlayerActionType::OperateObject;
+			return;
+		}
+		if (ObjectUnderCursor != nullptr) {
+			LogError("Server-backed controller object target is not an authoritative entity.");
 			LastPlayerAction = PlayerActionType::OperateObject;
 			return;
 		}
@@ -2683,21 +2692,28 @@ void PerformSecondaryAction()
 #endif
 
 	if (pcursitem != -1) {
-#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
-		if (authoritative::GetServerBackedRuntime().IsConnected()) {
-			const auto entityId = authoritative::GetServerBackedRuntime().WorldItemEntityIdAt(cursPosition.x, cursPosition.y);
-			if (entityId.has_value()) {
-				if (auto result = authoritative::GetServerBackedRuntime().PickupWorldItem(*entityId, 0, SDL_GetTicks()); !result.has_value())
-					LogError("Server-backed world-item pickup failed: {}", result.error());
-				return;
-			}
-		}
-#endif
 		NetSendCmdLocParam1(true, CMD_GOTOAGETITEM, cursPosition, pcursitem);
 	} else if (ObjectUnderCursor != nullptr) {
 		NetSendCmdLoc(MyPlayerId, true, CMD_OPOBJXY, cursPosition);
 		LastPlayerAction = PlayerActionType::OperateObject;
 	} else {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			std::optional<Point> target;
+			if (pcursmissile != nullptr)
+				target = pcursmissile->position.tile;
+			else if (pcurstrig != -1)
+				target = trigs[pcurstrig].position;
+			else if (pcursquest != Q_INVALID)
+				target = Quests[pcursquest].position;
+
+			if (target.has_value()) {
+				if (auto result = authoritative::GetServerBackedRuntime().MoveTo(target->x, target->y, 0, SDL_GetTicks()); !result.has_value())
+					LogError("Server-backed controller target movement failed: {}", result.error());
+			}
+			return;
+		}
+	#endif
 		if (pcursmissile != nullptr) {
 			myPlayer.makePath(pcursmissile->position.tile, true);
 			myPlayer.destAction = ACTION_WALK;

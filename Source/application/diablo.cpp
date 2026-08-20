@@ -354,6 +354,12 @@ void LeftMouseCmd(bool bShift)
 			NetSendCmdLoc(MyPlayerId, true, CMD_RATTACKXY, cursPosition);
 		} else if (pcursmonst != -1) {
 			if (Monsters[pcursmonst].canTalk()) {
+			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+				if (authoritative::GetServerBackedRuntime().IsConnected()) {
+					TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
+					return;
+				}
+			#endif
 				NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 			} else {
 			#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -391,6 +397,12 @@ void LeftMouseCmd(bool bShift)
 		if (bShift) {
 			if (pcursmonst != -1) {
 				if (Monsters[pcursmonst].canTalk()) {
+				#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+					if (authoritative::GetServerBackedRuntime().IsConnected()) {
+						TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
+						return;
+					}
+				#endif
 					NetSendCmdParam1(true, CMD_ATTACKID, pcursmonst);
 				} else {
 					LastPlayerAction = PlayerActionType::Attack;
@@ -415,6 +427,12 @@ void LeftMouseCmd(bool bShift)
 				NetSendCmdLoc(MyPlayerId, true, CMD_SATTACKXY, cursPosition);
 			}
 		} else if (pcursmonst != -1) {
+		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (Monsters[pcursmonst].canTalk() && authoritative::GetServerBackedRuntime().IsConnected()) {
+				TalktoMonster(*MyPlayer, Monsters[pcursmonst]);
+				return;
+			}
+		#endif
 		#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 			if (!Monsters[pcursmonst].canTalk() && authoritative::GetServerBackedRuntime().IsConnected()) {
 				const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y);

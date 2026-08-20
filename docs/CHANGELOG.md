@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route connected native dungeon talker interactions from mouse and controller
+  inputs through authoritative quest dialogue, and fail closed when controller
+  item/object projections are missing instead of falling through to legacy
+  commands. Controller quest-target movement now submits authoritative target
+  cells; disconnected sessions retain the original compatibility paths.
+
 - Route connected native controller monster, remote-player, and object
   interactions through authoritative entity IDs, including fail-closed handling
   when a projected entity is unavailable; legacy controller commands remain the
