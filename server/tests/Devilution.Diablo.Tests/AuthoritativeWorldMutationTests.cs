@@ -211,6 +211,78 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectLayerMutationRematerializesMappedObjects()
+    {
+        var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true);
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            levelId,
+            4,
+            4,
+            nativeObjectLayer: Enumerable.Repeat<ushort>(0, 16)));
+        var nativeObjects = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 14, 25, 0),
+        ]);
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                levelId,
+                objectLayerRectangles: [
+                    new AuthoritativeWorldMutationObjectRectangle(1, 1, 1, 1, 14),
+                ]),
+        ]);
+        var world = new DiabloWorldState(
+            geometry,
+            worldMutations: mutations,
+            nativeDunObjects: nativeObjects);
+
+        Assert.Empty(world.Objects);
+        Assert.True(world.ApplyWorldMutation(7));
+        var materialized = Assert.Single(world.Objects.Values);
+        Assert.Equal(
+            AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(2, true, 5),
+            materialized.EntityId);
+        Assert.Equal((1, 1), (materialized.PositionX, materialized.PositionY));
+        Assert.Equal(25U, materialized.ObjectId);
+
+        world.RestoreWorldMutations([]);
+        Assert.Empty(world.Objects);
+    }
+
+    [Fact]
+    public void GeometryMutationPreservesExistingMappedObjectState()
+    {
+        var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true);
+        var entityId = AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(2, true, 5);
+        var existing = new AuthoritativeWorldObject(entityId, 25, levelId, 1, 1, activated: true);
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            levelId,
+            4,
+            4,
+            nativeObjectLayer: [0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+        var nativeObjects = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 14, 25, 0),
+        ]);
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                levelId,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(0, 0, 1, 1)]),
+        ]);
+        var world = new DiabloWorldState(
+            geometry,
+            objects: [existing],
+            worldMutations: mutations,
+            nativeDunObjects: nativeObjects);
+
+        Assert.Same(existing, world.Objects[entityId]);
+        Assert.True(world.ApplyWorldMutation(7));
+        Assert.Same(existing, world.Objects[entityId]);
+        Assert.True(world.Objects[entityId].Activated);
+    }
+
+    [Fact]
     public void ResolvesSetLevelMutationTargetsToRuntimeLevels()
     {
         var stableIds = new StableContentIdCatalog([

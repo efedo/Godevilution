@@ -67,21 +67,37 @@ public sealed class AuthoritativeNativeDunObjectCatalog
     public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
-        IEnumerable<AuthoritativeWorldObject>? templates = null)
+        IEnumerable<AuthoritativeWorldObject>? templates = null,
+        bool preserveExisting = false)
     {
         ArgumentNullException.ThrowIfNull(world);
-        var usedEntityIds = (existingObjects ?? [])
+        return LoadAvailableObjects(world.Levels, existingObjects, templates, preserveExisting);
+    }
+
+    /** Materializes mapped objects from an already projected level collection. */
+    public IReadOnlyList<AuthoritativeWorldObject> LoadAvailableObjects(
+        IEnumerable<AuthoritativeLevel> levels,
+        IEnumerable<AuthoritativeWorldObject>? existingObjects = null,
+        IEnumerable<AuthoritativeWorldObject>? templates = null,
+        bool preserveExisting = false)
+    {
+        ArgumentNullException.ThrowIfNull(levels);
+        var existingValues = (existingObjects ?? []).ToArray();
+        var templateValues = (templates ?? []).ToArray();
+        var usedEntityIds = existingValues
             .Select(@object => @object.EntityId)
             .ToHashSet();
-        var templateByEntityId = (templates ?? [])
+        var existingByEntityId = existingValues
             .ToDictionary(@object => @object.EntityId);
+        var templateByEntityId = templateValues
+            .ToDictionary(@object => @object.EntityId);
+        var levelsById = levels.ToDictionary(level => level.LevelId);
         var objects = new List<AuthoritativeWorldObject>();
         foreach (var definition in definitions) {
             var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
                 definition.SetLevelId,
                 definition.ActiveMap);
-            var level = world.Levels.SingleOrDefault(candidate => candidate.LevelId == levelId);
-            if (level is null)
+            if (!levelsById.TryGetValue(levelId, out var level))
                 continue;
             if (level.NativeObjectLayer.Count == 0)
                 throw new InvalidDataException(
@@ -93,15 +109,24 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             for (var cell = 0; cell < level.NativeObjectLayer.Count; cell++) {
                 if (level.NativeObjectLayer[cell] != definition.NativeObjectId)
                     continue;
+                var positionX = cell % level.Width;
+                var positionY = cell / level.Width;
                 var entityId = GetRuntimeEntityId(
                     definition.SetLevelId,
                     definition.ActiveMap,
                     cell);
-                if (!usedEntityIds.Add(entityId))
+                if (!usedEntityIds.Add(entityId)) {
+                    if (preserveExisting
+                        && existingByEntityId.TryGetValue(entityId, out var existing)
+                        && existing.LevelId == levelId
+                        && existing.PositionX == positionX
+                        && existing.PositionY == positionY
+                        && existing.ObjectId == definition.ObjectId) {
+                        continue;
+                    }
                     throw new InvalidDataException(
                         $"Native DUN object mapping collides with entity {entityId}.");
-                var positionX = cell % level.Width;
-                var positionY = cell / level.Width;
+                }
                 if (definition.TemplateEntityId != 0) {
                     if (!templateByEntityId.TryGetValue(
                             definition.TemplateEntityId,

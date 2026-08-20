@@ -831,6 +831,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             SetLevelObjects = setLevelObjects,
             SetLevelMaps = setLevelMaps,
             NativeDunObjects = nativeDunObjects,
+            NativeObjectTemplates = objectTemplates,
             Spells = spells,
             SpellBooks = spellBooks,
             CombatRules = combatRules,

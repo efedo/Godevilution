@@ -266,8 +266,10 @@ the compatibility default retains the prior target-origin behavior. Set-level pl
 and map effects remain content seams still being filled from native data; authored
 world mutations can now also assign validated native transparency and native
 object-layer rectangles for set-piece effects such as Halls of the Blind.
-Object-layer values are retained for the explicit mapping catalog while dynamic
-object rematerialization remains a follow-up seam. The
+Object-layer values are retained for the explicit mapping catalog, and active
+mutations now reconcile mapped object entities dynamically: unchanged mapped
+objects preserve server state, while stale and newly mapped entities are
+removed or materialized deterministically. The
 Diablo module now parses native `.dun` layers, native little-endian `.til`
 mega-tile records, and `.sol` tile-property bytes, then exposes an exact
 materializer when those collision inputs are supplied, without guessing from

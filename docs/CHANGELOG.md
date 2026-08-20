@@ -4,10 +4,15 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Reconcile mapped native DUN object entities when active world mutations change
+  projected object-layer cells. Unchanged mapped objects preserve authoritative
+  state, stale entities are removed, and newly mapped cells are materialized
+  deterministically. Bump the Diablo content schema to 1.378.
+
 - Extend authored world mutations with validated `object_layer_rects`
   assignments. Native object-layer values now persist in effective level
-  geometry for explicit mapping/rematerialization after set-piece changes. Bump
-  the Diablo content schema to 1.377.
+  geometry for explicit object mapping and rematerialization. Bump the Diablo
+  content schema to 1.377.
 
 - Extend authored world mutations with validated `transparency_rects`
   assignments. Native transparency values now persist through active mutation

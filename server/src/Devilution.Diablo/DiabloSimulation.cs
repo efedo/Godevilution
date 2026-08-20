@@ -71,6 +71,9 @@ public sealed class DiabloSimulationOptions
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
+    /** Optional object templates used when mapped native DUN entities are rematerialized. */
+    public IReadOnlyList<AuthoritativeWorldObject>? NativeObjectTemplates { get; init; }
+
     /** Validated native set-level map assets and entry points used by activation. */
     public AuthoritativeSetLevelMapCatalog? SetLevelMaps { get; init; }
 
@@ -175,7 +178,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.Projectiles,
             options.FallbackMissileBlockedCells,
             options.Corpses,
-            options.WorldMutations);
+            options.WorldMutations,
+            nativeDunObjects: options.NativeDunObjects,
+            nativeObjectTemplates: options.NativeObjectTemplates);
         var spells = options.Spells ?? new AuthoritativeSpellCatalog([
             new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
             new AuthoritativeSpellDefinition(2, 3, 0, 1, 10, 1),

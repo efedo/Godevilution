@@ -7,6 +7,8 @@ public sealed class DiabloWorldState
     private readonly int fallbackHeight;
     private readonly HashSet<int> fallbackBlockedCells;
     private readonly HashSet<int> fallbackMissileBlockedCells;
+    private readonly AuthoritativeNativeDunObjectCatalog? nativeDunObjects;
+    private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
     private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
@@ -25,10 +27,14 @@ public sealed class DiabloWorldState
         IEnumerable<int>? fallbackMissileBlockedCells = null,
         IReadOnlyList<AuthoritativeCorpse>? corpses = null,
         AuthoritativeWorldMutationCatalog? worldMutations = null,
-        IEnumerable<uint>? activeWorldMutationIds = null)
+        IEnumerable<uint>? activeWorldMutationIds = null,
+        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
+        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null)
     {
         World = world;
         WorldMutations = worldMutations;
+        this.nativeDunObjects = nativeDunObjects;
+        this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         if (World is not null)
             WorldMutations?.ValidateWorld(World);
         foreach (var mutationId in activeWorldMutationIds ?? []) {
@@ -322,6 +328,42 @@ public sealed class DiabloWorldState
                     objectLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
+        }
+
+        SynchronizeNativeDunObjects();
+    }
+
+    /** Reconciles mapped native object entities with the currently projected object layer. */
+    private void SynchronizeNativeDunObjects()
+    {
+        if (nativeDunObjects is null)
+            return;
+
+        foreach (var definition in nativeDunObjects.Definitions) {
+            var levelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                definition.SetLevelId,
+                definition.ActiveMap);
+            if (!projectedLevels.TryGetValue(levelId, out var level))
+                continue;
+            for (var cell = 0; cell < level.NativeObjectLayer.Count; cell++) {
+                if (level.NativeObjectLayer[cell] == definition.NativeObjectId)
+                    continue;
+                Objects.Remove(AuthoritativeNativeDunObjectCatalog.GetRuntimeEntityId(
+                    definition.SetLevelId,
+                    definition.ActiveMap,
+                    cell));
+            }
+        }
+
+        var materialized = nativeDunObjects.LoadAvailableObjects(
+            projectedLevels.Values,
+            Objects.Values.ToArray(),
+            nativeObjectTemplates,
+            preserveExisting: true);
+        foreach (var @object in materialized) {
+            if (!Objects.TryAdd(@object.EntityId, @object))
+                throw new InvalidDataException(
+                    $"Native DUN object entity {@object.EntityId} is registered more than once.");
         }
     }
 
