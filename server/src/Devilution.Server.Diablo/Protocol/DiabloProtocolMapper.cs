@@ -1376,6 +1376,7 @@ internal static class DiabloProtocolMapper
             AuthoritativeProjectileBehavior.AcidSplat => NativeProjectileVisual.AcidSplat,
             AuthoritativeProjectileBehavior.AcidPuddle => NativeProjectileVisual.AcidPuddle,
             AuthoritativeProjectileBehavior.HorkSpawn => NativeProjectileVisual.HorkSpawn,
+            AuthoritativeProjectileBehavior.NovaBall => NativeProjectileVisual.NovaBall,
             AuthoritativeProjectileBehavior.WeaponArrow
                 or AuthoritativeProjectileBehavior.MonsterArrow
                 => NativeProjectileVisual.Arrow,

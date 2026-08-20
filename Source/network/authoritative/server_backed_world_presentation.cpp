@@ -91,6 +91,8 @@ std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVis
 			return MissileID::ChargedBolt;
 		case protocol::NATIVE_PROJECTILE_VISUAL_HORK_SPAWN:
 			return MissileID::HorkSpawn;
+		case protocol::NATIVE_PROJECTILE_VISUAL_NOVA_BALL:
+			return MissileID::NovaBall;
 		default:
 			// An explicit unknown identity must fail closed rather than infer a
 			// different visual from gameplay behavior.

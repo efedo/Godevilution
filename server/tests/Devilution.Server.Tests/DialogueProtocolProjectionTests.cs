@@ -75,6 +75,7 @@ public sealed class DialogueProtocolProjectionTests
     [InlineData(AuthoritativeProjectileBehavior.AcidSplat, NativeProjectileVisual.AcidSplat)]
     [InlineData(AuthoritativeProjectileBehavior.AcidPuddle, NativeProjectileVisual.AcidPuddle)]
     [InlineData(AuthoritativeProjectileBehavior.HorkSpawn, NativeProjectileVisual.HorkSpawn)]
+    [InlineData(AuthoritativeProjectileBehavior.NovaBall, NativeProjectileVisual.NovaBall)]
     [InlineData(AuthoritativeProjectileBehavior.WeaponArrow, NativeProjectileVisual.Arrow)]
     [InlineData(AuthoritativeProjectileBehavior.MonsterArrow, NativeProjectileVisual.Arrow)]
     public void ProjectsServerOwnedNativeProjectileVisual(
