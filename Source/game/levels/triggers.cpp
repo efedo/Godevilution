@@ -17,6 +17,9 @@
 #include "ui/diablo_msg.hpp"
 #include "application/game_mode.hpp"
 #include "network/protocol/multi.h"
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+#include "network/authoritative/server_backed_runtime.hpp"
+#endif
 #include "utils/algorithm/container.hpp"
 #include "utils/is_of.hpp"
 #include "utils/language.h"
@@ -861,6 +864,14 @@ void CheckTrigForce()
 
 void CheckTriggers()
 {
+	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	// Authoritative movement applies level transitions on the server when the
+	// projected walk action reaches its trigger tile. Do not emit legacy
+	// CMD_NEWLVL commands from the native presentation loop as well.
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		return;
+	#endif
+
 	Player &myPlayer = *MyPlayer;
 
 	if (myPlayer._pmode != PM_STAND)

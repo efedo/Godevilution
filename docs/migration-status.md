@@ -133,6 +133,9 @@ Status date: 2026-08-20
 - The connected native mouse held-item drop path now submits the authoritative
   drop intent; `CMD_PUTITEM` remains the disconnected compatibility path.
 
+- Connected native trigger polling now defers level transitions entirely to
+  server-owned movement/warp resolution instead of emitting legacy `CMD_NEWLVL`.
+
 - Authoritative experience level-ups now apply native class life/mana growth,
   level-up refills, `NoMana` suppression, and server-owned stat-point awards;
   the projected native character panel receives the resulting maxima and

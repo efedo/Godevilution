@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Prevent connected native trigger polling from emitting legacy level-change
+  commands after the server has already applied a projected warp transition.
+
 - Route the remaining connected native mouse held-item drop path through the
   authoritative drop intent; disconnected sessions retain `CMD_PUTITEM`.
 
