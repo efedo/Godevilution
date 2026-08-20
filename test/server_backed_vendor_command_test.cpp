@@ -308,6 +308,16 @@ TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
 	        ServerBackedItemReference { ServerBackedItemLocation::Equipment, 4 },
 	    },
 	    23);
+	const auto consumable = MakeCastCommand(
+	    32,
+	    0,
+	    4,
+	    5,
+	    {
+	        ServerBackedCastSourceKind::ConsumableItem,
+	        ServerBackedItemReference { ServerBackedItemLocation::Belt, 3, 2116 },
+	    },
+	    24);
 
 	ASSERT_TRUE(memorized.has_value()) << memorized.error();
 	EXPECT_EQ(memorized->cast_requested().source(), protocol::CAST_SOURCE_KIND_MEMORIZED_SPELL);
@@ -316,6 +326,11 @@ TEST(ServerBackedVendorCommand, BuildsSourceAwareCastIntents)
 	EXPECT_EQ(charged->cast_requested().source(), protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
 	EXPECT_EQ(charged->cast_requested().source_item().location(), protocol::PLAYER_ITEM_LOCATION_EQUIPMENT);
 	EXPECT_EQ(charged->cast_requested().source_item().slot(), 4U);
+	ASSERT_TRUE(consumable.has_value()) << consumable.error();
+	EXPECT_EQ(consumable->cast_requested().source(), protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
+	EXPECT_EQ(consumable->cast_requested().source_item().location(), protocol::PLAYER_ITEM_LOCATION_BELT);
+	EXPECT_EQ(consumable->cast_requested().source_item().slot(), 3U);
+	EXPECT_EQ(consumable->cast_requested().source_item().stable_item_id(), 2116U);
 }
 
 TEST(ServerBackedVendorCommand, RejectsInvalidSourceItemCombinations)

@@ -3106,6 +3106,19 @@ std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceFor
 
 	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(itemSeed);
 }
+
+std::optional<authoritative::ServerBackedItemReference> ServerBackedReferenceForSpellCursor(Player &player)
+{
+	const int itemLocation = player.spellFrom;
+	if (itemLocation < INVITEM_INV_FIRST || itemLocation > INVITEM_BELT_LAST)
+		return std::nullopt;
+
+	const Item &item = GetInventoryItem(player, itemLocation);
+	if (item.isEmpty())
+		return std::nullopt;
+
+	return authoritative::GetServerBackedRuntime().PlayerItemReferenceForSeed(item._iSeed);
+}
 #endif
 
 bool TryIconCurs()
@@ -3300,6 +3313,31 @@ bool TryIconCurs()
 		const SpellID spellID = myPlayer.inventorySpell;
 		const SpellType spellType = SpellType::Scroll;
 		const int spellFrom = myPlayer.spellFrom;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected()) {
+			uint32_t targetEntityId = 0;
+			if (pcursmonst != -1 && levelType() != DTYPE_TOWN) {
+				if (const auto entityId = authoritative::GetServerBackedRuntime().MonsterEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+					targetEntityId = *entityId;
+			} else if (PlayerUnderCursor != nullptr) {
+				if (const auto entityId = authoritative::GetServerBackedRuntime().PlayerEntityIdAt(cursPosition.x, cursPosition.y); entityId.has_value())
+					targetEntityId = *entityId;
+			}
+
+			const auto sourceItem = ServerBackedReferenceForSpellCursor(myPlayer);
+			if (!sourceItem.has_value()) {
+				LogError("Server-backed spell cursor has no authoritative consumable source.");
+			} else if (auto result = authoritative::GetServerBackedRuntime().Cast(
+			               static_cast<uint32_t>(spellID), targetEntityId,
+			               cursPosition.x, cursPosition.y,
+			               { authoritative::ServerBackedCastSourceKind::ConsumableItem, sourceItem },
+			               0, SDL_GetTicks()); !result.has_value()) {
+				LogError("Server-backed spell cursor cast failed: {}", result.error());
+			}
+			NewCursor(CURSOR_HAND);
+			return true;
+		}
+#endif
 		if (IsWallSpell(spellID)) {
 			const Direction sd = GetDirection(myPlayer.position.tile, cursPosition);
 			NetSendCmdLocParam4(true, CMD_SPELLXYD, cursPosition, static_cast<int8_t>(spellID), static_cast<uint8_t>(spellType), static_cast<uint16_t>(sd), spellFrom);

@@ -96,6 +96,10 @@ Status date: 2026-08-20
   movement intent when no authoritative cast or item interaction applies;
   server-side path resolution remains authoritative.
 
+- Connected native targeted scroll and rune cursor casts now submit the
+  authoritative cast intent with the exact stable consumable source reference;
+  legacy spell commands remain available outside server-backed sessions.
+
 - Connected native mouse entity-targeted monster/player attacks and ordinary
   object operations now submit projected authoritative entity IDs, and repeated
   cursor actions use the same server-owned intents. Adjacent primary native

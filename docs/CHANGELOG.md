@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Route connected native targeted scroll and rune cursor casts through the
+  authoritative cast protocol with their stable consumable source reference;
+  legacy spell commands remain available outside server-backed sessions.
+
 - Add an additive target-cell movement intent backed by the shared deterministic
   grid-navigation primitive. Connected native cursor walking and repeated
   dungeon walking now submit server-owned target cells; the legacy directional
