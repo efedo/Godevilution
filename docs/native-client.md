@@ -20,8 +20,9 @@ connected server-backed session.
 The native authoritative world projection retains the sorted, validated server
 projectile snapshots alongside monsters, items, and objects. The presentation
 bridge now materializes the first supported families (Charged Bolt, Firebolt,
-Lightning, Phasing, Fireball, Holy Bolt, Blood Star, Bone Spirit, Fire Wall,
-Chain Lightning, Guardian, Etherealize, Acid, Acid Splat, Acid Puddle, monster
+Lightning, Lightning segments, Phasing, Fireball, Holy Bolt, Blood Star, Bone
+Spirit, Fire Wall, Flame Wave, Inferno, Apocalypse impact, Chain Lightning,
+Elemental, Guardian, Etherealize, Acid, Acid Splat, Acid Puddle, monster
 Charged Bolt, Hork Spawn, and monster Arrow) into legacy missile sprites when
 the active native content pack defines the corresponding missile data. These
 objects are marked presentation-only: authoritative positions and lifetimes

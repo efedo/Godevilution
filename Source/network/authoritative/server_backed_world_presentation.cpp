@@ -42,6 +42,8 @@ std::optional<MissileID> NativePresentationMissileId(int behavior)
 		return MissileID::Firebolt;
 	case 3: // Lightning
 		return MissileID::Lightning;
+	case 4: // LightningSegment
+		return MissileID::ThinLightning;
 	case 15: // Phasing
 		return MissileID::Phasing;
 	case 16: // Fireball
@@ -54,8 +56,18 @@ std::optional<MissileID> NativePresentationMissileId(int behavior)
 		return MissileID::BoneSpirit;
 	case 23: // FireWallSegment
 		return MissileID::FireWall;
+	case 24: // FlameWaveController
+		return MissileID::FlameWaveControl;
+	case 25: // FlameWaveSegment
+		return MissileID::FlameWave;
+	case 27: // InfernoSegment
+		return MissileID::Inferno;
 	case 29: // ChainLightningBolt
 		return MissileID::ChainLightning;
+	case 33: // ApocalypseBoom
+		return MissileID::ApocalypseBoom;
+	case 35: // Elemental
+		return MissileID::Elemental;
 	case 36: // GuardianController
 		return MissileID::Guardian;
 	case 49: // Etherealize
