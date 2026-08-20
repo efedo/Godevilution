@@ -47,4 +47,57 @@ public sealed class DialogueProtocolProjectionTests
         Assert.NotNull(batch);
         Assert.Equal(string.Empty, Assert.Single(batch!.Events).Dialogue.Text);
     }
+
+    [Theory]
+    [InlineData(AuthoritativeProjectileBehavior.Firebolt, NativeProjectileVisual.Firebolt)]
+    [InlineData(AuthoritativeProjectileBehavior.LightningSegment, NativeProjectileVisual.ThinLightning)]
+    [InlineData(AuthoritativeProjectileBehavior.WeaponArrow, NativeProjectileVisual.Arrow)]
+    public void ProjectsServerOwnedNativeProjectileVisual(
+        AuthoritativeProjectileBehavior behavior,
+        NativeProjectileVisual expectedVisual)
+    {
+        var player = new StorePlayerSnapshot(
+            0,
+            null,
+            [],
+            0,
+            64,
+            0,
+            0,
+            PlayerAttributesState.Zero,
+            [],
+            [],
+            []) {
+            EntityId = 1,
+            LevelId = 1,
+        };
+        var source = new DiabloSimulationSnapshot(
+            1,
+            player,
+            [],
+            [],
+            [],
+            [],
+            [new DiabloProjectileState(
+                2,
+                1,
+                0,
+                2,
+                1,
+                4,
+                4,
+                4,
+                4,
+                0,
+                AuthoritativeDamageType.Fire,
+                0,
+                3) {
+                Behavior = behavior,
+            }],
+            null);
+
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.Equal(expectedVisual, Assert.Single(snapshot.Projectiles).NativeVisual);
+    }
 }

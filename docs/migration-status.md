@@ -41,6 +41,10 @@ Status date: 2026-08-20
   bridge fails closed for unsupported families or content-missing missile rows;
   those projectiles remain projection-only until their native presentation
   mapping is available.
+  The server also supplies an additive exact native visual identity, so the
+  compatibility client no longer needs to infer supported sprites from
+  gameplay behavior numbers; zero-valued metadata preserves older-server
+  fallback behavior and unknown explicit identities fail closed.
   Snapshot-driven collision also submits the same intent when the authoritative
   portal has no locally-created legacy missile.
 

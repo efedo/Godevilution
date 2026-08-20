@@ -509,19 +509,23 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsSortedAuthoritativeProjec
 	second.sourceEntityId = 1;
 	second.spellId = 4;
 	second.remainingTicks = 2;
+	second.nativeVisual = 2;
 	ProjectedProjectileSnapshot first;
 	first.entityId = 11;
 	first.sourceEntityId = 1;
 	first.spellId = 4;
 	first.remainingTicks = 1;
 	first.behavior = 7;
+	first.nativeVisual = 6;
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { second, first }, 1).has_value());
 	ASSERT_EQ(projection.Projectiles().size(), 2U);
 	EXPECT_EQ(projection.Projectiles()[0].entityId, 11U);
 	EXPECT_EQ(projection.Projectiles()[0].behavior, 7);
+	EXPECT_EQ(projection.Projectiles()[0].nativeVisual, 6);
 	EXPECT_EQ(projection.Projectiles()[1].entityId, 12U);
+	EXPECT_EQ(projection.Projectiles()[1].nativeVisual, 2);
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProjectiles)
@@ -552,6 +556,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	projectile.positionY = 4;
 	projectile.remainingTicks = 5;
 	projectile.behavior = 2; // Firebolt
+	projectile.nativeVisual = 25; // ChargedBolt; server metadata overrides behavior fallback.
 	projectile.originalDirection = 3;
 
 	ServerBackedWorldProjection projection;
@@ -562,7 +567,7 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 	ASSERT_EQ(Missiles.size(), 1U);
 	const Missile &missile = Missiles.front();
 	EXPECT_EQ(missile._miAuthoritativeEntityId, 101U);
-	EXPECT_EQ(missile._mitype, MissileID::Firebolt);
+	EXPECT_EQ(missile._mitype, MissileID::ChargedBolt);
 	const WorldTilePosition expectedPosition { 4, 4 };
 	EXPECT_EQ(missile.position.tile, expectedPosition);
 	EXPECT_EQ(missile.duration, 5);
@@ -585,6 +590,30 @@ TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimu
 
 	presentation.Clear();
 	Missiles.clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsUnknownExplicitNativeProjectileVisual)
+{
+	LoadMissileData();
+	Missiles.clear();
+
+	ProjectedProjectileSnapshot projectile;
+	projectile.entityId = 120;
+	projectile.sourceEntityId = 1;
+	projectile.spellId = 4;
+	projectile.levelId = 1;
+	projectile.positionX = 4;
+	projectile.positionY = 4;
+	projectile.remainingTicks = 5;
+	projectile.behavior = 2;
+	projectile.nativeVisual = 999;
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { projectile }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_TRUE(Missiles.empty());
+	presentation.Clear();
 }
 
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeMonsterProjectileFamilies)

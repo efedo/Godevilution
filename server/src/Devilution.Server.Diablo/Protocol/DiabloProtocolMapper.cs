@@ -305,6 +305,7 @@ internal static class DiabloProtocolMapper
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
                 DamageMinimum = projectile.DamageMinimum,
                 DamageMaximum = projectile.DamageMaximum,
+                NativeVisual = ResolveNativeProjectileVisual(projectile.Behavior),
                 PresentationKind = ResolveProjectilePresentationKind(
                     projectile.Behavior,
                     projectile.Phase),
@@ -1343,4 +1344,41 @@ internal static class DiabloProtocolMapper
             return ProjectilePresentationKind.Arrow;
         return ProjectilePresentationKind.Generic;
     }
+
+    /** Selects the native compatibility sprite without exposing gameplay IDs to the client. */
+    private static NativeProjectileVisual ResolveNativeProjectileVisual(
+        AuthoritativeProjectileBehavior behavior)
+        => behavior switch {
+            AuthoritativeProjectileBehavior.ChargedBolt
+                or AuthoritativeProjectileBehavior.MonsterChargedBolt
+                => NativeProjectileVisual.ChargedBolt,
+            AuthoritativeProjectileBehavior.Firebolt => NativeProjectileVisual.Firebolt,
+            AuthoritativeProjectileBehavior.Lightning => NativeProjectileVisual.Lightning,
+            AuthoritativeProjectileBehavior.LightningSegment => NativeProjectileVisual.ThinLightning,
+            AuthoritativeProjectileBehavior.FlashBottom => NativeProjectileVisual.FlashBottom,
+            AuthoritativeProjectileBehavior.FlashTop => NativeProjectileVisual.FlashTop,
+            AuthoritativeProjectileBehavior.ResurrectionBeam => NativeProjectileVisual.ResurrectBeam,
+            AuthoritativeProjectileBehavior.Phasing => NativeProjectileVisual.Phasing,
+            AuthoritativeProjectileBehavior.Fireball => NativeProjectileVisual.Fireball,
+            AuthoritativeProjectileBehavior.HolyBolt => NativeProjectileVisual.HolyBolt,
+            AuthoritativeProjectileBehavior.BloodStar => NativeProjectileVisual.BloodStar,
+            AuthoritativeProjectileBehavior.BoneSpirit => NativeProjectileVisual.BoneSpirit,
+            AuthoritativeProjectileBehavior.FireWallSegment => NativeProjectileVisual.FireWall,
+            AuthoritativeProjectileBehavior.FlameWaveController => NativeProjectileVisual.FlameWaveControl,
+            AuthoritativeProjectileBehavior.FlameWaveSegment => NativeProjectileVisual.FlameWave,
+            AuthoritativeProjectileBehavior.InfernoSegment => NativeProjectileVisual.Inferno,
+            AuthoritativeProjectileBehavior.ChainLightningBolt => NativeProjectileVisual.ChainLightning,
+            AuthoritativeProjectileBehavior.ApocalypseBoom => NativeProjectileVisual.ApocalypseBoom,
+            AuthoritativeProjectileBehavior.Elemental => NativeProjectileVisual.Elemental,
+            AuthoritativeProjectileBehavior.GuardianController => NativeProjectileVisual.Guardian,
+            AuthoritativeProjectileBehavior.Etherealize => NativeProjectileVisual.Etherealize,
+            AuthoritativeProjectileBehavior.Acid => NativeProjectileVisual.Acid,
+            AuthoritativeProjectileBehavior.AcidSplat => NativeProjectileVisual.AcidSplat,
+            AuthoritativeProjectileBehavior.AcidPuddle => NativeProjectileVisual.AcidPuddle,
+            AuthoritativeProjectileBehavior.HorkSpawn => NativeProjectileVisual.HorkSpawn,
+            AuthoritativeProjectileBehavior.WeaponArrow
+                or AuthoritativeProjectileBehavior.MonsterArrow
+                => NativeProjectileVisual.Arrow,
+            _ => NativeProjectileVisual.Unspecified,
+        };
 }

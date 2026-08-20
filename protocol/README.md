@@ -312,6 +312,11 @@ Windows toolchain command.
   presentation family. Current servers populate it for every projectile so
   Godot does not need to maintain the behavior-to-visual mapping; older peers
   may omit it and clients retain their behavior/phase compatibility fallback.
+  `ProjectileSnapshot.native_visual` field 56 is the corresponding exact
+  native-compatibility sprite identity. The native client consumes this
+  presentation-only metadata instead of inferring a sprite from gameplay
+  behavior; zero retains the legacy behavior fallback and unknown nonzero
+  values fail closed.
   Blood Star uses behavior value `20` for its fixed native magic projectile;
   Bone Spirit uses behavior value `21` for its native homing projectile and
   seven-tick impact phase. Both remain server-owned, including resistance,

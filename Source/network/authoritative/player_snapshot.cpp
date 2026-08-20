@@ -347,6 +347,7 @@ tl::expected<std::vector<ProjectedProjectileSnapshot>, std::string> ProjectProje
 		    .areaRadius = source.area_radius(),
 		    .remainingTicks = source.remaining_ticks(),
 		    .behavior = source.behavior(),
+		    .nativeVisual = source.native_visual(),
 		    .phase = source.phase(),
 		    .startX = source.start_x(),
 		    .startY = source.start_y(),

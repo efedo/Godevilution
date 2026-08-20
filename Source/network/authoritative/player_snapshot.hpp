@@ -143,6 +143,8 @@ struct ProjectedProjectileSnapshot {
 	int32_t areaRadius = 0;
 	uint32_t remainingTicks = 0;
 	int32_t behavior = 0;
+	/** Server-selected native compatibility sprite; zero retains behavior fallback. */
+	int32_t nativeVisual = 0;
 	int32_t phase = 0;
 	int32_t startX = 0;
 	int32_t startY = 0;

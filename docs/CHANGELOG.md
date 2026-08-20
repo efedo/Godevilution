@@ -12,6 +12,11 @@ All notable changes to this fork are documented below.
   arrows, Acid, Hork Spawn, monster Charged Bolt, and monster Arrow families,
   while unsupported or content-missing missile rows remain projection-only.
 
+- Add the server-owned `native_visual` projectile presentation identity. The
+  native compatibility client now consumes exact sprite metadata rather than
+  inferring visuals from gameplay behavior values; zero-valued metadata retains
+  older-server fallback behavior and unknown explicit values fail closed.
+
 - Handle connected Town Portal entry directly from projected portal state when
   no legacy native portal missile exists; disconnected sessions retain local
   portal behavior.

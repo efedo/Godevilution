@@ -14,9 +14,11 @@
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
+#include "devilution.pb.h"
 #include "tables/objdat.h"
 
 namespace devilution::authoritative {
+namespace protocol = ::devilution::protocol::v1;
 namespace {
 
 bool IsCurrentLevel(uint32_t entityLevelId, uint32_t currentLevelId)
@@ -33,8 +35,69 @@ bool IsValidWorldPosition(int32_t x, int32_t y)
 }
 
 /** Returns the native sprite family that can be presented without simulation. */
-std::optional<MissileID> NativePresentationMissileId(int behavior)
+std::optional<MissileID> NativePresentationMissileId(int behavior, int nativeVisual)
 {
+	if (nativeVisual != 0) {
+		switch (static_cast<protocol::NativeProjectileVisual>(nativeVisual)) {
+		case protocol::NATIVE_PROJECTILE_VISUAL_ARROW:
+			return MissileID::Arrow;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FIREBOLT:
+			return MissileID::Firebolt;
+		case protocol::NATIVE_PROJECTILE_VISUAL_LIGHTNING:
+			return MissileID::Lightning;
+		case protocol::NATIVE_PROJECTILE_VISUAL_THIN_LIGHTNING:
+			return MissileID::ThinLightning;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FLASH_BOTTOM:
+			return MissileID::FlashBottom;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FLASH_TOP:
+			return MissileID::FlashTop;
+		case protocol::NATIVE_PROJECTILE_VISUAL_RESURRECT_BEAM:
+			return MissileID::ResurrectBeam;
+		case protocol::NATIVE_PROJECTILE_VISUAL_PHASING:
+			return MissileID::Phasing;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FIREBALL:
+			return MissileID::Fireball;
+		case protocol::NATIVE_PROJECTILE_VISUAL_HOLY_BOLT:
+			return MissileID::HolyBolt;
+		case protocol::NATIVE_PROJECTILE_VISUAL_BLOOD_STAR:
+			return MissileID::BloodStar;
+		case protocol::NATIVE_PROJECTILE_VISUAL_BONE_SPIRIT:
+			return MissileID::BoneSpirit;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FIRE_WALL:
+			return MissileID::FireWall;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FLAME_WAVE_CONTROL:
+			return MissileID::FlameWaveControl;
+		case protocol::NATIVE_PROJECTILE_VISUAL_FLAME_WAVE:
+			return MissileID::FlameWave;
+		case protocol::NATIVE_PROJECTILE_VISUAL_INFERNO:
+			return MissileID::Inferno;
+		case protocol::NATIVE_PROJECTILE_VISUAL_CHAIN_LIGHTNING:
+			return MissileID::ChainLightning;
+		case protocol::NATIVE_PROJECTILE_VISUAL_APOCALYPSE_BOOM:
+			return MissileID::ApocalypseBoom;
+		case protocol::NATIVE_PROJECTILE_VISUAL_ELEMENTAL:
+			return MissileID::Elemental;
+		case protocol::NATIVE_PROJECTILE_VISUAL_GUARDIAN:
+			return MissileID::Guardian;
+		case protocol::NATIVE_PROJECTILE_VISUAL_ETHEREALIZE:
+			return MissileID::Etherealize;
+		case protocol::NATIVE_PROJECTILE_VISUAL_ACID:
+			return MissileID::Acid;
+		case protocol::NATIVE_PROJECTILE_VISUAL_ACID_SPLAT:
+			return MissileID::AcidSplat;
+		case protocol::NATIVE_PROJECTILE_VISUAL_ACID_PUDDLE:
+			return MissileID::AcidPuddle;
+		case protocol::NATIVE_PROJECTILE_VISUAL_CHARGED_BOLT:
+			return MissileID::ChargedBolt;
+		case protocol::NATIVE_PROJECTILE_VISUAL_HORK_SPAWN:
+			return MissileID::HorkSpawn;
+		default:
+			// An explicit unknown identity must fail closed rather than infer a
+			// different visual from gameplay behavior.
+			return std::nullopt;
+		}
+	}
+
 	switch (behavior) {
 	case 1: // ChargedBolt
 		return MissileID::ChargedBolt;
@@ -413,7 +476,7 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	for (const auto &snapshot : projection.Projectiles()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
 			continue;
-		const auto missileId = NativePresentationMissileId(snapshot.behavior);
+		const auto missileId = NativePresentationMissileId(snapshot.behavior, snapshot.nativeVisual);
 		if (!missileId)
 			continue;
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
