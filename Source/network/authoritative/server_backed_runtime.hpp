@@ -46,6 +46,16 @@ public:
 	{
 		worldPresentation_.ForEachRemotePlayer(callback);
 	}
+	/** Finds a projected remote player for read-only UI inspection. */
+	[[nodiscard]] const Player *FindRemotePlayer(uint32_t entityId) const noexcept
+	{
+		return worldPresentation_.FindRemotePlayer(entityId);
+	}
+	/** Finds a projected remote player for the legacy read-only inspection panel. */
+	[[nodiscard]] Player *FindRemotePlayer(uint32_t entityId) noexcept
+	{
+		return worldPresentation_.FindRemotePlayer(entityId);
+	}
 
 	/** Opens the experimental Smith store and applies its authoritative stock to the legacy UI buffers. */
 	tl::expected<void, std::string> OpenVendor(uint32_t storeId, ServerBackedVendorDestination destination, uint64_t requestedTick, uint64_t nowMs);

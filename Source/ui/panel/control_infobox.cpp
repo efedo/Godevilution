@@ -437,10 +437,11 @@ void DrawInfoBox(const Surface &out)
 			AddInfoBoxString(fmt::format(fmt::runtime(_("Hit Points {:d} of {:d}")), target.life.current >> 6, target.life.maximum >> 6));
 		}
 		if (PortraitIdUnderCursor != -1) {
-			InfoColor = UiFlags::ColorWhitegold;
-			auto &target = Players[PortraitIdUnderCursor];
-			InfoString = std::string_view(target._pName);
-			AddInfoBoxString(_("Right click to inspect"));
+			if (const Player *target = PartyPortraitPlayerAt(PortraitIdUnderCursor); target != nullptr) {
+				InfoColor = UiFlags::ColorWhitegold;
+				InfoString = std::string_view(target->_pName);
+				AddInfoBoxString(_("Right click to inspect"));
+			}
 		}
 	}
 	if (!InfoString.empty())

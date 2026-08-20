@@ -622,6 +622,13 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 		EXPECT_EQ(player.position.tile.y, remote.positionY);
 	});
 	EXPECT_EQ(visitedEntityId, remote.entityId);
+	Player *remotePlayer = presentation.FindRemotePlayer(remote.entityId);
+	ASSERT_NE(remotePlayer, nullptr);
+	EXPECT_EQ(presentation.FindRemotePlayer(99), nullptr);
+	ProjectedPlayerSnapshot secondRemote = remote;
+	secondRemote.entityId = 3;
+	ASSERT_TRUE(presentation.Apply(projection, 1, { local, remote, secondRemote }, 1).has_value());
+	EXPECT_EQ(presentation.FindRemotePlayer(remote.entityId), remotePlayer);
 
 	ASSERT_TRUE(presentation.Apply(projection, 1, { local }, 1).has_value());
 	EXPECT_EQ(presentation.RemotePlayerCount(), 0U);

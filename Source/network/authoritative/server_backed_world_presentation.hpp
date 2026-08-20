@@ -7,6 +7,7 @@
  */
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -51,6 +52,10 @@ public:
 		for (const auto &[entityId, remote] : remotePlayers_)
 			callback(entityId, remote.player);
 	}
+	/** Finds a projected remote player for read-only UI inspection. */
+	[[nodiscard]] const Player *FindRemotePlayer(uint32_t entityId) const noexcept;
+	/** Finds a projected remote player for the legacy read-only inspection panel. */
+	[[nodiscard]] Player *FindRemotePlayer(uint32_t entityId) noexcept;
 
 	[[nodiscard]] std::size_t RemotePlayerCount() const noexcept { return remotePlayers_.size(); }
 
@@ -72,7 +77,7 @@ private:
 		uint64_t serverTick = 0;
 		bool hasServerTick = false;
 	};
-	std::unordered_map<uint32_t, RemotePlayerPresentation> remotePlayers_;
+	std::map<uint32_t, RemotePlayerPresentation> remotePlayers_;
 };
 
 } // namespace devilution::authoritative

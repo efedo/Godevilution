@@ -7,6 +7,7 @@
 
 #include "ui/panel/partypanel.hpp"
 
+#include <array>
 #include <algorithm>
 #include <expected.hpp>
 #include <optional>
@@ -59,6 +60,8 @@ OptionalOwnedClxSpriteList PlayerTags;
 Point PartyPanelPos = { 8, 8 };
 Rectangle PortraitFrameRects[MAX_PLRS];
 int RightClickedPortraitIndex = -1;
+std::array<std::optional<uint32_t>, MAX_PLRS> RemotePortraitEntityIds;
+std::optional<uint32_t> RightClickedRemoteEntityId;
 constexpr int HealthBarHeight = 7;
 constexpr int ManaBarHeight = 7;
 constexpr int FrameGap = 15;
@@ -114,6 +117,30 @@ void DrawMemberFrame(const Surface &out, OwnedClxSpriteList &frame, Point pos)
 
 void HandleRightClickPortait()
 {
+	if (RightClickedRemoteEntityId.has_value()) {
+		bool inspectionStarted = false;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+			if (Player *player = authoritative::GetServerBackedRuntime().FindRemotePlayer(*RightClickedRemoteEntityId); player != nullptr) {
+				InspectPlayer = player;
+				inspectionStarted = true;
+				OpenCharPanel();
+				if (!SpellbookFlag)
+					invflag = true;
+				RedrawEverything();
+			}
+		}
+#endif
+		if (!inspectionStarted)
+			InspectingFromPartyPanel = false;
+		RightClickedRemoteEntityId.reset();
+		RightClickedPortraitIndex = -1;
+		return;
+	}
+
+	if (RightClickedPortraitIndex < 0 || RightClickedPortraitIndex >= MAX_PLRS)
+		return;
+
 	Player &player = Players[RightClickedPortraitIndex];
 	if (player.plractive && &player != MyPlayer) {
 		InspectPlayer = &player;
@@ -270,6 +297,9 @@ void FreePartyPanel()
 
 void DrawPartyMemberInfoPanel(const Surface &out)
 {
+	std::fill_n(PortraitFrameRects, MAX_PLRS, Rectangle {});
+	RemotePortraitEntityIds.fill(std::nullopt);
+
 	// Don't draw based on these criteria
 	if (CharFlag || !gbIsMultiplayer || !MyPlayer->friendlyMode || CurrentStoreManager.IsPlayerInStore() || IsStashOpen) {
 		if (PortraitIdUnderCursor != -1)
@@ -279,7 +309,6 @@ void DrawPartyMemberInfoPanel(const Surface &out)
 	}
 
 	Point pos = PartyPanelPos;
-	std::fill_n(PortraitFrameRects, MAX_PLRS, Rectangle {});
 	if (CurrentAutomapManager.GetAutomapActive())
 		pos.y += (FrameGap * 4);
 	if (*GetOptions().Graphics.showFPS)
@@ -412,11 +441,21 @@ void DrawPartyMemberInfoPanel(const Surface &out)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {
+		std::array<bool, MAX_PLRS> occupiedPortraitSlots {};
+		for (const Player &localPlayer : Players) {
+			if (localPlayer.plractive && localPlayer.friendlyMode && localPlayer.getId() < MAX_PLRS)
+				occupiedPortraitSlots[localPlayer.getId()] = true;
+		}
 		authoritative::GetServerBackedRuntime().ForEachRemotePlayer([&](uint32_t entityId, const Player &player) {
 			if (!player.plractive || !player.friendlyMode)
 				return;
-			const int displayId = static_cast<int>(entityId % 3);
-			DrawPartyMember(out, player, displayId, false, pos, currentLongestNameWidth, portraitUnderCursor);
+			const auto freeSlot = std::find(occupiedPortraitSlots.begin(), occupiedPortraitSlots.end(), false);
+			if (freeSlot == occupiedPortraitSlots.end())
+				return;
+			const int displayId = static_cast<int>(std::distance(occupiedPortraitSlots.begin(), freeSlot));
+			occupiedPortraitSlots[displayId] = true;
+			RemotePortraitEntityIds[displayId] = entityId;
+			DrawPartyMember(out, player, displayId, true, pos, currentLongestNameWidth, portraitUnderCursor);
 		});
 	}
 #endif
@@ -432,13 +471,29 @@ bool DidRightClickPartyPortrait()
 {
 	for (size_t i = 0; i < sizeof(PortraitFrameRects) / sizeof(PortraitFrameRects[0]); i++) {
 		if (PortraitFrameRects[i].contains(MousePosition)) {
-			RightClickedPortraitIndex = static_cast<int>(i);
+			const int portraitIndex = static_cast<int>(i);
+			RightClickedPortraitIndex = RemotePortraitEntityIds[portraitIndex].has_value() ? -1 : portraitIndex;
+			RightClickedRemoteEntityId = RemotePortraitEntityIds[portraitIndex];
 			InspectingFromPartyPanel = true;
 			return true;
 		}
 	}
 
 	return false;
+}
+
+const Player *PartyPortraitPlayerAt(int portraitId)
+{
+	if (portraitId < 0 || portraitId >= MAX_PLRS)
+		return nullptr;
+	if (RemotePortraitEntityIds[portraitId].has_value()) {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode())
+			return authoritative::GetServerBackedRuntime().FindRemotePlayer(*RemotePortraitEntityIds[portraitId]);
+#endif
+		return nullptr;
+	}
+	return &Players[portraitId];
 }
 
 } // namespace devilution

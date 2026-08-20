@@ -766,10 +766,13 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 		}
 	}
 	for (auto it = remotePlayers_.begin(); it != remotePlayers_.end();) {
-		if (!retainedRemotePlayers.contains(it->first))
+		if (!retainedRemotePlayers.contains(it->first)) {
+			if (InspectPlayer == &it->second.player)
+				InspectPlayer = MyPlayer;
 			it = remotePlayers_.erase(it);
-		else
+		} else {
 			++it;
+		}
 	}
 
 	for (auto it = itemSlots_.begin(); it != itemSlots_.end();) {
@@ -828,6 +831,18 @@ void ServerBackedWorldPresentation::DrawRemotePlayers(
 	}
 }
 
+const Player *ServerBackedWorldPresentation::FindRemotePlayer(uint32_t entityId) const noexcept
+{
+	const auto it = remotePlayers_.find(entityId);
+	return it == remotePlayers_.end() ? nullptr : &it->second.player;
+}
+
+Player *ServerBackedWorldPresentation::FindRemotePlayer(uint32_t entityId) noexcept
+{
+	const auto it = remotePlayers_.find(entityId);
+	return it == remotePlayers_.end() ? nullptr : &it->second.player;
+}
+
 void ServerBackedWorldPresentation::Clear() noexcept
 {
 	for (const auto &[entityId, itemSlot] : itemSlots_)
@@ -838,6 +853,11 @@ void ServerBackedWorldPresentation::Clear() noexcept
 		RemoveMappedObject(objectSlot);
 	for (const auto entityId : projectileEntities_)
 		RemoveAuthoritativePresentationMissile(entityId);
+	for (const auto &[entityId, remote] : remotePlayers_) {
+		(void)entityId;
+		if (InspectPlayer == &remote.player)
+			InspectPlayer = MyPlayer;
+	}
 	monsterSlots_.clear();
 	itemSlots_.clear();
 	objectSlots_.clear();
