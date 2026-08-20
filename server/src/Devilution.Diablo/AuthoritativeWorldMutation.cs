@@ -3,6 +3,43 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** One rectangle of geometry cells authored for a world interaction. */
+public sealed class AuthoritativeWorldMutationRectangle
+{
+    public AuthoritativeWorldMutationRectangle(int x, int y, int width, int height)
+    {
+        if (width <= 0)
+            throw new ArgumentOutOfRangeException(nameof(width));
+        if (height <= 0)
+            throw new ArgumentOutOfRangeException(nameof(height));
+        X = x;
+        Y = y;
+        Width = width;
+        Height = height;
+    }
+
+    public int X { get; }
+
+    public int Y { get; }
+
+    public int Width { get; }
+
+    public int Height { get; }
+
+    public IEnumerable<int> EnumerateCells(int levelWidth, int levelHeight)
+    {
+        if (levelWidth <= 0 || levelHeight <= 0)
+            throw new ArgumentOutOfRangeException(nameof(levelWidth));
+        var endX = checked(X + Width);
+        var endY = checked(Y + Height);
+        if (X < 0 || Y < 0 || endX > levelWidth || endY > levelHeight)
+            throw new InvalidDataException("A world mutation rectangle exceeds its level bounds.");
+        for (var y = Y; y < endY; y++)
+            for (var x = X; x < endX; x++)
+                yield return checked(y * levelWidth + x);
+    }
+}
+
 /** One deterministic cell overlay applied by an authored world interaction. */
 public sealed class AuthoritativeWorldMutation
 {
@@ -12,12 +49,16 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<int>? blockedCellsAdd = null,
         IEnumerable<int>? blockedCellsRemove = null,
         IEnumerable<int>? missileBlockedCellsAdd = null,
-        IEnumerable<int>? missileBlockedCellsRemove = null)
+        IEnumerable<int>? missileBlockedCellsRemove = null,
+        IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesAdd = null,
+        IEnumerable<AuthoritativeWorldMutationRectangle>? geometryRectanglesRemove = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
         MutationId = mutationId;
         LevelId = levelId;
+        GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
+        GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         BlockedCellsAdd = Normalize(blockedCellsAdd);
         BlockedCellsRemove = Normalize(blockedCellsRemove);
         MissileBlockedCellsAdd = Normalize(missileBlockedCellsAdd);
@@ -47,8 +88,47 @@ public sealed class AuthoritativeWorldMutation
 
     public IReadOnlyList<int> MissileBlockedCellsRemove { get; }
 
+    /** Rectangles that add both walkable and missile-blocking geometry. */
+    public IReadOnlyList<AuthoritativeWorldMutationRectangle> GeometryRectanglesAdd { get; }
+
+    /** Rectangles that remove both walkable and missile-blocking geometry. */
+    public IReadOnlyList<AuthoritativeWorldMutationRectangle> GeometryRectanglesRemove { get; }
+
+    public IReadOnlyList<int> GetBlockedCells(int levelWidth, int levelHeight)
+        => MergeCells(BlockedCellsAdd, GeometryRectanglesAdd, levelWidth, levelHeight);
+
+    public IReadOnlyList<int> GetBlockedCellsToRemove(int levelWidth, int levelHeight)
+        => MergeCells(BlockedCellsRemove, GeometryRectanglesRemove, levelWidth, levelHeight);
+
+    public IReadOnlyList<int> GetMissileBlockedCells(int levelWidth, int levelHeight)
+        => MergeCells(MissileBlockedCellsAdd, GeometryRectanglesAdd, levelWidth, levelHeight);
+
+    public IReadOnlyList<int> GetMissileBlockedCellsToRemove(int levelWidth, int levelHeight)
+        => MergeCells(MissileBlockedCellsRemove, GeometryRectanglesRemove, levelWidth, levelHeight);
+
     private static IReadOnlyList<int> Normalize(IEnumerable<int>? cells)
         => (cells ?? [])
+            .Distinct()
+            .OrderBy(cell => cell)
+            .ToArray();
+
+    private static IReadOnlyList<AuthoritativeWorldMutationRectangle> NormalizeRectangles(
+        IEnumerable<AuthoritativeWorldMutationRectangle>? rectangles)
+        => (rectangles ?? [])
+            .Where(rectangle => rectangle is not null)
+            .OrderBy(rectangle => rectangle.X)
+            .ThenBy(rectangle => rectangle.Y)
+            .ThenBy(rectangle => rectangle.Width)
+            .ThenBy(rectangle => rectangle.Height)
+            .ToArray();
+
+    private static IReadOnlyList<int> MergeCells(
+        IReadOnlyList<int> cells,
+        IReadOnlyList<AuthoritativeWorldMutationRectangle> rectangles,
+        int levelWidth,
+        int levelHeight)
+        => cells
+            .Concat(rectangles.SelectMany(rectangle => rectangle.EnumerateCells(levelWidth, levelHeight)))
             .Distinct()
             .OrderBy(cell => cell)
             .ToArray();
@@ -82,10 +162,30 @@ public sealed class AuthoritativeWorldMutationCatalog
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} references unknown level {mutation.LevelId}.");
             var level = world.Levels.Single(candidate => candidate.LevelId == mutation.LevelId);
-            foreach (var cell in mutation.BlockedCellsAdd
-                         .Concat(mutation.BlockedCellsRemove)
-                         .Concat(mutation.MissileBlockedCellsAdd)
-                         .Concat(mutation.MissileBlockedCellsRemove)) {
+            IReadOnlyList<int> blockedAdd;
+            IReadOnlyList<int> blockedRemove;
+            IReadOnlyList<int> missileBlockedAdd;
+            IReadOnlyList<int> missileBlockedRemove;
+            try {
+                blockedAdd = mutation.GetBlockedCells(level.Width, level.Height);
+                blockedRemove = mutation.GetBlockedCellsToRemove(level.Width, level.Height);
+                missileBlockedAdd = mutation.GetMissileBlockedCells(level.Width, level.Height);
+                missileBlockedRemove = mutation.GetMissileBlockedCellsToRemove(level.Width, level.Height);
+            } catch (Exception exception)
+                when (exception is InvalidDataException or OverflowException) {
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} contains an out-of-range rectangle.",
+                    exception);
+            }
+            if (blockedAdd.Intersect(blockedRemove).Any()
+                || missileBlockedAdd.Intersect(missileBlockedRemove).Any()) {
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} adds and removes the same geometry cell.");
+            }
+            foreach (var cell in blockedAdd
+                         .Concat(blockedRemove)
+                         .Concat(missileBlockedAdd)
+                         .Concat(missileBlockedRemove)) {
                 if (cell < 0 || cell >= checked(level.Width * level.Height))
                     throw new InvalidDataException(
                         $"World mutation {mutation.MutationId} contains an out-of-range cell {cell}.");
@@ -106,7 +206,9 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseCells(row, "blocked_cells_add"),
                 ParseCells(row, "blocked_cells_remove"),
                 ParseCells(row, "missile_blocked_cells_add"),
-                ParseCells(row, "missile_blocked_cells_remove"))));
+                ParseCells(row, "missile_blocked_cells_remove"),
+                ParseRectangles(row, "geometry_rect_add"),
+                ParseRectangles(row, "geometry_rect_remove"))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -197,6 +299,41 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ? parsed
                 : throw new InvalidDataException(
                     $"World mutation row {row.LineNumber} contains an invalid {column} cell '{cell}'."))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationRectangle> ParseRectangles(
+        TsvRow row,
+        string column)
+    {
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(rectangle => {
+                var fields = rectangle.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 4
+                    || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                    || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
+                    || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var width)
+                    || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var height)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.");
+                }
+                try {
+                    return new AuthoritativeWorldMutationRectangle(x, y, width, height);
+                } catch (ArgumentOutOfRangeException exception) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
+                        exception);
+                }
+            })
             .ToArray();
     }
 }

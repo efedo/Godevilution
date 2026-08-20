@@ -23,6 +23,66 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void LoadsAndExpandsGeometryRectanglesDeterministically()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tgeometry_rect_add\tgeometry_rect_remove\n"
+                + "7\t1\t1,1,2,2\t0,0,1,1;2,3,1,1\n");
+
+        var mutation = Assert.Single(catalog.Definitions);
+        var rectangle = Assert.Single(mutation.GeometryRectanglesAdd);
+        Assert.Equal((1, 1, 2, 2), (rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height));
+        Assert.Equal([5, 6, 9, 10], mutation.GetBlockedCells(4, 4));
+        Assert.Equal([0, 14], mutation.GetBlockedCellsToRemove(4, 4));
+        Assert.Equal(mutation.GetBlockedCells(4, 4), mutation.GetMissileBlockedCells(4, 4));
+    }
+
+    [Fact]
+    public void AppliesGeometryRectanglesToWalkAndMissileProjection()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(1, 1, 2, 2)]),
+        ]);
+        var world = new DiabloWorldState(geometry, worldMutations: mutations);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        Assert.False(world.IsWalkable(1, 1, 1));
+        Assert.False(world.IsWalkable(1, 2, 2));
+        Assert.True(world.IsMissileGeometryBlocked(1, 1, 1));
+        Assert.True(world.IsWalkable(1, 0, 0));
+    }
+
+    [Fact]
+    public void RejectsOutOfBoundsOrOverlappingGeometryRectangles()
+    {
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(
+                    7,
+                    1,
+                    geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(3, 3, 2, 2)]),
+            ]).ValidateWorld(geometry));
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeWorldMutationCatalog([
+                new AuthoritativeWorldMutation(
+                    8,
+                    1,
+                    blockedCellsRemove: [5],
+                    geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(1, 1, 2, 2)]),
+            ]).ValidateWorld(geometry));
+    }
+
+    [Fact]
     public void ResolvesSetLevelMutationTargetsToRuntimeLevels()
     {
         var stableIds = new StableContentIdCatalog([

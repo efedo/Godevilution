@@ -26,7 +26,7 @@ Status date: 2026-08-20
 
 On 2026-08-20, the current Release artifacts passed the managed boundary and
 client suites without failures: Domain 11 tests, Data 26, Engine 43, Diablo
-1,409, Server 414, and Godot protocol 145. These counts are a dated
+1,412, Server 414, and Godot protocol 145. These counts are a dated
 verification baseline, not a substitute for rebuilding the projects before a
 future run.
 
@@ -282,6 +282,12 @@ future run.
   and sends effective movement/missile geometry through the existing
   `LevelGeometrySnapshot`; native book/lever placement is supplied by the
   validated set-level catalog when its bundle is available.
+
+- Schema 1.375 extends `world_mutations.tsv` with optional deterministic
+  geometry rectangles. Each rectangle expands into both movement and
+  missile-blocking cells after the target level is resolved, enabling authored
+  native-style map regions without hard-coded map logic; explicit cell lists
+  remain backward compatible.
 
 - Authored object rows now also support validated quest transitions. An object
   may activate or complete its linked quest, set `_qvar1` or `_qvar2`, and gate

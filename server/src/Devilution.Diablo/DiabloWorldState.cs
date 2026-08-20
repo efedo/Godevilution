@@ -284,10 +284,11 @@ public sealed class DiabloWorldState
                     || mutation.LevelId != baseLevel.LevelId) {
                     continue;
                 }
-                blocked.UnionWith(mutation.BlockedCellsAdd);
-                blocked.ExceptWith(mutation.BlockedCellsRemove);
-                missileBlocked.UnionWith(mutation.MissileBlockedCellsAdd);
-                missileBlocked.ExceptWith(mutation.MissileBlockedCellsRemove);
+                blocked.UnionWith(mutation.GetBlockedCells(baseLevel.Width, baseLevel.Height));
+                blocked.ExceptWith(mutation.GetBlockedCellsToRemove(baseLevel.Width, baseLevel.Height));
+                missileBlocked.UnionWith(mutation.GetMissileBlockedCells(baseLevel.Width, baseLevel.Height));
+                missileBlocked.ExceptWith(
+                    mutation.GetMissileBlockedCellsToRemove(baseLevel.Width, baseLevel.Height));
             }
             projectedLevels.Add(
                 baseLevel.LevelId,

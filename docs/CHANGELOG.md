@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Add deterministic rectangle authoring to `world_mutations.tsv`. Optional
+  `geometry_rect_add` and `geometry_rect_remove` values expand into validated
+  movement and missile-blocking overlays while retaining the existing explicit
+  cell-list columns. Bump the Diablo content schema to 1.375.
+
 - Add optional authored projectile origins. `objects.tsv` rows can select
   `ActivatingPlayer` for Phasing projectiles while retaining target-origin
   compatibility by default; the source is validated and carried through
